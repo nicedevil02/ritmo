@@ -715,8 +715,10 @@ class _AddMockExamSheetState extends State<_AddMockExamSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         top: 20,
       ),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.75,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

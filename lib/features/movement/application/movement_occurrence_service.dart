@@ -74,23 +74,22 @@ class MovementOccurrenceService {
       createdAt: DateTime.now(),
     );
 
-    await dbExec.insert(
-      MovementTables.tableActivityKinds,
-      {
-        'id': id,
-        'nameFa': nameFa,
-        'nameEn': nameEn,
-        'aliasesJson': null,
-        'family': family,
-        'icon': icon,
-        'primaryMetric': primaryMetric,
-        'defaultUnitsJson': defaultUnits != null ? '[${defaultUnits.map((u) => '"$u"').join(',')}]' : null,
-        'isCustom': 1,
-        'isFavorite': 0,
-        'archivedAt': null,
-        'createdAt': now,
-      },
-    );
+    await dbExec.insert(MovementTables.tableActivityKinds, {
+      'id': id,
+      'nameFa': nameFa,
+      'nameEn': nameEn,
+      'aliasesJson': null,
+      'family': family,
+      'icon': icon,
+      'primaryMetric': primaryMetric,
+      'defaultUnitsJson': defaultUnits != null
+          ? '[${defaultUnits.map((u) => '"$u"').join(',')}]'
+          : null,
+      'isCustom': 1,
+      'isFavorite': 0,
+      'archivedAt': null,
+      'createdAt': now,
+    });
 
     _activityCache[id] = kind;
     return kind;
@@ -141,7 +140,9 @@ class MovementOccurrenceService {
   }
 
   /// دریافت لاگ‌های ثبت‌شده برای یک Occurrence
-  Future<List<MovementWorkoutLog>> getOccurrenceLogs(String occurrenceId) async {
+  Future<List<MovementWorkoutLog>> getOccurrenceLogs(
+    String occurrenceId,
+  ) async {
     final dbExec = await _database;
     final rows = await dbExec.query(
       MovementTables.tableWorkoutLogs,
@@ -255,10 +256,7 @@ class MovementOccurrenceService {
     );
   }
 
-  Future<void> moveOccurrence(
-    String occurrenceId,
-    String targetDateIso,
-  ) async {
+  Future<void> moveOccurrence(String occurrenceId, String targetDateIso) async {
     final dbExec = await _database;
     await dbExec.update(
       MovementTables.tableOccurrences,

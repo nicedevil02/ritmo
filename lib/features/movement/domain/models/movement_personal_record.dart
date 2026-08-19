@@ -19,7 +19,8 @@ class MovementPersonalRecord {
   final String id;
   final String? activityKindId;
   final String? exerciseId;
-  final String recordType; // e.g. max_weight, max_reps, max_duration, max_distance
+  final String
+  recordType; // e.g. max_weight, max_reps, max_duration, max_distance
   final double value;
   final String unit;
   final DateTime achievedAt;
@@ -75,7 +76,8 @@ class MovementPersonalRecord {
       unit: unit ?? this.unit,
       achievedAt: achievedAt ?? this.achievedAt,
       sourceId: sourceId ?? this.sourceId,
-      exerciseOrActivityNameFa: exerciseOrActivityNameFa ?? this.exerciseOrActivityNameFa,
+      exerciseOrActivityNameFa:
+          exerciseOrActivityNameFa ?? this.exerciseOrActivityNameFa,
       isEstimated: isEstimated ?? this.isEstimated,
     );
   }

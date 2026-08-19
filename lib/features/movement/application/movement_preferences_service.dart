@@ -18,15 +18,19 @@ class MovementPreferencesService {
   static const String keyWeightUnit = 'weight_unit'; // kg, lb
   static const String keyDefaultReminderTime = 'default_reminder_time'; // 08:00
   static const String keyMorningReminder = 'morning_reminder'; // true, false
-  static const String keyPreSessionReminder = 'pre_session_reminder'; // true, false
+  static const String keyPreSessionReminder =
+      'pre_session_reminder'; // true, false
   static const String keyQuietMode = 'quiet_mode'; // true, false
   static const String keyKeepScreenOn = 'keep_screen_on'; // true, false
   static const String keySoundEnabled = 'sound_enabled'; // true, false
   static const String keyHapticEnabled = 'haptic_enabled'; // true, false
   static const String keyCountdownSeconds = 'countdown_seconds'; // 5, 3, 0
-  static const String keySmartSuggestionsEnabled = 'smart_suggestions_enabled'; // true, false
-  static const String keyInterventionLevel = 'intervention_level'; // low, medium, high
-  static const String keyPlanBBehavior = 'plan_b_behavior'; // auto_suggest, manual_only
+  static const String keySmartSuggestionsEnabled =
+      'smart_suggestions_enabled'; // true, false
+  static const String keyInterventionLevel =
+      'intervention_level'; // low, medium, high
+  static const String keyPlanBBehavior =
+      'plan_b_behavior'; // auto_suggest, manual_only
 
   final Map<String, String> _memoryCache = {};
 
@@ -67,7 +71,10 @@ class MovementPreferencesService {
 
   /// دریافت مقدار بولی
   Future<bool> getBool(String key, {bool defaultValue = false}) async {
-    final str = await getString(key, defaultValue: defaultValue ? 'true' : 'false');
+    final str = await getString(
+      key,
+      defaultValue: defaultValue ? 'true' : 'false',
+    );
     return str.toLowerCase() == 'true';
   }
 
@@ -94,17 +101,32 @@ class MovementPreferencesService {
     return {
       'distanceUnit': await getString(keyDistanceUnit, defaultValue: 'km'),
       'weightUnit': await getString(keyWeightUnit, defaultValue: 'kg'),
-      'defaultReminderTime': await getString(keyDefaultReminderTime, defaultValue: '08:00'),
+      'defaultReminderTime': await getString(
+        keyDefaultReminderTime,
+        defaultValue: '08:00',
+      ),
       'morningReminder': await getBool(keyMorningReminder, defaultValue: true),
-      'preSessionReminder': await getBool(keyPreSessionReminder, defaultValue: true),
+      'preSessionReminder': await getBool(
+        keyPreSessionReminder,
+        defaultValue: true,
+      ),
       'quietMode': await getBool(keyQuietMode, defaultValue: false),
       'keepScreenOn': await getBool(keyKeepScreenOn, defaultValue: true),
       'soundEnabled': await getBool(keySoundEnabled, defaultValue: true),
       'hapticEnabled': await getBool(keyHapticEnabled, defaultValue: true),
       'countdownSeconds': await getInt(keyCountdownSeconds, defaultValue: 3),
-      'smartSuggestionsEnabled': await getBool(keySmartSuggestionsEnabled, defaultValue: true),
-      'interventionLevel': await getString(keyInterventionLevel, defaultValue: 'medium'),
-      'planBBehavior': await getString(keyPlanBBehavior, defaultValue: 'auto_suggest'),
+      'smartSuggestionsEnabled': await getBool(
+        keySmartSuggestionsEnabled,
+        defaultValue: true,
+      ),
+      'interventionLevel': await getString(
+        keyInterventionLevel,
+        defaultValue: 'medium',
+      ),
+      'planBBehavior': await getString(
+        keyPlanBBehavior,
+        defaultValue: 'auto_suggest',
+      ),
     };
   }
 

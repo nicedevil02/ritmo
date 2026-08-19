@@ -105,19 +105,28 @@ class LibraryActivityCard extends StatelessWidget {
                         children: [
                           Text(
                             activityKind.nameFa,
-                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                            style: RitmoTextStyles.cardTitle(
+                              colors.textPrimary,
+                            ),
                           ),
                           if (activityKind.isCustom) ...[
                             const SizedBox(width: RitmoSpacing.xs),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: sportsColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                borderRadius: BorderRadius.circular(
+                                  RitmoRadius.badge,
+                                ),
                               ),
                               child: Text(
                                 'سفارشی',
-                                style: RitmoTextStyles.caption(sportsColor).copyWith(fontSize: 10),
+                                style: RitmoTextStyles.caption(
+                                  sportsColor,
+                                ).copyWith(fontSize: 10),
                               ),
                             ),
                           ],
@@ -136,11 +145,18 @@ class LibraryActivityCard extends StatelessWidget {
                 IconButton(
                   onPressed: onToggleFavorite,
                   icon: Icon(
-                    activityKind.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
-                    color: activityKind.isFavorite ? Colors.amber : colors.textTertiary,
+                    activityKind.isFavorite
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    color: activityKind.isFavorite
+                        ? Colors.amber
+                        : colors.textTertiary,
                     size: 24,
                   ),
-                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
                 ),
               ],
             ),

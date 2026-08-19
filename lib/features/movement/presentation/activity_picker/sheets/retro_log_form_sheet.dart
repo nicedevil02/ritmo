@@ -25,7 +25,8 @@ class RetroLogFormSheet extends StatefulWidget {
     String? feeling,
     String? note,
     String? matchedOccurrenceId,
-  }) onSubmit;
+  })
+  onSubmit;
 
   final DateTime? initialDate;
   final String? matchingOccurrenceId;
@@ -41,7 +42,8 @@ class RetroLogFormSheet extends StatefulWidget {
       String? feeling,
       String? note,
       String? matchedOccurrenceId,
-    }) onSubmit,
+    })
+    onSubmit,
     DateTime? initialDate,
     String? matchingOccurrenceId,
   }) {
@@ -115,10 +117,7 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
       minute: int.tryParse(_selectedTime.split(':').last) ?? 0,
     );
 
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
 
     if (picked != null) {
       setState(() {
@@ -144,9 +143,13 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
         dateIso: _formatIso(_selectedDate),
         startTime: _selectedTime,
         durationSec: minutes * 60,
-        metrics: metricVal != null ? {'value': metricVal, 'unit': widget.activityKind.primaryMetric} : null,
+        metrics: metricVal != null
+            ? {'value': metricVal, 'unit': widget.activityKind.primaryMetric}
+            : null,
         feeling: _selectedFeeling,
-        note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
         matchedOccurrenceId: widget.matchingOccurrenceId,
       );
 
@@ -171,7 +174,9 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -210,7 +215,9 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                   decoration: BoxDecoration(
                     color: sportsColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    border: Border.all(color: sportsColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: sportsColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -219,9 +226,9 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                       Expanded(
                         child: Text(
                           MovementStrings.retroLogMatchPrompt,
-                          style: RitmoTextStyles.caption(sportsColor).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: RitmoTextStyles.caption(
+                            sportsColor,
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -242,13 +249,19 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: colors.surfaceSunken,
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                           border: Border.all(color: colors.border),
                         ),
                         alignment: Alignment.centerRight,
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today_rounded, size: 18, color: colors.textSecondary),
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 18,
+                              color: colors.textSecondary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               toPersianDigits(_formatIso(_selectedDate)),
@@ -269,13 +282,19 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: colors.surfaceSunken,
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                           border: Border.all(color: colors.border),
                         ),
                         alignment: Alignment.centerRight,
                         child: Row(
                           children: [
-                            Icon(Icons.access_time_rounded, size: 18, color: colors.textSecondary),
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 18,
+                              color: colors.textSecondary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               toPersianDigits(_selectedTime),
@@ -319,7 +338,8 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                   ),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'وارد کردن مدت الزامی است';
+                  if (val == null || val.trim().isEmpty)
+                    return 'وارد کردن مدت الزامی است';
                   final n = int.tryParse(val.trim());
                   if (n == null || n <= 0) return 'مدت نامعتبر است';
                   return null;
@@ -406,7 +426,10 @@ class _RetroLogFormSheetState extends State<RetroLogFormSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           MovementStrings.retroLogSubmit,

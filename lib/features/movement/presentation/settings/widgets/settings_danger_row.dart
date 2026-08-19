@@ -22,7 +22,9 @@ class SettingsDangerRow extends StatelessWidget {
     final colors = context.colors;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: MovementLayout.kFieldMinHeight),
+      constraints: const BoxConstraints(
+        minHeight: MovementLayout.kFieldMinHeight,
+      ),
       padding: const EdgeInsets.all(RitmoSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +35,9 @@ class SettingsDangerRow extends StatelessWidget {
               const SizedBox(width: RitmoSpacing.xs),
               Text(
                 title,
-                style: RitmoTextStyles.body(colors.accent).copyWith(fontWeight: FontWeight.bold),
+                style: RitmoTextStyles.body(
+                  colors.accent,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),

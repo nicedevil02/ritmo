@@ -103,7 +103,9 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
 
     return Material(
       color: colors.surface,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(RitmoRadius.sheet),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -140,7 +142,9 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
                   ),
                   TextButton(
                     onPressed: _handleSkip,
-                    style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
                     child: Text(
                       MovementStrings.readinessSkip,
                       style: RitmoTextStyles.caption(colors.textSecondary),
@@ -178,7 +182,13 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
                         title: MovementStrings.readinessSorenessLabel,
                         selectedValue: _soreness,
                         onChanged: (val) => setState(() => _soreness = val),
-                        labels: const ['هیچ', 'بسیار کم', 'متوسط', 'زیاد', 'شدید'],
+                        labels: const [
+                          'هیچ',
+                          'بسیار کم',
+                          'متوسط',
+                          'زیاد',
+                          'شدید',
+                        ],
                         semanticsGroup: 'ارزیابی درد عضلانی',
                       ),
                       const SizedBox(height: RitmoSpacing.lg),
@@ -186,7 +196,13 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
                         title: MovementStrings.readinessStressLabel,
                         selectedValue: _stress,
                         onChanged: (val) => setState(() => _stress = val),
-                        labels: const ['آرام', 'کم', 'متوسط', 'زیاد', 'بسیار زیاد'],
+                        labels: const [
+                          'آرام',
+                          'کم',
+                          'متوسط',
+                          'زیاد',
+                          'بسیار زیاد',
+                        ],
                         semanticsGroup: 'ارزیابی استرس',
                       ),
                       const SizedBox(height: RitmoSpacing.lg),
@@ -208,8 +224,12 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
                               return ChoiceChip(
                                 label: Text('${toPersianDigits(mins)} دقیقه'),
                                 selected: isSelected,
-                                onSelected: (sel) => setState(() => _availableMinutes = sel ? mins : null),
-                                selectedColor: sportsColor.withValues(alpha: 0.2),
+                                onSelected: (sel) => setState(
+                                  () => _availableMinutes = sel ? mins : null,
+                                ),
+                                selectedColor: sportsColor.withValues(
+                                  alpha: 0.2,
+                                ),
                                 labelStyle: RitmoTextStyles.caption(
                                   isSelected ? sportsColor : colors.textPrimary,
                                 ),
@@ -228,10 +248,15 @@ class _ReadinessCheckinSheetState extends State<ReadinessCheckinSheet> {
               ElevatedButton(
                 onPressed: _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, MovementLayout.kPrimaryButtonHeight),
+                  minimumSize: const Size(
+                    double.infinity,
+                    MovementLayout.kPrimaryButtonHeight,
+                  ),
                   backgroundColor: sportsColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  ),
                 ),
                 child: Text(
                   MovementStrings.readinessSubmit,

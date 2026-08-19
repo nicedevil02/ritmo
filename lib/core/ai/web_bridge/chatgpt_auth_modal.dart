@@ -3,6 +3,7 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_full_bleed_sheet.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// Modal dialog/bottom sheet enabling users to sign into ChatGPT directly within the app.
@@ -72,18 +73,20 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
     final textTheme = theme.textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-        border: Border(
-          top: BorderSide(color: colors.borderSubtle),
-          left: BorderSide(color: colors.borderSubtle),
-          right: BorderSide(color: colors.borderSubtle),
+    return RitmoFullBleedSheet(
+      maxHeightFactor: 0.9,
+      minHeightFactor: 0.6,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+          border: Border(
+            top: BorderSide(color: colors.borderSubtle),
+            left: BorderSide(color: colors.borderSubtle),
+            right: BorderSide(color: colors.borderSubtle),
+          ),
         ),
-      ),
-      child: Column(
+        child: Column(
         children: [
           // Header Bar
           Padding(
@@ -163,6 +166,6 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
           ),
         ],
       ),
-    );
+    ),);
   }
 }

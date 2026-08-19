@@ -51,7 +51,9 @@ class _ScopePickerSheetState extends State<ScopePickerSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,

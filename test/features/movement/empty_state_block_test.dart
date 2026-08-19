@@ -21,7 +21,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('EmptyStateBlock Widget Tests', () {
-    testWidgets('Renders all 8 empty state kinds with distinct icons', (tester) async {
+    testWidgets('Renders all 8 empty state kinds with distinct icons', (
+      tester,
+    ) async {
       const kinds = MovementEmptyStateKind.values;
       expect(kinds.length, equals(8));
 
@@ -44,7 +46,9 @@ void main() {
       }
     });
 
-    testWidgets('Tapping primary and secondary actions triggers callbacks', (tester) async {
+    testWidgets('Tapping primary and secondary actions triggers callbacks', (
+      tester,
+    ) async {
       bool primaryTapped = false;
       bool secondaryTapped = false;
 

@@ -53,7 +53,9 @@ class FakeOccurrenceService extends MovementOccurrenceService {
     final idx = _kinds.indexWhere((k) => k.id == id);
     if (idx != -1) {
       final current = _kinds[idx];
-      _kinds[idx] = current.copyWith(isFavorite: isFavorite ?? !current.isFavorite);
+      _kinds[idx] = current.copyWith(
+        isFavorite: isFavorite ?? !current.isFavorite,
+      );
     }
   }
 
@@ -88,20 +90,19 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('MovementLibraryScreen Tests (Gate 5)', () {
-    testWidgets('renders search, filters and activity cards list', (tester) async {
-      await tester.pumpWidget(createTestWidget(
-        MovementLibraryScreen(
-          occurrenceService: FakeOccurrenceService(),
+    testWidgets('renders search, filters and activity cards list', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          MovementLibraryScreen(occurrenceService: FakeOccurrenceService()),
         ),
-      ));
+      );
 
       await tester.pumpAndSettle();
 

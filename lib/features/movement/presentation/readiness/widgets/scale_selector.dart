@@ -28,10 +28,7 @@ class ScaleSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: RitmoTextStyles.label(colors.textPrimary),
-        ),
+        Text(title, style: RitmoTextStyles.label(colors.textPrimary)),
         const SizedBox(height: RitmoSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -39,7 +36,8 @@ class ScaleSelector extends StatelessWidget {
             final value = index + 1;
             final isSelected = selectedValue == value;
             final labelText = index < labels.length ? labels[index] : '';
-            final semanticLabel = '$semanticsGroup $title، $value از ۵، $labelText';
+            final semanticLabel =
+                '$semanticsGroup $title، $value از ۵، $labelText';
 
             return Semantics(
               label: semanticLabel,
@@ -56,7 +54,9 @@ class ScaleSelector extends StatelessWidget {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: isSelected ? sportsColor : colors.surfaceSunken,
+                          color: isSelected
+                              ? sportsColor
+                              : colors.surfaceSunken,
                           borderRadius: BorderRadius.circular(RitmoRadius.card),
                           border: Border.all(
                             color: isSelected ? sportsColor : colors.border,
@@ -65,10 +65,16 @@ class ScaleSelector extends StatelessWidget {
                         ),
                         child: Center(
                           child: isSelected
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 22)
+                              ? const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                )
                               : Text(
                                   toPersianDigits(value),
-                                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                  style: RitmoTextStyles.cardTitle(
+                                    colors.textPrimary,
+                                  ),
                                 ),
                         ),
                       ),

@@ -60,7 +60,9 @@ class MovementStrengthProgram {
   final DateTime updatedAt;
 
   bool get isActive => status == MovementStrengthProgramStatus.active;
-  bool get isDeload => status == MovementStrengthProgramStatus.deload || (isActive && currentWeek == deloadWeekIndex);
+  bool get isDeload =>
+      status == MovementStrengthProgramStatus.deload ||
+      (isActive && currentWeek == deloadWeekIndex);
   bool get isPaused => status == MovementStrengthProgramStatus.paused;
   bool get isFinished => status == MovementStrengthProgramStatus.finished;
   bool get isDraft => status == MovementStrengthProgramStatus.draft;
@@ -138,7 +140,8 @@ class MovementStrengthProgram {
       if (raw is List) return raw.map((e) => (e as num).toInt()).toList();
       try {
         final decoded = jsonDecode(raw.toString());
-        if (decoded is List) return decoded.map((e) => (e as num).toInt()).toList();
+        if (decoded is List)
+          return decoded.map((e) => (e as num).toInt()).toList();
       } catch (_) {}
       return [];
     }
@@ -157,11 +160,17 @@ class MovementStrengthProgram {
       totalWeeks: (map['totalWeeks'] as int?) ?? 6,
       currentWeek: (map['currentWeek'] as int?) ?? 1,
       deloadWeekIndex: map['deloadWeekIndex'] as int?,
-      status: MovementStrengthProgramStatus.fromString(map['status'] as String? ?? 'none'),
+      status: MovementStrengthProgramStatus.fromString(
+        map['status'] as String? ?? 'none',
+      ),
       draftStep: (map['draftStep'] as int?) ?? 1,
       draftDataJson: map['draftDataJson'] as String?,
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 

@@ -83,63 +83,65 @@ void main() {
       ),
     ];
 
-    testWidgets('MovementAppBar renders with zero overflow at 1.3x text scale', (tester) async {
+    testWidgets(
+      'MovementAppBar renders with zero overflow at 1.3x text scale',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrapWithScale(
+            Scaffold(
+              appBar: MovementAppBar(
+                title: MovementStrings.centerTitle,
+                subtitle: '۲۵ تا ۳۱ مرداد',
+                onProgressPressed: () {},
+                onSettingsPressed: () {},
+              ),
+              body: const SizedBox.shrink(),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('WeekRail renders with zero overflow at 1.3x text scale', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrapWithScale(
           Scaffold(
-            appBar: MovementAppBar(
+            body: WeekRail(days: testDays, onDaySelected: (_) {}),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'MovementScreenShell renders with zero overflow at 1.3x text scale',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrapWithScale(
+            MovementScreenShell(
               title: MovementStrings.centerTitle,
-              subtitle: '۲۵ تا ۳۱ مرداد',
-              onProgressPressed: () {},
-              onSettingsPressed: () {},
-            ),
-            body: const SizedBox.shrink(),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('WeekRail renders with zero overflow at 1.3x text scale', (tester) async {
-      await tester.pumpWidget(
-        _wrapWithScale(
-          Scaffold(
-            body: WeekRail(
-              days: testDays,
-              onDaySelected: (_) {},
+              subtitle: MovementStrings.centerDayPlan,
+              body: Column(
+                children: [
+                  WeekRail(days: testDays, onDaySelected: (_) {}),
+                  const SizedBox(height: 16),
+                  const Text('محتوای صفحه حرکت'),
+                ],
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('MovementScreenShell renders with zero overflow at 1.3x text scale', (tester) async {
-      await tester.pumpWidget(
-        _wrapWithScale(
-          MovementScreenShell(
-            title: MovementStrings.centerTitle,
-            subtitle: MovementStrings.centerDayPlan,
-            body: Column(
-              children: [
-                WeekRail(
-                  days: testDays,
-                  onDaySelected: (_) {},
-                ),
-                const SizedBox(height: 16),
-                const Text('محتوای صفحه حرکت'),
-              ],
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    });
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

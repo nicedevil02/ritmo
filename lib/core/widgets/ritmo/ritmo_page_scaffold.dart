@@ -33,10 +33,7 @@ class RitmoPageScaffold extends StatelessWidget {
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
       body: SafeArea(
-        child: Padding(
-          padding: padding,
-          child: body,
-        ),
+        child: Padding(padding: padding, child: body),
       ),
     );
   }

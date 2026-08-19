@@ -52,10 +52,7 @@ class MovementScreenShell extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              title,
-              style: RitmoTextStyles.pageTitle(colors.textPrimary),
-            ),
+            Text(title, style: RitmoTextStyles.pageTitle(colors.textPrimary)),
             if (subtitle != null && subtitle!.isNotEmpty)
               Text(
                 subtitle!,
@@ -72,10 +69,7 @@ class MovementScreenShell extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
       ),
       bottomNavigationBar: bottomDock != null
-          ? SafeArea(
-              top: false,
-              child: bottomDock!,
-            )
+          ? SafeArea(top: false, child: bottomDock!)
           : null,
       body: RitmoTheme.buildBackgroundContainer(
         context: context,
@@ -90,10 +84,7 @@ class MovementScreenShell extends StatelessWidget {
                 const SizedBox(height: RitmoSpacing.sm),
               ],
               Expanded(
-                child: Padding(
-                  padding: padding,
-                  child: content,
-                ),
+                child: Padding(padding: padding, child: content),
               ),
             ],
           ),

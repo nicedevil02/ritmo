@@ -45,7 +45,8 @@ class MovementLiveSessionScreen extends StatefulWidget {
   final ValueChanged<String>? onCompleted;
 
   @override
-  State<MovementLiveSessionScreen> createState() => _MovementLiveSessionScreenState();
+  State<MovementLiveSessionScreen> createState() =>
+      _MovementLiveSessionScreenState();
 }
 
 class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
@@ -78,14 +79,12 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
         } else {
           Navigator.of(context).pushReplacementNamed(
             MovementRoutes.summary,
-            arguments: {
-              'sessionId': _controller.session?.id,
-              'log': log,
-            },
+            arguments: {'sessionId': _controller.session?.id, 'log': log},
           );
         }
       }
-    } else if (_controller.status == MovementLiveSessionStatus.abandoned && mounted) {
+    } else if (_controller.status == MovementLiveSessionStatus.abandoned &&
+        mounted) {
       Navigator.of(context).pop();
     }
   }
@@ -175,7 +174,8 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
         );
 
       case 'count':
-        final targetReps = widget.targetSnapshot?['reps'] as int? ??
+        final targetReps =
+            widget.targetSnapshot?['reps'] as int? ??
             (widget.targetSnapshot?['value'] as num?)?.toInt();
         return CountSessionView(
           elapsedSeconds: _controller.elapsedSeconds,
@@ -197,9 +197,12 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
         );
 
       case 'strength':
-        final day = widget.targetSnapshot?['strengthDay'] as MovementStrengthDay? ??
+        final day =
+            widget.targetSnapshot?['strengthDay'] as MovementStrengthDay? ??
             MovementStrengthDay(
-              id: widget.targetSnapshot?['strengthDayId'] as String? ?? 'default_day',
+              id:
+                  widget.targetSnapshot?['strengthDayId'] as String? ??
+                  'default_day',
               programId: 'sp_default',
               weekIndex: 1,
               weekday: 1,
@@ -217,7 +220,8 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
 
       case 'time':
       default:
-        final targetMin = widget.targetSnapshot?['durationMinutes'] as int? ??
+        final targetMin =
+            widget.targetSnapshot?['durationMinutes'] as int? ??
             (widget.targetSnapshot?['value'] as num?)?.toInt();
         return TimeSessionView(
           elapsedSeconds: _controller.elapsedSeconds,
@@ -232,7 +236,8 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final isFinishing = _controller.status == MovementLiveSessionStatus.finishing;
+        final isFinishing =
+            _controller.status == MovementLiveSessionStatus.finishing;
 
         return PopScope(
           canPop: false,
@@ -292,7 +297,8 @@ class _MovementLiveSessionScreenState extends State<MovementLiveSessionScreen> {
                   if (_controller.isPaused) {
                     _controller.togglePause();
                   } else {
-                    if (_controller.mode == 'free' && _freeNoteController.text.isNotEmpty) {
+                    if (_controller.mode == 'free' &&
+                        _freeNoteController.text.isNotEmpty) {
                       _controller.updateNote(_freeNoteController.text);
                     }
                     _controller.finish();

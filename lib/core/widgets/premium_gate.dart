@@ -20,17 +20,12 @@ class PremiumBadge extends StatelessWidget {
         color: const Color(0xffFFA500).withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        Icons.diamond,
-        size: size,
-        color: const Color(0xffFFA500),
-      ),
+      child: Icon(Icons.diamond, size: size, color: const Color(0xffFFA500)),
     );
   }
 }
 
 class PremiumGate extends StatelessWidget {
-
   const PremiumGate({
     super.key,
     required this.child,
@@ -54,12 +49,7 @@ class PremiumGate extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         // Show child slightly faded
-        Opacity(
-          opacity: 0.5,
-          child: AbsorbPointer(
-            child: child,
-          ),
-        ),
+        Opacity(opacity: 0.5, child: AbsorbPointer(child: child)),
         // Overlay gesture detector to catch click and show upgrade sheet
         Positioned.fill(
           child: GestureDetector(
@@ -83,7 +73,10 @@ class PremiumGate extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.card,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xffFFA500).withValues(alpha: 0.5), width: 1.5),
+              border: Border.all(
+                color: const Color(0xffFFA500).withValues(alpha: 0.5),
+                width: 1.5,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.2),

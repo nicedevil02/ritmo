@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// کارت توزیع خانواده‌های ورزشی (DistributionCard)
 /// نمایش درصدها حتماً همراه با مقدار مطلق (تعداد جلسه).
 class DistributionCard extends StatelessWidget {
-  const DistributionCard({
-    super.key,
-    required this.items,
-  });
+  const DistributionCard({super.key, required this.items});
 
   final List<MovementDistributionItem> items;
 
@@ -54,10 +51,15 @@ class DistributionCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(item.nameFa, style: RitmoTextStyles.body(colors.textPrimary)),
+                      Text(
+                        item.nameFa,
+                        style: RitmoTextStyles.body(colors.textPrimary),
+                      ),
                       Text(
                         '${toPersianDigits(item.count)} جلسه (${toPersianDigits(item.percentage)}٪)',
-                        style: RitmoTextStyles.caption(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                        style: RitmoTextStyles.caption(
+                          sportsColor,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),

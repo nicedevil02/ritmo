@@ -26,10 +26,7 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
@@ -57,11 +54,11 @@ void main() {
       }
     });
 
-    testWidgets('1. Flow renders 5 steps with Persian step progress string', (tester) async {
+    testWidgets('1. Flow renders 5 steps with Persian step progress string', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        buildTestableWidget(
-          StrengthOnboardingFlow(strengthService: service),
-        ),
+        buildTestableWidget(StrengthOnboardingFlow(strengthService: service)),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -79,7 +76,10 @@ void main() {
       // Step 2: StepLevelSafety
       expect(find.text(MovementStrings.strengthStepOf(2)), findsOneWidget);
       expect(find.byType(StepLevelSafety), findsOneWidget);
-      expect(find.text(MovementStrings.strengthMedicalDisclaimer), findsOneWidget);
+      expect(
+        find.text(MovementStrings.strengthMedicalDisclaimer),
+        findsOneWidget,
+      );
 
       // Advance to Step 3
       await tester.tap(find.text('گام بعدی'));
@@ -118,31 +118,34 @@ void main() {
       expect(find.byType(StrengthProgramPreviewScreen), findsOneWidget);
     });
 
-    testWidgets('2. Resuming from existing draft starts at the saved draftStep', (tester) async {
-      final draft = MovementStrengthProgram(
-        id: 'draft_resume_1',
-        status: MovementStrengthProgramStatus.draft,
-        draftStep: 3,
-        goal: 'strength',
-        equipment: const ['dumbbells'],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+    testWidgets(
+      '2. Resuming from existing draft starts at the saved draftStep',
+      (tester) async {
+        final draft = MovementStrengthProgram(
+          id: 'draft_resume_1',
+          status: MovementStrengthProgramStatus.draft,
+          draftStep: 3,
+          goal: 'strength',
+          equipment: const ['dumbbells'],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          StrengthOnboardingFlow(
-            strengthService: service,
-            initialDraft: draft,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            StrengthOnboardingFlow(
+              strengthService: service,
+              initialDraft: draft,
+            ),
           ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      // Starts directly at Step 3
-      expect(find.text(MovementStrings.strengthStepOf(3)), findsOneWidget);
-      expect(find.byType(StepEquipment), findsOneWidget);
-    });
+        // Starts directly at Step 3
+        expect(find.text(MovementStrings.strengthStepOf(3)), findsOneWidget);
+        expect(find.byType(StepEquipment), findsOneWidget);
+      },
+    );
   });
 }

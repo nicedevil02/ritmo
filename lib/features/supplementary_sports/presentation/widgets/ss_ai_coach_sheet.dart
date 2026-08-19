@@ -659,7 +659,7 @@ $_sportsContext
                     const Divider(),
                     ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                        maxHeight: RitmoBreakpoints.usableHeight(context) * 0.4,
                       ),
                       child: _sessions.isEmpty
                           ? const Center(child: Text('گفتگویی یافت نشد', style: TextStyle()))
@@ -730,7 +730,9 @@ $_sportsContext
       child: RitmoTheme.glassCardLight(
         borderRadius: 28,
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.85,
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
           padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
           child: Column(
             children: [
@@ -1069,42 +1071,6 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
       ),
     );
 
-    final bubbleContainer = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: bubbleBg,
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(20),
-          topRight: const Radius.circular(20),
-          bottomLeft: Radius.circular(isUser ? 20 : 4),
-          bottomRight: Radius.circular(isUser ? 4 : 20),
-        ),
-        border: isUser
-            ? null
-            : Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
-              ),
-      ),
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.74,
-      ),
-      child: widget.msg['content'].toString().trim().isEmpty
-          ? const _TypingIndicator()
-          : Text.rich(
-              TextSpan(
-                children: parseMarkdownText(
-                  widget.msg['content'] as String,
-                  TextStyle(
-                    fontSize: 13.5,
-                    color: isUser ? Colors.white : colors.textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              textDirection: TextDirection.rtl,
-            ),
-    );
-
     final actionsList = (widget.msg['actions'] as List?)?.cast<ChatAction>() ?? const [];
 
     Widget? actionsSection;
@@ -1143,29 +1109,69 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
       );
     }
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: isUser
-                  ? [
-                      bubbleContainer,
-                      if (showCopy) copyButton else const SizedBox(width: 32),
-                    ]
-                  : [
-                      if (showCopy) copyButton else const SizedBox(width: 32),
-                      bubbleContainer,
-                    ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bubbleContainer = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: bubbleBg,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(20),
+              topRight: const Radius.circular(20),
+              bottomLeft: Radius.circular(isUser ? 20 : 4),
+              bottomRight: Radius.circular(isUser ? 4 : 20),
             ),
-            ?actionsSection,
-          ],
-        ),
-      ),
+            border: isUser
+                ? null
+                : Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+                  ),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor,
+          ),
+          child: widget.msg['content'].toString().trim().isEmpty
+              ? const _TypingIndicator()
+              : Text.rich(
+                  TextSpan(
+                    children: parseMarkdownText(
+                      widget.msg['content'] as String,
+                      TextStyle(
+                        fontSize: 13.5,
+                        color: isUser ? Colors.white : colors.textPrimary,
+                        height: 1.6,
+                      ),
+                    ),
+                  ),
+                  textDirection: TextDirection.rtl,
+                ),
+        );
+
+        return Align(
+          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: isUser
+                      ? [
+                          bubbleContainer,
+                          if (showCopy) copyButton else const SizedBox(width: 32),
+                        ]
+                      : [
+                          if (showCopy) copyButton else const SizedBox(width: 32),
+                          bubbleContainer,
+                        ],
+                ),
+                ?actionsSection,
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

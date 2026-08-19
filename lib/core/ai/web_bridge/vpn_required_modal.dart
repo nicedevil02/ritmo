@@ -4,6 +4,7 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_full_bleed_sheet.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class VpnRequiredModal extends StatefulWidget {
@@ -103,19 +104,20 @@ class _VpnRequiredModalState extends State<VpnRequiredModal> {
     final rayId = ChatGptWebBridgeManager.instance.lastRayId;
     final blockedIp = ChatGptWebBridgeManager.instance.lastBlockedIp;
     final controller = ChatGptWebBridgeManager.instance.controller;
-
-    return Container(
-      height: MediaQuery.of(context).size.height * (_showLiveBrowser ? 0.85 : 0.65),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-        border: Border(
-          top: BorderSide(color: colors.borderSubtle),
-          left: BorderSide(color: colors.borderSubtle),
-          right: BorderSide(color: colors.borderSubtle),
+    return RitmoFullBleedSheet(
+      maxHeightFactor: _showLiveBrowser ? 0.9 : 0.75,
+      minHeightFactor: 0.55,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+          border: Border(
+            top: BorderSide(color: colors.borderSubtle),
+            left: BorderSide(color: colors.borderSubtle),
+            right: BorderSide(color: colors.borderSubtle),
+          ),
         ),
-      ),
-      child: Column(
+        child: Column(
         children: [
           // Header Bar
           Padding(
@@ -329,7 +331,7 @@ class _VpnRequiredModalState extends State<VpnRequiredModal> {
           ),
         ],
       ),
-    );
+    ),);
   }
 
   Widget _buildSolutionItem(

@@ -22,7 +22,8 @@ class MoveSessionSheet extends StatefulWidget {
     String newDateIso,
     String? newTime,
     MovementChangeScope scope,
-  ) onMoveConfirm;
+  )
+  onMoveConfirm;
   final List<DateTime> weekDates;
 
   static Future<bool?> show(
@@ -32,7 +33,8 @@ class MoveSessionSheet extends StatefulWidget {
       String newDateIso,
       String? newTime,
       MovementChangeScope scope,
-    ) onMoveConfirm,
+    )
+    onMoveConfirm,
     List<DateTime> weekDates = const [],
   }) {
     return showModalBottomSheet<bool>(
@@ -98,10 +100,7 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
       minute: int.tryParse(_selectedTime.split(':').last) ?? 30,
     );
 
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
 
     if (picked != null) {
       setState(() {
@@ -115,7 +114,13 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
     setState(() => _isSaving = true);
     try {
       await widget.onMoveConfirm(_selectedDateIso, _selectedTime, _scope);
-      final dayOffset = DateTime.tryParse(_selectedDateIso)?.difference(DateTime.tryParse(widget.occurrence.dateIso) ?? DateTime.now()).inDays ?? 0;
+      final dayOffset =
+          DateTime.tryParse(_selectedDateIso)
+              ?.difference(
+                DateTime.tryParse(widget.occurrence.dateIso) ?? DateTime.now(),
+              )
+              .inDays ??
+          0;
       MovementAnalyticsService.instance.logOccurrenceMoved(
         scope: _scope.name,
         dayOffset: dayOffset,
@@ -134,7 +139,9 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -192,7 +199,9 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                           height: 64,
                           decoration: BoxDecoration(
                             color: isSelected ? sportsColor : colors.surface,
-                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.card,
+                            ),
                             border: Border.all(
                               color: isSelected ? sportsColor : colors.border,
                               width: 1.5,
@@ -205,14 +214,18 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                               Text(
                                 _weekdayFullNames[weekdayIdx],
                                 style: RitmoTextStyles.caption(
-                                  isSelected ? Colors.white : colors.textSecondary,
+                                  isSelected
+                                      ? Colors.white
+                                      : colors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 toPersianDigits(date.day),
                                 style: RitmoTextStyles.cardTitle(
-                                  isSelected ? Colors.white : colors.textPrimary,
+                                  isSelected
+                                      ? Colors.white
+                                      : colors.textPrimary,
                                 ),
                               ),
                             ],
@@ -245,7 +258,10 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                 onTap: _pickTime,
                 borderRadius: BorderRadius.circular(RitmoRadius.field),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: sportsColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
@@ -275,7 +291,8 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                   selected: _scope == MovementChangeScope.onlyThis,
                   selectedColor: sportsColor,
                   onSelected: (s) {
-                    if (s) setState(() => _scope = MovementChangeScope.onlyThis);
+                    if (s)
+                      setState(() => _scope = MovementChangeScope.onlyThis);
                   },
                 ),
                 ChoiceChip(
@@ -283,7 +300,10 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                   selected: _scope == MovementChangeScope.thisAndFuture,
                   selectedColor: sportsColor,
                   onSelected: (s) {
-                    if (s) setState(() => _scope = MovementChangeScope.thisAndFuture);
+                    if (s)
+                      setState(
+                        () => _scope = MovementChangeScope.thisAndFuture,
+                      );
                   },
                 ),
                 ChoiceChip(
@@ -291,7 +311,8 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                   selected: _scope == MovementChangeScope.wholePlan,
                   selectedColor: sportsColor,
                   onSelected: (s) {
-                    if (s) setState(() => _scope = MovementChangeScope.wholePlan);
+                    if (s)
+                      setState(() => _scope = MovementChangeScope.wholePlan);
                   },
                 ),
               ],
@@ -316,7 +337,10 @@ class _MoveSessionSheetState extends State<MoveSessionSheet> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                   : Text(
                       MovementStrings.commonConfirm,

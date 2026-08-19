@@ -40,7 +40,11 @@ class ConflictPanel extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.check_circle_outline_rounded, color: colors.success, size: 20),
+            Icon(
+              Icons.check_circle_outline_rounded,
+              color: colors.success,
+              size: 20,
+            ),
             const SizedBox(width: RitmoSpacing.sm),
             Text(
               MovementStrings.conflictNoneFound,
@@ -64,7 +68,11 @@ class ConflictPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: colors.warning, size: 22),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: colors.warning,
+                size: 22,
+              ),
               const SizedBox(width: RitmoSpacing.sm),
               Text(
                 MovementStrings.conflictDetectedTitle,

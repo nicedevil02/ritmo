@@ -90,10 +90,7 @@ class DaySlot extends StatelessWidget {
       decoration = BoxDecoration(
         color: sportsColor.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(RitmoRadius.pill),
-        border: Border.all(
-          color: sportsColor,
-          width: 1.5,
-        ),
+        border: Border.all(color: sportsColor, width: 1.5),
       );
     } else if (isToday) {
       decoration = BoxDecoration(

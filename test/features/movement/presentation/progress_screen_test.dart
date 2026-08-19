@@ -12,7 +12,10 @@ import 'package:ritmo/features/movement/presentation/progress/widgets/status_bre
 
 class FakeMovementProgressService extends MovementProgressService {
   @override
-  Future<MovementKpiData> getKpiData({required MovementProgressRange range, DateTime? now}) async {
+  Future<MovementKpiData> getKpiData({
+    required MovementProgressRange range,
+    DateTime? now,
+  }) async {
     return const MovementKpiData(
       sessionCount: 5,
       activeMinutes: 150,
@@ -24,14 +27,33 @@ class FakeMovementProgressService extends MovementProgressService {
   }
 
   @override
-  Future<MovementTrendData> getTrendData({required MovementProgressRange range, DateTime? now}) async {
+  Future<MovementTrendData> getTrendData({
+    required MovementProgressRange range,
+    DateTime? now,
+  }) async {
     return const MovementTrendData(
       points: [
-        MovementTrendPoint(label: 'هفته ۱', sessionCount: 2, activeMinutes: 60, volumeKg: 500),
-        MovementTrendPoint(label: 'هفته ۲', sessionCount: 3, activeMinutes: 90, volumeKg: 700),
-        MovementTrendPoint(label: 'هفته ۳', sessionCount: 4, activeMinutes: 120, volumeKg: 900),
+        MovementTrendPoint(
+          label: 'هفته ۱',
+          sessionCount: 2,
+          activeMinutes: 60,
+          volumeKg: 500,
+        ),
+        MovementTrendPoint(
+          label: 'هفته ۲',
+          sessionCount: 3,
+          activeMinutes: 90,
+          volumeKg: 700,
+        ),
+        MovementTrendPoint(
+          label: 'هفته ۳',
+          sessionCount: 4,
+          activeMinutes: 120,
+          volumeKg: 900,
+        ),
       ],
-      interpretationSentence: 'روند صعودی و پیوستگی مطلوب در تمرینات ثبت شده است.',
+      interpretationSentence:
+          'روند صعودی و پیوستگی مطلوب در تمرینات ثبت شده است.',
       hasEnoughData: true,
     );
   }
@@ -39,16 +61,34 @@ class FakeMovementProgressService extends MovementProgressService {
   @override
   Future<List<MovementDistributionItem>> getDistributionData() async {
     return const [
-      MovementDistributionItem(family: 'running', nameFa: 'دویدن در فضای باز', count: 3, percentage: 60),
-      MovementDistributionItem(family: 'walking', nameFa: 'پیاده‌روی روزانه', count: 2, percentage: 40),
+      MovementDistributionItem(
+        family: 'running',
+        nameFa: 'دویدن در فضای باز',
+        count: 3,
+        percentage: 60,
+      ),
+      MovementDistributionItem(
+        family: 'walking',
+        nameFa: 'پیاده‌روی روزانه',
+        count: 2,
+        percentage: 40,
+      ),
     ];
   }
 
   @override
   Future<List<MovementMuscleWorkloadItem>> getMuscleWorkload() async {
     return const [
-      MovementMuscleWorkloadItem(muscleGroup: 'پا و باسن', setsCount: 8, percentage: 50),
-      MovementMuscleWorkloadItem(muscleGroup: 'سینه', setsCount: 8, percentage: 50),
+      MovementMuscleWorkloadItem(
+        muscleGroup: 'پا و باسن',
+        setsCount: 8,
+        percentage: 50,
+      ),
+      MovementMuscleWorkloadItem(
+        muscleGroup: 'سینه',
+        setsCount: 8,
+        percentage: 50,
+      ),
     ];
   }
 
@@ -56,7 +96,9 @@ class FakeMovementProgressService extends MovementProgressService {
   Future<MovementStrengthProgressData?> getStrengthProgressData() async {
     return const MovementStrengthProgressData(
       weeklyVolumes: [500, 700, 900],
-      compoundLifts: {'اسکوات': [60, 65, 70]},
+      compoundLifts: {
+        'اسکوات': [60, 65, 70],
+      },
       completionRate: 0.9,
       isDeloadActive: false,
     );
@@ -95,20 +137,21 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('MovementProgressScreen & Progress Widgets Tests (Gate 5)', () {
-    testWidgets('Renders full progress screen with 8 zones and real data', (tester) async {
-      await tester.pumpWidget(createTestWidget(
-        MovementProgressScreen(
-          progressService: FakeMovementProgressService(),
+    testWidgets('Renders full progress screen with 8 zones and real data', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          MovementProgressScreen(
+            progressService: FakeMovementProgressService(),
+          ),
         ),
-      ));
+      );
 
       await tester.pumpAndSettle();
 

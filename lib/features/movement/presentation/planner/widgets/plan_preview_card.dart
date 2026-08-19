@@ -46,7 +46,9 @@ class PlanPreviewCard extends StatelessWidget {
 
   String get _summarySentence {
     final daysCount = schedules.length;
-    final daysNames = schedules.map((s) => _weekdayFullNames[s.weekday]).join('، ');
+    final daysNames = schedules
+        .map((s) => _weekdayFullNames[s.weekday])
+        .join('، ');
     final goalStr = '${toPersianDigits(goalValue.toInt())} $goalUnit';
 
     return 'هفته‌ای ${toPersianDigits(daysCount)} جلسه $goalStr $daysNames برای ${activityKind.nameFa}';
@@ -96,9 +98,9 @@ class PlanPreviewCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     _summarySentence,
-                    style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: RitmoTextStyles.body(
+                      colors.textPrimary,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],

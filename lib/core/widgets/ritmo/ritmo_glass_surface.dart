@@ -28,7 +28,8 @@ class RitmoGlassSurface extends StatelessWidget {
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final isDark = context.isDark;
 
-    final effectiveRadius = borderRadius ?? BorderRadius.circular(RitmoRadius.card);
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(RitmoRadius.card);
 
     if (behavior.reduceTransparency || highContrast) {
       return Container(
@@ -36,7 +37,8 @@ class RitmoGlassSurface extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: effectiveRadius,
-          border: border ??
+          border:
+              border ??
               Border.all(
                 color: highContrast
                     ? colors.textPrimary
@@ -57,7 +59,8 @@ class RitmoGlassSurface extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.glassTint,
             borderRadius: effectiveRadius,
-            border: border ??
+            border:
+                border ??
                 Border.all(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.08)

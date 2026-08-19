@@ -180,12 +180,16 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final size = MediaQuery.of(context).size;
-
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        height: size.height * 0.85,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         decoration: BoxDecoration(
           color: colors.bg,
           borderRadius: const BorderRadius.only(
@@ -343,7 +347,7 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
             ),
           ],
         ),
-      ),
+      ),),
     );
   }
 

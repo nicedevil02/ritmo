@@ -12,11 +12,7 @@ Widget _wrap(Widget child) {
     ),
     home: Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: SingleChildScrollView(
-          child: child,
-        ),
-      ),
+      child: Scaffold(body: SingleChildScrollView(child: child)),
     ),
   );
 }
@@ -55,12 +51,7 @@ void main() {
 
     testWidgets('Renders before/after/reason and locked label', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          DiffList(
-            items: testItems,
-            onItemToggled: (_) {},
-          ),
-        ),
+        _wrap(DiffList(items: testItems, onItemToggled: (_) {})),
       );
 
       expect(find.textContaining('شنبه ۱۸:۰۰'), findsOneWidget);

@@ -37,92 +37,100 @@ void main() {
       MovementUndoToast.dismissCurrent();
     });
 
-    testWidgets('Standard text scale sets 6 seconds duration and auto-dismisses after 6 seconds', (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          Builder(
-            builder: (context) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 150.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    MovementUndoToast.show(
-                      context,
-                      message: MovementStrings.undoMovedTodayOnly,
-                      onUndo: () {},
-                    );
-                  },
-                  child: const Text('نمایش توست'),
-                ),
-              );
-            },
+    testWidgets(
+      'Standard text scale sets 6 seconds duration and auto-dismisses after 6 seconds',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            Builder(
+              builder: (context) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 150.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      MovementUndoToast.show(
+                        context,
+                        message: MovementStrings.undoMovedTodayOnly,
+                        onUndo: () {},
+                      );
+                    },
+                    child: const Text('نمایش توست'),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('نمایش توست'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+        await tester.tap(find.text('نمایش توست'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
 
-      // Initial countdown must be 6 seconds: (۶)
-      expect(find.text('${MovementStrings.commonUndo} (۶)'), findsOneWidget);
+        // Initial countdown must be 6 seconds: (۶)
+        expect(find.text('${MovementStrings.commonUndo} (۶)'), findsOneWidget);
 
-      // Advance by 2 seconds -> countdown becomes (۴)
-      await tester.pump(const Duration(seconds: 2));
-      expect(find.text('${MovementStrings.commonUndo} (۴)'), findsOneWidget);
+        // Advance by 2 seconds -> countdown becomes (۴)
+        await tester.pump(const Duration(seconds: 2));
+        expect(find.text('${MovementStrings.commonUndo} (۴)'), findsOneWidget);
 
-      // Advance past 6 seconds and allow reverse animation to complete -> toast auto dismisses
-      await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
-      expect(find.text(MovementStrings.undoMovedTodayOnly), findsNothing);
-    });
+        // Advance past 6 seconds and allow reverse animation to complete -> toast auto dismisses
+        await tester.pump(const Duration(seconds: 4));
+        await tester.pumpAndSettle();
+        expect(find.text(MovementStrings.undoMovedTodayOnly), findsNothing);
+      },
+    );
 
-    testWidgets('High text scale (>1.2) sets 10 seconds duration and countdown starts at (۱۰)', (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          Builder(
-            builder: (context) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 150.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    MovementUndoToast.show(
-                      context,
-                      message: 'تغییر با مقیاس بزرگ',
-                      onUndo: () {},
-                    );
-                  },
-                  child: const Text('نمایش توست بزرگ'),
-                ),
-              );
-            },
+    testWidgets(
+      'High text scale (>1.2) sets 10 seconds duration and countdown starts at (۱۰)',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            Builder(
+              builder: (context) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 150.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      MovementUndoToast.show(
+                        context,
+                        message: 'تغییر با مقیاس بزرگ',
+                        onUndo: () {},
+                      );
+                    },
+                    child: const Text('نمایش توست بزرگ'),
+                  ),
+                );
+              },
+            ),
+            textScaler: const TextScaler.linear(1.3),
           ),
-          textScaler: const TextScaler.linear(1.3),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('نمایش توست بزرگ'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+        await tester.tap(find.text('نمایش توست بزرگ'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
 
-      // Initial countdown must be 10 seconds: (۱۰)
-      expect(find.text('${MovementStrings.commonUndo} (۱۰)'), findsOneWidget);
+        // Initial countdown must be 10 seconds: (۱۰)
+        expect(find.text('${MovementStrings.commonUndo} (۱۰)'), findsOneWidget);
 
-      // Advance by 3 seconds -> countdown becomes (۷)
-      await tester.pump(const Duration(seconds: 3));
-      expect(find.text('${MovementStrings.commonUndo} (۷)'), findsOneWidget);
+        // Advance by 3 seconds -> countdown becomes (۷)
+        await tester.pump(const Duration(seconds: 3));
+        expect(find.text('${MovementStrings.commonUndo} (۷)'), findsOneWidget);
 
-      // Still visible at 8 seconds
-      await tester.pump(const Duration(seconds: 5));
-      expect(find.text('${MovementStrings.commonUndo} (۲)'), findsOneWidget);
+        // Still visible at 8 seconds
+        await tester.pump(const Duration(seconds: 5));
+        expect(find.text('${MovementStrings.commonUndo} (۲)'), findsOneWidget);
 
-      // Dismisses after 10 seconds
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-      expect(find.text('تغییر با مقیاس بزرگ'), findsNothing);
-    });
+        // Dismisses after 10 seconds
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+        expect(find.text('تغییر با مقیاس بزرگ'), findsNothing);
+      },
+    );
 
-    testWidgets('Accessible navigation mode also uses 10 seconds duration', (tester) async {
+    testWidgets('Accessible navigation mode also uses 10 seconds duration', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           Builder(
@@ -153,7 +161,9 @@ void main() {
       expect(find.text('${MovementStrings.commonUndo} (۱۰)'), findsOneWidget);
     });
 
-    testWidgets('Showing a new toast replaces the previous toast immediately', (tester) async {
+    testWidgets('Showing a new toast replaces the previous toast immediately', (
+      tester,
+    ) async {
       bool firstFinalized = false;
 
       await tester.pumpWidget(

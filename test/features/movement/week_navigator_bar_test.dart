@@ -21,7 +21,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('WeekNavigatorBar Widget Tests', () {
-    testWidgets('Shows/hides "this week" chip based on isCurrentWeek', (tester) async {
+    testWidgets('Shows/hides "this week" chip based on isCurrentWeek', (
+      tester,
+    ) async {
       // 1. Current week: Chip is not shown
       await tester.pumpWidget(
         _wrap(
@@ -53,7 +55,9 @@ void main() {
       expect(find.text(MovementStrings.centerThisWeek), findsOneWidget);
     });
 
-    testWidgets('Tapping buttons triggers navigation callbacks', (tester) async {
+    testWidgets('Tapping buttons triggers navigation callbacks', (
+      tester,
+    ) async {
       bool prevTapped = false;
       bool nextTapped = false;
       bool currentTapped = false;
@@ -92,7 +96,9 @@ void main() {
       expect(currentTapped, isTrue);
     });
 
-    testWidgets('Swipe to right in RTL triggers onPreviousWeek', (tester) async {
+    testWidgets('Swipe to right in RTL triggers onPreviousWeek', (
+      tester,
+    ) async {
       bool prevSwiped = false;
       bool nextSwiped = false;
 

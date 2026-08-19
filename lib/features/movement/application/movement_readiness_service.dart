@@ -85,7 +85,9 @@ class MovementReadinessService {
   }
 
   /// ارزیابی آمادگی بر اساس چک‌این (بدون عدد از ۱۰۰ یا درصد ریکاوری)
-  ReadinessEvaluationResult computeReadinessResult(MovementReadinessCheckin checkin) {
+  ReadinessEvaluationResult computeReadinessResult(
+    MovementReadinessCheckin checkin,
+  ) {
     final sleep = checkin.sleep ?? 3;
     final energy = checkin.energy ?? 3;
     final soreness = checkin.soreness ?? 1;
@@ -133,7 +135,8 @@ class MovementReadinessService {
       if (!dismissedSuggestionIds.contains('sug_general_consistency')) {
         return const CoachSuggestion(
           id: 'sug_general_consistency',
-          text: 'ثبت منظم وضعیت آمادگی به تنظیم دقیق‌تر حجم و فشار تمرینات کمک می‌کند.',
+          text:
+              'ثبت منظم وضعیت آمادگی به تنظیم دقیق‌تر حجم و فشار تمرینات کمک می‌کند.',
           reason: 'پیوستگی تمرینی',
           reasonIcon: 'fitness_center',
           primaryActionLabel: 'ثبت آمادگی امروز',
@@ -150,7 +153,8 @@ class MovementReadinessService {
       if (!dismissedSuggestionIds.contains('sug_plan_b_recovery')) {
         return const CoachSuggestion(
           id: 'sug_plan_b_recovery',
-          text: 'پیشنهاد می‌شود امروز از نسخهٔ سبک‌تر جلسه (Plan B) با ۲۰٪ شدت کمتر استفاده کنید.',
+          text:
+              'پیشنهاد می‌شود امروز از نسخهٔ سبک‌تر جلسه (Plan B) با ۲۰٪ شدت کمتر استفاده کنید.',
           reason: 'ریکاوری هوشمند',
           reasonIcon: 'auto_mode',
           primaryActionLabel: 'انتخاب Plan B',
@@ -164,7 +168,8 @@ class MovementReadinessService {
       if (!dismissedSuggestionIds.contains('sug_high_energy_focus')) {
         return const CoachSuggestion(
           id: 'sug_high_energy_focus',
-          text: 'آمادگی بالای امروز فرصت مناسبی برای تمرکز روی تمپو و کیفیت اجرای حرکات است.',
+          text:
+              'آمادگی بالای امروز فرصت مناسبی برای تمرکز روی تمپو و کیفیت اجرای حرکات است.',
           reason: 'کیفیت حرکت',
           reasonIcon: 'verified',
           primaryActionLabel: 'شروع جلسه',

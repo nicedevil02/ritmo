@@ -70,10 +70,7 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                     width: MovementLayout.kMinTouchTarget,
                     height: MovementLayout.kMinTouchTarget,
                     child: Center(
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 24.0,
-                      ),
+                      child: Icon(Icons.chevron_right_rounded, size: 24.0),
                     ),
                   ),
                 ),
@@ -97,7 +94,9 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                         child: Text(
                           widget.rangeTitle,
                           key: ValueKey<String>(widget.rangeTitle),
-                          style: RitmoTextStyles.titleMedium(colors.textPrimary),
+                          style: RitmoTextStyles.titleMedium(
+                            colors.textPrimary,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
@@ -105,7 +104,8 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                       ),
                     ),
                   ),
-                  if (!widget.isCurrentWeek && widget.onCurrentWeekPressed != null) ...[
+                  if (!widget.isCurrentWeek &&
+                      widget.onCurrentWeekPressed != null) ...[
                     const SizedBox(width: RitmoSpacing.sm),
                     Semantics(
                       button: true,
@@ -116,7 +116,9 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: widget.onCurrentWeekPressed,
-                            borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.pill,
+                            ),
                             child: Container(
                               constraints: const BoxConstraints(
                                 minHeight: MovementLayout.kMinTouchTarget,
@@ -128,8 +130,9 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                               ),
                               decoration: BoxDecoration(
                                 color: colors.primaryContainer,
-                                borderRadius:
-                                    BorderRadius.circular(RitmoRadius.pill),
+                                borderRadius: BorderRadius.circular(
+                                  RitmoRadius.pill,
+                                ),
                                 border: Border.all(
                                   color: colors.border,
                                   width: RitmoElevation.borderWidthDark,
@@ -164,10 +167,7 @@ class _WeekNavigatorBarState extends State<WeekNavigatorBar> {
                     width: MovementLayout.kMinTouchTarget,
                     height: MovementLayout.kMinTouchTarget,
                     child: Center(
-                      child: Icon(
-                        Icons.chevron_left_rounded,
-                        size: 24.0,
-                      ),
+                      child: Icon(Icons.chevron_left_rounded, size: 24.0),
                     ),
                   ),
                 ),

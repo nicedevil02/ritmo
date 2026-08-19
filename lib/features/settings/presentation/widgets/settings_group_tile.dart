@@ -4,7 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
-/// ردیف نمایش گروه تنظیمات به سبک اختصاصی iOS 26
+/// ردیف نمایش گروه تنظیمات به سبک مدرن و اختصاصی iOS 26
 class SettingsGroupTile extends StatefulWidget {
   const SettingsGroupTile({
     super.key,
@@ -38,107 +38,124 @@ class _SettingsGroupTileState extends State<SettingsGroupTile> {
       button: true,
       label: '${widget.title}، ${widget.subtitle}',
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
           setState(() => _isPressed = false);
-          RitmoHaptics.tap();
+          RitmoHaptics.selection();
           widget.onTap();
         },
         onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _isPressed
-                ? colors.primary.withValues(alpha: 0.07)
-                : Colors.transparent,
-          ),
-          child: Row(
-            children: [
-              // ─── آیکن سه‌بعدی با هاله‌ی گرادیانی ───
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(13),
-                  gradient: LinearGradient(
-                    colors: widget.gradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.gradient.first.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.985 : 1.0,
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 13, 14, 13),
+            decoration: BoxDecoration(
+              color: _isPressed
+                  ? colors.primary.withValues(alpha: 0.06)
+                  : Colors.transparent,
+            ),
+            child: Row(
+              children: [
+                // ─── آیکن مدرن iOS 26 با های‌لایت و گرادیان سه‌بعدی ───
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(13),
+                    gradient: LinearGradient(
+                      colors: widget.gradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: widget.gradient.first.withValues(alpha: 0.32),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3.5),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      widget.icon,
+                      color: Colors.white,
+                      size: 21,
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  widget.icon,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
+                const SizedBox(width: 14),
 
-              // ─── متن عنوان و زیرعنوان ───
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
+                // ─── عنوان و توضیح مختصر ───
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: colors.textSecondary,
+                          height: 1.35,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                // ─── کپسول شمارنده تعداد تنظیمات ───
+                if (widget.count > 0)
+                  Container(
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: widget.gradient.first.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: widget.gradient.first.withValues(alpha: 0.18),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      '${toPersianDigits(widget.count)} مورد',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
+                        color: widget.gradient.first,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: colors.textSecondary,
-                        height: 1.35,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
+                  ),
+                const SizedBox(width: 6),
 
-              // ─── بج تعداد تنظیمات و شورون ───
-              Container(
-                padding: const EdgeInsetsDirectional.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: widget.gradient.first.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: widget.gradient.first.withValues(alpha: 0.16),
-                    width: 1,
-                  ),
+                // ─── نشانگر ناوبری iOS ───
+                Icon(
+                  CupertinoIcons.chevron_back, // جهت صحیح در زبان فارسی و RTL
+                  size: 15,
+                  color: colors.textTertiary.withValues(alpha: 0.7),
                 ),
-                child: Text(
-                  '${toPersianDigits(widget.count)} تنظیم',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: widget.gradient.first,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Icon(
-                CupertinoIcons.chevron_back, // RTL forward navigation chevron pointing left
-                size: 16,
-                color: colors.textTertiary,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

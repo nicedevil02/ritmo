@@ -32,43 +32,50 @@ void main() {
       createdAt: DateTime.now(),
     );
 
-    testWidgets('Renders active session banner with running elapsed time and resume CTA', (tester) async {
-      bool resumed = false;
+    testWidgets(
+      'Renders active session banner with running elapsed time and resume CTA',
+      (tester) async {
+        bool resumed = false;
 
-      final session = MovementLiveSession(
-        id: 'sess_1',
-        activityKindId: 'kind_running',
-        activityKind: testKind,
-        mode: 'standard',
-        status: MovementLiveSessionStatus.active,
-        startedAt: DateTime.now().subtract(const Duration(minutes: 12, seconds: 34)),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      await tester.pumpWidget(
-        _wrap(
-          LiveSessionBanner(
-            session: session,
-            onResume: () {
-              resumed = true;
-            },
-            onFinishAndSave: () {},
-            onDiscard: () {},
+        final session = MovementLiveSession(
+          id: 'sess_1',
+          activityKindId: 'kind_running',
+          activityKind: testKind,
+          mode: 'standard',
+          status: MovementLiveSessionStatus.active,
+          startedAt: DateTime.now().subtract(
+            const Duration(minutes: 12, seconds: 34),
           ),
-        ),
-      );
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      expect(find.text('دویدن استقامتی'), findsOneWidget);
-      expect(find.textContaining('در حال ضبط'), findsOneWidget);
-      expect(find.text(MovementStrings.bannerResumeSession), findsOneWidget);
+        await tester.pumpWidget(
+          _wrap(
+            LiveSessionBanner(
+              session: session,
+              onResume: () {
+                resumed = true;
+              },
+              onFinishAndSave: () {},
+              onDiscard: () {},
+            ),
+          ),
+        );
 
-      await tester.tap(find.text(MovementStrings.bannerResumeSession));
-      await tester.pumpAndSettle();
-      expect(resumed, isTrue);
-    });
+        expect(find.text('دویدن استقامتی'), findsOneWidget);
+        expect(find.textContaining('در حال ضبط'), findsOneWidget);
+        expect(find.text(MovementStrings.bannerResumeSession), findsOneWidget);
 
-    testWidgets('Paused session shows paused status and popup menu actions', (tester) async {
+        await tester.tap(find.text(MovementStrings.bannerResumeSession));
+        await tester.pumpAndSettle();
+        expect(resumed, isTrue);
+      },
+    );
+
+    testWidgets('Paused session shows paused status and popup menu actions', (
+      tester,
+    ) async {
       bool finishCalled = false;
       bool discardCalled = false;
 

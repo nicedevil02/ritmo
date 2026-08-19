@@ -23,16 +23,22 @@ abstract final class RitmoSprings {
       SpringDescription.withDampingRatio(mass: 1, stiffness: 800, ratio: 0.6);
 
   /// جابه‌جایی فضایی استاندارد — پیش‌فرض بیشتر حرکت‌های مکانی.
-  static final SpringDescription spatial =
-      SpringDescription.withDampingRatio(mass: 1, stiffness: 380, ratio: 0.8);
+  static final SpringDescription spatial = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 380,
+    ratio: 0.8,
+  );
 
   /// جابه‌جایی فضایی آهسته برای سطوح بزرگ (شیت‌ها و گذارهای صفحه).
   static final SpringDescription spatialSlow =
       SpringDescription.withDampingRatio(mass: 1, stiffness: 200, ratio: 0.8);
 
   /// تغییر افکت‌ها (رنگ، آلفا، بلور) — نرم و بدون overshoot.
-  static final SpringDescription effects =
-      SpringDescription.withDampingRatio(mass: 1, stiffness: 1600, ratio: 1.0);
+  static final SpringDescription effects = SpringDescription.withDampingRatio(
+    mass: 1,
+    stiffness: 1600,
+    ratio: 1.0,
+  );
 }
 
 /// هلپر مصرف فنر روی [AnimationController].
@@ -50,8 +56,6 @@ extension RitmoSpringAnimation on AnimationController {
       value = target;
       return TickerFuture.complete();
     }
-    return animateWith(
-      SpringSimulation(spring, value, target, velocity),
-    );
+    return animateWith(SpringSimulation(spring, value, target, velocity));
   }
 }

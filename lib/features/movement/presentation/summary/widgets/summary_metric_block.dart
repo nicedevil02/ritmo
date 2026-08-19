@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 
 /// بلوک نمایش متریک‌های واقعی جلسهٔ انجام‌شده بدون نمایش موارد فاقد داده
 class SummaryMetricBlock extends StatelessWidget {
-  const SummaryMetricBlock({
-    super.key,
-    required this.workoutLog,
-  });
+  const SummaryMetricBlock({super.key, required this.workoutLog});
 
   final MovementWorkoutLog workoutLog;
 
@@ -91,7 +88,9 @@ class SummaryMetricBlock extends StatelessWidget {
                 ),
                 child: Text(
                   MovementStrings.summaryEstimated,
-                  style: RitmoTextStyles.caption(colors.textTertiary).copyWith(fontSize: 10),
+                  style: RitmoTextStyles.caption(
+                    colors.textTertiary,
+                  ).copyWith(fontSize: 10),
                 ),
               ),
             ],

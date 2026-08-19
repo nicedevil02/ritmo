@@ -35,12 +35,14 @@ class SmartFillSheet extends StatefulWidget {
   });
 
   final List<MovementActivityKind> availableKinds;
-  final Future<void> Function(List<SmartFillSuggestionItem> selectedItems) onApplySuggestions;
+  final Future<void> Function(List<SmartFillSuggestionItem> selectedItems)
+  onApplySuggestions;
 
   static Future<bool?> show(
     BuildContext context, {
     required List<MovementActivityKind> availableKinds,
-    required Future<void> Function(List<SmartFillSuggestionItem> selectedItems) onApplySuggestions,
+    required Future<void> Function(List<SmartFillSuggestionItem> selectedItems)
+    onApplySuggestions,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -84,7 +86,8 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
 
   void _generateSuggestions() {
     final available = widget.availableKinds.where((k) {
-      if (_preferHomeWorkout && (k.family == 'hiking' || k.family == 'swimming')) {
+      if (_preferHomeWorkout &&
+          (k.family == 'hiking' || k.family == 'swimming')) {
         return false;
       }
       return true;
@@ -99,14 +102,24 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
     }
 
     final items = <SmartFillSuggestionItem>[];
-    final candidateDays = [0, 2, 4, 1, 3, 5, 6].where((d) => !_forbiddenDays.contains(d)).toList();
+    final candidateDays = [
+      0,
+      2,
+      4,
+      1,
+      3,
+      5,
+      6,
+    ].where((d) => !_forbiddenDays.contains(d)).toList();
 
     for (int i = 0; i < _targetDays && i < candidateDays.length; i++) {
       final day = candidateDays[i];
       final kind = available[i % available.length];
       final reason = i == 0
           ? MovementStrings.reasonInterest
-          : (i % 2 == 0 ? MovementStrings.reasonRecoveryGap : MovementStrings.reasonAvailableTime);
+          : (i % 2 == 0
+                ? MovementStrings.reasonRecoveryGap
+                : MovementStrings.reasonAvailableTime);
 
       items.add(
         SmartFillSuggestionItem(
@@ -147,7 +160,9 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -188,9 +203,9 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
               // گام ۱: ورودی‌ها
               Text(
                 'تعداد روزهای تمرین در هفته:',
-                style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: RitmoTextStyles.body(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: RitmoSpacing.sm),
               Wrap(
@@ -211,9 +226,9 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
 
               Text(
                 'مدت زمان در دسترس برای هر جلسه:',
-                style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: RitmoTextStyles.body(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: RitmoSpacing.sm),
               Wrap(
@@ -234,9 +249,9 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
 
               Text(
                 'روزهای ممنوع (عدم تمایل به ورزش):',
-                style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: RitmoTextStyles.body(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: RitmoSpacing.sm),
               Wrap(
@@ -308,13 +323,17 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.info_outline_rounded, color: colors.textSecondary, size: 36),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: colors.textSecondary,
+                        size: 36,
+                      ),
                       const SizedBox(height: RitmoSpacing.sm),
                       Text(
                         MovementStrings.smartFillNoSuggestion,
-                        style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: RitmoTextStyles.body(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.w600),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: RitmoSpacing.lg),
@@ -324,7 +343,9 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
                           backgroundColor: sportsColor,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text(MovementStrings.smartFillFixConstraints),
+                        child: const Text(
+                          MovementStrings.smartFillFixConstraints,
+                        ),
                       ),
                     ],
                   ),
@@ -358,12 +379,16 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
                             children: [
                               Text(
                                 '${sug.weekdayName} • ${sug.activityKind.nameFa}',
-                                style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                style: RitmoTextStyles.cardTitle(
+                                  colors.textPrimary,
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'ساعت ${toPersianDigits(sug.timeOfDay)} • ${toPersianDigits(sug.durationMin)} دقیقه',
-                                style: RitmoTextStyles.caption(colors.textSecondary),
+                                style: RitmoTextStyles.caption(
+                                  colors.textSecondary,
+                                ),
                               ),
                               const SizedBox(height: 6),
                               ReasonChip(reason: sug.reason),
@@ -383,10 +408,15 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
                       child: OutlinedButton(
                         onPressed: () => setState(() => _currentStep = 1),
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                          minimumSize: const Size(
+                            48,
+                            MovementLayout.kFieldMinHeight,
+                          ),
                           side: BorderSide(color: colors.border),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(RitmoRadius.field),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.field,
+                            ),
                           ),
                         ),
                         child: Text(
@@ -399,22 +429,31 @@ class _SmartFillSheetState extends State<SmartFillSheet> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: _suggestions.any((s) => s.isSelected) && !_isSaving
+                        onPressed:
+                            _suggestions.any((s) => s.isSelected) && !_isSaving
                             ? _submit
                             : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: sportsColor,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                          minimumSize: const Size(
+                            48,
+                            MovementLayout.kFieldMinHeight,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(RitmoRadius.field),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.field,
+                            ),
                           ),
                         ),
                         child: _isSaving
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(
                                 MovementStrings.smartFillApplySelected,

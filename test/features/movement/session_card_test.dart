@@ -16,9 +16,7 @@ Widget _wrap(Widget child) {
     ),
     home: Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: SingleChildScrollView(child: child),
-      ),
+      child: Scaffold(body: SingleChildScrollView(child: child)),
     ),
   );
 }
@@ -36,18 +34,48 @@ void main() {
       createdAt: DateTime.now(),
     );
 
-    testWidgets('Renders all 7 states of SessionCard with accurate status chips and accents', (tester) async {
-      const statuses = MovementOccurrenceStatus.values;
-      for (final s in statuses) {
+    testWidgets(
+      'Renders all 7 states of SessionCard with accurate status chips and accents',
+      (tester) async {
+        const statuses = MovementOccurrenceStatus.values;
+        for (final s in statuses) {
+          final occ = MovementOccurrence(
+            id: 'occ_${s.name}',
+            activityKindId: 'kind_cycling',
+            activityKind: testKind,
+            dateIso: '2026-08-16',
+            startTime: '18:00',
+            status: s,
+            goalType: 'duration',
+            goalValue: 40,
+            goalUnit: 'دقیقه',
+            origin: MovementOrigin.template,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+
+          await tester.pumpWidget(
+            _wrap(SessionCard(occurrence: occ, onTap: () {})),
+          );
+
+          expect(find.text('دوچرخه‌سواری'), findsOneWidget);
+          expect(find.byType(StatusChip), findsOneWidget);
+        }
+      },
+    );
+
+    testWidgets(
+      'Completed session card has reduced opacity, check icon, and height >= kSessionCardMinHeight',
+      (tester) async {
         final occ = MovementOccurrence(
-          id: 'occ_${s.name}',
+          id: 'occ_done',
           activityKindId: 'kind_cycling',
           activityKind: testKind,
           dateIso: '2026-08-16',
-          startTime: '18:00',
-          status: s,
+          startTime: '10:00',
+          status: MovementOccurrenceStatus.completed,
           goalType: 'duration',
-          goalValue: 40,
+          goalValue: 30,
           goalUnit: 'دقیقه',
           origin: MovementOrigin.template,
           createdAt: DateTime.now(),
@@ -55,51 +83,22 @@ void main() {
         );
 
         await tester.pumpWidget(
-          _wrap(
-            SessionCard(
-              occurrence: occ,
-              onTap: () {},
-            ),
-          ),
+          _wrap(SessionCard(occurrence: occ, onTap: () {})),
         );
 
-        expect(find.text('دوچرخه‌سواری'), findsOneWidget);
-        expect(find.byType(StatusChip), findsOneWidget);
-      }
-    });
+        expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
-    testWidgets('Completed session card has reduced opacity, check icon, and height >= kSessionCardMinHeight', (tester) async {
-      final occ = MovementOccurrence(
-        id: 'occ_done',
-        activityKindId: 'kind_cycling',
-        activityKind: testKind,
-        dateIso: '2026-08-16',
-        startTime: '10:00',
-        status: MovementOccurrenceStatus.completed,
-        goalType: 'duration',
-        goalValue: 30,
-        goalUnit: 'دقیقه',
-        origin: MovementOrigin.template,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+        final cardSize = tester.getSize(find.byType(SessionCard));
+        expect(
+          cardSize.height,
+          greaterThanOrEqualTo(MovementLayout.kSessionCardMinHeight),
+        );
+      },
+    );
 
-      await tester.pumpWidget(
-        _wrap(
-          SessionCard(
-            occurrence: occ,
-            onTap: () {},
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
-
-      final cardSize = tester.getSize(find.byType(SessionCard));
-      expect(cardSize.height, greaterThanOrEqualTo(MovementLayout.kSessionCardMinHeight));
-    });
-
-    testWidgets('Opening popup menu reveals all standard actions', (tester) async {
+    testWidgets('Opening popup menu reveals all standard actions', (
+      tester,
+    ) async {
       bool moveTapped = false;
 
       final occ = MovementOccurrence(

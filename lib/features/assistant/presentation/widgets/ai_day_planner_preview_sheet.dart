@@ -136,8 +136,14 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.9,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         decoration: BoxDecoration(
           color: colors.bg.withValues(alpha: 0.85),
           borderRadius: const BorderRadius.only(
@@ -220,6 +226,7 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 

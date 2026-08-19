@@ -13,10 +13,7 @@ import 'package:ritmo/features/movement/presentation/library/widgets/library_act
 
 /// صفحهٔ کتابخانهٔ جامع فعالیت‌های حرکتی (MovementLibraryScreen)
 class MovementLibraryScreen extends StatefulWidget {
-  const MovementLibraryScreen({
-    super.key,
-    this.occurrenceService,
-  });
+  const MovementLibraryScreen({super.key, this.occurrenceService});
 
   final MovementOccurrenceService? occurrenceService;
 
@@ -36,7 +33,8 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _occurrenceService = widget.occurrenceService ?? MovementOccurrenceService();
+    _occurrenceService =
+        widget.occurrenceService ?? MovementOccurrenceService();
     _searchController.addListener(_onSearchChanged);
     _loadActivityKinds();
   }
@@ -88,7 +86,10 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
   }
 
   Future<void> _toggleFavorite(MovementActivityKind kind) async {
-    await _occurrenceService.toggleFavoriteActivityKind(kind.id, !kind.isFavorite);
+    await _occurrenceService.toggleFavoriteActivityKind(
+      kind.id,
+      !kind.isFavorite,
+    );
     unawaited(_loadActivityKinds());
   }
 
@@ -115,8 +116,13 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
           builder: (ctx, setDialogState) {
             return AlertDialog(
               backgroundColor: colors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
-              title: Text(MovementStrings.libraryCreateCustom, style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
+              ),
+              title: Text(
+                MovementStrings.libraryCreateCustom,
+                style: RitmoTextStyles.cardTitle(colors.textPrimary),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -127,25 +133,49 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
                       decoration: InputDecoration(
                         labelText: 'نام فعالیت (فارسی)',
                         hintText: 'مثال: بدمینتون، کاراته...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
-                    Text('شاخص اصلی اندازه‌گیری:', style: RitmoTextStyles.label(colors.textPrimary)),
+                    Text(
+                      'شاخص اصلی اندازه‌گیری:',
+                      style: RitmoTextStyles.label(colors.textPrimary),
+                    ),
                     const SizedBox(height: RitmoSpacing.xs),
                     DropdownButtonFormField<String>(
                       initialValue: selectedMetric,
                       items: const [
-                        DropdownMenuItem(value: 'duration', child: Text('مدت زمان (دقیقه)')),
-                        DropdownMenuItem(value: 'distance', child: Text('مسافت (کیلومتر)')),
-                        DropdownMenuItem(value: 'count', child: Text('تعداد / شمارش')),
-                        DropdownMenuItem(value: 'free', child: Text('زمان آزاد')),
+                        DropdownMenuItem(
+                          value: 'duration',
+                          child: Text('مدت زمان (دقیقه)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'distance',
+                          child: Text('مسافت (کیلومتر)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'count',
+                          child: Text('تعداد / شمارش'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'free',
+                          child: Text('زمان آزاد'),
+                        ),
                       ],
                       onChanged: (val) {
-                        if (val != null) setDialogState(() => selectedMetric = val);
+                        if (val != null)
+                          setDialogState(() => selectedMetric = val);
                       },
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -154,7 +184,10 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text('انصراف', style: RitmoTextStyles.caption(colors.textSecondary)),
+                  child: Text(
+                    'انصراف',
+                    style: RitmoTextStyles.caption(colors.textSecondary),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -188,14 +221,17 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
 
   List<MovementActivityKind> _getFilteredKinds() {
     return _allKinds.where((kind) {
-      if (_selectedFamilies.isNotEmpty && !_selectedFamilies.contains(kind.family)) {
+      if (_selectedFamilies.isNotEmpty &&
+          !_selectedFamilies.contains(kind.family)) {
         return false;
       }
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
         final matchFa = kind.nameFa.toLowerCase().contains(q);
         final matchEn = kind.nameEn?.toLowerCase().contains(q) ?? false;
-        final matchAliases = kind.aliases.any((a) => a.toLowerCase().contains(q));
+        final matchAliases = kind.aliases.any(
+          (a) => a.toLowerCase().contains(q),
+        );
         if (!matchFa && !matchEn && !matchAliases) return false;
       }
       return true;
@@ -246,10 +282,16 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
                       decoration: InputDecoration(
                         hintText: MovementStrings.librarySearchPlaceholder,
                         hintStyle: RitmoTextStyles.body(colors.textTertiary),
-                        prefixIcon: Icon(Icons.search_rounded, color: colors.textTertiary),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: colors.textTertiary,
+                        ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.close_rounded, color: colors.textTertiary),
+                                icon: Icon(
+                                  Icons.close_rounded,
+                                  color: colors.textTertiary,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
@@ -283,15 +325,22 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
                       decoration: BoxDecoration(
                         color: sportsColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(RitmoRadius.card),
-                        border: Border.all(color: sportsColor.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: sportsColor.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.add_circle_outline_rounded, color: sportsColor),
+                          Icon(
+                            Icons.add_circle_outline_rounded,
+                            color: sportsColor,
+                          ),
                           const SizedBox(width: RitmoSpacing.sm),
                           Text(
                             MovementStrings.libraryCreateCustom,
-                            style: RitmoTextStyles.label(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                            style: RitmoTextStyles.label(
+                              sportsColor,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -306,16 +355,24 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
                       alignment: Alignment.center,
                       child: Column(
                         children: [
-                          Icon(Icons.search_off_rounded, size: 48, color: colors.textTertiary),
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 48,
+                            color: colors.textTertiary,
+                          ),
                           const SizedBox(height: RitmoSpacing.md),
                           Text(
                             MovementStrings.libraryNoResult,
-                            style: RitmoTextStyles.cardTitle(colors.textSecondary),
+                            style: RitmoTextStyles.cardTitle(
+                              colors.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           TextButton(
                             onPressed: _clearFilters,
-                            child: const Text(MovementStrings.libraryClearFilters),
+                            child: const Text(
+                              MovementStrings.libraryClearFilters,
+                            ),
                           ),
                         ],
                       ),
@@ -335,7 +392,9 @@ class _MovementLibraryScreenState extends State<MovementLibraryScreen> {
                       const SizedBox(height: RitmoSpacing.md),
                       Text(
                         MovementStrings.libraryCustomActivities,
-                        style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                        style: RitmoTextStyles.sectionHeadline(
+                          colors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: RitmoSpacing.sm),
                       ...customKinds.map((kind) {

@@ -54,14 +54,16 @@ class CurrentExerciseCard extends StatelessWidget {
                   children: [
                     Text(
                       exercise.nameFa,
-                      style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                      style: RitmoTextStyles.sectionHeadline(
+                        colors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${exercise.muscleGroup} • ${toPersianDigits(exercise.sets)} ست × ${toPersianDigits(exercise.repsDisplay)} تکرار',
-                      style: RitmoTextStyles.caption(sportsColor).copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: RitmoTextStyles.caption(
+                        sportsColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

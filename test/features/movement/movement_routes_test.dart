@@ -14,8 +14,14 @@ void main() {
       expect(MovementRoutes.liveSession, equals('movement.session'));
       expect(MovementRoutes.summary, equals('movement.summary'));
       expect(MovementRoutes.strengthHub, equals('movement.strength'));
-      expect(MovementRoutes.strengthOnboarding, equals('movement.strength.onboarding'));
-      expect(MovementRoutes.strengthPreview, equals('movement.strength.preview'));
+      expect(
+        MovementRoutes.strengthOnboarding,
+        equals('movement.strength.onboarding'),
+      );
+      expect(
+        MovementRoutes.strengthPreview,
+        equals('movement.strength.preview'),
+      );
       expect(MovementRoutes.progress, equals('movement.progress'));
       expect(MovementRoutes.library, equals('movement.library'));
       expect(MovementRoutes.settings, equals('movement.settings'));

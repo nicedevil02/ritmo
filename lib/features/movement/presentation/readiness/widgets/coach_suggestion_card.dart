@@ -43,9 +43,9 @@ class CoachSuggestionCard extends StatelessWidget {
               const SizedBox(width: RitmoSpacing.xs),
               Text(
                 MovementStrings.coachSuggestionTitle,
-                style: RitmoTextStyles.caption(sportsColor).copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: RitmoTextStyles.caption(
+                  sportsColor,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               ReasonChip(
@@ -82,9 +82,9 @@ class CoachSuggestionCard extends StatelessWidget {
                   ),
                   child: Text(
                     suggestion.primaryActionLabel,
-                    style: RitmoTextStyles.caption(Colors.white).copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: RitmoTextStyles.caption(
+                      Colors.white,
+                    ).copyWith(fontWeight: FontWeight.bold),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

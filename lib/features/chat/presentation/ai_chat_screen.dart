@@ -393,41 +393,48 @@ class _AiChatScreenState extends State<AiChatScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            return RitmoTheme.glassCardLight(
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.75,
-                padding: const EdgeInsets.only(top: 8),
-                child: Column(
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: colors.textSecondary.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(2.5),
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: RitmoTheme.glassCardLight(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+                  ),
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: colors.textSecondary.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2.5),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _briefing == null
-                          ? Center(
-                              child: Text(
-                                'در حال بارگذاری تحلیل امروز...',
-                                style: TextStyle(color: colors.textSecondary),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _briefing == null
+                            ? Center(
+                                child: Text(
+                                  'در حال بارگذاری تحلیل امروز...',
+                                  style: TextStyle(color: colors.textSecondary),
+                                ),
+                              )
+                            : AssistantBriefingSection(
+                                briefing: _briefing!,
+                                nextActions: _nextActions,
+                                onActionComplete: () async {
+                                  await _loadBriefingData();
+                                  setModalState(() {});
+                                },
                               ),
-                            )
-                          : AssistantBriefingSection(
-                              briefing: _briefing!,
-                              nextActions: _nextActions,
-                              onActionComplete: () async {
-                                await _loadBriefingData();
-                                setModalState(() {});
-                              },
-                            ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -462,92 +469,99 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 
                 return Directionality(
                   textDirection: TextDirection.rtl,
-                  child: RitmoTheme.glassCardLight(
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'دفتر ممیزی و تغییرات دستیار',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
-                              ),
-                              IconButton(
-                                icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ],
-                          ),
-                          const Divider(),
-                          if (logs.isEmpty)
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  'هیچ تغییری توسط دستیار ثبت نشده است.',
-                                  style: TextStyle(color: colors.textSecondary),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.viewInsetsOf(context).bottom,
+                    ),
+                    child: RitmoTheme.glassCardLight(
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'دفتر ممیزی و تغییرات دستیار',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
+                                ),
+                                IconButton(
+                                  icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ],
+                            ),
+                            const Divider(),
+                            if (logs.isEmpty)
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    'هیچ تغییری توسط دستیار ثبت نشده است.',
+                                    style: TextStyle(color: colors.textSecondary),
+                                  ),
+                                ),
+                              )
+                            else
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: logs.length,
+                                  itemBuilder: (context, index) {
+                                    final log = logs[index];
+                                    final type = log['actionType']?.toString() ?? '';
+                                    final key = log['targetKey']?.toString() ?? '';
+                                    final oldValue = log['oldValue']?.toString() ?? '';
+                                    final newValue = log['newValue']?.toString() ?? '';
+                                    final appliedAt = log['appliedAt'] as int;
+                                    
+                                    final date = DateTime.fromMillisecondsSinceEpoch(appliedAt);
+                                    final timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+                                    
+                                    var actionLabel = type;
+                                    if (type == 'updateSetting') actionLabel = 'تغییر تنظیمات';
+                                    if (type == 'completeRoutine') actionLabel = 'انجام روتین';
+                                    if (type == 'skipRoutine') actionLabel = 'تعویق روتین';
+                                    if (type == 'editRoutine') actionLabel = 'ویرایش روتین';
+                                    if (type == 'deleteRoutine') actionLabel = 'حذف روتین';
+                                    if (type == 'editGoal') actionLabel = 'ویرایش هدف';
+                                    if (type == 'completeGoalStep') actionLabel = 'تکمیل گام هدف';
+                                    
+                                    return Card(
+                                      color: colors.card,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      child: ListTile(
+                                        title: Text(
+                                          '$actionLabel - $key',
+                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                                        ),
+                                        subtitle: Text(
+                                          type == 'updateSetting'
+                                              ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue\nساعت: $timeStr'
+                                              : 'تغییر: $newValue\nساعت: $timeStr',
+                                          style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                                        ),
+                                        trailing: type == 'updateSetting' && oldValue.isNotEmpty && oldValue != 'null'
+                                            ? TextButton(
+                                                onPressed: () async {
+                                                  final success = await applySettingChange(key, oldValue);
+                                                  if (success) {
+                                                    setModalState(() {});
+                                                  }
+                                                },
+                                                child: const Text('بازگردانی', style: TextStyle(color: Color(0xff06B6D4))),
+                                              )
+                                            : null,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            )
-                          else
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: logs.length,
-                                itemBuilder: (context, index) {
-                                  final log = logs[index];
-                                  final type = log['actionType']?.toString() ?? '';
-                                  final key = log['targetKey']?.toString() ?? '';
-                                  final oldValue = log['oldValue']?.toString() ?? '';
-                                  final newValue = log['newValue']?.toString() ?? '';
-                                  final appliedAt = log['appliedAt'] as int;
-                                  
-                                  final date = DateTime.fromMillisecondsSinceEpoch(appliedAt);
-                                  final timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                                  
-                                  var actionLabel = type;
-                                  if (type == 'updateSetting') actionLabel = 'تغییر تنظیمات';
-                                  if (type == 'completeRoutine') actionLabel = 'انجام روتین';
-                                  if (type == 'skipRoutine') actionLabel = 'تعویق روتین';
-                                  if (type == 'editRoutine') actionLabel = 'ویرایش روتین';
-                                  if (type == 'deleteRoutine') actionLabel = 'حذف روتین';
-                                  if (type == 'editGoal') actionLabel = 'ویرایش هدف';
-                                  if (type == 'completeGoalStep') actionLabel = 'تکمیل گام هدف';
-                                  
-                                  return Card(
-                                    color: colors.card,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    margin: const EdgeInsets.symmetric(vertical: 6),
-                                    child: ListTile(
-                                      title: Text(
-                                        '$actionLabel - $key',
-                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                                      ),
-                                      subtitle: Text(
-                                        type == 'updateSetting'
-                                            ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue\nساعت: $timeStr'
-                                            : 'تغییر: $newValue\nساعت: $timeStr',
-                                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
-                                      ),
-                                      trailing: type == 'updateSetting' && oldValue.isNotEmpty && oldValue != 'null'
-                                          ? TextButton(
-                                              onPressed: () async {
-                                                final success = await applySettingChange(key, oldValue);
-                                                if (success) {
-                                                  setModalState(() {});
-                                                }
-                                              },
-                                              child: const Text('بازگردانی', style: TextStyle(color: Color(0xff06B6D4))),
-                                            )
-                                          : null,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

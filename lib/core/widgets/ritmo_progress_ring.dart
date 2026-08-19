@@ -33,7 +33,9 @@ class RitmoProgressRing extends StatelessWidget {
       height: size,
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0.0, end: value ?? 0.0),
-        duration: disableAnim ? Duration.zero : const Duration(milliseconds: 600),
+        duration: disableAnim
+            ? Duration.zero
+            : const Duration(milliseconds: 600),
         curve: Curves.easeOutCubic,
         builder: (context, animValue, _) {
           return CustomPaint(

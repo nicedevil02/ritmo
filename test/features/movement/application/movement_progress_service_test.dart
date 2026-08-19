@@ -34,40 +34,46 @@ void main() {
       }
     });
 
-    test('getKpiData calculates correct minutes, sessions and adherence', () async {
-      if (!dbInitialized || db == null) return;
-      final now = DateTime(2026, 8, 16);
+    test(
+      'getKpiData calculates correct minutes, sessions and adherence',
+      () async {
+        if (!dbInitialized || db == null) return;
+        final now = DateTime(2026, 8, 16);
 
-      // Insert workout logs
-      await db!.insert(MovementTables.tableWorkoutLogs, {
-        'id': 'log_1',
-        'activityKindId': 'kind_walking',
-        'dateIso': '2026-08-15',
-        'durationSec': 1800, // 30 min
-        'metricJson': jsonEncode({'distanceKm': 2.5}),
-        'source': 'live',
-        'createdAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
-      });
+        // Insert workout logs
+        await db!.insert(MovementTables.tableWorkoutLogs, {
+          'id': 'log_1',
+          'activityKindId': 'kind_walking',
+          'dateIso': '2026-08-15',
+          'durationSec': 1800, // 30 min
+          'metricJson': jsonEncode({'distanceKm': 2.5}),
+          'source': 'live',
+          'createdAt': now.toIso8601String(),
+          'updatedAt': now.toIso8601String(),
+        });
 
-      await db!.insert(MovementTables.tableWorkoutLogs, {
-        'id': 'log_2',
-        'activityKindId': 'kind_running',
-        'dateIso': '2026-08-16',
-        'durationSec': 2400, // 40 min
-        'metricJson': jsonEncode({'distanceKm': 5.0}),
-        'source': 'live',
-        'createdAt': now.toIso8601String(),
-        'updatedAt': now.toIso8601String(),
-      });
+        await db!.insert(MovementTables.tableWorkoutLogs, {
+          'id': 'log_2',
+          'activityKindId': 'kind_running',
+          'dateIso': '2026-08-16',
+          'durationSec': 2400, // 40 min
+          'metricJson': jsonEncode({'distanceKm': 5.0}),
+          'source': 'live',
+          'createdAt': now.toIso8601String(),
+          'updatedAt': now.toIso8601String(),
+        });
 
-      final kpi = await service.getKpiData(range: MovementProgressRange.week, now: now);
+        final kpi = await service.getKpiData(
+          range: MovementProgressRange.week,
+          now: now,
+        );
 
-      expect(kpi.sessionCount, equals(2));
-      expect(kpi.activeMinutes, equals(70));
-      expect(kpi.activeDaysCount, equals(2));
-      expect(kpi.totalDistanceKm, equals(7.5));
-    });
+        expect(kpi.sessionCount, equals(2));
+        expect(kpi.activeMinutes, equals(70));
+        expect(kpi.activeDaysCount, equals(2));
+        expect(kpi.totalDistanceKm, equals(7.5));
+      },
+    );
 
     test('getDistributionData computes percentage and count', () async {
       if (!dbInitialized || db == null) return;

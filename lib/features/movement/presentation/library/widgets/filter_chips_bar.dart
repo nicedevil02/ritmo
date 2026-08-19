@@ -46,7 +46,9 @@ class FilterChipsBar extends StatelessWidget {
               children: [
                 Text(
                   '${toPersianDigits(activeCount)} فیلتر فعال',
-                  style: RitmoTextStyles.caption(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                  style: RitmoTextStyles.caption(
+                    sportsColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: onClearAll,
@@ -77,11 +79,14 @@ class FilterChipsBar extends StatelessWidget {
                   onSelected: (_) => onFamilyToggled(entry.key),
                   selectedColor: sportsColor.withValues(alpha: 0.2),
                   checkmarkColor: sportsColor,
-                  labelStyle: RitmoTextStyles.caption(
-                    isSelected ? sportsColor : colors.textPrimary,
-                  ).copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+                  labelStyle:
+                      RitmoTextStyles.caption(
+                        isSelected ? sportsColor : colors.textPrimary,
+                      ).copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                   backgroundColor: colors.surfaceSunken,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(RitmoRadius.pill),

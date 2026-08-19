@@ -71,7 +71,10 @@ class StepSchedule extends StatelessWidget {
         const SizedBox(height: RitmoSpacing.lg),
 
         // ۱. تعداد جلسات در هفته
-        Text('تعداد روزهای تمرین در هفته:', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        Text(
+          'تعداد روزهای تمرین در هفته:',
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
         const SizedBox(height: RitmoSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -84,7 +87,9 @@ class StepSchedule extends StatelessWidget {
                   label: Center(child: Text('${toPersianDigits(d)} روز')),
                   selected: isSel,
                   selectedColor: sportsColor.withValues(alpha: 0.2),
-                  labelStyle: RitmoTextStyles.label(isSel ? sportsColor : colors.textPrimary),
+                  labelStyle: RitmoTextStyles.label(
+                    isSel ? sportsColor : colors.textPrimary,
+                  ),
                   onSelected: (_) => onDaysPerWeekChanged(d),
                 ),
               ),
@@ -95,9 +100,15 @@ class StepSchedule extends StatelessWidget {
         const SizedBox(height: RitmoSpacing.lg),
 
         // ۲. انتخاب روزهای هفته
-        Text('روزهای ترجیحی برای تمرین:', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        Text(
+          'روزهای ترجیحی برای تمرین:',
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
         const SizedBox(height: RitmoSpacing.xs),
-        Text('حداقل $daysPerWeek روز را انتخاب کنید.', style: RitmoTextStyles.caption(colors.textSecondary)),
+        Text(
+          'حداقل $daysPerWeek روز را انتخاب کنید.',
+          style: RitmoTextStyles.caption(colors.textSecondary),
+        ),
         const SizedBox(height: RitmoSpacing.sm),
         Wrap(
           spacing: RitmoSpacing.sm,
@@ -109,7 +120,9 @@ class StepSchedule extends StatelessWidget {
               selected: isSel,
               selectedColor: sportsColor.withValues(alpha: 0.2),
               checkmarkColor: sportsColor,
-              labelStyle: RitmoTextStyles.label(isSel ? sportsColor : colors.textSecondary),
+              labelStyle: RitmoTextStyles.label(
+                isSel ? sportsColor : colors.textSecondary,
+              ),
               onSelected: (_) => _toggleWeekday(w['day'] as int),
             );
           }).toList(),
@@ -118,7 +131,10 @@ class StepSchedule extends StatelessWidget {
         const SizedBox(height: RitmoSpacing.lg),
 
         // ۳. مدت هر جلسه
-        Text('مدت زمان هر جلسه:', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        Text(
+          'مدت زمان هر جلسه:',
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
         const SizedBox(height: RitmoSpacing.sm),
         Row(
           children: _durations.map((dur) {
@@ -130,7 +146,9 @@ class StepSchedule extends StatelessWidget {
                   label: Center(child: Text('${toPersianDigits(dur)} دقیقه')),
                   selected: isSel,
                   selectedColor: sportsColor.withValues(alpha: 0.2),
-                  labelStyle: RitmoTextStyles.label(isSel ? sportsColor : colors.textPrimary),
+                  labelStyle: RitmoTextStyles.label(
+                    isSel ? sportsColor : colors.textPrimary,
+                  ),
                   onSelected: (_) => onSessionMinutesChanged(dur),
                 ),
               ),

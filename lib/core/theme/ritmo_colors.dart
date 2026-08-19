@@ -101,12 +101,16 @@ class RitmoColors extends ThemeExtension<RitmoColors> {
 
   static Color glassSurface(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04);
+    return isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
   }
 
   static Color staticGlassBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.10);
+    return isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.10);
   }
 
   @override
@@ -178,7 +182,11 @@ class RitmoColors extends ThemeExtension<RitmoColors> {
       surfaceSunken: Color.lerp(surfaceSunken, other.surfaceSunken, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
       primaryPressed: Color.lerp(primaryPressed, other.primaryPressed, t)!,
-      primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
+      primaryContainer: Color.lerp(
+        primaryContainer,
+        other.primaryContainer,
+        t,
+      )!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,
       accent: Color.lerp(accent, other.accent, t)!,
       accentContainer: Color.lerp(accentContainer, other.accentContainer, t)!,

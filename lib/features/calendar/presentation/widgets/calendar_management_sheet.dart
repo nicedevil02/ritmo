@@ -145,10 +145,14 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         decoration: BoxDecoration(
           color: colors.sheetBackground,
           borderRadius: const BorderRadius.vertical(
@@ -348,7 +352,7 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
             ],
           ),
         ),
-      ),
+      ),),
     );
   }
 

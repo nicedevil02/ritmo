@@ -12,7 +12,10 @@ class RitmoListRow extends StatelessWidget {
     this.leading,
     this.trailing,
     this.onTap,
-    this.padding = const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: RitmoSpacing.lg,
+      vertical: RitmoSpacing.md,
+    ),
     this.showDivider = true,
   });
 
@@ -69,7 +72,11 @@ class RitmoListRow extends StatelessWidget {
             trailing!,
           ] else if (onTap != null) ...[
             const SizedBox(width: RitmoSpacing.md),
-            Icon(Icons.chevron_left_rounded, color: colors.textTertiary, size: 20),
+            Icon(
+              Icons.chevron_left_rounded,
+              color: colors.textTertiary,
+              size: 20,
+            ),
           ],
         ],
       ),

@@ -365,7 +365,9 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
     return RitmoTheme.glassCardLight(
       borderRadius: 30,
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
         padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
         child: Column(
           children: [

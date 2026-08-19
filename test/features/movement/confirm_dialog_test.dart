@@ -21,7 +21,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('MovementConfirmDialog Widget Tests', () {
-    testWidgets('Renders title, message, and all items in impactList', (tester) async {
+    testWidgets('Renders title, message, and all items in impactList', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           Builder(
@@ -52,8 +54,14 @@ void main() {
       await tester.tap(find.text('نمایش دیالوگ'));
       await tester.pumpAndSettle();
 
-      expect(find.text(MovementStrings.settingsDeleteMovementData), findsOneWidget);
-      expect(find.text('آیا از حذف داده‌های بخش حرکت اطمینان دارید؟'), findsOneWidget);
+      expect(
+        find.text(MovementStrings.settingsDeleteMovementData),
+        findsOneWidget,
+      );
+      expect(
+        find.text('آیا از حذف داده‌های بخش حرکت اطمینان دارید؟'),
+        findsOneWidget,
+      );
       expect(find.text('۸ جلسهٔ آینده حذف می‌شود'), findsOneWidget);
       expect(find.text('تاریخچهٔ تمرینات پاک خواهد شد'), findsOneWidget);
       expect(find.text(MovementStrings.commonDelete), findsOneWidget);
@@ -63,7 +71,10 @@ void main() {
       await tester.tap(find.text(MovementStrings.commonCancel));
       await tester.pumpAndSettle();
 
-      expect(find.text(MovementStrings.settingsDeleteMovementData), findsNothing);
+      expect(
+        find.text(MovementStrings.settingsDeleteMovementData),
+        findsNothing,
+      );
     });
 
     testWidgets('Confirm button returns true on dialog pop', (tester) async {

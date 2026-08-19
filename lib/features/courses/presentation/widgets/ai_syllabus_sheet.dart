@@ -164,8 +164,10 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
         borderRadius: 28,
         child: Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.8,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

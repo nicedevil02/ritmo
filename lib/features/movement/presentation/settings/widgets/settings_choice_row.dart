@@ -25,7 +25,9 @@ class SettingsChoiceRow<T> extends StatelessWidget {
     final sportsColor = context.modules.sports;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: MovementLayout.kFieldMinHeight),
+      constraints: const BoxConstraints(
+        minHeight: MovementLayout.kFieldMinHeight,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
         vertical: RitmoSpacing.sm,
@@ -36,10 +38,7 @@ class SettingsChoiceRow<T> extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
+                Text(title, style: RitmoTextStyles.body(colors.textPrimary)),
                 if (explanation != null) ...[
                   const SizedBox(height: 2),
                   Text(
@@ -65,11 +64,14 @@ class SettingsChoiceRow<T> extends StatelessWidget {
                     if (sel) onChanged(entry.key);
                   },
                   selectedColor: sportsColor.withValues(alpha: 0.2),
-                  labelStyle: RitmoTextStyles.caption(
-                    isSelected ? sportsColor : colors.textSecondary,
-                  ).copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+                  labelStyle:
+                      RitmoTextStyles.caption(
+                        isSelected ? sportsColor : colors.textSecondary,
+                      ).copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(RitmoRadius.pill),
                     side: BorderSide(

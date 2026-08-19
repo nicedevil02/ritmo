@@ -130,7 +130,10 @@ class EmptyStateBlock extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),
-                    minimumSize: const Size(160, MovementLayout.kPrimaryButtonHeight),
+                    minimumSize: const Size(
+                      160,
+                      MovementLayout.kPrimaryButtonHeight,
+                    ),
                   ),
                   child: Text(
                     effectiveLabel,
@@ -159,7 +162,10 @@ class EmptyStateBlock extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),
-                    minimumSize: const Size(160, MovementLayout.kSecondaryButtonHeight),
+                    minimumSize: const Size(
+                      160,
+                      MovementLayout.kSecondaryButtonHeight,
+                    ),
                   ),
                   child: Text(
                     secondaryActionLabel!,

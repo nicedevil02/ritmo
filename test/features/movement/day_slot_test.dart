@@ -28,36 +28,45 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('DaySlot & Semantics Exact Label Tests (Point 3)', () {
-    testWidgets('Renders exact full semantics template matching specification: "شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده"', (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          DaySlot(
-            dayName: 'شنبه',
-            dayNumber: 25,
-            monthName: 'مرداد',
-            state: MovementDaySlotState.selected,
-            statuses: const [
-              MovementDayStatus.completed,
-              MovementDayStatus.planned,
-            ],
-            sessionCount: 2,
-            completedCount: 1,
-            onTap: () {},
+    testWidgets(
+      'Renders exact full semantics template matching specification: "شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده"',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            DaySlot(
+              dayName: 'شنبه',
+              dayNumber: 25,
+              monthName: 'مرداد',
+              state: MovementDaySlotState.selected,
+              statuses: const [
+                MovementDayStatus.completed,
+                MovementDayStatus.planned,
+              ],
+              sessionCount: 2,
+              completedCount: 1,
+              onTap: () {},
+            ),
           ),
-        ),
-      );
+        );
 
-      final semanticsNode = tester.getSemantics(find.byType(DaySlot));
-      const expectedLabel = 'شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده';
+        final semanticsNode = tester.getSemantics(find.byType(DaySlot));
+        const expectedLabel =
+            'شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده';
 
-      // 1. Exact string match on Semantics label
-      expect(semanticsNode.label, equals(expectedLabel));
+        // 1. Exact string match on Semantics label
+        expect(semanticsNode.label, equals(expectedLabel));
 
-      // 2. Semantics selected state flag
-      expect(semanticsNode.getSemanticsData().flagsCollection.isSelected.name, equals('isTrue'));
-    });
+        // 2. Semantics selected state flag
+        expect(
+          semanticsNode.getSemanticsData().flagsCollection.isSelected.name,
+          equals('isTrue'),
+        );
+      },
+    );
 
-    testWidgets('Today and Selected semantics formats with "امروز، ..."', (tester) async {
+    testWidgets('Today and Selected semantics formats with "امروز، ..."', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           DaySlot(
@@ -77,13 +86,19 @@ void main() {
       );
 
       final semanticsNode = tester.getSemantics(find.byType(DaySlot));
-      const expectedLabel = 'امروز، یکشنبه ۲۶ مرداد، ۲ جلسه، ۲ انجام شده، انتخاب‌شده';
+      const expectedLabel =
+          'امروز، یکشنبه ۲۶ مرداد، ۲ جلسه، ۲ انجام شده، انتخاب‌شده';
 
       expect(semanticsNode.label, equals(expectedLabel));
-      expect(semanticsNode.getSemanticsData().flagsCollection.isSelected.name, equals('isTrue'));
+      expect(
+        semanticsNode.getSemanticsData().flagsCollection.isSelected.name,
+        equals('isTrue'),
+      );
     });
 
-    testWidgets('Zero sessions semantics formats with "، بدون جلسه"', (tester) async {
+    testWidgets('Zero sessions semantics formats with "، بدون جلسه"', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrap(
           DaySlot(
@@ -103,7 +118,10 @@ void main() {
       const expectedLabel = 'دوشنبه ۲۷ مرداد، بدون جلسه';
 
       expect(semanticsNode.label, equals(expectedLabel));
-      expect(semanticsNode.getSemanticsData().flagsCollection.isSelected.name, equals('isFalse'));
+      expect(
+        semanticsNode.getSemanticsData().flagsCollection.isSelected.name,
+        equals('isFalse'),
+      );
     });
 
     test('MovementSemantics.dayLabel direct unit verification', () {
@@ -116,7 +134,10 @@ void main() {
         isSelected: true,
         isToday: false,
       );
-      expect(label1, equals('شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده'));
+      expect(
+        label1,
+        equals('شنبه ۲۵ مرداد، ۲ جلسه، یکی انجام شده، انتخاب‌شده'),
+      );
 
       final label2 = MovementSemantics.dayLabel(
         dayName: 'جمعه',

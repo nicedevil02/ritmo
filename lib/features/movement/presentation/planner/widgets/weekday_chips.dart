@@ -50,7 +50,9 @@ class _WeekdayChipsState extends State<WeekdayChips> {
     }
 
     if (_selectedDaysWithTime.isEmpty) {
-      final todayWeekday = MovementPlanningService.getRitmoWeekday(DateTime.now());
+      final todayWeekday = MovementPlanningService.getRitmoWeekday(
+        DateTime.now(),
+      );
       _selectedDaysWithTime[todayWeekday] = _sharedTime;
     }
   }
@@ -96,10 +98,7 @@ class _WeekdayChipsState extends State<WeekdayChips> {
       minute: int.tryParse(parts.last) ?? 30,
     );
 
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
 
     if (picked != null) {
       final formatted =
@@ -157,7 +156,9 @@ class _WeekdayChipsState extends State<WeekdayChips> {
                     height: 48, // Touch target >= 48
                     decoration: BoxDecoration(
                       color: isSelected ? sportsColor : colors.surfaceSunken,
-                      borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
+                      borderRadius: BorderRadius.circular(
+                        RitmoRadius.iconButton,
+                      ),
                       border: Border.all(
                         color: isSelected ? sportsColor : colors.border,
                         width: 1.5,
@@ -186,7 +187,9 @@ class _WeekdayChipsState extends State<WeekdayChips> {
               ),
               const Spacer(),
               Text(
-                _isSharedTime ? 'ساعت یکسان برای همه روزها' : 'ساعت مجزا برای هر روز',
+                _isSharedTime
+                    ? 'ساعت یکسان برای همه روزها'
+                    : 'ساعت مجزا برای هر روز',
                 style: RitmoTextStyles.caption(colors.textSecondary),
               ),
               Switch(
@@ -224,7 +227,10 @@ class _WeekdayChipsState extends State<WeekdayChips> {
                       style: RitmoTextStyles.body(colors.textPrimary),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: sportsColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(RitmoRadius.badge),

@@ -13,7 +13,8 @@ class MovementPlanningService {
   MovementPlanningService({this.db});
   final Database? db;
 
-  Future<Database> get _database async => db ?? await DatabaseHelper.instance.database;
+  Future<Database> get _database async =>
+      db ?? await DatabaseHelper.instance.database;
 
   /// تبدیل تاریخ میلادی به روز هفتهٔ ریتمو (۰=شنبه، ۱=یکشنبه، ...، ۶=جمعه)
   static int getRitmoWeekday(DateTime date) {
@@ -41,20 +42,17 @@ class MovementPlanningService {
 
     await db.transaction((txn) async {
       // ۱. ثبت قالب برنامه
-      await txn.insert(
-        MovementTables.tablePlanTemplates,
-        {
-          'id': templateId,
-          'activityKindId': activityKindId,
-          'sessionType': sessionType,
-          'goalJson': goal != null ? jsonEncode(goal) : null,
-          'reminderType': reminderType,
-          'reminderOffsetMin': reminderOffsetMin,
-          'createdAt': now,
-          'updatedAt': now,
-          'archivedAt': null,
-        },
-      );
+      await txn.insert(MovementTables.tablePlanTemplates, {
+        'id': templateId,
+        'activityKindId': activityKindId,
+        'sessionType': sessionType,
+        'goalJson': goal != null ? jsonEncode(goal) : null,
+        'reminderType': reminderType,
+        'reminderOffsetMin': reminderOffsetMin,
+        'createdAt': now,
+        'updatedAt': now,
+        'archivedAt': null,
+      });
 
       // ۲. ثبت زمان‌بندی‌ها و تولید رویدادهای افق ۴ هفته
       for (final schedule in schedules) {
@@ -62,52 +60,48 @@ class MovementPlanningService {
             ? schedule.id
             : 'sch_${DateTime.now().microsecondsSinceEpoch}_${schedule.weekday}';
 
-        await txn.insert(
-          MovementTables.tablePlanSchedules,
-          {
-            'id': scheduleId,
-            'templateId': templateId,
-            'weekday': schedule.weekday,
-            'timeOfDay': schedule.timeOfDay,
-            'recurrence': schedule.recurrence,
-            'startDateIso': schedule.startDateIso,
-            'weeksCount': schedule.weeksCount,
-            'createdAt': now,
-          },
-        );
+        await txn.insert(MovementTables.tablePlanSchedules, {
+          'id': scheduleId,
+          'templateId': templateId,
+          'weekday': schedule.weekday,
+          'timeOfDay': schedule.timeOfDay,
+          'recurrence': schedule.recurrence,
+          'startDateIso': schedule.startDateIso,
+          'weeksCount': schedule.weeksCount,
+          'createdAt': now,
+        });
 
         // ۳. تولید رخدادها بر اساس نوع تکرار
-        final startDate = DateTime.tryParse(schedule.startDateIso) ?? DateTime.now();
+        final startDate =
+            DateTime.tryParse(schedule.startDateIso) ?? DateTime.now();
         final maxWeeks = schedule.recurrence == 'once'
             ? 1
             : (schedule.weeksCount != null && schedule.weeksCount! > 0
-                ? schedule.weeksCount!
-                : horizonWeeks);
+                  ? schedule.weeksCount!
+                  : horizonWeeks);
 
         final totalDays = maxWeeks * 7;
         for (int i = 0; i < totalDays; i++) {
           final targetDate = startDate.add(Duration(days: i));
           if (getRitmoWeekday(targetDate) == schedule.weekday) {
-            final occId = 'occ_${DateTime.now().microsecondsSinceEpoch}_${formatIso(targetDate)}';
-            await txn.insert(
-              MovementTables.tableOccurrences,
-              {
-                'id': occId,
-                'activityKindId': activityKindId,
-                'templateId': templateId,
-                'scheduleId': scheduleId,
-                'dateIso': formatIso(targetDate),
-                'startTime': schedule.timeOfDay,
-                'status': 'planned',
-                'goalType': goal?['type'] as String?,
-                'goalValue': (goal?['value'] as num?)?.toDouble(),
-                'goalUnit': goal?['unit'] as String?,
-                'movedToDateIso': null,
-                'origin': 'template',
-                'createdAt': now,
-                'updatedAt': now,
-              },
-            );
+            final occId =
+                'occ_${DateTime.now().microsecondsSinceEpoch}_${formatIso(targetDate)}';
+            await txn.insert(MovementTables.tableOccurrences, {
+              'id': occId,
+              'activityKindId': activityKindId,
+              'templateId': templateId,
+              'scheduleId': scheduleId,
+              'dateIso': formatIso(targetDate),
+              'startTime': schedule.timeOfDay,
+              'status': 'planned',
+              'goalType': goal?['type'] as String?,
+              'goalValue': (goal?['value'] as num?)?.toDouble(),
+              'goalUnit': goal?['unit'] as String?,
+              'movedToDateIso': null,
+              'origin': 'template',
+              'createdAt': now,
+              'updatedAt': now,
+            });
 
             if (schedule.recurrence == 'once') {
               break;
@@ -180,9 +174,7 @@ class MovementPlanningService {
     switch (scope) {
       case MovementChangeScope.onlyThis:
         // فقط همین Occurrence تغییر می‌کند
-        final updates = <String, dynamic>{
-          'updatedAt': now,
-        };
+        final updates = <String, dynamic>{'updatedAt': now};
         if (newStartTime != null) updates['startTime'] = newStartTime;
         if (newGoal != null) {
           updates['goalType'] = newGoal['type'];
@@ -199,9 +191,7 @@ class MovementPlanningService {
 
       case MovementChangeScope.thisAndFuture:
         // جلسات از focalDateIso به بعد تغییر می‌کنند
-        final occUpdates = <String, dynamic>{
-          'updatedAt': now,
-        };
+        final occUpdates = <String, dynamic>{'updatedAt': now};
         if (newStartTime != null) occUpdates['startTime'] = newStartTime;
         if (newGoal != null) {
           occUpdates['goalType'] = newGoal['type'];
@@ -219,12 +209,12 @@ class MovementPlanningService {
       case MovementChangeScope.wholePlan:
         await db.transaction((txn) async {
           // ۱. به‌روزرسانی قالب
-          final tplUpdates = <String, dynamic>{
-            'updatedAt': now,
-          };
+          final tplUpdates = <String, dynamic>{'updatedAt': now};
           if (newGoal != null) tplUpdates['goalJson'] = jsonEncode(newGoal);
-          if (newReminderType != null) tplUpdates['reminderType'] = newReminderType;
-          if (newReminderOffsetMin != null) tplUpdates['reminderOffsetMin'] = newReminderOffsetMin;
+          if (newReminderType != null)
+            tplUpdates['reminderType'] = newReminderType;
+          if (newReminderOffsetMin != null)
+            tplUpdates['reminderOffsetMin'] = newReminderOffsetMin;
 
           await txn.update(
             MovementTables.tablePlanTemplates,
@@ -234,9 +224,7 @@ class MovementPlanningService {
           );
 
           // ۲. به‌روزرسانی تمام جلسات آینده (که هنوز انجام نشده‌اند)
-          final occUpdates = <String, dynamic>{
-            'updatedAt': now,
-          };
+          final occUpdates = <String, dynamic>{'updatedAt': now};
           if (newStartTime != null) occUpdates['startTime'] = newStartTime;
           if (newGoal != null) {
             occUpdates['goalType'] = newGoal['type'];
@@ -283,18 +271,13 @@ class MovementPlanningService {
   }
 
   /// رد کردن (Skip) یک جلسه
-  Future<void> skipOccurrence({
-    required String occurrenceId,
-  }) async {
+  Future<void> skipOccurrence({required String occurrenceId}) async {
     final db = await _database;
     final now = DateTime.now().toUtc().toIso8601String();
 
     await db.update(
       MovementTables.tableOccurrences,
-      {
-        'status': 'skipped',
-        'updatedAt': now,
-      },
+      {'status': 'skipped', 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [occurrenceId],
     );
@@ -399,7 +382,8 @@ class MovementPlanningService {
   }) async {
     final db = await _database;
     final whereArgs = <dynamic>[dateIso, 'planned'];
-    var query = '''
+    var query =
+        '''
       SELECT o.*, k.nameFa as k_nameFa, k.family as k_family, k.icon as k_icon
       FROM ${MovementTables.tableOccurrences} o
       LEFT JOIN ${MovementTables.tableActivityKinds} k ON o.activityKindId = k.id

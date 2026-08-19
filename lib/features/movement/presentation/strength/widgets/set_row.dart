@@ -44,7 +44,8 @@ class SetRow extends StatelessWidget {
       hintText = '$hintW $hintR'.trim();
     }
 
-    final semanticsLabel = 'ست ${toPersianDigits(setIndex)}، '
+    final semanticsLabel =
+        'ست ${toPersianDigits(setIndex)}، '
         '${currentWeight != null ? '${toPersianDigits(currentWeight)} کیلوگرم' : 'بدون وزن'}، '
         '${currentReps != null ? '${toPersianDigits(currentReps)} تکرار' : 'هدف $targetReps'}، '
         '${isCompleted ? 'انجام شده' : 'در انتظار'}';
@@ -57,10 +58,14 @@ class SetRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: RitmoSpacing.xs),
         padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
         decoration: BoxDecoration(
-          color: isCompleted ? sportsColor.withValues(alpha: 0.08) : colors.surface,
+          color: isCompleted
+              ? sportsColor.withValues(alpha: 0.08)
+              : colors.surface,
           borderRadius: BorderRadius.circular(RitmoRadius.card),
           border: Border.all(
-            color: isCompleted ? sportsColor.withValues(alpha: 0.3) : colors.border,
+            color: isCompleted
+                ? sportsColor.withValues(alpha: 0.3)
+                : colors.border,
           ),
         ),
         child: Row(
@@ -71,9 +76,9 @@ class SetRow extends StatelessWidget {
               child: Text(
                 toPersianDigits(setIndex),
                 textAlign: TextAlign.center,
-                style: RitmoTextStyles.label(colors.textPrimary).copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: RitmoTextStyles.label(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: RitmoSpacing.xs),
@@ -106,13 +111,18 @@ class SetRow extends StatelessWidget {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),
                   child: Text(
-                    currentWeight != null ? toPersianDigits(currentWeight) : '—',
+                    currentWeight != null
+                        ? toPersianDigits(currentWeight)
+                        : '—',
                     textAlign: TextAlign.center,
                     style: RitmoTextStyles.body(colors.textPrimary),
                   ),
@@ -129,7 +139,9 @@ class SetRow extends StatelessWidget {
                   final entered = await _showInputDialog(
                     context,
                     title: 'تعداد تکرار',
-                    initialValue: currentReps?.toString() ?? targetReps.split('-').first.trim(),
+                    initialValue:
+                        currentReps?.toString() ??
+                        targetReps.split('-').first.trim(),
                     isDecimal: false,
                   );
                   if (entered != null) {
@@ -137,13 +149,18 @@ class SetRow extends StatelessWidget {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),
                   child: Text(
-                    currentReps != null ? toPersianDigits(currentReps) : toPersianDigits(targetReps),
+                    currentReps != null
+                        ? toPersianDigits(currentReps)
+                        : toPersianDigits(targetReps),
                     textAlign: TextAlign.center,
                     style: RitmoTextStyles.body(colors.textPrimary),
                   ),
@@ -155,7 +172,9 @@ class SetRow extends StatelessWidget {
             // دکمه تیک / ثبت انجام ست
             IconButton(
               icon: Icon(
-                isCompleted ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                isCompleted
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
                 color: isCompleted ? sportsColor : colors.textTertiary,
                 size: 26,
               ),
@@ -178,7 +197,10 @@ class SetRow extends StatelessWidget {
     return showDialog<String>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: Text(title, style: RitmoTextStyles.cardTitle(dialogCtx.colors.textPrimary)),
+        title: Text(
+          title,
+          style: RitmoTextStyles.cardTitle(dialogCtx.colors.textPrimary),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -191,7 +213,8 @@ class SetRow extends StatelessWidget {
             child: const Text('انصراف'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(controller.text.trim()),
+            onPressed: () =>
+                Navigator.of(dialogCtx).pop(controller.text.trim()),
             child: const Text('تأیید'),
           ),
         ],

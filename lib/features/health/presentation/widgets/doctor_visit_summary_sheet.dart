@@ -217,9 +217,15 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return RitmoTheme.glassCardLight(
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.8,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: RitmoTheme.glassCardLight(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         padding: const EdgeInsets.all(16),
         child: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -293,7 +299,7 @@ class _DoctorVisitSummarySheetState extends State<DoctorVisitSummarySheet> {
               ],
             ),
       ),
-    );
+    ),);
   }
 
   String _toPersianDigits(String input) {

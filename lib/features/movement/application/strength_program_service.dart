@@ -85,7 +85,9 @@ class StrengthProgramService {
       preferredTime: preferredTime ?? existing?.preferredTime ?? '08:00',
       status: MovementStrengthProgramStatus.draft,
       draftStep: draftStep,
-      draftDataJson: extraDraftData != null ? jsonEncode(extraDraftData) : existing?.draftDataJson,
+      draftDataJson: extraDraftData != null
+          ? jsonEncode(extraDraftData)
+          : existing?.draftDataJson,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     );
@@ -114,7 +116,9 @@ class StrengthProgramService {
   }) {
     // اعتبارسنجی محدودیت‌ها
     if (daysPerWeek < 1 || daysPerWeek > 7) {
-      throw ArgumentError('تعداد روزهای تمرین در هفته باید بین ۱ تا ۷ روز باشد.');
+      throw ArgumentError(
+        'تعداد روزهای تمرین در هفته باید بین ۱ تا ۷ روز باشد.',
+      );
     }
     if (preferredDays.isEmpty) {
       throw ArgumentError('حداقل یک روز ترجیحی برای تمرین باید انتخاب شود.');
@@ -221,7 +225,10 @@ class StrengthProgramService {
         final weekday = sanitizedDays[i];
         final dayId = '${programId}_w${w}_d${i + 1}';
         final dayName = _getDaySplitName(i, sanitizedDays.length);
-        final targetMuscles = _getTargetMusclesForSplit(i, sanitizedDays.length);
+        final targetMuscles = _getTargetMusclesForSplit(
+          i,
+          sanitizedDays.length,
+        );
 
         final exercises = _generateDeterministicExercises(
           dayId: dayId,
@@ -256,10 +263,7 @@ class StrengthProgramService {
       }
     }
 
-    return {
-      'program': program,
-      'days': days,
-    };
+    return {'program': program, 'days': days};
   }
 
   static String _getGoalLabel(String goal) {
@@ -297,7 +301,9 @@ class StrengthProgramService {
 
   static List<String> _getTargetMusclesForSplit(int index, int totalDays) {
     if (totalDays <= 2) {
-      return index == 0 ? ['سینه', 'زیربغل', 'شانه'] : ['چهارسر ران', 'همسترینگ', 'شکم'];
+      return index == 0
+          ? ['سینه', 'زیربغل', 'شانه']
+          : ['چهارسر ران', 'همسترینگ', 'شکم'];
     }
     if (totalDays == 3) {
       if (index == 0) return ['سینه', 'چهارسر ران', 'پشت‌بازو'];
@@ -336,89 +342,99 @@ class StrengthProgramService {
       chestEx = 'شنا روی بند انگشتان یا دسته';
     }
 
-    list.add(MovementStrengthExercise(
-      id: '${dayId}_ex1',
-      dayId: dayId,
-      orderIndex: 0,
-      nameFa: chestEx,
-      muscleGroup: 'سینه و پشت‌بازو',
-      sets: sets,
-      repsMin: repsMin,
-      repsMax: repsMax,
-      restSec: restSec,
-      formTips: const [
-        'ستون فقرات را کاملاً صاف نگه دارید.',
-        'آرنج‌ها زاویهٔ ۴۵ درجه با بدن داشته باشند.',
-        'در دامنهٔ کامل حرکت را اجرا کنید.',
-      ],
-      alternatives: const [
-        'شنا سوئدی روی زانو',
-        'شنا با تکیه به دیوار',
-        'پرس سینه با کش ورزشی',
-      ],
-    ));
+    list.add(
+      MovementStrengthExercise(
+        id: '${dayId}_ex1',
+        dayId: dayId,
+        orderIndex: 0,
+        nameFa: chestEx,
+        muscleGroup: 'سینه و پشت‌بازو',
+        sets: sets,
+        repsMin: repsMin,
+        repsMax: repsMax,
+        restSec: restSec,
+        formTips: const [
+          'ستون فقرات را کاملاً صاف نگه دارید.',
+          'آرنج‌ها زاویهٔ ۴۵ درجه با بدن داشته باشند.',
+          'در دامنهٔ کامل حرکت را اجرا کنید.',
+        ],
+        alternatives: const [
+          'شنا سوئدی روی زانو',
+          'شنا با تکیه به دیوار',
+          'پرس سینه با کش ورزشی',
+        ],
+      ),
+    );
 
     // حرکت ۲: زیربغل / کشش
     String backEx = 'سوپرمن روی زمین';
     if (hasPullup) {
       backEx = 'بارفیکس دست باز';
     } else if (hasDumbbells) {
-      backEx = avoidLowerBack ? 'زیربغل تک دمبل خم با تکیه‌گاه' : 'زیربغل دمبل جفت خم';
+      backEx = avoidLowerBack
+          ? 'زیربغل تک دمبل خم با تکیه‌گاه'
+          : 'زیربغل دمبل جفت خم';
     } else if (hasBands) {
       backEx = 'زیربغل قایقی با کش ورزشی';
     }
 
-    list.add(MovementStrengthExercise(
-      id: '${dayId}_ex2',
-      dayId: dayId,
-      orderIndex: 1,
-      nameFa: backEx,
-      muscleGroup: 'زیربغل و پشت',
-      sets: sets,
-      repsMin: repsMin,
-      repsMax: repsMax,
-      restSec: restSec,
-      formTips: const [
-        'تیغه‌های شانه را در انتهای حرکت به هم منقبض کنید.',
-        'از تکان دادن ناگهانی بالاتنه خودداری کنید.',
-        'تنفس پیوسته را حفظ کنید.',
-      ],
-      alternatives: const [
-        'کشش زیربغل با حوله یا کش',
-        'سوپرمن دست باز',
-        'حرکت پرنده‌سگ (Bird-Dog)',
-      ],
-    ));
+    list.add(
+      MovementStrengthExercise(
+        id: '${dayId}_ex2',
+        dayId: dayId,
+        orderIndex: 1,
+        nameFa: backEx,
+        muscleGroup: 'زیربغل و پشت',
+        sets: sets,
+        repsMin: repsMin,
+        repsMax: repsMax,
+        restSec: restSec,
+        formTips: const [
+          'تیغه‌های شانه را در انتهای حرکت به هم منقبض کنید.',
+          'از تکان دادن ناگهانی بالاتنه خودداری کنید.',
+          'تنفس پیوسته را حفظ کنید.',
+        ],
+        alternatives: const [
+          'کشش زیربغل با حوله یا کش',
+          'سوپرمن دست باز',
+          'حرکت پرنده‌سگ (Bird-Dog)',
+        ],
+      ),
+    );
 
     // حرکت ۳: پاها / اسکات
-    String legEx = avoidKnees ? 'پل باسن روی زمین (Glute Bridge)' : 'اسکات با وزن بدن';
+    String legEx = avoidKnees
+        ? 'پل باسن روی زمین (Glute Bridge)'
+        : 'اسکات با وزن بدن';
     if (!avoidKnees && hasDumbbells) {
       legEx = 'گابلت اسکات با دمبل';
     } else if (!avoidKnees && hasBands) {
       legEx = 'اسکات با کش ورزشی دور زانو';
     }
 
-    list.add(MovementStrengthExercise(
-      id: '${dayId}_ex3',
-      dayId: dayId,
-      orderIndex: 2,
-      nameFa: legEx,
-      muscleGroup: avoidKnees ? 'باسن و پشت ران' : 'چهارسر ران و باسن',
-      sets: sets,
-      repsMin: repsMin,
-      repsMax: repsMax,
-      restSec: restSec,
-      formTips: const [
-        'سینه را بالا و وزن را روی پاشنه‌ها نگه دارید.',
-        'زانوها در راستای پنجهٔ پا حرکت کنند.',
-        'هنگام بالا آمدن باسن را منقبض کنید.',
-      ],
-      alternatives: const [
-        'اسکات با تکیه به دیوار (Wall Sit)',
-        'پل باسن تک‌پا',
-        'لانجز ثابت معکوس',
-      ],
-    ));
+    list.add(
+      MovementStrengthExercise(
+        id: '${dayId}_ex3',
+        dayId: dayId,
+        orderIndex: 2,
+        nameFa: legEx,
+        muscleGroup: avoidKnees ? 'باسن و پشت ران' : 'چهارسر ران و باسن',
+        sets: sets,
+        repsMin: repsMin,
+        repsMax: repsMax,
+        restSec: restSec,
+        formTips: const [
+          'سینه را بالا و وزن را روی پاشنه‌ها نگه دارید.',
+          'زانوها در راستای پنجهٔ پا حرکت کنند.',
+          'هنگام بالا آمدن باسن را منقبض کنید.',
+        ],
+        alternatives: const [
+          'اسکات با تکیه به دیوار (Wall Sit)',
+          'پل باسن تک‌پا',
+          'لانجز ثابت معکوس',
+        ],
+      ),
+    );
 
     // حرکت ۴: میان‌تنه / شکم
     String coreEx = avoidWrists ? 'پلانک روی ساعد' : 'پلانک استاندارد';
@@ -426,27 +442,29 @@ class StrengthProgramService {
       coreEx = 'کرانچ ساده روی زمین با زانوی خم';
     }
 
-    list.add(MovementStrengthExercise(
-      id: '${dayId}_ex4',
-      dayId: dayId,
-      orderIndex: 3,
-      nameFa: coreEx,
-      muscleGroup: 'عضلات مرکزی شکم و پهلو',
-      sets: sets > 3 ? 3 : sets,
-      repsMin: 30, // 30 sec or reps
-      repsMax: 45,
-      restSec: 45,
-      formTips: const [
-        'شکم را محکم منقبض نگه دارید و گودی کمر ندهید.',
-        'نفس را در سینه حبس نکنید.',
-        'نگاه به زمین و گردن در وضعیت خنثی باشد.',
-      ],
-      alternatives: const [
-        'پلانک زانو روی زمین',
-        'ددباگ (Deadbug)',
-        'کرانچ معکوس',
-      ],
-    ));
+    list.add(
+      MovementStrengthExercise(
+        id: '${dayId}_ex4',
+        dayId: dayId,
+        orderIndex: 3,
+        nameFa: coreEx,
+        muscleGroup: 'عضلات مرکزی شکم و پهلو',
+        sets: sets > 3 ? 3 : sets,
+        repsMin: 30, // 30 sec or reps
+        repsMax: 45,
+        restSec: 45,
+        formTips: const [
+          'شکم را محکم منقبض نگه دارید و گودی کمر ندهید.',
+          'نفس را در سینه حبس نکنید.',
+          'نگاه به زمین و گردن در وضعیت خنثی باشد.',
+        ],
+        alternatives: const [
+          'پلانک زانو روی زمین',
+          'ددباگ (Deadbug)',
+          'کرانچ معکوس',
+        ],
+      ),
+    );
 
     return list;
   }
@@ -529,7 +547,8 @@ class StrengthProgramService {
           final dayDate = weekStart.add(Duration(days: day.weekday - 1));
           final dateIso = dayDate.toIso8601String().substring(0, 10);
 
-          final occId = 'occ_str_${activeProgram.id}_w${w + 1}_d${day.weekday}_$dateIso';
+          final occId =
+              'occ_str_${activeProgram.id}_w${w + 1}_d${day.weekday}_$dateIso';
 
           await txn.insert(
             MovementTables.tableOccurrences,
@@ -606,7 +625,10 @@ class StrengthProgramService {
   // ---------------------------------------------------------------------------
 
   /// دریافت روزهای برنامه همراه با لیست حرکات هر روز
-  Future<List<MovementStrengthDay>> getProgramDays(String programId, {int? weekIndex}) async {
+  Future<List<MovementStrengthDay>> getProgramDays(
+    String programId, {
+    int? weekIndex,
+  }) async {
     final dbExec = await _database;
 
     String where = 'programId = ?';
@@ -635,7 +657,9 @@ class StrengthProgramService {
         orderBy: 'orderIndex ASC',
       );
 
-      final exercises = exRows.map((e) => MovementStrengthExercise.fromMap(e)).toList();
+      final exercises = exRows
+          .map((e) => MovementStrengthExercise.fromMap(e))
+          .toList();
       result.add(MovementStrengthDay.fromMap(r, exercises: exercises));
     }
 
@@ -661,10 +685,7 @@ class StrengthProgramService {
       // فقط همین حرکت در همین روز
       await dbExec.update(
         MovementTables.tableStrengthExercises,
-        {
-          'nameFa': newExerciseNameFa,
-          'muscleGroup': newMuscleGroup,
-        },
+        {'nameFa': newExerciseNameFa, 'muscleGroup': newMuscleGroup},
         where: 'id = ?',
         whereArgs: [exerciseId],
       );
@@ -680,10 +701,7 @@ class StrengthProgramService {
         final currentName = exRow.first['nameFa'] as String;
         await dbExec.update(
           MovementTables.tableStrengthExercises,
-          {
-            'nameFa': newExerciseNameFa,
-            'muscleGroup': newMuscleGroup,
-          },
+          {'nameFa': newExerciseNameFa, 'muscleGroup': newMuscleGroup},
           where: 'nameFa = ?',
           whereArgs: [currentName],
         );
@@ -718,17 +736,22 @@ class StrengthProgramService {
   }
 
   /// دریافت ست‌های جلسهٔ قبل برای یک حرکت جهت نمایش به صورت Hint
-  Future<List<MovementSetLog>> getPreviousSessionSetLogs(String exerciseNameFa) async {
+  Future<List<MovementSetLog>> getPreviousSessionSetLogs(
+    String exerciseNameFa,
+  ) async {
     final dbExec = await _database;
     // یافتن آخرین لاگ‌های این حرکت از جلسات پیشین
-    final rows = await dbExec.rawQuery('''
+    final rows = await dbExec.rawQuery(
+      '''
       SELECT s.*
       FROM ${MovementTables.tableSetLogs} s
       INNER JOIN ${MovementTables.tableStrengthExercises} e ON s.exerciseId = e.id
       WHERE e.nameFa = ? AND s.completed = 1
       ORDER BY s.at DESC
       LIMIT 10
-    ''', [exerciseNameFa]);
+    ''',
+      [exerciseNameFa],
+    );
 
     return rows.map((r) => MovementSetLog.fromMap(r)).toList();
   }

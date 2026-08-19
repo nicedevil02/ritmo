@@ -88,7 +88,9 @@ class StepLevelSafety extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(RitmoSpacing.md),
                 decoration: BoxDecoration(
-                  color: isSelected ? sportsColor.withValues(alpha: 0.1) : colors.surface,
+                  color: isSelected
+                      ? sportsColor.withValues(alpha: 0.1)
+                      : colors.surface,
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(
                     color: isSelected ? sportsColor : colors.border,
@@ -122,7 +124,9 @@ class StepLevelSafety extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             lvl['desc']!,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -179,14 +183,18 @@ class StepLevelSafety extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, color: colors.textSecondary, size: 20),
+              Icon(
+                Icons.info_outline_rounded,
+                color: colors.textSecondary,
+                size: 20,
+              ),
               const SizedBox(width: RitmoSpacing.sm),
               Expanded(
                 child: Text(
                   MovementStrings.strengthMedicalDisclaimer,
-                  style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.caption(
+                    colors.textSecondary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],

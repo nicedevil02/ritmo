@@ -17,7 +17,13 @@ class SummaryFeelingPicker extends StatelessWidget {
   final TextEditingController noteController;
   final ValueChanged<String>? onNoteChanged;
 
-  static const List<String> _feelings = ['عالی', 'خوب', 'معمولی', 'سخت', 'خسته'];
+  static const List<String> _feelings = [
+    'عالی',
+    'خوب',
+    'معمولی',
+    'سخت',
+    'خسته',
+  ];
 
   @override
   Widget build(BuildContext context) {

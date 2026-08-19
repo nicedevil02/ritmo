@@ -1110,7 +1110,9 @@ class _ManageMustahabSheetState extends State<ManageMustahabSheet> {
       child: RitmoTheme.glassCardLight(
         borderRadius: 28,
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+          ),
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -1,9 +1,5 @@
 /// Meaning of snooze capability for a domain.
-enum SnoozeMeaning {
-  none,
-  normal,
-  qada,
-}
+enum SnoozeMeaning { none, normal, qada }
 
 /// Declarative capabilities supported by a specific domain ActionBody.
 class ActionCapabilities {

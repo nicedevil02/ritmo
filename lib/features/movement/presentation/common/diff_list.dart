@@ -4,14 +4,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_layout.dart
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
 /// انواع تغییرات در لیست تفاوت‌ها (Diff)
-enum MovementDiffKind {
-  moved,
-  shortened,
-  replaced,
-  added,
-  removed,
-  locked,
-}
+enum MovementDiffKind { moved, shortened, replaced, added, removed, locked }
 
 /// مدل دادهٔ یک تغییر در لیست تفاوت‌ها
 class MovementDiffItem {
@@ -109,10 +102,12 @@ class DiffList extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: items.length,
-      separatorBuilder: (context, index) => const SizedBox(height: RitmoSpacing.sm),
+      separatorBuilder: (context, index) =>
+          const SizedBox(height: RitmoSpacing.sm),
       itemBuilder: (context, index) {
         final item = items[index];
-        final effectiveLocked = item.isLocked || item.kind == MovementDiffKind.locked;
+        final effectiveLocked =
+            item.isLocked || item.kind == MovementDiffKind.locked;
         final iconColor = _colorForKind(context, item.kind);
 
         return Container(
@@ -184,10 +179,12 @@ class DiffList extends StatelessWidget {
                           Flexible(
                             child: Text(
                               '${MovementStrings.diffBefore}: ${item.beforeText}',
-                              style: RitmoTextStyles.caption(colors.textTertiary)
-                                  .copyWith(
-                                decoration: TextDecoration.lineThrough,
-                              ),
+                              style:
+                                  RitmoTextStyles.caption(
+                                    colors.textTertiary,
+                                  ).copyWith(
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),

@@ -1201,10 +1201,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     await RitmoSheetScaffold.present(
       context: context,
       title: 'تاریخچه نسخه‌های یادداشت',
+      maxHeightFactor: 0.75,
+      childIsScrollable: true,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
-        child: SizedBox(
-          height: MediaQuery.of(ctx).size.height * 0.6,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(ctx, factor: 0.75),
+          ),
           child: FutureBuilder<List<NoteRevision>>(
             future: NotesRepository.instance.listRevisions(_activeNote!.id),
             builder: (context, snapshot) {

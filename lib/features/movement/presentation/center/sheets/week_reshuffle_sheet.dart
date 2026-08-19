@@ -37,12 +37,16 @@ class WeekReshuffleSheet extends StatefulWidget {
   });
 
   final List<WeekReshuffleChangeItem> changes;
-  final Future<void> Function(List<WeekReshuffleChangeItem> selectedChanges) onApplyChanges;
+  final Future<void> Function(List<WeekReshuffleChangeItem> selectedChanges)
+  onApplyChanges;
 
   static Future<bool?> show(
     BuildContext context, {
     required List<WeekReshuffleChangeItem> changes,
-    required Future<void> Function(List<WeekReshuffleChangeItem> selectedChanges) onApplyChanges,
+    required Future<void> Function(
+      List<WeekReshuffleChangeItem> selectedChanges,
+    )
+    onApplyChanges,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -75,7 +79,9 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
   }
 
   Future<void> _submit() async {
-    final selected = widget.changes.where((c) => c.isSelected && !c.isLocked).toList();
+    final selected = widget.changes
+        .where((c) => c.isSelected && !c.isLocked)
+        .toList();
     if (selected.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -94,7 +100,9 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -158,7 +166,11 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                     else
                       Padding(
                         padding: const EdgeInsets.all(12),
-                        child: Icon(Icons.lock_outline_rounded, color: colors.textSecondary, size: 20),
+                        child: Icon(
+                          Icons.lock_outline_rounded,
+                          color: colors.textSecondary,
+                          size: 20,
+                        ),
                       ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Expanded(
@@ -169,13 +181,17 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                             children: [
                               Text(
                                 item.occurrence.displayName,
-                                style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                style: RitmoTextStyles.cardTitle(
+                                  colors.textPrimary,
+                                ),
                               ),
                               if (item.isLocked) ...[
                                 const Spacer(),
                                 Text(
                                   MovementStrings.diffLocked,
-                                  style: RitmoTextStyles.caption(colors.textSecondary),
+                                  style: RitmoTextStyles.caption(
+                                    colors.textSecondary,
+                                  ),
                                 ),
                               ],
                             ],
@@ -185,18 +201,23 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                             children: [
                               Text(
                                 '${MovementStrings.diffBefore}: ${toPersianDigits(item.originalDateIso)} (${toPersianDigits(item.originalTime)})',
-                                style: RitmoTextStyles.caption(colors.error).copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                ),
+                                style: RitmoTextStyles.caption(colors.error)
+                                    .copyWith(
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
                               ),
                               const SizedBox(width: RitmoSpacing.sm),
-                              Icon(Icons.arrow_forward_rounded, color: sportsColor, size: 14),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: sportsColor,
+                                size: 14,
+                              ),
                               const SizedBox(width: RitmoSpacing.sm),
                               Text(
                                 '${MovementStrings.diffAfter}: ${toPersianDigits(item.proposedDateIso)} (${toPersianDigits(item.proposedTime)})',
-                                style: RitmoTextStyles.caption(sportsColor).copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: RitmoTextStyles.caption(
+                                  sportsColor,
+                                ).copyWith(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -219,7 +240,10 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                      minimumSize: const Size(
+                        48,
+                        MovementLayout.kFieldMinHeight,
+                      ),
                       side: BorderSide(color: colors.border),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(RitmoRadius.field),
@@ -239,7 +263,10 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: sportsColor,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                      minimumSize: const Size(
+                        48,
+                        MovementLayout.kFieldMinHeight,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(RitmoRadius.field),
                       ),
@@ -248,7 +275,10 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         : Text(
                             MovementStrings.weekReshuffleApplyAll,

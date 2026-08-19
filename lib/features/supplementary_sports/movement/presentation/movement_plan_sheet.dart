@@ -427,8 +427,12 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.90,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -524,7 +528,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
             _buildBottomBar(colors),
           ],
         ),
-      ),
+      ),),
     );
   }
 

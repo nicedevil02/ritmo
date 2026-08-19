@@ -361,6 +361,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
   }
 
   Widget _buildCollapsedView() {
+    final colors = context.colors;
     final soreNames = _soreBodyParts
         .map((code) {
           final def = _kBodyParts.where((p) => p.code == code).firstOrNull;
@@ -375,7 +376,7 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF131B2E),
+          color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.5),
           boxShadow: [
@@ -477,9 +478,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
+        border: Border.all(color: colors.border, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -774,14 +775,19 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.65,
+    final colors = context.colors;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF131B2E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Column(
@@ -1002,6 +1008,6 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
           ],
         ),
       ),
-    );
+    ),);
   }
 }

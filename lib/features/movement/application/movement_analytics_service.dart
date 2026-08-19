@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-typedef AnalyticsEventCallback = void Function(String eventName, Map<String, dynamic> parameters);
+typedef AnalyticsEventCallback =
+    void Function(String eventName, Map<String, dynamic> parameters);
 
 /// سرویس ثبت رویدادهای تحلیلی ماژول حرکت (Gate 5)
 /// شامل ۱۳ رویداد مشخص شده بدون داده‌های سلامت، یادداشت متنی، نام فعالیت سفارشی یا دادهٔ مکانی.
@@ -17,7 +18,8 @@ class MovementAnalyticsService {
   }
 
   @visibleForTesting
-  static List<Map<String, dynamic>> get recordedEvents => List.unmodifiable(_recordedEventsForTesting);
+  static List<Map<String, dynamic>> get recordedEvents =>
+      List.unmodifiable(_recordedEventsForTesting);
 
   @visibleForTesting
   static void clearEvents() {
@@ -27,13 +29,15 @@ class MovementAnalyticsService {
   void _log(String eventName, Map<String, dynamic> params) {
     final sanitizedParams = Map<String, dynamic>.from(params);
     // تضمین عدم وجود داده‌های حساس
-    sanitizedParams.removeWhere((key, value) =>
-        key.toLowerCase().contains('note') ||
-        key.toLowerCase().contains('health') ||
-        key.toLowerCase().contains('customname') ||
-        key.toLowerCase().contains('location') ||
-        key.toLowerCase().contains('lat') ||
-        key.toLowerCase().contains('lng'));
+    sanitizedParams.removeWhere(
+      (key, value) =>
+          key.toLowerCase().contains('note') ||
+          key.toLowerCase().contains('health') ||
+          key.toLowerCase().contains('customname') ||
+          key.toLowerCase().contains('location') ||
+          key.toLowerCase().contains('lat') ||
+          key.toLowerCase().contains('lng'),
+    );
 
     _recordedEventsForTesting.add({
       'name': eventName,
@@ -60,12 +64,8 @@ class MovementAnalyticsService {
   }
 
   // ۲. انتخاب ردیف در شیت افزودن
-  void logAddIntentSelected({
-    required String intentType,
-  }) {
-    _log('movement_add_intent_selected', {
-      'intent_type': intentType,
-    });
+  void logAddIntentSelected({required String intentType}) {
+    _log('movement_add_intent_selected', {'intent_type': intentType});
   }
 
   // ۳. رسیدن به پیش‌نمایش برنامه

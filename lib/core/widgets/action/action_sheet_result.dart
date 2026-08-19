@@ -10,10 +10,7 @@ final class StartTimerHandoff extends HandoffIntent {
   final String mode;
   final int durationMinutes;
 
-  const StartTimerHandoff({
-    required this.mode,
-    required this.durationMinutes,
-  });
+  const StartTimerHandoff({required this.mode, required this.durationMinutes});
 }
 
 /// Intent to open the routine / item editor.

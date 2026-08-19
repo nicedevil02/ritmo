@@ -99,31 +99,36 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Movement Center RTL & Text Scale 1.3x Tests (Requirement 6)', () {
-    testWidgets('HeroSessionCard renders with zero overflow at 1.3x text scale across all variants', (tester) async {
-      for (final variant in HeroCardVariant.values) {
-        await tester.pumpWidget(
-          _wrapScale(
-            Scaffold(
-              body: SingleChildScrollView(
-                child: HeroSessionCard(
-                  variant: variant,
-                  onPrimaryAction: () {},
-                  onSecondaryAction: () {},
-                  onMoveAction: () {},
-                  onShortVersionAction: () {},
-                  onLogManualAction: () {},
+    testWidgets(
+      'HeroSessionCard renders with zero overflow at 1.3x text scale across all variants',
+      (tester) async {
+        for (final variant in HeroCardVariant.values) {
+          await tester.pumpWidget(
+            _wrapScale(
+              Scaffold(
+                body: SingleChildScrollView(
+                  child: HeroSessionCard(
+                    variant: variant,
+                    onPrimaryAction: () {},
+                    onSecondaryAction: () {},
+                    onMoveAction: () {},
+                    onShortVersionAction: () {},
+                    onLogManualAction: () {},
+                  ),
                 ),
               ),
             ),
-          ),
-        );
+          );
 
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull);
-      }
-    });
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
+      },
+    );
 
-    testWidgets('SessionCard renders with zero overflow at 1.3x text scale', (tester) async {
+    testWidgets('SessionCard renders with zero overflow at 1.3x text scale', (
+      tester,
+    ) async {
       final occ = MovementOccurrence(
         id: 'occ_1',
         activityKindId: 'kind_hiking',
@@ -149,10 +154,7 @@ void main() {
       await tester.pumpWidget(
         _wrapScale(
           Scaffold(
-            body: SessionCard(
-              occurrence: occ,
-              onTap: () {},
-            ),
+            body: SessionCard(occurrence: occ, onTap: () {}),
           ),
         ),
       );
@@ -161,23 +163,24 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Complete MovementCenterScreen renders with zero overflow at 1.3x text scale in RTL', (tester) async {
-      final controller = MovementCenterController(
-        occurrenceService: FakeFullOccurrenceService(),
-        sessionService: FakeSessionService(),
-        strengthProgramService: FakeStrengthProgramService(),
-      );
+    testWidgets(
+      'Complete MovementCenterScreen renders with zero overflow at 1.3x text scale in RTL',
+      (tester) async {
+        final controller = MovementCenterController(
+          occurrenceService: FakeFullOccurrenceService(),
+          sessionService: FakeSessionService(),
+          strengthProgramService: FakeStrengthProgramService(),
+        );
 
-      await controller.loadData();
+        await controller.loadData();
 
-      await tester.pumpWidget(
-        _wrapScale(
-          MovementCenterScreen(controller: controller),
-        ),
-      );
+        await tester.pumpWidget(
+          _wrapScale(MovementCenterScreen(controller: controller)),
+        );
 
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-    });
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 }

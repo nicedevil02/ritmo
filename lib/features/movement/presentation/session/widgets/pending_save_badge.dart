@@ -36,9 +36,9 @@ class PendingSaveBadge extends StatelessWidget {
           const SizedBox(width: RitmoSpacing.xs),
           Text(
             MovementStrings.sessionPendingSave,
-            style: RitmoTextStyles.caption(colors.warning).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: RitmoTextStyles.caption(
+              colors.warning,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: RitmoSpacing.sm),
           InkWell(

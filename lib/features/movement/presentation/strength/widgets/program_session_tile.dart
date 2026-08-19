@@ -53,7 +53,9 @@ class ProgramSessionTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  isCompleted ? Icons.check_circle_rounded : Icons.fitness_center_rounded,
+                  isCompleted
+                      ? Icons.check_circle_rounded
+                      : Icons.fitness_center_rounded,
                   color: isCompleted ? colors.success : sportsColor,
                   size: 22,
                 ),
@@ -67,9 +69,9 @@ class ProgramSessionTile extends StatelessWidget {
                       children: [
                         Text(
                           _getWeekdayName(day.weekday),
-                          style: RitmoTextStyles.caption(sportsColor).copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: RitmoTextStyles.caption(
+                            sportsColor,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 6),
                         Text(

@@ -52,10 +52,7 @@ class MovementConfirmDialog extends StatelessWidget {
             const SizedBox(height: RitmoSpacing.md),
 
             // پیام اصلی
-            Text(
-              message,
-              style: RitmoTextStyles.body(colors.textSecondary),
-            ),
+            Text(message, style: RitmoTextStyles.body(colors.textSecondary)),
 
             // فهرست پیامدهای قطعی (impactList)
             if (impactList != null && impactList!.isNotEmpty) ...[
@@ -88,7 +85,9 @@ class MovementConfirmDialog extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 impact,
-                                style: RitmoTextStyles.caption(colors.textPrimary),
+                                style: RitmoTextStyles.caption(
+                                  colors.textPrimary,
+                                ),
                               ),
                             ),
                           ],
@@ -118,7 +117,10 @@ class MovementConfirmDialog extends StatelessWidget {
                       color: colors.border,
                       width: RitmoElevation.borderWidthDark,
                     ),
-                    minimumSize: const Size(80, MovementLayout.kSecondaryButtonHeight),
+                    minimumSize: const Size(
+                      80,
+                      MovementLayout.kSecondaryButtonHeight,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),
@@ -142,9 +144,14 @@ class MovementConfirmDialog extends StatelessWidget {
                     Navigator.of(context).pop(true);
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: destructive ? colors.error : colors.primary,
+                    backgroundColor: destructive
+                        ? colors.error
+                        : colors.primary,
                     foregroundColor: colors.onPrimary,
-                    minimumSize: const Size(80, MovementLayout.kSecondaryButtonHeight),
+                    minimumSize: const Size(
+                      80,
+                      MovementLayout.kSecondaryButtonHeight,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),

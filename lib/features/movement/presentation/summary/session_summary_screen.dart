@@ -66,7 +66,8 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
 
   Future<void> _persistFeedback() async {
     final note = _noteController.text.trim();
-    if (_selectedFeeling != widget.workoutLog.feeling || note != (widget.workoutLog.note ?? '')) {
+    if (_selectedFeeling != widget.workoutLog.feeling ||
+        note != (widget.workoutLog.note ?? '')) {
       final updated = widget.workoutLog.copyWith(
         feeling: _selectedFeeling,
         note: note.isNotEmpty ? note : null,
@@ -120,7 +121,9 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -149,14 +152,18 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                             widget.isPartial
                                 ? MovementStrings.summarySubtitlePartial
                                 : MovementStrings.summarySubtitleCompleted,
-                            style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                            style: RitmoTextStyles.sectionHeadline(
+                              colors.textPrimary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                           if (widget.activityKind != null) ...[
                             const SizedBox(height: 2),
                             Text(
                               widget.activityKind!.nameFa,
-                              style: RitmoTextStyles.caption(colors.textSecondary),
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
+                              ),
                             ),
                           ],
                         ],
@@ -180,12 +187,18 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.compare_arrows_rounded, color: sportsColor, size: 20),
+                            Icon(
+                              Icons.compare_arrows_rounded,
+                              color: sportsColor,
+                              size: 20,
+                            ),
                             const SizedBox(width: RitmoSpacing.sm),
                             Expanded(
                               child: Text(
                                 'جلسهٔ قبل: ${toPersianDigits((widget.previousLog!.durationSec / 60).round())} دقیقه',
-                                style: RitmoTextStyles.body(colors.textSecondary),
+                                style: RitmoTextStyles.body(
+                                  colors.textSecondary,
+                                ),
                               ),
                             ),
                           ],
@@ -195,7 +208,9 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                     ],
 
                     // ناحیهٔ ۴: رکورد شخصی (PR) شرطی
-                    if (widget.isPr && widget.prTitle != null && widget.prValue != null) ...[
+                    if (widget.isPr &&
+                        widget.prTitle != null &&
+                        widget.prValue != null) ...[
                       SummaryPrBlock(
                         prTitle: widget.prTitle!,
                         prValue: widget.prValue!,
@@ -206,7 +221,8 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                     // ناحیهٔ ۵: حس بعد از تمرین و یادداشت
                     SummaryFeelingPicker(
                       selectedFeeling: _selectedFeeling,
-                      onFeelingChanged: (feel) => setState(() => _selectedFeeling = feel),
+                      onFeelingChanged: (feel) =>
+                          setState(() => _selectedFeeling = feel),
                       noteController: _noteController,
                     ),
                     const SizedBox(height: RitmoSpacing.md),
@@ -222,7 +238,11 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.auto_graph_rounded, color: sportsColor, size: 20),
+                          Icon(
+                            Icons.auto_graph_rounded,
+                            color: sportsColor,
+                            size: 20,
+                          ),
                           const SizedBox(width: RitmoSpacing.sm),
                           Expanded(
                             child: Text(
@@ -243,7 +263,9 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                         decoration: BoxDecoration(
                           color: sportsColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(RitmoRadius.card),
-                          border: Border.all(color: sportsColor.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: sportsColor.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,7 +288,9 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                                 backgroundColor: sportsColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(RitmoRadius.field),
+                                  borderRadius: BorderRadius.circular(
+                                    RitmoRadius.field,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -295,10 +319,15 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                     child: OutlinedButton(
                       onPressed: _handleLogAnother,
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kFieldMinHeight,
+                        ),
                         side: BorderSide(color: colors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -313,11 +342,16 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                     child: ElevatedButton(
                       onPressed: _handleDone,
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kFieldMinHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kFieldMinHeight,
+                        ),
                         backgroundColor: sportsColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: Text(

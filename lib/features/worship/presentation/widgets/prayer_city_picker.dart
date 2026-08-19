@@ -255,7 +255,9 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
       child: RitmoTheme.glassCardLight(
         borderRadius: 28,
         child: Container(
-          height: MediaQuery.of(context).size.height * 0.75,
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -436,18 +438,22 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         title: Text(
                           cityName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: isSelected ? colors.primary : colors.textPrimary,
                             fontSize: 15,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
+                          ),
                         ),
                         subtitle: Text(
                           provinceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colors.textSecondary,
                             fontSize: 12.5,
-                            ),
+                          ),
                         ),
                         trailing: isSelected
                             ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary, size: 18)

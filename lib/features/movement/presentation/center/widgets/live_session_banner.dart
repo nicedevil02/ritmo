@@ -83,7 +83,8 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
     final sportsColor = context.modules.sports;
 
     final activityName =
-        widget.session.activityKind?.nameFa ?? MovementStrings.bannerDefaultTitle;
+        widget.session.activityKind?.nameFa ??
+        MovementStrings.bannerDefaultTitle;
     final timeStr = _formatDuration(_elapsedSeconds);
     final isPaused = widget.session.status == MovementLiveSessionStatus.paused;
 
@@ -141,9 +142,9 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
                 children: [
                   Text(
                     activityName,
-                    style: RitmoTextStyles.label(colors.textPrimary).copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: RitmoTextStyles.label(
+                      colors.textPrimary,
+                    ).copyWith(fontWeight: FontWeight.w700),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -204,7 +205,11 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
                   value: 'finish',
                   child: Row(
                     children: [
-                      Icon(Icons.check_rounded, color: colors.primary, size: 18),
+                      Icon(
+                        Icons.check_rounded,
+                        color: colors.primary,
+                        size: 18,
+                      ),
                       const SizedBox(width: RitmoSpacing.sm),
                       Text(
                         MovementStrings.bannerFinishAndSave,
@@ -217,7 +222,11 @@ class _LiveSessionBannerState extends State<LiveSessionBanner> {
                   value: 'discard',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline_rounded, color: colors.error, size: 18),
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        color: colors.error,
+                        size: 18,
+                      ),
                       const SizedBox(width: RitmoSpacing.sm),
                       Text(
                         MovementStrings.bannerDiscardSession,

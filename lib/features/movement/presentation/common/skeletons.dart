@@ -39,9 +39,10 @@ class _MovementSkeletonBoxState extends State<MovementSkeletonBox>
         vsync: this,
         duration: const Duration(milliseconds: 1200),
       )..repeat(reverse: true);
-      _animation = Tween<double>(begin: 0.35, end: 0.85).animate(
-        CurvedAnimation(parent: _controller!, curve: Curves.easeInOut),
-      );
+      _animation = Tween<double>(
+        begin: 0.35,
+        end: 0.85,
+      ).animate(CurvedAnimation(parent: _controller!, curve: Curves.easeInOut));
     }
   }
 
@@ -96,10 +97,7 @@ class _MovementSkeletonBoxState extends State<MovementSkeletonBox>
 
 /// اسکلت هیرو کارت مرکز حرکت
 class HeroSkeleton extends StatelessWidget {
-  const HeroSkeleton({
-    super.key,
-    this.height = MovementLayout.kHeroMinHeight,
-  });
+  const HeroSkeleton({super.key, this.height = MovementLayout.kHeroMinHeight});
 
   final double height;
 

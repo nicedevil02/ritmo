@@ -49,14 +49,19 @@ class _CounterControlState extends State<CounterControl> {
   }
 
   void _showManualDialog() async {
-    final controller = TextEditingController(text: widget.currentCount.toString());
+    final controller = TextEditingController(
+      text: widget.currentCount.toString(),
+    );
     final result = await showDialog<int>(
       context: context,
       builder: (ctx) {
         final colors = ctx.colors;
         return AlertDialog(
           backgroundColor: colors.surfaceElevated,
-          title: Text('ورود تعداد تکرار', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+          title: Text(
+            'ورود تعداد تکرار',
+            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+          ),
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -181,7 +186,9 @@ class _CounterControlState extends State<CounterControl> {
               onPressed: _showManualDialog,
               icon: const Icon(Icons.edit_rounded, size: 16),
               label: const Text('ورود دستی'),
-              style: TextButton.styleFrom(foregroundColor: colors.textSecondary),
+              style: TextButton.styleFrom(
+                foregroundColor: colors.textSecondary,
+              ),
             ),
           ],
         ),

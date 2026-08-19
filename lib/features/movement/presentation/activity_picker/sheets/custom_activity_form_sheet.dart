@@ -18,7 +18,8 @@ class CustomActivityFormSheet extends StatefulWidget {
     required String family,
     required String primaryMetric,
     required String icon,
-  }) onSubmit;
+  })
+  onSubmit;
 
   static Future<MovementActivityKind?> show(
     BuildContext context, {
@@ -28,7 +29,8 @@ class CustomActivityFormSheet extends StatefulWidget {
       required String family,
       required String primaryMetric,
       required String icon,
-    }) onSubmit,
+    })
+    onSubmit,
   }) {
     return showModalBottomSheet<MovementActivityKind>(
       context: context,
@@ -45,7 +47,8 @@ class CustomActivityFormSheet extends StatefulWidget {
   }
 
   @override
-  State<CustomActivityFormSheet> createState() => _CustomActivityFormSheetState();
+  State<CustomActivityFormSheet> createState() =>
+      _CustomActivityFormSheetState();
 }
 
 class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
@@ -61,8 +64,16 @@ class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
     {'key': 'running', 'title': 'دویدن و پیاده‌روی', 'icon': 'directions_run'},
     {'key': 'cycling', 'title': 'دوچرخه‌سواری', 'icon': 'directions_bike'},
     {'key': 'swimming', 'title': 'شنا و ورزش‌های آبی', 'icon': 'pool'},
-    {'key': 'strength', 'title': 'تمرین قدرتی و بدنسازی', 'icon': 'fitness_center'},
-    {'key': 'mobility', 'title': 'کشش و انعطاف‌پذیری', 'icon': 'self_improvement'},
+    {
+      'key': 'strength',
+      'title': 'تمرین قدرتی و بدنسازی',
+      'icon': 'fitness_center',
+    },
+    {
+      'key': 'mobility',
+      'title': 'کشش و انعطاف‌پذیری',
+      'icon': 'self_improvement',
+    },
     {'key': 'racket', 'title': 'ورزش‌های راکتی', 'icon': 'sports_tennis'},
     {'key': 'team', 'title': 'ورزش‌های تیمی', 'icon': 'sports_soccer'},
     {'key': 'martial', 'title': 'هنرهای رزمی', 'icon': 'sports_kabaddi'},
@@ -88,7 +99,9 @@ class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     final trimmedName = _nameController.text.trim();
-    if (widget.existingNames.any((n) => n.toLowerCase() == trimmedName.toLowerCase())) {
+    if (widget.existingNames.any(
+      (n) => n.toLowerCase() == trimmedName.toLowerCase(),
+    )) {
       setState(() {
         _errorMessage = MovementStrings.customActivityDuplicateError;
       });
@@ -129,7 +142,9 @@ class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -210,7 +225,10 @@ class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
                 items: _families.map((f) {
                   return DropdownMenuItem(
                     value: f['key'],
-                    child: Text(f['title']!, style: RitmoTextStyles.body(colors.textPrimary)),
+                    child: Text(
+                      f['title']!,
+                      style: RitmoTextStyles.body(colors.textPrimary),
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -244,7 +262,10 @@ class _CustomActivityFormSheetState extends State<CustomActivityFormSheet> {
                 items: _metrics.map((m) {
                   return DropdownMenuItem(
                     value: m,
-                    child: Text(m, style: RitmoTextStyles.body(colors.textPrimary)),
+                    child: Text(
+                      m,
+                      style: RitmoTextStyles.body(colors.textPrimary),
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {

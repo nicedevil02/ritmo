@@ -26,10 +26,12 @@ class StrengthProgramPreviewScreen extends StatefulWidget {
   final StrengthProgramService? strengthService;
 
   @override
-  State<StrengthProgramPreviewScreen> createState() => _StrengthProgramPreviewScreenState();
+  State<StrengthProgramPreviewScreen> createState() =>
+      _StrengthProgramPreviewScreenState();
 }
 
-class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScreen> {
+class _StrengthProgramPreviewScreenState
+    extends State<StrengthProgramPreviewScreen> {
   late final StrengthProgramService _service;
   bool _isActivating = false;
   bool _isSampleExpanded = false;
@@ -54,16 +56,18 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
       );
 
       if (mounted) {
-        unawaited(Navigator.of(context).pushNamedAndRemoveUntil(
-          MovementRoutes.strengthHub,
-          (route) => route.isFirst,
-        ));
+        unawaited(
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            MovementRoutes.strengthHub,
+            (route) => route.isFirst,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در فعال‌سازی برنامه: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('خطا در فعال‌سازی برنامه: $e')));
       }
     } finally {
       if (mounted) {
@@ -93,7 +97,9 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -106,16 +112,18 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                       decoration: BoxDecoration(
                         color: sportsColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(RitmoRadius.card),
-                        border: Border.all(color: sportsColor.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: sportsColor.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.program.name ?? 'برنامهٔ قدرت در خانه',
-                            style: RitmoTextStyles.cardTitle(sportsColor).copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: RitmoTextStyles.cardTitle(
+                              sportsColor,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           Wrap(
@@ -123,18 +131,30 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                             runSpacing: RitmoSpacing.xs,
                             children: [
                               Chip(
-                                label: Text('${toPersianDigits(widget.program.daysPerWeek)} روز در هفته'),
-                                labelStyle: RitmoTextStyles.caption(colors.textPrimary),
+                                label: Text(
+                                  '${toPersianDigits(widget.program.daysPerWeek)} روز در هفته',
+                                ),
+                                labelStyle: RitmoTextStyles.caption(
+                                  colors.textPrimary,
+                                ),
                                 backgroundColor: colors.surface,
                               ),
                               Chip(
-                                label: Text('${toPersianDigits(widget.program.sessionMinutes)} دقیقه هر جلسه'),
-                                labelStyle: RitmoTextStyles.caption(colors.textPrimary),
+                                label: Text(
+                                  '${toPersianDigits(widget.program.sessionMinutes)} دقیقه هر جلسه',
+                                ),
+                                labelStyle: RitmoTextStyles.caption(
+                                  colors.textPrimary,
+                                ),
                                 backgroundColor: colors.surface,
                               ),
                               Chip(
-                                label: Text('دورهٔ ${toPersianDigits(widget.program.totalWeeks)} هفته‌ای'),
-                                labelStyle: RitmoTextStyles.caption(colors.textPrimary),
+                                label: Text(
+                                  'دورهٔ ${toPersianDigits(widget.program.totalWeeks)} هفته‌ای',
+                                ),
+                                labelStyle: RitmoTextStyles.caption(
+                                  colors.textPrimary,
+                                ),
                                 backgroundColor: colors.surface,
                               ),
                             ],
@@ -151,7 +171,9 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                     // ناحیهٔ ۳: جدول زمان‌بندی هفتهٔ اول
                     Text(
                       'برنامهٔ هفتهٔ اول:',
-                      style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                      style: RitmoTextStyles.sectionHeadline(
+                        colors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: RitmoSpacing.sm),
                     Material(
@@ -166,10 +188,15 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                           children: week1Days.map((day) {
                             return ListTile(
                               leading: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: sportsColor.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                  borderRadius: BorderRadius.circular(
+                                    RitmoRadius.pill,
+                                  ),
                                 ),
                                 child: Text(
                                   _getWeekdayName(day.weekday),
@@ -178,15 +205,21 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                               ),
                               title: Text(
                                 day.name,
-                                style: RitmoTextStyles.label(colors.textPrimary),
+                                style: RitmoTextStyles.label(
+                                  colors.textPrimary,
+                                ),
                               ),
                               subtitle: Text(
                                 day.targetMuscles.join(' • '),
-                                style: RitmoTextStyles.caption(colors.textSecondary),
+                                style: RitmoTextStyles.caption(
+                                  colors.textSecondary,
+                                ),
                               ),
                               trailing: Text(
                                 '${toPersianDigits(day.estimatedMinutes)} دقیقه',
-                                style: RitmoTextStyles.caption(colors.textTertiary),
+                                style: RitmoTextStyles.caption(
+                                  colors.textTertiary,
+                                ),
                               ),
                             );
                           }).toList(),
@@ -202,12 +235,15 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                         borderRadius: BorderRadius.circular(RitmoRadius.card),
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.card,
+                            ),
                             border: Border.all(color: colors.border),
                           ),
                           child: ExpansionTile(
                             initiallyExpanded: _isSampleExpanded,
-                            onExpansionChanged: (exp) => setState(() => _isSampleExpanded = exp),
+                            onExpansionChanged: (exp) =>
+                                setState(() => _isSampleExpanded = exp),
                             title: Text(
                               'نمونهٔ حرکات جلسهٔ اول (${sampleDay.name})',
                               style: RitmoTextStyles.label(colors.textPrimary),
@@ -220,10 +256,17 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                                   backgroundColor: colors.surfaceSunken,
                                   child: Text(
                                     toPersianDigits(ex.orderIndex + 1),
-                                    style: RitmoTextStyles.caption(colors.textPrimary),
+                                    style: RitmoTextStyles.caption(
+                                      colors.textPrimary,
+                                    ),
                                   ),
                                 ),
-                                title: Text(ex.nameFa, style: RitmoTextStyles.body(colors.textPrimary)),
+                                title: Text(
+                                  ex.nameFa,
+                                  style: RitmoTextStyles.body(
+                                    colors.textPrimary,
+                                  ),
+                                ),
                                 subtitle: Text(
                                   '${toPersianDigits(ex.sets)} ست × ${toPersianDigits(ex.repsDisplay)} تکرار',
                                   style: RitmoTextStyles.caption(sportsColor),
@@ -250,14 +293,16 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                         children: [
                           Text(
                             MovementStrings.strengthProgressionTitle,
-                            style: RitmoTextStyles.label(colors.textPrimary).copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: RitmoTextStyles.label(
+                              colors.textPrimary,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: RitmoSpacing.xs),
                           Text(
                             'در هفته‌های ۱ تا ۳ با حرکات آشنا می‌شوید و حجم تمرین تثبیت می‌شود. هفتهٔ ۴ هفتهٔ دِلود برای ریکاوری است و در هفته‌های ۵ و ۶ با افزایش تدریجی رکوردها به اوج آمادگی می‌رسید.',
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -278,10 +323,15 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         side: BorderSide(color: colors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -296,18 +346,26 @@ class _StrengthProgramPreviewScreenState extends State<StrengthProgramPreviewScr
                     child: ElevatedButton(
                       onPressed: _isActivating ? null : _handleActivate,
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         backgroundColor: sportsColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: _isActivating
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : Text(
                               MovementStrings.strengthPreviewActivate,

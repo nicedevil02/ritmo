@@ -34,90 +34,102 @@ void main() {
       }
     });
 
-    test('records check-in with optional fields and retrieves today checkin', () async {
-      if (!dbInitialized || db == null) return;
-      final now = DateTime(2026, 8, 16);
-      final checkin = MovementReadinessCheckin(
-        id: 'chk_1',
-        dateIso: '2026-08-16',
-        sleep: 4,
-        energy: 5,
-        soreness: 1,
-        stress: 2,
-        availableMinutes: 30,
-        createdAt: now,
-      );
+    test(
+      'records check-in with optional fields and retrieves today checkin',
+      () async {
+        if (!dbInitialized || db == null) return;
+        final now = DateTime(2026, 8, 16);
+        final checkin = MovementReadinessCheckin(
+          id: 'chk_1',
+          dateIso: '2026-08-16',
+          sleep: 4,
+          energy: 5,
+          soreness: 1,
+          stress: 2,
+          availableMinutes: 30,
+          createdAt: now,
+        );
 
-      await service.recordCheckin(checkin);
-      final retrieved = await service.getTodayCheckin(now);
+        await service.recordCheckin(checkin);
+        final retrieved = await service.getTodayCheckin(now);
 
-      expect(retrieved, isNotNull);
-      expect(retrieved!.id, equals('chk_1'));
-      expect(retrieved.sleep, equals(4));
-      expect(retrieved.energy, equals(5));
-      expect(retrieved.filledFieldsCount, equals(5));
-    });
+        expect(retrieved, isNotNull);
+        expect(retrieved!.id, equals('chk_1'));
+        expect(retrieved.sleep, equals(4));
+        expect(retrieved.energy, equals(5));
+        expect(retrieved.filledFieldsCount, equals(5));
+      },
+    );
 
-    test('computeReadinessResult returns descriptive status without numeric score', () {
-      final highEnergyCheckin = MovementReadinessCheckin(
-        id: 'chk_high',
-        dateIso: '2026-08-16',
-        sleep: 5,
-        energy: 5,
-        soreness: 1,
-        stress: 1,
-        createdAt: DateTime.now(),
-      );
+    test(
+      'computeReadinessResult returns descriptive status without numeric score',
+      () {
+        final highEnergyCheckin = MovementReadinessCheckin(
+          id: 'chk_high',
+          dateIso: '2026-08-16',
+          sleep: 5,
+          energy: 5,
+          soreness: 1,
+          stress: 1,
+          createdAt: DateTime.now(),
+        );
 
-      final result = service.computeReadinessResult(highEnergyCheckin);
-      expect(result.statusHeadline, contains('آمادگی بسیار مناسب'));
-      expect(result.suggestions.length, inInclusiveRange(1, 3));
-      expect(result.statusHeadline.contains('/100'), isFalse);
-      expect(result.statusHeadline.contains('%'), isFalse);
-    });
+        final result = service.computeReadinessResult(highEnergyCheckin);
+        expect(result.statusHeadline, contains('آمادگی بسیار مناسب'));
+        expect(result.suggestions.length, inInclusiveRange(1, 3));
+        expect(result.statusHeadline.contains('/100'), isFalse);
+        expect(result.statusHeadline.contains('%'), isFalse);
+      },
+    );
 
-    test('computeReadinessResult handles sore or low sleep checkin with Plan B suggestion', () {
-      final tiredCheckin = MovementReadinessCheckin(
-        id: 'chk_tired',
-        dateIso: '2026-08-16',
-        sleep: 1,
-        energy: 2,
-        soreness: 5,
-        stress: 4,
-        createdAt: DateTime.now(),
-      );
+    test(
+      'computeReadinessResult handles sore or low sleep checkin with Plan B suggestion',
+      () {
+        final tiredCheckin = MovementReadinessCheckin(
+          id: 'chk_tired',
+          dateIso: '2026-08-16',
+          sleep: 1,
+          energy: 2,
+          soreness: 5,
+          stress: 4,
+          createdAt: DateTime.now(),
+        );
 
-      final result = service.computeReadinessResult(tiredCheckin);
-      expect(result.statusHeadline, contains('نیاز به تمرکز بر ریکاوری'));
-      expect(result.suggestions.any((s) => s.contains('Plan B')), isTrue);
-    });
+        final result = service.computeReadinessResult(tiredCheckin);
+        expect(result.statusHeadline, contains('نیاز به تمرکز بر ریکاوری'));
+        expect(result.suggestions.any((s) => s.contains('Plan B')), isTrue);
+      },
+    );
 
-    test('getCoachSuggestion produces actionable non-blocking suggestion', () async {
-      final highEnergyCheckin = MovementReadinessCheckin(
-        id: 'chk_high',
-        dateIso: '2026-08-16',
-        sleep: 5,
-        energy: 5,
-        soreness: 1,
-        stress: 1,
-        createdAt: DateTime.now(),
-      );
+    test(
+      'getCoachSuggestion produces actionable non-blocking suggestion',
+      () async {
+        final highEnergyCheckin = MovementReadinessCheckin(
+          id: 'chk_high',
+          dateIso: '2026-08-16',
+          sleep: 5,
+          energy: 5,
+          soreness: 1,
+          stress: 1,
+          createdAt: DateTime.now(),
+        );
 
-      final suggestion = await service.getCoachSuggestion(
-        checkin: highEnergyCheckin,
-        dismissedSuggestionIds: [],
-      );
+        final suggestion = await service.getCoachSuggestion(
+          checkin: highEnergyCheckin,
+          dismissedSuggestionIds: [],
+        );
 
-      expect(suggestion, isNotNull);
-      expect(suggestion!.id, equals('sug_high_energy_focus'));
-      expect(suggestion.primaryActionLabel.isNotEmpty, isTrue);
+        expect(suggestion, isNotNull);
+        expect(suggestion!.id, equals('sug_high_energy_focus'));
+        expect(suggestion.primaryActionLabel.isNotEmpty, isTrue);
 
-      // If dismissed, returns null
-      final dismissedSuggestion = await service.getCoachSuggestion(
-        checkin: highEnergyCheckin,
-        dismissedSuggestionIds: ['sug_high_energy_focus'],
-      );
-      expect(dismissedSuggestion, isNull);
-    });
+        // If dismissed, returns null
+        final dismissedSuggestion = await service.getCoachSuggestion(
+          checkin: highEnergyCheckin,
+          dismissedSuggestionIds: ['sug_high_energy_focus'],
+        );
+        expect(dismissedSuggestion, isNull);
+      },
+    );
   });
 }

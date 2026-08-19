@@ -34,7 +34,8 @@ class ActivityPlanEditorScreen extends StatefulWidget {
   final DateTime? initialDate;
 
   @override
-  State<ActivityPlanEditorScreen> createState() => _ActivityPlanEditorScreenState();
+  State<ActivityPlanEditorScreen> createState() =>
+      _ActivityPlanEditorScreenState();
 }
 
 class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
@@ -44,7 +45,8 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ??
+    _controller =
+        widget.controller ??
         ActivityPlanEditorController(
           initialActivityKindId: widget.activityKindId,
           existingTemplateId: widget.existingTemplateId,
@@ -202,21 +204,38 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
                         ],
 
                         // مرحله ۱: انتخاب فعالیت
-                        _buildStepHeader(context, 1, MovementStrings.plannerStepActivity),
-                        _buildActivitySelectionCard(context, colors, sportsColor),
+                        _buildStepHeader(
+                          context,
+                          1,
+                          MovementStrings.plannerStepActivity,
+                        ),
+                        _buildActivitySelectionCard(
+                          context,
+                          colors,
+                          sportsColor,
+                        ),
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۲: نوع جلسه
-                        _buildStepHeader(context, 2, MovementStrings.plannerStepSessionType),
+                        _buildStepHeader(
+                          context,
+                          2,
+                          MovementStrings.plannerStepSessionType,
+                        ),
                         _buildSessionTypeChips(context, colors, sportsColor),
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۳: هدف
-                        _buildStepHeader(context, 3, MovementStrings.plannerStepGoal),
+                        _buildStepHeader(
+                          context,
+                          3,
+                          MovementStrings.plannerStepGoal,
+                        ),
                         if (_controller.activityKind != null)
                           GoalFieldGroup(
                             family: _controller.activityKind!.family,
-                            primaryMetric: _controller.activityKind!.primaryMetric,
+                            primaryMetric:
+                                _controller.activityKind!.primaryMetric,
                             initialGoalType: _controller.goalType,
                             initialGoalValue: _controller.goalValue,
                             initialGoalUnit: _controller.goalUnit,
@@ -227,7 +246,11 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۴: زمان‌بندی
-                        _buildStepHeader(context, 4, MovementStrings.plannerStepSchedule),
+                        _buildStepHeader(
+                          context,
+                          4,
+                          MovementStrings.plannerStepSchedule,
+                        ),
                         WeekdayChips(
                           initialSchedules: _controller.schedules,
                           onSchedulesChanged: (schs) {
@@ -237,17 +260,29 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۵: یادآوری
-                        _buildStepHeader(context, 5, MovementStrings.plannerStepReminder),
+                        _buildStepHeader(
+                          context,
+                          5,
+                          MovementStrings.plannerStepReminder,
+                        ),
                         _buildReminderChips(context, colors, sportsColor),
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۶: محدودیت‌ها و تداخل
-                        _buildStepHeader(context, 6, MovementStrings.plannerStepConstraints),
+                        _buildStepHeader(
+                          context,
+                          6,
+                          MovementStrings.plannerStepConstraints,
+                        ),
                         ConflictPanel(
                           conflicts: _controller.conflicts,
                           onSuggestionPickOtherTime: () {},
                           onSuggestionShorten: () {
-                            _controller.setGoal(_controller.goalType, 15.0, _controller.goalUnit);
+                            _controller.setGoal(
+                              _controller.goalType,
+                              15.0,
+                              _controller.goalUnit,
+                            );
                           },
                           onSuggestionMoveToFreeDay: () {},
                           onSuggestionKeepBoth: () {},
@@ -255,7 +290,11 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
                         const SizedBox(height: RitmoSpacing.xl),
 
                         // مرحله ۷ و ۸: پیش‌نمایش و تأیید و ذخیره
-                        _buildStepHeader(context, 7, MovementStrings.plannerStepPreview),
+                        _buildStepHeader(
+                          context,
+                          7,
+                          MovementStrings.plannerStepPreview,
+                        ),
                         if (_controller.activityKind != null)
                           PlanPreviewCard(
                             activityKind: _controller.activityKind!,
@@ -264,7 +303,8 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
                             goalValue: _controller.goalValue,
                             goalUnit: _controller.goalUnit,
                             reminderType: _controller.reminderType,
-                            isSaving: _controller.state == PlanEditorState.saving,
+                            isSaving:
+                                _controller.state == PlanEditorState.saving,
                             disabledReason: _controller.disabledReason,
                             onConfirm: _controller.isValid ? _handleSave : null,
                             onEdit: () {

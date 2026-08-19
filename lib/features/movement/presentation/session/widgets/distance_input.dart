@@ -36,7 +36,10 @@ class DistanceInput extends StatelessWidget {
         final colors = ctx.colors;
         return AlertDialog(
           backgroundColor: colors.surfaceElevated,
-          title: Text('ورود مسافت (کیلومتر)', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+          title: Text(
+            'ورود مسافت (کیلومتر)',
+            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+          ),
           content: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -104,10 +107,7 @@ class DistanceInput extends StatelessWidget {
                       style: RitmoTextStyles.heroNumber(colors.textPrimary),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      'کیلومتر',
-                      style: RitmoTextStyles.label(sportsColor),
-                    ),
+                    Text('کیلومتر', style: RitmoTextStyles.label(sportsColor)),
                   ],
                 ),
                 if (targetDistanceKm != null) ...[
@@ -127,11 +127,23 @@ class DistanceInput extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildQuickBtn('+۰.۱', () => onDistanceChanged(distanceKm + 0.1), sportsColor),
+            _buildQuickBtn(
+              '+۰.۱',
+              () => onDistanceChanged(distanceKm + 0.1),
+              sportsColor,
+            ),
             const SizedBox(width: RitmoSpacing.sm),
-            _buildQuickBtn('+۰.۵', () => onDistanceChanged(distanceKm + 0.5), sportsColor),
+            _buildQuickBtn(
+              '+۰.۵',
+              () => onDistanceChanged(distanceKm + 0.5),
+              sportsColor,
+            ),
             const SizedBox(width: RitmoSpacing.sm),
-            _buildQuickBtn('+۱.۰', () => onDistanceChanged(distanceKm + 1.0), sportsColor),
+            _buildQuickBtn(
+              '+۱.۰',
+              () => onDistanceChanged(distanceKm + 1.0),
+              sportsColor,
+            ),
           ],
         ),
         const SizedBox(height: RitmoSpacing.md),
@@ -172,10 +184,7 @@ class DistanceInput extends StatelessWidget {
           borderRadius: BorderRadius.circular(RitmoRadius.field),
         ),
       ),
-      child: Text(
-        toPersianDigits(text),
-        style: RitmoTextStyles.label(color),
-      ),
+      child: Text(toPersianDigits(text), style: RitmoTextStyles.label(color)),
     );
   }
 }

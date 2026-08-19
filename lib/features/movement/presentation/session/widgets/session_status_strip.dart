@@ -60,8 +60,8 @@ class SessionStatusStrip extends StatelessWidget {
                   color: status == MovementLiveSessionStatus.active
                       ? sportsColor
                       : status == MovementLiveSessionStatus.paused
-                          ? colors.warning
-                          : colors.textTertiary,
+                      ? colors.warning
+                      : colors.textTertiary,
                   shape: BoxShape.circle,
                 ),
               ),

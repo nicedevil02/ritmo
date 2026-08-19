@@ -8,10 +8,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// کارت توزیع کار گروه‌های عضلانی (BodyMapCard)
 /// ارتفاع استاندارد kBodyMapHeight، طراحی خنثی و غیرجنسیتی همراه با معادل متنی اجباری.
 class BodyMapCard extends StatelessWidget {
-  const BodyMapCard({
-    super.key,
-    required this.items,
-  });
+  const BodyMapCard({super.key, required this.items});
 
   final List<MovementMuscleWorkloadItem> items;
 
@@ -24,7 +21,8 @@ class BodyMapCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final semanticSummary = 'توزیع کار عضلانی: ${items.map((i) => '${i.muscleGroup}: ${toPersianDigits(i.setsCount)} ست (${toPersianDigits(i.percentage)}٪)').join('، ')}';
+    final semanticSummary =
+        'توزیع کار عضلانی: ${items.map((i) => '${i.muscleGroup}: ${toPersianDigits(i.setsCount)} ست (${toPersianDigits(i.percentage)}٪)').join('، ')}';
 
     return Semantics(
       label: semanticSummary,
@@ -56,7 +54,8 @@ class BodyMapCard extends StatelessWidget {
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
                 itemCount: items.length,
-                separatorBuilder: (context, index) => const SizedBox(height: RitmoSpacing.sm),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: RitmoSpacing.sm),
                 itemBuilder: (context, index) {
                   final item = items[index];
                   return Row(
@@ -78,7 +77,9 @@ class BodyMapCard extends StatelessWidget {
                             value: (item.percentage / 100).clamp(0.05, 1.0),
                             minHeight: 8,
                             backgroundColor: colors.surfaceSunken,
-                            valueColor: AlwaysStoppedAnimation<Color>(sportsColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              sportsColor,
+                            ),
                           ),
                         ),
                       ),
@@ -87,7 +88,9 @@ class BodyMapCard extends StatelessWidget {
                         width: 80,
                         child: Text(
                           '${toPersianDigits(item.setsCount)} ست (${toPersianDigits(item.percentage)}٪)',
-                          style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 10),
+                          style: RitmoTextStyles.caption(
+                            colors.textSecondary,
+                          ).copyWith(fontSize: 10),
                           textAlign: TextAlign.end,
                         ),
                       ),

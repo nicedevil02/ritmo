@@ -60,7 +60,8 @@ abstract final class MovementStrings {
 
   // Recovery Day Card
   static const recoveryDayTitle = 'روز ریکاوری';
-  static const recoveryDayDesc = 'این روز برای بازیابی بین جلسه‌ها نگه داشته شده';
+  static const recoveryDayDesc =
+      'این روز برای بازیابی بین جلسه‌ها نگه داشته شده';
   static const recoveryDayAddLight = 'افزودن حرکت سبک';
 
   // Week Summary Card
@@ -100,7 +101,8 @@ abstract final class MovementStrings {
   static const strengthStartNextCycle = 'شروع دورهٔ بعد';
   static const strengthNotMedical = 'این بخش جایگزین مشاورهٔ پزشکی نیست';
   static const strengthActivate = 'فعالسازی برنامه';
-  static const strengthDraftDesc = 'پیش‌نویس برنامهٔ قدرتی شما در انتظار تکمیل است.';
+  static const strengthDraftDesc =
+      'پیش‌نویس برنامهٔ قدرتی شما در انتظار تکمیل است.';
   static const strengthResumeOnboarding = 'ادامهٔ آنبوردینگ قدرت';
   static const strengthFinishedDesc =
       'دورهٔ تمرینی با موفقیت به پایان رسید. اکنون می‌توانید دورهٔ بعدی را با حجم و شدت جدید آغاز کنید.';
@@ -295,7 +297,8 @@ abstract final class MovementStrings {
   static const customActivityMetric = 'شاخص اصلی';
   static const customActivitySubmit = 'ذخیرهٔ فعالیت';
   static const customActivityCreatedToast = 'فعالیت جدید با موفقیت ایجاد شد';
-  static const customActivityDuplicateError = 'فعالیتی با این نام از قبل وجود دارد';
+  static const customActivityDuplicateError =
+      'فعالیتی با این نام از قبل وجود دارد';
 
   // Planner Goals & Recurrence
   static const goalSuggestedBadge = 'پیشنهادی';
@@ -367,7 +370,8 @@ abstract final class MovementStrings {
   static const summaryEstimated = 'تخمینی';
 
   // progress.* / settings.* / common.*
-  static const progressNeedMoreData = 'برای نمایش روند به دادهٔ بیشتری نیاز است';
+  static const progressNeedMoreData =
+      'برای نمایش روند به دادهٔ بیشتری نیاز است';
   static const progressShowTable = 'نمایش به‌صورت جدول';
   static const settingsDeleteMovementData = 'حذف دادهٔ حرکت';
   static const commonRetry = 'تلاش دوباره';

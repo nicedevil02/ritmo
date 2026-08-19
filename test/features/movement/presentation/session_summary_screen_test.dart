@@ -36,7 +36,8 @@ void main() {
     activityKindId: 'kind_running',
     dateIso: '2026-08-16',
     durationSec: 1800, // 30 mins
-    metricJson: '{"distanceKm": 5.2, "calories": 320, "caloriesEstimated": true}',
+    metricJson:
+        '{"distanceKm": 5.2, "calories": 320, "caloriesEstimated": true}',
     source: 'live',
     createdAt: DateTime.now(),
     updatedAt: DateTime.now(),
@@ -48,74 +49,91 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('SessionSummaryScreen Widget Tests (Gate 3)', () {
-    testWidgets('1. Renders all 7 zones with actual metrics and estimation badge', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '1. Renders all 7 zones with actual metrics and estimation badge',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final fakeLogService = FakeSummaryLogService();
+        final fakeLogService = FakeSummaryLogService();
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          SessionSummaryScreen(
-            workoutLog: sampleLog,
-            activityKind: sampleKind,
-            logService: fakeLogService,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            SessionSummaryScreen(
+              workoutLog: sampleLog,
+              activityKind: sampleKind,
+              logService: fakeLogService,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Zone 1: Confirmation sentence
-      expect(find.text(MovementStrings.summarySubtitleCompleted), findsOneWidget);
+        // Zone 1: Confirmation sentence
+        expect(
+          find.text(MovementStrings.summarySubtitleCompleted),
+          findsOneWidget,
+        );
 
-      // Zone 2: SummaryMetricBlock
-      expect(find.byType(SummaryMetricBlock), findsOneWidget);
-      expect(find.textContaining('۳۰'), findsWidgets); // 30 mins
-      expect(find.textContaining('۵.۲۰'), findsOneWidget); // 5.20 km
-      expect(find.text(MovementStrings.summaryEstimated), findsOneWidget);
+        // Zone 2: SummaryMetricBlock
+        expect(find.byType(SummaryMetricBlock), findsOneWidget);
+        expect(find.textContaining('۳۰'), findsWidgets); // 30 mins
+        expect(find.textContaining('۵.۲۰'), findsOneWidget); // 5.20 km
+        expect(find.text(MovementStrings.summaryEstimated), findsOneWidget);
 
-      // Zone 5: SummaryFeelingPicker
-      expect(find.byType(SummaryFeelingPicker), findsOneWidget);
-      expect(find.text('عالی'), findsOneWidget);
+        // Zone 5: SummaryFeelingPicker
+        expect(find.byType(SummaryFeelingPicker), findsOneWidget);
+        expect(find.text('عالی'), findsOneWidget);
 
-      // Zone 6: Weekly impact
-      expect(find.textContaining('دقیقه به دقایق تمرین این هفته اضافه شد'), findsOneWidget);
+        // Zone 6: Weekly impact
+        expect(
+          find.textContaining('دقیقه به دقایق تمرین این هفته اضافه شد'),
+          findsOneWidget,
+        );
 
-      // Zone 7: Two CTAs
-      expect(find.text(MovementStrings.summaryDone), findsOneWidget);
-      expect(find.text(MovementStrings.summaryLogAnother), findsOneWidget);
-    });
+        // Zone 7: Two CTAs
+        expect(find.text(MovementStrings.summaryDone), findsOneWidget);
+        expect(find.text(MovementStrings.summaryLogAnother), findsOneWidget);
+      },
+    );
 
-    testWidgets('2. Partial session shows neutral tone subtitle without exaggeration', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '2. Partial session shows neutral tone subtitle without exaggeration',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          SessionSummaryScreen(
-            workoutLog: sampleLog,
-            activityKind: sampleKind,
-            isPartial: true,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            SessionSummaryScreen(
+              workoutLog: sampleLog,
+              activityKind: sampleKind,
+              isPartial: true,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text(MovementStrings.summarySubtitlePartial), findsOneWidget);
-      expect(find.text(MovementStrings.summarySubtitleCompleted), findsNothing);
-    });
+        expect(
+          find.text(MovementStrings.summarySubtitlePartial),
+          findsOneWidget,
+        );
+        expect(
+          find.text(MovementStrings.summarySubtitleCompleted),
+          findsNothing,
+        );
+      },
+    );
 
-    testWidgets('3. Renders SummaryPrBlock when PR is achieved', (tester) async {
+    testWidgets('3. Renders SummaryPrBlock when PR is achieved', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -138,27 +156,38 @@ void main() {
       expect(find.textContaining('بیشترین مسافت ۵ کیلومتر'), findsOneWidget);
     });
 
-    testWidgets('4. QuickStart session renders proposal to add to weekly plan', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '4. QuickStart session renders proposal to add to weekly plan',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          SessionSummaryScreen(
-            workoutLog: sampleLog,
-            activityKind: sampleKind,
-            isQuickStart: true,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            SessionSummaryScreen(
+              workoutLog: sampleLog,
+              activityKind: sampleKind,
+              isQuickStart: true,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text(MovementStrings.summaryAddToPlanPrompt), findsOneWidget);
-      expect(find.text(MovementStrings.summaryAddToPlanButton), findsOneWidget);
-    });
+        expect(
+          find.text(MovementStrings.summaryAddToPlanPrompt),
+          findsOneWidget,
+        );
+        expect(
+          find.text(MovementStrings.summaryAddToPlanButton),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('5. Selecting feeling and tapping Done saves updated log', (tester) async {
+    testWidgets('5. Selecting feeling and tapping Done saves updated log', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);

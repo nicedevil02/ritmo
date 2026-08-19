@@ -85,7 +85,8 @@ class MovementSessionService {
   }) async {
     final dbExec = await _database;
     final now = DateTime.now().toUtc();
-    final sessionId = 'live_${now.millisecondsSinceEpoch}_${activityKindId.hashCode.abs()}';
+    final sessionId =
+        'live_${now.millisecondsSinceEpoch}_${activityKindId.hashCode.abs()}';
 
     final session = MovementLiveSession(
       id: sessionId,
@@ -95,7 +96,9 @@ class MovementSessionService {
       status: MovementLiveSessionStatus.active,
       startedAt: now,
       accumulatedPauseMs: 0,
-      targetSnapshotJson: targetSnapshot != null ? jsonEncode(targetSnapshot) : null,
+      targetSnapshotJson: targetSnapshot != null
+          ? jsonEncode(targetSnapshot)
+          : null,
       createdAt: now,
       updatedAt: now,
     );
@@ -210,10 +213,7 @@ class MovementSessionService {
         type: MovementSessionEventType.pause,
         at: now,
       );
-      await txn.insert(
-        MovementTables.tableSessionEvents,
-        event.toMap(),
-      );
+      await txn.insert(MovementTables.tableSessionEvents, event.toMap());
     });
   }
 
@@ -225,7 +225,9 @@ class MovementSessionService {
     // یافتن آخرین رویداد Pause برای محاسبهٔ وقفه
     final events = await getEvents(sessionId);
     int addedPauseMs = 0;
-    final lastPauseIndex = events.lastIndexWhere((e) => e.type == MovementSessionEventType.pause);
+    final lastPauseIndex = events.lastIndexWhere(
+      (e) => e.type == MovementSessionEventType.pause,
+    );
     if (lastPauseIndex != -1) {
       final pauseAt = events[lastPauseIndex].at;
       addedPauseMs = now.difference(pauseAt).inMilliseconds;
@@ -254,10 +256,7 @@ class MovementSessionService {
         payloadJson: jsonEncode({'pauseDurationMs': addedPauseMs}),
         at: now,
       );
-      await txn.insert(
-        MovementTables.tableSessionEvents,
-        event.toMap(),
-      );
+      await txn.insert(MovementTables.tableSessionEvents, event.toMap());
     });
   }
 
@@ -305,8 +304,10 @@ class MovementSessionService {
     }
 
     final elapsedSec = session.elapsedSeconds;
-    final logId = 'log_${now.millisecondsSinceEpoch}_${session.activityKindId.hashCode.abs()}';
-    final dateIso = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final logId =
+        'log_${now.millisecondsSinceEpoch}_${session.activityKindId.hashCode.abs()}';
+    final dateIso =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final startTimeStr = session.startedAt != null
         ? '${session.startedAt!.hour.toString().padLeft(2, '0')}:${session.startedAt!.minute.toString().padLeft(2, '0')}'
         : null;

@@ -64,7 +64,8 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
   @override
   void initState() {
     super.initState();
-    _occurrenceService = widget.occurrenceService ?? MovementOccurrenceService();
+    _occurrenceService =
+        widget.occurrenceService ?? MovementOccurrenceService();
     _logService = widget.logService ?? MovementLogService();
     _progressService = widget.progressService ?? MovementProgressService();
     _loadHistory();
@@ -72,10 +73,14 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
 
   Future<void> _loadHistory() async {
     try {
-      final logs = await _logService.getLogsForActivityKind(widget.activityKind.id);
+      final logs = await _logService.getLogsForActivityKind(
+        widget.activityKind.id,
+      );
       final prs = await _progressService.getPersonalRecords();
 
-      final kindPrs = prs.where((p) => p.activityKindId == widget.activityKind.id).toList();
+      final kindPrs = prs
+          .where((p) => p.activityKindId == widget.activityKind.id)
+          .toList();
 
       if (mounted) {
         setState(() {
@@ -152,7 +157,9 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
 
     return Material(
       color: colors.surface,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(RitmoRadius.sheet),
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -202,7 +209,9 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                         if (widget.activityKind.nameEn != null)
                           Text(
                             widget.activityKind.nameEn!,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                       ],
                     ),
@@ -239,10 +248,17 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('تعداد جلسات انجام‌شده:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                              Text(
+                                'تعداد جلسات انجام‌شده:',
+                                style: RitmoTextStyles.caption(
+                                  colors.textSecondary,
+                                ),
+                              ),
                               Text(
                                 '${toPersianDigits(_sessionCount)} جلسه',
-                                style: RitmoTextStyles.body(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+                                style: RitmoTextStyles.body(
+                                  colors.textPrimary,
+                                ).copyWith(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -251,10 +267,17 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('آخرین بار:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                                Text(
+                                  'آخرین بار:',
+                                  style: RitmoTextStyles.caption(
+                                    colors.textSecondary,
+                                  ),
+                                ),
                                 Text(
                                   _formatJalali(_lastSessionDate!),
-                                  style: RitmoTextStyles.caption(colors.textPrimary),
+                                  style: RitmoTextStyles.caption(
+                                    colors.textPrimary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -264,10 +287,17 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('بهترین رکورد:', style: RitmoTextStyles.caption(colors.textSecondary)),
+                                Text(
+                                  'بهترین رکورد:',
+                                  style: RitmoTextStyles.caption(
+                                    colors.textSecondary,
+                                  ),
+                                ),
                                 Text(
                                   '${toPersianDigits(_bestRecord!.value)} ${_bestRecord!.unit}',
-                                  style: RitmoTextStyles.caption(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                                  style: RitmoTextStyles.caption(
+                                    sportsColor,
+                                  ).copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -286,10 +316,17 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                       icon: const Icon(Icons.event_note_outlined, size: 18),
                       label: const Text(MovementStrings.libraryAddToPlan),
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         side: BorderSide(color: sportsColor),
                         foregroundColor: sportsColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -300,10 +337,17 @@ class _ActivityDetailsSheetState extends State<ActivityDetailsSheet> {
                       icon: const Icon(Icons.play_arrow_rounded, size: 20),
                       label: const Text(MovementStrings.libraryStartNow),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         backgroundColor: sportsColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
+                        ),
                       ),
                     ),
                   ),

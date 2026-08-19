@@ -64,7 +64,9 @@ class SessionActionsSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -154,12 +156,16 @@ class SessionActionsSheet extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: RitmoTextStyles.body(color).copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                style: RitmoTextStyles.body(
+                  color,
+                ).copyWith(fontWeight: FontWeight.w500),
               ),
             ),
-            Icon(Icons.chevron_left_rounded, color: colors.textTertiary, size: 20),
+            Icon(
+              Icons.chevron_left_rounded,
+              color: colors.textTertiary,
+              size: 20,
+            ),
           ],
         ),
       ),

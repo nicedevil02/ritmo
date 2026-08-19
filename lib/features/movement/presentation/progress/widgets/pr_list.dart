@@ -8,10 +8,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 /// فهرست رکوردهای شخصی واقعی (PrList)
 /// فقط رکوردهای واقعی ثبت‌شده؛ هر ردیف = نام، مقدار + واحد، تاریخ جلالی، نوع رکورد.
 class PrList extends StatelessWidget {
-  const PrList({
-    super.key,
-    required this.records,
-  });
+  const PrList({super.key, required this.records});
 
   final List<MovementPersonalRecord> records;
 
@@ -82,10 +79,15 @@ class PrList extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: records.length,
-              separatorBuilder: (context, index) => Divider(color: colors.border, height: RitmoSpacing.md),
+              separatorBuilder: (context, index) =>
+                  Divider(color: colors.border, height: RitmoSpacing.md),
               itemBuilder: (context, index) {
                 final pr = records[index];
-                final name = pr.exerciseOrActivityNameFa ?? pr.exerciseId ?? pr.activityKindId ?? 'تمرین';
+                final name =
+                    pr.exerciseOrActivityNameFa ??
+                    pr.exerciseId ??
+                    pr.activityKindId ??
+                    'تمرین';
 
                 return Row(
                   children: [
@@ -97,19 +99,30 @@ class PrList extends StatelessWidget {
                             children: [
                               Text(
                                 name,
-                                style: RitmoTextStyles.label(colors.textPrimary),
+                                style: RitmoTextStyles.label(
+                                  colors.textPrimary,
+                                ),
                               ),
                               if (pr.isEstimated) ...[
                                 const SizedBox(width: RitmoSpacing.xs),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: colors.accent.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                    color: colors.accent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.badge,
+                                    ),
                                   ),
                                   child: Text(
                                     'تخمینی',
-                                    style: RitmoTextStyles.caption(colors.accent).copyWith(fontSize: 10),
+                                    style: RitmoTextStyles.caption(
+                                      colors.accent,
+                                    ).copyWith(fontSize: 10),
                                   ),
                                 ),
                               ],
@@ -125,7 +138,9 @@ class PrList extends StatelessWidget {
                     ),
                     Text(
                       '${toPersianDigits(pr.value % 1 == 0 ? pr.value.toInt() : pr.value)} ${pr.unit}',
-                      style: RitmoTextStyles.cardTitle(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                      style: RitmoTextStyles.cardTitle(
+                        sportsColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 );

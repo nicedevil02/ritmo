@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/status_chip.dart';
 
 /// سربرگ صفحهٔ جزئیات جلسه با آیکون، عنوان، تاریخ جلالی، ساعت و نشان وضعیت
 class OccurrenceHeader extends StatelessWidget {
-  const OccurrenceHeader({
-    super.key,
-    required this.occurrence,
-  });
+  const OccurrenceHeader({super.key, required this.occurrence});
 
   final MovementOccurrence occurrence;
 
@@ -38,7 +35,9 @@ class OccurrenceHeader extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Icon(
-              MovementIcons.fromKey(occurrence.activityKind?.icon ?? 'directions_run'),
+              MovementIcons.fromKey(
+                occurrence.activityKind?.icon ?? 'directions_run',
+              ),
               color: sportsColor,
               size: 28,
             ),

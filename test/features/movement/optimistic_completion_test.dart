@@ -58,27 +58,38 @@ void main() {
       updatedAt: DateTime.now(),
     );
 
-    test('Optimistic completion applies status immediately and reverts on failure', () async {
-      final failingService = FailingOccurrenceService({
-        todayIso: [testOcc],
-      });
+    test(
+      'Optimistic completion applies status immediately and reverts on failure',
+      () async {
+        final failingService = FailingOccurrenceService({
+          todayIso: [testOcc],
+        });
 
-      final controller = MovementCenterController(
-        occurrenceService: failingService,
-        sessionService: MovementSessionService(),
-        strengthProgramService: StrengthProgramService(),
-        initialDate: today,
-      );
+        final controller = MovementCenterController(
+          occurrenceService: failingService,
+          sessionService: MovementSessionService(),
+          strengthProgramService: StrengthProgramService(),
+          initialDate: today,
+        );
 
-      await controller.loadData();
-      expect(controller.selectedDayOccurrences.first.status, equals(MovementOccurrenceStatus.planned));
+        await controller.loadData();
+        expect(
+          controller.selectedDayOccurrences.first.status,
+          equals(MovementOccurrenceStatus.planned),
+        );
 
-      // Trigger optimistic complete
-      final success = await controller.optimisticCompleteOccurrence('occ_opt_1');
+        // Trigger optimistic complete
+        final success = await controller.optimisticCompleteOccurrence(
+          'occ_opt_1',
+        );
 
-      // Database failed, so success is false and status reverted back to planned!
-      expect(success, isFalse);
-      expect(controller.selectedDayOccurrences.first.status, equals(MovementOccurrenceStatus.planned));
-    });
+        // Database failed, so success is false and status reverted back to planned!
+        expect(success, isFalse);
+        expect(
+          controller.selectedDayOccurrences.first.status,
+          equals(MovementOccurrenceStatus.planned),
+        );
+      },
+    );
   });
 }

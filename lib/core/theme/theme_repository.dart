@@ -10,14 +10,17 @@ class ThemeRepository {
   final ValueNotifier<ThemePreferences> preferencesNotifier =
       ValueNotifier<ThemePreferences>(ThemePreferences.defaults);
 
-  final ValueNotifier<ThemeMode> themeModeNotifier =
-      ValueNotifier<ThemeMode>(ThemeMode.system);
+  final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier<ThemeMode>(
+    ThemeMode.system,
+  );
 
   Future<void> init() async {
     try {
       final modeStr = SettingsService.instance.get<String>('theme_mode');
       final paletteStr = SettingsService.instance.get<String>('theme_palette');
-      final reduceTrans = SettingsService.instance.get<bool>('theme_reduce_transparency');
+      final reduceTrans = SettingsService.instance.get<bool>(
+        'theme_reduce_transparency',
+      );
       final trueBlk = SettingsService.instance.get<bool>('theme_true_black');
 
       final mode = _parseThemeMode(modeStr);
@@ -33,7 +36,12 @@ class ThemeRepository {
       preferencesNotifier.value = prefs;
       themeModeNotifier.value = mode;
     } catch (e, st) {
-      RitmoLog.error('Settings', 'خطا در مقداردهی اولیه ThemeRepository', e, st);
+      RitmoLog.error(
+        'Settings',
+        'خطا در مقداردهی اولیه ThemeRepository',
+        e,
+        st,
+      );
     }
   }
 
@@ -61,21 +69,30 @@ class ThemeRepository {
     final updated = current.copyWith(mode: mode);
     preferencesNotifier.value = updated;
     themeModeNotifier.value = mode;
-    return SettingsService.instance.set('theme_mode', _serializeThemeMode(mode));
+    return SettingsService.instance.set(
+      'theme_mode',
+      _serializeThemeMode(mode),
+    );
   }
 
   Future<bool> updatePalette(RitmoPaletteId paletteId) async {
     final current = preferencesNotifier.value;
     final updated = current.copyWith(paletteId: paletteId);
     preferencesNotifier.value = updated;
-    return SettingsService.instance.set('theme_palette', RitmoPalette.serializeId(paletteId));
+    return SettingsService.instance.set(
+      'theme_palette',
+      RitmoPalette.serializeId(paletteId),
+    );
   }
 
   Future<bool> updateReduceTransparency(bool reduceTransparency) async {
     final current = preferencesNotifier.value;
     final updated = current.copyWith(reduceTransparency: reduceTransparency);
     preferencesNotifier.value = updated;
-    return SettingsService.instance.set('theme_reduce_transparency', reduceTransparency);
+    return SettingsService.instance.set(
+      'theme_reduce_transparency',
+      reduceTransparency,
+    );
   }
 
   Future<bool> updateTrueBlack(bool trueBlack) async {

@@ -378,8 +378,12 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.9,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+            ),
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: const BorderRadius.vertical(
@@ -793,7 +797,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
             ],
           ),
         ),
-      ),
+      ),),
     );
   }
 

@@ -12,10 +12,7 @@ enum SkipActionChoice {
 
 /// شیت رد کردن جلسه با گزینه‌های حمایتی و بدون کلمات سرزنش‌آمیز
 class SkipSessionSheet extends StatelessWidget {
-  const SkipSessionSheet({
-    super.key,
-    required this.onChoiceSelected,
-  });
+  const SkipSessionSheet({super.key, required this.onChoiceSelected});
 
   final ValueChanged<SkipActionChoice> onChoiceSelected;
 
@@ -38,7 +35,9 @@ class SkipSessionSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -77,7 +76,8 @@ class SkipSessionSheet extends StatelessWidget {
             context,
             icon: Icons.check_circle_outline_rounded,
             title: MovementStrings.skipOptionTodayOnly,
-            subtitle: 'امروز به عنوان روز استراحت ثبت می‌شود و برنامه ادامه می‌یابد',
+            subtitle:
+                'امروز به عنوان روز استراحت ثبت می‌شود و برنامه ادامه می‌یابد',
             choice: SkipActionChoice.skipTodayOnly,
             colors: colors,
             sportsColor: sportsColor,

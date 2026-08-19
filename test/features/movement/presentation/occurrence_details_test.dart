@@ -24,7 +24,9 @@ class FakeDetailsOccurrenceService extends MovementOccurrenceService {
   }
 
   @override
-  Future<List<MovementWorkoutLog>> getOccurrenceLogs(String occurrenceId) async {
+  Future<List<MovementWorkoutLog>> getOccurrenceLogs(
+    String occurrenceId,
+  ) async {
     return logs;
   }
 }
@@ -75,89 +77,103 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('ActivityOccurrenceDetailsScreen Tests', () {
-    testWidgets('Renders occurrence header, goal, origin, logs and action buttons', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'Renders occurrence header, goal, origin, logs and action buttons',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final occService = FakeDetailsOccurrenceService(testOccurrence, []);
-      final planService = FakeDetailsPlanningService();
+        final occService = FakeDetailsOccurrenceService(testOccurrence, []);
+        final planService = FakeDetailsPlanningService();
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          ActivityOccurrenceDetailsScreen(
-            occurrenceId: 'occ_test_detail',
-            occurrenceService: occService,
-            planningService: planService,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ActivityOccurrenceDetailsScreen(
+              occurrenceId: 'occ_test_detail',
+              occurrenceService: occService,
+              planningService: planService,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Header and displayName
-      expect(find.byType(OccurrenceHeader), findsOneWidget);
-      expect(find.text('دویدن'), findsWidgets);
+        // Header and displayName
+        expect(find.byType(OccurrenceHeader), findsOneWidget);
+        expect(find.text('دویدن'), findsWidgets);
 
-      // Goal card
-      expect(find.text(MovementStrings.occurrenceGoal), findsOneWidget);
-      expect(find.text('هدف تعیین‌شده'), findsOneWidget);
+        // Goal card
+        expect(find.text(MovementStrings.occurrenceGoal), findsOneWidget);
+        expect(find.text('هدف تعیین‌شده'), findsOneWidget);
 
-      // Origin
-      expect(find.text(MovementStrings.occurrenceOrigin), findsOneWidget);
-      expect(find.text(MovementStrings.occurrenceOriginTemplate), findsOneWidget);
+        // Origin
+        expect(find.text(MovementStrings.occurrenceOrigin), findsOneWidget);
+        expect(
+          find.text(MovementStrings.occurrenceOriginTemplate),
+          findsOneWidget,
+        );
 
-      // Actions widget
-      expect(find.byType(OccurrenceActions), findsOneWidget);
-      expect(find.text(MovementStrings.menuStart), findsOneWidget);
-      expect(find.text(MovementStrings.menuManualLog), findsOneWidget);
-      expect(find.text(MovementStrings.menuMove), findsOneWidget);
-      expect(find.text(MovementStrings.menuShortVersion), findsOneWidget);
-      expect(find.text(MovementStrings.menuSkip), findsOneWidget);
-      expect(find.text(MovementStrings.menuEditPlan), findsOneWidget);
-      expect(find.text(MovementStrings.menuDelete), findsOneWidget);
-    });
+        // Actions widget
+        expect(find.byType(OccurrenceActions), findsOneWidget);
+        expect(find.text(MovementStrings.menuStart), findsOneWidget);
+        expect(find.text(MovementStrings.menuManualLog), findsOneWidget);
+        expect(find.text(MovementStrings.menuMove), findsOneWidget);
+        expect(find.text(MovementStrings.menuShortVersion), findsOneWidget);
+        expect(find.text(MovementStrings.menuSkip), findsOneWidget);
+        expect(find.text(MovementStrings.menuEditPlan), findsOneWidget);
+        expect(find.text(MovementStrings.menuDelete), findsOneWidget);
+      },
+    );
 
-    testWidgets('Delete button prompts confirmation dialog and deletes occurrence', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'Delete button prompts confirmation dialog and deletes occurrence',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final occService = FakeDetailsOccurrenceService(testOccurrence, []);
-      final planService = FakeDetailsPlanningService();
+        final occService = FakeDetailsOccurrenceService(testOccurrence, []);
+        final planService = FakeDetailsPlanningService();
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          ActivityOccurrenceDetailsScreen(
-            occurrenceId: 'occ_test_detail',
-            occurrenceService: occService,
-            planningService: planService,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ActivityOccurrenceDetailsScreen(
+              occurrenceId: 'occ_test_detail',
+              occurrenceService: occService,
+              planningService: planService,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Scroll to delete button and tap
-      await tester.ensureVisible(find.text(MovementStrings.menuDelete));
-      await tester.tap(find.text(MovementStrings.menuDelete));
-      await tester.pumpAndSettle();
+        // Scroll to delete button and tap
+        await tester.ensureVisible(find.text(MovementStrings.menuDelete));
+        await tester.tap(find.text(MovementStrings.menuDelete));
+        await tester.pumpAndSettle();
 
-      // Confirm dialog appears
-      expect(find.text(MovementStrings.occurrenceDeleteConfirmTitle), findsOneWidget);
-      expect(find.text(MovementStrings.occurrenceDeleteConfirmDesc), findsOneWidget);
+        // Confirm dialog appears
+        expect(
+          find.text(MovementStrings.occurrenceDeleteConfirmTitle),
+          findsOneWidget,
+        );
+        expect(
+          find.text(MovementStrings.occurrenceDeleteConfirmDesc),
+          findsOneWidget,
+        );
 
-      // Tap confirm delete
-      await tester.tap(find.widgetWithText(ElevatedButton, MovementStrings.commonDelete));
-      await tester.pumpAndSettle();
+        // Tap confirm delete
+        await tester.tap(
+          find.widgetWithText(ElevatedButton, MovementStrings.commonDelete),
+        );
+        await tester.pumpAndSettle();
 
-      expect(planService.deleteCalled, isTrue);
-    });
+        expect(planService.deleteCalled, isTrue);
+      },
+    );
   });
 }

@@ -18,7 +18,8 @@ class QuickCompleteSheet extends StatefulWidget {
     double? metricValue,
     String? feeling,
     String? note,
-  ) onQuickComplete;
+  )
+  onQuickComplete;
 
   static Future<bool?> show(
     BuildContext context, {
@@ -28,7 +29,8 @@ class QuickCompleteSheet extends StatefulWidget {
       double? metricValue,
       String? feeling,
       String? note,
-    ) onQuickComplete,
+    )
+    onQuickComplete,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -65,11 +67,14 @@ class _QuickCompleteSheetState extends State<QuickCompleteSheet> {
   @override
   void initState() {
     super.initState();
-    final defaultMinutes = widget.occurrence.goalValue != null && widget.occurrence.goalType == 'duration'
+    final defaultMinutes =
+        widget.occurrence.goalValue != null &&
+            widget.occurrence.goalType == 'duration'
         ? widget.occurrence.goalValue!.toInt()
         : 30;
     _durationController.text = defaultMinutes.toString();
-    if (widget.occurrence.goalValue != null && widget.occurrence.goalType != 'duration') {
+    if (widget.occurrence.goalValue != null &&
+        widget.occurrence.goalType != 'duration') {
       _metricController.text = widget.occurrence.goalValue!.toString();
     }
   }
@@ -92,7 +97,11 @@ class _QuickCompleteSheetState extends State<QuickCompleteSheet> {
         minutes * 60,
         metricVal,
         minimal ? null : _selectedFeeling,
-        minimal ? null : (_noteController.text.trim().isEmpty ? null : _noteController.text.trim()),
+        minimal
+            ? null
+            : (_noteController.text.trim().isEmpty
+                  ? null
+                  : _noteController.text.trim()),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -107,7 +116,9 @@ class _QuickCompleteSheetState extends State<QuickCompleteSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -217,7 +228,10 @@ class _QuickCompleteSheetState extends State<QuickCompleteSheet> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : Text(
                         MovementStrings.quickCompleteButton,
@@ -233,9 +247,9 @@ class _QuickCompleteSheetState extends State<QuickCompleteSheet> {
                 onPressed: _isSaving ? null : () => _submit(minimal: true),
                 child: Text(
                   MovementStrings.quickCompleteDetailsLater,
-                  style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
-                    decoration: TextDecoration.underline,
-                  ),
+                  style: RitmoTextStyles.caption(
+                    colors.textSecondary,
+                  ).copyWith(decoration: TextDecoration.underline),
                 ),
               ),
             ),

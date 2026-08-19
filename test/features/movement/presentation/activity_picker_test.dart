@@ -13,7 +13,9 @@ class FakePickerOccurrenceService extends MovementOccurrenceService {
   List<MovementActivityKind> kinds;
 
   @override
-  Future<List<MovementActivityKind>> getAllActivityKinds({bool includeCustom = true}) async {
+  Future<List<MovementActivityKind>> getAllActivityKinds({
+    bool includeCustom = true,
+  }) async {
     return kinds;
   }
 
@@ -21,7 +23,9 @@ class FakePickerOccurrenceService extends MovementOccurrenceService {
   Future<void> toggleFavoriteActivityKind(String id, [bool? isFavorite]) async {
     final idx = kinds.indexWhere((k) => k.id == id);
     if (idx != -1) {
-      kinds[idx] = kinds[idx].copyWith(isFavorite: isFavorite ?? !kinds[idx].isFavorite);
+      kinds[idx] = kinds[idx].copyWith(
+        isFavorite: isFavorite ?? !kinds[idx].isFavorite,
+      );
     }
   }
 
@@ -85,15 +89,14 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('ActivityPickerScreen Widget Tests', () {
-    testWidgets('Renders search field, favorite section, and activity tiles', (tester) async {
+    testWidgets('Renders search field, favorite section, and activity tiles', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -114,14 +117,19 @@ void main() {
       expect(find.byType(ActivitySearchField), findsOneWidget);
 
       // New custom activity button is present
-      expect(find.text(MovementStrings.customActivityNewButton), findsOneWidget);
+      expect(
+        find.text(MovementStrings.customActivityNewButton),
+        findsOneWidget,
+      );
 
       // Activity tiles are rendered
       expect(find.text('پیاده‌روی', skipOffstage: false), findsWidgets);
       expect(find.text('دوچرخه‌سواری', skipOffstage: false), findsWidgets);
     });
 
-    testWidgets('Search query filters activities and shows search results', (tester) async {
+    testWidgets('Search query filters activities and shows search results', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -147,7 +155,9 @@ void main() {
       expect(find.text('پیاده‌روی', skipOffstage: false), findsNothing);
     });
 
-    testWidgets('Tapping on favorite star toggles favorite state', (tester) async {
+    testWidgets('Tapping on favorite star toggles favorite state', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -171,72 +181,86 @@ void main() {
       await tester.tap(favButtons.first);
       await tester.pumpAndSettle();
 
-      expect(service.kinds.firstWhere((k) => k.id == 'kind_walking').isFavorite, isTrue);
+      expect(
+        service.kinds.firstWhere((k) => k.id == 'kind_walking').isFavorite,
+        isTrue,
+      );
     });
 
-    testWidgets('CustomActivityFormSheet validates duplicate name and allows submission', (tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'CustomActivityFormSheet validates duplicate name and allows submission',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      bool submitted = false;
+        bool submitted = false;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: RitmoTheme.build(
-            palette: RitmoPalette.jadeNoir,
-            brightness: Brightness.dark,
-          ),
-          home: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Scaffold(
-              body: CustomActivityFormSheet(
-                existingNames: const ['پیاده‌روی'],
-                onSubmit: ({
-                  required nameFa,
-                  required family,
-                  required primaryMetric,
-                  required icon,
-                }) async {
-                  submitted = true;
-                  return MovementActivityKind(
-                    id: 'custom_1',
-                    nameFa: nameFa,
-                    family: family,
-                    icon: icon,
-                    primaryMetric: primaryMetric,
-                    isCustom: true,
-                    createdAt: DateTime.now(),
-                  );
-                },
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.dark,
+            ),
+            home: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Scaffold(
+                body: CustomActivityFormSheet(
+                  existingNames: const ['پیاده‌روی'],
+                  onSubmit:
+                      ({
+                        required nameFa,
+                        required family,
+                        required primaryMetric,
+                        required icon,
+                      }) async {
+                        submitted = true;
+                        return MovementActivityKind(
+                          id: 'custom_1',
+                          nameFa: nameFa,
+                          family: family,
+                          icon: icon,
+                          primaryMetric: primaryMetric,
+                          isCustom: true,
+                          createdAt: DateTime.now(),
+                        );
+                      },
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Enter duplicate name
-      await tester.enterText(find.byType(TextFormField).first, 'پیاده‌روی');
-      await tester.pumpAndSettle();
+        // Enter duplicate name
+        await tester.enterText(find.byType(TextFormField).first, 'پیاده‌روی');
+        await tester.pumpAndSettle();
 
-      // Submit button should show duplicate warning
-      await tester.ensureVisible(find.text(MovementStrings.customActivitySubmit));
-      await tester.tap(find.text(MovementStrings.customActivitySubmit));
-      await tester.pumpAndSettle();
+        // Submit button should show duplicate warning
+        await tester.ensureVisible(
+          find.text(MovementStrings.customActivitySubmit),
+        );
+        await tester.tap(find.text(MovementStrings.customActivitySubmit));
+        await tester.pumpAndSettle();
 
-      expect(find.text(MovementStrings.customActivityDuplicateError), findsOneWidget);
-      expect(submitted, isFalse);
+        expect(
+          find.text(MovementStrings.customActivityDuplicateError),
+          findsOneWidget,
+        );
+        expect(submitted, isFalse);
 
-      // Enter unique name
-      await tester.enterText(find.byType(TextFormField).first, 'طناب‌زنی');
-      await tester.pumpAndSettle();
+        // Enter unique name
+        await tester.enterText(find.byType(TextFormField).first, 'طناب‌زنی');
+        await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.text(MovementStrings.customActivitySubmit));
-      await tester.tap(find.text(MovementStrings.customActivitySubmit));
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.text(MovementStrings.customActivitySubmit),
+        );
+        await tester.tap(find.text(MovementStrings.customActivitySubmit));
+        await tester.pumpAndSettle();
 
-      expect(submitted, isTrue);
-    });
+        expect(submitted, isTrue);
+      },
+    );
   });
 }

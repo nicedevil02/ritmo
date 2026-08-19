@@ -15,11 +15,7 @@ import 'package:ritmo/features/movement/presentation/common/undo_toast.dart';
 import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
 import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
 
-enum ActivityPickerIntent {
-  startNow,
-  addToPlan,
-  retroLog,
-}
+enum ActivityPickerIntent { startNow, addToPlan, retroLog }
 
 /// صفحهٔ کامل انتخاب فعالیت ورزشی (ActivityPickerScreen)
 class ActivityPickerScreen extends StatefulWidget {
@@ -64,7 +60,8 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _occurrenceService = widget.occurrenceService ?? MovementOccurrenceService();
+    _occurrenceService =
+        widget.occurrenceService ?? MovementOccurrenceService();
     _loadActivities();
   }
 
@@ -110,17 +107,13 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
     } else if (widget.intent == ActivityPickerIntent.startNow) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MovementLiveSessionScreen(
-            activityKind: kind,
-          ),
+          builder: (_) => MovementLiveSessionScreen(activityKind: kind),
         ),
       );
     } else if (widget.intent == ActivityPickerIntent.addToPlan) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => ActivityPlanEditorScreen(
-            activityKindId: kind.id,
-          ),
+          builder: (_) => ActivityPlanEditorScreen(activityKindId: kind.id),
         ),
       );
     } else {
@@ -138,19 +131,20 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
     final created = await CustomActivityFormSheet.show(
       context,
       existingNames: existingNames,
-      onSubmit: ({
-        required nameFa,
-        required family,
-        required primaryMetric,
-        required icon,
-      }) async {
-        return await _occurrenceService.createCustomActivityKind(
-          nameFa: nameFa,
-          family: family,
-          primaryMetric: primaryMetric,
-          icon: icon,
-        );
-      },
+      onSubmit:
+          ({
+            required nameFa,
+            required family,
+            required primaryMetric,
+            required icon,
+          }) async {
+            return await _occurrenceService.createCustomActivityKind(
+              nameFa: nameFa,
+              family: family,
+              primaryMetric: primaryMetric,
+              icon: icon,
+            );
+          },
     );
 
     if (created != null && mounted) {
@@ -172,8 +166,8 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
       subtitle: widget.intent == ActivityPickerIntent.startNow
           ? MovementStrings.addStartNow
           : (widget.intent == ActivityPickerIntent.retroLog
-              ? MovementStrings.addRetroLog
-              : MovementStrings.addToPlan),
+                ? MovementStrings.addRetroLog
+                : MovementStrings.addToPlan),
       body: _isLoading
           ? const Padding(
               padding: EdgeInsets.all(RitmoSpacing.lg),
@@ -193,7 +187,9 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
                 if (_errorMessage != null)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: RitmoSpacing.lg,
+                      ),
                       child: ErrorBlock(
                         title: 'خطا در بارگذاری فعالیت‌ها',
                         message: _errorMessage!,
@@ -225,16 +221,27 @@ class _ActivityPickerScreenState extends State<ActivityPickerScreen> {
                     ),
                     child: OutlinedButton.icon(
                       onPressed: _openCustomActivitySheet,
-                      icon: Icon(Icons.add_rounded, color: sportsColor, size: 20),
+                      icon: Icon(
+                        Icons.add_rounded,
+                        color: sportsColor,
+                        size: 20,
+                      ),
                       label: Text(
                         MovementStrings.customActivityNewButton,
                         style: RitmoTextStyles.label(sportsColor),
                       ),
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, MovementLayout.kFieldMinHeight),
-                        side: BorderSide(color: sportsColor.withValues(alpha: 0.5)),
+                        minimumSize: const Size(
+                          double.infinity,
+                          MovementLayout.kFieldMinHeight,
+                        ),
+                        side: BorderSide(
+                          color: sportsColor.withValues(alpha: 0.5),
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                     ),

@@ -3,18 +3,11 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
-enum PauseExitAction {
-  pauseAndBack,
-  finish,
-  continueSession,
-}
+enum PauseExitAction { pauseAndBack, finish, continueSession }
 
 /// شیت ۳ گزینه‌ای خروج/توقف جلسهٔ زنده با ترتیب ثابت و توصیه به مکث
 class PauseExitSheet extends StatelessWidget {
-  const PauseExitSheet({
-    super.key,
-    required this.onActionSelected,
-  });
+  const PauseExitSheet({super.key, required this.onActionSelected});
 
   final ValueChanged<PauseExitAction> onActionSelected;
 
@@ -22,9 +15,8 @@ class PauseExitSheet extends StatelessWidget {
     return showModalBottomSheet<PauseExitAction>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => PauseExitSheet(
-        onActionSelected: (act) => Navigator.of(ctx).pop(act),
-      ),
+      builder: (ctx) =>
+          PauseExitSheet(onActionSelected: (act) => Navigator.of(ctx).pop(act)),
     );
   }
 
@@ -36,7 +28,9 @@ class PauseExitSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -94,7 +88,10 @@ class PauseExitSheet extends StatelessWidget {
             height: MovementLayout.kFieldMinHeight,
             child: OutlinedButton.icon(
               onPressed: () => onActionSelected(PauseExitAction.finish),
-              icon: Icon(Icons.check_circle_outline_rounded, color: colors.textPrimary),
+              icon: Icon(
+                Icons.check_circle_outline_rounded,
+                color: colors.textPrimary,
+              ),
               label: Text(
                 MovementStrings.pauseExitFinish,
                 style: RitmoTextStyles.label(colors.textPrimary),
@@ -114,7 +111,8 @@ class PauseExitSheet extends StatelessWidget {
             width: double.infinity,
             height: MovementLayout.kFieldMinHeight,
             child: TextButton.icon(
-              onPressed: () => onActionSelected(PauseExitAction.continueSession),
+              onPressed: () =>
+                  onActionSelected(PauseExitAction.continueSession),
               icon: Icon(Icons.play_arrow_rounded, color: colors.textSecondary),
               label: Text(
                 MovementStrings.pauseExitContinue,

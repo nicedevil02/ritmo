@@ -13,10 +13,7 @@ import 'package:ritmo/features/movement/presentation/movement_routes.dart';
 /// رندرر اختصاصی ردیف‌های ورزشی در اجندا و تقویم (SportAgendaRenderer)
 /// امکان مشاهدهٔ جزئیات و تکمیل مستقیم بدون دستکاری کدهای تقویم
 class SportAgendaRenderer extends AgendaTileRenderer {
-  const SportAgendaRenderer({
-    this.occurrenceService,
-    this.logService,
-  });
+  const SportAgendaRenderer({this.occurrenceService, this.logService});
 
   final MovementOccurrenceService? occurrenceService;
   final MovementLogService? logService;
@@ -34,7 +31,11 @@ class SportAgendaRenderer extends AgendaTileRenderer {
   }
 
   @override
-  Widget build(BuildContext context, AgendaItem item, {required VoidCallback onChanged}) {
+  Widget build(
+    BuildContext context,
+    AgendaItem item, {
+    required VoidCallback onChanged,
+  }) {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
     final isDone = item.completion == AgendaCompletion.done;
@@ -72,13 +73,15 @@ class SportAgendaRenderer extends AgendaTileRenderer {
           borderRadius: BorderRadius.circular(RitmoRadius.card),
           onTap: () {
             // دیپ‌لینک به جزئیات جلسه یا مرکز حرکت
-            Navigator.of(context).pushNamed(
-              MovementRoutes.occurrence,
-              arguments: {
-                'occurrenceId': item.sourceId,
-                'dateIso': item.dateStr,
-              },
-            ).then((_) => onChanged());
+            Navigator.of(context)
+                .pushNamed(
+                  MovementRoutes.occurrence,
+                  arguments: {
+                    'occurrenceId': item.sourceId,
+                    'dateIso': item.dateStr,
+                  },
+                )
+                .then((_) => onChanged());
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -111,14 +114,20 @@ class SportAgendaRenderer extends AgendaTileRenderer {
                     children: [
                       Text(
                         item.title,
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary).copyWith(
-                          decoration: isDone || isSkipped ? TextDecoration.lineThrough : null,
-                          color: isDone ? colors.textTertiary : colors.textPrimary,
-                        ),
+                        style: RitmoTextStyles.cardTitle(colors.textPrimary)
+                            .copyWith(
+                              decoration: isDone || isSkipped
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: isDone
+                                  ? colors.textTertiary
+                                  : colors.textPrimary,
+                            ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (item.subtitle != null && item.subtitle!.isNotEmpty) ...[
+                      if (item.subtitle != null &&
+                          item.subtitle!.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           item.subtitle!,
@@ -145,7 +154,9 @@ class SportAgendaRenderer extends AgendaTileRenderer {
                       if (durationText != null)
                         Text(
                           durationText,
-                          style: RitmoTextStyles.caption(colors.textTertiary).copyWith(fontSize: 10),
+                          style: RitmoTextStyles.caption(
+                            colors.textTertiary,
+                          ).copyWith(fontSize: 10),
                         ),
                     ],
                   ),
@@ -154,7 +165,9 @@ class SportAgendaRenderer extends AgendaTileRenderer {
 
                 // دکمهٔ تکمیل از داخل تقویم / اجندا (Touch Target >= 48x48)
                 Semantics(
-                  label: isDone ? 'لغو تکمیل' : MovementStrings.agendaSportActionComplete,
+                  label: isDone
+                      ? 'لغو تکمیل'
+                      : MovementStrings.agendaSportActionComplete,
                   button: true,
                   child: SizedBox(
                     width: 48,
@@ -164,11 +177,13 @@ class SportAgendaRenderer extends AgendaTileRenderer {
                         isDone
                             ? CupertinoIcons.checkmark_circle_fill
                             : (isPartial
-                                ? Icons.timelapse_rounded
-                                : CupertinoIcons.circle),
+                                  ? Icons.timelapse_rounded
+                                  : CupertinoIcons.circle),
                         color: isDone
                             ? colors.success
-                            : (isPartial ? colors.warning : colors.textTertiary),
+                            : (isPartial
+                                  ? colors.warning
+                                  : colors.textTertiary),
                         size: 24,
                       ),
                       onPressed: () async {
@@ -176,16 +191,26 @@ class SportAgendaRenderer extends AgendaTileRenderer {
                             ? MovementOccurrenceStatus.planned
                             : MovementOccurrenceStatus.completed;
 
-                        await occService.updateOccurrenceStatus(item.sourceId, newStatus);
+                        await occService.updateOccurrenceStatus(
+                          item.sourceId,
+                          newStatus,
+                        );
                         if (!isDone) {
                           try {
-                            final occ = await occService.getOccurrenceById(item.sourceId);
+                            final occ = await occService.getOccurrenceById(
+                              item.sourceId,
+                            );
                             if (occ != null) {
                               await lgService.logRetroWorkout(
                                 activityKindId: occ.activityKindId,
                                 dateIso: occ.dateIso,
                                 startTime: occ.startTime,
-                                durationSec: ((occ.goalType == 'duration' ? occ.goalValue?.toInt() : 30) ?? 30) * 60,
+                                durationSec:
+                                    ((occ.goalType == 'duration'
+                                            ? occ.goalValue?.toInt()
+                                            : 30) ??
+                                        30) *
+                                    60,
                                 matchedOccurrenceId: occ.id,
                               );
                             }

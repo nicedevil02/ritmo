@@ -20,37 +20,42 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('DayStatusIndicators Widget Tests', () {
-    testWidgets('Renders up to 3 status indicators directly without overflow counter', (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          const DayStatusIndicators(
-            statuses: [
-              MovementDayStatus.completed,
-              MovementDayStatus.planned,
-            ],
+    testWidgets(
+      'Renders up to 3 status indicators directly without overflow counter',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            const DayStatusIndicators(
+              statuses: [
+                MovementDayStatus.completed,
+                MovementDayStatus.planned,
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      // No +n text
-      expect(find.textContaining('+'), findsNothing);
+        // No +n text
+        expect(find.textContaining('+'), findsNothing);
 
-      await tester.pumpWidget(
-        _wrap(
-          const DayStatusIndicators(
-            statuses: [
-              MovementDayStatus.completed,
-              MovementDayStatus.planned,
-              MovementDayStatus.recovery,
-            ],
+        await tester.pumpWidget(
+          _wrap(
+            const DayStatusIndicators(
+              statuses: [
+                MovementDayStatus.completed,
+                MovementDayStatus.planned,
+                MovementDayStatus.recovery,
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.textContaining('+'), findsNothing);
-    });
+        expect(find.textContaining('+'), findsNothing);
+      },
+    );
 
-    testWidgets('Overflows to +n when more than 3 statuses exist', (tester) async {
+    testWidgets('Overflows to +n when more than 3 statuses exist', (
+      tester,
+    ) async {
       // 4 statuses -> 2 icons + "+۲"
       await tester.pumpWidget(
         _wrap(

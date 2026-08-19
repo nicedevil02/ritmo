@@ -33,16 +33,9 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.wifi_off_rounded,
-            size: 14.0,
-            color: colors.warning,
-          ),
+          Icon(Icons.wifi_off_rounded, size: 14.0, color: colors.warning),
           const SizedBox(width: RitmoSpacing.xs),
-          Text(
-            message,
-            style: RitmoTextStyles.badge(colors.warning),
-          ),
+          Text(message, style: RitmoTextStyles.badge(colors.warning)),
         ],
       ),
     );

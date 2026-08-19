@@ -23,11 +23,7 @@ void main() {
   group('ReasonChip Widget Tests', () {
     testWidgets('Renders reason text and icon', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const ReasonChip(
-            reason: MovementStrings.reasonInterest,
-          ),
-        ),
+        _wrap(const ReasonChip(reason: MovementStrings.reasonInterest)),
       );
 
       expect(find.text(MovementStrings.reasonInterest), findsOneWidget);
@@ -39,7 +35,8 @@ void main() {
         _wrap(
           const ReasonChip(
             reason: MovementStrings.reasonAvailableTime,
-            explanation: 'این جلسه دقیقاً ۳۰ دقیقه طول می‌کشد و با زمان آزاد شما همخوانی دارد.',
+            explanation:
+                'این جلسه دقیقاً ۳۰ دقیقه طول می‌کشد و با زمان آزاد شما همخوانی دارد.',
           ),
         ),
       );
@@ -48,7 +45,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(MovementStrings.reasonWhySuggestion), findsOneWidget);
-      expect(find.textContaining('این جلسه دقیقاً ۳۰ دقیقه طول می‌کشد'), findsOneWidget);
+      expect(
+        find.textContaining('این جلسه دقیقاً ۳۰ دقیقه طول می‌کشد'),
+        findsOneWidget,
+      );
     });
   });
 }

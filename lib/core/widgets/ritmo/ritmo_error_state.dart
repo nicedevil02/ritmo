@@ -32,7 +32,11 @@ class RitmoErrorState extends StatelessWidget {
               color: colors.error.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.error_outline_rounded, size: 40, color: colors.error),
+            child: Icon(
+              Icons.error_outline_rounded,
+              size: 40,
+              color: colors.error,
+            ),
           ),
           const SizedBox(height: RitmoSpacing.lg),
           Text(

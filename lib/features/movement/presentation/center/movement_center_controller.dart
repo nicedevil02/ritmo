@@ -86,7 +86,8 @@ class MovementCenterController extends ChangeNotifier {
   List<MovementDayData> get weekDays => _weekDays;
 
   Map<String, List<MovementOccurrence>> _weekOccurrencesMap = {};
-  Map<String, List<MovementOccurrence>> get weekOccurrencesMap => _weekOccurrencesMap;
+  Map<String, List<MovementOccurrence>> get weekOccurrencesMap =>
+      _weekOccurrencesMap;
 
   List<MovementOccurrence> get selectedDayOccurrences {
     final key = _formatDateIso(_selectedDate);
@@ -136,10 +137,12 @@ class MovementCenterController extends ChangeNotifier {
       final dateIso = _formatDateIso(d);
 
       final jDate = Jalali.fromDateTime(d);
-      final isToday = d.year == todayDate.year &&
+      final isToday =
+          d.year == todayDate.year &&
           d.month == todayDate.month &&
           d.day == todayDate.day;
-      final isSelected = d.year == selectedDate.year &&
+      final isSelected =
+          d.year == selectedDate.year &&
           d.month == selectedDate.month &&
           d.day == selectedDate.day;
 
@@ -164,19 +167,22 @@ class MovementCenterController extends ChangeNotifier {
         };
       }).toList();
 
-      final completedCount =
-          occurrencesForDay.where((o) => o.isCompleted).length;
+      final completedCount = occurrencesForDay
+          .where((o) => o.isCompleted)
+          .length;
 
-      days.add(MovementDayData(
-        date: d,
-        dayName: dayShortNames[i],
-        dayNumber: jDate.day,
-        monthName: jDate.formatter.mN,
-        state: state,
-        statuses: statuses,
-        sessionCount: occurrencesForDay.length,
-        completedCount: completedCount,
-      ));
+      days.add(
+        MovementDayData(
+          date: d,
+          dayName: dayShortNames[i],
+          dayNumber: jDate.day,
+          monthName: jDate.formatter.mN,
+          state: state,
+          statuses: statuses,
+          sessionCount: occurrencesForDay.length,
+          completedCount: completedCount,
+        ),
+      );
     }
     return days;
   }
@@ -213,7 +219,11 @@ class MovementCenterController extends ChangeNotifier {
         7,
         (i) => _formatDateIso(_weekStartDate.add(Duration(days: i))),
       );
-      _weekDays = _buildDaysForWeek(_weekStartDate, _selectedDate, _weekOccurrencesMap);
+      _weekDays = _buildDaysForWeek(
+        _weekStartDate,
+        _selectedDate,
+        _weekOccurrencesMap,
+      );
 
       // ۵. محاسبه خلاصه هفته
       _weekSummary = await occurrenceService.getWeekSummary(
@@ -253,8 +263,10 @@ class MovementCenterController extends ChangeNotifier {
     final todayIso = _formatDateIso(now);
     final todayOccurrences = _weekOccurrencesMap[todayIso] ?? const [];
     final selectedOccurrences = selectedDayOccurrences;
-    final totalWeekOccurrences =
-        _weekOccurrencesMap.values.fold<int>(0, (sum, list) => sum + list.length);
+    final totalWeekOccurrences = _weekOccurrencesMap.values.fold<int>(
+      0,
+      (sum, list) => sum + list.length,
+    );
 
     // حالت ۷: جلسه زنده در حال انجام
     if (_activeLiveSession != null && _activeLiveSession!.isActiveOrPaused) {
@@ -269,13 +281,17 @@ class MovementCenterController extends ChangeNotifier {
       _entryState = MovementCenterEntryState.brandNewUser;
     }
     // امروز جلسه‌ای ندارد اما هفته جلسه دارد (روز ریکاوری)
-    else if (todayOccurrences.isEmpty && _selectedDate.day == now.day && _selectedDate.month == now.month) {
+    else if (todayOccurrences.isEmpty &&
+        _selectedDate.day == now.day &&
+        _selectedDate.month == now.month) {
       _entryState = MovementCenterEntryState.recoveryDay;
     }
     // امروز جلسه دارد
     else if (todayOccurrences.isNotEmpty) {
       final allCompleted = todayOccurrences.every((o) => o.isCompleted);
-      final hasLate = todayOccurrences.any((o) => o.status == MovementOccurrenceStatus.late);
+      final hasLate = todayOccurrences.any(
+        (o) => o.status == MovementOccurrenceStatus.late,
+      );
 
       if (allCompleted) {
         _entryState = MovementCenterEntryState.todaySessionCompleted;
@@ -297,7 +313,9 @@ class MovementCenterController extends ChangeNotifier {
       _heroVariant = HeroCardVariant.restDay;
     } else {
       final allDone = selectedOccurrences.every((o) => o.isCompleted);
-      final hasLate = selectedOccurrences.any((o) => o.status == MovementOccurrenceStatus.late);
+      final hasLate = selectedOccurrences.any(
+        (o) => o.status == MovementOccurrenceStatus.late,
+      );
       if (allDone) {
         _heroVariant = HeroCardVariant.allDone;
       } else if (hasLate) {
@@ -317,10 +335,12 @@ class MovementCenterController extends ChangeNotifier {
     final todayDate = DateTime(now.year, now.month, now.day);
 
     _weekDays = _weekDays.map((d) {
-      final isToday = d.date.year == todayDate.year &&
+      final isToday =
+          d.date.year == todayDate.year &&
           d.date.month == todayDate.month &&
           d.date.day == todayDate.day;
-      final isSelected = d.date.year == _selectedDate.year &&
+      final isSelected =
+          d.date.year == _selectedDate.year &&
           d.date.month == _selectedDate.month &&
           d.date.day == _selectedDate.day;
 
@@ -398,9 +418,7 @@ class MovementCenterController extends ChangeNotifier {
       return true;
     } catch (e) {
       // ۳. بازگشت در صورت شکست
-      occurrences[index] = occurrences[index].copyWith(
-        status: previousStatus,
-      );
+      occurrences[index] = occurrences[index].copyWith(status: previousStatus);
       _computeEntryStateAndHero();
       notifyListeners();
       return false;
@@ -429,9 +447,7 @@ class MovementCenterController extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      occurrences[index] = occurrences[index].copyWith(
-        status: previousStatus,
-      );
+      occurrences[index] = occurrences[index].copyWith(status: previousStatus);
       _computeEntryStateAndHero();
       notifyListeners();
       return false;

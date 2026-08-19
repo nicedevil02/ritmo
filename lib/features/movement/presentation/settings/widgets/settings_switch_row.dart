@@ -26,7 +26,9 @@ class SettingsSwitchRow extends StatelessWidget {
     return InkWell(
       onTap: () => onChanged(!value),
       child: Container(
-        constraints: const BoxConstraints(minHeight: MovementLayout.kFieldMinHeight),
+        constraints: const BoxConstraints(
+          minHeight: MovementLayout.kFieldMinHeight,
+        ),
         padding: const EdgeInsets.symmetric(
           horizontal: RitmoSpacing.lg,
           vertical: RitmoSpacing.sm,
@@ -37,10 +39,7 @@ class SettingsSwitchRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: RitmoTextStyles.body(colors.textPrimary),
-                  ),
+                  Text(title, style: RitmoTextStyles.body(colors.textPrimary)),
                   const SizedBox(height: 2),
                   Text(
                     explanation,

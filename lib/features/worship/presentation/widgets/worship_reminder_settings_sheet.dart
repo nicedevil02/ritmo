@@ -273,7 +273,8 @@ class _WorshipReminderSettingsSheetState
           borderRadius: 28,
           child: Container(
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85),
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+            ),
             padding: EdgeInsets.fromLTRB(
                 20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
             child: Column(

@@ -2,11 +2,7 @@ import 'dart:convert';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 
 /// منبع ثبت لاگ تمرین
-enum MovementLogSource {
-  live,
-  quick,
-  retro,
-}
+enum MovementLogSource { live, quick, retro }
 
 /// مدل لاگ و تاریخچهٔ ثبت تمرین
 class MovementWorkoutLog {
@@ -69,8 +65,12 @@ class MovementWorkoutLog {
       feeling: map['feeling'] as String?,
       note: map['note'] as String?,
       source: (map['source'] as String?) ?? 'quick',
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 

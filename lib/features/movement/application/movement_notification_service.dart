@@ -14,8 +14,8 @@ class MovementNotificationService {
   MovementNotificationService({
     Future<bool> Function(NotificationRequest req)? scheduleFn,
     Future<bool> Function(String id)? cancelFn,
-  })  : _scheduleFn = scheduleFn ?? NotificationGateway.schedule,
-        _cancelFn = cancelFn ?? NotificationGateway.cancel;
+  }) : _scheduleFn = scheduleFn ?? NotificationGateway.schedule,
+       _cancelFn = cancelFn ?? NotificationGateway.cancel;
 
   final Future<bool> Function(NotificationRequest req) _scheduleFn;
   final Future<bool> Function(String id) _cancelFn;
@@ -29,7 +29,8 @@ class MovementNotificationService {
     int minutesBefore = 15,
     bool isPrivate = false,
   }) async {
-    if (occurrence.startTime == null || occurrence.startTime!.isEmpty) return false;
+    if (occurrence.startTime == null || occurrence.startTime!.isEmpty)
+      return false;
 
     final parts = occurrence.startTime!.split(':');
     if (parts.length != 2) return false;
@@ -49,9 +50,12 @@ class MovementNotificationService {
     final sessionTime = DateTime(y, m, d, hour, minute);
     final reminderTime = sessionTime.subtract(Duration(minutes: minutesBefore));
 
-    final activityTitle = kind?.nameFa ?? MovementStrings.notificationSessionPreReminder;
+    final activityTitle =
+        kind?.nameFa ?? MovementStrings.notificationSessionPreReminder;
     final startTime = occurrence.startTime;
-    final bodyText = startTime != null ? 'ساعت ${toPersianDigits(startTime)}' : '';
+    final bodyText = startTime != null
+        ? 'ساعت ${toPersianDigits(startTime)}'
+        : '';
 
     final request = NotificationRequest(
       id: 'mov_rem_${occurrence.id}',
@@ -59,7 +63,9 @@ class MovementNotificationService {
       scheduledAt: reminderTime,
       title: activityTitle,
       body: bodyText,
-      privacy: isPrivate ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+      privacy: isPrivate
+          ? NotificationPrivacy.redacted
+          : NotificationPrivacy.none,
       redactedTitle: MovementStrings.notificationNeutralTitle,
       redactedBody: MovementStrings.notificationNeutralBody,
       sourceSystem: sourceSystem,
@@ -104,8 +110,11 @@ class MovementNotificationService {
       channel: NotificationChannelId.planning,
       scheduledAt: scheduledAt,
       title: MovementStrings.notificationMorningTitle,
-      body: 'امروز ${toPersianDigits(dailyOccurrences.length)} جلسهٔ ورزشی در برنامه دارید.',
-      privacy: isPrivate ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+      body:
+          'امروز ${toPersianDigits(dailyOccurrences.length)} جلسهٔ ورزشی در برنامه دارید.',
+      privacy: isPrivate
+          ? NotificationPrivacy.redacted
+          : NotificationPrivacy.none,
       redactedTitle: MovementStrings.notificationNeutralTitle,
       redactedBody: MovementStrings.notificationNeutralBody,
       sourceSystem: sourceSystem,
@@ -134,7 +143,9 @@ class MovementNotificationService {
       scheduledAt: scheduledAt,
       title: MovementStrings.notificationPartialTitle,
       body: MovementStrings.notificationPartialBody,
-      privacy: isPrivate ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+      privacy: isPrivate
+          ? NotificationPrivacy.redacted
+          : NotificationPrivacy.none,
       redactedTitle: MovementStrings.notificationNeutralTitle,
       redactedBody: MovementStrings.notificationNeutralBody,
       sourceSystem: sourceSystem,
@@ -175,14 +186,18 @@ class MovementNotificationService {
   }
 
   /// توقف یادآورهای برنامهٔ قدرتی هنگام مکث یا آرشیو
-  Future<void> cancelStrengthProgramReminders(List<String> occurrenceIds) async {
+  Future<void> cancelStrengthProgramReminders(
+    List<String> occurrenceIds,
+  ) async {
     for (final id in occurrenceIds) {
       await cancelOccurrenceReminders(id);
     }
   }
 
   /// پاکسازی تمام یادآورهای ماژول حرکت (هنگام حذف کامل داده‌ها)
-  Future<void> cancelAllMovementReminders({List<String>? allOccurrenceIds}) async {
+  Future<void> cancelAllMovementReminders({
+    List<String>? allOccurrenceIds,
+  }) async {
     if (allOccurrenceIds != null) {
       for (final id in allOccurrenceIds) {
         await cancelOccurrenceReminders(id);
@@ -191,7 +206,10 @@ class MovementNotificationService {
   }
 
   /// مسیریابی امن اعلان با Fallback مطمئن به مرکز حرکت (بدون بن‌بست یا خطای خالی)
-  static void navigateFromPayload(BuildContext context, Map<String, dynamic>? payload) {
+  static void navigateFromPayload(
+    BuildContext context,
+    Map<String, dynamic>? payload,
+  ) {
     if (payload == null) {
       Navigator.of(context).pushNamed(MovementRoutes.center);
       return;
@@ -201,7 +219,9 @@ class MovementNotificationService {
     final occurrenceId = payload['occurrenceId'] as String?;
     final dateIso = payload['dateIso'] as String?;
 
-    if (route == MovementRoutes.occurrence && occurrenceId != null && occurrenceId.isNotEmpty) {
+    if (route == MovementRoutes.occurrence &&
+        occurrenceId != null &&
+        occurrenceId.isNotEmpty) {
       Navigator.of(context).pushNamed(
         MovementRoutes.occurrence,
         arguments: {'occurrenceId': occurrenceId, 'dateIso': dateIso},
@@ -209,7 +229,9 @@ class MovementNotificationService {
       return;
     }
 
-    if (route == MovementRoutes.liveSession && occurrenceId != null && occurrenceId.isNotEmpty) {
+    if (route == MovementRoutes.liveSession &&
+        occurrenceId != null &&
+        occurrenceId.isNotEmpty) {
       Navigator.of(context).pushNamed(
         MovementRoutes.liveSession,
         arguments: {'occurrenceId': occurrenceId},
@@ -218,10 +240,9 @@ class MovementNotificationService {
     }
 
     if (route == MovementRoutes.center) {
-      Navigator.of(context).pushNamed(
-        MovementRoutes.center,
-        arguments: {'initialDate': dateIso},
-      );
+      Navigator.of(
+        context,
+      ).pushNamed(MovementRoutes.center, arguments: {'initialDate': dateIso});
       return;
     }
 

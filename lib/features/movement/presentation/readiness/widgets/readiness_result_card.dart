@@ -48,9 +48,9 @@ class ReadinessResultCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   MovementStrings.readinessCheckinTitle,
-                  style: RitmoTextStyles.caption(sportsColor).copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.caption(
+                    sportsColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               if (onDismiss != null)
@@ -58,7 +58,10 @@ class ReadinessResultCard extends StatelessWidget {
                   onPressed: onDismiss,
                   icon: const Icon(Icons.close_rounded, size: 18),
                   color: colors.textTertiary,
-                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
                 ),
             ],
           ),
@@ -83,18 +86,29 @@ class ReadinessResultCard extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: RitmoSpacing.xs),
               child: InkWell(
-                onTap: onSelectSuggestion != null ? () => onSelectSuggestion!(suggestion) : null,
+                onTap: onSelectSuggestion != null
+                    ? () => onSelectSuggestion!(suggestion)
+                    : null,
                 borderRadius: BorderRadius.circular(RitmoRadius.field),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.md,
+                    vertical: RitmoSpacing.sm,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: colors.border.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.arrow_right_rounded, color: sportsColor, size: 20),
+                      Icon(
+                        Icons.arrow_right_rounded,
+                        color: sportsColor,
+                        size: 20,
+                      ),
                       const SizedBox(width: RitmoSpacing.xs),
                       Expanded(
                         child: Text(

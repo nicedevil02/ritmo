@@ -96,7 +96,7 @@ void main() {
 
       // No nested ListView inside SettingsScreen
       expect(find.byType(ListView), findsNothing);
-      expect(find.text('دسته‌بندی‌های تنظیمات'), findsOneWidget);
+      expect(find.text('شخصی‌سازی و تجربه کاربری'), findsOneWidget);
     });
   });
 }

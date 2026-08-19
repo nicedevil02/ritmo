@@ -52,7 +52,8 @@ class MovementCenterScreen extends StatefulWidget {
 
   final MovementCenterController? controller;
   final DateTime? initialDate;
-  final void Function(String route, {Map<String, dynamic>? arguments})? onNavigateToRoute;
+  final void Function(String route, {Map<String, dynamic>? arguments})?
+  onNavigateToRoute;
   final VoidCallback? onOpenAddActivity;
 
   @override
@@ -102,7 +103,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
   Future<void> _openAddCommandSheet() async {
     await AddCommandSheet.show(
       context,
-      hasActiveLiveSession: _controller.activeLiveSession?.isActiveOrPaused ?? false,
+      hasActiveLiveSession:
+          _controller.activeLiveSession?.isActiveOrPaused ?? false,
       hasActiveStrengthProgram: _controller.strengthProgram != null,
       onStartNow: () {
         Navigator.of(context).push(
@@ -114,11 +116,13 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         );
       },
       onAddToPlan: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const ActivityPlanEditorScreen(),
-          ),
-        ).then((_) => _controller.loadData());
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => const ActivityPlanEditorScreen(),
+              ),
+            )
+            .then((_) => _controller.loadData());
       },
       onRetroLog: () async {
         final kind = await Navigator.of(context).push<MovementActivityKind>(
@@ -132,29 +136,33 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
           final log = await RetroLogFormSheet.show(
             context,
             activityKind: kind,
-            onSubmit: ({
-              required dateIso,
-              startTime,
-              required durationSec,
-              metrics,
-              feeling,
-              note,
-              matchedOccurrenceId,
-            }) async {
-              return await _logService.logRetroWorkout(
-                activityKindId: kind.id,
-                dateIso: dateIso,
-                startTime: startTime,
-                durationSec: durationSec,
-                metrics: metrics,
-                feeling: feeling,
-                note: note,
-                matchedOccurrenceId: matchedOccurrenceId,
-              );
-            },
+            onSubmit:
+                ({
+                  required dateIso,
+                  startTime,
+                  required durationSec,
+                  metrics,
+                  feeling,
+                  note,
+                  matchedOccurrenceId,
+                }) async {
+                  return await _logService.logRetroWorkout(
+                    activityKindId: kind.id,
+                    dateIso: dateIso,
+                    startTime: startTime,
+                    durationSec: durationSec,
+                    metrics: metrics,
+                    feeling: feeling,
+                    note: note,
+                    matchedOccurrenceId: matchedOccurrenceId,
+                  );
+                },
           );
           if (log != null && mounted) {
-            MovementUndoToast.show(context, message: MovementStrings.retroLoggedToast);
+            MovementUndoToast.show(
+              context,
+              message: MovementStrings.retroLoggedToast,
+            );
             await _controller.loadData();
           }
         }
@@ -176,7 +184,11 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         for (final item in items) {
           await _planningService.createPlan(
             activityKindId: item.activityKind.id,
-            goal: {'type': 'duration', 'value': item.durationMin, 'unit': 'دقیقه'},
+            goal: {
+              'type': 'duration',
+              'value': item.durationMin,
+              'unit': 'دقیقه',
+            },
             schedules: [
               MovementPlanSchedule(
                 id: '',
@@ -194,7 +206,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     );
 
     if (applied == true && mounted) {
-      MovementUndoToast.show(context, message: MovementStrings.smartFillAppliedToast);
+      MovementUndoToast.show(
+        context,
+        message: MovementStrings.smartFillAppliedToast,
+      );
       await _controller.loadData();
     }
   }
@@ -225,7 +240,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: MovementStrings.undoMovedTodayOnly);
+      MovementUndoToast.show(
+        context,
+        message: MovementStrings.undoMovedTodayOnly,
+      );
       await _controller.loadData();
     }
   }
@@ -250,7 +268,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: MovementStrings.planBAppliedToast);
+      MovementUndoToast.show(
+        context,
+        message: MovementStrings.planBAppliedToast,
+      );
       await _controller.loadData();
     }
   }
@@ -263,7 +284,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
       case SkipActionChoice.skipTodayOnly:
         await _planningService.skipOccurrence(occurrenceId: occ.id);
         if (mounted) {
-          MovementUndoToast.show(context, message: MovementStrings.undoSkippedToday);
+          MovementUndoToast.show(
+            context,
+            message: MovementStrings.undoSkippedToday,
+          );
           await _controller.loadData();
         }
         break;
@@ -298,9 +322,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     } else {
       final updated = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => ActivityPlanEditorScreen(
-            activityKindId: occ.activityKindId,
-          ),
+          builder: (_) =>
+              ActivityPlanEditorScreen(activityKindId: occ.activityKindId),
         ),
       );
       if (updated == true && mounted) {
@@ -330,7 +353,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
       );
 
       if (mounted) {
-        MovementUndoToast.show(context, message: MovementStrings.undoSessionDeleted);
+        MovementUndoToast.show(
+          context,
+          message: MovementStrings.undoSessionDeleted,
+        );
         await _controller.loadData();
       }
     }
@@ -400,7 +426,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         }
 
         final selectedOccurrences = _controller.selectedDayOccurrences;
-        final hasLiveSession = _controller.activeLiveSession != null &&
+        final hasLiveSession =
+            _controller.activeLiveSession != null &&
             _controller.activeLiveSession!.isActiveOrPaused;
 
         return MovementScreenShell(
@@ -421,7 +448,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                if (_controller.isBannerError && _controller.errorMessage != null)
+                if (_controller.isBannerError &&
+                    _controller.errorMessage != null)
                   SliverToBoxAdapter(
                     child: ErrorBlock(
                       title: MovementStrings.centerSyncErrorTitle,
@@ -449,16 +477,22 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline_rounded, color: colors.primary),
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: colors.primary,
+                          ),
                           const SizedBox(width: RitmoSpacing.sm),
                           Expanded(
                             child: Text(
                               MovementStrings.cutoverCalloutDesc,
-                              style: RitmoTextStyles.caption(colors.textPrimary),
+                              style: RitmoTextStyles.caption(
+                                colors.textPrimary,
+                              ),
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _controller.dismissCutoverCallout(),
+                            onPressed: () =>
+                                _controller.dismissCutoverCallout(),
                             child: Text(
                               MovementStrings.cutoverCalloutDismiss,
                               style: RitmoTextStyles.label(colors.primary),
@@ -499,7 +533,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                     child: LiveSessionBanner(
                       session: _controller.activeLiveSession!,
                       onResume: () => _navigateTo(MovementRoutes.liveSession),
-                      onFinishAndSave: () => _navigateTo(MovementRoutes.summary),
+                      onFinishAndSave: () =>
+                          _navigateTo(MovementRoutes.summary),
                       onDiscard: () async {
                         await MovementSessionService().abandonSession(
                           _controller.activeLiveSession!.id,
@@ -519,39 +554,49 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                     totalTodaySessions: selectedOccurrences.length,
                     currentSessionIndex: 1,
                     onPrimaryAction: () {
-                      if (_controller.heroVariant == HeroCardVariant.emptyPlan ||
-                          _controller.heroVariant == HeroCardVariant.noPlanToday) {
+                      if (_controller.heroVariant ==
+                              HeroCardVariant.emptyPlan ||
+                          _controller.heroVariant ==
+                              HeroCardVariant.noPlanToday) {
                         _openAddCommandSheet();
                       } else if (selectedOccurrences.isNotEmpty) {
                         final occ = selectedOccurrences.first;
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => MovementLiveSessionScreen(
-                              activityKind: occ.activityKind ?? MovementActivityKind(
-                                id: occ.activityKindId,
-                                nameFa: occ.displayName,
-                                family: 'general',
-                                icon: 'directions_run',
-                                primaryMetric: 'duration',
-                                createdAt: DateTime.now(),
+                        Navigator.of(context)
+                            .push(
+                              MaterialPageRoute(
+                                builder: (_) => MovementLiveSessionScreen(
+                                  activityKind:
+                                      occ.activityKind ??
+                                      MovementActivityKind(
+                                        id: occ.activityKindId,
+                                        nameFa: occ.displayName,
+                                        family: 'general',
+                                        icon: 'directions_run',
+                                        primaryMetric: 'duration',
+                                        createdAt: DateTime.now(),
+                                      ),
+                                  occurrenceId: occ.id,
+                                  targetSnapshot: occ.goalValue != null
+                                      ? {
+                                          'type': occ.goalType ?? 'duration',
+                                          'value': occ.goalValue,
+                                          'unit':
+                                              occ.goalUnit ??
+                                              MovementStrings.unitMinute,
+                                        }
+                                      : null,
+                                ),
                               ),
-                              occurrenceId: occ.id,
-                              targetSnapshot: occ.goalValue != null
-                                  ? {
-                                      'type': occ.goalType ?? 'duration',
-                                      'value': occ.goalValue,
-                                      'unit': occ.goalUnit ?? MovementStrings.unitMinute,
-                                    }
-                                  : null,
-                            ),
-                          ),
-                        ).then((_) => _controller.loadData());
+                            )
+                            .then((_) => _controller.loadData());
                       }
                     },
                     onSecondaryAction: () {
-                      if (_controller.heroVariant == HeroCardVariant.emptyPlan) {
+                      if (_controller.heroVariant ==
+                          HeroCardVariant.emptyPlan) {
                         _openSmartFillSheet();
-                      } else if (_controller.heroVariant == HeroCardVariant.restDay) {
+                      } else if (_controller.heroVariant ==
+                          HeroCardVariant.restDay) {
                         _navigateTo(
                           MovementRoutes.picker,
                           arguments: {'lightMode': true},
@@ -576,7 +621,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                           onQuickComplete: (dur, metric, feel, note) async {
                             await _logService.quickCompleteOccurrence(
                               occurrenceId: selectedOccurrences.first.id,
-                              activityKindId: selectedOccurrences.first.activityKindId,
+                              activityKindId:
+                                  selectedOccurrences.first.activityKindId,
                               dateIso: selectedOccurrences.first.dateIso,
                               durationSec: dur,
                               feeling: feel,
@@ -592,7 +638,8 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                       }
                     },
                     onLogAnotherAction: () => _openAddCommandSheet(),
-                    onReviewWeekAction: () => _navigateTo(MovementRoutes.progress),
+                    onReviewWeekAction: () =>
+                        _navigateTo(MovementRoutes.progress),
                   ),
                 ),
 
@@ -605,7 +652,9 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                     ),
                     child: Text(
                       MovementStrings.centerDayPlan,
-                      style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                      style: RitmoTextStyles.sectionHeadline(
+                        colors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -613,69 +662,73 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                 // ۶. لیست روز (SessionCard | RecoveryDayCard | EmptyStateBlock)
                 if (selectedOccurrences.isNotEmpty)
                   SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final occ = selectedOccurrences[index];
-                        return SessionCard(
-                          occurrence: occ,
-                          onTap: () => _handleOccurrenceTap(occ),
-                          onStart: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => MovementLiveSessionScreen(
-                                  activityKind: occ.activityKind ?? MovementActivityKind(
-                                    id: occ.activityKindId,
-                                    nameFa: occ.displayName,
-                                    family: 'general',
-                                    icon: 'directions_run',
-                                    primaryMetric: 'duration',
-                                    createdAt: DateTime.now(),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final occ = selectedOccurrences[index];
+                      return SessionCard(
+                        occurrence: occ,
+                        onTap: () => _handleOccurrenceTap(occ),
+                        onStart: () {
+                          Navigator.of(context)
+                              .push(
+                                MaterialPageRoute(
+                                  builder: (_) => MovementLiveSessionScreen(
+                                    activityKind:
+                                        occ.activityKind ??
+                                        MovementActivityKind(
+                                          id: occ.activityKindId,
+                                          nameFa: occ.displayName,
+                                          family: 'general',
+                                          icon: 'directions_run',
+                                          primaryMetric: 'duration',
+                                          createdAt: DateTime.now(),
+                                        ),
+                                    occurrenceId: occ.id,
+                                    targetSnapshot: occ.goalValue != null
+                                        ? {
+                                            'type': occ.goalType ?? 'duration',
+                                            'value': occ.goalValue,
+                                            'unit':
+                                                occ.goalUnit ??
+                                                MovementStrings.unitMinute,
+                                          }
+                                        : null,
                                   ),
-                                  occurrenceId: occ.id,
-                                  targetSnapshot: occ.goalValue != null
-                                      ? {
-                                          'type': occ.goalType ?? 'duration',
-                                          'value': occ.goalValue,
-                                          'unit': occ.goalUnit ?? MovementStrings.unitMinute,
-                                        }
-                                      : null,
                                 ),
-                              ),
-                            ).then((_) => _controller.loadData());
-                          },
-                          onManualLog: () {
-                            QuickCompleteSheet.show(
-                              context,
-                              occurrence: occ,
-                              onQuickComplete: (dur, metric, feel, note) async {
-                                await _logService.quickCompleteOccurrence(
-                                  occurrenceId: occ.id,
-                                  activityKindId: occ.activityKindId,
-                                  dateIso: occ.dateIso,
-                                  durationSec: dur,
-                                  feeling: feel,
-                                  note: note,
-                                );
-                              },
-                            ).then((_) => _controller.loadData());
-                          },
-                          onMove: () => _handleMove(occ),
-                          onSkip: () => _handleSkip(occ),
-                          onEditPlan: () => _handleEditPlan(occ),
-                          onDelete: () => _handleDelete(occ),
-                          onQuickComplete: () async {
-                            final ok = await _controller.optimisticCompleteOccurrence(occ.id);
-                            if (!ok && context.mounted) {
-                              MovementUndoToast.show(
-                                context,
-                                message: MovementStrings.completeErrorToast,
+                              )
+                              .then((_) => _controller.loadData());
+                        },
+                        onManualLog: () {
+                          QuickCompleteSheet.show(
+                            context,
+                            occurrence: occ,
+                            onQuickComplete: (dur, metric, feel, note) async {
+                              await _logService.quickCompleteOccurrence(
+                                occurrenceId: occ.id,
+                                activityKindId: occ.activityKindId,
+                                dateIso: occ.dateIso,
+                                durationSec: dur,
+                                feeling: feel,
+                                note: note,
                               );
-                            }
-                          },
-                        );
-                      },
-                      childCount: selectedOccurrences.length,
-                    ),
+                            },
+                          ).then((_) => _controller.loadData());
+                        },
+                        onMove: () => _handleMove(occ),
+                        onSkip: () => _handleSkip(occ),
+                        onEditPlan: () => _handleEditPlan(occ),
+                        onDelete: () => _handleDelete(occ),
+                        onQuickComplete: () async {
+                          final ok = await _controller
+                              .optimisticCompleteOccurrence(occ.id);
+                          if (!ok && context.mounted) {
+                            MovementUndoToast.show(
+                              context,
+                              message: MovementStrings.completeErrorToast,
+                            );
+                          }
+                        },
+                      );
+                    }, childCount: selectedOccurrences.length),
                   )
                 else if (_controller.heroVariant == HeroCardVariant.restDay)
                   SliverToBoxAdapter(
@@ -711,7 +764,9 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: (context.modules.sports).withValues(alpha: 0.12),
+                                color: (context.modules.sports).withValues(
+                                  alpha: 0.12,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -727,12 +782,16 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                                 children: [
                                   Text(
                                     'جلسه‌ای برای این روز تنظیم نشده',
-                                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                                    style: RitmoTextStyles.cardTitle(
+                                      colors.textPrimary,
+                                    ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'برای ثبت تمرین یا برنامه‌ریزی، دکمهٔ «افزودن فعالیت» پایین را لمس کنید.',
-                                    style: RitmoTextStyles.caption(colors.textSecondary),
+                                    style: RitmoTextStyles.caption(
+                                      colors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -747,10 +806,14 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
                 SliverToBoxAdapter(
                   child: StrengthEntryCard(
                     program: _controller.strengthProgram,
-                    onBuildProgram: () => _navigateTo(MovementRoutes.strengthOnboarding),
-                    onViewProgram: () => _navigateTo(MovementRoutes.strengthHub),
-                    onResumeSession: () => _navigateTo(MovementRoutes.liveSession),
-                    onStartNextCycle: () => _navigateTo(MovementRoutes.strengthOnboarding),
+                    onBuildProgram: () =>
+                        _navigateTo(MovementRoutes.strengthOnboarding),
+                    onViewProgram: () =>
+                        _navigateTo(MovementRoutes.strengthHub),
+                    onResumeSession: () =>
+                        _navigateTo(MovementRoutes.liveSession),
+                    onStartNextCycle: () =>
+                        _navigateTo(MovementRoutes.strengthOnboarding),
                   ),
                 ),
 

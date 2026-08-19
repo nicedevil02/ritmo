@@ -35,7 +35,9 @@ class SessionShell extends StatelessWidget {
             status,
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                ),
                 child: content,
               ),
             ),

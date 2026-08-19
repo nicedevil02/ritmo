@@ -210,7 +210,8 @@ class HeroSessionCard extends StatelessWidget {
         );
 
       case HeroCardVariant.allDone:
-        final activityName = primaryOccurrence?.activityKind?.nameFa ??
+        final activityName =
+            primaryOccurrence?.activityKind?.nameFa ??
             MovementStrings.defaultTodaySessionName;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -248,7 +249,10 @@ class HeroSessionCard extends StatelessWidget {
                       RitmoHapticsPolicy.tap();
                       onLogAnotherAction?.call();
                     },
-                    icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 18,
+                    ),
                     label: Text(
                       MovementStrings.heroActionLogAnother,
                       style: RitmoTextStyles.label(colors.primary),
@@ -351,9 +355,7 @@ class HeroSessionCard extends StatelessWidget {
               timeStatus,
               style: RitmoTextStyles.caption(
                 isLate ? colors.warning : colors.textSecondary,
-              ).copyWith(
-                fontWeight: isLate ? FontWeight.w700 : null,
-              ),
+              ).copyWith(fontWeight: isLate ? FontWeight.w700 : null),
             ),
             const SizedBox(height: RitmoSpacing.xs),
 
@@ -365,10 +367,7 @@ class HeroSessionCard extends StatelessWidget {
             const SizedBox(height: RitmoSpacing.xs),
 
             // ۳. هدف
-            Text(
-              goalStr,
-              style: RitmoTextStyles.body(colors.textSecondary),
-            ),
+            Text(goalStr, style: RitmoTextStyles.body(colors.textSecondary)),
 
             const SizedBox(height: RitmoSpacing.lg),
 

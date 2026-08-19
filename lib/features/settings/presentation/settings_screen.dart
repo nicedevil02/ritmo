@@ -34,8 +34,7 @@ import 'package:ritmo/features/settings/presentation/widgets/settings_mode_switc
 import 'package:ritmo/features/settings/presentation/widgets/settings_premium_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
-/// صفحه اصلی تنظیمات اپلیکیشن با طراحی اختصاصی iOS 26 Inset Grouped
-/// به همراه آیکن‌های سه‌بعدی نئونی و انیمیشن ناوبری Depth Parallax
+/// صفحه اصلی تنظیمات اپلیکیشن با طراحی مدرن تفکیک‌شده iOS 26 Inset Grouped
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
@@ -164,73 +163,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    final groups = [
-      _GroupItem(
-        group: SettingsGroup.identity,
-        title: SettingsGroup.identity.labelFa,
-        subtitle: SettingsGroup.identity.subtitleFa,
-        icon: SettingsGroup.identity.icon,
-        gradient: const [Color(0xFF00C9FF), Color(0xFF92FE9D)],
-        pageBuilder: () => const IdentityGroupScreen(),
+    // ─── دسته‌بندی منطقی گزینه‌ها در بخش‌های جزیره‌ای مجزا (iOS 26 Inset Grouped) ───
+    final sections = [
+      _SettingsSectionData(
+        title: 'شخصی‌سازی و تجربه کاربری',
+        icon: CupertinoIcons.person_crop_circle,
+        items: [
+          _GroupItem(
+            group: SettingsGroup.identity,
+            title: SettingsGroup.identity.labelFa,
+            subtitle: SettingsGroup.identity.subtitleFa,
+            icon: SettingsGroup.identity.icon,
+            gradient: const [Color(0xFF00C9FF), Color(0xFF92FE9D)],
+            pageBuilder: () => const IdentityGroupScreen(),
+          ),
+          _GroupItem(
+            group: SettingsGroup.appearance,
+            title: SettingsGroup.appearance.labelFa,
+            subtitle: SettingsGroup.appearance.subtitleFa,
+            icon: SettingsGroup.appearance.icon,
+            gradient: const [Color(0xFFDA22FF), Color(0xFF9733EE)],
+            pageBuilder: () => AppearanceGroupScreen(
+              themeRepository: widget.themeRepository,
+              localeRepository: widget.localeRepository,
+            ),
+          ),
+        ],
       ),
-      _GroupItem(
-        group: SettingsGroup.modules,
-        title: SettingsGroup.modules.labelFa,
-        subtitle: SettingsGroup.modules.subtitleFa,
-        icon: SettingsGroup.modules.icon,
-        gradient: const [Color(0xFF6A11CB), Color(0xFF2575FC)],
-        pageBuilder: () => const ModulesGroupScreen(),
+      _SettingsSectionData(
+        title: 'هسته هوشمند و قابلیت‌ها',
+        icon: CupertinoIcons.sparkles,
+        items: [
+          _GroupItem(
+            group: SettingsGroup.modules,
+            title: SettingsGroup.modules.labelFa,
+            subtitle: SettingsGroup.modules.subtitleFa,
+            icon: SettingsGroup.modules.icon,
+            gradient: const [Color(0xFF6A11CB), Color(0xFF2575FC)],
+            pageBuilder: () => const ModulesGroupScreen(),
+          ),
+          _GroupItem(
+            group: SettingsGroup.assistant,
+            title: SettingsGroup.assistant.labelFa,
+            subtitle: SettingsGroup.assistant.subtitleFa,
+            icon: SettingsGroup.assistant.icon,
+            gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+            pageBuilder: () => const AssistantPrivacyGroupScreen(),
+          ),
+          _GroupItem(
+            group: SettingsGroup.calendar,
+            title: SettingsGroup.calendar.labelFa,
+            subtitle: SettingsGroup.calendar.subtitleFa,
+            icon: SettingsGroup.calendar.icon,
+            gradient: const [Color(0xFF4568DC), Color(0xFFB06AB3)],
+            pageBuilder: () => const CalendarGroupScreen(),
+          ),
+        ],
       ),
-      _GroupItem(
-        group: SettingsGroup.notifications,
-        title: SettingsGroup.notifications.labelFa,
-        subtitle: SettingsGroup.notifications.subtitleFa,
-        icon: SettingsGroup.notifications.icon,
-        gradient: const [Color(0xFFFF9966), Color(0xFFFF5E62)],
-        pageBuilder: () => const NotificationsGroupScreen(),
+      _SettingsSectionData(
+        title: 'ارتباطات و اعلان‌ها',
+        icon: CupertinoIcons.bell,
+        items: [
+          _GroupItem(
+            group: SettingsGroup.notifications,
+            title: SettingsGroup.notifications.labelFa,
+            subtitle: SettingsGroup.notifications.subtitleFa,
+            icon: SettingsGroup.notifications.icon,
+            gradient: const [Color(0xFFFF9966), Color(0xFFFF5E62)],
+            pageBuilder: () => const NotificationsGroupScreen(),
+          ),
+        ],
       ),
-      _GroupItem(
-        group: SettingsGroup.appearance,
-        title: SettingsGroup.appearance.labelFa,
-        subtitle: SettingsGroup.appearance.subtitleFa,
-        icon: SettingsGroup.appearance.icon,
-        gradient: const [Color(0xFFDA22FF), Color(0xFF9733EE)],
-        pageBuilder: () => AppearanceGroupScreen(
-          themeRepository: widget.themeRepository,
-          localeRepository: widget.localeRepository,
-        ),
-      ),
-      _GroupItem(
-        group: SettingsGroup.assistant,
-        title: SettingsGroup.assistant.labelFa,
-        subtitle: SettingsGroup.assistant.subtitleFa,
-        icon: SettingsGroup.assistant.icon,
-        gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
-        pageBuilder: () => const AssistantPrivacyGroupScreen(),
-      ),
-      _GroupItem(
-        group: SettingsGroup.dataBackup,
-        title: SettingsGroup.dataBackup.labelFa,
-        subtitle: SettingsGroup.dataBackup.subtitleFa,
-        icon: SettingsGroup.dataBackup.icon,
-        gradient: const [Color(0xFF373B44), Color(0xFF4286F4)],
-        pageBuilder: () => DataBackupGroupScreen(onFactoryReset: widget.onFactoryReset),
-      ),
-      _GroupItem(
-        group: SettingsGroup.security,
-        title: SettingsGroup.security.labelFa,
-        subtitle: SettingsGroup.security.subtitleFa,
-        icon: SettingsGroup.security.icon,
-        gradient: const [Color(0xFFFF416C), Color(0xFFFF4B2B)],
-        pageBuilder: () => const SecurityGroupScreen(),
-      ),
-      _GroupItem(
-        group: SettingsGroup.calendar,
-        title: SettingsGroup.calendar.labelFa,
-        subtitle: SettingsGroup.calendar.subtitleFa,
-        icon: SettingsGroup.calendar.icon,
-        gradient: const [Color(0xFF4568DC), Color(0xFFB06AB3)],
-        pageBuilder: () => const CalendarGroupScreen(),
+      _SettingsSectionData(
+        title: 'امنیت و مدیریت داده‌ها',
+        icon: CupertinoIcons.lock_shield,
+        items: [
+          _GroupItem(
+            group: SettingsGroup.security,
+            title: SettingsGroup.security.labelFa,
+            subtitle: SettingsGroup.security.subtitleFa,
+            icon: SettingsGroup.security.icon,
+            gradient: const [Color(0xFFFF416C), Color(0xFFFF4B2B)],
+            pageBuilder: () => const SecurityGroupScreen(),
+          ),
+          _GroupItem(
+            group: SettingsGroup.dataBackup,
+            title: SettingsGroup.dataBackup.labelFa,
+            subtitle: SettingsGroup.dataBackup.subtitleFa,
+            icon: SettingsGroup.dataBackup.icon,
+            gradient: const [Color(0xFF373B44), Color(0xFF4286F4)],
+            pageBuilder: () => DataBackupGroupScreen(onFactoryReset: widget.onFactoryReset),
+          ),
+        ],
       ),
     ];
 
@@ -280,7 +304,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Icon(
                         CupertinoIcons.search,
-                        size: 16,
+                        size: 15,
                         color: colors.primary,
                       ),
                       const SizedBox(width: 6),
@@ -290,7 +314,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: colors.primary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -309,6 +333,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               const SettingsDegradedBanner(),
               const SettingsHealthCard(),
+
               // ─── هدر هویتی اختصاصی پرمیوم iOS 26 ───
               IdentityHeader(
                 onTap: () {
@@ -326,98 +351,105 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // ─── جابجایی حالت ساده / پیشرفته ───
               const SettingsModeSwitcher(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
 
-              // ─── عنوان بخش دسته‌بندی‌ها ───
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'دسته‌بندی‌های تنظیمات',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ─── فهرست گروه‌های تنظیمات به سبک iOS 26 Inset Grouped ───
+              // ─── بخش‌های جزیره‌ای تنظیمات تفکیک‌شده به سبک iOS 26 ───
               AnimatedBuilder(
                 animation: SettingsService.instance.revision,
                 builder: (context, _) {
                   final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: colors.border,
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.shadow.withValues(alpha: 0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final section in sections) ...[
+                        // عنوان بخش با استایل اختصاصی iOS
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 6, bottom: 8, top: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                section.icon,
+                                size: 14,
+                                color: colors.primary.withValues(alpha: 0.8),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                section.title,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.textSecondary,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // کارت جزیره‌ای گروه‌بندی‌شده
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 18),
+                          decoration: BoxDecoration(
+                            color: colors.card,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: colors.border.withValues(alpha: 0.65),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors.shadow.withValues(alpha: 0.03),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            children: [
+                              for (int i = 0; i < section.items.length; i++) ...[
+                                if (i > 0)
+                                  Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: colors.border.withValues(alpha: 0.45),
+                                    indent: 68,
+                                    endIndent: 16,
+                                  ),
+                                Builder(
+                                  builder: (context) {
+                                    final g = section.items[i];
+                                    final count = SettingsRegistry.userVisibleByGroup(
+                                      g.group,
+                                      includeAdvanced: showAdvanced,
+                                    ).length;
+                                    return SettingsGroupTile(
+                                      title: g.title,
+                                      subtitle: g.subtitle,
+                                      icon: g.icon,
+                                      gradient: g.gradient,
+                                      count: count,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < groups.length; i++) ...[
-                          if (i > 0)
-                            Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: colors.border.withValues(alpha: 0.6),
-                              indent: 64,
-                              endIndent: 16,
-                            ),
-                          Builder(
-                            builder: (context) {
-                              final g = groups[i];
-                              final count = SettingsRegistry.userVisibleByGroup(
-                                g.group,
-                                includeAdvanced: showAdvanced,
-                              ).length;
-                              return SettingsGroupTile(
-                                title: g.title,
-                                subtitle: g.subtitle,
-                                icon: g.icon,
-                                gradient: g.gradient,
-                                count: count,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    Ios26PageRoute(builder: (_) => g.pageBuilder()),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
+                    ],
                   );
                 },
               ),
-              const SizedBox(height: 28),
+
+              const SizedBox(height: 12),
 
               // ─── بخش نسخه و کپی‌رایت ───
               Center(
@@ -433,7 +465,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: colors.textSecondary,
-                            ),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -454,6 +486,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+}
+
+class _SettingsSectionData {
+  const _SettingsSectionData({
+    required this.title,
+    required this.icon,
+    required this.items,
+  });
+
+  final String title;
+  final IconData icon;
+  final List<_GroupItem> items;
 }
 
 class _GroupItem {

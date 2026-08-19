@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
 /// تنها راه مجاز باز کردن شیت در کل برنامه (R-03).
 /// این ویجت ارتفاع را سقف می‌گیرد نه قطعی، به صفحه‌کلید احترام می‌گذارد،
@@ -68,103 +67,106 @@ class RitmoSheetScaffold extends StatelessWidget {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(
-            context,
-            factor: maxHeightFactor,
-          ),
-        ),
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(RitmoRadius.card),
-          ),
-          border: Border.all(color: colors.border, width: 1.0),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(
-                  top: RitmoSpacing.md,
-                  bottom: RitmoSpacing.xs,
-                ),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.textTertiary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(
+              context,
+              factor: maxHeightFactor,
             ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: RitmoSpacing.xl,
-                vertical: RitmoSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(RitmoRadius.card),
+            ),
+            border: Border.all(color: colors.border, width: 1.0),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(
+                    top: RitmoSpacing.md,
+                    bottom: RitmoSpacing.xs,
+                  ),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textTertiary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                        ),
-                        if (subtitle != null && subtitle!.isNotEmpty) ...[
-                          const SizedBox(height: 4),
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.xl,
+                  vertical: RitmoSpacing.md,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            subtitle!,
-                            style: RitmoTextStyles.caption(
-                              colors.textSecondary,
-                            ),
+                            title,
+                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
                           ),
+                          if (subtitle != null && subtitle!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle!,
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close, color: colors.textSecondary),
-                    tooltip: 'بستن',
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            // Body
-            Flexible(
-              child: childIsScrollable
-                  ? Padding(
-                      padding: const EdgeInsets.all(RitmoSpacing.xl),
-                      child: child,
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(RitmoSpacing.xl),
-                      child: child,
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(Icons.close, color: colors.textSecondary),
+                      tooltip: 'بستن',
                     ),
-            ),
-            // Optional Footer
-            if (footer != null) ...[
-              const Divider(height: 1),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: RitmoSpacing.xl,
-                    vertical: RitmoSpacing.md,
-                  ),
-                  child: footer!,
+                  ],
                 ),
               ),
+              const Divider(height: 1),
+              // Body
+              Flexible(
+                child: childIsScrollable
+                    ? Padding(
+                        padding: const EdgeInsets.all(RitmoSpacing.xl),
+                        child: child,
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(RitmoSpacing.xl),
+                        child: child,
+                      ),
+              ),
+              // Optional Footer
+              if (footer != null) ...[
+                const Divider(height: 1),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: RitmoSpacing.xl,
+                      vertical: RitmoSpacing.md,
+                    ),
+                    child: footer!,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

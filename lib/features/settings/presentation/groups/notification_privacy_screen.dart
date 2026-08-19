@@ -28,6 +28,7 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
   }
 
   void _loadSettings() {
+    if (!mounted) return;
     setState(() {
       _privacyMode = SettingsService.instance.get<String>('notif_privacy_mode');
       _biometricEnabled = SettingsService.instance.get<bool>('notif_biometric_enabled');
@@ -35,6 +36,7 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
   }
 
   Future<void> _updateSetting(String key, Object val) async {
+    if (!mounted) return;
     setState(() {
       if (key == 'notif_privacy_mode') _privacyMode = val.toString();
       if (key == 'notif_biometric_enabled') _biometricEnabled = val == true;
@@ -44,7 +46,9 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
     } catch (e, st) {
       RitmoLog.error('Settings', 'Failed to update setting: $key', e, st);
     }
-    _loadSettings();
+    if (mounted) {
+      _loadSettings();
+    }
   }
 
   @override

@@ -72,8 +72,14 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.68,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.75),
+          ),
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
@@ -193,7 +199,7 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
             ),
           ],
         ),
-      ),
+      ),),
     );
   }
 }

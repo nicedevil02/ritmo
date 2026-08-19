@@ -52,10 +52,11 @@ class MovementAppBar extends StatelessWidget implements PreferredSizeWidget {
                   header: true,
                   child: Text(
                     title,
-                    style: RitmoTextStyles.pageTitle(colors.textPrimary).copyWith(
-                      fontSize: hasSubtitle ? 20.0 : 24.0,
-                      height: 1.15,
-                    ),
+                    style: RitmoTextStyles.pageTitle(colors.textPrimary)
+                        .copyWith(
+                          fontSize: hasSubtitle ? 20.0 : 24.0,
+                          height: 1.15,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -63,18 +64,15 @@ class MovementAppBar extends StatelessWidget implements PreferredSizeWidget {
                 if (hasSubtitle) ...[
                   AnimatedOpacity(
                     opacity: isCollapsed ? 0.0 : 1.0,
-                    duration: RitmoMotion.effective(
-                      context,
-                      RitmoMotion.state,
-                    ),
+                    duration: RitmoMotion.effective(context, RitmoMotion.state),
                     curve: Curves.easeInOut,
                     child: isCollapsed
                         ? const SizedBox.shrink()
                         : Text(
                             subtitle!,
-                            style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
-                              height: 1.15,
-                            ),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ).copyWith(height: 1.15),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -154,11 +152,7 @@ class _AppBarIconButton extends StatelessWidget {
                       width: RitmoElevation.borderWidthDark,
                     ),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 20.0,
-                    color: colors.textPrimary,
-                  ),
+                  child: Icon(icon, size: 20.0, color: colors.textPrimary),
                 ),
               ),
             ),

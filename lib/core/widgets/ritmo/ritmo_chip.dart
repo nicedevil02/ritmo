@@ -32,7 +32,10 @@ class RitmoChip extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: RitmoMotion.state,
-        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs + 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: RitmoSpacing.md,
+          vertical: RitmoSpacing.xs + 2,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? activeColor.withValues(alpha: 0.16)
@@ -47,7 +50,11 @@ class RitmoChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: isSelected ? activeColor : colors.textSecondary),
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? activeColor : colors.textSecondary,
+              ),
               const SizedBox(width: RitmoSpacing.xs),
             ],
             Text(

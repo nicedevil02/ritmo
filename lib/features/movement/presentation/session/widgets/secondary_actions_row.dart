@@ -24,9 +24,15 @@ class SecondaryActionsRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (leftAction != null) leftAction! else const SizedBox(width: 48, height: 48),
+          if (leftAction != null)
+            leftAction!
+          else
+            const SizedBox(width: 48, height: 48),
           if (centerAction != null) centerAction! else const SizedBox.shrink(),
-          if (rightAction != null) rightAction! else const SizedBox(width: 48, height: 48),
+          if (rightAction != null)
+            rightAction!
+          else
+            const SizedBox(width: 48, height: 48),
         ],
       ),
     );

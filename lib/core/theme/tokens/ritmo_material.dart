@@ -75,10 +75,10 @@ class RitmoMaterials extends ThemeExtension<RitmoMaterials> {
   }
 
   RitmoMaterialSpec of(RitmoMaterialTier tier) => switch (tier) {
-        RitmoMaterialTier.thin => thin,
-        RitmoMaterialTier.regular => regular,
-        RitmoMaterialTier.thick => thick,
-      };
+    RitmoMaterialTier.thin => thin,
+    RitmoMaterialTier.regular => regular,
+    RitmoMaterialTier.thick => thick,
+  };
 
   @override
   RitmoMaterials copyWith({
@@ -170,8 +170,9 @@ class RitmoMaterial extends StatelessWidget {
     // تنزل خودکار: دسترس‌پذیری + دستگاه ضعیف
     final reduceTransparency =
         Theme.of(context).extension<RitmoBehavior>()?.reduceTransparency ??
-            false;
-    final degrade = reduceTransparency ||
+        false;
+    final degrade =
+        reduceTransparency ||
         MediaQuery.highContrastOf(context) ||
         RitmoDeviceTier.isLowEndOf(context);
 
@@ -193,11 +194,7 @@ class RitmoMaterial extends StatelessWidget {
             sigmaY: spec.sigma,
             tileMode: TileMode.clamp,
           ),
-          child: _TintAndHighlight(
-            spec: spec,
-            tint: tint,
-            child: child,
-          ),
+          child: _TintAndHighlight(spec: spec, tint: tint, child: child),
         ),
       ),
     );
@@ -269,8 +266,6 @@ extension RitmoMaterialsContext on BuildContext {
   RitmoMaterials get materials {
     final registered = Theme.of(this).extension<RitmoMaterials>();
     if (registered != null) return registered;
-    return RitmoMaterials.fromColors(
-      Theme.of(this).extension<RitmoColors>(),
-    );
+    return RitmoMaterials.fromColors(Theme.of(this).extension<RitmoColors>());
   }
 }

@@ -292,11 +292,15 @@ class _AgendaDiagnosticsSheetState extends State<AgendaDiagnosticsSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+          ),
         child: Padding(
           padding: const EdgeInsets.all(RitmoSpacing.lg),
           child: FutureBuilder<String>(
@@ -404,6 +408,6 @@ class _AgendaDiagnosticsSheetState extends State<AgendaDiagnosticsSheet> {
           ),
         ),
       ),
-    );
+    ),);
   }
 }

@@ -64,15 +64,23 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
           repsMin: 8,
           repsMax: 12,
           restSec: 60,
-          formTips: const ['بدن در یک خط مستقیم باشد.', 'آرنج‌ها زاویه ۴۵ درجه داشته باشند.'],
-          alternatives: const ['شنا روی زانو', 'شنا با تکیه به دیوار', 'پرس سینه با کش'],
+          formTips: const [
+            'بدن در یک خط مستقیم باشد.',
+            'آرنج‌ها زاویه ۴۵ درجه داشته باشند.',
+          ],
+          alternatives: const [
+            'شنا روی زانو',
+            'شنا با تکیه به دیوار',
+            'پرس سینه با کش',
+          ],
         ),
       ];
     }
     _loadPreviousHints();
   }
 
-  MovementStrengthExercise get _currentExercise => _exercises[_currentExerciseIndex];
+  MovementStrengthExercise get _currentExercise =>
+      _exercises[_currentExerciseIndex];
 
   List<MovementSetLog> get _currentSetLogs =>
       _setLogsByExercise[_currentExercise.id] ?? [];
@@ -96,14 +104,16 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
     if (idx >= 0) {
       list[idx] = list[idx].copyWith(weightKg: weight);
     } else {
-      list.add(MovementSetLog(
-        id: '${widget.sessionId}_${_currentExercise.id}_$setIndex',
-        sessionId: widget.sessionId,
-        exerciseId: _currentExercise.id,
-        setIndex: setIndex,
-        weightKg: weight,
-        at: DateTime.now(),
-      ));
+      list.add(
+        MovementSetLog(
+          id: '${widget.sessionId}_${_currentExercise.id}_$setIndex',
+          sessionId: widget.sessionId,
+          exerciseId: _currentExercise.id,
+          setIndex: setIndex,
+          weightKg: weight,
+          at: DateTime.now(),
+        ),
+      );
     }
     _setLogsByExercise[_currentExercise.id] = list;
     setState(() {});
@@ -116,14 +126,16 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
     if (idx >= 0) {
       list[idx] = list[idx].copyWith(reps: reps);
     } else {
-      list.add(MovementSetLog(
-        id: '${widget.sessionId}_${_currentExercise.id}_$setIndex',
-        sessionId: widget.sessionId,
-        exerciseId: _currentExercise.id,
-        setIndex: setIndex,
-        reps: reps,
-        at: DateTime.now(),
-      ));
+      list.add(
+        MovementSetLog(
+          id: '${widget.sessionId}_${_currentExercise.id}_$setIndex',
+          sessionId: widget.sessionId,
+          exerciseId: _currentExercise.id,
+          setIndex: setIndex,
+          reps: reps,
+          at: DateTime.now(),
+        ),
+      );
     }
     _setLogsByExercise[_currentExercise.id] = list;
     setState(() {});
@@ -172,8 +184,11 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
 
   void _onAddSet() {
     final list = List<MovementSetLog>.from(_currentSetLogs);
-    final newSetIndex = (list.map((e) => e.setIndex).fold<int>(0, (a, b) => a > b ? a : b)) + 1;
-    final targetSets = newSetIndex > _currentExercise.sets ? newSetIndex : _currentExercise.sets + 1;
+    final newSetIndex =
+        (list.map((e) => e.setIndex).fold<int>(0, (a, b) => a > b ? a : b)) + 1;
+    final targetSets = newSetIndex > _currentExercise.sets
+        ? newSetIndex
+        : _currentExercise.sets + 1;
 
     final updatedExercise = _currentExercise.copyWith(sets: targetSets);
     _exercises[_currentExerciseIndex] = updatedExercise;
@@ -203,14 +218,16 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
         _exercises[_currentExerciseIndex] = updated;
         setState(() {});
 
-        unawaited(_service.swapExercise(
-          exerciseId: _currentExercise.id,
-          newExerciseNameFa: res.newExerciseNameFa,
-          newMuscleGroup: res.newMuscleGroup,
-          scope: res.scope,
-          dayId: widget.day.id,
-          programId: widget.day.programId,
-        ));
+        unawaited(
+          _service.swapExercise(
+            exerciseId: _currentExercise.id,
+            newExerciseNameFa: res.newExerciseNameFa,
+            newMuscleGroup: res.newMuscleGroup,
+            scope: res.scope,
+            dayId: widget.day.id,
+            programId: widget.day.programId,
+          ),
+        );
       }
     }
   }
@@ -225,10 +242,15 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
   }
 
   void _handlePrimaryCta() {
-    final uncompleted = _currentExercise.sets - _currentSetLogs.where((l) => l.completed).length;
+    final uncompleted =
+        _currentExercise.sets -
+        _currentSetLogs.where((l) => l.completed).length;
     if (uncompleted > 0) {
       // تکمیل اولین ست باز
-      final completedIndices = _currentSetLogs.where((l) => l.completed).map((l) => l.setIndex).toSet();
+      final completedIndices = _currentSetLogs
+          .where((l) => l.completed)
+          .map((l) => l.setIndex)
+          .toSet();
       for (int i = 1; i <= _currentExercise.sets; i++) {
         if (!completedIndices.contains(i)) {
           _onToggleCompleted(i);
@@ -243,7 +265,9 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
   }
 
   String _getPrimaryCtaLabel() {
-    final uncompleted = _currentExercise.sets - _currentSetLogs.where((l) => l.completed).length;
+    final uncompleted =
+        _currentExercise.sets -
+        _currentSetLogs.where((l) => l.completed).length;
     if (uncompleted > 0) {
       return MovementStrings.strengthRecordSet;
     }
@@ -259,7 +283,10 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
     final sportsColor = context.modules.sports;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.md,
+        vertical: RitmoSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -268,10 +295,13 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                MovementStrings.strengthExerciseProgress(_currentExerciseIndex + 1, _exercises.length),
-                style: RitmoTextStyles.label(sportsColor).copyWith(
-                  fontWeight: FontWeight.bold,
+                MovementStrings.strengthExerciseProgress(
+                  _currentExerciseIndex + 1,
+                  _exercises.length,
                 ),
+                style: RitmoTextStyles.label(
+                  sportsColor,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
                 widget.day.name,
@@ -320,10 +350,15 @@ class _StrengthSessionViewState extends State<StrengthSessionView> {
           ElevatedButton(
             onPressed: _handlePrimaryCta,
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, MovementLayout.kPrimaryButtonHeight),
+              minimumSize: const Size(
+                double.infinity,
+                MovementLayout.kPrimaryButtonHeight,
+              ),
               backgroundColor: sportsColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RitmoRadius.field),
+              ),
             ),
             child: Text(
               _getPrimaryCtaLabel(),

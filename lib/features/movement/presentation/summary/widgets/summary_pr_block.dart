@@ -34,7 +34,11 @@ class SummaryPrBlock extends StatelessWidget {
               color: sportsColor,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: RitmoSpacing.md),
           Expanded(
@@ -43,9 +47,9 @@ class SummaryPrBlock extends StatelessWidget {
               children: [
                 Text(
                   MovementStrings.summaryPrCelebration,
-                  style: RitmoTextStyles.cardTitle(sportsColor).copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.cardTitle(
+                    sportsColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(

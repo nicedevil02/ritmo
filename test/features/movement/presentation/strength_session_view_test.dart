@@ -27,10 +27,7 @@ void main() {
         brightness: Brightness.dark,
       ),
       home: Scaffold(
-        body: Directionality(
-          textDirection: TextDirection.rtl,
-          child: child,
-        ),
+        body: Directionality(textDirection: TextDirection.rtl, child: child),
       ),
     );
   }
@@ -85,7 +82,9 @@ void main() {
       exercises: [sampleExercise],
     );
 
-    testWidgets('1. Renders exercise card, set table and RIR picker', (tester) async {
+    testWidgets('1. Renders exercise card, set table and RIR picker', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestableWidget(
           StrengthSessionView(
@@ -106,44 +105,49 @@ void main() {
       expect(find.text(MovementStrings.strengthRecordSet), findsOneWidget);
     });
 
-    testWidgets('2. Completing a set records set log and displays RestTimerBar', (tester) async {
-      await tester.pumpWidget(
-        buildTestableWidget(
-          StrengthSessionView(
-            day: sampleDay,
-            sessionId: 'sess_1',
-            strengthService: service,
-            onFinishSession: () {},
+    testWidgets(
+      '2. Completing a set records set log and displays RestTimerBar',
+      (tester) async {
+        await tester.pumpWidget(
+          buildTestableWidget(
+            StrengthSessionView(
+              day: sampleDay,
+              sessionId: 'sess_1',
+              strengthService: service,
+              onFinishSession: () {},
+            ),
           ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
-      // Tap primary CTA to complete set 1
-      await tester.tap(find.text(MovementStrings.strengthRecordSet));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+        // Tap primary CTA to complete set 1
+        await tester.tap(find.text(MovementStrings.strengthRecordSet));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
-      // RestTimerBar appears
-      expect(find.byType(RestTimerBar), findsOneWidget);
-      expect(find.text(MovementStrings.strengthRestTimer), findsOneWidget);
+        // RestTimerBar appears
+        expect(find.byType(RestTimerBar), findsOneWidget);
+        expect(find.text(MovementStrings.strengthRestTimer), findsOneWidget);
 
-      // Verify log was saved to DB if ready
-      if (dbReady) {
-        final logs = await service.getSetLogsForSession('sess_1');
-        expect(logs.length, equals(1));
-        expect(logs.first.setIndex, equals(1));
-        expect(logs.first.completed, isTrue);
-      }
+        // Verify log was saved to DB if ready
+        if (dbReady) {
+          final logs = await service.getSetLogsForSession('sess_1');
+          expect(logs.length, equals(1));
+          expect(logs.first.setIndex, equals(1));
+          expect(logs.first.completed, isTrue);
+        }
 
-      // Dismiss rest timer by tapping skip
-      await tester.tap(find.text(MovementStrings.strengthRestSkip));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-    });
+        // Dismiss rest timer by tapping skip
+        await tester.tap(find.text(MovementStrings.strengthRestSkip));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+      },
+    );
 
-    testWidgets('3. Swapping exercise mid-session keeps previous sets', (tester) async {
+    testWidgets('3. Swapping exercise mid-session keeps previous sets', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         buildTestableWidget(
           StrengthSessionView(

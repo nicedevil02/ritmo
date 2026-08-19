@@ -34,10 +34,12 @@ void main() {
         },
       );
       DatabaseHelper.instance.overrideDatabaseForTesting(db!);
+      await SettingsService.instance.init();
     } catch (_) {}
   });
 
   tearDown(() async {
+    SettingsService.instance.resetForTesting();
     if (db != null) {
       await db!.close();
     }

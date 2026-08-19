@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// کارت تفکیک تحلیلی وضعیت جلسات (StatusBreakdownCard)
 /// لحن خنثی و تحلیلی؛ عدم استفاده از رنگ قرمز برای جلسات ردشده.
 class StatusBreakdownCard extends StatelessWidget {
-  const StatusBreakdownCard({
-    super.key,
-    required this.data,
-  });
+  const StatusBreakdownCard({super.key, required this.data});
 
   final MovementStatusBreakdownData data;
 
@@ -42,7 +39,8 @@ class StatusBreakdownCard extends StatelessWidget {
       {
         'label': 'ردشده یا استراحت',
         'count': data.skippedCount,
-        'color': colors.textTertiary, // استفاده از رنگ خنثی و عدم استفاده از قرمز
+        'color':
+            colors.textTertiary, // استفاده از رنگ خنثی و عدم استفاده از قرمز
       },
     ];
 
@@ -111,7 +109,10 @@ class StatusBreakdownCard extends StatelessWidget {
                     ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Expanded(
-                      child: Text(label, style: RitmoTextStyles.caption(colors.textPrimary)),
+                      child: Text(
+                        label,
+                        style: RitmoTextStyles.caption(colors.textPrimary),
+                      ),
                     ),
                     Text(
                       '${toPersianDigits(count)} جلسه (${toPersianDigits(pct.toStringAsFixed(0))}٪)',

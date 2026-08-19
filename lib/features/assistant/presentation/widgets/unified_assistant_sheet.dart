@@ -33,6 +33,7 @@ import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
@@ -749,150 +750,152 @@ class _AssistantSheetState extends State<AssistantSheet> {
   }
 
   void _showPreviewSheet(CommandPlan plan, PlanPreview preview) {
-    showModalBottomSheet<void>(
+    RitmoSheetScaffold.present<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: MediaQuery.of(sheetCtx).size.height * 0.6,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E2C) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      title: 'بررسی اقدامات پیشنهادی دستیار',
+      maxHeightFactor: 0.8,
+      childIsScrollable: true,
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (preview.needsBiometric) ...[
+            const Text(
+              '🔒 این اقدام حساس است و نیاز به تایید هویت بیومتریک دارد.',
+              style: TextStyle(color: Colors.redAccent, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+          ],
+          Row(
             children: [
-              Text(
-                'بررسی اقدامات پیشنهادی دستیار',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 15),
               Expanded(
-                child: ListView.builder(
-                  itemCount: preview.diffs.length,
-                  itemBuilder: (context, index) {
-                    final diff = preview.diffs[index];
-                    return Card(
-                      color: isDark ? const Color(0xFF2C2C3E) : Colors.grey[50],
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              diff.entityLabelFa,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            if (diff.beforeFa != null || diff.afterFa != null) ...[
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  if (diff.beforeFa != null) ...[
-                                    Text(diff.beforeFa!, style: const TextStyle(color: Colors.red)),
-                                    const Icon(Icons.arrow_left),
-                                  ],
-                                  if (diff.afterFa != null)
-                                    Text(diff.afterFa!, style: const TextStyle(color: Colors.green)),
-                                ],
-                              ),
-                            ],
-                            if (diff.warningFa != null) ...[
-                              const SizedBox(height: 5),
-                              Text(
-                                '⚠️ ${diff.warningFa}',
-                                style: const TextStyle(color: Colors.orange, fontSize: 12),
-                              ),
-                            ]
-                          ],
-                        ),
-                      ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    final result = await RitmoCommandBus.instance.execute(
+                      plan,
+                      personaId: widget.persona.id,
+                      source: CommandSource.assistant,
                     );
+                    if (result.success) {
+                      final stepTitles = plan.steps
+                          .map(
+                            (s) =>
+                                '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}',
+                          )
+                          .join('\n');
+                      if (mounted) {
+                        setState(() {
+                          _messages.add(ChatMessage(
+                            id: 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
+                            sessionId: widget.persona.id,
+                            role: ChatRole.assistant,
+                            content: 'اقدامات با موفقیت اجرا شد:\n$stepTitles',
+                            timestamp: DateTime.now(),
+                          ));
+                        });
+                      }
+                      unawaited(_checkLastPlan());
+
+                      for (final res in result.results) {
+                        if (res.commandId == 'app.openPage' &&
+                            res.outputData?['route'] != null) {
+                          final route = res.outputData!['route']!.toString();
+                          if (mounted) {
+                            unawaited(Navigator.of(context).pushNamed(route));
+                          }
+                        }
+                        if (res.commandId == 'assistant.handoff' &&
+                            res.outputData?['personaId'] != null) {
+                          final target =
+                              res.outputData!['personaId']!.toString();
+                          handoffTo(target);
+                        }
+                      }
+                    } else if (mounted) {
+                      setState(() {
+                        _messages.add(ChatMessage(
+                          id: 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
+                          sessionId: widget.persona.id,
+                          role: ChatRole.assistant,
+                          content: 'خطا در اجرای اقدام: ${result.errorMessage}',
+                          timestamp: DateTime.now(),
+                        ));
+                      });
+                    }
                   },
+                  child: const Text('تایید و اجرا', style: TextStyle()),
                 ),
               ),
-              const SizedBox(height: 15),
-              if (preview.needsBiometric)
-                const Text(
-                  '🔒 این اقدام حساس است و نیاز به تایید هویت بیومتریک دارد.',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 13),
-                  textAlign: TextAlign.center,
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('لغو', style: TextStyle()),
                 ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () async {
-                        Navigator.of(sheetCtx).pop();
-                        final result = await RitmoCommandBus.instance.execute(
-                          plan,
-                          personaId: widget.persona.id,
-                          source: CommandSource.assistant,
-                        );
-                        if (result.success) {
-                          final stepTitles = plan.steps.map((s) => '- ${RitmoCommandBus.instance.getCommand(s.commandId)?.humanTitle ?? s.commandId}').join('\n');
-                          if (mounted) {
-                            setState(() {
-                              _messages.add(ChatMessage(
-                                id: 'msg_ok_${DateTime.now().millisecondsSinceEpoch}',
-                                sessionId: widget.persona.id,
-                                role: ChatRole.assistant,
-                                content: 'اقدامات با موفقیت اجرا شد:\n$stepTitles',
-                                timestamp: DateTime.now(),
-                              ));
-                            });
-                          }
-                          unawaited(_checkLastPlan());
-
-                          for (final res in result.results) {
-                            if (res.commandId == 'app.openPage' && res.outputData?['route'] != null) {
-                              final route = res.outputData!['route']!.toString();
-                              if (mounted) unawaited(Navigator.of(context).pushNamed(route));
-                            }
-                            if (res.commandId == 'assistant.handoff' && res.outputData?['personaId'] != null) {
-                              final target = res.outputData!['personaId']!.toString();
-                              handoffTo(target);
-                            }
-                          }
-                        } else if (mounted) {
-                          setState(() {
-                            _messages.add(ChatMessage(
-                              id: 'msg_fail_${DateTime.now().millisecondsSinceEpoch}',
-                              sessionId: widget.persona.id,
-                              role: ChatRole.assistant,
-                              content: 'خطا در اجرای اقدام: ${result.errorMessage}',
-                              timestamp: DateTime.now(),
-                            ));
-                          });
-                        }
-                      },
-                      child: const Text('تایید و اجرا', style: TextStyle()),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(sheetCtx).pop(),
-                      child: const Text('لغو', style: TextStyle()),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
+        ],
+      ),
+      builder: (sheetCtx) {
+        final colors = context.colors;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const ClampingScrollPhysics(),
+          itemCount: preview.diffs.length,
+          itemBuilder: (context, index) {
+            final diff = preview.diffs[index];
+            return Card(
+              color: colors.surfaceElevated,
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      diff.entityLabelFa,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (diff.beforeFa != null || diff.afterFa != null) ...[
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          if (diff.beforeFa != null) ...[
+                            Text(
+                              diff.beforeFa!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const Icon(Icons.arrow_left),
+                          ],
+                          if (diff.afterFa != null)
+                            Text(
+                              diff.afterFa!,
+                              style: const TextStyle(color: Colors.green),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (diff.warningFa != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        '⚠️ ${diff.warningFa}',
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -965,25 +968,27 @@ class _AssistantSheetState extends State<AssistantSheet> {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF1E1E2C).withValues(alpha: 0.85)
-                : Colors.white.withValues(alpha: 0.92),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.08),
-              width: 1.2,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
             ),
-          ),
-          child: Column(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated.withValues(alpha: 0.92),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(
+                color: colors.border,
+                width: 1.2,
+              ),
+            ),
+            child: Column(
             children: [
               // Header with Glass Style & Avatar
               Container(
@@ -991,7 +996,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                      color: colors.border,
                     ),
                   ),
                 ),
@@ -1283,6 +1288,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
           ),
         ),
       ),
+    ),
     );
   }
 }

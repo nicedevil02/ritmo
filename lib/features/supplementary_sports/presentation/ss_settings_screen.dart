@@ -658,7 +658,9 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         child: RitmoGlassCardLight(
           borderRadius: 28,
           child: Container(
-            height: MediaQuery.of(context).size.height * 0.85,
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+            ),
             padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
             child: Column(
               children: [

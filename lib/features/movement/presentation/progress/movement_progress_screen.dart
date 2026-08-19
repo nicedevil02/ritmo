@@ -135,7 +135,8 @@ class _MovementProgressScreenState extends State<MovementProgressScreen> {
                 const CardSkeleton(height: 200),
               ] else if (_errorMessage != null) ...[
                 _buildErrorCard(colors),
-              ] else if (_kpiData == null || (_kpiData!.isEmpty && _personalRecords.isEmpty)) ...[
+              ] else if (_kpiData == null ||
+                  (_kpiData!.isEmpty && _personalRecords.isEmpty)) ...[
                 _buildEmptyState(colors, sportsColor),
               ] else ...[
                 // ۲. شبکهٔ KPI
@@ -217,10 +218,15 @@ class _MovementProgressScreenState extends State<MovementProgressScreen> {
             icon: const Icon(Icons.arrow_forward_rounded, size: 18),
             label: const Text('بازگشت به مرکز حرکت'),
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(200, MovementLayout.kSecondaryButtonHeight),
+              minimumSize: const Size(
+                200,
+                MovementLayout.kSecondaryButtonHeight,
+              ),
               backgroundColor: sportsColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RitmoRadius.field),
+              ),
             ),
           ),
         ],

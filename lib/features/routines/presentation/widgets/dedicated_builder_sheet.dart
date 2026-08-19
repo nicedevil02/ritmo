@@ -51,19 +51,21 @@ class DedicatedBuilderSheet extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.9,
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF0F111E).withValues(alpha: 0.96)
-                : Colors.white.withValues(alpha: 0.96),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.06),
-            ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
           ),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+            ),
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated.withValues(alpha: 0.96),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              border: Border.all(
+                color: colors.border,
+              ),
+            ),
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             child: BackdropFilter(
@@ -198,7 +200,7 @@ class DedicatedBuilderSheet extends StatelessWidget {
               ),
             ),
           ),
-        );
+        ),);
       },
     );
   }

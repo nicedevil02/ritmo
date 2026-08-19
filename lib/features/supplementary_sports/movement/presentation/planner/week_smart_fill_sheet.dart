@@ -124,8 +124,14 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+          ),
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -341,7 +347,7 @@ class _WeekSmartFillSheetState extends State<WeekSmartFillSheet> {
             ),
           ],
         ),
-      ),
+      ),),
     );
   }
 }

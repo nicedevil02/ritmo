@@ -27,10 +27,10 @@ class MovementAgendaSource implements AgendaSource {
 
   /// منبع غیرفعال/خالی
   static MovementAgendaSource disabled() => MovementAgendaSource(
-        occurrencesByDate: const {},
-        activityKindsById: const {},
-        isModuleEnabled: false,
-      );
+    occurrencesByDate: const {},
+    activityKindsById: const {},
+    isModuleEnabled: false,
+  );
 
   /// بارگذاری دسته‌ای داده‌ها برای کل بازهٔ درخواست‌شده از دیتابیس
   static Future<MovementAgendaSource> load(
@@ -113,8 +113,7 @@ class MovementAgendaSource implements AgendaSource {
         MovementOccurrenceStatus.planned ||
         MovementOccurrenceStatus.inProgress ||
         MovementOccurrenceStatus.late ||
-        MovementOccurrenceStatus.restDay =>
-          AgendaCompletion.pending,
+        MovementOccurrenceStatus.restDay => AgendaCompletion.pending,
       };
 
       final item = AgendaItem(
@@ -122,12 +121,16 @@ class MovementAgendaSource implements AgendaSource {
         sourceId: occ.id,
         domain: AgendaDomain.sport,
         kind: AgendaItemKind.session,
-        itemType: occ.startTime != null ? AgendaItemType.fixed : AgendaItemType.flexible,
+        itemType: occ.startTime != null
+            ? AgendaItemType.fixed
+            : AgendaItemType.flexible,
         title: title,
         subtitle: subtitle,
         dateStr: ctx.dateStr,
         timeOfDay: occ.startTime,
-        durationMinutes: occ.goalType == 'duration' ? occ.goalValue?.toInt() : 30,
+        durationMinutes: occ.goalType == 'duration'
+            ? occ.goalValue?.toInt()
+            : 30,
         category: Category.fitness,
         completion: completion,
         priority: occ.status == MovementOccurrenceStatus.planned ? 2.0 : 1.0,

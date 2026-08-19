@@ -31,12 +31,23 @@ class StrengthEntryCard extends StatelessWidget {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final isInactive = program == null || program!.status == MovementStrengthProgramStatus.none;
-    final isDraft = program != null && program!.status == MovementStrengthProgramStatus.draft;
-    final isPaused = program != null && program!.status == MovementStrengthProgramStatus.paused;
-    final isActive = program != null && (program!.status == MovementStrengthProgramStatus.active && !program!.isDeload);
+    final isInactive =
+        program == null ||
+        program!.status == MovementStrengthProgramStatus.none;
+    final isDraft =
+        program != null &&
+        program!.status == MovementStrengthProgramStatus.draft;
+    final isPaused =
+        program != null &&
+        program!.status == MovementStrengthProgramStatus.paused;
+    final isActive =
+        program != null &&
+        (program!.status == MovementStrengthProgramStatus.active &&
+            !program!.isDeload);
     final isDeload = program != null && program!.isDeload;
-    final isFinished = program != null && program!.status == MovementStrengthProgramStatus.finished;
+    final isFinished =
+        program != null &&
+        program!.status == MovementStrengthProgramStatus.finished;
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -110,9 +121,21 @@ class StrengthEntryCard extends StatelessWidget {
               style: RitmoTextStyles.body(colors.textSecondary),
             ),
             const SizedBox(height: RitmoSpacing.md),
-            _buildBenefit(Icons.home_rounded, MovementStrings.strengthBenefit1, colors),
-            _buildBenefit(Icons.trending_up_rounded, MovementStrings.strengthBenefit2, colors),
-            _buildBenefit(Icons.shield_outlined, MovementStrings.strengthBenefit3, colors),
+            _buildBenefit(
+              Icons.home_rounded,
+              MovementStrings.strengthBenefit1,
+              colors,
+            ),
+            _buildBenefit(
+              Icons.trending_up_rounded,
+              MovementStrings.strengthBenefit2,
+              colors,
+            ),
+            _buildBenefit(
+              Icons.shield_outlined,
+              MovementStrings.strengthBenefit3,
+              colors,
+            ),
             const SizedBox(height: RitmoSpacing.lg),
             SizedBox(
               height: MovementLayout.kPrimaryButtonHeight,
@@ -229,7 +252,9 @@ class StrengthEntryCard extends StatelessWidget {
                   style: RitmoTextStyles.label(colors.textPrimary),
                 ),
                 Text(
-                  toPersianDigits('${(program!.progressFraction * 100).round()}%'),
+                  toPersianDigits(
+                    '${(program!.progressFraction * 100).round()}%',
+                  ),
                   style: RitmoTextStyles.caption(colors.textSecondary),
                 ),
               ],

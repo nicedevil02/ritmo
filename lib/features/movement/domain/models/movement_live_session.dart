@@ -40,7 +40,8 @@ class MovementLiveSession {
   final String? occurrenceId;
   final String activityKindId;
   final MovementActivityKind? activityKind;
-  final String mode; // standard, interval, strength, quick, time, distance, lap, count, free
+  final String
+  mode; // standard, interval, strength, quick, time, distance, lap, count, free
   final MovementLiveSessionStatus status;
   final DateTime? startedAt;
   final int accumulatedPauseMs;
@@ -56,7 +57,8 @@ class MovementLiveSession {
   int get elapsedSeconds {
     if (startedAt == null) return 0;
     final now = finishedAt ?? DateTime.now();
-    final totalMs = now.difference(startedAt!).inMilliseconds - accumulatedPauseMs;
+    final totalMs =
+        now.difference(startedAt!).inMilliseconds - accumulatedPauseMs;
     return totalMs > 0 ? (totalMs / 1000).floor() : 0;
   }
 
@@ -100,7 +102,9 @@ class MovementLiveSession {
       activityKindId: map['activityKindId'] as String,
       activityKind: activityKind,
       mode: map['mode'] as String? ?? 'time',
-      status: MovementLiveSessionStatus.fromString(map['status'] as String? ?? 'active'),
+      status: MovementLiveSessionStatus.fromString(
+        map['status'] as String? ?? 'active',
+      ),
       startedAt: map['startedAt'] != null
           ? DateTime.tryParse(map['startedAt'].toString())
           : null,
@@ -109,8 +113,12 @@ class MovementLiveSession {
       finishedAt: map['finishedAt'] != null
           ? DateTime.tryParse(map['finishedAt'].toString())
           : null,
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 

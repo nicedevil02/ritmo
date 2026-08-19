@@ -7,13 +7,7 @@ import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/domain/models/movement_plan_schedule.dart';
 
 /// وضعیت‌های ماشین حالت ذخیره‌سازی برنامه
-enum PlanEditorState {
-  editing,
-  validating,
-  saving,
-  saved,
-  failed,
-}
+enum PlanEditorState { editing, validating, saving, saved, failed }
 
 /// کنترلر صفحهٔ برنامه‌ریز حرکت (ActivityPlanEditorController)
 class ActivityPlanEditorController extends ChangeNotifier {
@@ -23,8 +17,8 @@ class ActivityPlanEditorController extends ChangeNotifier {
     this.initialActivityKindId,
     this.existingTemplateId,
     this.initialDate,
-  })  : _planningService = planningService ?? MovementPlanningService(),
-        _occurrenceService = occurrenceService ?? MovementOccurrenceService();
+  }) : _planningService = planningService ?? MovementPlanningService(),
+       _occurrenceService = occurrenceService ?? MovementOccurrenceService();
 
   final MovementPlanningService _planningService;
   final MovementOccurrenceService _occurrenceService;
@@ -92,7 +86,9 @@ class ActivityPlanEditorController extends ChangeNotifier {
 
     try {
       if (initialActivityKindId != null) {
-        _activityKind = await _occurrenceService.getActivityKind(initialActivityKindId!);
+        _activityKind = await _occurrenceService.getActivityKind(
+          initialActivityKindId!,
+        );
       }
 
       if (_activityKind == null) {
@@ -203,7 +199,9 @@ class ActivityPlanEditorController extends ChangeNotifier {
   }
 
   /// ذخیرهٔ نهایی برنامه در یک تراکنش اتمیک
-  Future<int> savePlan({MovementChangeScope scope = MovementChangeScope.wholePlan}) async {
+  Future<int> savePlan({
+    MovementChangeScope scope = MovementChangeScope.wholePlan,
+  }) async {
     if (!isValid) return 0;
 
     _state = PlanEditorState.validating;
@@ -232,14 +230,18 @@ class ActivityPlanEditorController extends ChangeNotifier {
         );
       } else {
         // به‌روزرسانی برنامه موجود با دامنه
-        final todayIso = MovementPlanningService.formatIso(initialDate ?? DateTime.now());
+        final todayIso = MovementPlanningService.formatIso(
+          initialDate ?? DateTime.now(),
+        );
         await _planningService.updatePlanWithScope(
           templateId: existingTemplateId!,
           occurrenceId: '',
           focalDateIso: todayIso,
           scope: scope,
           newGoal: goalMap,
-          newStartTime: _schedules.isNotEmpty ? _schedules.first.timeOfDay : null,
+          newStartTime: _schedules.isNotEmpty
+              ? _schedules.first.timeOfDay
+              : null,
           newReminderType: _reminderType,
           newReminderOffsetMin: _reminderOffsetMin,
         );

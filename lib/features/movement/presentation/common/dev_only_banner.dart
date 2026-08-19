@@ -11,8 +11,10 @@ class DevOnlyBanner extends StatelessWidget {
 
   final String text;
 
-  static const bool _isInternalBuild =
-      bool.fromEnvironment('MOVEMENT_GREENFIELD_INTERNAL', defaultValue: false);
+  static const bool _isInternalBuild = bool.fromEnvironment(
+    'MOVEMENT_GREENFIELD_INTERNAL',
+    defaultValue: false,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +40,7 @@ class DevOnlyBanner extends StatelessWidget {
         ),
       ),
       child: Center(
-        child: Text(
-          text,
-          style: RitmoTextStyles.badge(colors.primary),
-        ),
+        child: Text(text, style: RitmoTextStyles.badge(colors.primary)),
       ),
     );
   }

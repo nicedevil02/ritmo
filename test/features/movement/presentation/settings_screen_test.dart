@@ -52,20 +52,21 @@ void main() {
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
       ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
+      home: Directionality(textDirection: TextDirection.rtl, child: child),
     );
   }
 
   group('MovementSettingsScreen Tests (Gate 5)', () {
-    testWidgets('renders all 6 setting groups with switches and choices', (tester) async {
-      await tester.pumpWidget(createTestWidget(
-        MovementSettingsScreen(
-          preferencesService: FakeMovementPreferencesService(),
+    testWidgets('renders all 6 setting groups with switches and choices', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          MovementSettingsScreen(
+            preferencesService: FakeMovementPreferencesService(),
+          ),
         ),
-      ));
+      );
 
       await tester.pumpAndSettle();
 

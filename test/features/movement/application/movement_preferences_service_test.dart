@@ -34,9 +34,18 @@ void main() {
 
     test('reads default values when no record exists', () async {
       if (!dbInitialized) return;
-      final dist = await service.getString(MovementPreferencesService.keyDistanceUnit, defaultValue: 'km');
-      final morning = await service.getBool(MovementPreferencesService.keyMorningReminder, defaultValue: true);
-      final countdown = await service.getInt(MovementPreferencesService.keyCountdownSeconds, defaultValue: 3);
+      final dist = await service.getString(
+        MovementPreferencesService.keyDistanceUnit,
+        defaultValue: 'km',
+      );
+      final morning = await service.getBool(
+        MovementPreferencesService.keyMorningReminder,
+        defaultValue: true,
+      );
+      final countdown = await service.getInt(
+        MovementPreferencesService.keyCountdownSeconds,
+        defaultValue: 3,
+      );
 
       expect(dist, equals('km'));
       expect(morning, isTrue);
@@ -49,9 +58,15 @@ void main() {
       await service.setBool(MovementPreferencesService.keyQuietMode, true);
       await service.setInt(MovementPreferencesService.keyCountdownSeconds, 5);
 
-      final dist = await service.getString(MovementPreferencesService.keyDistanceUnit);
-      final quiet = await service.getBool(MovementPreferencesService.keyQuietMode);
-      final countdown = await service.getInt(MovementPreferencesService.keyCountdownSeconds);
+      final dist = await service.getString(
+        MovementPreferencesService.keyDistanceUnit,
+      );
+      final quiet = await service.getBool(
+        MovementPreferencesService.keyQuietMode,
+      );
+      final countdown = await service.getInt(
+        MovementPreferencesService.keyCountdownSeconds,
+      );
 
       expect(dist, equals('mi'));
       expect(quiet, isTrue);

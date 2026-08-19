@@ -7,11 +7,7 @@ class FormStep {
   final Widget content;
   final bool Function()? validate;
 
-  const FormStep({
-    required this.title,
-    required this.content,
-    this.validate,
-  });
+  const FormStep({required this.title, required this.content, this.validate});
 }
 
 /// Generic multi-step form sheet shell.
@@ -174,9 +170,16 @@ class _RitmoFormSheetState extends State<RitmoFormSheet> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
-                    : Text(_currentStepIndex == totalSteps - 1 ? 'ثبت نهایی' : 'بعدی'),
+                    : Text(
+                        _currentStepIndex == totalSteps - 1
+                            ? 'ثبت نهایی'
+                            : 'بعدی',
+                      ),
               ),
             ),
           ],

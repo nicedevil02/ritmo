@@ -27,7 +27,8 @@ class RitmoCard extends StatelessWidget {
     final colors = context.colors;
     final isDark = context.isDark;
 
-    final effectiveRadius = borderRadius ?? BorderRadius.circular(RitmoRadius.card);
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(RitmoRadius.card);
 
     final cardContent = Container(
       padding: padding,
@@ -39,7 +40,9 @@ class RitmoCard extends StatelessWidget {
           color: isSelected
               ? colors.primary
               : (isDark ? colors.border : colors.divider),
-          width: isSelected ? 1.5 : (isDark ? RitmoElevation.borderWidthDark : 0.5),
+          width: isSelected
+              ? 1.5
+              : (isDark ? RitmoElevation.borderWidthDark : 0.5),
         ),
         boxShadow: isDark ? RitmoElevation.none : RitmoElevation.cardLight,
       ),

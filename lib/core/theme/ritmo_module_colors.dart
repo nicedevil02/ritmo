@@ -105,7 +105,11 @@ class RitmoModuleColors {
     );
   }
 
-  static RitmoModuleColors lerp(RitmoModuleColors a, RitmoModuleColors b, double t) {
+  static RitmoModuleColors lerp(
+    RitmoModuleColors a,
+    RitmoModuleColors b,
+    double t,
+  ) {
     return RitmoModuleColors(
       planner: Color.lerp(a.planner, b.planner, t)!,
       routines: Color.lerp(a.routines, b.routines, t)!,

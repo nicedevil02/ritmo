@@ -55,99 +55,105 @@ void main() {
           palette: RitmoPalette.jadeNoir,
           brightness: Brightness.dark,
         ),
-        home: Directionality(
-          textDirection: TextDirection.rtl,
-          child: child,
-        ),
+        home: Directionality(textDirection: TextDirection.rtl, child: child),
       );
     }
 
-    testWidgets('1. SessionShell renders all building blocks with single primary CTA', (tester) async {
-      if (!dbReady || db == null) return;
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '1. SessionShell renders all building blocks with single primary CTA',
+      (tester) async {
+        if (!dbReady || db == null) return;
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final service = MovementSessionService(db: db);
+        final service = MovementSessionService(db: db);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          MovementLiveSessionScreen(
-            activityKind: sampleKind,
-            sessionService: service,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            MovementLiveSessionScreen(
+              activityKind: sampleKind,
+              sessionService: service,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Verify SessionAppBar
-      expect(find.byType(SessionAppBar), findsOneWidget);
-      expect(find.text('پیاده‌روی'), findsOneWidget);
+        // Verify SessionAppBar
+        expect(find.byType(SessionAppBar), findsOneWidget);
+        expect(find.text('پیاده‌روی'), findsOneWidget);
 
-      // Verify SessionStatusStrip
-      expect(find.byType(SessionStatusStrip), findsOneWidget);
+        // Verify SessionStatusStrip
+        expect(find.byType(SessionStatusStrip), findsOneWidget);
 
-      // Verify exactly ONE prominent primary CTA
-      expect(find.byType(SessionPrimaryCta), findsOneWidget);
-      expect(find.text(MovementStrings.sessionFinish), findsOneWidget);
-    });
+        // Verify exactly ONE prominent primary CTA
+        expect(find.byType(SessionPrimaryCta), findsOneWidget);
+        expect(find.text(MovementStrings.sessionFinish), findsOneWidget);
+      },
+    );
 
-    testWidgets('2. Back button triggers PauseExitSheet and does not pop or finish session directly', (tester) async {
-      if (!dbReady || db == null) return;
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '2. Back button triggers PauseExitSheet and does not pop or finish session directly',
+      (tester) async {
+        if (!dbReady || db == null) return;
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final service = MovementSessionService(db: db);
+        final service = MovementSessionService(db: db);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          MovementLiveSessionScreen(
-            activityKind: sampleKind,
-            sessionService: service,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            MovementLiveSessionScreen(
+              activityKind: sampleKind,
+              sessionService: service,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Tap back button on AppBar
-      final backBtn = find.byTooltip('بازگشت');
-      expect(backBtn, findsOneWidget);
-      await tester.tap(backBtn);
-      await tester.pumpAndSettle();
+        // Tap back button on AppBar
+        final backBtn = find.byTooltip('بازگشت');
+        expect(backBtn, findsOneWidget);
+        await tester.tap(backBtn);
+        await tester.pumpAndSettle();
 
-      // PauseExitSheet must be visible
-      expect(find.byType(PauseExitSheet), findsOneWidget);
-      expect(find.text(MovementStrings.pauseExitTitle), findsOneWidget);
-    });
+        // PauseExitSheet must be visible
+        expect(find.byType(PauseExitSheet), findsOneWidget);
+        expect(find.text(MovementStrings.pauseExitTitle), findsOneWidget);
+      },
+    );
 
-    testWidgets('3. Toggling pause changes primary CTA to Resume and updates status strip', (tester) async {
-      if (!dbReady || db == null) return;
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      '3. Toggling pause changes primary CTA to Resume and updates status strip',
+      (tester) async {
+        if (!dbReady || db == null) return;
+        tester.view.physicalSize = const Size(800, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final service = MovementSessionService(db: db);
+        final service = MovementSessionService(db: db);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          MovementLiveSessionScreen(
-            activityKind: sampleKind,
-            sessionService: service,
+        await tester.pumpWidget(
+          buildTestableWidget(
+            MovementLiveSessionScreen(
+              activityKind: sampleKind,
+              sessionService: service,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Tap pause button on AppBar
-      final pauseBtn = find.byTooltip('مکث');
-      expect(pauseBtn, findsOneWidget);
-      await tester.tap(pauseBtn);
-      await tester.pumpAndSettle();
+        // Tap pause button on AppBar
+        final pauseBtn = find.byTooltip('مکث');
+        expect(pauseBtn, findsOneWidget);
+        await tester.tap(pauseBtn);
+        await tester.pumpAndSettle();
 
-      // Primary CTA changes to Resume
-      expect(find.text(MovementStrings.sessionResume), findsOneWidget);
-      expect(find.text('متوقف‌شده'), findsOneWidget);
-    });
+        // Primary CTA changes to Resume
+        expect(find.text(MovementStrings.sessionResume), findsOneWidget);
+        expect(find.text('متوقف‌شده'), findsOneWidget);
+      },
+    );
   });
 }

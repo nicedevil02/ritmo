@@ -75,7 +75,10 @@ class RitmoPrimaryButton extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(RitmoRadius.field),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.lg,
+        vertical: RitmoSpacing.md,
+      ),
       child: childWidget,
     );
 

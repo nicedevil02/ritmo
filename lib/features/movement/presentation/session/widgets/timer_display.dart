@@ -35,9 +35,7 @@ class TimerDisplay extends StatelessWidget {
     final textColor = isPaused ? colors.textSecondary : colors.textPrimary;
 
     final textStyle = isLarge
-        ? RitmoTextStyles.heroNumber(textColor).copyWith(
-            letterSpacing: 2.0,
-          )
+        ? RitmoTextStyles.heroNumber(textColor).copyWith(letterSpacing: 2.0)
         : RitmoTextStyles.sectionHeadline(textColor);
 
     return Semantics(
@@ -48,14 +46,14 @@ class TimerDisplay extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (isPaused) ...[
-            Icon(Icons.pause_circle_outline_rounded, size: isLarge ? 28 : 20, color: colors.warning),
+            Icon(
+              Icons.pause_circle_outline_rounded,
+              size: isLarge ? 28 : 20,
+              color: colors.warning,
+            ),
             const SizedBox(width: RitmoSpacing.xs),
           ],
-          Text(
-            formatted,
-            style: textStyle,
-            textDirection: TextDirection.ltr,
-          ),
+          Text(formatted, style: textStyle, textDirection: TextDirection.ltr),
         ],
       ),
     );

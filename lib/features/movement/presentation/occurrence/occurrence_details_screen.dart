@@ -38,10 +38,12 @@ class ActivityOccurrenceDetailsScreen extends StatefulWidget {
   final MovementLogService? logService;
 
   @override
-  State<ActivityOccurrenceDetailsScreen> createState() => _ActivityOccurrenceDetailsScreenState();
+  State<ActivityOccurrenceDetailsScreen> createState() =>
+      _ActivityOccurrenceDetailsScreenState();
 }
 
-class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDetailsScreen> {
+class _ActivityOccurrenceDetailsScreenState
+    extends State<ActivityOccurrenceDetailsScreen> {
   late final MovementOccurrenceService _occurrenceService;
   late final MovementPlanningService _planningService;
   late final MovementLogService _logService;
@@ -54,7 +56,8 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
   @override
   void initState() {
     super.initState();
-    _occurrenceService = widget.occurrenceService ?? MovementOccurrenceService();
+    _occurrenceService =
+        widget.occurrenceService ?? MovementOccurrenceService();
     _planningService = widget.planningService ?? MovementPlanningService();
     _logService = widget.logService ?? MovementLogService();
     _loadData();
@@ -63,8 +66,12 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final occ = await _occurrenceService.getOccurrenceById(widget.occurrenceId);
-      final logs = await _occurrenceService.getOccurrenceLogs(widget.occurrenceId);
+      final occ = await _occurrenceService.getOccurrenceById(
+        widget.occurrenceId,
+      );
+      final logs = await _occurrenceService.getOccurrenceLogs(
+        widget.occurrenceId,
+      );
       if (mounted) {
         setState(() {
           _occurrence = occ;
@@ -84,8 +91,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
 
   String _getOriginText(MovementOccurrence occ) {
     if (occ.templateId != null) return MovementStrings.occurrenceOriginTemplate;
-    if (occ.origin == MovementOrigin.strength) return MovementStrings.occurrenceOriginStrength;
-    if (occ.origin == MovementOrigin.quickStart) return MovementStrings.occurrenceOriginManual;
+    if (occ.origin == MovementOrigin.strength)
+      return MovementStrings.occurrenceOriginStrength;
+    if (occ.origin == MovementOrigin.quickStart)
+      return MovementStrings.occurrenceOriginManual;
     return MovementStrings.occurrenceOriginOnce;
   }
 
@@ -119,7 +128,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: 'جلسه با موفقیت به عنوان انجام‌شده ثبت شد');
+      MovementUndoToast.show(
+        context,
+        message: 'جلسه با موفقیت به عنوان انجام‌شده ثبت شد',
+      );
       await _loadData();
     }
   }
@@ -140,7 +152,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: MovementStrings.undoMovedTodayOnly);
+      MovementUndoToast.show(
+        context,
+        message: MovementStrings.undoMovedTodayOnly,
+      );
       await _loadData();
     }
   }
@@ -166,7 +181,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
     );
 
     if (done == true && mounted) {
-      MovementUndoToast.show(context, message: 'نسخهٔ Plan B با موفقیت اعمال شد');
+      MovementUndoToast.show(
+        context,
+        message: 'نسخهٔ Plan B با موفقیت اعمال شد',
+      );
       await _loadData();
     }
   }
@@ -180,7 +198,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
       case SkipActionChoice.skipTodayOnly:
         await _planningService.skipOccurrence(occurrenceId: _occurrence!.id);
         if (mounted) {
-          MovementUndoToast.show(context, message: MovementStrings.undoSkippedToday);
+          MovementUndoToast.show(
+            context,
+            message: MovementStrings.undoSkippedToday,
+          );
           await _loadData();
         }
         break;
@@ -215,9 +236,7 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
     } else {
       final updated = await Navigator.of(context).pushNamed(
         MovementRoutes.planEditor,
-        arguments: {
-          'activityKindId': _occurrence!.activityKindId,
-        },
+        arguments: {'activityKindId': _occurrence!.activityKindId},
       );
       if (updated == true && mounted) {
         await _loadData();
@@ -269,7 +288,10 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
       );
 
       if (mounted) {
-        MovementUndoToast.show(context, message: MovementStrings.undoSessionDeleted);
+        MovementUndoToast.show(
+          context,
+          message: MovementStrings.undoSessionDeleted,
+        );
         Navigator.of(context).pop(true);
       }
     }
@@ -296,123 +318,133 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
               ),
             )
           : _occurrence == null
-              ? Center(
-                  child: Text(
-                    'جلسه یافت نشد.',
-                    style: RitmoTextStyles.body(colors.textSecondary),
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: RitmoSpacing.lg,
-                    vertical: RitmoSpacing.md,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (_errorMessage != null) ...[
-                        ErrorBlock(
-                          title: 'خطا در بارگذاری جزئیات جلسه',
-                          message: _errorMessage!,
-                          onRetry: _loadData,
-                          isBannerMode: true,
-                        ),
-                        const SizedBox(height: RitmoSpacing.md),
-                      ],
+          ? Center(
+              child: Text(
+                'جلسه یافت نشد.',
+                style: RitmoTextStyles.body(colors.textSecondary),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.lg,
+                vertical: RitmoSpacing.md,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_errorMessage != null) ...[
+                    ErrorBlock(
+                      title: 'خطا در بارگذاری جزئیات جلسه',
+                      message: _errorMessage!,
+                      onRetry: _loadData,
+                      isBannerMode: true,
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+                  ],
 
-                      // ۱. سربرگ جلسه
-                      OccurrenceHeader(occurrence: _occurrence!),
-                      const SizedBox(height: RitmoSpacing.lg),
+                  // ۱. سربرگ جلسه
+                  OccurrenceHeader(occurrence: _occurrence!),
+                  const SizedBox(height: RitmoSpacing.lg),
 
-                      // ۲. هدف جلسه
-                      if (_occurrence!.goalValue != null) ...[
-                        _buildSectionCard(
-                          context,
-                          title: MovementStrings.occurrenceGoal,
-                          content: Row(
-                            children: [
-                              MetricStat(
-                                label: 'هدف تعیین‌شده',
-                                value: _occurrence!.goalValue!.toInt().toString(),
-                                unit: _occurrence!.goalUnit,
-                              ),
-                            ],
+                  // ۲. هدف جلسه
+                  if (_occurrence!.goalValue != null) ...[
+                    _buildSectionCard(
+                      context,
+                      title: MovementStrings.occurrenceGoal,
+                      content: Row(
+                        children: [
+                          MetricStat(
+                            label: 'هدف تعیین‌شده',
+                            value: _occurrence!.goalValue!.toInt().toString(),
+                            unit: _occurrence!.goalUnit,
                           ),
-                          colors: colors,
+                        ],
+                      ),
+                      colors: colors,
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+                  ],
+
+                  // ۳. منشأ جلسه و یادآور
+                  _buildSectionCard(
+                    context,
+                    title: MovementStrings.occurrenceOrigin,
+                    content: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: colors.textSecondary,
+                          size: 20,
                         ),
-                        const SizedBox(height: RitmoSpacing.md),
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Text(
+                          _getOriginText(_occurrence!),
+                          style: RitmoTextStyles.body(colors.textPrimary),
+                        ),
                       ],
-
-                      // ۳. منشأ جلسه و یادآور
-                      _buildSectionCard(
-                        context,
-                        title: MovementStrings.occurrenceOrigin,
-                        content: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded, color: colors.textSecondary, size: 20),
-                            const SizedBox(width: RitmoSpacing.sm),
-                            Text(
-                              _getOriginText(_occurrence!),
-                              style: RitmoTextStyles.body(colors.textPrimary),
-                            ),
-                          ],
-                        ),
-                        colors: colors,
-                      ),
-                      const SizedBox(height: RitmoSpacing.md),
-
-                      // ۴. تاریخچهٔ ثبت تمرین (Log)
-                      _buildSectionCard(
-                        context,
-                        title: MovementStrings.occurrenceHistory,
-                        content: _logs.isEmpty
-                            ? Text(
-                                MovementStrings.occurrenceNoHistory,
-                                style: RitmoTextStyles.caption(colors.textSecondary),
-                              )
-                            : Column(
-                                children: _logs.map((log) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.check_circle_rounded, color: colors.success, size: 18),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '${toPersianDigits(log.durationSec ~/ 60)} دقیقه ثبت‌شده (${log.source})',
-                                          style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                        colors: colors,
-                      ),
-                      const SizedBox(height: RitmoSpacing.xl),
-
-                      // ۵. فهرست کامل اکشن‌ها
-                      Text(
-                        'عملیات جلسه',
-                        style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
-                      ),
-                      const SizedBox(height: RitmoSpacing.sm),
-                      OccurrenceActions(
-                        occurrence: _occurrence!,
-                        onStartSession: _startSession,
-                        onQuickComplete: _quickComplete,
-                        onMoveSession: _moveSession,
-                        onPlanB: _applyPlanB,
-                        onSkipSession: _skipSession,
-                        onEditPlan: _editPlan,
-                        onDeleteSession: _deleteSession,
-                      ),
-                      const SizedBox(height: RitmoSpacing.xxxl),
-                    ],
+                    ),
+                    colors: colors,
                   ),
-                ),
+                  const SizedBox(height: RitmoSpacing.md),
+
+                  // ۴. تاریخچهٔ ثبت تمرین (Log)
+                  _buildSectionCard(
+                    context,
+                    title: MovementStrings.occurrenceHistory,
+                    content: _logs.isEmpty
+                        ? Text(
+                            MovementStrings.occurrenceNoHistory,
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
+                          )
+                        : Column(
+                            children: _logs.map((log) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: colors.success,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${toPersianDigits(log.durationSec ~/ 60)} دقیقه ثبت‌شده (${log.source})',
+                                      style: RitmoTextStyles.body(
+                                        colors.textPrimary,
+                                      ).copyWith(fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                    colors: colors,
+                  ),
+                  const SizedBox(height: RitmoSpacing.xl),
+
+                  // ۵. فهرست کامل اکشن‌ها
+                  Text(
+                    'عملیات جلسه',
+                    style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+                  ),
+                  const SizedBox(height: RitmoSpacing.sm),
+                  OccurrenceActions(
+                    occurrence: _occurrence!,
+                    onStartSession: _startSession,
+                    onQuickComplete: _quickComplete,
+                    onMoveSession: _moveSession,
+                    onPlanB: _applyPlanB,
+                    onSkipSession: _skipSession,
+                    onEditPlan: _editPlan,
+                    onDeleteSession: _deleteSession,
+                  ),
+                  const SizedBox(height: RitmoSpacing.xxxl),
+                ],
+              ),
+            ),
     );
   }
 
@@ -433,10 +465,7 @@ class _ActivityOccurrenceDetailsScreenState extends State<ActivityOccurrenceDeta
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: RitmoTextStyles.label(colors.textSecondary),
-          ),
+          Text(title, style: RitmoTextStyles.label(colors.textSecondary)),
           const SizedBox(height: RitmoSpacing.xs),
           content,
         ],

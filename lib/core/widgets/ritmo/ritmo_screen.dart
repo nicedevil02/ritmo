@@ -85,8 +85,9 @@ class RitmoScreen extends StatelessWidget {
                     ),
                     Expanded(
                       child: Padding(
-                        padding:
-                            padding.add(EdgeInsets.only(bottom: bottomPad)),
+                        padding: padding.add(
+                          EdgeInsets.only(bottom: bottomPad),
+                        ),
                         child: body,
                       ),
                     ),

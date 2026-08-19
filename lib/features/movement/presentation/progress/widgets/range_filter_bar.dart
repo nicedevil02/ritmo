@@ -21,8 +21,14 @@ class RangeFilterBar extends StatelessWidget {
 
     final options = [
       {'range': MovementProgressRange.week, 'label': MovementStrings.rangeWeek},
-      {'range': MovementProgressRange.month, 'label': MovementStrings.rangeMonth},
-      {'range': MovementProgressRange.threeMonths, 'label': MovementStrings.rangeThreeMonths},
+      {
+        'range': MovementProgressRange.month,
+        'label': MovementStrings.rangeMonth,
+      },
+      {
+        'range': MovementProgressRange.threeMonths,
+        'label': MovementStrings.rangeThreeMonths,
+      },
       {'range': MovementProgressRange.all, 'label': MovementStrings.rangeAll},
     ];
 
@@ -53,11 +59,14 @@ class RangeFilterBar extends StatelessWidget {
                 ),
                 child: Text(
                   label,
-                  style: RitmoTextStyles.caption(
-                    isSelected ? Colors.white : colors.textSecondary,
-                  ).copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
+                  style:
+                      RitmoTextStyles.caption(
+                        isSelected ? Colors.white : colors.textSecondary,
+                      ).copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                 ),
               ),
             ),

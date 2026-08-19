@@ -413,8 +413,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
           builder: (context) {
-            return SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+              ),
               child: BottomSheetContainer(
                 title: 'افزودن حرکت جدید',
                 child: ListView.builder(

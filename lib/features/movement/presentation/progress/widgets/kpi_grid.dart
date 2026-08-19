@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// شبکهٔ نمایش KPIهای کلیدی (KpiGrid)
 /// چیدمان Wrap دو ستونه، بدون اسکرول افقی مخفی.
 class KpiGrid extends StatelessWidget {
-  const KpiGrid({
-    super.key,
-    required this.kpiData,
-  });
+  const KpiGrid({super.key, required this.kpiData});
 
   final MovementKpiData kpiData;
 
@@ -23,75 +20,87 @@ class KpiGrid extends StatelessWidget {
 
     // ۱. تعداد جلسات
     if (kpiData.sessionCount > 0) {
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiSessions,
-        value: toPersianDigits(kpiData.sessionCount),
-        unit: 'جلسه',
-        icon: Icons.event_available_rounded,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiSessions,
+          value: toPersianDigits(kpiData.sessionCount),
+          unit: 'جلسه',
+          icon: Icons.event_available_rounded,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     // ۲. دقیقه فعالیت
     if (kpiData.activeMinutes > 0) {
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiActiveMinutes,
-        value: toPersianDigits(kpiData.activeMinutes),
-        unit: 'دقیقه',
-        icon: Icons.timer_outlined,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiActiveMinutes,
+          value: toPersianDigits(kpiData.activeMinutes),
+          unit: 'دقیقه',
+          icon: Icons.timer_outlined,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     // ۳. روزهای فعال
     if (kpiData.activeDaysCount > 0) {
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiActiveDays,
-        value: toPersianDigits(kpiData.activeDaysCount),
-        unit: 'روز',
-        icon: Icons.calendar_today_outlined,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiActiveDays,
+          value: toPersianDigits(kpiData.activeDaysCount),
+          unit: 'روز',
+          icon: Icons.calendar_today_outlined,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     // ۴. پایبندی به برنامه
     if (kpiData.adherenceRate > 0) {
       final pct = (kpiData.adherenceRate * 100).round();
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiAdherence,
-        value: toPersianDigits(pct),
-        unit: '٪',
-        icon: Icons.track_changes_rounded,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiAdherence,
+          value: toPersianDigits(pct),
+          unit: '٪',
+          icon: Icons.track_changes_rounded,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     // ۵. مجموع حجم قدرتی
     if (kpiData.totalStrengthVolumeKg > 0) {
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiStrengthVolume,
-        value: toPersianDigits(kpiData.totalStrengthVolumeKg.round()),
-        unit: 'کیلوگرم',
-        icon: Icons.fitness_center_rounded,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiStrengthVolume,
+          value: toPersianDigits(kpiData.totalStrengthVolumeKg.round()),
+          unit: 'کیلوگرم',
+          icon: Icons.fitness_center_rounded,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     // ۶. مسافت پیموده شده
     if (kpiData.totalDistanceKm > 0) {
-      cards.add(_buildKpiCard(
-        title: MovementStrings.kpiDistance,
-        value: toPersianDigits(kpiData.totalDistanceKm.toStringAsFixed(1)),
-        unit: 'کیلومتر',
-        icon: Icons.directions_run_rounded,
-        colors: colors,
-        sportsColor: sportsColor,
-      ));
+      cards.add(
+        _buildKpiCard(
+          title: MovementStrings.kpiDistance,
+          value: toPersianDigits(kpiData.totalDistanceKm.toStringAsFixed(1)),
+          unit: 'کیلومتر',
+          icon: Icons.directions_run_rounded,
+          colors: colors,
+          sportsColor: sportsColor,
+        ),
+      );
     }
 
     if (cards.isEmpty) {
@@ -104,7 +113,9 @@ class KpiGrid extends StatelessWidget {
         return Wrap(
           spacing: RitmoSpacing.md,
           runSpacing: RitmoSpacing.md,
-          children: cards.map((c) => SizedBox(width: itemWidth, child: c)).toList(),
+          children: cards
+              .map((c) => SizedBox(width: itemWidth, child: c))
+              .toList(),
         );
       },
     );
@@ -149,15 +160,12 @@ class KpiGrid extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: RitmoTextStyles.sectionHeadline(colors.textPrimary).copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: RitmoTextStyles.sectionHeadline(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 4),
-              Text(
-                unit,
-                style: RitmoTextStyles.caption(colors.textTertiary),
-              ),
+              Text(unit, style: RitmoTextStyles.caption(colors.textTertiary)),
             ],
           ),
         ],

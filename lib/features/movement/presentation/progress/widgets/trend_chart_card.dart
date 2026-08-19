@@ -8,10 +8,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// کارت نمودار روند فعالیت (TrendChartCard)
 /// ارتفاع استاندارد kChartCardHeight، جملهٔ تفسیر اجباری، پیام دادهٔ کم، و جدول دسترس‌پذیری.
 class TrendChartCard extends StatelessWidget {
-  const TrendChartCard({
-    super.key,
-    required this.trendData,
-  });
+  const TrendChartCard({super.key, required this.trendData});
 
   final MovementTrendData trendData;
 
@@ -22,7 +19,9 @@ class TrendChartCard extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => Material(
         color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
         child: SafeArea(
           top: false,
           child: Padding(
@@ -44,15 +43,24 @@ class TrendChartCard extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(8),
-                          child: Text('بازه', style: RitmoTextStyles.label(colors.textPrimary)),
+                          child: Text(
+                            'بازه',
+                            style: RitmoTextStyles.label(colors.textPrimary),
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8),
-                          child: Text('تعداد جلسات', style: RitmoTextStyles.label(colors.textPrimary)),
+                          child: Text(
+                            'تعداد جلسات',
+                            style: RitmoTextStyles.label(colors.textPrimary),
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8),
-                          child: Text('دقیقه فعالیت', style: RitmoTextStyles.label(colors.textPrimary)),
+                          child: Text(
+                            'دقیقه فعالیت',
+                            style: RitmoTextStyles.label(colors.textPrimary),
+                          ),
                         ),
                       ],
                     ),
@@ -61,15 +69,30 @@ class TrendChartCard extends StatelessWidget {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text(pt.label, style: RitmoTextStyles.caption(colors.textSecondary)),
+                            child: Text(
+                              pt.label,
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
+                              ),
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text(toPersianDigits(pt.sessionCount), style: RitmoTextStyles.caption(colors.textPrimary)),
+                            child: Text(
+                              toPersianDigits(pt.sessionCount),
+                              style: RitmoTextStyles.caption(
+                                colors.textPrimary,
+                              ),
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8),
-                            child: Text(toPersianDigits(pt.activeMinutes), style: RitmoTextStyles.caption(colors.textPrimary)),
+                            child: Text(
+                              toPersianDigits(pt.activeMinutes),
+                              style: RitmoTextStyles.caption(
+                                colors.textPrimary,
+                              ),
+                            ),
                           ),
                         ],
                       );
@@ -145,7 +168,9 @@ class TrendChartCard extends StatelessWidget {
             if (!trendData.hasEnoughData)
               Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: RitmoSpacing.sm,
+                  ),
                   child: Text(
                     MovementStrings.trendNeedMoreData,
                     style: RitmoTextStyles.caption(colors.textTertiary),
@@ -162,7 +187,10 @@ class TrendChartCard extends StatelessWidget {
   }
 
   Widget _buildBarChart(Color sportsColor, RitmoColors colors) {
-    final maxSessions = trendData.points.fold<int>(1, (max, pt) => pt.sessionCount > max ? pt.sessionCount : max);
+    final maxSessions = trendData.points.fold<int>(
+      1,
+      (max, pt) => pt.sessionCount > max ? pt.sessionCount : max,
+    );
 
     return SizedBox(
       height: 90,
@@ -179,7 +207,9 @@ class TrendChartCard extends StatelessWidget {
                 children: [
                   Text(
                     toPersianDigits(pt.sessionCount),
-                    style: RitmoTextStyles.caption(sportsColor).copyWith(fontSize: 10, height: 1.2),
+                    style: RitmoTextStyles.caption(
+                      sportsColor,
+                    ).copyWith(fontSize: 10, height: 1.2),
                   ),
                   const SizedBox(height: 2),
                   Container(
@@ -193,7 +223,9 @@ class TrendChartCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     pt.label,
-                    style: RitmoTextStyles.caption(colors.textTertiary).copyWith(fontSize: 9, height: 1.2),
+                    style: RitmoTextStyles.caption(
+                      colors.textTertiary,
+                    ).copyWith(fontSize: 9, height: 1.2),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

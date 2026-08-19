@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class ChatBubble extends StatelessWidget {
-
   const ChatBubble({
     super.key,
     required this.message,
     required this.isFromUser,
   });
+
   final String message;
   final bool isFromUser;
 
@@ -23,8 +24,8 @@ class ChatBubble extends StatelessWidget {
     final userBgColor = SupplementarySportsTheme.getSuccessColor(context);
     final userTextColor = isDark ? Colors.black : Colors.white;
 
-    final aiBgColor = isDark 
-        ? Colors.white.withValues(alpha: 0.06) 
+    final aiBgColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
         : Colors.black.withValues(alpha: 0.04);
     final aiBorderColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
@@ -45,40 +46,43 @@ class ChatBubble extends StatelessWidget {
       bottomRight: Radius.circular(isFromUser ? 4 : 16),
     );
 
-    return Align(
-      alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-          vertical: SupplementarySportsTheme.spacing8,
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-          minHeight: 40,
-        ),
-        padding: bubblePadding,
-        decoration: BoxDecoration(
-          color: isFromUser ? userBgColor : aiBgColor,
-          borderRadius: borderRadius,
-          border: isFromUser 
-              ? null 
-              : Border.all(color: aiBorderColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Align(
+          alignment: alignment,
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              vertical: SupplementarySportsTheme.spacing8,
             ),
-          ],
-        ),
-        child: Text(
-          message,
-          textDirection: TextDirection.rtl,
-          style: SupplementarySportsTheme.body.copyWith(
-            color: isFromUser ? userTextColor : aiTextColor,
-            height: 1.5,
+            constraints: BoxConstraints(
+              maxWidth: constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor,
+            ),
+            padding: bubblePadding,
+            decoration: BoxDecoration(
+              color: isFromUser ? userBgColor : aiBgColor,
+              borderRadius: borderRadius,
+              border: isFromUser
+                  ? null
+                  : Border.all(color: aiBorderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              message,
+              textDirection: TextDirection.rtl,
+              style: SupplementarySportsTheme.body.copyWith(
+                color: isFromUser ? userTextColor : aiTextColor,
+                height: 1.5,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -127,14 +127,20 @@ class MovementOccurrence {
       scheduleId: map['scheduleId'] as String?,
       dateIso: map['dateIso'] as String,
       startTime: map['startTime'] as String?,
-      status: MovementOccurrenceStatus.fromString(map['status'] as String? ?? 'planned'),
+      status: MovementOccurrenceStatus.fromString(
+        map['status'] as String? ?? 'planned',
+      ),
       goalType: map['goalType'] as String?,
       goalValue: (map['goalValue'] as num?)?.toDouble(),
       goalUnit: map['goalUnit'] as String?,
       movedToDateIso: map['movedToDateIso'] as String?,
       origin: MovementOrigin.fromString(map['origin'] as String? ?? 'template'),
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updatedAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 

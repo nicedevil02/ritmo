@@ -71,7 +71,9 @@ class RitmoTextField extends StatelessWidget {
           fontSize: 11,
           fontFamily: 'Vazirmatn',
         ),
-        prefixIcon: icon != null ? Icon(icon, color: colors.primary, size: 20) : null,
+        prefixIcon: icon != null
+            ? Icon(icon, color: colors.primary, size: 20)
+            : null,
         filled: true,
         fillColor: colors.surfaceSunken,
         border: OutlineInputBorder(

@@ -5,12 +5,7 @@ import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
 import 'package:ritmo/features/movement/domain/models/movement_personal_record.dart';
 import 'package:sqflite/sqflite.dart';
 
-enum MovementProgressRange {
-  week,
-  month,
-  threeMonths,
-  all,
-}
+enum MovementProgressRange { week, month, threeMonths, all }
 
 class MovementKpiData {
   const MovementKpiData({
@@ -29,7 +24,8 @@ class MovementKpiData {
   final double totalStrengthVolumeKg;
   final double totalDistanceKm;
 
-  bool get isEmpty => sessionCount == 0 && activeMinutes == 0 && totalStrengthVolumeKg == 0;
+  bool get isEmpty =>
+      sessionCount == 0 && activeMinutes == 0 && totalStrengthVolumeKg == 0;
 }
 
 class MovementTrendData {
@@ -186,7 +182,10 @@ class MovementProgressService {
     final setLogs = await dbExec.query(
       MovementTables.tableSetLogs,
       where: 'completed = 1 AND at >= ? AND at <= ?',
-      whereArgs: [startDate.toUtc().toIso8601String(), targetNow.toUtc().toIso8601String()],
+      whereArgs: [
+        startDate.toUtc().toIso8601String(),
+        targetNow.toUtc().toIso8601String(),
+      ],
     );
 
     double totalVolume = 0.0;
@@ -207,7 +206,9 @@ class MovementProgressService {
 
     double adherence = 1.0;
     if (occurrences.isNotEmpty) {
-      final completedOccs = occurrences.where((o) => o['status'] == 'completed').length;
+      final completedOccs = occurrences
+          .where((o) => o['status'] == 'completed')
+          .length;
       adherence = (completedOccs / occurrences.length).clamp(0.0, 1.0);
     }
 
@@ -251,23 +252,31 @@ class MovementProgressService {
     for (final row in workoutLogs) {
       final dateStr = row['dateIso'] as String;
       final dt = DateTime.tryParse(dateStr) ?? targetNow;
-      final weekKey = 'هفته ${(dt.difference(DateTime(2025, 1, 1)).inDays ~/ 7) + 1}';
+      final weekKey =
+          'هفته ${(dt.difference(DateTime(2025, 1, 1)).inDays ~/ 7) + 1}';
       groups.putIfAbsent(weekKey, () => []).add(row);
     }
 
     for (final entry in groups.entries) {
       final count = entry.value.length;
-      final sec = entry.value.fold<int>(0, (sum, r) => sum + (r['durationSec'] as int? ?? 0));
-      points.add(MovementTrendPoint(
-        label: entry.key,
-        sessionCount: count,
-        activeMinutes: (sec / 60).round(),
-        volumeKg: 0.0,
-      ));
+      final sec = entry.value.fold<int>(
+        0,
+        (sum, r) => sum + (r['durationSec'] as int? ?? 0),
+      );
+      points.add(
+        MovementTrendPoint(
+          label: entry.key,
+          sessionCount: count,
+          activeMinutes: (sec / 60).round(),
+          volumeKg: 0.0,
+        ),
+      );
     }
 
-    String interp = 'روند کلی فعالیت‌های شما در سطح پایدار و باکیفیت پیش می‌رود.';
-    if (points.length >= 2 && points.last.sessionCount >= points[points.length - 2].sessionCount) {
+    String interp =
+        'روند کلی فعالیت‌های شما در سطح پایدار و باکیفیت پیش می‌رود.';
+    if (points.length >= 2 &&
+        points.last.sessionCount >= points[points.length - 2].sessionCount) {
       interp = 'پیوستگی تمرینی شما نسبت به دورهٔ قبل بهبود یافته است.';
     }
 
@@ -316,12 +325,14 @@ class MovementProgressService {
 
     for (final entry in counts.entries) {
       final pct = total > 0 ? (entry.value / total) * 100 : 0.0;
-      items.add(MovementDistributionItem(
-        family: entry.key,
-        nameFa: familyFaMap[entry.key] ?? entry.key,
-        count: entry.value,
-        percentage: double.parse(pct.toStringAsFixed(1)),
-      ));
+      items.add(
+        MovementDistributionItem(
+          family: entry.key,
+          nameFa: familyFaMap[entry.key] ?? entry.key,
+          count: entry.value,
+          percentage: double.parse(pct.toStringAsFixed(1)),
+        ),
+      );
     }
 
     items.sort((a, b) => b.count.compareTo(a.count));
@@ -358,11 +369,13 @@ class MovementProgressService {
 
     for (final entry in counts.entries) {
       final pct = total > 0 ? (entry.value / total) * 100 : 0.0;
-      items.add(MovementMuscleWorkloadItem(
-        muscleGroup: entry.key,
-        setsCount: entry.value,
-        percentage: double.parse(pct.toStringAsFixed(1)),
-      ));
+      items.add(
+        MovementMuscleWorkloadItem(
+          muscleGroup: entry.key,
+          setsCount: entry.value,
+          percentage: double.parse(pct.toStringAsFixed(1)),
+        ),
+      );
     }
 
     items.sort((a, b) => b.setsCount.compareTo(a.setsCount));
@@ -500,19 +513,16 @@ class MovementProgressService {
       }
     } else {
       final newId = 'pr_${DateTime.now().millisecondsSinceEpoch}';
-      await dbExec.insert(
-        MovementTables.tablePersonalRecords,
-        {
-          'id': newId,
-          'activityKindId': activityKindId,
-          'exerciseId': exerciseId,
-          'recordType': recordType,
-          'value': value,
-          'unit': unit,
-          'achievedAt': DateTime.now().toUtc().toIso8601String(),
-          'sourceId': sourceId,
-        },
-      );
+      await dbExec.insert(MovementTables.tablePersonalRecords, {
+        'id': newId,
+        'activityKindId': activityKindId,
+        'exerciseId': exerciseId,
+        'recordType': recordType,
+        'value': value,
+        'unit': unit,
+        'achievedAt': DateTime.now().toUtc().toIso8601String(),
+        'sourceId': sourceId,
+      });
     }
   }
 }

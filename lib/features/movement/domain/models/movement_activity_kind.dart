@@ -55,7 +55,8 @@ class MovementActivityKind {
       archivedAt: map['archivedAt'] != null
           ? DateTime.tryParse(map['archivedAt'].toString())
           : null,
-      createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
           DateTime.now().toUtc(),
     );
   }

@@ -5,11 +5,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 
 /// نشانگر وضعیت رخداد یا جلسه با رعایت کامل دسترس‌پذیری
 class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.status,
-    this.compact = false,
-  });
+  const StatusChip({super.key, required this.status, this.compact = false});
 
   final MovementOccurrenceStatus status;
   final bool compact;
@@ -21,45 +17,45 @@ class StatusChip extends StatelessWidget {
 
     final (String label, IconData icon, Color color) = switch (status) {
       MovementOccurrenceStatus.planned => (
-          MovementStrings.statusPlanned,
-          Icons.schedule_rounded,
-          colors.textSecondary,
-        ),
+        MovementStrings.statusPlanned,
+        Icons.schedule_rounded,
+        colors.textSecondary,
+      ),
       MovementOccurrenceStatus.inProgress => (
-          MovementStrings.statusInProgress,
-          Icons.play_circle_fill_rounded,
-          sportsColor,
-        ),
+        MovementStrings.statusInProgress,
+        Icons.play_circle_fill_rounded,
+        sportsColor,
+      ),
       MovementOccurrenceStatus.completed => (
-          MovementStrings.statusCompleted,
-          Icons.check_circle_rounded,
-          colors.primary,
-        ),
+        MovementStrings.statusCompleted,
+        Icons.check_circle_rounded,
+        colors.primary,
+      ),
       MovementOccurrenceStatus.partial => (
-          MovementStrings.statusPartial,
-          Icons.timelapse_rounded,
-          colors.warning,
-        ),
+        MovementStrings.statusPartial,
+        Icons.timelapse_rounded,
+        colors.warning,
+      ),
       MovementOccurrenceStatus.skipped => (
-          MovementStrings.statusSkipped,
-          Icons.cancel_outlined,
-          colors.textTertiary,
-        ),
+        MovementStrings.statusSkipped,
+        Icons.cancel_outlined,
+        colors.textTertiary,
+      ),
       MovementOccurrenceStatus.moved => (
-          MovementStrings.statusMoved,
-          Icons.swap_horiz_rounded,
-          sportsColor,
-        ),
+        MovementStrings.statusMoved,
+        Icons.swap_horiz_rounded,
+        sportsColor,
+      ),
       MovementOccurrenceStatus.late => (
-          MovementStrings.statusLate,
-          Icons.history_toggle_off_rounded,
-          colors.warning,
-        ),
+        MovementStrings.statusLate,
+        Icons.history_toggle_off_rounded,
+        colors.warning,
+      ),
       MovementOccurrenceStatus.restDay => (
-          MovementStrings.statusRestDay,
-          Icons.nightlight_round,
-          colors.textSecondary,
-        ),
+        MovementStrings.statusRestDay,
+        Icons.nightlight_round,
+        colors.textSecondary,
+      ),
     };
 
     return Semantics(
@@ -82,19 +78,14 @@ class StatusChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 16.0,
-              color: color,
-            ),
+            Icon(icon, size: 16.0, color: color),
             if (!compact) ...[
               const SizedBox(width: RitmoSpacing.xs),
               Text(
                 label,
-                style: RitmoTextStyles.badge(color).copyWith(
-                  fontWeight: FontWeight.w600,
-                  height: 1.1,
-                ),
+                style: RitmoTextStyles.badge(
+                  color,
+                ).copyWith(fontWeight: FontWeight.w600, height: 1.1),
               ),
             ],
           ],

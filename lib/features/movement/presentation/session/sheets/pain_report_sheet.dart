@@ -18,10 +18,7 @@ class PainReportData {
 
 /// شیت گزارش درد ورزشی بدون هرگونه ادعای پزشکی/تشخیصی با تمرکز بر مدیریت فوری فشار
 class PainReportSheet extends StatefulWidget {
-  const PainReportSheet({
-    super.key,
-    required this.onSubmitReport,
-  });
+  const PainReportSheet({super.key, required this.onSubmitReport});
 
   final ValueChanged<PainReportData> onSubmitReport;
 
@@ -64,7 +61,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -106,9 +105,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
           // شدت درد ۱ تا ۵
           Text(
             '${MovementStrings.painReportSeverity}: ${toPersianDigits(_severity)} از ۵',
-            style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: RitmoTextStyles.body(
+              colors.textPrimary,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: RitmoSpacing.sm),
           Row(
@@ -124,7 +123,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
                     onPressed: () => setState(() => _severity = level),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSel ? color : colors.surfaceSunken,
-                      foregroundColor: isSel ? Colors.white : colors.textPrimary,
+                      foregroundColor: isSel
+                          ? Colors.white
+                          : colors.textPrimary,
                       elevation: 0,
                       side: BorderSide(color: isSel ? color : colors.border),
                       shape: RoundedRectangleBorder(
@@ -133,7 +134,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
                     ),
                     child: Text(
                       toPersianDigits(level),
-                      style: RitmoTextStyles.label(isSel ? Colors.white : colors.textPrimary),
+                      style: RitmoTextStyles.label(
+                        isSel ? Colors.white : colors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -145,9 +148,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
           // محل تقریبی درد
           Text(
             MovementStrings.painReportLocation,
-            style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: RitmoTextStyles.body(
+              colors.textPrimary,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: RitmoSpacing.sm),
           Wrap(
@@ -170,10 +173,12 @@ class _PainReportSheetState extends State<PainReportSheet> {
           Container(
             padding: const EdgeInsets.all(RitmoSpacing.md),
             decoration: BoxDecoration(
-              color: (isHighSeverity ? colors.error : colors.warning).withValues(alpha: 0.1),
+              color: (isHighSeverity ? colors.error : colors.warning)
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(RitmoRadius.card),
               border: Border.all(
-                color: (isHighSeverity ? colors.error : colors.warning).withValues(alpha: 0.3),
+                color: (isHighSeverity ? colors.error : colors.warning)
+                    .withValues(alpha: 0.3),
               ),
             ),
             child: Text(
@@ -207,7 +212,9 @@ class _PainReportSheetState extends State<PainReportSheet> {
                 ),
               ),
               child: Text(
-                isHighSeverity ? 'پایان تمرین و ثبت گزارش' : MovementStrings.painReportSubmit,
+                isHighSeverity
+                    ? 'پایان تمرین و ثبت گزارش'
+                    : MovementStrings.painReportSubmit,
                 style: RitmoTextStyles.label(Colors.white),
               ),
             ),

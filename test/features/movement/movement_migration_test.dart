@@ -28,45 +28,57 @@ void main() {
       }
     });
 
-    test('Creates all 4 movement tables and seeds 8 base activity kinds', () async {
-      if (!dbInitialized || db == null) {
-        return;
-      }
+    test(
+      'Creates all 4 movement tables and seeds 8 base activity kinds',
+      () async {
+        if (!dbInitialized || db == null) {
+          return;
+        }
 
-      await MovementTables.create(db!);
-      await MovementTables.seedInitialData(db!);
+        await MovementTables.create(db!);
+        await MovementTables.seedInitialData(db!);
 
-      // 1. Verify tables exist
-      final tables = await db!.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'movement_%'",
-      );
-      final tableNames = tables.map((t) => t['name'] as String).toSet();
+        // 1. Verify tables exist
+        final tables = await db!.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'movement_%'",
+        );
+        final tableNames = tables.map((t) => t['name'] as String).toSet();
 
-      expect(tableNames.contains(MovementTables.tableActivityKinds), isTrue);
-      expect(tableNames.contains(MovementTables.tableOccurrences), isTrue);
-      expect(tableNames.contains(MovementTables.tableLiveSessions), isTrue);
-      expect(tableNames.contains(MovementTables.tableStrengthPrograms), isTrue);
-      expect(tableNames.contains(MovementTables.tablePlanTemplates), isTrue);
-      expect(tableNames.contains(MovementTables.tablePlanSchedules), isTrue);
-      expect(tableNames.contains(MovementTables.tableWorkoutLogs), isTrue);
-      expect(tableNames.contains(MovementTables.tableSessionEvents), isTrue);
-      expect(tableNames.contains(MovementTables.tableReadinessCheckins), isTrue);
-      expect(tableNames.contains(MovementTables.tablePreferences), isTrue);
-      expect(tableNames.contains(MovementTables.tablePersonalRecords), isTrue);
+        expect(tableNames.contains(MovementTables.tableActivityKinds), isTrue);
+        expect(tableNames.contains(MovementTables.tableOccurrences), isTrue);
+        expect(tableNames.contains(MovementTables.tableLiveSessions), isTrue);
+        expect(
+          tableNames.contains(MovementTables.tableStrengthPrograms),
+          isTrue,
+        );
+        expect(tableNames.contains(MovementTables.tablePlanTemplates), isTrue);
+        expect(tableNames.contains(MovementTables.tablePlanSchedules), isTrue);
+        expect(tableNames.contains(MovementTables.tableWorkoutLogs), isTrue);
+        expect(tableNames.contains(MovementTables.tableSessionEvents), isTrue);
+        expect(
+          tableNames.contains(MovementTables.tableReadinessCheckins),
+          isTrue,
+        );
+        expect(tableNames.contains(MovementTables.tablePreferences), isTrue);
+        expect(
+          tableNames.contains(MovementTables.tablePersonalRecords),
+          isTrue,
+        );
 
-      // 2. Verify 8 seeded activity kinds
-      final kinds = await db!.query(MovementTables.tableActivityKinds);
-      expect(kinds.length, equals(8));
+        // 2. Verify 8 seeded activity kinds
+        final kinds = await db!.query(MovementTables.tableActivityKinds);
+        expect(kinds.length, equals(8));
 
-      final kindIds = kinds.map((k) => k['id'] as String).toSet();
-      expect(kindIds.contains('kind_walking'), isTrue);
-      expect(kindIds.contains('kind_running'), isTrue);
-      expect(kindIds.contains('kind_cycling'), isTrue);
-      expect(kindIds.contains('kind_swimming'), isTrue);
-      expect(kindIds.contains('kind_team_sports'), isTrue);
-      expect(kindIds.contains('kind_hiking'), isTrue);
-      expect(kindIds.contains('kind_yoga_mobility'), isTrue);
-      expect(kindIds.contains('kind_strength'), isTrue);
-    });
+        final kindIds = kinds.map((k) => k['id'] as String).toSet();
+        expect(kindIds.contains('kind_walking'), isTrue);
+        expect(kindIds.contains('kind_running'), isTrue);
+        expect(kindIds.contains('kind_cycling'), isTrue);
+        expect(kindIds.contains('kind_swimming'), isTrue);
+        expect(kindIds.contains('kind_team_sports'), isTrue);
+        expect(kindIds.contains('kind_hiking'), isTrue);
+        expect(kindIds.contains('kind_yoga_mobility'), isTrue);
+        expect(kindIds.contains('kind_strength'), isTrue);
+      },
+    );
   });
 }

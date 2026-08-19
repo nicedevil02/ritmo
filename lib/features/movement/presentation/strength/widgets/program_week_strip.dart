@@ -41,7 +41,10 @@ class ProgramWeekStrip extends StatelessWidget {
               onTap: () => onWeekSelected(weekNum),
               borderRadius: BorderRadius.circular(RitmoRadius.card),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? sportsColor.withValues(alpha: 0.15)
@@ -59,37 +62,54 @@ class ProgramWeekStrip extends StatelessWidget {
                   children: [
                     Text(
                       'هفتهٔ ${toPersianDigits(weekNum)}',
-                      style: RitmoTextStyles.label(
-                        isSelected ? sportsColor : colors.textPrimary,
-                      ).copyWith(
-                        fontWeight: isCurrent || isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
+                      style:
+                          RitmoTextStyles.label(
+                            isSelected ? sportsColor : colors.textPrimary,
+                          ).copyWith(
+                            fontWeight: isCurrent || isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     if (isDeload)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: colors.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(RitmoRadius.pill),
                         ),
                         child: Text(
                           'دِلود',
-                          style: RitmoTextStyles.caption(colors.accent).copyWith(fontSize: 10),
+                          style: RitmoTextStyles.caption(
+                            colors.accent,
+                          ).copyWith(fontSize: 10),
                         ),
                       )
                     else if (isPast)
-                      Icon(Icons.check_circle_rounded, size: 14, color: colors.success)
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 14,
+                        color: colors.success,
+                      )
                     else if (isCurrent)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: sportsColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(RitmoRadius.pill),
                         ),
                         child: Text(
                           'جاری',
-                          style: RitmoTextStyles.caption(sportsColor).copyWith(fontSize: 10),
+                          style: RitmoTextStyles.caption(
+                            sportsColor,
+                          ).copyWith(fontSize: 10),
                         ),
                       )
                     else

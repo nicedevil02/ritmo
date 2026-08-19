@@ -74,7 +74,7 @@ class _AiWriteHistorySheetState extends State<AiWriteHistorySheet> {
           right: 16,
         ),
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.75),
         ),
         decoration: BoxDecoration(
           color: colors.card,

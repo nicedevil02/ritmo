@@ -70,7 +70,9 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
     _sensitiveAreas = draft.sensitiveAreas;
     _equipment = draft.equipment.isNotEmpty ? draft.equipment : _equipment;
     _daysPerWeek = draft.daysPerWeek;
-    _preferredDays = draft.preferredDays.isNotEmpty ? draft.preferredDays : _preferredDays;
+    _preferredDays = draft.preferredDays.isNotEmpty
+        ? draft.preferredDays
+        : _preferredDays;
     _sessionMinutes = draft.sessionMinutes;
     _preferredTime = draft.preferredTime ?? _preferredTime;
 
@@ -147,15 +149,17 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
         );
 
         if (mounted) {
-          unawaited(Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => StrengthProgramPreviewScreen(
-                program: program,
-                days: days,
-                strengthService: _service,
+          unawaited(
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => StrengthProgramPreviewScreen(
+                  program: program,
+                  days: days,
+                  strengthService: _service,
+                ),
               ),
             ),
-          ));
+          );
         }
       } catch (e, st) {
         debugPrint('ERROR in generateProgramPlan: $e\n$st');
@@ -184,7 +188,8 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
           selectedLevel: _level,
           onLevelChanged: (lvl) => setState(() => _level = lvl),
           sensitiveAreas: _sensitiveAreas,
-          onSensitiveAreasChanged: (areas) => setState(() => _sensitiveAreas = areas),
+          onSensitiveAreasChanged: (areas) =>
+              setState(() => _sensitiveAreas = areas),
         );
       case 3:
         return StepEquipment(
@@ -236,7 +241,10 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
           children: [
             // نوار پیشرفت گام‌ها
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.lg,
+                vertical: RitmoSpacing.sm,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -245,9 +253,9 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
                     children: [
                       Text(
                         MovementStrings.strengthStepOf(_currentStep),
-                        style: RitmoTextStyles.caption(sportsColor).copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: RitmoTextStyles.caption(
+                          sportsColor,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         '${(_currentStep * 20)}٪',
@@ -272,7 +280,10 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
             // محتوای گام جاری
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.lg,
+                  vertical: RitmoSpacing.md,
+                ),
                 child: _buildStepContent(),
               ),
             ),
@@ -286,10 +297,15 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
                     OutlinedButton(
                       onPressed: _handleBack,
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         side: BorderSide(color: colors.border),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: const Icon(Icons.arrow_forward_rounded, size: 20),
@@ -300,11 +316,16 @@ class _StrengthOnboardingFlowState extends State<StrengthOnboardingFlow> {
                     child: ElevatedButton(
                       onPressed: _handleNext,
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(48, MovementLayout.kPrimaryButtonHeight),
+                        minimumSize: const Size(
+                          48,
+                          MovementLayout.kPrimaryButtonHeight,
+                        ),
                         backgroundColor: sportsColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.field,
+                          ),
                         ),
                       ),
                       child: Text(

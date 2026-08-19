@@ -86,11 +86,15 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
 
     final displayContent = _getDisplayContent(widget.message.content);
 
-    // Build the main message bubble container
-    final bubbleContainer = Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.76,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxBubbleWidth = constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor;
+
+        // Build the main message bubble container
+        final bubbleContainer = Container(
+          constraints: BoxConstraints(
+            maxWidth: maxBubbleWidth,
+          ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: bubbleBg,
@@ -218,23 +222,25 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
     final showCopy = !widget.message.isStreaming && displayContent.isNotEmpty;
 
     // Layout the row based on message sender (User or AI)
-    return Align(
-      alignment: alignment,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: isUser
-              ? [
-                  bubbleContainer,
-                  if (showCopy) copyButton else const SizedBox(width: 32), // Copy icon on the right of user message
-                ]
-              : [
-                  if (showCopy) copyButton else const SizedBox(width: 32), // Copy icon on the left of AI message
-                  bubbleContainer,
-                ],
-        ),
-      ),
+        return Align(
+          alignment: alignment,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: isUser
+                  ? [
+                      bubbleContainer,
+                      if (showCopy) copyButton else const SizedBox(width: 32), // Copy icon on the right of user message
+                    ]
+                  : [
+                      if (showCopy) copyButton else const SizedBox(width: 32), // Copy icon on the left of AI message
+                      bubbleContainer,
+                    ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

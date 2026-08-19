@@ -67,7 +67,9 @@ class MovementSessionEvent {
     return MovementSessionEvent(
       id: map['id'] as String,
       sessionId: map['sessionId'] as String,
-      type: MovementSessionEventType.fromString(map['type'] as String? ?? 'note'),
+      type: MovementSessionEventType.fromString(
+        map['type'] as String? ?? 'note',
+      ),
       payloadJson: map['payloadJson'] as String?,
       at: DateTime.tryParse(map['at']?.toString() ?? '') ?? DateTime.now(),
     );

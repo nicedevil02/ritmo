@@ -3,6 +3,7 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/sheet/ritmo_full_bleed_sheet.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class CloudflareChallengeModal extends StatefulWidget {
@@ -67,101 +68,104 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
     final textTheme = theme.textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-        border: Border(
-          top: BorderSide(color: colors.borderSubtle),
-          left: BorderSide(color: colors.borderSubtle),
-          right: BorderSide(color: colors.borderSubtle),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Header Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: RitmoSpacing.md,
-              vertical: RitmoSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
-                  ),
-                  child: Icon(Icons.security_rounded, color: colors.primary, size: 20),
-                ),
-                const SizedBox(width: RitmoSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'تایید هویت امنیتی (Cloudflare)',
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'لطفاً باکس تایید «Verify you are human» را لمس کنید.',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
-                  tooltip: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
-                      ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'
-                      : 'بارگذاری مجدد',
-                  onPressed: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
-                      ? null
-                      : () => ChatGptWebBridgeManager.instance.forceReboot(
-                            reasonFa: 'بارگذاری مجدد توسط کاربر در چالش کلودفلر',
-                          ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close_rounded, color: colors.textTertiary),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
+    return RitmoFullBleedSheet(
+      minHeightFactor: 0.6,
+      maxHeightFactor: 0.9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+          border: Border(
+            top: BorderSide(color: colors.borderSubtle),
+            left: BorderSide(color: colors.borderSubtle),
+            right: BorderSide(color: colors.borderSubtle),
           ),
-          Divider(height: 1, color: colors.borderSubtle),
-
-          // Interactive WebView container
-          Expanded(
-            child: controller != null
-                ? ClipRRect(
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(RitmoRadius.sheet)),
-                    child: WebViewWidget(
-                      key: const ValueKey('chatgpt_cloudflare_webview'),
-                      controller: controller,
+        ),
+        child: Column(
+          children: [
+            // Header Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.md,
+                vertical: RitmoSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(RitmoRadius.badge),
                     ),
-                  )
-                : Center(
+                    child: Icon(Icons.security_rounded, color: colors.primary, size: 20),
+                  ),
+                  const SizedBox(width: RitmoSpacing.sm),
+                  Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircularProgressIndicator(color: colors.primary),
-                        const SizedBox(height: RitmoSpacing.md),
                         Text(
-                          'در حال آماده‌سازی پنجره تایید...',
-                          style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                          'تایید هویت امنیتی (Cloudflare)',
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'لطفاً باکس تایید «Verify you are human» را لمس کنید.',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
-          ),
-        ],
+                  IconButton(
+                    icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
+                    tooltip: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
+                        ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'
+                        : 'بارگذاری مجدد',
+                    onPressed: ChatGptWebBridgeManager.instance.status == ChatGptBridgeStatus.generating
+                        ? null
+                        : () => ChatGptWebBridgeManager.instance.forceReboot(
+                              reasonFa: 'بارگذاری مجدد توسط کاربر در چالش کلودفلر',
+                            ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, color: colors.textTertiary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: colors.borderSubtle),
+
+            // Interactive WebView container
+            Expanded(
+              child: controller != null
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(RitmoRadius.sheet)),
+                      child: WebViewWidget(
+                        key: const ValueKey('chatgpt_cloudflare_webview'),
+                        controller: controller,
+                      ),
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: colors.primary),
+                          const SizedBox(height: RitmoSpacing.md),
+                          Text(
+                            'در حال آماده‌سازی پنجره تایید...',
+                            style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

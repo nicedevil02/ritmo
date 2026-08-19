@@ -49,7 +49,10 @@ class MovementStrengthDay {
     );
   }
 
-  factory MovementStrengthDay.fromMap(Map<String, dynamic> map, {List<MovementStrengthExercise> exercises = const []}) {
+  factory MovementStrengthDay.fromMap(
+    Map<String, dynamic> map, {
+    List<MovementStrengthExercise> exercises = const [],
+  }) {
     List<String> parseStringList(dynamic raw) {
       if (raw == null) return [];
       if (raw is List) return raw.map((e) => e.toString()).toList();

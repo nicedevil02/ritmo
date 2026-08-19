@@ -84,9 +84,12 @@ class _RitmoPickerSheetState<T> extends State<RitmoPickerSheet<T>> {
         _filteredOptions = widget.options;
       } else {
         _filteredOptions = widget.options
-            .where((opt) =>
-                opt.label.toLowerCase().contains(query) ||
-                (opt.subtitle != null && opt.subtitle!.toLowerCase().contains(query)))
+            .where(
+              (opt) =>
+                  opt.label.toLowerCase().contains(query) ||
+                  (opt.subtitle != null &&
+                      opt.subtitle!.toLowerCase().contains(query)),
+            )
             .toList();
       }
     });
@@ -142,27 +145,45 @@ class _RitmoPickerSheetState<T> extends State<RitmoPickerSheet<T>> {
 
               return ListTile(
                 onTap: () => Navigator.pop(context, opt.value),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                tileColor: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                tileColor: isSelected
+                    ? colors.primary.withValues(alpha: 0.12)
+                    : colors.surface,
                 leading: opt.icon != null
-                    ? Icon(opt.icon, color: isSelected ? colors.primary : colors.textSecondary)
+                    ? Icon(
+                        opt.icon,
+                        color: isSelected
+                            ? colors.primary
+                            : colors.textSecondary,
+                      )
                     : null,
                 title: Text(
                   opt.label,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                     color: isSelected ? colors.primary : colors.textPrimary,
                   ),
                 ),
                 subtitle: opt.subtitle != null
                     ? Text(
                         opt.subtitle!,
-                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                        ),
                       )
                     : null,
                 trailing: isSelected
-                    ? Icon(CupertinoIcons.check_mark, color: colors.primary, size: 18)
+                    ? Icon(
+                        CupertinoIcons.check_mark,
+                        color: colors.primary,
+                        size: 18,
+                      )
                     : null,
               );
             },

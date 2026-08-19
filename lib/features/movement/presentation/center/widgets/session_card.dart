@@ -47,7 +47,8 @@ class SessionCard extends StatelessWidget {
     final timeStr = occurrence.startTime != null
         ? MovementStrings.atTime(occurrence.startTime!)
         : MovementStrings.todayLabel;
-    final goalStr = (occurrence.goalValue != null && occurrence.goalUnit != null)
+    final goalStr =
+        (occurrence.goalValue != null && occurrence.goalUnit != null)
         ? '${toPersianDigits(occurrence.goalValue!.round())} ${occurrence.goalUnit}'
         : MovementStrings.goalStandard;
 
@@ -144,16 +145,18 @@ class SessionCard extends StatelessWidget {
                                 children: [
                                   Text(
                                     activityName,
-                                    style: RitmoTextStyles.label(colors.textPrimary).copyWith(
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                    style: RitmoTextStyles.label(
+                                      colors.textPrimary,
+                                    ).copyWith(fontWeight: FontWeight.w700),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: RitmoSpacing.xs),
                                   Text(
                                     '$timeStr · $goalStr',
-                                    style: RitmoTextStyles.caption(colors.textSecondary),
+                                    style: RitmoTextStyles.caption(
+                                      colors.textSecondary,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -178,7 +181,9 @@ class SessionCard extends StatelessWidget {
                                 size: 20,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(RitmoRadius.card),
+                                borderRadius: BorderRadius.circular(
+                                  RitmoRadius.card,
+                                ),
                               ),
                               color: colors.surfaceElevated,
                               onSelected: (val) {
@@ -212,9 +217,18 @@ class SessionCard extends StatelessWidget {
                                     value: 'start',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.play_arrow_rounded, color: sportsColor, size: 18),
+                                        Icon(
+                                          Icons.play_arrow_rounded,
+                                          color: sportsColor,
+                                          size: 18,
+                                        ),
                                         const SizedBox(width: RitmoSpacing.sm),
-                                        Text(MovementStrings.menuStart, style: RitmoTextStyles.label(colors.textPrimary)),
+                                        Text(
+                                          MovementStrings.menuStart,
+                                          style: RitmoTextStyles.label(
+                                            colors.textPrimary,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -223,9 +237,18 @@ class SessionCard extends StatelessWidget {
                                     value: 'manual',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.edit_note_rounded, color: colors.textSecondary, size: 18),
+                                        Icon(
+                                          Icons.edit_note_rounded,
+                                          color: colors.textSecondary,
+                                          size: 18,
+                                        ),
                                         const SizedBox(width: RitmoSpacing.sm),
-                                        Text(MovementStrings.menuManualLog, style: RitmoTextStyles.label(colors.textPrimary)),
+                                        Text(
+                                          MovementStrings.menuManualLog,
+                                          style: RitmoTextStyles.label(
+                                            colors.textPrimary,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -233,9 +256,18 @@ class SessionCard extends StatelessWidget {
                                   value: 'move',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.swap_horiz_rounded, color: colors.textSecondary, size: 18),
+                                      Icon(
+                                        Icons.swap_horiz_rounded,
+                                        color: colors.textSecondary,
+                                        size: 18,
+                                      ),
                                       const SizedBox(width: RitmoSpacing.sm),
-                                      Text(MovementStrings.menuMove, style: RitmoTextStyles.label(colors.textPrimary)),
+                                      Text(
+                                        MovementStrings.menuMove,
+                                        style: RitmoTextStyles.label(
+                                          colors.textPrimary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -244,9 +276,18 @@ class SessionCard extends StatelessWidget {
                                     value: 'short',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.flash_on_rounded, color: colors.textSecondary, size: 18),
+                                        Icon(
+                                          Icons.flash_on_rounded,
+                                          color: colors.textSecondary,
+                                          size: 18,
+                                        ),
                                         const SizedBox(width: RitmoSpacing.sm),
-                                        Text(MovementStrings.menuShortVersion, style: RitmoTextStyles.label(colors.textPrimary)),
+                                        Text(
+                                          MovementStrings.menuShortVersion,
+                                          style: RitmoTextStyles.label(
+                                            colors.textPrimary,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -255,9 +296,18 @@ class SessionCard extends StatelessWidget {
                                     value: 'skip',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.close_rounded, color: colors.warning, size: 18),
+                                        Icon(
+                                          Icons.close_rounded,
+                                          color: colors.warning,
+                                          size: 18,
+                                        ),
                                         const SizedBox(width: RitmoSpacing.sm),
-                                        Text(MovementStrings.menuSkip, style: RitmoTextStyles.label(colors.warning)),
+                                        Text(
+                                          MovementStrings.menuSkip,
+                                          style: RitmoTextStyles.label(
+                                            colors.warning,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -265,9 +315,18 @@ class SessionCard extends StatelessWidget {
                                   value: 'edit',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.edit_calendar_rounded, color: colors.textSecondary, size: 18),
+                                      Icon(
+                                        Icons.edit_calendar_rounded,
+                                        color: colors.textSecondary,
+                                        size: 18,
+                                      ),
                                       const SizedBox(width: RitmoSpacing.sm),
-                                      Text(MovementStrings.menuEditPlan, style: RitmoTextStyles.label(colors.textPrimary)),
+                                      Text(
+                                        MovementStrings.menuEditPlan,
+                                        style: RitmoTextStyles.label(
+                                          colors.textPrimary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -275,9 +334,18 @@ class SessionCard extends StatelessWidget {
                                   value: 'delete',
                                   child: Row(
                                     children: [
-                                      Icon(Icons.delete_outline_rounded, color: colors.error, size: 18),
+                                      Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: colors.error,
+                                        size: 18,
+                                      ),
                                       const SizedBox(width: RitmoSpacing.sm),
-                                      Text(MovementStrings.menuDelete, style: RitmoTextStyles.label(colors.error)),
+                                      Text(
+                                        MovementStrings.menuDelete,
+                                        style: RitmoTextStyles.label(
+                                          colors.error,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

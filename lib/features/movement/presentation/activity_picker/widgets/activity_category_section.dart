@@ -55,7 +55,9 @@ class ActivityCategorySection extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 600;
-              final crossAxisCount = isWide ? 3 : (constraints.maxWidth > 340 ? 2 : 1);
+              final crossAxisCount = isWide
+                  ? 3
+                  : (constraints.maxWidth > 340 ? 2 : 1);
 
               return GridView.builder(
                 shrinkWrap: true,

@@ -77,19 +77,28 @@ class _RestTimerBarState extends State<RestTimerBar> {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final progress = _totalSeconds > 0 ? (_remainingSeconds / _totalSeconds).clamp(0.0, 1.0) : 0.0;
+    final progress = _totalSeconds > 0
+        ? (_remainingSeconds / _totalSeconds).clamp(0.0, 1.0)
+        : 0.0;
     final mins = _remainingSeconds ~/ 60;
     final secs = _remainingSeconds % 60;
-    final timeStr = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
 
     return Container(
       height: MovementLayout.kRestTimerBarHeight,
-      margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs),
+      margin: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.md,
+        vertical: RitmoSpacing.xs,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: sportsColor.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: sportsColor.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: sportsColor.withValues(alpha: 0.1),
@@ -149,9 +158,9 @@ class _RestTimerBarState extends State<RestTimerBar> {
             ),
             child: Text(
               MovementStrings.restAddFifteen,
-              style: RitmoTextStyles.caption(sportsColor).copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: RitmoTextStyles.caption(
+                sportsColor,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
           ),
 

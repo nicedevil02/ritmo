@@ -7,10 +7,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 /// کارت پیشرفت تمرینات قدرتی (StrengthProgressCard)
 /// نمایش حجم تمرین، وضعیت دِلود و نرخ اتمام جلسات.
 class StrengthProgressCard extends StatelessWidget {
-  const StrengthProgressCard({
-    super.key,
-    required this.strengthData,
-  });
+  const StrengthProgressCard({super.key, required this.strengthData});
 
   final MovementStrengthProgressData strengthData;
 
@@ -41,14 +38,19 @@ class StrengthProgressCard extends StatelessWidget {
               ),
               if (strengthData.isDeloadActive)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(RitmoRadius.pill),
                   ),
                   child: Text(
                     MovementStrings.strengthHubDeloadWeek,
-                    style: RitmoTextStyles.caption(colors.accent).copyWith(fontWeight: FontWeight.bold),
+                    style: RitmoTextStyles.caption(
+                      colors.accent,
+                    ).copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
             ],
@@ -58,11 +60,16 @@ class StrengthProgressCard extends StatelessWidget {
           // نرخ تکمیل جلسات دوره
           Row(
             children: [
-              Text('نرخ تکمیل دوره:', style: RitmoTextStyles.caption(colors.textSecondary)),
+              Text(
+                'نرخ تکمیل دوره:',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
               const SizedBox(width: RitmoSpacing.xs),
               Text(
                 '${toPersianDigits(completionPct)}٪',
-                style: RitmoTextStyles.caption(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                style: RitmoTextStyles.caption(
+                  sportsColor,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -80,7 +87,10 @@ class StrengthProgressCard extends StatelessWidget {
               children: [
                 Column(
                   children: [
-                    Text('تعداد ست‌های ثبت‌شده', style: RitmoTextStyles.caption(colors.textSecondary)),
+                    Text(
+                      'تعداد ست‌های ثبت‌شده',
+                      style: RitmoTextStyles.caption(colors.textSecondary),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       toPersianDigits(strengthData.weeklyVolumes.length),
@@ -91,11 +101,18 @@ class StrengthProgressCard extends StatelessWidget {
                 Container(width: 1, height: 32, color: colors.divider),
                 Column(
                   children: [
-                    Text('وضعیت پیشرفت', style: RitmoTextStyles.caption(colors.textSecondary)),
+                    Text(
+                      'وضعیت پیشرفت',
+                      style: RitmoTextStyles.caption(colors.textSecondary),
+                    ),
                     const SizedBox(height: 4),
                     Text(
-                      strengthData.isDeloadActive ? 'هفتهٔ ریکاوری فعال' : 'بارگذاری تدریجی',
-                      style: RitmoTextStyles.caption(sportsColor).copyWith(fontWeight: FontWeight.bold),
+                      strengthData.isDeloadActive
+                          ? 'هفتهٔ ریکاوری فعال'
+                          : 'بارگذاری تدریجی',
+                      style: RitmoTextStyles.caption(
+                        sportsColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

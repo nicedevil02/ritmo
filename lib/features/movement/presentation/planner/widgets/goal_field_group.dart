@@ -37,7 +37,11 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
     super.initState();
     _goalType = widget.initialGoalType;
     _valueController = TextEditingController(
-      text: widget.initialGoalValue.toStringAsFixed(widget.initialGoalValue.truncateToDouble() == widget.initialGoalValue ? 0 : 1),
+      text: widget.initialGoalValue.toStringAsFixed(
+        widget.initialGoalValue.truncateToDouble() == widget.initialGoalValue
+            ? 0
+            : 1,
+      ),
     );
     _goalUnit = widget.initialGoalUnit;
   }
@@ -76,7 +80,9 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
 
   void _applySuggestion() {
     final val = _suggestedValue;
-    _valueController.text = val.toStringAsFixed(val.truncateToDouble() == val ? 0 : 1);
+    _valueController.text = val.toStringAsFixed(
+      val.truncateToDouble() == val ? 0 : 1,
+    );
     _onValueChanged(_valueController.text);
   }
 
@@ -108,7 +114,10 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
                 onTap: _applySuggestion,
                 borderRadius: BorderRadius.circular(RitmoRadius.badge),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: sportsColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(RitmoRadius.badge),
@@ -116,7 +125,11 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome_rounded, color: sportsColor, size: 14),
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: sportsColor,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${MovementStrings.goalSuggestedBadge}: ${toPersianDigits(_suggestedValue.toInt())} $_goalUnit',
@@ -148,7 +161,9 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
                   }
                 },
               ),
-              if (widget.family == 'running' || widget.family == 'cycling' || widget.family == 'swimming')
+              if (widget.family == 'running' ||
+                  widget.family == 'cycling' ||
+                  widget.family == 'swimming')
                 ChoiceChip(
                   label: const Text(MovementStrings.goalTypeDistance),
                   selected: _goalType == 'distance',
@@ -210,10 +225,7 @@ class _GoalFieldGroupState extends State<GoalFieldGroup> {
           // خطای درون‌فیلدی
           if (_inlineError != null) ...[
             const SizedBox(height: RitmoSpacing.xs),
-            Text(
-              _inlineError!,
-              style: RitmoTextStyles.caption(colors.error),
-            ),
+            Text(_inlineError!, style: RitmoTextStyles.caption(colors.error)),
           ],
         ],
       ),

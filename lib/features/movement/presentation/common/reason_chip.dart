@@ -43,10 +43,7 @@ class ReasonChip extends StatelessWidget {
                 style: RitmoTextStyles.cardTitle(colors.textPrimary),
               ),
               const SizedBox(height: RitmoSpacing.md),
-              Text(
-                text,
-                style: RitmoTextStyles.body(colors.textSecondary),
-              ),
+              Text(text, style: RitmoTextStyles.body(colors.textSecondary)),
               const SizedBox(height: RitmoSpacing.xl),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop(),
@@ -82,10 +79,7 @@ class ReasonChip extends StatelessWidget {
           onTap: onTap ?? () => _showExplanation(context),
           borderRadius: BorderRadius.circular(RitmoRadius.pill),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: 32.0,
-              minWidth: 48.0,
-            ),
+            constraints: const BoxConstraints(minHeight: 32.0, minWidth: 48.0),
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: RitmoSpacing.sm,
@@ -110,9 +104,9 @@ class ReasonChip extends StatelessWidget {
                   const SizedBox(width: RitmoSpacing.xs),
                   Text(
                     reason,
-                    style: RitmoTextStyles.badge(sportsColor).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: RitmoTextStyles.badge(
+                      sportsColor,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

@@ -47,37 +47,49 @@ class AddCommandSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddCommandSheet(
         onStartNow: () {
-          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'start_now');
+          MovementAnalyticsService.instance.logAddIntentSelected(
+            intentType: 'start_now',
+          );
           Navigator.of(ctx).pop();
           onStartNow();
         },
         onAddToPlan: () {
-          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'add_to_plan');
+          MovementAnalyticsService.instance.logAddIntentSelected(
+            intentType: 'add_to_plan',
+          );
           Navigator.of(ctx).pop();
           onAddToPlan();
         },
         onRetroLog: () {
-          MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'retro_log');
+          MovementAnalyticsService.instance.logAddIntentSelected(
+            intentType: 'retro_log',
+          );
           Navigator.of(ctx).pop();
           onRetroLog();
         },
         onResumeLiveSession: onResumeLiveSession != null
             ? () {
-                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'resume_live_session');
+                MovementAnalyticsService.instance.logAddIntentSelected(
+                  intentType: 'resume_live_session',
+                );
                 Navigator.of(ctx).pop();
                 onResumeLiveSession();
               }
             : null,
         onUseTemplate: onUseTemplate != null
             ? () {
-                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'use_template');
+                MovementAnalyticsService.instance.logAddIntentSelected(
+                  intentType: 'use_template',
+                );
                 Navigator.of(ctx).pop();
                 onUseTemplate();
               }
             : null,
         onStrengthHome: onStrengthHome != null
             ? () {
-                MovementAnalyticsService.instance.logAddIntentSelected(intentType: 'strength_home');
+                MovementAnalyticsService.instance.logAddIntentSelected(
+                  intentType: 'strength_home',
+                );
                 Navigator.of(ctx).pop();
                 onStrengthHome();
               }
@@ -97,7 +109,9 @@ class AddCommandSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -168,7 +182,9 @@ class AddCommandSheet extends StatelessWidget {
           ),
 
           // ردیف‌های شرطی (حداکثر تا ۶ ردیف در کل)
-          if (hasActiveLiveSession || hasTemplates || !hasActiveStrengthProgram) ...[
+          if (hasActiveLiveSession ||
+              hasTemplates ||
+              !hasActiveStrengthProgram) ...[
             const SizedBox(height: RitmoSpacing.sm),
             const Divider(height: 1),
             const SizedBox(height: RitmoSpacing.sm),

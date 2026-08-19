@@ -44,21 +44,14 @@ class ErrorBlock extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: colors.error,
-              size: 20.0,
-            ),
+            Icon(Icons.warning_amber_rounded, color: colors.error, size: 20.0),
             const SizedBox(width: RitmoSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    title,
-                    style: RitmoTextStyles.label(colors.error),
-                  ),
+                  Text(title, style: RitmoTextStyles.label(colors.error)),
                   Text(
                     message,
                     style: RitmoTextStyles.caption(colors.textSecondary),
@@ -144,7 +137,10 @@ class ErrorBlock extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(RitmoRadius.field),
                   ),
-                  minimumSize: const Size(160, MovementLayout.kPrimaryButtonHeight),
+                  minimumSize: const Size(
+                    160,
+                    MovementLayout.kPrimaryButtonHeight,
+                  ),
                 ),
                 child: Text(
                   MovementStrings.commonRetry,
@@ -171,7 +167,10 @@ class ErrorBlock extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(RitmoRadius.field),
                     ),
-                    minimumSize: const Size(160, MovementLayout.kSecondaryButtonHeight),
+                    minimumSize: const Size(
+                      160,
+                      MovementLayout.kSecondaryButtonHeight,
+                    ),
                   ),
                   child: Text(
                     secondaryActionLabel!,

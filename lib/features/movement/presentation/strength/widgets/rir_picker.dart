@@ -38,7 +38,10 @@ class RirPicker extends StatelessWidget {
               style: RitmoTextStyles.label(colors.textPrimary),
             ),
             const SizedBox(width: 4),
-            Text('(اختیاری)', style: RitmoTextStyles.caption(colors.textTertiary)),
+            Text(
+              '(اختیاری)',
+              style: RitmoTextStyles.caption(colors.textTertiary),
+            ),
           ],
         ),
         const SizedBox(height: RitmoSpacing.xs),
@@ -53,7 +56,9 @@ class RirPicker extends StatelessWidget {
                   label: Center(child: Text(toPersianDigits(opt['label']))),
                   selected: isSel,
                   selectedColor: sportsColor.withValues(alpha: 0.2),
-                  labelStyle: RitmoTextStyles.label(isSel ? sportsColor : colors.textPrimary),
+                  labelStyle: RitmoTextStyles.label(
+                    isSel ? sportsColor : colors.textPrimary,
+                  ),
                   onSelected: (selected) {
                     onRirSelected(selected ? val : null);
                   },

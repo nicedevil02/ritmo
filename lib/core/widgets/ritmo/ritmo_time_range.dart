@@ -20,10 +20,11 @@ class RitmoTimeRange extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final defaultStyle = (style ?? TextStyle(color: colors.textPrimary, fontSize: 13)).copyWith(
-      fontFeatures: const [FontFeature.tabularFigures()],
-      fontFamily: 'Vazirmatn',
-    );
+    final defaultStyle =
+        (style ?? TextStyle(color: colors.textPrimary, fontSize: 13)).copyWith(
+          fontFeatures: const [FontFeature.tabularFigures()],
+          fontFamily: 'Vazirmatn',
+        );
 
     final startStr = toPersianDigits(TimeOfDayMinutes.format(startMinutes));
 
@@ -45,7 +46,11 @@ class RitmoTimeRange extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(fullString, style: defaultStyle, textDirection: TextDirection.ltr),
+          Text(
+            fullString,
+            style: defaultStyle,
+            textDirection: TextDirection.ltr,
+          ),
           const SizedBox(width: 3),
           Text(
             '+۱',

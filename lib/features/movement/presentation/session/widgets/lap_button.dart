@@ -49,7 +49,9 @@ class _LapButtonState extends State<LapButton> {
 
     HapticFeedback.lightImpact();
 
-    final lastLapSplit = widget.laps.isNotEmpty ? widget.laps.last.splitTimeSec : 0;
+    final lastLapSplit = widget.laps.isNotEmpty
+        ? widget.laps.last.splitTimeSec
+        : 0;
     final lapDuration = widget.currentElapsedSec - lastLapSplit;
     final newLap = SessionLapItem(
       lapNumber: widget.laps.length + 1,
@@ -76,8 +78,13 @@ class _LapButtonState extends State<LapButton> {
     double avgSec = 0;
 
     if (lapCount >= 2) {
-      bestLap = widget.laps.reduce((a, b) => a.durationSec < b.durationSec ? a : b);
-      final totalSec = widget.laps.fold<int>(0, (sum, l) => sum + l.durationSec);
+      bestLap = widget.laps.reduce(
+        (a, b) => a.durationSec < b.durationSec ? a : b,
+      );
+      final totalSec = widget.laps.fold<int>(
+        0,
+        (sum, l) => sum + l.durationSec,
+      );
       avgSec = totalSec / lapCount;
     }
 
@@ -106,9 +113,9 @@ class _LapButtonState extends State<LapButton> {
                 const SizedBox(width: RitmoSpacing.md),
                 Text(
                   MovementStrings.sessionLapDone,
-                  style: RitmoTextStyles.sectionHeadline(sportsColor).copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.sectionHeadline(
+                    sportsColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -155,14 +162,16 @@ class _LapButtonState extends State<LapButton> {
                         children: [
                           Text(
                             MovementStrings.lapBestLabel,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'دور ${toPersianDigits(bestLap.lapNumber)} (${toPersianDigits(_formatSec(bestLap.durationSec))})',
-                            style: RitmoTextStyles.body(colors.success).copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: RitmoTextStyles.body(
+                              colors.success,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -170,14 +179,16 @@ class _LapButtonState extends State<LapButton> {
                         children: [
                           Text(
                             MovementStrings.lapAvgLabel,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             toPersianDigits(_formatSec(avgSec.round())),
-                            style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: RitmoTextStyles.body(
+                              colors.textPrimary,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),

@@ -43,7 +43,11 @@ class OccurrenceActions extends StatelessWidget {
             height: MovementLayout.kFieldMinHeight,
             child: ElevatedButton.icon(
               onPressed: onStartSession,
-              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+              icon: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
               label: Text(
                 MovementStrings.menuStart,
                 style: RitmoTextStyles.label(Colors.white),
@@ -153,9 +157,9 @@ class OccurrenceActions extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: RitmoTextStyles.body(titleColor ?? colors.textPrimary).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: RitmoTextStyles.body(
+                      titleColor ?? colors.textPrimary,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
                 Icon(

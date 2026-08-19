@@ -79,14 +79,11 @@ void main() {
       ),
     ];
 
-    testWidgets('Renders 7 days in Saturday to Friday order in RTL', (tester) async {
+    testWidgets('Renders 7 days in Saturday to Friday order in RTL', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        _wrap(
-          WeekRail(
-            days: testDays,
-            onDaySelected: (_) {},
-          ),
-        ),
+        _wrap(WeekRail(days: testDays, onDaySelected: (_) {})),
       );
 
       final satFinder = find.text('ش');
@@ -104,14 +101,11 @@ void main() {
       expect(satTopRight.dx, greaterThan(friTopLeft.dx));
     });
 
-    testWidgets('Touch target size for each slot is at least 48x48', (tester) async {
+    testWidgets('Touch target size for each slot is at least 48x48', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        _wrap(
-          WeekRail(
-            days: testDays,
-            onDaySelected: (_) {},
-          ),
-        ),
+        _wrap(WeekRail(days: testDays, onDaySelected: (_) {})),
       );
 
       final slotFinders = find.byType(DaySlot);
@@ -124,7 +118,9 @@ void main() {
       }
     });
 
-    testWidgets('Tapping on unselected day triggers onDaySelected', (tester) async {
+    testWidgets('Tapping on unselected day triggers onDaySelected', (
+      tester,
+    ) async {
       DateTime? selected;
       await tester.pumpWidget(
         _wrap(
@@ -143,7 +139,9 @@ void main() {
       expect(selected, equals(DateTime(2026, 8, 15)));
     });
 
-    testWidgets('Tapping on selected day triggers onDayReselected', (tester) async {
+    testWidgets('Tapping on selected day triggers onDayReselected', (
+      tester,
+    ) async {
       DateTime? reselected;
       await tester.pumpWidget(
         _wrap(

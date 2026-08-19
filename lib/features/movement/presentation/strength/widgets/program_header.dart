@@ -6,11 +6,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 
 /// سربرگ مشخصات و وضعیت برنامهٔ قدرتی فعال
 class ProgramHeader extends StatelessWidget {
-  const ProgramHeader({
-    super.key,
-    required this.program,
-    this.onManagePressed,
-  });
+  const ProgramHeader({super.key, required this.program, this.onManagePressed});
 
   final MovementStrengthProgram program;
   final VoidCallback? onManagePressed;
@@ -53,7 +49,10 @@ class ProgramHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -61,9 +60,9 @@ class ProgramHeader extends StatelessWidget {
                 ),
                 child: Text(
                   statusText,
-                  style: RitmoTextStyles.caption(statusColor).copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.caption(
+                    statusColor,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               if (onManagePressed != null)
@@ -83,14 +82,22 @@ class ProgramHeader extends StatelessWidget {
           const SizedBox(height: RitmoSpacing.sm),
           Row(
             children: [
-              Icon(Icons.calendar_today_rounded, size: 16, color: colors.textSecondary),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 16,
+                color: colors.textSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 'هفتهٔ ${toPersianDigits(program.currentWeek)} از ${toPersianDigits(program.totalWeeks)}',
                 style: RitmoTextStyles.body(colors.textSecondary),
               ),
               const SizedBox(width: RitmoSpacing.md),
-              Icon(Icons.fitness_center_rounded, size: 16, color: colors.textSecondary),
+              Icon(
+                Icons.fitness_center_rounded,
+                size: 16,
+                color: colors.textSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 '${toPersianDigits(program.daysPerWeek)} جلسه در هفته',

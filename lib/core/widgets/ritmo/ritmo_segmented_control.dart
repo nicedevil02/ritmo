@@ -45,7 +45,9 @@ class RitmoSegmentedControl<T> extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected ? colors.surface : Colors.transparent,
                   borderRadius: BorderRadius.circular(RitmoRadius.field - 2),
-                  boxShadow: isSelected && !context.isDark ? RitmoElevation.cardLight : RitmoElevation.none,
+                  boxShadow: isSelected && !context.isDark
+                      ? RitmoElevation.cardLight
+                      : RitmoElevation.none,
                 ),
                 child: Text(
                   entry.value,

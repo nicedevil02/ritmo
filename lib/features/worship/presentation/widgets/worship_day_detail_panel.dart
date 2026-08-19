@@ -1309,10 +1309,14 @@ class WorshipDayDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
       ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+        ),
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1344,6 +1348,6 @@ class WorshipDayDetailSheet extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),);
   }
 }

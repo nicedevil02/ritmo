@@ -99,7 +99,10 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
     Navigator.of(context).pushNamed(MovementRoutes.strengthOnboarding);
   }
 
-  Future<void> _handleUpdateSettings({required int newDays, required int newDuration}) async {
+  Future<void> _handleUpdateSettings({
+    required int newDays,
+    required int newDuration,
+  }) async {
     if (_program == null) return;
     final planMap = _service.generateProgramPlan(
       goal: _program!.goal ?? 'muscle',
@@ -136,7 +139,10 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
     final sportsColor = context.modules.sports;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.lg,
+        vertical: RitmoSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -154,7 +160,11 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.fitness_center_rounded, color: sportsColor, size: 28),
+                    Icon(
+                      Icons.fitness_center_rounded,
+                      color: sportsColor,
+                      size: 28,
+                    ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Text(
                       MovementStrings.strengthHubTitle,
@@ -173,35 +183,54 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
           const SizedBox(height: RitmoSpacing.lg),
 
           // ۳ مزیت کلیدی
-          Text('مزایای سیستم قدرت در خانه:', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+          Text(
+            'مزایای سیستم قدرت در خانه:',
+            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+          ),
           const SizedBox(height: RitmoSpacing.sm),
-          _buildBenefitRow('تطبیق کامل با وسایل موجود در خانه بدون نیاز به باشگاه'),
-          _buildBenefitRow('پیشرفت تدریجی با استراحت هوشمند و هفتهٔ ریکاوری (دِلود)'),
+          _buildBenefitRow(
+            'تطبیق کامل با وسایل موجود در خانه بدون نیاز به باشگاه',
+          ),
+          _buildBenefitRow(
+            'پیشرفت تدریجی با استراحت هوشمند و هفتهٔ ریکاوری (دِلود)',
+          ),
           _buildBenefitRow('حفظ مفاصل حساس با جایگزینی خودکار حرکات پرخطر'),
           const SizedBox(height: RitmoSpacing.lg),
 
           // پاسخ به ۲ تردید رایج
-          Text('پاسخ به تردیدهای رایج:', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+          Text(
+            'پاسخ به تردیدهای رایج:',
+            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+          ),
           const SizedBox(height: RitmoSpacing.sm),
           _buildFaqCard(
             question: 'آیا بدون دمبل یا تجهیزات هم نتیجه می‌گیرم؟',
-            answer: 'بله؛ حرکات بر پایهٔ وزن بدن با اهرم‌های مختلف به گونه‌ای طراحی شده‌اند که مقاومت کافی برای تقویت عضلات را ایجاد کنند.',
+            answer:
+                'بله؛ حرکات بر پایهٔ وزن بدن با اهرم‌های مختلف به گونه‌ای طراحی شده‌اند که مقاومت کافی برای تقویت عضلات را ایجاد کنند.',
           ),
           const SizedBox(height: RitmoSpacing.sm),
           _buildFaqCard(
             question: 'چقدر زمان در روز نیاز دارم؟',
-            answer: 'شما می‌توانید جلسات ۲۰ تا ۳۰ دقیقه‌ای را انتخاب کنید که به راحتی در برنامهٔ روزمره‌تان جای می‌گیرد.',
+            answer:
+                'شما می‌توانید جلسات ۲۰ تا ۳۰ دقیقه‌ای را انتخاب کنید که به راحتی در برنامهٔ روزمره‌تان جای می‌گیرد.',
           ),
           const SizedBox(height: RitmoSpacing.xl),
 
           // CTA ساخت برنامه
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pushNamed(MovementRoutes.strengthOnboarding),
+            onPressed: () => Navigator.of(
+              context,
+            ).pushNamed(MovementRoutes.strengthOnboarding),
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, MovementLayout.kPrimaryButtonHeight),
+              minimumSize: const Size(
+                double.infinity,
+                MovementLayout.kPrimaryButtonHeight,
+              ),
               backgroundColor: sportsColor,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RitmoRadius.field),
+              ),
             ),
             child: Text(
               MovementStrings.strengthHubCreatePlan,
@@ -222,10 +251,17 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_outline_rounded, color: sportsColor, size: 20),
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: sportsColor,
+            size: 20,
+          ),
           const SizedBox(width: RitmoSpacing.sm),
           Expanded(
-            child: Text(text, style: RitmoTextStyles.body(colors.textSecondary)),
+            child: Text(
+              text,
+              style: RitmoTextStyles.body(colors.textSecondary),
+            ),
           ),
         ],
       ),
@@ -256,19 +292,21 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
   Widget _buildActiveState() {
     final colors = context.colors;
     final program = _program!;
-    final weekDays = _allDays.where((d) => d.weekIndex == _selectedWeek).toList();
+    final weekDays = _allDays
+        .where((d) => d.weekIndex == _selectedWeek)
+        .toList();
     final nextSession = weekDays.isNotEmpty ? weekDays.first : null;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: RitmoSpacing.lg,
+        vertical: RitmoSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ۱. سربرگ برنامه
-          ProgramHeader(
-            program: program,
-            onManagePressed: _openManageSheet,
-          ),
+          ProgramHeader(program: program, onManagePressed: _openManageSheet),
           const SizedBox(height: RitmoSpacing.md),
 
           // ۲. نوار انتخاب هفته‌های دوره
@@ -283,7 +321,10 @@ class _StrengthHubScreenState extends State<StrengthHubScreen> {
 
           // ۳. کارت جلسهٔ بعدی با دکمهٔ شروع
           if (nextSession != null && !program.isPaused) ...[
-            Text('جلسهٔ بعدی:', style: RitmoTextStyles.sectionHeadline(colors.textPrimary)),
+            Text(
+              'جلسهٔ بعدی:',
+              style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
+            ),
             const SizedBox(height: RitmoSpacing.sm),
             ProgramSessionTile(
               day: nextSession,

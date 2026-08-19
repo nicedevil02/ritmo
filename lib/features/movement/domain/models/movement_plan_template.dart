@@ -2,20 +2,10 @@ import 'dart:convert';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 
 /// نوع و ماهیت جلسه در برنامه حرکت
-enum MovementSessionType {
-  simple,
-  structured,
-  repeating,
-  event,
-  retro,
-}
+enum MovementSessionType { simple, structured, repeating, event, retro }
 
 /// نوع یادآور جلسه
-enum MovementReminderType {
-  none,
-  preSession,
-  morning,
-}
+enum MovementReminderType { none, preSession, morning }
 
 /// مدل قالب برنامهٔ حرکت
 class MovementPlanTemplate {
@@ -64,9 +54,15 @@ class MovementPlanTemplate {
       goalJson: map['goalJson'] as String?,
       reminderType: (map['reminderType'] as String?) ?? 'none',
       reminderOffsetMin: map['reminderOffsetMin'] as int?,
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
-      archivedAt: map['archivedAt'] != null ? DateTime.tryParse(map['archivedAt'] as String) : null,
+      createdAt:
+          DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(map['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
+      archivedAt: map['archivedAt'] != null
+          ? DateTime.tryParse(map['archivedAt'] as String)
+          : null,
     );
   }
 

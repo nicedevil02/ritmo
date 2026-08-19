@@ -3,13 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// انواع وضعیت جلسات روز
-enum MovementDayStatus {
-  planned,
-  completed,
-  partial,
-  moved,
-  recovery,
-}
+enum MovementDayStatus { planned, completed, partial, moved, recovery }
 
 // ثابت‌های میکرو-چیدمان نشانگرها (اندازهٔ بصری، نه فاصله‌بندی)
 const double _kGlyphSize = 7.0;
@@ -18,10 +12,7 @@ const double _kOverflowPadding = 2.0;
 
 /// نشانگر وضعیت جلسات روز — حداکثر ۳ نشانگر با تمایز شکلی و نمادین (نه فقط رنگ)
 class DayStatusIndicators extends StatelessWidget {
-  const DayStatusIndicators({
-    super.key,
-    required this.statuses,
-  });
+  const DayStatusIndicators({super.key, required this.statuses});
 
   final List<MovementDayStatus> statuses;
 
@@ -70,10 +61,7 @@ class DayStatusIndicators extends StatelessWidget {
 }
 
 class _StatusGlyph extends StatelessWidget {
-  const _StatusGlyph({
-    required this.status,
-    required this.sportsColor,
-  });
+  const _StatusGlyph({required this.status, required this.sportsColor});
 
   final MovementDayStatus status;
   final Color sportsColor;
@@ -90,10 +78,7 @@ class _StatusGlyph extends StatelessWidget {
           height: _kGlyphSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: sportsColor,
-              width: 1.5,
-            ),
+            border: Border.all(color: sportsColor, width: 1.5),
           ),
         );
 
@@ -107,11 +92,7 @@ class _StatusGlyph extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Center(
-            child: Icon(
-              Icons.check,
-              size: 5.5,
-              color: colors.onPrimary,
-            ),
+            child: Icon(Icons.check, size: 5.5, color: colors.onPrimary),
           ),
         );
 
@@ -122,10 +103,7 @@ class _StatusGlyph extends StatelessWidget {
           height: _kGlyphSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: colors.warning,
-              width: 1.2,
-            ),
+            border: Border.all(color: colors.warning, width: 1.2),
           ),
           child: Center(
             child: Container(
@@ -141,19 +119,11 @@ class _StatusGlyph extends StatelessWidget {
 
       case MovementDayStatus.moved:
         // آیکون جابه‌جایی
-        return Icon(
-          Icons.swap_horiz_rounded,
-          size: 9.0,
-          color: colors.warning,
-        );
+        return Icon(Icons.swap_horiz_rounded, size: 9.0, color: colors.warning);
 
       case MovementDayStatus.recovery:
         // نماد ریکاوری
-        return Icon(
-          Icons.spa_rounded,
-          size: 8.0,
-          color: colors.accent,
-        );
+        return Icon(Icons.spa_rounded, size: 8.0, color: colors.accent);
     }
   }
 }

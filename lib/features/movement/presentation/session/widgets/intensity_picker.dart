@@ -32,9 +32,9 @@ class IntensityPicker extends StatelessWidget {
       children: [
         Text(
           'شدت تمرین:',
-          style: RitmoTextStyles.body(colors.textPrimary).copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: RitmoTextStyles.body(
+            colors.textPrimary,
+          ).copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: RitmoSpacing.sm),
         Row(

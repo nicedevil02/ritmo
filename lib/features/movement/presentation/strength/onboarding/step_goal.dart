@@ -106,9 +106,7 @@ class StepGoal extends StatelessWidget {
                       width: MovementLayout.kIconContainerSize,
                       height: MovementLayout.kIconContainerSize,
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? sportsColor
-                            : colors.surfaceSunken,
+                        color: isSelected ? sportsColor : colors.surfaceSunken,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -131,13 +129,19 @@ class StepGoal extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             g['subtitle']!,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     if (isSelected)
-                      Icon(Icons.check_circle_rounded, color: sportsColor, size: 22),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: sportsColor,
+                        size: 22,
+                      ),
                   ],
                 ),
               ),

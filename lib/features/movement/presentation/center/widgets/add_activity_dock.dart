@@ -74,9 +74,9 @@ class AddActivityDock extends StatelessWidget {
                 isCompact
                     ? MovementStrings.dockCompactLabel
                     : MovementStrings.centerAddActivity,
-                style: RitmoTextStyles.label(colors.onPrimary).copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: RitmoTextStyles.label(
+                  colors.onPrimary,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
             ),
           ),

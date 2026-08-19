@@ -30,7 +30,9 @@ class MetricStat extends StatelessWidget {
     if (hasData) {
       final formattedVal = toPersianDigits(value);
       final unitStr = unit != null && unit!.isNotEmpty ? ' $unit' : '';
-      final estStr = isEstimated ? ' (${MovementStrings.summaryEstimated})' : '';
+      final estStr = isEstimated
+          ? ' (${MovementStrings.summaryEstimated})'
+          : '';
       displayValue = '$formattedVal$unitStr$estStr';
       semanticsValue = isEstimated
           ? '$formattedVal$unitStr تخمینی'
@@ -55,9 +57,9 @@ class MetricStat extends StatelessWidget {
           // برچسب متریک
           Text(
             label,
-            style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
-              height: 1.2,
-            ),
+            style: RitmoTextStyles.caption(
+              colors.textSecondary,
+            ).copyWith(height: 1.2),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -68,10 +70,7 @@ class MetricStat extends StatelessWidget {
             displayValue,
             style: RitmoTextStyles.cardTitle(
               hasData ? colors.textPrimary : colors.textTertiary,
-            ).copyWith(
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
+            ).copyWith(fontWeight: FontWeight.w700, height: 1.2),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

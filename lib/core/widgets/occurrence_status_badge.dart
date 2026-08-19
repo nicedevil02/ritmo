@@ -16,10 +16,15 @@ class OccurrenceStatusBadge extends StatelessWidget {
     final colors = context.colors;
 
     final (label, color, icon) = switch (status.toLowerCase()) {
-      'done' || 'completed' || 'full' => ('انجام شد', colors.success, Icons.check_circle_rounded),
+      'done' ||
+      'completed' ||
+      'full' => ('انجام شد', colors.success, Icons.check_circle_rounded),
       'skipped' => ('رد شد', colors.medicalRed, Icons.cancel_rounded),
-      'rescheduled' || 'snoozed' => ('موکول شد', colors.warning, Icons.update_rounded),
-      'unfulfilled' || 'past_unfulfilled' || 'missed' => ('ثبت‌نشده', colors.textSecondary, Icons.history_rounded),
+      'rescheduled' ||
+      'snoozed' => ('موکول شد', colors.warning, Icons.update_rounded),
+      'unfulfilled' ||
+      'past_unfulfilled' ||
+      'missed' => ('ثبت‌نشده', colors.textSecondary, Icons.history_rounded),
       _ => ('در انتظار', colors.textSecondary, Icons.hourglass_bottom_rounded),
     };
 

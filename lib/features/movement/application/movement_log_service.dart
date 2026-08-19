@@ -10,7 +10,8 @@ class MovementLogService {
   MovementLogService({this.db});
   final Database? db;
 
-  Future<Database> get _database async => db ?? await DatabaseHelper.instance.database;
+  Future<Database> get _database async =>
+      db ?? await DatabaseHelper.instance.database;
 
   /// ثبت گذشته‌نگر تمرین انجام‌شده (RetroLog)
   /// تاریخ آینده ممنوع است. در صورت وجود جلسهٔ برنامه‌ریزی‌شدهٔ مشابه در همان روز،
@@ -29,7 +30,8 @@ class MovementLogService {
     final today = DateTime.now();
     final todayMidnight = DateTime(today.year, today.month, today.day);
 
-    if (parsedDate != null && parsedDate.isAfter(todayMidnight.add(const Duration(days: 1)))) {
+    if (parsedDate != null &&
+        parsedDate.isAfter(todayMidnight.add(const Duration(days: 1)))) {
       throw ArgumentError('ثبت فعالیت برای تاریخ‌های آینده امکان‌پذیر نیست.');
     }
 
@@ -57,33 +59,27 @@ class MovementLogService {
       if (occurrenceId != null) {
         await txn.update(
           MovementTables.tableOccurrences,
-          {
-            'status': 'completed',
-            'updatedAt': now,
-          },
+          {'status': 'completed', 'updatedAt': now},
           where: 'id = ?',
           whereArgs: [occurrenceId],
         );
       }
 
       // درج رکورد در جدول لاگ‌ها
-      await txn.insert(
-        MovementTables.tableWorkoutLogs,
-        {
-          'id': logId,
-          'occurrenceId': occurrenceId,
-          'activityKindId': activityKindId,
-          'dateIso': dateIso,
-          'startTime': startTime,
-          'durationSec': durationSec,
-          'metricJson': metrics != null ? jsonEncode(metrics) : null,
-          'feeling': feeling,
-          'note': note,
-          'source': 'retro',
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      );
+      await txn.insert(MovementTables.tableWorkoutLogs, {
+        'id': logId,
+        'occurrenceId': occurrenceId,
+        'activityKindId': activityKindId,
+        'dateIso': dateIso,
+        'startTime': startTime,
+        'durationSec': durationSec,
+        'metricJson': metrics != null ? jsonEncode(metrics) : null,
+        'feeling': feeling,
+        'note': note,
+        'source': 'retro',
+        'createdAt': now,
+        'updatedAt': now,
+      });
     });
 
     return MovementWorkoutLog(
@@ -121,32 +117,26 @@ class MovementLogService {
       // ۱. به‌روزرسانی وضعیت Occurrence
       await txn.update(
         MovementTables.tableOccurrences,
-        {
-          'status': 'completed',
-          'updatedAt': now,
-        },
+        {'status': 'completed', 'updatedAt': now},
         where: 'id = ?',
         whereArgs: [occurrenceId],
       );
 
       // ۲. درج لاگ تمرین
-      await txn.insert(
-        MovementTables.tableWorkoutLogs,
-        {
-          'id': logId,
-          'occurrenceId': occurrenceId,
-          'activityKindId': activityKindId,
-          'dateIso': dateIso,
-          'startTime': startTime,
-          'durationSec': durationSec,
-          'metricJson': metrics != null ? jsonEncode(metrics) : null,
-          'feeling': feeling,
-          'note': note,
-          'source': 'quick',
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      );
+      await txn.insert(MovementTables.tableWorkoutLogs, {
+        'id': logId,
+        'occurrenceId': occurrenceId,
+        'activityKindId': activityKindId,
+        'dateIso': dateIso,
+        'startTime': startTime,
+        'durationSec': durationSec,
+        'metricJson': metrics != null ? jsonEncode(metrics) : null,
+        'feeling': feeling,
+        'note': note,
+        'source': 'quick',
+        'createdAt': now,
+        'updatedAt': now,
+      });
     });
 
     return MovementWorkoutLog(
@@ -176,7 +166,9 @@ class MovementLogService {
   }
 
   /// دریافت لاگ‌های یک Occurrence
-  Future<List<MovementWorkoutLog>> getLogsForOccurrence(String occurrenceId) async {
+  Future<List<MovementWorkoutLog>> getLogsForOccurrence(
+    String occurrenceId,
+  ) async {
     final db = await _database;
     final rows = await db.rawQuery(
       '''
@@ -269,7 +261,9 @@ class MovementLogService {
   }
 
   /// دریافت لاگ‌های تمرینی یک گونهٔ فعالیت مشخص
-  Future<List<MovementWorkoutLog>> getLogsForActivityKind(String activityKindId) async {
+  Future<List<MovementWorkoutLog>> getLogsForActivityKind(
+    String activityKindId,
+  ) async {
     final db = await _database;
     final rows = await db.query(
       MovementTables.tableWorkoutLogs,

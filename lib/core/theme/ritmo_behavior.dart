@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 
 @immutable
 class RitmoBehavior extends ThemeExtension<RitmoBehavior> {
-  const RitmoBehavior({
-    required this.reduceTransparency,
-  });
+  const RitmoBehavior({required this.reduceTransparency});
 
   final bool reduceTransparency;
 

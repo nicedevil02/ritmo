@@ -12,10 +12,7 @@ import 'package:ritmo/features/movement/presentation/settings/widgets/settings_s
 
 /// صفحهٔ تنظیمات جامع حرکت (MovementSettingsScreen)
 class MovementSettingsScreen extends StatefulWidget {
-  const MovementSettingsScreen({
-    super.key,
-    this.preferencesService,
-  });
+  const MovementSettingsScreen({super.key, this.preferencesService});
 
   final MovementPreferencesService? preferencesService;
 
@@ -94,7 +91,10 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
 
   Future<void> _handlePreSessionReminderChanged(bool val) async {
     setState(() => _preSessionReminder = val);
-    await _service.setBool(MovementPreferencesService.keyPreSessionReminder, val);
+    await _service.setBool(
+      MovementPreferencesService.keyPreSessionReminder,
+      val,
+    );
   }
 
   Future<void> _handleQuietModeChanged(bool val) async {
@@ -124,12 +124,18 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
 
   Future<void> _handleSmartSuggestionsChanged(bool val) async {
     setState(() => _smartSuggestionsEnabled = val);
-    await _service.setBool(MovementPreferencesService.keySmartSuggestionsEnabled, val);
+    await _service.setBool(
+      MovementPreferencesService.keySmartSuggestionsEnabled,
+      val,
+    );
   }
 
   Future<void> _handleInterventionLevelChanged(String val) async {
     setState(() => _interventionLevel = val);
-    await _service.setString(MovementPreferencesService.keyInterventionLevel, val);
+    await _service.setString(
+      MovementPreferencesService.keyInterventionLevel,
+      val,
+    );
   }
 
   Future<void> _handlePlanBBehaviorChanged(String val) async {
@@ -146,8 +152,13 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
-        title: Text('داده‌های ذخیره‌شده در دستگاه', style: RitmoTextStyles.cardTitle(colors.textPrimary)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+        ),
+        title: Text(
+          'داده‌های ذخیره‌شده در دستگاه',
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: counts.entries.map((e) {
@@ -156,8 +167,14 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(e.key, style: RitmoTextStyles.caption(colors.textSecondary)),
-                  Text(toPersianDigits(e.value), style: RitmoTextStyles.caption(colors.textPrimary)),
+                  Text(
+                    e.key,
+                    style: RitmoTextStyles.caption(colors.textSecondary),
+                  ),
+                  Text(
+                    toPersianDigits(e.value),
+                    style: RitmoTextStyles.caption(colors.textPrimary),
+                  ),
                 ],
               ),
             );
@@ -178,7 +195,9 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
     await Clipboard.setData(ClipboardData(text: jsonStr));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('داده‌های حرکت با موفقیت به کلیپ‌بورد کپی شدند.')),
+        const SnackBar(
+          content: Text('داده‌های حرکت با موفقیت به کلیپ‌بورد کپی شدند.'),
+        ),
       );
     }
   }
@@ -190,7 +209,9 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.card)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+        ),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: colors.accent),
@@ -212,13 +233,27 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
             const SizedBox(height: RitmoSpacing.md),
             Text(
               'موارد زیر کاملاً پاکسازی خواهند شد:',
-              style: RitmoTextStyles.caption(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+              style: RitmoTextStyles.caption(
+                colors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            Text('• تمام جلسات زنده و تاریخچه‌ها', style: RitmoTextStyles.caption(colors.textTertiary)),
-            Text('• برنامه‌ها و روزهای تمرین قدرتی', style: RitmoTextStyles.caption(colors.textTertiary)),
-            Text('• چک‌این‌های آمادگی و رکوردهای شخصی', style: RitmoTextStyles.caption(colors.textTertiary)),
-            Text('• قالب‌ها و زمان‌بندی‌های حرکتی', style: RitmoTextStyles.caption(colors.textTertiary)),
+            Text(
+              '• تمام جلسات زنده و تاریخچه‌ها',
+              style: RitmoTextStyles.caption(colors.textTertiary),
+            ),
+            Text(
+              '• برنامه‌ها و روزهای تمرین قدرتی',
+              style: RitmoTextStyles.caption(colors.textTertiary),
+            ),
+            Text(
+              '• چک‌این‌های آمادگی و رکوردهای شخصی',
+              style: RitmoTextStyles.caption(colors.textTertiary),
+            ),
+            Text(
+              '• قالب‌ها و زمان‌بندی‌های حرکتی',
+              style: RitmoTextStyles.caption(colors.textTertiary),
+            ),
           ],
         ),
         actions: [
@@ -242,7 +277,9 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
       await _service.deleteAllMovementData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('داده‌های ماژول حرکت با موفقیت پاکسازی شدند.')),
+          const SnackBar(
+            content: Text('داده‌های ماژول حرکت با موفقیت پاکسازی شدند.'),
+          ),
         );
         Navigator.of(context).pop();
       }
@@ -297,30 +334,41 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                         title: 'ساعت یادآوری پیش‌فرض',
                         explanation: 'زمان پیش‌فرض برای ثبت جلسات جدید',
                         selectedValue: _defaultReminderTime,
-                        options: const {'07:00': '۰۷:۰۰', '08:00': '۰۸:۰۰', '09:00': '۰۹:۰۰', '18:00': '۱۸:۰۰'},
+                        options: const {
+                          '07:00': '۰۷:۰۰',
+                          '08:00': '۰۸:۰۰',
+                          '09:00': '۰۹:۰۰',
+                          '18:00': '۱۸:۰۰',
+                        },
                         onChanged: (val) async {
                           setState(() => _defaultReminderTime = val);
-                          await _service.setString(MovementPreferencesService.keyDefaultReminderTime, val);
+                          await _service.setString(
+                            MovementPreferencesService.keyDefaultReminderTime,
+                            val,
+                          );
                         },
                       ),
                       const Divider(height: 1),
                       SettingsSwitchRow(
                         title: 'یادآوری صبحگاهی',
-                        explanation: 'نمایش خلاصهٔ برنامه‌های حرکتی روز در آغاز صبح',
+                        explanation:
+                            'نمایش خلاصهٔ برنامه‌های حرکتی روز در آغاز صبح',
                         value: _morningReminder,
                         onChanged: _handleMorningReminderChanged,
                       ),
                       const Divider(height: 1),
                       SettingsSwitchRow(
                         title: 'یادآوری پیش از جلسه',
-                        explanation: 'اعلان ۱۵ دقیقه قبل از زمان مشخص‌شده برای تمرین',
+                        explanation:
+                            'اعلان ۱۵ دقیقه قبل از زمان مشخص‌شده برای تمرین',
                         value: _preSessionReminder,
                         onChanged: _handlePreSessionReminderChanged,
                       ),
                       const Divider(height: 1),
                       SettingsSwitchRow(
                         title: 'حالت بی‌صدا در تمرین',
-                        explanation: 'عدم پخش هشدارهای صوتی و تمرکز بر بازخورد لرزشی',
+                        explanation:
+                            'عدم پخش هشدارهای صوتی و تمرکز بر بازخورد لرزشی',
                         value: _quietMode,
                         onChanged: _handleQuietModeChanged,
                       ),
@@ -334,30 +382,38 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                     children: [
                       SettingsSwitchRow(
                         title: 'روشن ماندن صفحه',
-                        explanation: 'جلوگیری از خاموش شدن صفحه هنگام اجرای جلسهٔ زنده',
+                        explanation:
+                            'جلوگیری از خاموش شدن صفحه هنگام اجرای جلسهٔ زنده',
                         value: _keepScreenOn,
                         onChanged: _handleKeepScreenOnChanged,
                       ),
                       const Divider(height: 1),
                       SettingsSwitchRow(
                         title: 'صدای تایمر و پایان استراحت',
-                        explanation: 'پخش بوق کوتاه در ثانیه‌های پایانی استراحت ست‌ها',
+                        explanation:
+                            'پخش بوق کوتاه در ثانیه‌های پایانی استراحت ست‌ها',
                         value: _soundEnabled,
                         onChanged: _handleSoundEnabledChanged,
                       ),
                       const Divider(height: 1),
                       SettingsSwitchRow(
                         title: 'بازخورد لرزشی (Haptic)',
-                        explanation: 'لرزش ملایم هنگام ثبت ست یا تغییر وضعیت تایمر',
+                        explanation:
+                            'لرزش ملایم هنگام ثبت ست یا تغییر وضعیت تایمر',
                         value: _hapticEnabled,
                         onChanged: _handleHapticEnabledChanged,
                       ),
                       const Divider(height: 1),
                       SettingsChoiceRow<int>(
                         title: 'شمارش معکوس شروع',
-                        explanation: 'ثانیه‌های آماده‌سازی پیش از آغاز تایمر جلسه',
+                        explanation:
+                            'ثانیه‌های آماده‌سازی پیش از آغاز تایمر جلسه',
                         selectedValue: _countdownSeconds,
-                        options: const {5: '۵ ثانیه', 3: '۳ ثانیه', 0: 'بدون وقفه'},
+                        options: const {
+                          5: '۵ ثانیه',
+                          3: '۳ ثانیه',
+                          0: 'بدون وقفه',
+                        },
                         onChanged: _handleCountdownSecondsChanged,
                       ),
                     ],
@@ -370,16 +426,22 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                     children: [
                       SettingsSwitchRow(
                         title: 'پیشنهادهای هوشمند مربی',
-                        explanation: 'ارائهٔ پیشنهادهای تطبیقی بر اساس وضعیت خستگی و آمادگی',
+                        explanation:
+                            'ارائهٔ پیشنهادهای تطبیقی بر اساس وضعیت خستگی و آمادگی',
                         value: _smartSuggestionsEnabled,
                         onChanged: _handleSmartSuggestionsChanged,
                       ),
                       const Divider(height: 1),
                       SettingsChoiceRow<String>(
                         title: 'میزان مداخلهٔ هوشمند',
-                        explanation: 'تواتر و حساسیت سیستم در پیشنهاد نسخهٔ سبک‌تر (Plan B)',
+                        explanation:
+                            'تواتر و حساسیت سیستم در پیشنهاد نسخهٔ سبک‌تر (Plan B)',
                         selectedValue: _interventionLevel,
-                        options: const {'low': 'کم', 'medium': 'متوسط', 'high': 'حساس'},
+                        options: const {
+                          'low': 'کم',
+                          'medium': 'متوسط',
+                          'high': 'حساس',
+                        },
                         onChanged: _handleInterventionLevelChanged,
                       ),
                       const Divider(height: 1),
@@ -405,8 +467,14 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                         color: Colors.transparent,
                         child: ListTile(
                           leading: const Icon(Icons.info_outline_rounded),
-                          title: Text('مشاهدهٔ خلاصه داده‌های ذخیره‌شده', style: RitmoTextStyles.body(colors.textPrimary)),
-                          subtitle: Text('تعداد سوابق، ست‌ها و برنامه‌های موجود در حافظه', style: RitmoTextStyles.caption(colors.textTertiary)),
+                          title: Text(
+                            'مشاهدهٔ خلاصه داده‌های ذخیره‌شده',
+                            style: RitmoTextStyles.body(colors.textPrimary),
+                          ),
+                          subtitle: Text(
+                            'تعداد سوابق، ست‌ها و برنامه‌های موجود در حافظه',
+                            style: RitmoTextStyles.caption(colors.textTertiary),
+                          ),
                           onTap: _showStoredDataStats,
                         ),
                       ),
@@ -415,15 +483,22 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                         color: Colors.transparent,
                         child: ListTile(
                           leading: const Icon(Icons.download_rounded),
-                          title: Text('خروجی گرفتن از داده‌های حرکت (JSON)', style: RitmoTextStyles.body(colors.textPrimary)),
-                          subtitle: Text('کپی ساختار داده‌ها برای پشتیبان‌گیری', style: RitmoTextStyles.caption(colors.textTertiary)),
+                          title: Text(
+                            'خروجی گرفتن از داده‌های حرکت (JSON)',
+                            style: RitmoTextStyles.body(colors.textPrimary),
+                          ),
+                          subtitle: Text(
+                            'کپی ساختار داده‌ها برای پشتیبان‌گیری',
+                            style: RitmoTextStyles.caption(colors.textTertiary),
+                          ),
                           onTap: _exportData,
                         ),
                       ),
                       const Divider(height: 1),
                       SettingsDangerRow(
                         title: MovementStrings.settingsDeleteAllData,
-                        explanation: 'پاکسازی کامل همهٔ جلسات، برنامه‌ها، سوابق و رکوردهای حرکت از دستگاه.',
+                        explanation:
+                            'پاکسازی کامل همهٔ جلسات، برنامه‌ها، سوابق و رکوردهای حرکت از دستگاه.',
                         buttonLabel: 'حذف کامل داده‌های حرکت',
                         onTap: _handleDeleteAllData,
                       ),
@@ -442,12 +517,16 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                           children: [
                             Text(
                               MovementStrings.settingsMedicalDisclaimer,
-                              style: RitmoTextStyles.body(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+                              style: RitmoTextStyles.body(
+                                colors.textPrimary,
+                              ).copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: RitmoSpacing.xs),
                             Text(
                               'پیشنهادها و آمارهای ارائه شده صرفاً جنبهٔ راهنمایی ورزشی داشته و به هیچ عنوان جایگزین توصیه یا تشخیص پزشک، فیزیوتراپ یا مربی تخصصی نمی‌باشند. در صورت احساس درد شدید یا بیماری، تمرین را متوقف کرده و با پزشک مشورت نمایید.',
-                              style: RitmoTextStyles.caption(colors.textSecondary),
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
+                              ),
                             ),
                           ],
                         ),

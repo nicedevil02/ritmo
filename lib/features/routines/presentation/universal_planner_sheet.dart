@@ -332,15 +332,21 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                 alignment: Alignment.bottomCenter,
                 child: GestureDetector(
                   onTap: () {}, // Prevent dismissal when tapping inside the sheet
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.92,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F111E).withValues(alpha: 0.94) : Colors.white.withValues(alpha: 0.94),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                      border: Border.all(
-                        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
-                      ),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.viewInsetsOf(context).bottom,
                     ),
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceElevated.withValues(alpha: 0.94),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                        border: Border.all(
+                          color: colors.border,
+                        ),
+                      ),
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                       child: BackdropFilter(
@@ -433,18 +439,34 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          const SizedBox(
-                                            height: 100,
-                                            width: 300,
-                                            child: ConfettiWidget(),
-                                          ),
-                                        ],
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                '⏰ ${_controller.getTimeToStartLabel()}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const SizedBox(
+                                              height: 100,
+                                              width: 300,
+                                              child: ConfettiWidget(),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

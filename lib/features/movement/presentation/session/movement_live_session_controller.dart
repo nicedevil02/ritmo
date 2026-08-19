@@ -166,18 +166,21 @@ class MovementLiveSessionController extends ChangeNotifier {
 
         switch (evt.type) {
           case MovementSessionEventType.lap:
-            _laps.add(SessionLapItem(
-              lapNumber: payload['lapNumber'] as int? ?? (_laps.length + 1),
-              durationSec: payload['durationSec'] as int? ?? 0,
-              splitTimeSec: payload['splitTimeSec'] as int? ?? 0,
-            ));
+            _laps.add(
+              SessionLapItem(
+                lapNumber: payload['lapNumber'] as int? ?? (_laps.length + 1),
+                durationSec: payload['durationSec'] as int? ?? 0,
+                splitTimeSec: payload['splitTimeSec'] as int? ?? 0,
+              ),
+            );
             break;
           case MovementSessionEventType.count:
             _currentCount = payload['count'] as int? ?? _currentCount;
             _currentSet = payload['set'] as int? ?? _currentSet;
             break;
           case MovementSessionEventType.distance:
-            _distanceKm = (payload['distanceKm'] as num?)?.toDouble() ?? _distanceKm;
+            _distanceKm =
+                (payload['distanceKm'] as num?)?.toDouble() ?? _distanceKm;
             break;
           case MovementSessionEventType.intensity:
             _selectedIntensity = payload['level'] as int? ?? _selectedIntensity;
@@ -278,10 +281,7 @@ class MovementLiveSessionController extends ChangeNotifier {
       notifyListeners();
       _safeRecordEvent(
         MovementSessionEventType.lap,
-        payload: {
-          'action': 'undo',
-          'lapNumber': removed.lapNumber,
-        },
+        payload: {'action': 'undo', 'lapNumber': removed.lapNumber},
       );
     }
   }
@@ -320,10 +320,7 @@ class MovementLiveSessionController extends ChangeNotifier {
   void updateNote(String note) {
     _sessionNote = note;
     notifyListeners();
-    _safeRecordEvent(
-      MovementSessionEventType.note,
-      payload: {'note': note},
-    );
+    _safeRecordEvent(MovementSessionEventType.note, payload: {'note': note});
   }
 
   /// ثبت گزارش درد
@@ -346,7 +343,10 @@ class MovementLiveSessionController extends ChangeNotifier {
   }
 
   /// پایان کامل جلسه و ذخیرهٔ لاگ
-  Future<MovementWorkoutLog?> finish({String? feeling, String? finalNote}) async {
+  Future<MovementWorkoutLog?> finish({
+    String? feeling,
+    String? finalNote,
+  }) async {
     if (_session == null) return null;
 
     _status = MovementLiveSessionStatus.finishing;
@@ -363,7 +363,9 @@ class MovementLiveSessionController extends ChangeNotifier {
     if (_currentCount > 0) metrics['count'] = _currentCount;
     if (_painReports.isNotEmpty) {
       metrics['hasPainReport'] = true;
-      metrics['painSeverityMax'] = _painReports.map((p) => p.severity).reduce((a, b) => a > b ? a : b);
+      metrics['painSeverityMax'] = _painReports
+          .map((p) => p.severity)
+          .reduce((a, b) => a > b ? a : b);
     }
 
     try {
@@ -377,7 +379,9 @@ class MovementLiveSessionController extends ChangeNotifier {
       _completedLog = log;
       _status = MovementLiveSessionStatus.completed;
 
-      final goalAchieved = _targetSnapshot != null ? progressRatio >= 1.0 : true;
+      final goalAchieved = _targetSnapshot != null
+          ? progressRatio >= 1.0
+          : true;
       MovementAnalyticsService.instance.logSessionCompleted(
         mode: _mode,
         durationSec: _elapsedSeconds,
@@ -394,7 +398,10 @@ class MovementLiveSessionController extends ChangeNotifier {
   }
 
   /// ثبت جلسهٔ نیمه‌تمام (Partial Session)
-  Future<MovementWorkoutLog?> finishPartial({String? reason, String? feeling}) async {
+  Future<MovementWorkoutLog?> finishPartial({
+    String? reason,
+    String? feeling,
+  }) async {
     final log = await finish(feeling: feeling);
     if (log != null) {
       MovementAnalyticsService.instance.logSessionPartial(
@@ -470,8 +477,11 @@ class MovementLiveSessionController extends ChangeNotifier {
       }
     }
 
-    if (_pendingEvents.isEmpty && _status == MovementLiveSessionStatus.errorRecoverable) {
-      _status = isPaused ? MovementLiveSessionStatus.paused : MovementLiveSessionStatus.active;
+    if (_pendingEvents.isEmpty &&
+        _status == MovementLiveSessionStatus.errorRecoverable) {
+      _status = isPaused
+          ? MovementLiveSessionStatus.paused
+          : MovementLiveSessionStatus.active;
     }
     notifyListeners();
   }

@@ -40,7 +40,9 @@ class MovementPlanSchedule {
       recurrence: (map['recurrence'] as String?) ?? 'weekly',
       startDateIso: map['startDateIso'] as String,
       weeksCount: map['weeksCount'] as int?,
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 

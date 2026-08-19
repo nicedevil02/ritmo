@@ -6,13 +6,7 @@ import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
-enum PlanBOption {
-  full,
-  short,
-  minEffectiveDose,
-  move,
-  recovery,
-}
+enum PlanBOption { full, short, minEffectiveDose, move, recovery }
 
 /// شیت انتخاب نسخهٔ جایگزین (Plan B) با پیش‌نمایش دقیق تغییرات
 class PlanBSheet extends StatefulWidget {
@@ -23,12 +17,14 @@ class PlanBSheet extends StatefulWidget {
   });
 
   final MovementOccurrence occurrence;
-  final Future<void> Function(PlanBOption option, double newGoalValue) onApplyPlanB;
+  final Future<void> Function(PlanBOption option, double newGoalValue)
+  onApplyPlanB;
 
   static Future<bool?> show(
     BuildContext context, {
     required MovementOccurrence occurrence,
-    required Future<void> Function(PlanBOption option, double newGoalValue) onApplyPlanB,
+    required Future<void> Function(PlanBOption option, double newGoalValue)
+    onApplyPlanB,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -119,7 +115,9 @@ class _PlanBSheetState extends State<PlanBSheet> {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
@@ -174,7 +172,8 @@ class _PlanBSheetState extends State<PlanBSheet> {
             context,
             option: PlanBOption.full,
             title: MovementStrings.planBFull,
-            duration: '${toPersianDigits(widget.occurrence.goalValue?.toInt() ?? 30)} دقیقه',
+            duration:
+                '${toPersianDigits(widget.occurrence.goalValue?.toInt() ?? 30)} دقیقه',
             colors: colors,
             sportsColor: sportsColor,
           ),
@@ -227,7 +226,10 @@ class _PlanBSheetState extends State<PlanBSheet> {
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                   : Text(
                       'اعمال ${toPersianDigits(_newDurationMinutes.toInt())} دقیقه‌ای',
@@ -303,10 +305,7 @@ class _PlanBSheetState extends State<PlanBSheet> {
                     style: RitmoTextStyles.cardTitle(colors.textPrimary),
                   ),
                 ),
-                Text(
-                  duration,
-                  style: RitmoTextStyles.label(sportsColor),
-                ),
+                Text(duration, style: RitmoTextStyles.label(sportsColor)),
               ],
             ),
           ),

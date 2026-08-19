@@ -31,39 +31,64 @@ class SetTable extends StatelessWidget {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final targetSetsCount = exercise.sets > setLogs.length ? exercise.sets : setLogs.length;
+    final targetSetsCount = exercise.sets > setLogs.length
+        ? exercise.sets
+        : setLogs.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // سربرگ جدول
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs),
+          padding: const EdgeInsets.symmetric(
+            horizontal: RitmoSpacing.sm,
+            vertical: RitmoSpacing.xs,
+          ),
           child: Row(
             children: [
               SizedBox(
                 width: 32,
-                child: Text('ست', textAlign: TextAlign.center, style: RitmoTextStyles.caption(colors.textSecondary)),
+                child: Text(
+                  'ست',
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
               ),
               const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 flex: 2,
-                child: Text('هدف/قبل', textAlign: TextAlign.center, style: RitmoTextStyles.caption(colors.textSecondary)),
+                child: Text(
+                  'هدف/قبل',
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
               ),
               const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 flex: 2,
-                child: Text('وزن (kg)', textAlign: TextAlign.center, style: RitmoTextStyles.caption(colors.textSecondary)),
+                child: Text(
+                  'وزن (kg)',
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
               ),
               const SizedBox(width: RitmoSpacing.xs),
               Expanded(
                 flex: 2,
-                child: Text('تکرار', textAlign: TextAlign.center, style: RitmoTextStyles.caption(colors.textSecondary)),
+                child: Text(
+                  'تکرار',
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
               ),
               const SizedBox(width: RitmoSpacing.xs),
               SizedBox(
                 width: 48,
-                child: Text('ثبت', textAlign: TextAlign.center, style: RitmoTextStyles.caption(colors.textSecondary)),
+                child: Text(
+                  'ثبت',
+                  textAlign: TextAlign.center,
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
               ),
             ],
           ),

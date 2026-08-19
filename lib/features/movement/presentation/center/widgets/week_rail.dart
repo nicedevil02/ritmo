@@ -109,9 +109,7 @@ class WeekRail extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              for (final slot in slots) Expanded(child: slot),
-            ],
+            children: [for (final slot in slots) Expanded(child: slot)],
           ),
         );
       },

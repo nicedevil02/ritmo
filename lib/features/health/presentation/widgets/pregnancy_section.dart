@@ -715,21 +715,27 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
               ],
             ),
             const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: 380,
-                maxHeight: 520 * MediaQuery.textScalerOf(context).scale(1.0),
-              ),
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildWeekTrackerTab(),
-                  _buildCheckupsTab(),
-                  _buildKickCounterTab(),
-                  _buildContractionTimerTab(),
-                  _buildSymptomsTab(),
-                ],
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final scale = context.textScale;
+                final available = RitmoBreakpoints.usableHeight(context);
+                return ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: (380 * scale).clamp(280.0, available * 0.5),
+                    maxHeight: available * 0.7,
+                  ),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      SingleChildScrollView(child: _buildWeekTrackerTab()),
+                      SingleChildScrollView(child: _buildCheckupsTab()),
+                      SingleChildScrollView(child: _buildKickCounterTab()),
+                      SingleChildScrollView(child: _buildContractionTimerTab()),
+                      SingleChildScrollView(child: _buildSymptomsTab()),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
 

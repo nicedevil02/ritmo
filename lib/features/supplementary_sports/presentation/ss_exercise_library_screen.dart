@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -275,7 +276,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
       });
 
       if (!mounted) return;
-      HapticFeedback.mediumImpact();
+      unawaited(HapticFeedback.mediumImpact());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

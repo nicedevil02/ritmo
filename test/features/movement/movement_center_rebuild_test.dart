@@ -48,99 +48,103 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Day Switching & Nav State Preservation Tests (Requirements 2 & 3)', () {
-    testWidgets('Day selection changes instantly from cached data without re-fetching week occurrences', (tester) async {
-      final tracker = RebuildTrackerOccurrenceService();
-      final controller = MovementCenterController(
-        occurrenceService: tracker,
-        sessionService: FakeSessionService(),
-        strengthProgramService: FakeStrengthProgramService(),
-      );
+    testWidgets(
+      'Day selection changes instantly from cached data without re-fetching week occurrences',
+      (tester) async {
+        final tracker = RebuildTrackerOccurrenceService();
+        final controller = MovementCenterController(
+          occurrenceService: tracker,
+          sessionService: FakeSessionService(),
+          strengthProgramService: FakeStrengthProgramService(),
+        );
 
-      await controller.loadData();
+        await controller.loadData();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: RitmoTheme.build(
-            palette: RitmoPalette.jadeNoir,
-            brightness: Brightness.dark,
-          ),
-          home: Directionality(
-            textDirection: TextDirection.rtl,
-            child: MovementCenterScreen(controller: controller),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-      final initialFetchCount = tracker.fetchCount;
-      expect(initialFetchCount, equals(1));
-
-      // Select 3rd day in cached week (synchronous memory update)
-      controller.selectDay(controller.weekDays[2].date);
-      await tester.pump();
-
-      // Database fetch count must remain 1 (switched from cache in < 100ms)
-      expect(tracker.fetchCount, equals(initialFetchCount));
-    });
-
-    testWidgets('Preserves selected day after navigating to child route and popping back', (tester) async {
-      final controller = MovementCenterController(
-        occurrenceService: RebuildTrackerOccurrenceService(),
-        sessionService: FakeSessionService(),
-        strengthProgramService: FakeStrengthProgramService(),
-      );
-
-      await controller.loadData();
-      final navKey = GlobalKey<NavigatorState>();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          theme: RitmoTheme.build(
-            palette: RitmoPalette.jadeNoir,
-            brightness: Brightness.dark,
-          ),
-          home: Directionality(
-            textDirection: TextDirection.rtl,
-            child: MovementCenterScreen(
-              controller: controller,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.dark,
+            ),
+            home: Directionality(
+              textDirection: TextDirection.rtl,
+              child: MovementCenterScreen(controller: controller),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.pumpAndSettle();
+        await tester.pumpAndSettle();
+        final initialFetchCount = tracker.fetchCount;
+        expect(initialFetchCount, equals(1));
 
-      // 1. Select 4th day
-      controller.selectDay(controller.weekDays[3].date);
-      await tester.pumpAndSettle();
+        // Select 3rd day in cached week (synchronous memory update)
+        controller.selectDay(controller.weekDays[2].date);
+        await tester.pump();
 
-      final selectedDateBeforeNav = controller.selectedDate;
+        // Database fetch count must remain 1 (switched from cache in < 100ms)
+        expect(tracker.fetchCount, equals(initialFetchCount));
+      },
+    );
 
-      // 2. Push child route
-      unawaited(
-        navKey.currentState!.push(
-          MaterialPageRoute(
-            builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('صفحه فرزند')),
-              body: ElevatedButton(
-                onPressed: () => navKey.currentState!.pop(),
-                child: const Text('بازگشت'),
+    testWidgets(
+      'Preserves selected day after navigating to child route and popping back',
+      (tester) async {
+        final controller = MovementCenterController(
+          occurrenceService: RebuildTrackerOccurrenceService(),
+          sessionService: FakeSessionService(),
+          strengthProgramService: FakeStrengthProgramService(),
+        );
+
+        await controller.loadData();
+        final navKey = GlobalKey<NavigatorState>();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            navigatorKey: navKey,
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.dark,
+            ),
+            home: Directionality(
+              textDirection: TextDirection.rtl,
+              child: MovementCenterScreen(controller: controller),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // 1. Select 4th day
+        controller.selectDay(controller.weekDays[3].date);
+        await tester.pumpAndSettle();
+
+        final selectedDateBeforeNav = controller.selectedDate;
+
+        // 2. Push child route
+        unawaited(
+          navKey.currentState!.push(
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('صفحه فرزند')),
+                body: ElevatedButton(
+                  onPressed: () => navKey.currentState!.pop(),
+                  child: const Text('بازگشت'),
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('صفحه فرزند'), findsOneWidget);
+        expect(find.text('صفحه فرزند'), findsOneWidget);
 
-      // 3. Pop back
-      await tester.tap(find.text('بازگشت'));
-      await tester.pumpAndSettle();
+        // 3. Pop back
+        await tester.tap(find.text('بازگشت'));
+        await tester.pumpAndSettle();
 
-      // 4. Selected date is preserved!
-      expect(controller.selectedDate, equals(selectedDateBeforeNav));
-    });
+        // 4. Selected date is preserved!
+        expect(controller.selectedDate, equals(selectedDateBeforeNav));
+      },
+    );
   });
 }

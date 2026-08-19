@@ -85,7 +85,9 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
               child: const Text('انصراف'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('تأیید'),
             ),
@@ -175,7 +177,8 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
                       color: colors.textPrimary,
                     ),
                   ),
-                  if (widget.item.subtitle != null && widget.item.subtitle!.isNotEmpty) ...[
+                  if (widget.item.subtitle != null &&
+                      widget.item.subtitle!.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       widget.item.subtitle!,
@@ -219,16 +222,25 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
             decoration: BoxDecoration(
               color: Colors.redAccent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: Colors.redAccent.withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               children: [
-                const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.redAccent, size: 16),
+                const Icon(
+                  CupertinoIcons.exclamationmark_triangle_fill,
+                  color: Colors.redAccent,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
@@ -244,14 +256,19 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
             backgroundColor: colors.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
           onPressed: _busy ? null : () => _onSubmit(widget.primarySubmitAction),
           child: _busy && _activeActionId == widget.primarySubmitAction.id
               ? const SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -262,59 +279,88 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
                     ],
                     Text(
                       widget.primarySubmitAction.label,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
         ),
 
         // Zone 4: Secondary Actions & Handoffs (Max 2 in a row)
-        if (widget.secondarySubmitActions.isNotEmpty || widget.handoffActions.isNotEmpty) ...[
+        if (widget.secondarySubmitActions.isNotEmpty ||
+            widget.handoffActions.isNotEmpty) ...[
           const SizedBox(height: 12),
           Row(
             children: [
-              ...widget.secondarySubmitActions.take(2).map((act) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.primary,
-                          side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: _busy ? null : () => _onSubmit(act),
-                        child: _busy && _activeActionId == act.id
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
-                              )
-                            : Text(
-                                act.label,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                      ),
-                    ),
-                  )),
-              ...widget.handoffActions.take(2).map((hAct) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textPrimary,
-                          side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: _busy ? null : () => _onHandoff(hAct),
-                        child: Text(
-                          hAct.label,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ...widget.secondarySubmitActions
+                  .take(2)
+                  .map(
+                    (act) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.primary,
+                            side: BorderSide(
+                              color: colors.primary.withValues(alpha: 0.5),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _busy ? null : () => _onSubmit(act),
+                          child: _busy && _activeActionId == act.id
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colors.primary,
+                                  ),
+                                )
+                              : Text(
+                                  act.label,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
-                  )),
+                  ),
+              ...widget.handoffActions
+                  .take(2)
+                  .map(
+                    (hAct) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.textPrimary,
+                            side: BorderSide(
+                              color: colors.border.withValues(alpha: 0.5),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _busy ? null : () => _onHandoff(hAct),
+                          child: Text(
+                            hAct.label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
             ],
           ),
         ],
@@ -325,27 +371,37 @@ class _RitmoActionSheetState extends State<RitmoActionSheet> {
           ExpansionTile(
             title: Text(
               'گزینه‌های بیشتر',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             shape: const Border(),
             childrenPadding: EdgeInsets.zero,
             children: widget.moreActions
-                .map((mAct) => ListTile(
-                      dense: true,
-                      leading: Icon(
-                        mAct.icon ?? CupertinoIcons.ellipsis,
-                        color: mAct.isDestructive ? Colors.redAccent : colors.textSecondary,
-                        size: 18,
+                .map(
+                  (mAct) => ListTile(
+                    dense: true,
+                    leading: Icon(
+                      mAct.icon ?? CupertinoIcons.ellipsis,
+                      color: mAct.isDestructive
+                          ? Colors.redAccent
+                          : colors.textSecondary,
+                      size: 18,
+                    ),
+                    title: Text(
+                      mAct.label,
+                      style: TextStyle(
+                        color: mAct.isDestructive
+                            ? Colors.redAccent
+                            : colors.textPrimary,
+                        fontSize: 13,
                       ),
-                      title: Text(
-                        mAct.label,
-                        style: TextStyle(
-                          color: mAct.isDestructive ? Colors.redAccent : colors.textPrimary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      onTap: _busy ? null : () => _onSubmit(mAct),
-                    ))
+                    ),
+                    onTap: _busy ? null : () => _onSubmit(mAct),
+                  ),
+                )
                 .toList(),
           ),
         ],

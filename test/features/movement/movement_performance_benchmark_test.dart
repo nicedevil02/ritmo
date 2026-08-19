@@ -22,7 +22,9 @@ void main() {
     setUp(() async {
       try {
         databaseFactory = databaseFactoryFfi;
-        final database = await databaseFactory.openDatabase(inMemoryDatabasePath);
+        final database = await databaseFactory.openDatabase(
+          inMemoryDatabasePath,
+        );
         db = database;
         await MovementTables.create(database);
         await MovementTables.seedInitialData(database);
@@ -38,22 +40,19 @@ void main() {
           final d = baseDate.add(Duration(days: i));
           final dateIso =
               '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-          batch.insert(
-            MovementTables.tableOccurrences,
-            {
-              'id': 'occ_bench_$i',
-              'activityKindId': i % 2 == 0 ? 'kind_running' : 'kind_walking',
-              'dateIso': dateIso,
-              'startTime': '18:00',
-              'status': i < 20 ? 'completed' : 'planned',
-              'goalType': 'duration',
-              'goalValue': 30,
-              'goalUnit': 'min',
-              'origin': 'template',
-              'createdAt': DateTime.now().toUtc().toIso8601String(),
-              'updatedAt': DateTime.now().toUtc().toIso8601String(),
-            },
-          );
+          batch.insert(MovementTables.tableOccurrences, {
+            'id': 'occ_bench_$i',
+            'activityKindId': i % 2 == 0 ? 'kind_running' : 'kind_walking',
+            'dateIso': dateIso,
+            'startTime': '18:00',
+            'status': i < 20 ? 'completed' : 'planned',
+            'goalType': 'duration',
+            'goalValue': 30,
+            'goalUnit': 'min',
+            'origin': 'template',
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+            'updatedAt': DateTime.now().toUtc().toIso8601String(),
+          });
         }
         await batch.commit(noResult: true);
         dbInitialized = true;
@@ -128,7 +127,9 @@ void main() {
 
         final updateMs = stopwatch.elapsedMilliseconds;
         // ignore: avoid_print
-        print('Optimistic Status Update Elapsed: ${updateMs}ms (Target: <50ms)');
+        print(
+          'Optimistic Status Update Elapsed: ${updateMs}ms (Target: <50ms)',
+        );
         expect(updateMs, lessThan(50));
       }
     });

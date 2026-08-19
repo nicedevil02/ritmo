@@ -92,7 +92,9 @@ class StepEquipment extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(RitmoSpacing.md),
                 decoration: BoxDecoration(
-                  color: isSelected ? sportsColor.withValues(alpha: 0.1) : colors.surface,
+                  color: isSelected
+                      ? sportsColor.withValues(alpha: 0.1)
+                      : colors.surface,
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(
                     color: isSelected ? sportsColor : colors.border,
@@ -120,7 +122,9 @@ class StepEquipment extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             eq['desc']!,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),

@@ -5,10 +5,7 @@ import 'package:ritmo/features/movement/presentation/common/movement_strings.dar
 
 /// کارت روز ریکاوری در لیست برنامهٔ روز
 class RecoveryDayCard extends StatelessWidget {
-  const RecoveryDayCard({
-    super.key,
-    this.onAddLightMovement,
-  });
+  const RecoveryDayCard({super.key, this.onAddLightMovement});
 
   final VoidCallback? onAddLightMovement;
 
@@ -53,9 +50,9 @@ class RecoveryDayCard extends StatelessWidget {
               children: [
                 Text(
                   MovementStrings.recoveryDayTitle,
-                  style: RitmoTextStyles.label(colors.textPrimary).copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: RitmoTextStyles.label(
+                    colors.textPrimary,
+                  ).copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: RitmoSpacing.xs),
                 Text(
@@ -75,9 +72,9 @@ class RecoveryDayCard extends StatelessWidget {
               icon: const Icon(Icons.add_rounded, size: 16),
               label: Text(
                 MovementStrings.recoveryDayAddLight,
-                style: RitmoTextStyles.caption(colors.primary).copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: RitmoTextStyles.caption(
+                  colors.primary,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
               style: TextButton.styleFrom(
                 foregroundColor: colors.primary,

@@ -24,8 +24,7 @@ class SessionPrimaryCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sportsColor = context.modules.sports;
-    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final buttonHeight = textScale > 1.2
+    final buttonHeight = context.isLargeTextScale
         ? MovementLayout.kPrimaryButtonHeightLarge
         : MovementLayout.kPrimaryButtonHeight;
 
@@ -63,10 +62,9 @@ class SessionPrimaryCta extends StatelessWidget {
                     ],
                     Text(
                       label,
-                      style: RitmoTextStyles.label(fg).copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: RitmoTextStyles.label(
+                        fg,
+                      ).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

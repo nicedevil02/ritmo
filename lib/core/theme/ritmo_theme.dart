@@ -15,6 +15,7 @@ export 'package:ritmo/core/theme/ritmo_behavior.dart';
 export 'package:ritmo/core/theme/ritmo_colors.dart';
 export 'package:ritmo/core/theme/ritmo_module_colors.dart';
 export 'package:ritmo/core/theme/ritmo_palette.dart';
+export 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_material.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_springs.dart';
 
@@ -46,7 +47,10 @@ abstract final class RitmoRadius {
   static const double cardLarge = hero;
 
   /// گوشه‌ی پیوسته‌ی سبک اپل (squircle) برای کارت‌های کلیدی
-  static ShapeBorder squircle(double radius, {BorderSide side = BorderSide.none}) {
+  static ShapeBorder squircle(
+    double radius, {
+    BorderSide side = BorderSide.none,
+  }) {
     return ContinuousRectangleBorder(
       borderRadius: BorderRadius.circular(radius * 2.35),
       side: side,
@@ -89,76 +93,76 @@ abstract final class RitmoHapticsPolicy {
 
 abstract final class RitmoTextStyles {
   static TextStyle heroNumber(Color color) => TextStyle(
-        fontSize: 44,
-        fontWeight: FontWeight.w800,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.1,
-      );
+    fontSize: 44,
+    fontWeight: FontWeight.w800,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.1,
+  );
 
   static TextStyle pageTitle(Color color) => TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.3,
-      );
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.3,
+  );
 
   static TextStyle sectionHeadline(Color color) => TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.4,
-      );
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.4,
+  );
 
   static TextStyle cardTitle(Color color) => TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.4,
-      );
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.4,
+  );
 
   static TextStyle titleMedium(Color color) => TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.5,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.5,
+  );
 
   static TextStyle body(Color color) => TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.6,
-      );
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.6,
+  );
 
   static TextStyle label(Color color) => TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.3,
-      );
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.3,
+  );
 
   static TextStyle caption(Color color) => TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.6,
-      );
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.6,
+  );
 
   static TextStyle badge(Color color) => TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: color,
-        fontFamily: 'Vazirmatn',
-        height: 1.3,
-      );
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    color: color,
+    fontFamily: 'Vazirmatn',
+    height: 1.3,
+  );
 }
 
 /// تایپوگرافی کامل و متناسب با Vazirmatn (سند طراحی §۳.۴)
@@ -288,16 +292,12 @@ abstract final class RitmoElevation {
 
 class RitmoTheme {
   @Deprecated('از RitmoTheme.build استفاده کن')
-  static ThemeData get darkTheme => build(
-        palette: RitmoPalette.jadeNoir,
-        brightness: Brightness.dark,
-      );
+  static ThemeData get darkTheme =>
+      build(palette: RitmoPalette.jadeNoir, brightness: Brightness.dark);
 
   @Deprecated('از RitmoTheme.build استفاده کن')
-  static ThemeData get lightTheme => build(
-        palette: RitmoPalette.jadeNoir,
-        brightness: Brightness.light,
-      );
+  static ThemeData get lightTheme =>
+      build(palette: RitmoPalette.jadeNoir, brightness: Brightness.light);
 
   static ThemeData build({
     required RitmoPalette palette,
@@ -416,7 +416,10 @@ class RitmoTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(RitmoRadius.card),
           side: isDark
-              ? BorderSide(color: colors.border, width: RitmoElevation.borderWidthDark)
+              ? BorderSide(
+                  color: colors.border,
+                  width: RitmoElevation.borderWidthDark,
+                )
               : BorderSide.none,
         ),
       ),
@@ -439,7 +442,10 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.field),
           borderSide: BorderSide(color: colors.disabled.withValues(alpha: 0.3)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       dividerTheme: DividerThemeData(
         color: colors.divider,
@@ -452,8 +458,16 @@ class RitmoTheme {
         selectedColor: colors.primaryContainer,
         secondarySelectedColor: colors.primary,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        labelStyle: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
-        secondaryLabelStyle: TextStyle(color: colors.onPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
+        labelStyle: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 13,
+          fontFamily: 'Vazirmatn',
+        ),
+        secondaryLabelStyle: TextStyle(
+          color: colors.onPrimary,
+          fontSize: 13,
+          fontFamily: 'Vazirmatn',
+        ),
         brightness: brightness,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -465,7 +479,9 @@ class RitmoTheme {
         modalBackgroundColor: colors.surfaceElevated,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(RitmoRadius.sheet),
+          ),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -490,7 +506,10 @@ class RitmoTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colors.surfaceElevated,
-        contentTextStyle: TextStyle(color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+        contentTextStyle: TextStyle(
+          color: colors.textPrimary,
+          fontFamily: 'Vazirmatn',
+        ),
         actionTextColor: colors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -501,8 +520,14 @@ class RitmoTheme {
         labelColor: colors.primary,
         unselectedLabelColor: colors.textSecondary,
         indicatorColor: colors.primary,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontFamily: 'Vazirmatn'),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400, fontFamily: 'Vazirmatn'),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Vazirmatn',
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w400,
+          fontFamily: 'Vazirmatn',
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colors.surfaceElevated,
@@ -577,10 +602,16 @@ class RitmoTheme {
           }),
           side: WidgetStateProperty.all(BorderSide(color: colors.border)),
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(RitmoRadius.field)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(RitmoRadius.field),
+            ),
           ),
           textStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Vazirmatn'),
+            const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Vazirmatn',
+            ),
           ),
         ),
       ),
@@ -590,7 +621,11 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.badge),
           border: Border.all(color: colors.border),
         ),
-        textStyle: TextStyle(color: colors.textPrimary, fontSize: 12, fontFamily: 'Vazirmatn'),
+        textStyle: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 12,
+          fontFamily: 'Vazirmatn',
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colors.primary,
@@ -607,7 +642,11 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.card),
           side: BorderSide(color: colors.border),
         ),
-        textStyle: TextStyle(color: colors.textPrimary, fontSize: 14, fontFamily: 'Vazirmatn'),
+        textStyle: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 14,
+          fontFamily: 'Vazirmatn',
+        ),
       ),
       datePickerTheme: DatePickerThemeData(
         backgroundColor: colors.surfaceElevated,
@@ -624,10 +663,7 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.card),
         ),
       ),
-      iconTheme: IconThemeData(
-        color: colors.textPrimary,
-        size: 24,
-      ),
+      iconTheme: IconThemeData(color: colors.textPrimary, size: 24),
     );
   }
 
@@ -662,7 +698,9 @@ class RitmoTheme {
       outlineVariant: colors.divider,
       shadow: Colors.black,
       scrim: Colors.black,
-      inverseSurface: brightness == Brightness.dark ? colors.surfaceElevated : colors.surfaceSunken,
+      inverseSurface: brightness == Brightness.dark
+          ? colors.surfaceElevated
+          : colors.surfaceSunken,
       onInverseSurface: colors.textPrimary,
       inversePrimary: colors.primary,
     );
@@ -755,7 +793,11 @@ class RitmoTheme {
     final colors = context.colors;
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: colors.textSecondary, fontSize: 13, fontFamily: 'Vazirmatn'),
+      labelStyle: TextStyle(
+        color: colors.textSecondary,
+        fontSize: 13,
+        fontFamily: 'Vazirmatn',
+      ),
       prefixIcon: Icon(icon, color: colors.primary, size: 20),
       filled: true,
       fillColor: colors.surfaceSunken,
@@ -803,18 +845,17 @@ class RitmoGlassCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: color ?? colors.glassTint,
-            borderRadius: borderRadius ?? BorderRadius.circular(RitmoRadius.card),
-            border: border ??
+            borderRadius:
+                borderRadius ?? BorderRadius.circular(RitmoRadius.card),
+            border:
+                border ??
                 Border.all(
                   color: isDarkMode
                       ? Colors.white.withValues(alpha: 0.08)
                       : Colors.white.withValues(alpha: 0.45),
                 ),
           ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: child,
-          ),
+          child: Material(type: MaterialType.transparency, child: child),
         ),
       ),
     );
@@ -847,7 +888,8 @@ class RitmoGlassCardLight extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: shadows ??
+        boxShadow:
+            shadows ??
             (isDarkMode ? RitmoElevation.none : RitmoElevation.cardLight),
       ),
       child: ClipRRect(
@@ -858,7 +900,8 @@ class RitmoGlassCardLight extends StatelessWidget {
             decoration: BoxDecoration(
               color: color ?? colors.glassTint,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: border ??
+              border:
+                  border ??
                   Border.all(
                     color: isDarkMode
                         ? Colors.white.withValues(alpha: 0.08)
@@ -866,10 +909,7 @@ class RitmoGlassCardLight extends StatelessWidget {
                     width: 1.5,
                   ),
             ),
-            child: Material(
-              type: MaterialType.transparency,
-              child: child,
-            ),
+            child: Material(type: MaterialType.transparency, child: child),
           ),
         ),
       ),
@@ -883,10 +923,12 @@ extension RitmoThemeExtension on BuildContext {
     final isDarkMode = Theme.of(this).brightness == Brightness.dark;
     return c ?? (isDarkMode ? kJadeNoirDark : kJadeNoirLight);
   }
+
   RitmoColors get ritmoColors => colors;
   RitmoModuleColors get modules => colors.modules;
   RitmoBehavior get behavior =>
-      Theme.of(this).extension<RitmoBehavior>() ?? const RitmoBehavior(reduceTransparency: false);
+      Theme.of(this).extension<RitmoBehavior>() ??
+      const RitmoBehavior(reduceTransparency: false);
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
   TextTheme get t => Theme.of(this).textTheme;
 }

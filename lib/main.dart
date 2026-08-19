@@ -41,57 +41,83 @@ void main() async {
   await PrivacyErrorSink.instance.init();
 
   FlutterError.onError = (details) {
-    PrivacyErrorSink.instance.logError('FlutterError', details.exceptionAsString(), details.exception, details.stack);
-    RitmoLog.error('FlutterError', details.exceptionAsString(), details.exception, details.stack);
+    PrivacyErrorSink.instance.logError(
+      'FlutterError',
+      details.exceptionAsString(),
+      details.exception,
+      details.stack,
+    );
+    RitmoLog.error(
+      'FlutterError',
+      details.exceptionAsString(),
+      details.exception,
+      details.stack,
+    );
     if (kDebugMode) {
       FlutterError.presentError(details);
     }
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    PrivacyErrorSink.instance.logError('PlatformError', error.toString(), error, stack);
+    PrivacyErrorSink.instance.logError(
+      'PlatformError',
+      error.toString(),
+      error,
+      stack,
+    );
     RitmoLog.error('PlatformError', error.toString(), error, stack);
     return kReleaseMode; // Handled after logging (BOOT-05)
   };
 
-  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
-    unawaited(Future.microtask(() async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS)) {
+    unawaited(
+      Future.microtask(() async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
 
-        // Clean up legacy single-register flag if present
-        if (prefs.containsKey('wm_registered_v2')) {
-          await prefs.remove('wm_registered_v2');
+          // Clean up legacy single-register flag if present
+          if (prefs.containsKey('wm_registered_v2')) {
+            await prefs.remove('wm_registered_v2');
+          }
+
+          // Store handle before scheduling tasks (BOOT-10)
+          final handle = PluginUtilities.getCallbackHandle(
+            notificationActionDispatcher,
+          )?.toRawHandle();
+          if (handle != null) {
+            await prefs.setInt('notification_action_callback_handle', handle);
+          }
+
+          // Digest count reset comparison using DayKey (BOOT-11)
+          final todayStr = DayKey.from(DateTime.now()).value;
+          final lastResetDate = prefs.getString('digest_notif_reset_date');
+          if (lastResetDate != todayStr) {
+            await prefs.setInt('digest_notif_count', 0);
+            await prefs.setString('digest_notif_reset_date', todayStr);
+          }
+
+          // Workmanager initialization on every non-web mobile boot (P0-04)
+          await Workmanager().initialize(ritmoCallbackDispatcher);
+          await Workmanager().registerPeriodicTask(
+            'ritmo_periodic_reschedule',
+            'ritmoRescheduleTask',
+            frequency: const Duration(hours: 6),
+            existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+            constraints: Constraints(networkType: NetworkType.notRequired),
+            backoffPolicy: BackoffPolicy.linear,
+          );
+        } catch (e, st) {
+          RitmoLog.error(
+            'BackgroundInit',
+            'Workmanager init/register error',
+            e,
+            st,
+          );
         }
-
-        // Store handle before scheduling tasks (BOOT-10)
-        final handle = PluginUtilities.getCallbackHandle(notificationActionDispatcher)?.toRawHandle();
-        if (handle != null) {
-          await prefs.setInt('notification_action_callback_handle', handle);
-        }
-
-        // Digest count reset comparison using DayKey (BOOT-11)
-        final todayStr = DayKey.from(DateTime.now()).value;
-        final lastResetDate = prefs.getString('digest_notif_reset_date');
-        if (lastResetDate != todayStr) {
-          await prefs.setInt('digest_notif_count', 0);
-          await prefs.setString('digest_notif_reset_date', todayStr);
-        }
-
-        // Workmanager initialization on every non-web mobile boot (P0-04)
-        await Workmanager().initialize(ritmoCallbackDispatcher);
-        await Workmanager().registerPeriodicTask(
-          'ritmo_periodic_reschedule',
-          'ritmoRescheduleTask',
-          frequency: const Duration(hours: 6),
-          existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-          constraints: Constraints(networkType: NetworkType.notRequired),
-          backoffPolicy: BackoffPolicy.linear,
-        );
-      } catch (e, st) {
-        RitmoLog.error('BackgroundInit', 'Workmanager init/register error', e, st);
-      }
-    }));
+      }),
+    );
   }
 
   ErrorWidget.builder = (details) {
@@ -111,24 +137,26 @@ void main() async {
 
   await AppModeService.instance.load();
 
-  runApp(RestartWidget(
-    child: ProviderScope(
-      child: RitmoApp(
-        themeRepository: themeRepository,
-        localeRepository: localeRepository,
-        orchestrator: sl<RitmoIntelligenceOrchestrator>(),
+  runApp(
+    RestartWidget(
+      child: ProviderScope(
+        child: RitmoApp(
+          themeRepository: themeRepository,
+          localeRepository: localeRepository,
+          orchestrator: sl<RitmoIntelligenceOrchestrator>(),
+        ),
       ),
     ),
-  ));
+  );
 
   // Deferred non-critical Auth init after runApp (BOOT-02)
   unawaited(
-    AuthService.instance
-        .init()
-        .timeout(const Duration(seconds: 8))
-        .catchError((Object e, StackTrace st) {
-          RitmoLog.warning('AuthService', 'Deferred init failed (offline?): $e');
-        }),
+    AuthService.instance.init().timeout(const Duration(seconds: 8)).catchError((
+      Object e,
+      StackTrace st,
+    ) {
+      RitmoLog.warning('AuthService', 'Deferred init failed (offline?): $e');
+    }),
   );
 }
 
@@ -176,14 +204,25 @@ class _RitmoAppState extends State<RitmoApp> {
       // Restore any in-progress course study timer with timeout (C8)
       await CourseTimerService.instance.initOnAppStart().timeout(
         const Duration(seconds: 2),
-        onTimeout: () => RitmoLog.warning('Init', 'Course timer init timed out'),
+        onTimeout: () =>
+            RitmoLog.warning('Init', 'Course timer init timed out'),
       );
 
       // Check if onboarding is completed via OnboardingGate
       _onboardingCompleted = await OnboardingGate.isCompleted(db);
     } catch (e, st) {
-      await PrivacyErrorSink.instance.logError('Init', 'Critical startup error in _initialize (BOOT-04)', e, st);
-      RitmoLog.error('Init', 'Critical startup error in _initialize (BOOT-04)', e, st);
+      await PrivacyErrorSink.instance.logError(
+        'Init',
+        'Critical startup error in _initialize (BOOT-04)',
+        e,
+        st,
+      );
+      RitmoLog.error(
+        'Init',
+        'Critical startup error in _initialize (BOOT-04)',
+        e,
+        st,
+      );
       if (mounted) {
         setState(() {
           _initError = e;
@@ -200,7 +239,9 @@ class _RitmoAppState extends State<RitmoApp> {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: brightness,
         systemNavigationBarColor: colors.systemNavBar,
-        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
       ),
     );
   }
@@ -210,8 +251,12 @@ class _RitmoAppState extends State<RitmoApp> {
   Object? _themeInputsKey;
 
   void _ensureThemes(RitmoPalette palette, ThemePreferences prefs) {
-    final inputsKey = '${prefs.paletteId}|${prefs.mode}|${prefs.reduceTransparency}|${prefs.trueBlack}';
-    if (_themeInputsKey == inputsKey && _lightCache != null && _darkCache != null) return;
+    final inputsKey =
+        '${prefs.paletteId}|${prefs.mode}|${prefs.reduceTransparency}|${prefs.trueBlack}';
+    if (_themeInputsKey == inputsKey &&
+        _lightCache != null &&
+        _darkCache != null)
+      return;
     _themeInputsKey = inputsKey;
     _lightCache = RitmoTheme.build(
       palette: palette,
@@ -251,92 +296,108 @@ class _RitmoAppState extends State<RitmoApp> {
           builder: (context, child) {
             final mq = MediaQuery.of(context);
             final brightness = Theme.of(context).brightness;
-            final colors = Theme.of(context).extension<RitmoColors>() ?? palette.forBrightness(brightness);
+            final colors =
+                Theme.of(context).extension<RitmoColors>() ??
+                palette.forBrightness(brightness);
             _applySystemOverlay(colors, brightness);
             return MediaQuery(
               data: mq.copyWith(
-                textScaler: mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.3),
+                textScaler: mq.textScaler.clamp(
+                  minScaleFactor: RitmoBreakpoints.supportedMinTextScale,
+                  maxScaleFactor: RitmoBreakpoints.supportedMaxTextScale,
+                ),
               ),
               child: AppLockGate(child: child!),
             );
           },
-              home: _initError != null
-                  ? Scaffold(
-                      body: SafeArea(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.error_outline, size: 64, color: Colors.amber),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'خطا در راه‌اندازی برنامه',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'مشکلی در بارگذاری اطلاعات پیش آمده است: $_initError',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                const SizedBox(height: 24),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _initializationFuture = _initialize();
-                                    });
-                                  },
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('تلاش مجدد'),
-                                ),
-                              ],
+          home: _initError != null
+              ? Scaffold(
+                  body: SafeArea(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.amber,
                             ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : AnimatedSwitcher(
-                      duration: kDebugMode ? const Duration(milliseconds: 100) : const Duration(milliseconds: 650),
-                      switchInCurve: Curves.easeInOut,
-                      switchOutCurve: Curves.easeInOut,
-                      child: _showSplash
-                          ? SplashScreen(
-                              key: const ValueKey('splash'),
-                              initializationFuture: _initializationFuture,
-                              onInitializationComplete: () {
+                            const SizedBox(height: 16),
+                            const Text(
+                              'خطا در راه‌اندازی برنامه',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'مشکلی در بارگذاری اطلاعات پیش آمده است: $_initError',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () {
                                 setState(() {
-                                  _showSplash = false;
+                                  _initializationFuture = _initialize();
                                 });
                               },
-                            )
-                          : (_onboardingCompleted
-                              ? HomeNavigationShell(
-                                  key: const ValueKey('home'),
-                                  themeRepository: widget.themeRepository,
-                                  localeRepository: widget.localeRepository,
-                                  onLogout: () async {
-                                    await AccountResetService.wipeUserData();
-                                    setState(() {
-                                      _onboardingCompleted = false;
-                                      _showSplash = true;
-                                      _initializationFuture = _initialize();
-                                    });
-                                  },
-                                )
-                              : OnboardingScreen(
-                                  key: const ValueKey('onboarding'),
-                                  onFinished: () {
-                                    debugPrint('[Main] Onboarding onFinished received! Setting _onboardingCompleted = true');
-                                    setState(() {
-                                      _onboardingCompleted = true;
-                                    });
-                                  },
-                                )),
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('تلاش مجدد'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-            );
-          },
+                  ),
+                )
+              : AnimatedSwitcher(
+                  duration: kDebugMode
+                      ? const Duration(milliseconds: 100)
+                      : const Duration(milliseconds: 650),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  child: _showSplash
+                      ? SplashScreen(
+                          key: const ValueKey('splash'),
+                          initializationFuture: _initializationFuture,
+                          onInitializationComplete: () {
+                            setState(() {
+                              _showSplash = false;
+                            });
+                          },
+                        )
+                      : (_onboardingCompleted
+                            ? HomeNavigationShell(
+                                key: const ValueKey('home'),
+                                themeRepository: widget.themeRepository,
+                                localeRepository: widget.localeRepository,
+                                onLogout: () async {
+                                  await AccountResetService.wipeUserData();
+                                  setState(() {
+                                    _onboardingCompleted = false;
+                                    _showSplash = true;
+                                    _initializationFuture = _initialize();
+                                  });
+                                },
+                              )
+                            : OnboardingScreen(
+                                key: const ValueKey('onboarding'),
+                                onFinished: () {
+                                  debugPrint(
+                                    '[Main] Onboarding onFinished received! Setting _onboardingCompleted = true',
+                                  );
+                                  setState(() {
+                                    _onboardingCompleted = true;
+                                  });
+                                },
+                              )),
+                ),
         );
+      },
+    );
   }
 }

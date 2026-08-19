@@ -13,6 +13,7 @@ import 'package:ritmo/features/movement/presentation/planner/widgets/conflict_pa
 import 'package:ritmo/features/movement/presentation/planner/widgets/goal_field_group.dart';
 import 'package:ritmo/features/movement/presentation/planner/widgets/plan_preview_card.dart';
 import 'package:ritmo/features/movement/presentation/planner/widgets/weekday_chips.dart';
+import '../../../support/responsive_harness.dart';
 
 class FakePlannerOccurrenceService extends MovementOccurrenceService {
   @override
@@ -58,25 +59,22 @@ class FakePlannerPlanningService extends MovementPlanningService {
   }
 }
 
+Widget buildTestableWidget(Widget child) {
+  return MaterialApp(
+    theme: RitmoTheme.lightTheme,
+    darkTheme: RitmoTheme.darkTheme,
+    home: Directionality(textDirection: TextDirection.rtl, child: child),
+  );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Widget buildTestableWidget(Widget child) {
-    return MaterialApp(
-      theme: RitmoTheme.build(
-        palette: RitmoPalette.jadeNoir,
-        brightness: Brightness.dark,
-      ),
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: child,
-      ),
-    );
-  }
-
   group('ActivityPlanEditorScreen 8-Step Planner Tests', () {
-    testWidgets('Renders all 8-step building blocks without overflow', (tester) async {
-      tester.view.physicalSize = const Size(800, 1800);
+    testWidgets('Renders all 8-step building blocks without overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = kRitmoTestViewports['regular']!;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
@@ -106,80 +104,109 @@ void main() {
       expect(find.byType(PlanPreviewCard, skipOffstage: false), findsOneWidget);
     });
 
-    testWidgets('Conflict panel displays suggestions when conflicts are detected', (tester) async {
-      tester.view.physicalSize = const Size(800, 1800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'Conflict panel displays suggestions when conflicts are detected',
+      (tester) async {
+        tester.view.physicalSize = kRitmoTestViewports['regular']!;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      final occService = FakePlannerOccurrenceService();
-      final planService = FakePlannerPlanningService(
-        conflictsToReturn: [
-          MovementOccurrence(
-            id: 'occ_conf_1',
-            activityKindId: 'kind_cycling',
-            dateIso: '2026-08-16',
-            startTime: '07:00',
-            status: MovementOccurrenceStatus.planned,
-            origin: MovementOrigin.template,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
+        final occService = FakePlannerOccurrenceService();
+        final planService = FakePlannerPlanningService(
+          conflictsToReturn: [
+            MovementOccurrence(
+              id: 'occ_conf_1',
+              activityKindId: 'kind_cycling',
+              dateIso: '2026-08-16',
+              startTime: '07:00',
+              status: MovementOccurrenceStatus.planned,
+              origin: MovementOrigin.template,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          ],
+        );
+        final controller = ActivityPlanEditorController(
+          occurrenceService: occService,
+          planningService: planService,
+          initialActivityKindId: 'kind_running',
+        );
+        await controller.init();
+
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ActivityPlanEditorScreen(
+              controller: controller,
+              activityKindId: 'kind_running',
+            ),
           ),
-        ],
-      );
-      final controller = ActivityPlanEditorController(
-        occurrenceService: occService,
-        planningService: planService,
-        initialActivityKindId: 'kind_running',
-      );
-      await controller.init();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          ActivityPlanEditorScreen(
-            controller: controller,
-            activityKindId: 'kind_running',
+        // Conflict title and suggestions must be visible
+        expect(
+          find.text(MovementStrings.conflictDetectedTitle, skipOffstage: false),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            MovementStrings.conflictSuggestOtherTime,
+            skipOffstage: false,
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Conflict title and suggestions must be visible
-      expect(find.text(MovementStrings.conflictDetectedTitle, skipOffstage: false), findsOneWidget);
-      expect(find.text(MovementStrings.conflictSuggestOtherTime, skipOffstage: false), findsOneWidget);
-      expect(find.text(MovementStrings.conflictSuggestShorten, skipOffstage: false), findsOneWidget);
-      expect(find.text(MovementStrings.conflictSuggestMoveToFreeDay, skipOffstage: false), findsOneWidget);
-    });
-
-    testWidgets('Save button triggers createPlan when valid schedules are selected', (tester) async {
-      tester.view.physicalSize = const Size(800, 1800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      final occService = FakePlannerOccurrenceService();
-      final planService = FakePlannerPlanningService();
-      final controller = ActivityPlanEditorController(
-        occurrenceService: occService,
-        planningService: planService,
-        initialActivityKindId: 'kind_running',
-      );
-      await controller.init();
-
-      await tester.pumpWidget(
-        buildTestableWidget(
-          ActivityPlanEditorScreen(
-            controller: controller,
-            activityKindId: 'kind_running',
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            MovementStrings.conflictSuggestShorten,
+            skipOffstage: false,
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            MovementStrings.conflictSuggestMoveToFreeDay,
+            skipOffstage: false,
+          ),
+          findsOneWidget,
+        );
+      },
+    );
 
-      // Scroll to save button and tap
-      await tester.ensureVisible(find.text(MovementStrings.plannerSaveButton));
-      await tester.tap(find.text(MovementStrings.plannerSaveButton));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Save button triggers createPlan when valid schedules are selected',
+      (tester) async {
+        tester.view.physicalSize = kRitmoTestViewports['regular']!;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      expect(planService.createPlanCalled, isTrue);
-    });
+        final occService = FakePlannerOccurrenceService();
+        final planService = FakePlannerPlanningService();
+        final controller = ActivityPlanEditorController(
+          occurrenceService: occService,
+          planningService: planService,
+          initialActivityKindId: 'kind_running',
+        );
+        await controller.init();
+
+        await tester.pumpWidget(
+          buildTestableWidget(
+            ActivityPlanEditorScreen(
+              controller: controller,
+              activityKindId: 'kind_running',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Scroll to save button and tap
+        await tester.ensureVisible(
+          find.text(MovementStrings.plannerSaveButton),
+        );
+        await tester.tap(find.text(MovementStrings.plannerSaveButton));
+        await tester.pumpAndSettle();
+
+        expect(planService.createPlanCalled, isTrue);
+      },
+    );
   });
 }

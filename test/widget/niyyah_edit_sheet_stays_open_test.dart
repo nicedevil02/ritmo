@@ -30,58 +30,62 @@ void main() {
     domain: AgendaDomain.routine,
     itemType: AgendaItemType.flexible,
     meta: {'routine': testRoutine.toMap()},
-    deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: 'r_edit_stay_test'),
+    deepLink: const AgendaDeepLink(
+      domain: AgendaDomain.routine,
+      targetId: 'r_edit_stay_test',
+    ),
   );
 
   Widget buildTestableWidget(Widget child) {
     return MaterialApp(
       theme: RitmoTheme.lightTheme,
       darkTheme: RitmoTheme.darkTheme,
-      home: Scaffold(
-        body: child,
-      ),
+      home: Scaffold(body: child),
     );
   }
 
   group('Niyyah Edit Sheet Stays Open Tests (Main Bug Guard Test)', () {
-    testWidgets('Tapping Edit opens UniversalPlannerSheet and keeps it open on Navigator stack', (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+    testWidgets(
+      'Tapping Edit opens UniversalPlannerSheet and keeps it open on Navigator stack',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
 
-      // Suppress expected overflow exceptions from planner date picker in constrained test environment
-      final originalOnError = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) {
-        if (details.toString().contains('overflowed') || details.toString().contains('databaseFactory')) {
-          return; // suppress known test-environment-only issues
-        }
-        originalOnError?.call(details);
-      };
-      addTearDown(() => FlutterError.onError = originalOnError);
+        // Suppress expected database factory exceptions in mock-free test environment
+        final originalOnError = FlutterError.onError;
+        FlutterError.onError = (FlutterErrorDetails details) {
+          if (details.toString().contains('databaseFactory')) {
+            return; // suppress known test-environment-only issues
+          }
+          originalOnError?.call(details);
+        };
+        addTearDown(() => FlutterError.onError = originalOnError);
 
-      await tester.pumpWidget(
-        buildTestableWidget(
-          Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => ActionRouter.open(context, item: agendaItem),
-              child: const Text('Open Niyyah'),
+        await tester.pumpWidget(
+          buildTestableWidget(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => ActionRouter.open(context, item: agendaItem),
+                child: const Text('Open Niyyah'),
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      await tester.tap(find.text('Open Niyyah'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Open Niyyah'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(RoutineNiyyahSheet), findsOneWidget);
+        expect(find.byType(RoutineNiyyahSheet), findsOneWidget);
 
-      await tester.tap(find.text('ویرایش'));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 4));
+        await tester.tap(find.text('ویرایش'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 4));
 
-      // Verify that RoutineNiyyahSheet closed AND UniversalPlannerSheet is OPEN on the stack!
-      expect(find.byType(RoutineNiyyahSheet), findsNothing);
-      expect(find.byType(UniversalPlannerSheet), findsOneWidget);
-    });
+        // Verify that RoutineNiyyahSheet closed AND UniversalPlannerSheet is OPEN on the stack!
+        expect(find.byType(RoutineNiyyahSheet), findsNothing);
+        expect(find.byType(UniversalPlannerSheet), findsOneWidget);
+      },
+    );
   });
 }

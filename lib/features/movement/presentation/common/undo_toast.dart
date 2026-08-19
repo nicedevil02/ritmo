@@ -32,8 +32,8 @@ class MovementUndoToast {
 
     _pendingFinalizeAction = onFinalize;
 
-    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final isAccessible = textScale > 1.2 || MediaQuery.accessibleNavigationOf(context);
+    final isAccessible =
+        context.isLargeTextScale || MediaQuery.accessibleNavigationOf(context);
     final durationSeconds = isAccessible ? 10 : 6;
 
     final overlayState = Overlay.maybeOf(context, rootOverlay: true);
@@ -108,33 +108,22 @@ class _MovementUndoToastWidgetState extends State<_MovementUndoToastWidget>
     super.initState();
     _secondsLeft = widget.durationSeconds;
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: RitmoMotion.sheet,
-    );
+    _controller = AnimationController(vsync: this, duration: RitmoMotion.sheet);
 
     _offsetAnimation = Tween<Offset>(
       begin: const Offset(0, -1.2),
       end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
 
-    _dismissTimer = Timer(
-      Duration(seconds: widget.durationSeconds),
-      () {
-        if (mounted) {
-          _controller.reverse().then((_) {
-            widget.onDismiss();
-          });
-        }
-      },
-    );
+    _dismissTimer = Timer(Duration(seconds: widget.durationSeconds), () {
+      if (mounted) {
+        _controller.reverse().then((_) {
+          widget.onDismiss();
+        });
+      }
+    });
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -219,9 +208,9 @@ class _MovementUndoToastWidgetState extends State<_MovementUndoToastWidget>
                         ),
                         child: Text(
                           '${MovementStrings.commonUndo} (${toPersianDigits(_secondsLeft)})',
-                          style: RitmoTextStyles.label(colors.primary).copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: RitmoTextStyles.label(
+                            colors.primary,
+                          ).copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],

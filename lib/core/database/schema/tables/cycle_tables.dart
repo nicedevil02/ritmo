@@ -21,6 +21,9 @@ class CycleTables {
     ''');
     await db.execute('CREATE INDEX index_cycle_logs_cycleStartDate ON cycle_logs(cycleStartDate);');
 
+    // هر تغییری در ستون‌های این جدول باید هم‌زمان در
+    // lib/features/cycle/logic/cycle_period_contract.dart و
+    // test/cycle/cycle_schema_contract_test.dart اعمال شود.
     // V14 cycle_periods table
     await db.execute('''
       CREATE TABLE cycle_periods (

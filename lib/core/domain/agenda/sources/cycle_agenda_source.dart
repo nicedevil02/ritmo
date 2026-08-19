@@ -43,9 +43,11 @@ class CycleAgendaSource implements AgendaSource {
       settingsMap,
       'module_cycle_enabled',
     );
-    final dashboardConsent = settingsMap['cycle_consent_dashboard'] == 'true';
+    final calendarConsent =
+        settingsMap['show_cycle_in_calendar'] == 'true' ||
+        settingsMap['cycle_consent_calendar'] == 'true';
     final effectiveAllowed =
-        isFemale && isCycleEnabled && dashboardConsent && cycleAllowed;
+        isFemale && isCycleEnabled && calendarConsent && cycleAllowed;
     final isPregnant = CycleSettings.isPregnancyMode(settingsMap);
 
     if (!effectiveAllowed) {

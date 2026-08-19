@@ -62,7 +62,7 @@ void main() {
         final settings = {
           'user_gender': 'female',
           'module_cycle_enabled': 'true',
-          'cycle_consent_dashboard': 'true',
+          'show_cycle_in_calendar': 'true',
         };
 
         final source = await CycleAgendaSource.load(db, settings, true);

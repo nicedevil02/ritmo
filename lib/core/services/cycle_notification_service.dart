@@ -1,7 +1,7 @@
-// C-10 & C-39: CycleNotificationService
+// C-10 & C-39 & Lifecycle Prompt Phase 6: CycleNotificationService
 // Schedules discrete, privacy-preserving notifications for upcoming menstrual cycle windows.
 // Supports multi-cycle lookahead (3 cycles), ensures transactional scheduling (no early wipeouts),
-// and guarantees discrete Persian titles/bodies.
+// and guarantees discrete Persian titles/bodies via CyclePrivacyText and NotificationIds.
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_ids.dart';
@@ -9,6 +9,7 @@ import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_privacy_text.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 
 class CycleNotificationService {
@@ -21,6 +22,8 @@ class CycleNotificationService {
     required List<PredictedCycle> forecastCycles,
     required bool consentReminders,
     required bool pregnancyMode,
+    List<int> leadDays = const [3, 1],
+    int reminderHour = 10,
     DateTime? now,
   }) async {
     if (!consentReminders || pregnancyMode || forecastCycles.isEmpty) {
@@ -33,9 +36,8 @@ class CycleNotificationService {
 
     try {
       final requests = <NotificationRequest>[];
-      final targetCycles = forecastCycles
-          .take(upcomingCyclesLookahead)
-          .toList();
+      final targetCycles =
+          forecastCycles.take(upcomingCyclesLookahead).toList();
 
       for (var c = 0; c < targetCycles.length; c++) {
         final cycle = targetCycles[c];
@@ -43,59 +45,35 @@ class CycleNotificationService {
           cycle.predictedStart,
         );
 
-        // T-2 reminder: 2 days before predicted start at 10:00 AM
-        final dayMinus2 = cleanTargetStart.subtract(const Duration(days: 2));
-        if (CycleDateContract.isSameOrAfter(dayMinus2, cleanToday)) {
-          final scheduledDateTime = DateTime(
-            dayMinus2.year,
-            dayMinus2.month,
-            dayMinus2.day,
-            10,
-            0,
+        for (final days in leadDays) {
+          final reminderDate = cleanTargetStart.subtract(
+            Duration(days: days),
           );
-          if (scheduledDateTime.isAfter(effectiveNow)) {
-            requests.add(
-              NotificationRequest(
-                id: 'cycle_period_t2_c$c',
-                channel: NotificationChannelId.privateChannel,
-                scheduledAt: scheduledDateTime,
-                title: 'Body Rhythm Reminder',
-                body: 'Check supplies and stay prepared',
-                privacy: NotificationPrivacy.redacted,
-                redactedTitle: 'Daily Reminder',
-                redactedBody: 'Open to view',
-                sourceSystem: 'cycle',
-                entityId: 'cycle_period',
-              ),
+          if (CycleDateContract.isSameOrAfter(reminderDate, cleanToday)) {
+            final scheduledDateTime = DateTime(
+              reminderDate.year,
+              reminderDate.month,
+              reminderDate.day,
+              reminderHour,
+              0,
             );
-          }
-        }
-
-        // T-1 reminder: 1 day before predicted start at 10:00 AM
-        final dayMinus1 = cleanTargetStart.subtract(const Duration(days: 1));
-        if (CycleDateContract.isSameOrAfter(dayMinus1, cleanToday)) {
-          final scheduledDateTime = DateTime(
-            dayMinus1.year,
-            dayMinus1.month,
-            dayMinus1.day,
-            10,
-            0,
-          );
-          if (scheduledDateTime.isAfter(effectiveNow)) {
-            requests.add(
-              NotificationRequest(
-                id: 'cycle_period_t1_c$c',
-                channel: NotificationChannelId.privateChannel,
-                scheduledAt: scheduledDateTime,
-                title: 'Body Rhythm Reminder',
-                body: 'Upcoming cycle phase tomorrow; have a gentle day',
-                privacy: NotificationPrivacy.redacted,
-                redactedTitle: 'Daily Reminder',
-                redactedBody: 'Open to view',
-                sourceSystem: 'cycle',
-                entityId: 'cycle_period',
-              ),
-            );
+            if (scheduledDateTime.isAfter(effectiveNow)) {
+              final idStr = NotificationIds.leadReminder(c, days).toString();
+              requests.add(
+                NotificationRequest(
+                  id: idStr,
+                  channel: NotificationChannelId.privateChannel,
+                  scheduledAt: scheduledDateTime,
+                  title: CyclePrivacyText.leadReminderTitle,
+                  body: CyclePrivacyText.leadReminderBody(days),
+                  privacy: NotificationPrivacy.redacted,
+                  redactedTitle: CyclePrivacyText.osRedactedTitle,
+                  redactedBody: CyclePrivacyText.osRedactedBody,
+                  sourceSystem: 'cycle',
+                  entityId: 'cycle_period',
+                ),
+              );
+            }
           }
         }
       }
@@ -114,13 +92,13 @@ class CycleNotificationService {
   }
 
   /// Schedules multi-cycle reminder notifications for the upcoming period windows.
-  /// If [nextPeriodWindowStart] is null, or [pregnancyMode] is active, or [consentReminders] is false,
-  /// all cycle reminders are cancelled.
   static Future<void> scheduleReminders({
     required DateTime? nextPeriodWindowStart,
     int cycleLength = 28,
     required bool consentReminders,
     required bool pregnancyMode,
+    List<int> leadDays = const [3, 1],
+    int reminderHour = 10,
     DateTime? now,
   }) async {
     if (!consentReminders || pregnancyMode || nextPeriodWindowStart == null) {
@@ -141,59 +119,35 @@ class CycleNotificationService {
           Duration(days: c * safeCycleLength),
         );
 
-        // T-2 reminder: 2 days before predicted start at 10:00 AM
-        final dayMinus2 = cycleTargetStart.subtract(const Duration(days: 2));
-        if (CycleDateContract.isSameOrAfter(dayMinus2, cleanToday)) {
-          final scheduledDateTime = DateTime(
-            dayMinus2.year,
-            dayMinus2.month,
-            dayMinus2.day,
-            10,
-            0,
+        for (final days in leadDays) {
+          final reminderDate = cycleTargetStart.subtract(
+            Duration(days: days),
           );
-          if (scheduledDateTime.isAfter(effectiveNow)) {
-            requests.add(
-              NotificationRequest(
-                id: 'cycle_period_t2_c$c',
-                channel: NotificationChannelId.privateChannel,
-                scheduledAt: scheduledDateTime,
-                title: 'Body Rhythm Reminder',
-                body: 'Check supplies and stay prepared',
-                privacy: NotificationPrivacy.redacted,
-                redactedTitle: 'Daily Reminder',
-                redactedBody: 'Open to view',
-                sourceSystem: 'cycle',
-                entityId: 'cycle_period',
-              ),
+          if (CycleDateContract.isSameOrAfter(reminderDate, cleanToday)) {
+            final scheduledDateTime = DateTime(
+              reminderDate.year,
+              reminderDate.month,
+              reminderDate.day,
+              reminderHour,
+              0,
             );
-          }
-        }
-
-        // T-1 reminder: 1 day before predicted start at 10:00 AM
-        final dayMinus1 = cycleTargetStart.subtract(const Duration(days: 1));
-        if (CycleDateContract.isSameOrAfter(dayMinus1, cleanToday)) {
-          final scheduledDateTime = DateTime(
-            dayMinus1.year,
-            dayMinus1.month,
-            dayMinus1.day,
-            10,
-            0,
-          );
-          if (scheduledDateTime.isAfter(effectiveNow)) {
-            requests.add(
-              NotificationRequest(
-                id: 'cycle_period_t1_c$c',
-                channel: NotificationChannelId.privateChannel,
-                scheduledAt: scheduledDateTime,
-                title: 'Body Rhythm Reminder',
-                body: 'Upcoming cycle phase tomorrow; have a gentle day',
-                privacy: NotificationPrivacy.redacted,
-                redactedTitle: 'Daily Reminder',
-                redactedBody: 'Open to view',
-                sourceSystem: 'cycle',
-                entityId: 'cycle_period',
-              ),
-            );
+            if (scheduledDateTime.isAfter(effectiveNow)) {
+              final idStr = NotificationIds.leadReminder(c, days).toString();
+              requests.add(
+                NotificationRequest(
+                  id: idStr,
+                  channel: NotificationChannelId.privateChannel,
+                  scheduledAt: scheduledDateTime,
+                  title: CyclePrivacyText.leadReminderTitle,
+                  body: CyclePrivacyText.leadReminderBody(days),
+                  privacy: NotificationPrivacy.redacted,
+                  redactedTitle: CyclePrivacyText.osRedactedTitle,
+                  redactedBody: CyclePrivacyText.osRedactedBody,
+                  sourceSystem: 'cycle',
+                  entityId: 'cycle_period',
+                ),
+              );
+            }
           }
         }
       }
@@ -209,21 +163,43 @@ class CycleNotificationService {
         error: e,
         stack: st,
       );
-      // Note: Do NOT wipe existing reminders if computation fails
     }
   }
 
-  /// Cancels all cycle notifications across all lookahead cycles.
+  /// Cancels all cycle notifications across all lookahead cycles and legacy IDs.
   static Future<void> cancelAll() async {
     try {
       await NotificationGateway.cancelForEntity('cycle', 'cycle_period');
+      // Cancel lead reminder IDs
       for (var c = 0; c < 5; c++) {
+        for (final d in [1, 2, 3, 5, 7, 10, 14]) {
+          await NotificationGateway.cancel('cycle_lead_c${c}_d$d');
+          await NotificationGateway.cancel(
+            NotificationIds.leadReminder(c, d).toString(),
+          );
+        }
+        await NotificationGateway.cancel('cycle_start_confirm_c$c');
+        await NotificationGateway.cancel(
+          NotificationIds.startConfirm(c).toString(),
+        );
         await NotificationGateway.cancel('cycle_period_t2_c$c');
         await NotificationGateway.cancel('cycle_period_t1_c$c');
       }
+      await NotificationGateway.cancel('cycle_end_confirm');
+      await NotificationGateway.cancel(
+        NotificationIds.endConfirm().toString(),
+      );
+      await NotificationGateway.cancel('cycle_prolonged');
+      await NotificationGateway.cancel(
+        NotificationIds.prolongedBleeding().toString(),
+      );
+
+      // Clean legacy IDs
       await NotificationGateway.cancel('cycle_period_t2');
       await NotificationGateway.cancel('cycle_period_t1');
-      // Clean legacy IDs
+      await NotificationGateway.cancel('cycle_period');
+      await NotificationGateway.cancel(NotificationIds.cyclePeriod.toString());
+      await NotificationGateway.cancel(NotificationIds.cyclePeriodT1.toString());
       await NotificationGateway.cancel(
         'cycle_period_2days_${NotificationIds.cyclePeriod}',
       );

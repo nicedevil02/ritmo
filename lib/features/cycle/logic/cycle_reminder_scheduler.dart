@@ -65,10 +65,14 @@ class CycleReminderScheduler {
             .toList();
 
         if (eligibleCycles.isNotEmpty) {
+          final leadDays = CycleSettings.getReminderLeadDays(settings);
+          final reminderHour = CycleSettings.getReminderHour(settings);
           await CycleNotificationService.scheduleForecastReminders(
             forecastCycles: eligibleCycles,
             consentReminders: consentReminders,
             pregnancyMode: isPregnant,
+            leadDays: leadDays,
+            reminderHour: reminderHour,
             now: effectiveNow,
           );
         } else {

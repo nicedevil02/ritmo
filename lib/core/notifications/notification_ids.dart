@@ -4,12 +4,24 @@ abstract final class NotificationIds {
   // 1000-1999: System & Core Services
   static const int masterService = 1001;
 
-  // 2000-2999: Cycle & Reproductive Health
+  // 2000-2999: Cycle & Reproductive Health (Single source of truth)
   static const int cyclePill = 2001;
   static const int cyclePeriod = 2002;
   static const int cyclePeriodT2 = 2002;
   static const int cycleOvulation = 2003;
   static const int cyclePeriodT1 = 2004;
+
+  static const int cycleLeadReminderBase = 2010; // 2010..2029 (lead days × lookahead cycles)
+  static const int cycleStartConfirmBase = 2030; // 2030..2039
+  static const int cycleEndConfirmBase = 2040; // 2040..2049
+  static const int cycleProlongedBase = 2050; // 2050..2059
+
+  static int leadReminder(int cycleIndex, int leadDays) =>
+      cycleLeadReminderBase + (cycleIndex * 5) + (leadDays % 5);
+
+  static int startConfirm(int cycleIndex) => cycleStartConfirmBase + cycleIndex;
+  static int endConfirm() => cycleEndConfirmBase;
+  static int prolongedBleeding() => cycleProlongedBase;
 
   // 3000-3999: Sleep, Recovery & Backups
   static const int sleepWinddown = 3001;
@@ -31,6 +43,10 @@ abstract final class NotificationIds {
     cyclePeriod,
     cyclePeriodT1,
     cycleOvulation,
+    cycleLeadReminderBase,
+    cycleStartConfirmBase,
+    cycleEndConfirmBase,
+    cycleProlongedBase,
     sleepWinddown,
     weeklyBackup,
     persistentStatus,

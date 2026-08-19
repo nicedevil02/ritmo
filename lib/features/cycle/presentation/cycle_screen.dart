@@ -16,12 +16,14 @@ import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_burden_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_confirmation_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_load_balancer.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
+import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -31,6 +33,7 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_burden_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_view.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_confirmation_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_correlation_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_fasting_debt_view.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_history_list.dart';
@@ -72,6 +75,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   int _activeTab = 0;
   List<FastingDebt> _fastingDebts = [];
   Map<String, dynamic>? _forgottenPeriod;
+  CycleConfirmationRequest? _pendingConfirmation;
   List<SymptomStat> _symptomStats = [];
   PredictionConfidence? _predictionConfidence;
   DataQualityReport? _dataQualityReport;
@@ -218,6 +222,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           _burdenScore!,
           phase: _engineOutput!.currentPhase,
         );
+
+        _pendingConfirmation =
+            await CycleConfirmationService.instance.evaluatePendingRequest(
+              dbExecutor: db,
+              engineOutput: _engineOutput!,
+              settings: _settings,
+              now: CycleClock.now,
+            );
+      } else {
+        _pendingConfirmation = null;
       }
 
       _symptomStats = await CycleCorrelationAnalyzer.analyzeSymptomStats(db);
@@ -226,6 +240,14 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openConfirmationSheet(CycleConfirmationRequest request) {
+    CycleConfirmationSheet.show(
+      context: context,
+      request: request,
+      onAnswered: _loadData,
+    );
   }
 
   Color _getActivePhaseColor(BuildContext context) {
@@ -621,6 +643,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               onOpenDailyLog: _openLogTodaySheet,
                               onCloseForgottenPeriod: _closeForgottenPeriod,
                               onEditPeriod: _openAddEditPeriodSheet,
+                              pendingConfirmation: _pendingConfirmation,
+                              onOpenConfirmation:
+                                  _pendingConfirmation != null
+                                      ? () => _openConfirmationSheet(
+                                        _pendingConfirmation!,
+                                      )
+                                      : null,
                             ),
                             const SizedBox(height: 16),
                             CycleCalendarView(

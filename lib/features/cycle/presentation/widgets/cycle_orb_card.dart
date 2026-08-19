@@ -58,8 +58,26 @@ class CycleOrbCard extends StatelessWidget {
         emoji = '🌸';
         statusTip =
             'روزهای قبل از پریود؛ نوسان هورمونی طبیعی است. یوگای آرام، کاهش مصرف نمک و خواب منظم بسیار موثر است.';
+      case CyclePhase.dataStale:
+        phaseText = 'نیاز به بازبینی وضعیت';
+        remainingText = 'موعد تخمینی سپری شده است';
+        phaseColor = colors.warning;
+        emoji = '⏳';
+        statusTip =
+            'لطفاً وضعیت ثبت دورهٔ خود را مشخص کنید تا محاسبات و یادآوری‌ها دقیق بمانند.';
+      case CyclePhase.pregnancy:
+        phaseText = 'دوران بارداری';
+        remainingText = 'محاسبات چرخه متوقف شده است';
+        phaseColor = colors.primary;
+        emoji = '🤰';
+        statusTip = 'حالت بارداری فعال است و ریتم متناسب با این دوران تنظیم شده است.';
+      case CyclePhase.noData:
+        phaseText = 'در انتظار ثبت داده';
+        remainingText = 'اولین دورهٔ خود را ثبت کنید';
+        phaseColor = colors.textSecondary;
+        emoji = '📅';
+        statusTip = 'برای شروع تحلیل‌های هوشمند، اولین دورهٔ ریتم خود را ثبت کنید.';
       case CyclePhase.follicular:
-      default:
         phaseText = 'فاز فولیکولار (رشد)';
         remainingText =
             'روز ${PersianDigits.toFa(dayOfCycle.toString())} چرخه بدنی';

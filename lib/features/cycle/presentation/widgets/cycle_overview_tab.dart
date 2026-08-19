@@ -7,8 +7,10 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_orb_card.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_status_banner.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_workout_card.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -25,6 +27,8 @@ class CycleOverviewTab extends StatelessWidget {
     required this.onOpenDailyLog,
     required this.onCloseForgottenPeriod,
     required this.onEditPeriod,
+    this.pendingConfirmation,
+    this.onOpenConfirmation,
   });
 
   final CycleEngineOutput? engineOutput;
@@ -37,6 +41,8 @@ class CycleOverviewTab extends StatelessWidget {
   final VoidCallback onOpenDailyLog;
   final ValueChanged<Map<String, dynamic>> onCloseForgottenPeriod;
   final ValueChanged<Map<String, dynamic>> onEditPeriod;
+  final CycleConfirmationRequest? pendingConfirmation;
+  final VoidCallback? onOpenConfirmation;
 
   String _formatJalaliDate(DateTime? dt) {
     if (dt == null) return '';
@@ -114,7 +120,17 @@ class CycleOverviewTab extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (forgottenPeriod != null) ...[
+        if (engineOutput != null)
+          CycleStatusBanner(
+            engineOutput: engineOutput!,
+            pendingRequest: pendingConfirmation,
+            onOpenConfirmation: onOpenConfirmation ?? () {},
+            onCloseForgottenPeriod:
+                forgottenPeriod != null
+                    ? () => onCloseForgottenPeriod(forgottenPeriod!)
+                    : null,
+          ),
+        if (forgottenPeriod != null && pendingConfirmation == null) ...[
           _buildForgottenPeriodWarning(context, colors, isDark),
           const SizedBox(height: 16),
         ],

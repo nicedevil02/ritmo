@@ -226,29 +226,6 @@ class CycleAgendaSource implements AgendaSource {
           ),
         );
       }
-
-      // Fertile window prediction
-      if (inFutureWindow(out.fertileWindowStart, out.fertileWindowEnd)) {
-        items.add(
-          AgendaItem(
-            id: buildAgendaItemId(
-              AgendaDomain.cycle,
-              '${ctx.dateStr}_pred_fertile',
-              ctx.dateStr,
-            ),
-            domain: AgendaDomain.cycle,
-            sourceId: '${ctx.dateStr}_pred_fertile',
-            title: 'Fertile Window',
-            dateStr: ctx.dateStr,
-            category: Category.personal,
-            priority: 0.7,
-            deepLink: AgendaDeepLink(
-              domain: AgendaDomain.cycle,
-              targetId: ctx.dateStr,
-            ),
-          ),
-        );
-      }
     }
 
     return items;

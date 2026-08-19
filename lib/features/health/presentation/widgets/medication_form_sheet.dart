@@ -702,34 +702,41 @@ class _MedicationFormSheetState extends State<MedicationFormSheet> {
                               ),
                             ),
 
-                          // Medication Form Selection (Chips)
-                          Text(
-                            'شکل دارویی',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: MedicationForm.values.map((f) {
-                              final isSelected = _form == f;
-                              return ChoiceChip(
-                                avatar: Icon(f.icon, size: 18, color: isSelected ? Colors.white : colors.primary),
-                                label: Text(f.labelFa),
-                                selected: isSelected,
-                                onSelected: (sel) {
-                                  if (sel) _onFormChanged(f);
-                                },
-                                selectedColor: colors.primary,
-                                labelStyle: TextStyle(
-                                  color: isSelected ? Colors.white : colors.textPrimary,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  fontSize: 12.5,
+                          // Medication Form Selection (Dropdown)
+                          DropdownButtonFormField<MedicationForm>(
+                            initialValue: _form,
+                            decoration: InputDecoration(
+                              labelText: 'شکل دارویی',
+                              prefixIcon: Icon(_form.icon, color: colors.primary),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            isExpanded: true,
+                            items: MedicationForm.values.map((f) {
+                              return DropdownMenuItem<MedicationForm>(
+                                value: f,
+                                child: Row(
+                                  children: [
+                                    Icon(f.icon, size: 20, color: colors.primary),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        f.labelFa,
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          color: colors.textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
                             }).toList(),
+                            onChanged: (val) {
+                              if (val != null) _onFormChanged(val);
+                            },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
 
                           // Dose Amount & Dose Unit
                           Row(

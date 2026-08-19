@@ -7,9 +7,6 @@ import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleDataQualityEngine {
-  /// Standard threshold for forgotten open period banner (in days).
-  static const int forgottenOpenPeriodThresholdDays = 12;
-
   static Future<DataQualityReport> evaluateDataQuality({
     required Database db,
     required List<Map<String, dynamic>> periodRows,
@@ -41,7 +38,7 @@ class CycleDataQualityEngine {
         );
         if (start != null) {
           final daysOpen = CycleDateContract.daysBetween(start, cleanNow);
-          if (daysOpen >= forgottenOpenPeriodThresholdDays) {
+          if (daysOpen >= CycleSettings.forgottenOpenPeriodDays) {
             hasForgottenOpenPeriod = true;
           }
         }

@@ -148,7 +148,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             p['startDate']?.toString(),
           );
           if (start != null &&
-              CycleDateContract.daysBetween(start, CycleClock.now) >= 12) {
+              CycleDateContract.daysBetween(start, CycleClock.now) >=
+                  CycleSettings.forgottenOpenPeriodDays) {
             _forgottenPeriod = p;
             break;
           }
@@ -273,7 +274,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
       return p['endDate'] == null &&
           start != null &&
-          CycleDateContract.daysBetween(start, CycleClock.now) < 12;
+          CycleDateContract.daysBetween(start, CycleClock.now) <
+              CycleSettings.forgottenOpenPeriodDays;
     });
 
     if (!hasActivePeriod) {
@@ -318,7 +320,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
         return p['endDate'] == null &&
             start != null &&
-            CycleDateContract.daysBetween(start, CycleClock.now) < 12;
+            CycleDateContract.daysBetween(start, CycleClock.now) <
+                CycleSettings.forgottenOpenPeriodDays;
       });
       await db.update(
         'cycle_periods',

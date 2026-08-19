@@ -55,7 +55,8 @@ class CycleOverviewTab extends StatelessWidget {
     if (p['endDate'] != null) return false;
     final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
     if (start == null) return false;
-    return CycleDateContract.daysBetween(start, CycleClock.now) > 12;
+    return CycleDateContract.daysBetween(start, CycleClock.now) >=
+        CycleSettings.forgottenOpenPeriodDays;
   }
 
   bool _checkIsPeriodDay(DateTime date) {

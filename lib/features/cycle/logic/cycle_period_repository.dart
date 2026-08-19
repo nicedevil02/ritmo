@@ -7,9 +7,12 @@ import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CyclePeriod {
+  static const int maxActivePeriodDays = CycleSettings.forgottenOpenPeriodDays;
+
   final int? id;
   final DateTime startDate;
   final DateTime? endDate;
@@ -93,8 +96,6 @@ class CyclePeriodRepository {
   CyclePeriodRepository._();
   static final CyclePeriodRepository instance = CyclePeriodRepository._();
 
-  static const int maxActivePeriodDays = 12;
-
   /// Fetches all recorded cycle periods sorted chronologically newest-first.
   Future<List<CyclePeriod>> getAllPeriods([
     DatabaseExecutor? dbExecutor,
@@ -166,7 +167,7 @@ class CyclePeriodRepository {
         active.startDate,
         cleanStart,
       );
-      final closeDate = daysOpen > maxActivePeriodDays
+      final closeDate = daysOpen >= CycleSettings.forgottenOpenPeriodDays
           ? active.startDate.add(const Duration(days: 6))
           : cleanStart.subtract(const Duration(days: 1));
 

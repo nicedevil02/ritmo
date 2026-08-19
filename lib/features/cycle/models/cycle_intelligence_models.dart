@@ -1,4 +1,5 @@
 // Cycle Intelligence Models (C-41: Clean domain contracts without hardcoded strings)
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 
 enum PredictionConfidenceLevel { low, medium, high }
 
@@ -65,6 +66,9 @@ class BodyBurdenScore {
 }
 
 class DataQualityReport {
+  static const int forgottenOpenPeriodThresholdDays =
+      CycleSettings.forgottenOpenPeriodDays;
+
   const DataQualityReport({
     required this.hasEnoughCycles,
     required this.hasRecentDailyLogs,

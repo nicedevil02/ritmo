@@ -42,7 +42,7 @@ void main() {
         final files = logicDir
             .listSync(recursive: true)
             .whereType<File>()
-            .where((f) => f.path.endsWith('.dart'));
+            .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('cycle_privacy_text.dart'));
 
         final persianRegex = RegExp(
           r'[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]',

@@ -123,6 +123,14 @@ class CycleEngineOutput {
     this.cycleLengthSd,
     this.forecastAnchor,
     this.forecast = const [],
+    this.isBleedingConfirmed = false,
+    this.isOpenPeriodBeyondAverage = false,
+    this.openPeriodDayCount = 0,
+    this.actualPeriodStart,
+    this.isStartDueToday = false,
+    this.missedExpectedStarts = const [],
+    this.awaitingStartConfirmation = false,
+    this.awaitingEndConfirmation = false,
   }) : _nextPeriodPrediction = nextPeriodPrediction,
        _fertileWindowStart = fertileWindowStart,
        _fertileWindowEnd = fertileWindowEnd,
@@ -183,6 +191,30 @@ class CycleEngineOutput {
   final double? cycleLengthSd;
   final DateTime? forecastAnchor;
   final List<PredictedCycle> forecast;
+
+  /// آیا خونریزی امروز از رکورد واقعی کاربر استنتاج شده (نه از میانگین)؟
+  final bool isBleedingConfirmed;
+
+  /// دورهٔ بازِ فعلی از میانگین طول دورهٔ کاربر گذشته است.
+  final bool isOpenPeriodBeyondAverage;
+
+  /// شمارهٔ روز دورهٔ باز فعلی (۰ اگر دورهٔ بازی نیست).
+  final int openPeriodDayCount;
+
+  /// تاریخ شروع آخرین دورهٔ واقعیِ ثبت‌شده.
+  final DateTime? actualPeriodStart;
+
+  /// امروز دقیقاً موعد تخمینی شروع است.
+  final bool isStartDueToday;
+
+  /// موعدهای تخمینی گذشته که کاربر شروعی ثبت نکرده — قدیمی‌ترین اول.
+  final List<DateTime> missedExpectedStarts;
+
+  /// منتظر تأیید کاربر برای شروع.
+  final bool awaitingStartConfirmation;
+
+  /// منتظر تأیید کاربر برای پایان.
+  final bool awaitingEndConfirmation;
 
   // Backward-compatible single-cycle getters derived from forecast.first (T-2, F-17)
   final DateTime? _nextPeriodPrediction;
@@ -690,17 +722,36 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     // Check Menstrual Phase
     var isBleeding = false;
+    var isBleedingConfirmed = false;
+    var isOpenPeriodBeyondAverage = false;
+    var openPeriodDayCount = 0;
+    var awaitingEndConfirmation = false;
+
     if (daysSinceStart >= 0) {
       if (endDate != null) {
         final cleanEnd = CycleDateContract.cleanDate(endDate);
         if (CycleDateContract.isSameOrBefore(cleanNow, cleanEnd)) {
           isBleeding = true;
           dayOfPeriod = daysSinceStart + 1;
+          isBleedingConfirmed = !isProjected;
         }
       } else {
-        if (daysSinceStart < pDuration) {
+        // دورهٔ باز: تا تأیید کاربر، وضعیت واقعی «در جریان» است.
+        // قبلاً از میانگین pDuration استفاده می‌شد و همین باعث می‌شد UI
+        // بی‌اجازه فاز را به فولیکولار ببرد در حالی که رکورد هنوز باز بود.
+        if (daysSinceStart <= maxPlausiblePeriodDays) {
           isBleeding = true;
           dayOfPeriod = daysSinceStart + 1;
+          openPeriodDayCount = daysSinceStart + 1;
+          isOpenPeriodBeyondAverage = daysSinceStart >= pDuration;
+          awaitingEndConfirmation =
+              daysSinceStart >=
+              pDuration + CycleSettings.prolongedBleedingGraceDays;
+          isBleedingConfirmed = !isProjected;
+        } else {
+          hasImplausiblePeriodData = true;
+          openPeriodDayCount = maxPlausiblePeriodDays;
+          awaitingEndConfirmation = true;
         }
       }
     }
@@ -716,19 +767,41 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
 
     // Overdue tracking (C-18)
     final missedCycles = (daysSinceStart / L).floor();
-    final daysOverdue = (!isBleeding && daysSinceStart >= L)
+    final rawOverdue = (!isBleeding && daysSinceStart >= L)
         ? (daysSinceStart - L)
         : 0;
-    final isOverdue = daysOverdue > 0;
+    final isStartDueToday = !isBleeding && daysSinceStart == L;
+    final daysOverdue = rawOverdue;
+    final isOverdue = !isBleeding && daysSinceStart >= L;
+    final awaitingStartConfirmation = !isBleeding && daysSinceStart >= L;
     final needsUserAttention =
         (!isBleeding && (missedCycles >= 2 || daysOverdue >= 45));
 
-    // Phase determination
+    // Missed expected starts tracking (Section 3.2 Fix 3)
+    final missedExpectedStarts = <DateTime>[];
+    if (!isBleeding && daysSinceStart >= L) {
+      final totalMissed = (daysSinceStart / L).floor();
+      for (var k = 1; k <= totalMissed; k++) {
+        final missedDate = cleanStart.add(Duration(days: k * L));
+        if (CycleDateContract.isSameOrBefore(missedDate, cleanNow)) {
+          missedExpectedStarts.add(missedDate);
+        }
+      }
+      if (missedExpectedStarts.length > 6) {
+        missedExpectedStarts.removeRange(0, missedExpectedStarts.length - 6);
+      }
+    }
+
+    // Phase determination (Section 3.3)
     CyclePhase phase;
     if (needsUserAttention) {
       phase = CyclePhase.dataStale;
     } else if (isBleeding) {
       phase = CyclePhase.menstrual;
+    } else if (awaitingStartConfirmation) {
+      // موعد گذشته و کاربر چیزی ثبت نکرده:
+      // حق نداریم فاز فولیکولار را قطعی اعلام کنیم.
+      phase = CyclePhase.dataStale;
     } else {
       final currentDayInCycle = (daysSinceStart % L) + 1;
       final ovulationDayNum = L - lutealDays;
@@ -789,6 +862,14 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       cycleLengthSd: regularity.sdDays,
       forecastAnchor: effectiveAnchor,
       forecast: forecast,
+      isBleedingConfirmed: isBleedingConfirmed,
+      isOpenPeriodBeyondAverage: isOpenPeriodBeyondAverage,
+      openPeriodDayCount: openPeriodDayCount,
+      actualPeriodStart: isProjected ? null : startDate,
+      isStartDueToday: isStartDueToday,
+      missedExpectedStarts: missedExpectedStarts,
+      awaitingStartConfirmation: awaitingStartConfirmation,
+      awaitingEndConfirmation: awaitingEndConfirmation,
     );
   }
 

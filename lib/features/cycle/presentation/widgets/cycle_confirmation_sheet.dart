@@ -45,6 +45,9 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
       widget.request.kind == CycleConfirmationKind.startDue ||
       widget.request.kind == CycleConfirmationKind.startOverdue;
 
+  bool get _isBleedingProlonged =>
+      widget.request.kind == CycleConfirmationKind.bleedingProlonged;
+
   String _formatJalali(DateTime dt) {
     final j = Jalali.fromDateTime(dt);
     return '${PersianDigits.toFa(j.year.toString())}/${PersianDigits.toFa(j.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(j.day.toString().padLeft(2, '0'))}';
@@ -57,15 +60,30 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
     if (_isSubmitting) return;
     setState(() => _isSubmitting = true);
 
-    await CycleConfirmationService.instance.recordAnswer(
-      requestId: widget.request.id,
-      answer: answer,
-      resolvedDate: resolvedDate,
-    );
+    try {
+      await CycleConfirmationService.instance.recordAnswer(
+        requestId: widget.request.id,
+        answer: answer,
+        resolvedDate: resolvedDate,
+      );
 
-    if (mounted) {
-      Navigator.pop(context);
-      widget.onAnswered();
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onAnswered();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -96,13 +114,15 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    final title =
-        _isStartKind ? 'بازبینی موعد ریتم بدنی' : 'بررسی وضعیت پایان دوره';
+    final title = _isStartKind
+        ? 'بازبینی موعد ریتم بدنی'
+        : (_isBleedingProlonged ? 'بررسی تداوم خونریزی' : 'بررسی وضعیت پایان دوره');
 
-    final description =
-        _isStartKind
-            ? 'بر اساس میانگین و پیش‌بینی‌ها، موعد ریتم بدنی شما رسیده است. آیا دورهٔ شما آغاز شده است؟'
-            : 'بر اساس میانگین روزهای خونریزی، احتمالاً دورهٔ شما به پایان رسیده است. آیا خونریزی متوقف شده است؟';
+    final description = _isStartKind
+        ? 'بر اساس میانگین و پیش‌بینی‌ها، موعد ریتم بدنی شما رسیده است. آیا دورهٔ شما آغاز شده است؟'
+        : (_isBleedingProlonged
+            ? 'مدت خونریزی بیش از میانگین معمول طول کشیده است. آیا خونریزی شما پایان یافته است؟'
+            : 'بر اساس میانگین روزهای خونریزی، احتمالاً دورهٔ شما به پایان رسیده است. آیا خونریزی متوقف شده است؟');
 
     return Directionality(
       textDirection: TextDirection.rtl,

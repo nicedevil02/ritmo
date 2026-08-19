@@ -128,12 +128,17 @@ class CycleCalendarGrid extends StatelessWidget {
             textColor = colors.textSecondary;
             break;
           case CycleDayKind.ovulation:
-            cellBg = colors.accent.withValues(alpha: isDark ? 0.40 : 0.30);
-            cellBorder = Border.all(color: colors.accent, width: 1.5);
+            cellBg = colors.accent.withValues(alpha: isDark ? 0.45 : 0.35);
+            cellBorder = Border.all(color: colors.accent, width: 1.8);
             textWeight = FontWeight.w900;
             break;
           case CycleDayKind.fertileWindow:
-            cellBg = colors.accent.withValues(alpha: isDark ? 0.16 : 0.12);
+            cellBg = colors.accent.withValues(alpha: isDark ? 0.26 : 0.20);
+            cellBorder = Border.all(
+              color: colors.accent.withValues(alpha: 0.55),
+              width: 1.1,
+            );
+            textWeight = FontWeight.w800;
             break;
           case CycleDayKind.pms:
             cellBg = colors.primary.withValues(alpha: isDark ? 0.18 : 0.12);

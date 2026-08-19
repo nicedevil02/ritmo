@@ -48,8 +48,7 @@ class CycleCalendarLegend extends StatelessWidget {
     final hasPms = marks.values.any((m) => m.kind == CycleDayKind.pms);
     final hasLogs = marks.values.any((m) => m.hasLog);
 
-    final isFertilityVisible = CycleSettings.isFertilityVisible(settings) &&
-        !CycleSettings.isPregnancyMode(settings);
+    final isFertilityVisible = CycleSettings.isFertilityVisible(settings);
 
     final legendItems = <Widget>[];
 
@@ -121,9 +120,10 @@ class CycleCalendarLegend extends StatelessWidget {
     if (isFertilityVisible && hasFertile) {
       legendItems.add(
         _buildLegendItem(
-          colors.accent.withValues(alpha: 0.15),
+          colors.accent.withValues(alpha: isDark ? 0.26 : 0.20),
           l10n?.cycleFertileWindow ?? 'پنجره باروری (Fertile)',
           colors.textPrimary,
+          borderColor: colors.accent.withValues(alpha: 0.55),
         ),
       );
     }

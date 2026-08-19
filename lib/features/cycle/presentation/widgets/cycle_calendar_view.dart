@@ -352,8 +352,7 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     final pmsDays = int.tryParse(widget.settings[CycleSettings.keyPmsWindowDays] ?? '4') ?? 4;
     final avgL = widget.engineOutput?.stats.avgCycleLength ??
         (double.tryParse(widget.settings[CycleSettings.keyCycleLength] ?? '28') ?? 28.0);
-    final isFertilityVisible = CycleSettings.isFertilityVisible(widget.settings) &&
-        !CycleSettings.isPregnancyMode(widget.settings);
+    final isFertilityVisible = CycleSettings.isFertilityVisible(widget.settings);
     final forecast = widget.engineOutput?.forecast ?? const <PredictedCycle>[];
 
     _marks = CycleCalendarView.buildMonthMarks(

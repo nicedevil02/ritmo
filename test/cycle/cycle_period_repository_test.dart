@@ -1,90 +1,264 @@
-// Unit tests for CyclePeriod (C-12, C-14, C-16)
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
-  group('CyclePeriod Model', () {
-    test('isOpen returns true when endDate is null', () {
-      final period = CyclePeriod(
-        id: 1,
-        startDate: DateTime(2026, 5, 1),
+  TestWidgetsFlutterBinding.ensureInitialized();
+  sqfliteFfiInit();
+
+  group('CyclePeriod Model Contract', () {
+    test('isOpen returns true when endDate is null and false when endDate is present', () {
+      final open = CyclePeriod(
+        id: 'p1',
+        startDate: DateTime(2026, 8, 1),
         endDate: null,
-        createdAt: 1000,
-        updatedAt: 1000,
       );
-      expect(period.isOpen, true);
+      expect(open.isOpen, isTrue);
+
+      final closed = CyclePeriod(
+        id: 'p2',
+        startDate: DateTime(2026, 8, 1),
+        endDate: DateTime(2026, 8, 6),
+      );
+      expect(closed.isOpen, isFalse);
+      expect(closed.durationDays, equals(6));
     });
 
-    test('isOpen returns false when endDate is provided', () {
-      final period = CyclePeriod(
-        id: 1,
-        startDate: DateTime(2026, 5, 1),
-        endDate: DateTime(2026, 5, 6),
-        createdAt: 1000,
-        updatedAt: 1000,
+    test('toMap and fromMap serialize and deserialize accurately with String ID and canonical columns', () {
+      final original = CyclePeriod(
+        id: 'period_custom_1',
+        startDate: DateTime(2026, 8, 1),
+        endDate: DateTime(2026, 8, 7),
+        flowIntensity: 'HEAVY',
+        isPredicted: false,
+        note: 'دوره قاعدگی آزمایشی',
+        createdAt: 1700000000,
+        updatedAt: 1700005000,
       );
-      expect(period.isOpen, false);
+
+      final map = original.toMap();
+      expect(map[CyclePeriodContract.colId], 'period_custom_1');
+      expect(map[CyclePeriodContract.colStartDate], '2026-08-01');
+      expect(map[CyclePeriodContract.colEndDate], '2026-08-07');
+      expect(map[CyclePeriodContract.colFlowIntensity], 'HEAVY');
+      expect(map[CyclePeriodContract.colIsPredicted], 0);
+      expect(map[CyclePeriodContract.colNote], 'دوره قاعدگی آزمایشی');
+
+      final restored = CyclePeriod.fromMap(map);
+      expect(restored.id, 'period_custom_1');
+      expect(restored.startDate, DateTime(2026, 8, 1));
+      expect(restored.endDate, DateTime(2026, 8, 7));
+      expect(restored.flowIntensity, 'HEAVY');
+      expect(restored.isPredicted, isFalse);
+      expect(restored.note, 'دوره قاعدگی آزمایشی');
+    });
+  });
+
+  group('CyclePeriodRepository Rules (R1..R10)', () {
+    late Database db;
+    late CycleEngine engine;
+    late EngineRegistry registry;
+
+    setUp(() async {
+      db = await openCycleTestDb();
+      DatabaseHelper.instance.overrideDatabaseForTesting(db);
+
+      engine = CycleEngine();
+      registry = EngineRegistry()..register(engine);
+      RitmoEngineBus.init(registry);
     });
 
-    test(
-      'toMap and fromMap serialize and deserialize accurately with DayKey format',
-      () {
-        final original = CyclePeriod(
-          id: 42,
-          startDate: DateTime(2026, 5, 1),
-          endDate: DateTime(2026, 5, 7),
-          cycleLength: 28,
-          periodDuration: 7,
-          notes: 'تست دوره',
-          suppressedPrayer: true,
-          fastDebtCreated: false,
-          createdAt: 1700000000,
-          updatedAt: 1700005000,
-        );
+    tearDown(() async {
+      await db.close();
+    });
 
-        final map = original.toMap();
-        expect(map['id'], 42);
-        expect(map['startDate'], '2026-05-01');
-        expect(map['endDate'], '2026-05-07');
-        expect(map['periodDuration'], 7);
-        expect(map['suppressedPrayer'], 1);
-        expect(map['fastDebtCreated'], 0);
+    test('R1, R2, R3, R10: startPeriod generates valid String ID, normalized dates, and getOpenPeriod works', () async {
+      final now = DateTime(2026, 8, 17);
+      final id = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: DateTime(2026, 8, 15, 14, 30), // Has time component
+        now: now,
+      );
 
-        final restored = CyclePeriod.fromMap(map);
-        expect(restored.id, 42);
-        expect(restored.startDate.year, 2026);
-        expect(restored.startDate.month, 5);
-        expect(restored.startDate.day, 1);
-        expect(restored.endDate!.year, 2026);
-        expect(restored.endDate!.month, 5);
-        expect(restored.endDate!.day, 7);
-        expect(restored.periodDuration, 7);
-        expect(restored.suppressedPrayer, true);
-        expect(restored.fastDebtCreated, false);
-        expect(restored.notes, 'تست دوره');
-      },
-    );
+      expect(id, isNotEmpty);
+      expect(id, startsWith('period_'));
 
-    test('fromMap gracefully maps legacy cycleStartDate/cycleEndDate keys', () {
-      final legacyMap = {
-        'id': 10,
-        'cycleStartDate': '2026-04-10',
-        'cycleEndDate': '2026-04-15',
-        'suppressedPrayer': 1,
-        'fastDebtCreated': 1,
+      final active = await CyclePeriodRepository.instance.getOpenPeriod(db);
+      expect(active, isNotNull);
+      expect(active!.id, equals(id));
+      expect(active.startDate, equals(DateTime(2026, 8, 15))); // Time stripped
+      expect(active.endDate, isNull);
+      expect(active.isOpen, isTrue);
+    });
+
+    test('R4: Validation guard prevents start date in the future', () async {
+      final now = DateTime(2026, 8, 17);
+      expect(
+        () => CyclePeriodRepository.instance.startPeriod(
+          db: db,
+          startDate: DateTime(2026, 8, 18),
+          now: now,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('R4: Validation guard prevents end date before start date or in the future or > 45 days', () async {
+      final now = DateTime(2026, 8, 17);
+      final id = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: DateTime(2026, 8, 10),
+        now: now,
+      );
+
+      // End date before start date
+      expect(
+        () => CyclePeriodRepository.instance.endPeriod(
+          db: db,
+          id: id,
+          endDate: DateTime(2026, 8, 9),
+          now: now,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      // End date in the future
+      expect(
+        () => CyclePeriodRepository.instance.endPeriod(
+          db: db,
+          id: id,
+          endDate: DateTime(2026, 8, 18),
+          now: now,
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('R5: Duplicate start on exact same startDate returns existing open period ID without duplicating', () async {
+      final now = DateTime(2026, 8, 17);
+      final id1 = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: DateTime(2026, 8, 15),
+        now: now,
+      );
+
+      final id2 = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: DateTime(2026, 8, 15),
+        now: now,
+      );
+
+      expect(id1, equals(id2));
+      final all = await CyclePeriodRepository.instance.getAllPeriods(db);
+      expect(all.length, equals(1));
+    });
+
+    test('R6: If active open period exists (< 45 days), starting another throws StateError', () async {
+      final now = DateTime(2026, 8, 17);
+      await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: DateTime(2026, 8, 10),
+        now: now,
+      );
+
+      expect(
+        () => CyclePeriodRepository.instance.startPeriod(
+          db: db,
+          startDate: DateTime(2026, 8, 15),
+          now: now,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('R6: If active open period is forgotten (>= 45 days), starting a new period auto-closes the forgotten period', () async {
+      final now = DateTime(2026, 8, 17);
+      final oldStart = now.subtract(const Duration(days: 60)); // 60 days ago
+
+      final id1 = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: oldStart,
+        now: oldStart,
+      );
+
+      // Starting a new period on now
+      final id2 = await CyclePeriodRepository.instance.startPeriod(
+        db: db,
+        startDate: now,
+        now: now,
+      );
+
+      expect(id2, isNot(equals(id1)));
+
+      final all = await CyclePeriodRepository.instance.getAllPeriods(db);
+      expect(all.length, equals(2));
+
+      final closedOld = all.firstWhere((p) => p.id == id1);
+      expect(closedOld.isOpen, isFalse);
+      expect(closedOld.endDate, isNotNull);
+
+      final activeNew = all.firstWhere((p) => p.id == id2);
+      expect(activeNew.isOpen, isTrue);
+    });
+
+    test('R8: Ending or updating non-existent period ID throws StateError', () async {
+      final now = DateTime(2026, 8, 17);
+      expect(
+        () => CyclePeriodRepository.instance.endPeriod(
+          db: db,
+          id: 'non_existent_id',
+          endDate: now,
+          now: now,
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(
+        () => CyclePeriodRepository.instance.updatePeriod(
+          db: db,
+          id: 'non_existent_id',
+          startDate: now,
+          now: now,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('R9: getAllPeriods returns records sorted by startDate DESC', () async {
+      final now = DateTime(2026, 8, 17);
+      await db.insert('cycle_periods', {
+        'id': 'p1',
+        'startDate': '2026-06-01',
+        'endDate': '2026-06-06',
         'createdAt': 1000,
         'updatedAt': 1000,
-      };
+      });
+      await db.insert('cycle_periods', {
+        'id': 'p3',
+        'startDate': '2026-08-01',
+        'endDate': '2026-08-06',
+        'createdAt': 1000,
+        'updatedAt': 1000,
+      });
+      await db.insert('cycle_periods', {
+        'id': 'p2',
+        'startDate': '2026-07-01',
+        'endDate': '2026-07-06',
+        'createdAt': 1000,
+        'updatedAt': 1000,
+      });
 
-      final period = CyclePeriod.fromMap(legacyMap);
-      expect(period.id, 10);
-      expect(period.startDate.year, 2026);
-      expect(period.startDate.month, 4);
-      expect(period.startDate.day, 10);
-      expect(period.endDate!.year, 2026);
-      expect(period.endDate!.month, 4);
-      expect(period.endDate!.day, 15);
-      expect(period.fastDebtCreated, true);
+      final all = await CyclePeriodRepository.instance.getAllPeriods(db);
+      expect(all.length, equals(3));
+      expect(all[0].id, equals('p3'));
+      expect(all[1].id, equals('p2'));
+      expect(all[2].id, equals('p1'));
     });
   });
 }

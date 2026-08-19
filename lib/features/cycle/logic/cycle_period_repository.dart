@@ -29,8 +29,8 @@ class CyclePeriod {
     this.flowIntensity = 'MEDIUM',
     this.isPredicted = false,
     this.note,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt = 0,
+    this.updatedAt = 0,
   });
 
   bool get isOpen => endDate == null;

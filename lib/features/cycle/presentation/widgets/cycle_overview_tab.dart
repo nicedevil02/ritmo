@@ -6,6 +6,8 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
+import 'package:ritmo/features/cycle/logic/cycle_period_status.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
@@ -27,6 +29,7 @@ class CycleOverviewTab extends StatelessWidget {
     required this.onOpenDailyLog,
     required this.onCloseForgottenPeriod,
     required this.onEditPeriod,
+    this.isTogglingPeriod = false,
     this.pendingConfirmation,
     this.onOpenConfirmation,
   });
@@ -41,6 +44,7 @@ class CycleOverviewTab extends StatelessWidget {
   final VoidCallback onOpenDailyLog;
   final ValueChanged<Map<String, dynamic>> onCloseForgottenPeriod;
   final ValueChanged<Map<String, dynamic>> onEditPeriod;
+  final bool isTogglingPeriod;
   final CycleConfirmationRequest? pendingConfirmation;
   final VoidCallback? onOpenConfirmation;
 
@@ -57,65 +61,18 @@ class CycleOverviewTab extends StatelessWidget {
     return '${PersianDigits.toFa(jal.year.toString())}/${PersianDigits.toFa(jal.month.toString().padLeft(2, '0'))}/${PersianDigits.toFa(jal.day.toString().padLeft(2, '0'))}';
   }
 
-  bool _isPeriodForgotten(Map<String, dynamic> p) {
-    if (p['endDate'] != null) return false;
-    final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
-    if (start == null) return false;
-    return CycleDateContract.daysBetween(start, CycleClock.now) >=
-        CycleSettings.forgottenOpenPeriodDays;
-  }
-
-  bool _checkIsPeriodDay(DateTime date) {
-    final cleanDate = CycleDateContract.cleanDate(date);
-    for (final p in periods) {
-      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
-      if (start == null) continue;
-      final cleanEnd = CycleDateContract.parseDayKey(p['endDate']?.toString());
-
-      if (CycleDateContract.isSameOrAfter(cleanDate, start)) {
-        if (cleanEnd != null) {
-          if (CycleDateContract.isSameOrBefore(cleanDate, cleanEnd)) return true;
-        } else {
-          final pDur = CycleSettings.getPeriodDuration(settings);
-          if (CycleDateContract.daysBetween(start, cleanDate) < pDur) return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  int _calculateActivePeriodDay(DateTime date) {
-    final cleanDate = CycleDateContract.cleanDate(date);
-    for (final p in periods) {
-      final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
-      if (start == null) continue;
-      final cleanEnd = CycleDateContract.parseDayKey(p['endDate']?.toString());
-
-      if (CycleDateContract.isSameOrAfter(cleanDate, start)) {
-        if (cleanEnd != null) {
-          if (CycleDateContract.isSameOrBefore(cleanDate, cleanEnd)) {
-            return CycleDateContract.daysBetween(start, cleanDate) + 1;
-          }
-        } else {
-          final pDur = CycleSettings.getPeriodDuration(settings);
-          if (CycleDateContract.daysBetween(start, cleanDate) < pDur) {
-            return CycleDateContract.daysBetween(start, cleanDate) + 1;
-          }
-        }
-      }
-    }
-    return (engineOutput?.dayOfPeriod ?? 0) > 0 ? engineOutput!.dayOfPeriod : 1;
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final today = CycleClock.now;
-    final isTodayPeriod = _checkIsPeriodDay(today);
-    final activePeriodDay = _calculateActivePeriodDay(today);
-    final phase = engineOutput?.currentPhase ?? CyclePhase.menstrual;
+    final periodModels = periods.map((p) => CyclePeriod.fromMap(p)).toList();
+    final isTodayPeriod =
+        CyclePeriodStatus.isConfirmedPeriodDay(periodModels, today, today);
+    final activePeriodDay =
+        CyclePeriodStatus.activeDayNumber(periodModels, today);
+    final phase = engineOutput?.currentPhase ?? CyclePhase.noData;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -137,7 +94,7 @@ class CycleOverviewTab extends StatelessWidget {
         CycleOrbCard(
           phase: phase,
           isTodayPeriod: isTodayPeriod,
-          activePeriodDay: activePeriodDay,
+          activePeriodDay: activePeriodDay ?? 0,
           dayOfCycle: engineOutput?.dayOfCycle ?? 1,
           totalCycleLength: engineOutput?.stats.avgCycleLength ?? 28.0,
           avgPeriodDuration:
@@ -366,39 +323,55 @@ class CycleOverviewTab extends StatelessWidget {
     bool isDark,
   ) {
     if (engineOutput == null) return const SizedBox();
-    final hasActivePeriod = periods.any(
-      (p) => p['endDate'] == null && !_isPeriodForgotten(p),
+    final periodModels = periods.map((p) => CyclePeriod.fromMap(p)).toList();
+    final shouldOfferEnd = CyclePeriodStatus.shouldOfferEnd(
+      periodModels,
+      CycleClock.now,
     );
 
     return Row(
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: onTogglePeriodToday,
-            child: RitmoTheme.glassCardLight(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      hasActivePeriod
-                          ? CupertinoIcons.check_mark_circled_solid
-                          : CupertinoIcons.add_circled_solid,
-                      color: activePhaseColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      hasActivePeriod ? 'ثبت پایان قاعدگی' : 'ثبت شروع قاعدگی',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
+            onTap: isTogglingPeriod ? null : onTogglePeriodToday,
+            child: Opacity(
+              opacity: isTogglingPeriod ? 0.6 : 1.0,
+              child: RitmoTheme.glassCardLight(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: isTogglingPeriod
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: activePhaseColor,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              shouldOfferEnd
+                                  ? CupertinoIcons.check_mark_circled_solid
+                                  : CupertinoIcons.add_circled_solid,
+                              color: activePhaseColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              shouldOfferEnd
+                                  ? 'ثبت پایان قاعدگی'
+                                  : 'ثبت شروع قاعدگی',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),

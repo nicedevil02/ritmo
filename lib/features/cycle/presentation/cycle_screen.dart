@@ -689,6 +689,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               forgottenPeriod: _forgottenPeriod,
                               symptomStats: _symptomStats,
                               activePhaseColor: _getActivePhaseColor(context),
+                              isTogglingPeriod: _isTogglingPeriod,
                               onTogglePeriodToday: _togglePeriodToday,
                               onOpenDailyLog: _openLogTodaySheet,
                               onCloseForgottenPeriod: _closeForgottenPeriod,

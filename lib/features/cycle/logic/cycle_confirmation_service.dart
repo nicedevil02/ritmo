@@ -237,31 +237,62 @@ class CycleConfirmationService {
     );
   }
 
-  /// ریست شمارنده برای چرخهٔ جدید پس از شروع واقعی
+  /// هنگامی که دورهٔ واقعی شروع شد (startPeriod)، درخواست‌های startDue باز حذف/بسته می‌شوند
+  /// و cycle_confirm_snooze_until نیز پاک می‌شود.
   Future<void> onActualCycleStarted({
     DatabaseExecutor? dbExecutor,
     required DateTime startDate,
   }) async {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      final startKey = CycleDateContract.toDayKey(
-        CycleDateContract.cleanDate(startDate),
-      );
+      final cleanStart = CycleDateContract.cleanDate(startDate);
+      final maxTargetDate = cleanStart.add(const Duration(days: 7));
+
       await db.delete(
         'cycle_confirmations',
-        where: 'targetDate < ?',
-        whereArgs: [startKey],
+        where: "kind = 'startDue' AND targetDate <= ?",
+        whereArgs: [CycleDateContract.toDayKey(maxTargetDate)],
+      );
+
+      await db.delete(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: [CycleSettings.keyConfirmSnoozeUntil],
       );
     } catch (e, st) {
       RitmoLogger.error(
-        '[CycleConfirmationService] Error resetting cycle confirmations',
+        '[CycleConfirmationService] Error resetting cycle confirmations on start',
         error: e,
         stack: st,
       );
     }
   }
 
-  /// پاک‌کردن تاریخچهٔ قدیمی
+  /// هنگامی که دورهٔ واقعی پایان یافت (endPeriod)، درخواست‌های endDue و bleedingProlonged باز حذف می‌شوند.
+  Future<void> onActualCycleEnded({
+    DatabaseExecutor? dbExecutor,
+    required DateTime endDate,
+  }) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final cleanEnd = CycleDateContract.cleanDate(endDate);
+      final maxTargetDate = cleanEnd.add(const Duration(days: 7));
+
+      await db.delete(
+        'cycle_confirmations',
+        where: "(kind = 'endDue' OR kind = 'bleedingProlonged') AND targetDate <= ?",
+        whereArgs: [CycleDateContract.toDayKey(maxTargetDate)],
+      );
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleConfirmationService] Error resetting cycle confirmations on end',
+        error: e,
+        stack: st,
+      );
+    }
+  }
+
+  /// پاک‌کردن تاریخچهٔ قدیمی (بیش از ۹۰ روز)
   Future<void> pruneOldRequests({
     DatabaseExecutor? dbExecutor,
     DateTime? now,

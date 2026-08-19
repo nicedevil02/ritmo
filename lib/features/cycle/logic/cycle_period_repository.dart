@@ -4,6 +4,7 @@
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_confirmation_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -214,6 +215,12 @@ class CyclePeriodRepository {
       CyclePeriodContract.colUpdatedAt: nowMs,
     });
 
+    // Phase 10: Sync confirmation requests
+    await CycleConfirmationService.instance.onActualCycleStarted(
+      dbExecutor: db,
+      startDate: cleanStart,
+    );
+
     // R7: Mandatory invalidate
     CycleEngine().invalidate();
     return newId;
@@ -270,6 +277,12 @@ class CyclePeriodRepository {
       },
       where: '${CyclePeriodContract.colId} = ?',
       whereArgs: [id],
+    );
+
+    // Phase 10: Sync confirmation requests
+    await CycleConfirmationService.instance.onActualCycleEnded(
+      dbExecutor: db,
+      endDate: cleanEnd,
     );
 
     // R7: Mandatory invalidate

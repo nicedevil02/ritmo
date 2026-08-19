@@ -5,6 +5,7 @@ import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,57 +17,12 @@ void main() {
     late EngineRegistry registry;
 
     setUp(() async {
-      databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 1,
-        onCreate: (db, version) async {
-          await db.execute('''
-          CREATE TABLE app_settings (
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            updatedAt INTEGER
-          )
-        ''');
-          await db.execute('''
-          CREATE TABLE cycle_periods (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            startDate TEXT NOT NULL,
-            endDate TEXT,
-            cycleLength INTEGER,
-            periodDuration INTEGER,
-            notes TEXT,
-            suppressedPrayer INTEGER DEFAULT 1,
-            fastDebtCreated INTEGER DEFAULT 0,
-            createdAt INTEGER,
-            updatedAt INTEGER
-          )
-        ''');
-        },
-      );
-
+      db = await openCycleTestDb();
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
 
       engine = CycleEngine();
       registry = EngineRegistry()..register(engine);
       RitmoEngineBus.init(registry);
-
-      await db.insert('app_settings', {
-        'key': 'user_gender',
-        'value': 'FEMALE',
-      });
-      await db.insert('app_settings', {
-        'key': 'module_cycle_enabled',
-        'value': 'true',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_length',
-        'value': '28',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_period',
-        'value': '6',
-      });
     });
 
     tearDown(() async {
@@ -97,8 +53,8 @@ void main() {
         expect(out1.hasData, isFalse);
 
         await CyclePeriodRepository.instance.startPeriod(
-          DateTime(2026, 8, 15),
-          dbExecutor: db,
+          db: db,
+          startDate: DateTime(2026, 8, 15),
           now: now,
         );
 

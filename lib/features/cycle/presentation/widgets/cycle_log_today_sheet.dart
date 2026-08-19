@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -509,6 +510,8 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
                         },
                         conflictAlgorithm: ConflictAlgorithm.replace,
                       );
+
+                      CycleEngine().invalidate();
 
                       RitmoEventBus().fire(
                         RitmoEvent(

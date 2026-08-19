@@ -1,6 +1,7 @@
 // C-13: CycleSettings Façade
 // Single authoritative source of truth for Cycle configuration, canonical keys, defaults, and ranges.
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:sqflite/sqflite.dart';
@@ -307,6 +308,7 @@ class CycleSettings {
         'value': value,
         'updatedAt': now,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
+      CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleSettings] error saving setting $key',
@@ -323,6 +325,7 @@ class CycleSettings {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       await db.delete('app_settings', where: 'key = ?', whereArgs: [key]);
+      CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleSettings] error deleting alias setting $key',

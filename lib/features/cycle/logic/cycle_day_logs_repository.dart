@@ -2,6 +2,7 @@
 // Manages daily symptom, flow, mood, energy, and notes tracking for Cycle module.
 import 'dart:convert';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
@@ -196,6 +197,7 @@ class CycleDayLogsRepository {
         map,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+      CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleDayLogsRepository] saveLog error',
@@ -218,6 +220,7 @@ class CycleDayLogsRepository {
         where: 'logDate = ?',
         whereArgs: [dayKey],
       );
+      CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleDayLogsRepository] deleteLogForDate error',

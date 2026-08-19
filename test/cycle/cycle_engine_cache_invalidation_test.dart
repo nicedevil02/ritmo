@@ -7,7 +7,6 @@ import 'package:ritmo/features/cycle/logic/cycle_day_logs_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'test_helpers/cycle_test_db.dart';
 

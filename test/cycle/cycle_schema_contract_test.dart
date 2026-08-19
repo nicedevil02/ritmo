@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ritmo/core/database/schema/tables/cycle_tables.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_contract.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'test_helpers/cycle_test_db.dart';
 

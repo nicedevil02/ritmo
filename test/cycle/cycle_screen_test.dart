@@ -10,7 +10,6 @@ import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'test_helpers/cycle_test_db.dart';
 

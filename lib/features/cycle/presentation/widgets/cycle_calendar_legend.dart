@@ -2,6 +2,7 @@
 // F-31, F-35, F-40, F-41: Dynamic, localized cycle calendar legend displaying only items present in current month view.
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -47,7 +48,8 @@ class CycleCalendarLegend extends StatelessWidget {
     final hasPms = marks.values.any((m) => m.kind == CycleDayKind.pms);
     final hasLogs = marks.values.any((m) => m.hasLog);
 
-    final isFertilityVisible = settings['cycle_fertility_visible'] != 'false';
+    final isFertilityVisible = CycleSettings.isFertilityVisible(settings) &&
+        !CycleSettings.isPregnancyMode(settings);
 
     final legendItems = <Widget>[];
 

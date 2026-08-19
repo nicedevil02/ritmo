@@ -33,6 +33,7 @@ class CyclePredictionDetailSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final jDate = Jalali.fromDateTime(selectedDate);
     final cycle = mark.predictedCycle;
+    final isPast = CycleDateContract.isSameOrBefore(selectedDate, CycleClock.now);
 
     final String title;
     final IconData icon;
@@ -50,12 +51,12 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         headerColor = colors.textSecondary;
         break;
       case CycleDayKind.ovulation:
-        title = 'روز تخمک‌گذاری تخمینی';
+        title = isPast ? 'روز تخمک‌گذاری (دوره گذشته)' : 'روز تخمک‌گذاری تخمینی';
         icon = CupertinoIcons.sparkles;
         headerColor = colors.accent;
         break;
       case CycleDayKind.fertileWindow:
-        title = 'پنجره باروری تخمینی';
+        title = isPast ? 'پنجره باروری (دوره گذشته)' : 'پنجره باروری تخمینی';
         icon = CupertinoIcons.heart_circle;
         headerColor = colors.accent;
         break;
@@ -76,7 +77,7 @@ class CyclePredictionDetailSheet extends StatelessWidget {
       PredictionConfidenceLevel.high => 'اطمینان بالا',
       PredictionConfidenceLevel.medium => 'اطمینان متوسط',
       PredictionConfidenceLevel.low => 'اطمینان کم (داده محدود)',
-      null => 'تخمینی',
+      null => isPast ? 'محاسبه گذشته‌نگر' : 'تخمینی',
     };
 
     final basisDescription = switch (cycle?.basis) {
@@ -86,8 +87,8 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         'محاسبه‌شده با داده‌های محدود اولیه؛ با ثبت چرخه‌های بیشتر دقت افزایش می‌یابد.',
       ForecastBasis.defaultAssumption =>
         'محاسبه‌شده بر اساس تنظیمات پیش‌فرض بالینی، به دلیل نبود چرخه‌های ثبت‌شده کافی.',
-      null => CycleDateContract.isSameOrBefore(selectedDate, CycleClock.now)
-          ? 'محاسبه‌شده گذشته‌نگر بر اساس تاریخ شروع دوره بعدی و طول فاز لوتئال (Luteal Phase).'
+      null => isPast
+          ? 'محاسبه‌شده گذشته‌نگر بر پایهٔ تاریخ شروع دورهٔ بعدی و فاز لوتئال (Luteal Phase). این بازه بیشترین احتمال باروری چرخه را داشته است.'
           : 'محاسبه‌شده بر اساس الگوهای زمانی.',
     };
 

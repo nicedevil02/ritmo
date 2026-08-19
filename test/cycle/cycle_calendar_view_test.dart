@@ -164,5 +164,78 @@ void main() {
       expect(marks['2026-07-09']?.kind, equals(CycleDayKind.normal));
       expect(marks['2026-07-05']?.kind, equals(CycleDayKind.normal));
     });
+
+    test('Historical Fertile Windows: handles long past cycle (e.g. 50 days) linking ovulation to next period start', () {
+      // Month: Tir 1405 (June 22 to July 22, 2026)
+      final month = Jalali(1405, 4, 1);
+
+      // P1: 2026-05-24
+      // P2: 2026-07-13 (50 days later)
+      // Ovulation for P1 cycle = 2026-07-13 - 14 days = 2026-06-29
+      // Fertile Window: 2026-06-24 to 2026-06-30
+      final periods = [
+        {'startDate': '2026-05-24', 'endDate': '2026-05-29'},
+        {'startDate': '2026-07-13', 'endDate': '2026-07-18'},
+      ];
+
+      final marks = CycleCalendarView.buildMonthMarks(
+        month: month,
+        periods: periods,
+        loggedDayKeys: {},
+        forecast: [],
+        lutealPhaseDays: 14,
+        isFertilityVisible: true,
+      );
+
+      expect(marks['2026-06-29']?.kind, equals(CycleDayKind.ovulation));
+      expect(marks['2026-06-25']?.kind, equals(CycleDayKind.fertileWindow));
+      expect(marks['2026-06-30']?.kind, equals(CycleDayKind.fertileWindow));
+      expect(marks['2026-07-13']?.kind, equals(CycleDayKind.recordedPeriod));
+    });
+
+    test('Historical Fertile Windows: populates intermediate cycle between last recorded period and forecast', () {
+      // Month: Tir 1405 (June 22 to July 22, 2026)
+      final month = Jalali(1405, 4, 1);
+
+      // Last recorded period was on 2026-06-01 (Ordibehesht)
+      // Forecast first cycle starts on 2026-07-27
+      // Intermediate cycle from 2026-06-01 to 2026-06-29:
+      // Ovulation on 2026-06-29 - 14 = 2026-06-15
+      // Intermediate cycle from 2026-06-29 to 2026-07-27:
+      // Ovulation on 2026-07-27 - 14 = 2026-07-13
+      // Fertile window: 2026-07-08 to 2026-07-14
+      final periods = [
+        {'startDate': '2026-06-01', 'endDate': '2026-06-06'},
+      ];
+
+      final forecast = [
+        PredictedCycle(
+          index: 1,
+          predictedStart: DateTime(2026, 7, 27),
+          predictedEnd: DateTime(2026, 8, 1),
+          windowStart: DateTime(2026, 7, 25),
+          windowEnd: DateTime(2026, 7, 29),
+          sigmaDays: 2.0,
+          periodDays: 6,
+          confidence: 0.8,
+          confidenceLevel: PredictionConfidenceLevel.medium,
+          basis: ForecastBasis.measured,
+        ),
+      ];
+
+      final marks = CycleCalendarView.buildMonthMarks(
+        month: month,
+        periods: periods,
+        loggedDayKeys: {},
+        forecast: forecast,
+        avgCycleLength: 28,
+        lutealPhaseDays: 14,
+        isFertilityVisible: true,
+      );
+
+      expect(marks['2026-07-13']?.kind, equals(CycleDayKind.ovulation));
+      expect(marks['2026-07-09']?.kind, equals(CycleDayKind.fertileWindow));
+      expect(marks['2026-07-14']?.kind, equals(CycleDayKind.fertileWindow));
+    });
   });
 }

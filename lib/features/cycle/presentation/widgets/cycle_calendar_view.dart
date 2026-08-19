@@ -2,21 +2,19 @@
 // Minimalist, modern, accessible Jalali cycle calendar with swipe gestures,
 // animated month transitions, pre-computed day marks (F-25..F-34), and dynamic legend.
 import 'dart:math' as math;
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_grid.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_header.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_calendar_legend.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_empty_state_banner.dart';
-import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class CycleCalendarView extends StatefulWidget {
@@ -106,62 +104,95 @@ class CycleCalendarView extends StatefulWidget {
     }
     final sortedStarts = distinctStarts.toList()..sort((a, b) => a.compareTo(b));
 
-    for (var i = 0; i < sortedStarts.length; i++) {
-      final sCurrent = sortedStarts[i];
-      DateTime? sNext;
-      int cycleL;
+    void markRetrospectiveCycle(
+      DateTime start,
+      DateTime endNext,
+      int lutealDays,
+      int pmsDaysCount,
+    ) {
+      final cycleL = CycleDateContract.daysBetween(start, endNext);
+      if (cycleL < 10) return;
 
-      if (i + 1 < sortedStarts.length) {
-        sNext = sortedStarts[i + 1];
-        cycleL = CycleDateContract.daysBetween(sCurrent, sNext);
-      } else {
-        // Last recorded cycle: if forecast is empty, estimate its next start
-        if (forecast.isEmpty) {
-          cycleL = avgCycleLength.round().clamp(15, 60);
-          sNext = sCurrent.add(Duration(days: cycleL));
-        } else {
-          // Covered by forecast.first
-          continue;
+      final effectiveLuteal = math.min(lutealDays, math.max(1, cycleL - 5));
+      final ovDate = endNext.subtract(Duration(days: effectiveLuteal));
+      final fertStart = ovDate.subtract(const Duration(days: 5));
+      final fertEnd = ovDate.add(const Duration(days: 1));
+      final pmsStart = endNext.subtract(Duration(days: pmsDaysCount));
+      final pmsEnd = endNext.subtract(const Duration(days: 1));
+
+      if (isFertilityVisible) {
+        // Ovulation
+        final ovClean = CycleDateContract.cleanDate(ovDate);
+        if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
+          ovulationDays.add(CycleDateContract.toDayKey(ovClean));
+        }
+
+        // Fertile Window (6 days: ovDate - 5 days up to ovDate + 1 day)
+        var fCurr = CycleDateContract.cleanDate(fertStart);
+        final fEnd = CycleDateContract.cleanDate(fertEnd);
+        while (!fCurr.isAfter(fEnd)) {
+          if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
+              CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
+            fertileDays.add(CycleDateContract.toDayKey(fCurr));
+          }
+          fCurr = fCurr.add(const Duration(days: 1));
         }
       }
 
-      if (cycleL >= 15 && cycleL <= 60) {
-        final cycleLuteal = math.min(lutealPhaseDays, math.max(1, cycleL - 10));
-        final ovDate = sNext.subtract(Duration(days: cycleLuteal));
-        final fertStart = ovDate.subtract(const Duration(days: 5));
-        final fertEnd = ovDate.add(const Duration(days: 1));
-        final pmsStart = sNext.subtract(Duration(days: pmsWindowDays));
-        final pmsEnd = sNext.subtract(const Duration(days: 1));
-
-        if (isFertilityVisible) {
-          // Ovulation
-          final ovClean = CycleDateContract.cleanDate(ovDate);
-          if (CycleDateContract.isSameOrAfter(ovClean, monthStartGregorian) &&
-              CycleDateContract.isSameOrBefore(ovClean, monthEndGregorian)) {
-            ovulationDays.add(CycleDateContract.toDayKey(ovClean));
-          }
-
-          // Fertile Window
-          var fCurr = CycleDateContract.cleanDate(fertStart);
-          final fEnd = CycleDateContract.cleanDate(fertEnd);
-          while (!fCurr.isAfter(fEnd)) {
-            if (CycleDateContract.isSameOrAfter(fCurr, monthStartGregorian) &&
-                CycleDateContract.isSameOrBefore(fCurr, monthEndGregorian)) {
-              fertileDays.add(CycleDateContract.toDayKey(fCurr));
-            }
-            fCurr = fCurr.add(const Duration(days: 1));
-          }
+      // PMS Window
+      var pCurr = CycleDateContract.cleanDate(pmsStart);
+      final pEnd = CycleDateContract.cleanDate(pmsEnd);
+      while (!pCurr.isAfter(pEnd)) {
+        if (CycleDateContract.isSameOrAfter(pCurr, monthStartGregorian) &&
+            CycleDateContract.isSameOrBefore(pCurr, monthEndGregorian)) {
+          pmsDays.add(CycleDateContract.toDayKey(pCurr));
         }
+        pCurr = pCurr.add(const Duration(days: 1));
+      }
+    }
 
-        // PMS Window
-        var pCurr = CycleDateContract.cleanDate(pmsStart);
-        final pEnd = CycleDateContract.cleanDate(pmsEnd);
-        while (!pCurr.isAfter(pEnd)) {
-          if (CycleDateContract.isSameOrAfter(pCurr, monthStartGregorian) &&
-              CycleDateContract.isSameOrBefore(pCurr, monthEndGregorian)) {
-            pmsDays.add(CycleDateContract.toDayKey(pCurr));
+    final effectiveAvgCycle = avgCycleLength.round().clamp(21, 45);
+
+    // 2.1 Process all recorded consecutive pairs (past cycles)
+    for (var i = 0; i < sortedStarts.length - 1; i++) {
+      final sCurrent = sortedStarts[i];
+      final sNext = sortedStarts[i + 1];
+      markRetrospectiveCycle(sCurrent, sNext, lutealPhaseDays, pmsWindowDays);
+    }
+
+    // 2.2 Process the cycle starting at the last recorded start up to the first forecast cycle
+    if (sortedStarts.isNotEmpty) {
+      final sLast = sortedStarts.last;
+      final firstForecastStart =
+          forecast.isNotEmpty
+              ? CycleDateContract.cleanDate(forecast.first.predictedStart)
+              : null;
+
+      if (firstForecastStart == null) {
+        final nextStart = sLast.add(Duration(days: effectiveAvgCycle));
+        markRetrospectiveCycle(sLast, nextStart, lutealPhaseDays, pmsWindowDays);
+      } else {
+        var currStart = sLast;
+        while (currStart.isBefore(firstForecastStart)) {
+          final nextStart = currStart.add(Duration(days: effectiveAvgCycle));
+          if (nextStart.isAfter(firstForecastStart)) {
+            markRetrospectiveCycle(
+              currStart,
+              firstForecastStart,
+              lutealPhaseDays,
+              pmsWindowDays,
+            );
+            break;
+          } else {
+            markRetrospectiveCycle(
+              currStart,
+              nextStart,
+              lutealPhaseDays,
+              pmsWindowDays,
+            );
+            currStart = nextStart;
           }
-          pCurr = pCurr.add(const Duration(days: 1));
         }
       }
     }
@@ -321,7 +352,8 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
     final pmsDays = int.tryParse(widget.settings[CycleSettings.keyPmsWindowDays] ?? '4') ?? 4;
     final avgL = widget.engineOutput?.stats.avgCycleLength ??
         (double.tryParse(widget.settings[CycleSettings.keyCycleLength] ?? '28') ?? 28.0);
-    final isFertilityVisible = widget.settings[CycleSettings.keyFertilityVisible] != 'false';
+    final isFertilityVisible = CycleSettings.isFertilityVisible(widget.settings) &&
+        !CycleSettings.isPregnancyMode(widget.settings);
     final forecast = widget.engineOutput?.forecast ?? const <PredictedCycle>[];
 
     _marks = CycleCalendarView.buildMonthMarks(
@@ -421,7 +453,6 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context);
     final cal = widget.calendarMonth;
     final year = cal.year;
     final monthName = cal.formatter.mN;
@@ -479,181 +510,18 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
           child: Column(
             children: [
               // Calendar Month Navigation Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Previous Month Button (pointing right in RTL)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _changeMonth(-1),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.textSecondary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: colors.border.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          color: colors.textPrimary,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Month & Year Center Display + Action Buttons
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            monthName,
-                            style: RitmoTextStyles.cardTitle(
-                              colors.textPrimary,
-                            ).copyWith(
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            PersianDigits.toFa(year.toString()),
-                            style: RitmoTextStyles.body(
-                              colors.textSecondary,
-                            ).copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          // F-36: Confidence Badge for Future Estimated Months
-                          if (isPredictionOnlyMonth &&
-                              dominantConfidence != null) ...[
-                            const SizedBox(width: 8),
-                            _buildConfidenceBadge(
-                              dominantConfidence,
-                              colors,
-                              l10n,
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (!isCurrentMonth || canJumpToNext) ...[
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (!isCurrentMonth)
-                              InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: _goToCurrentMonth,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: widget.activePhaseColor.withValues(
-                                      alpha: 0.12,
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: widget.activePhaseColor.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.arrow_counterclockwise,
-                                        size: 11,
-                                        color: widget.activePhaseColor,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        l10n?.cycleCurrentMonth ?? 'ماه جاری',
-                                        style: RitmoTextStyles.badge(
-                                          widget.activePhaseColor,
-                                        ).copyWith(fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (!isCurrentMonth && canJumpToNext)
-                              const SizedBox(width: 6),
-                            if (canJumpToNext)
-                              InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: _jumpToNextPredictedPeriod,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colors.error.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: colors.error.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.calendar_today,
-                                        size: 11,
-                                        color: colors.error,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        l10n?.cycleJumpToNext ??
-                                            'پرش به دوره بعد',
-                                        style: RitmoTextStyles.badge(
-                                          colors.error,
-                                        ).copyWith(fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-
-                  // Next Month Button (pointing left in RTL)
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _changeMonth(1),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.textSecondary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: colors.border.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Icon(
-                          Icons.chevron_left_rounded,
-                          color: colors.textPrimary,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              CycleCalendarHeader(
+                monthName: monthName,
+                year: year,
+                isCurrentMonth: isCurrentMonth,
+                canJumpToNext: canJumpToNext,
+                isPredictionOnlyMonth: isPredictionOnlyMonth,
+                dominantConfidence: dominantConfidence,
+                activePhaseColor: widget.activePhaseColor,
+                onPreviousMonth: () => _changeMonth(-1),
+                onNextMonth: () => _changeMonth(1),
+                onGoToCurrentMonth: _goToCurrentMonth,
+                onJumpToNextPeriod: _jumpToNextPredictedPeriod,
               ),
 
               const SizedBox(height: 16),
@@ -741,46 +609,6 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildConfidenceBadge(
-    PredictionConfidenceLevel level,
-    RitmoColors colors,
-    AppLocalizations? l10n,
-  ) {
-    final String label;
-    final Color badgeColor;
-    switch (level) {
-      case PredictionConfidenceLevel.high:
-        label = l10n?.cycleConfidenceHigh ?? 'اطمینان بالا';
-        badgeColor = colors.accent;
-        break;
-      case PredictionConfidenceLevel.medium:
-        label = l10n?.cycleConfidenceMedium ?? 'اطمینان متوسط';
-        badgeColor = colors.primary;
-        break;
-      case PredictionConfidenceLevel.low:
-        label = l10n?.cycleConfidenceLow ?? 'اطمینان کم';
-        badgeColor = colors.textSecondary;
-        break;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: badgeColor.withValues(alpha: 0.35),
-          width: 0.8,
-        ),
-      ),
-      child: Text(
-        label,
-        style: RitmoTextStyles.badge(
-          badgeColor,
-        ).copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }

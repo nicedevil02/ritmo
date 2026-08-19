@@ -2,11 +2,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
-import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
+import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,86 +18,12 @@ void main() {
     late Database db;
 
     setUp(() async {
-      databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 1,
-        onCreate: (db, version) async {
-          await db.execute('''
-            CREATE TABLE app_settings (
-              key TEXT PRIMARY KEY,
-              value TEXT,
-              updatedAt INTEGER
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_periods (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              startDate TEXT NOT NULL,
-              endDate TEXT,
-              flowIntensity TEXT,
-              isPredicted INTEGER DEFAULT 0,
-              note TEXT,
-              periodDuration INTEGER,
-              cycleLength INTEGER,
-              suppressedPrayer INTEGER DEFAULT 0,
-              fastDebtCreated INTEGER DEFAULT 0,
-              createdAt INTEGER,
-              updatedAt INTEGER
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_day_logs (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              logDate TEXT NOT NULL,
-              symptomsJson TEXT,
-              flowIntensity TEXT,
-              cervicalMucus TEXT,
-              temperature REAL,
-              note TEXT,
-              createdAt INTEGER,
-              updatedAt INTEGER
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_symptoms (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              dayKey TEXT NOT NULL,
-              symptomKey TEXT NOT NULL,
-              severity INTEGER DEFAULT 1
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_moods (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              dayKey TEXT NOT NULL,
-              moodKey TEXT NOT NULL
-            )
-          ''');
-        },
-      );
+      db = await openCycleTestDb();
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
 
-      await db.insert('app_settings', {
-        'key': 'user_gender',
-        'value': 'FEMALE',
-      });
-      await db.insert('app_settings', {
-        'key': 'module_cycle_enabled',
-        'value': 'true',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_length',
-        'value': '28',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_period',
-        'value': '6',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_luteal_phase_days',
-        'value': '14',
-      });
+      final engine = CycleEngine();
+      final registry = EngineRegistry()..register(engine);
+      RitmoEngineBus.init(registry);
     });
 
     tearDown(() async {
@@ -110,6 +38,7 @@ void main() {
         CycleClock.nowProvider = () => now;
 
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-07-20',
           'endDate': '2026-07-25',
           'createdAt': 1000,
@@ -148,6 +77,7 @@ void main() {
         CycleClock.nowProvider = () => now;
 
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-01-01',
           'endDate': '2026-01-06',
           'createdAt': 1000,
@@ -186,6 +116,7 @@ void main() {
 
         // A period started 40 days ago and never closed -> forgotten open period
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-06-20',
           'endDate': null,
           'createdAt': 1000,
@@ -211,12 +142,14 @@ void main() {
 
         // 4 periods = 3 completed cycles
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-05-01',
           'endDate': '2026-05-06',
           'createdAt': 1000,
           'updatedAt': 1000,
         });
         await db.insert('cycle_day_logs', {
+          'id': 'l1',
           'logDate': '2026-05-26',
           'symptomsJson': '["headache"]',
           'createdAt': 1000,
@@ -224,12 +157,14 @@ void main() {
         });
 
         await db.insert('cycle_periods', {
+          'id': 'p2',
           'startDate': '2026-05-29',
           'endDate': '2026-06-03',
           'createdAt': 1000,
           'updatedAt': 1000,
         });
         await db.insert('cycle_day_logs', {
+          'id': 'l2',
           'logDate': '2026-06-23',
           'symptomsJson': '["headache"]',
           'createdAt': 1000,
@@ -237,12 +172,14 @@ void main() {
         });
 
         await db.insert('cycle_periods', {
+          'id': 'p3',
           'startDate': '2026-06-26',
           'endDate': '2026-07-01',
           'createdAt': 1000,
           'updatedAt': 1000,
         });
         await db.insert('cycle_day_logs', {
+          'id': 'l3',
           'logDate': '2026-07-21',
           'symptomsJson': '["headache"]',
           'createdAt': 1000,
@@ -250,6 +187,7 @@ void main() {
         });
 
         await db.insert('cycle_periods', {
+          'id': 'p4',
           'startDate': '2026-07-24',
           'endDate': '2026-07-29',
           'createdAt': 1000,

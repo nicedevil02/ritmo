@@ -6,12 +6,12 @@ class MigrationV114CycleFertilityCleanup extends Migration {
   int get version => 114;
 
   @override
-  Future<void> up(Database db) async {
+  Future<void> up(DatabaseExecutor db) async {
     await db.rawDelete(
       "DELETE FROM app_settings WHERE key = 'cycle_fertility_visible';",
     );
   }
 
   @override
-  Future<void> down(Database db) async {}
+  Future<void> down(DatabaseExecutor db) async {}
 }

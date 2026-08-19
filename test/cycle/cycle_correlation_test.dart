@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/schema/tables/cycle_tables.dart';
 import 'package:ritmo/features/cycle/logic/cycle_correlation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -15,18 +16,7 @@ void main() {
         options: OpenDatabaseOptions(
           version: 1,
           onCreate: (db, version) async {
-            await db.execute('''
-              CREATE TABLE cycle_day_logs (
-                id TEXT PRIMARY KEY,
-                logDate TEXT NOT NULL,
-                flowLevel TEXT,
-                symptomsJson TEXT,
-                mood TEXT,
-                notes TEXT,
-                createdAt INTEGER NOT NULL,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
+            await CycleTables.create(db);
             await db.execute('''
               CREATE TABLE energy_logs (
                 id TEXT PRIMARY KEY,
@@ -47,18 +37,6 @@ void main() {
                 completionDate TEXT NOT NULL,
                 completionTime INTEGER NOT NULL,
                 resultType TEXT
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE cycle_periods (
-                id TEXT PRIMARY KEY,
-                startDate TEXT NOT NULL,
-                endDate TEXT,
-                cycleLength INTEGER,
-                periodDuration INTEGER,
-                isProjected INTEGER,
-                createdAt INTEGER NOT NULL,
-                updatedAt INTEGER NOT NULL
               )
             ''');
           },

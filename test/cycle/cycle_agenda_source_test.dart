@@ -4,43 +4,17 @@ import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/agenda/sources/cycle_agenda_source.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
 
-  group('CycleAgendaSource Tests (C-36)', () {
+  group('CycleAgendaSource Tests (C-36 to C-42)', () {
     late Database db;
 
     setUp(() async {
-      db = await databaseFactoryFfi.openDatabase(
-        inMemoryDatabasePath,
-        options: OpenDatabaseOptions(
-          version: 1,
-          onCreate: (db, version) async {
-            await db.execute('''
-              CREATE TABLE cycle_periods (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                startDate TEXT NOT NULL,
-                endDate TEXT,
-                periodDuration INTEGER,
-                cycleLength INTEGER,
-                notes TEXT,
-                suppressedPrayer INTEGER DEFAULT 0,
-                fastDebtCreated INTEGER DEFAULT 0,
-                createdAt INTEGER NOT NULL,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE app_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-              )
-            ''');
-          },
-        ),
-      );
+      db = await openCycleTestDb();
     });
 
     tearDown(() async {
@@ -52,9 +26,9 @@ void main() {
       () async {
         // 1. Insert past period: 2026-08-01 to 2026-08-06
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-08-01',
           'endDate': '2026-08-06',
-          'periodDuration': 6,
           'createdAt': 1000,
           'updatedAt': 1000,
         });

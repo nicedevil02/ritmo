@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/schema/tables/cycle_tables.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class CycleTestDb {
@@ -20,31 +21,7 @@ class CycleTestDb {
             )
           ''');
 
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS cycle_periods (
-              id TEXT PRIMARY KEY,
-              startDate TEXT NOT NULL,
-              endDate TEXT,
-              flowIntensity TEXT,
-              isPredicted INTEGER DEFAULT 0,
-              createdAt INTEGER,
-              updatedAt INTEGER
-            )
-          ''');
-
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS cycle_day_logs (
-              dayKey TEXT PRIMARY KEY,
-              flow TEXT,
-              pain INTEGER,
-              mood TEXT,
-              symptoms TEXT,
-              sexualActivity INTEGER,
-              notes TEXT,
-              createdAt INTEGER,
-              updatedAt INTEGER
-            )
-          ''');
+          await CycleTables.create(db);
 
           await db.execute('''
             CREATE TABLE IF NOT EXISTS worship_debts (

@@ -1,8 +1,7 @@
 import 'dart:math';
+import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 
-/// تک‌منبعِ حقیقت برای نام ستون‌های جدول cycle_periods.
-/// هر نوشتن یا خواندنی روی این جدول باید از این ثابت‌ها استفاده کند.
-/// اگر CycleTables.create عوض شد، این فایل و تست قرارداد باید با آن عوض شوند.
+/// Single source of truth for column names of cycle_periods table.
 class CyclePeriodContract {
   const CyclePeriodContract._();
 
@@ -28,9 +27,9 @@ class CyclePeriodContract {
     colUpdatedAt,
   ];
 
-  /// شناسهٔ یکتا برای ردیف جدید. تصادم دو ضربهٔ هم‌زمان را هم پوشش می‌دهد.
+  /// Generates a unique String ID for a new cycle period.
   static String newId() {
-    final ms = DateTime.now().millisecondsSinceEpoch;
+    final ms = CycleClock.now.millisecondsSinceEpoch;
     final rnd = Random().nextInt(0x10000).toRadixString(16).padLeft(4, '0');
     return 'period_${ms}_$rnd';
   }

@@ -141,7 +141,7 @@ class CyclePeriodRepository {
 
     // R4: startDate cannot be in the future
     if (cleanStart.isAfter(cleanToday)) {
-      throw ArgumentError('تاریخ شروع دوره نمی‌تواند در آینده باشد.');
+      throw ArgumentError('startDate cannot be in the future');
     }
 
     // R6: Check active open period
@@ -170,7 +170,7 @@ class CyclePeriodRepository {
         );
       } else {
         throw StateError(
-          'دورهٔ باز فعال دیگری وجود دارد. ابتدا دورهٔ قبلی را ببندید.',
+          'Another active open period already exists. Close it first.',
         );
       }
     }
@@ -195,7 +195,7 @@ class CyclePeriodRepository {
       final pEnd = p.endDate ?? cleanToday;
       if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
         throw ArgumentError(
-          'تاریخ شروع با یکی از دوره‌های ثبت‌شده هم‌پوشانی دارد.',
+          'startDate overlaps with an existing recorded period.',
         );
       }
     }
@@ -247,24 +247,24 @@ class CyclePeriodRepository {
 
     // R8: No silent return
     if (rows.isEmpty) {
-      throw StateError('دوره‌ای با شناسهٔ مشخص‌شده یافت نشد.');
+      throw StateError('Period with specified id not found.');
     }
 
     final period = CyclePeriod.fromMap(rows.first);
 
     // R4: Validation guards
     if (cleanEnd.isBefore(period.startDate)) {
-      throw ArgumentError('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
+      throw ArgumentError('endDate cannot be before startDate.');
     }
     if (cleanEnd.isAfter(cleanToday)) {
-      throw ArgumentError('تاریخ پایان نمی‌تواند در آینده باشد.');
+      throw ArgumentError('endDate cannot be in the future.');
     }
 
     final duration =
         CycleDateContract.daysBetween(period.startDate, cleanEnd) + 1;
     if (duration > CycleSettings.forgottenOpenPeriodDays) {
       throw ArgumentError(
-        'طول دوره نمی‌تواند بیش از ${CycleSettings.forgottenOpenPeriodDays} روز باشد.',
+        'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.',
       );
     }
 
@@ -313,25 +313,25 @@ class CyclePeriodRepository {
     );
 
     if (rows.isEmpty) {
-      throw StateError('دوره‌ای با شناسهٔ مشخص‌شده برای ویرایش یافت نشد.');
+      throw StateError('Period with specified id for update not found.');
     }
 
     // R4: Guards
     if (cleanStart.isAfter(cleanToday)) {
-      throw ArgumentError('تاریخ شروع دوره نمی‌تواند در آینده باشد.');
+      throw ArgumentError('startDate cannot be in the future.');
     }
     if (cleanEnd != null) {
       if (cleanEnd.isBefore(cleanStart)) {
-        throw ArgumentError('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.');
+        throw ArgumentError('endDate cannot be before startDate.');
       }
       if (cleanEnd.isAfter(cleanToday)) {
-        throw ArgumentError('تاریخ پایان نمی‌تواند در آینده باشد.');
+        throw ArgumentError('endDate cannot be in the future.');
       }
       final duration =
           CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
       if (duration > CycleSettings.forgottenOpenPeriodDays) {
         throw ArgumentError(
-          'طول دوره نمی‌تواند بیش از ${CycleSettings.forgottenOpenPeriodDays} روز باشد.',
+          'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.',
         );
       }
     }
@@ -343,13 +343,13 @@ class CyclePeriodRepository {
       final pEnd = p.endDate ?? cleanToday;
       if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
         throw ArgumentError(
-          'تاریخ شروع با یکی از دوره‌های دیگر هم‌پوشانی دارد.',
+          'startDate overlaps with another period.',
         );
       }
       if (cleanEnd != null &&
           CycleDateContract.inWindow(cleanEnd, p.startDate, pEnd)) {
         throw ArgumentError(
-          'تاریخ پایان با یکی از دوره‌های دیگر هم‌پوشانی دارد.',
+          'endDate overlaps with another period.',
         );
       }
     }
@@ -391,7 +391,7 @@ class CyclePeriodRepository {
       limit: 1,
     );
     if (rows.isEmpty) {
-      throw StateError('دوره‌ای با شناسهٔ مشخص‌شده برای حذف یافت نشد.');
+      throw StateError('Period with specified id for deletion not found.');
     }
 
     await db.delete(
@@ -419,19 +419,19 @@ class CyclePeriodRepository {
         endDate != null ? CycleDateContract.cleanDate(endDate) : null;
 
     if (cleanStart.isAfter(cleanToday)) {
-      return 'تاریخ شروع نمی‌تواند در آینده باشد.';
+      return 'startDate cannot be in the future.';
     }
     if (cleanEnd != null) {
       if (cleanEnd.isBefore(cleanStart)) {
-        return 'تاریخ پایان نمی‌تواند قبل از شروع باشد.';
+        return 'endDate cannot be before startDate.';
       }
       if (cleanEnd.isAfter(cleanToday)) {
-        return 'تاریخ پایان نمی‌تواند در آینده باشد.';
+        return 'endDate cannot be in the future.';
       }
       final duration =
           CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
       if (duration > CycleSettings.forgottenOpenPeriodDays) {
-        return 'طول دوره نمی‌تواند بیش از ${CycleSettings.forgottenOpenPeriodDays} روز باشد.';
+        return 'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.';
       }
     }
 
@@ -439,11 +439,11 @@ class CyclePeriodRepository {
       if (editingId != null && p.id == editingId) continue;
       final pEnd = p.endDate ?? cleanToday;
       if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
-        return 'تاریخ شروع با دورهٔ دیگری هم‌پوشانی دارد.';
+        return 'startDate overlaps with another period.';
       }
       if (cleanEnd != null &&
           CycleDateContract.inWindow(cleanEnd, p.startDate, pEnd)) {
-        return 'تاریخ پایان با دورهٔ دیگری هم‌پوشانی دارد.';
+        return 'endDate overlaps with another period.';
       }
     }
 

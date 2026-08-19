@@ -1,10 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:ritmo/core/database/database_helper.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -16,44 +17,7 @@ void main() {
       late Database db;
 
       setUp(() async {
-        databaseFactory = databaseFactoryFfi;
-        db = await openDatabase(
-          inMemoryDatabasePath,
-          version: 1,
-          onCreate: (db, version) async {
-            await db.execute('''
-          CREATE TABLE app_settings (
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            updatedAt INTEGER
-          )
-        ''');
-            await db.execute('''
-          CREATE TABLE cycle_periods (
-            id TEXT PRIMARY KEY,
-            startDate TEXT NOT NULL,
-            endDate TEXT,
-            flowIntensity TEXT,
-            isPredicted INTEGER DEFAULT 0,
-            note TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
-          )
-        ''');
-            await db.execute('''
-          CREATE TABLE cycle_day_logs (
-            id TEXT PRIMARY KEY,
-            logDate TEXT NOT NULL,
-            flowLevel TEXT,
-            symptoms TEXT,
-            mood TEXT,
-            notes TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
-          )
-        ''');
-          },
-        );
+        db = await openCycleTestDb();
         DatabaseHelper.instance.overrideDatabaseForTesting(db);
       });
 
@@ -82,7 +46,7 @@ void main() {
             'key': 'user_gender',
             'value': 'female',
             'updatedAt': DateTime.now().millisecondsSinceEpoch,
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
           await CycleOnboardingController.instance.saveOnboarding(data);
 
           // 2. Verify Database row

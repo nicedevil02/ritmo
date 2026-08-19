@@ -4,6 +4,7 @@ import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,34 +14,7 @@ void main() {
     late Database db;
 
     setUp(() async {
-      db = await databaseFactoryFfi.openDatabase(
-        inMemoryDatabasePath,
-        options: OpenDatabaseOptions(
-          version: 1,
-          onCreate: (db, version) async {
-            await db.execute('''
-              CREATE TABLE cycle_periods (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                startDate TEXT NOT NULL,
-                endDate TEXT,
-                periodDuration INTEGER,
-                cycleLength INTEGER,
-                notes TEXT,
-                suppressedPrayer INTEGER DEFAULT 0,
-                fastDebtCreated INTEGER DEFAULT 0,
-                createdAt INTEGER NOT NULL,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE app_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-              )
-            ''');
-          },
-        ),
-      );
+      db = await openCycleTestDb();
     });
 
     tearDown(() async {
@@ -52,9 +26,9 @@ void main() {
       () async {
         // Completed period 28 days ago
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-07-20',
           'endDate': '2026-07-25',
-          'periodDuration': 6,
           'createdAt': 1000,
           'updatedAt': 1000,
         });
@@ -96,21 +70,24 @@ void main() {
           await db.insert('app_settings', {
             'key': entry.key,
             'value': entry.value,
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
 
         final now = DateTime(2026, 8, 17);
 
         // Add a period via repository
         await CyclePeriodRepository.instance.startPeriod(
-          DateTime(2026, 8, 1),
-          dbExecutor: db,
+          db: db,
+          startDate: DateTime(2026, 8, 1),
           now: now,
         );
+        final openPeriod = await CyclePeriodRepository.instance.getOpenPeriod(db);
+        expect(openPeriod, isNotNull);
+
         await CyclePeriodRepository.instance.endPeriod(
-          1,
-          DateTime(2026, 8, 6),
-          dbExecutor: db,
+          db: db,
+          id: openPeriod!.id,
+          endDate: DateTime(2026, 8, 6),
           now: now,
         );
 

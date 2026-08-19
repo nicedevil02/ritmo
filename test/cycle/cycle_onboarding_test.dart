@@ -3,41 +3,17 @@ import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_onboarding_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
 
-  group('CycleOnboardingController Tests', () {
+  group('CycleOnboardingController Tests (C-01 to C-10)', () {
     late Database db;
 
     setUp(() async {
-      databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 1,
-        onCreate: (db, version) async {
-          await db.execute('''
-          CREATE TABLE app_settings (
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            updatedAt INTEGER
-          )
-        ''');
-          await db.execute('''
-          CREATE TABLE cycle_periods (
-            id TEXT PRIMARY KEY,
-            startDate TEXT NOT NULL,
-            endDate TEXT,
-            flowIntensity TEXT,
-            isPredicted INTEGER DEFAULT 0,
-            note TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
-          )
-        ''');
-        },
-      );
+      db = await openCycleTestDb();
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
     });
 

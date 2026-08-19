@@ -2,6 +2,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -12,51 +13,8 @@ void main() {
     late CycleEngine engine;
 
     setUp(() async {
-      databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 1,
-        onCreate: (db, version) async {
-          await db.execute('''
-          CREATE TABLE app_settings (
-            key TEXT PRIMARY KEY,
-            value TEXT,
-            updatedAt INTEGER
-          )
-        ''');
-          await db.execute('''
-          CREATE TABLE cycle_periods (
-            id TEXT PRIMARY KEY,
-            startDate TEXT NOT NULL,
-            endDate TEXT,
-            flowIntensity TEXT,
-            isPredicted INTEGER DEFAULT 0,
-            note TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
-          )
-        ''');
-        },
-      );
-
+      db = await openCycleTestDb();
       engine = CycleEngine();
-
-      await db.insert('app_settings', {
-        'key': 'user_gender',
-        'value': 'FEMALE',
-      });
-      await db.insert('app_settings', {
-        'key': 'module_cycle_enabled',
-        'value': 'true',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_length',
-        'value': '28',
-      });
-      await db.insert('app_settings', {
-        'key': 'cycle_avg_period',
-        'value': '6',
-      });
     });
 
     tearDown(() async {

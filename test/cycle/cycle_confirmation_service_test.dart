@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
+import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/features/cycle/logic/cycle_confirmation_service.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,68 +16,11 @@ void main() {
     late Database db;
 
     setUp(() async {
-      databaseFactory = databaseFactoryFfi;
-      db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 1,
-        onCreate: (db, version) async {
-          await db.execute('''
-            CREATE TABLE app_settings (
-              key TEXT PRIMARY KEY,
-              value TEXT,
-              updatedAt INTEGER
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_periods (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              startDate TEXT NOT NULL,
-              endDate TEXT,
-              cycleLength INTEGER,
-              periodDuration INTEGER,
-              flowIntensity TEXT,
-              isPredicted INTEGER DEFAULT 0,
-              suppressedPrayer INTEGER DEFAULT 1,
-              fastDebtCreated INTEGER DEFAULT 0,
-              notes TEXT,
-              createdAt INTEGER,
-              updatedAt INTEGER
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE cycle_confirmations (
-              id TEXT PRIMARY KEY,
-              kind TEXT NOT NULL,
-              targetDate TEXT NOT NULL,
-              answer TEXT,
-              answeredAt INTEGER,
-              askCount INTEGER NOT NULL DEFAULT 0,
-              lastAskedAt INTEGER,
-              createdAt INTEGER NOT NULL,
-              updatedAt INTEGER NOT NULL
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE inbox_items (
-              id TEXT PRIMARY KEY,
-              category TEXT NOT NULL,
-              sourceSystem TEXT NOT NULL,
-              title TEXT NOT NULL,
-              body TEXT,
-              priority INTEGER DEFAULT 0,
-              linkModule TEXT,
-              linkEntityId TEXT,
-              linkAction TEXT,
-              payloadJson TEXT,
-              status TEXT NOT NULL,
-              createdAt INTEGER NOT NULL,
-              readAt INTEGER,
-              expiresAt INTEGER,
-              dedupeKey TEXT
-            )
-          ''');
-        },
-      );
+      db = await openCycleTestDb();
+      DatabaseHelper.instance.overrideDatabaseForTesting(db);
+      final engine = CycleEngine();
+      final registry = EngineRegistry()..register(engine);
+      RitmoEngineBus.init(registry);
     });
 
     tearDown(() async {
@@ -147,10 +93,9 @@ void main() {
         now: now,
       );
 
-      // Verify cycle_confirmations updated
+      // Verify cycle_confirmations was synced and cleared for startDue
       final confs = await db.query('cycle_confirmations', where: 'id = ?', whereArgs: [reqId]);
-      expect(confs.first['answeredAt'], isNotNull);
-      expect(confs.first['answer'], equals(CycleConfirmationAnswer.startedToday.name));
+      expect(confs.isEmpty, isTrue);
 
       // Verify actual cycle_period inserted with isPredicted = 0
       final periods = await db.query('cycle_periods', where: 'startDate = ?', whereArgs: [targetDateStr]);
@@ -161,7 +106,7 @@ void main() {
     test('recordAnswer with endedToday sets endDate for open period', () async {
       final startDate = DateTime(2026, 8, 14);
       final endDate = DateTime(2026, 8, 19);
-      const periodId = 1;
+      const periodId = 'period_1';
 
       await db.insert('cycle_periods', {
         'id': periodId,

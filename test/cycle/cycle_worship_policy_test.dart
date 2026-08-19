@@ -1,63 +1,30 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/features/cycle/logic/cycle_worship_policy.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'test_helpers/cycle_test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
 
   group('CycleWorshipPolicy Tests (C-37)', () {
     late Database db;
 
     setUp(() async {
-      db = await databaseFactoryFfi.openDatabase(
-        inMemoryDatabasePath,
-        options: OpenDatabaseOptions(
-          version: 1,
-          onCreate: (db, version) async {
-            await db.execute('''
-              CREATE TABLE cycle_periods (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                startDate TEXT NOT NULL,
-                endDate TEXT,
-                periodDuration INTEGER,
-                cycleLength INTEGER,
-                notes TEXT,
-                suppressedPrayer INTEGER DEFAULT 0,
-                fastDebtCreated INTEGER DEFAULT 0,
-                createdAt INTEGER NOT NULL,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE app_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE fasting_debt (
-                id TEXT PRIMARY KEY,
-                dateIso TEXT NOT NULL,
-                isResolved INTEGER DEFAULT 0,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
-            await db.execute('''
-              CREATE TABLE worship_debts (
-                id TEXT PRIMARY KEY,
-                totalCount INTEGER NOT NULL,
-                remainingCount INTEGER NOT NULL,
-                isArchived INTEGER DEFAULT 0,
-                updatedAt INTEGER NOT NULL
-              )
-            ''');
-          },
-        ),
-      );
+      db = await openCycleTestDb();
+      DatabaseHelper.instance.overrideDatabaseForTesting(db);
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS worship_debts (
+          id TEXT PRIMARY KEY,
+          totalCount INTEGER NOT NULL,
+          remainingCount INTEGER NOT NULL,
+          isArchived INTEGER DEFAULT 0,
+          updatedAt INTEGER NOT NULL
+        );
+      ''');
     });
 
     tearDown(() async {
@@ -69,6 +36,7 @@ void main() {
       () async {
         // Active period today
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-08-17',
           'endDate': null,
           'createdAt': 1000,
@@ -85,7 +53,7 @@ void main() {
           await db.insert('app_settings', {
             'key': entry.key,
             'value': entry.value,
-          });
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
 
         final now = DateTime(2026, 8, 17);
@@ -117,6 +85,7 @@ void main() {
       () async {
         // Period started 8 days ago
         await db.insert('cycle_periods', {
+          'id': 'p1',
           'startDate': '2026-08-10',
           'endDate': null,
           'createdAt': 1000,

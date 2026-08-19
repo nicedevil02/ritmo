@@ -5,6 +5,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_pressable.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/reflection/models/reflection_models.dart';
 import 'package:shamsi_date/shamsi_date.dart';
@@ -236,60 +237,61 @@ class _DailyReflectionSheetState extends State<DailyReflectionSheet> {
                 ),
               ),
               const SizedBox(height: RitmoSpacing.sm),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              RitmoAdaptiveGrid(
+                minTileWidth: 58,
+                spacing: 6,
+                maxColumns: 5,
                 children: _moodOptions.map((opt) {
                   final score = opt['score'] as int;
                   final isSelected = _moodScore == score;
                   final optColor = opt['color'] as Color;
 
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3),
-                      child: RitmoPressable(
-                        onTap: () {
-                          RitmoHapticsPolicy.selection();
-                          setState(() {
-                            _moodScore = score;
-                          });
-                        },
-                        semanticLabel: opt['label'] as String,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? optColor.withValues(alpha: isDark ? 0.22 : 0.14)
-                                : colors.surfaceSunken.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(RitmoRadius.card),
-                            border: Border.all(
+                  return RitmoPressable(
+                    onTap: () {
+                      RitmoHapticsPolicy.selection();
+                      setState(() {
+                        _moodScore = score;
+                      });
+                    },
+                    semanticLabel: opt['label'] as String,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? optColor.withValues(alpha: isDark ? 0.22 : 0.14)
+                            : colors.surfaceSunken.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(RitmoRadius.card),
+                        border: Border.all(
+                          color: isSelected
+                              ? optColor
+                              : colors.border.withValues(alpha: 0.6),
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            opt['emoji'] as String,
+                            style: const TextStyle(fontSize: 22),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            opt['label'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                               color: isSelected
-                                  ? optColor
-                                  : colors.border.withValues(alpha: 0.6),
-                              width: isSelected ? 1.5 : 1.0,
+                                  ? (isDark ? Colors.white : optColor)
+                                  : colors.textSecondary,
                             ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                opt['emoji'] as String,
-                                style: const TextStyle(fontSize: 22),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                opt['label'] as String,
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                  color: isSelected
-                                      ? (isDark ? Colors.white : optColor)
-                                      : colors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   );

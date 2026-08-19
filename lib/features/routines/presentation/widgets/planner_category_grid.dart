@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 
 class PlannerCategoryGrid extends StatelessWidget {
@@ -102,122 +103,122 @@ class PlannerCategoryGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: categories.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.15,
-              ),
-            itemBuilder: (context, index) {
-              final item = categories[index];
-              final cat = item['cat']! as Category;
-              final title = item['title']! as String;
-              final icon = item['icon']! as IconData;
-              final color = item['color']! as Color;
-              final type = item['type'] as String?;
+            RitmoAdaptiveGrid(
+              minTileWidth: 90,
+              spacing: 10,
+              maxColumns: 4,
+              children: [
+                for (final item in categories) ...[
+                  () {
+                    final cat = item['cat']! as Category;
+                    final title = item['title']! as String;
+                    final icon = item['icon']! as IconData;
+                    final color = item['color']! as Color;
+                    final type = item['type'] as String?;
 
-              var isEnabled = true;
-              if (cat == Category.fitness) {
-                isEnabled = controller.moduleSportsEnabled;
-              } else if (cat == Category.religious) {
-                isEnabled = controller.moduleReligionEnabled;
-              } else if (cat == Category.medical) {
-                isEnabled = controller.moduleMedicineEnabled;
-              } else if (cat == Category.learning || cat == Category.free) {
-                isEnabled = controller.moduleCoursesEnabled;
-              } else if (cat == Category.custom) {
-                isEnabled = controller.moduleGoalsEnabled;
-              }
+                    var isEnabled = true;
+                    if (cat == Category.fitness) {
+                      isEnabled = controller.moduleSportsEnabled;
+                    } else if (cat == Category.religious) {
+                      isEnabled = controller.moduleReligionEnabled;
+                    } else if (cat == Category.medical) {
+                      isEnabled = controller.moduleMedicineEnabled;
+                    } else if (cat == Category.learning || cat == Category.free) {
+                      isEnabled = controller.moduleCoursesEnabled;
+                    } else if (cat == Category.custom) {
+                      isEnabled = controller.moduleGoalsEnabled;
+                    }
 
-              final isSuggested = !controller.hasManuallySelectedCategory && 
-                  controller.selectedCategory == cat && 
-                  controller.title.trim().isNotEmpty;
+                    final isSuggested = !controller.hasManuallySelectedCategory && 
+                        controller.selectedCategory == cat && 
+                        controller.title.trim().isNotEmpty;
 
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  controller.hasManuallySelectedCategory = true;
-                  controller.selectCategory(cat, context, type: type);
-                },
-                child: Opacity(
-                  opacity: isEnabled ? 1.0 : 0.55,
-                  child: Stack(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSuggested ? colors.goldAccent : color.withValues(alpha: 0.22),
-                            width: isSuggested ? 1.8 : 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isSuggested ? colors.goldAccent.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            )
-                          ],
-                        ),
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        controller.hasManuallySelectedCategory = true;
+                        controller.selectCategory(cat, context, type: type);
+                      },
+                      child: Opacity(
+                        opacity: isEnabled ? 1.0 : 0.55,
+                        child: Stack(
                           children: [
-                            Icon(icon, size: 40, color: color),
-                            const SizedBox(height: 8),
-                            Text(
-                              title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary.withValues(alpha: 0.85),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: colors.card.withValues(alpha: isDark ? 0.45 : 0.75),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSuggested ? colors.goldAccent : color.withValues(alpha: 0.22),
+                                  width: isSuggested ? 1.8 : 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isSuggested ? colors.goldAccent.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  )
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(icon, size: 36, color: color),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.textPrimary.withValues(alpha: 0.85),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            if (isSuggested)
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: colors.goldAccent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'پیشنهاد ✨',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!isEnabled)
+                              Positioned(
+                                top: 8,
+                                left: 8,
+                                child: Icon(
+                                  Icons.lock_rounded,
+                                  size: 13,
+                                  color: colors.textSecondary.withValues(alpha: 0.5),
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                      if (isSuggested)
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: colors.goldAccent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'پیشنهاد ✨',
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (!isEnabled)
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Icon(
-                            Icons.lock_rounded,
-                            size: 13,
-                            color: colors.textSecondary.withValues(alpha: 0.5),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                    );
+                  }(),
+                ],
+              ],
+            ),
           const SizedBox(height: 16),
           GestureDetector(
             onTap: () {

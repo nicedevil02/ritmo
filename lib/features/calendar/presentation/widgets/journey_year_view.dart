@@ -65,15 +65,29 @@ class JourneyYearView extends StatelessWidget {
             ),
             const SizedBox(height: RitmoSpacing.md),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 0.82,
-                ),
-                itemCount: 12,
-                itemBuilder: (context, index) {
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final widthClass = context.widthClass;
+                  final columns = switch (widthClass) {
+                    RitmoWidthClass.compact => 2,
+                    RitmoWidthClass.regular => 3,
+                    RitmoWidthClass.large => 3,
+                    RitmoWidthClass.expanded => 4,
+                  };
+                  const spacing = 10.0;
+                  final tileWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                  final scale = context.textScale;
+                  final tileHeight = (tileWidth * 1.2).clamp(130.0 * scale, 220.0 * scale);
+
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      mainAxisExtent: tileHeight,
+                    ),
+                    itemCount: 12,
+                    itemBuilder: (context, index) {
                   final monthIndex = index + 1;
                   final isCurrentMonth = (jalaliYear == jalaliNow.year && monthIndex == jalaliNow.month);
                   final isSelectedMonth = (jalaliYear == jalaliSelected.year && monthIndex == jalaliSelected.month);
@@ -198,8 +212,10 @@ class JourneyYearView extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-            ),
+              );
+            },
+          ),
+        ),
             const SizedBox(height: RitmoSpacing.sm),
 
             // Heatmap Legend (راهنمای نقشهٔ حرارتی)

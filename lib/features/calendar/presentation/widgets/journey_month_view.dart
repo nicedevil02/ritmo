@@ -105,16 +105,24 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
 
             // Month Days Grid
             Expanded(
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 5.0,
-                  mainAxisSpacing: 5.0,
-                  childAspectRatio: 0.82,
-                ),
-                itemCount: gridDays.length,
-                itemBuilder: (context, index) {
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const columns = 7;
+                  const spacing = 5.0;
+                  final rows = (gridDays.length / 7).ceil();
+                  final availableHeight = constraints.maxHeight - (rows - 1) * spacing;
+                  final cellHeight = rows > 0 ? (availableHeight / rows).clamp(38.0, 75.0) : 48.0;
+
+                  return GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      mainAxisExtent: cellHeight,
+                    ),
+                    itemCount: gridDays.length,
+                    itemBuilder: (context, index) {
                   final day = gridDays[index];
                   final jDay = Jalali.fromDateTime(day);
                   final isCurrentMonth = jDay.month == jalaliSelected.month;
@@ -276,12 +284,13 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                             ),
                           ),
                         ),
-                      );
                     },
                   );
                 },
-              ),
-            ),
+              );
+            },
+          ),
+        ),
 
             // Workload Legend Row
             Padding(

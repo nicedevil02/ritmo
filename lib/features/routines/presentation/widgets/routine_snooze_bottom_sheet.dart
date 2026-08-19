@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 
 class RoutineSnoozeBottomSheet extends StatefulWidget {
 
@@ -154,14 +155,11 @@ class _RoutineSnoozeBottomSheetState extends State<RoutineSnoozeBottomSheet> {
                 ),
                 const SizedBox(height: 16),
 
-                // Presets Grid Layout (2 columns)
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 2.2,
+                // Presets Adaptive Grid Layout (2 columns)
+                RitmoAdaptiveGrid(
+                  minTileWidth: RitmoBreakpoints.tileMinWidthRegular,
+                  spacing: 8,
+                  maxColumns: 2,
                   children: [
                     buildOptionCard(
                       label: '۵ دقیقه دیگر',

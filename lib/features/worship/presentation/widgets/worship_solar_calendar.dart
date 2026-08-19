@@ -338,20 +338,30 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
               // 3. MONTH GRID (7 Columns) with Modern Squircle Selection
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                child: GridView.builder(
+                child: LayoutBuilder(
                   key: ValueKey('${_monthData.year}-${_monthData.month}-collapsed:$_isCollapsed-week:$weekStart'),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: displayedDays.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    mainAxisSpacing: 5,
-                    crossAxisSpacing: 5,
-                    childAspectRatio: 0.98,
-                  ),
-                  itemBuilder: (context, index) {
-                    final day = displayedDays[index];
-                    return _buildDayCell(context, colors, day, isDark);
+                  builder: (context, constraints) {
+                    const columns = 7;
+                    const spacing = 5.0;
+                    final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                    final scale = context.textScale;
+                    final cellHeight = (cellWidth * 1.02).clamp(38.0 * scale, 58.0 * scale);
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: displayedDays.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        mainAxisSpacing: spacing,
+                        crossAxisSpacing: spacing,
+                        mainAxisExtent: cellHeight,
+                      ),
+                      itemBuilder: (context, index) {
+                        final day = displayedDays[index];
+                        return _buildDayCell(context, colors, day, isDark);
+                      },
+                    );
                   },
                 ),
               ),

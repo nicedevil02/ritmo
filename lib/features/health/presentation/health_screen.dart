@@ -10,6 +10,7 @@ import 'package:ritmo/core/analytics/health_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
 import 'package:ritmo/features/health/presentation/pages/health_insights_page.dart';
@@ -614,13 +615,10 @@ class _HealthScreenState extends State<HealthScreen> {
   }
 
   Widget _buildGridMenu() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 1.1,
+    return RitmoAdaptiveGrid(
+      minTileWidth: 140,
+      spacing: 16,
+      maxColumns: 2,
       children: [
         _buildHubCard(
           title: 'داروها',
@@ -824,14 +822,12 @@ class _HealthScreenState extends State<HealthScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.1,
+        RitmoAdaptiveGrid(
+          minTileWidth: 140,
+          spacing: 16,
+          maxColumns: 2,
           children: List.generate(4, (_) => Container(
+            height: 120,
             decoration: BoxDecoration(
               color: colors.card.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(28),

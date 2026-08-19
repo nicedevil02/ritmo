@@ -59,7 +59,9 @@ Future<void> expectNoOverflow(
   };
 
   try {
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 100));
   } finally {
     FlutterError.onError = previousOnError;
   }
@@ -99,4 +101,15 @@ void testAcrossViewports(
       });
     }
   }
+}
+
+/// متن‌های مرجع بدترین حالت برای تست چیدمان فارسی.
+abstract final class kWorstCaseFa {
+  static const String weekday = 'چهارشنبه';
+  static const String month = 'اردیبهشت';
+  static const String longLabel = 'برنامه‌ریزی جامع و هوشمند برای تمام روزهای هفته';
+  static const String twoLinesLabel = 'پیگیری وضعیت سلامتی و یادآوری داروها';
+  static const String fiveDigitNumber = '۱۲۳۴۵';
+  static const String currency = '۱۲۵٬۰۰۰ تومان';
+  static const String city = 'بندرعباس';
 }

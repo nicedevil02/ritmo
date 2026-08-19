@@ -11,6 +11,7 @@ import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
@@ -455,31 +456,45 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       return _buildCategorySection(title: leftTitle, cards: leftCards, colors: colors);
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 320) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildCategoryHeader(rightTitle, colors),
-              const SizedBox(height: 12),
-              ...rightCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+              _buildCategorySection(title: rightTitle, cards: rightCards, colors: colors),
+              const SizedBox(height: 24),
+              _buildCategorySection(title: leftTitle, cards: leftCards, colors: colors),
             ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildCategoryHeader(leftTitle, colors),
-              const SizedBox(height: 12),
-              ...leftCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
-            ],
-          ),
-        ),
-      ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCategoryHeader(rightTitle, colors),
+                  const SizedBox(height: 12),
+                  ...rightCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCategoryHeader(leftTitle, colors),
+                  const SizedBox(height: 12),
+                  ...leftCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -494,13 +509,14 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       children: [
         _buildCategoryHeader(title, colors),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: cards,
+        RitmoAdaptiveGrid(
+          minTileWidth: 140,
+          spacing: 16,
+          maxColumns: 2,
+          children: cards.map((card) => AspectRatio(
+            aspectRatio: 1.0,
+            child: card,
+          )).toList(),
         ),
       ],
     );

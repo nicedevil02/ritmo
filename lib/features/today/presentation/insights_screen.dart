@@ -27,6 +27,7 @@ import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/premium_gate.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/ai_deep_analysis_dialog.dart';
 import 'package:ritmo/features/today/presentation/widgets/insights_time_window_ruler.dart';
 import 'package:ritmo/features/today/presentation/widgets/life_pulse_sparkline_chart.dart';
@@ -1361,13 +1362,10 @@ ${jsonEncode(digest.json)}
       );
     }
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.4,
+    return RitmoAdaptiveGrid(
+      minTileWidth: 140,
+      spacing: 12,
+      maxColumns: 2,
       children: activeEntries.map((e) {
         final domain = e.key;
         final name = _domainNamesFarsi[domain] ?? domain;
@@ -1378,12 +1376,19 @@ ${jsonEncode(digest.json)}
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(name, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      ),
+                    ),
                     Container(
                       width: 6,
                       height: 6,
@@ -1391,6 +1396,7 @@ ${jsonEncode(digest.json)}
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1411,7 +1417,7 @@ ${jsonEncode(digest.json)}
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: color,
-                          ),
+                        ),
                       ),
                     ),
                   ],

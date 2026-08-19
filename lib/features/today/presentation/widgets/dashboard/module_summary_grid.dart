@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_pressable.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
 
 class ModuleSummaryGrid extends StatelessWidget {
@@ -27,22 +28,22 @@ class ModuleSummaryGrid extends StatelessWidget {
             ),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: summaries.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            mainAxisExtent: 118,
-          ),
-          itemBuilder: (context, i) => _ModuleSummaryCard(
-            summary: summaries[i],
-            onTap: () => onModuleTap(summaries[i].moduleId),
-            isDark: isDark,
-            colors: colors,
-          ),
+        RitmoAdaptiveGrid(
+          minTileWidth: 140,
+          spacing: 10,
+          maxColumns: 2,
+          children: [
+            for (final summary in summaries)
+              SizedBox(
+                height: (118.0 * context.textScale).clamp(118.0, 160.0),
+                child: _ModuleSummaryCard(
+                  summary: summary,
+                  onTap: () => onModuleTap(summary.moduleId),
+                  isDark: isDark,
+                  colors: colors,
+                ),
+              ),
+          ],
         ),
       ],
     );

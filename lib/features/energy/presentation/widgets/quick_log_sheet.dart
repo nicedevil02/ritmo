@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
@@ -107,14 +108,18 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
           style: RitmoTextStyles.titleMedium(colors.textPrimary),
         ),
         const SizedBox(height: 8),
-        Row(
+        RitmoAdaptiveGrid(
+          minTileWidth: 80,
+          spacing: 8,
+          maxColumns: 3,
           children: EnergyLevel.values.map((level) {
             final isSelected = _selectedEnergy == level;
-            Color activeColor;
-            String emoji;
+            final Color activeColor;
+            final String emoji;
+
             if (level == EnergyLevel.low) {
               activeColor = colors.cautionAccent;
-              emoji = '🥱';
+              emoji = '🪫';
             } else if (level == EnergyLevel.medium) {
               activeColor = colors.primary;
               emoji = '🔋';
@@ -123,46 +128,47 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               emoji = '⚡';
             }
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    if (_selectedEnergy == level) {
-                      _selectedEnergy = null;
-                    } else {
-                      _selectedEnergy = level;
-                    }
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? activeColor.withValues(alpha: 0.15)
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(
-                      color: isSelected ? activeColor : colors.border,
-                      width: 1.5,
-                    ),
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  if (_selectedEnergy == level) {
+                    _selectedEnergy = null;
+                  } else {
+                    _selectedEnergy = level;
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? activeColor.withValues(alpha: 0.15)
+                      : colors.surface,
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  border: Border.all(
+                    color: isSelected ? activeColor : colors.border,
+                    width: 1.5,
                   ),
-                  child: Column(
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 22)),
-                      const SizedBox(height: 4),
-                      Text(
-                        level.label,
-                        style: RitmoTextStyles.caption(
-                          isSelected ? activeColor : colors.textSecondary,
-                        ).copyWith(
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(height: 4),
+                    Text(
+                      level.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: RitmoTextStyles.caption(
+                        isSelected ? activeColor : colors.textSecondary,
+                      ).copyWith(
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -176,62 +182,63 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
           style: RitmoTextStyles.titleMedium(colors.textPrimary),
         ),
         const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            childAspectRatio: 1.1,
-            crossAxisSpacing: 6,
-            mainAxisSpacing: 6,
-          ),
-          itemCount: Mood.values.length,
-          itemBuilder: (context, index) {
-            final mood = Mood.values[index];
-            final isSelected = _selectedMood == mood;
-
-            return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  if (_selectedMood == mood) {
-                    _selectedMood = null;
-                  } else {
-                    _selectedMood = mood;
-                    _valence = mood.defaultValence.toDouble();
-                  }
-                });
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? colors.reflectionAccent.withValues(alpha: 0.15)
-                      : colors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? colors.reflectionAccent : colors.border,
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(mood.emoji, style: const TextStyle(fontSize: 22)),
-                    const SizedBox(height: 4),
-                    Text(
-                      mood.label,
-                      style: RitmoTextStyles.caption(
-                        isSelected ? colors.reflectionAccent : colors.textSecondary,
-                      ).copyWith(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
+        RitmoAdaptiveGrid(
+          minTileWidth: 70,
+          spacing: 8,
+          maxColumns: 4,
+          children: [
+            for (final mood in Mood.values) ...[
+              () {
+                final isSelected = _selectedMood == mood;
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      if (_selectedMood == mood) {
+                        _selectedMood = null;
+                      } else {
+                        _selectedMood = mood;
+                        _valence = mood.defaultValence.toDouble();
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? colors.reflectionAccent.withValues(alpha: 0.15)
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? colors.reflectionAccent : colors.border,
+                        width: 1.5,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(mood.emoji, style: const TextStyle(fontSize: 22)),
+                        const SizedBox(height: 4),
+                        Text(
+                          mood.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: RitmoTextStyles.caption(
+                            isSelected ? colors.reflectionAccent : colors.textSecondary,
+                          ).copyWith(
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }(),
+            ],
+          ],
         ),
         const SizedBox(height: RitmoSpacing.lg),
 
@@ -239,10 +246,13 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'میزان خوشایی (رضایت ذهنی):',
-              style: RitmoTextStyles.titleMedium(colors.textPrimary),
+            Expanded(
+              child: Text(
+                'میزان خوشایی (رضایت ذهنی):',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+              ),
             ),
+            const SizedBox(width: 8),
             Text(
               '${RitmoNumber.faInt(_valence.toInt())} از ۵',
               style: RitmoTextStyles.label(colors.reflectionAccent),

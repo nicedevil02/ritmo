@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Helper utility for opening a custom Jalali (Shamsi) glassmorphic date picker dialog.
@@ -394,10 +395,8 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
       children: [
         // Weekday labels
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: _weekdayLabels.map((lbl) {
-            return SizedBox(
-              width: 36,
+            return Expanded(
               child: Text(
                 lbl,
                 textAlign: TextAlign.center,
@@ -412,79 +411,90 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
           }).toList(),
         ),
         const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-          ),
-          itemCount: totalCells,
-          itemBuilder: (context, index) {
-            if (index < startOffset) {
-              return const SizedBox();
-            }
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const columns = 7;
+            const spacing = 6.0;
+            final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            final scale = context.textScale;
+            final cellHeight = (cellWidth * 0.95).clamp(34.0 * scale, 52.0 * scale);
 
-            final dayNum = index - startOffset + 1;
-            final cellDate = Jalali(_viewDate.year, _viewDate.month, dayNum);
-
-            // Bounds check
-            final cellDateTimeRaw = cellDate.toDateTime();
-            final cellDateTime = DateTime(
-              cellDateTimeRaw.year,
-              cellDateTimeRaw.month,
-              cellDateTimeRaw.day,
-            );
-            final limitFirst = DateTime(
-              widget.firstDate.year,
-              widget.firstDate.month,
-              widget.firstDate.day,
-            );
-            final limitLast = DateTime(
-              widget.lastDate.year,
-              widget.lastDate.month,
-              widget.lastDate.day,
-            );
-            final isEnabled =
-                !cellDateTime.isBefore(limitFirst) &&
-                !cellDateTime.isAfter(limitLast);
-            final isSelected =
-                cellDate.year == _selectedDate.year &&
-                cellDate.month == _selectedDate.month &&
-                cellDate.day == _selectedDate.day;
-
-            return InkWell(
-              onTap: isEnabled
-                  ? () {
-                      setState(() {
-                        _selectedDate = cellDate;
-                      });
-                    }
-                  : null,
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected ? colors.primary : Colors.transparent,
-                ),
-                child: Text(
-                  '$dayNum',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 14,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelected
-                        ? Colors.white
-                        : (isEnabled
-                              ? colors.textPrimary
-                              : colors.textSecondary.withValues(alpha: 0.3)),
-                  ),
-                ),
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                mainAxisSpacing: spacing,
+                crossAxisSpacing: spacing,
+                mainAxisExtent: cellHeight,
               ),
+              itemCount: totalCells,
+              itemBuilder: (context, index) {
+                if (index < startOffset) {
+                  return const SizedBox();
+                }
+
+                final dayNum = index - startOffset + 1;
+                final cellDate = Jalali(_viewDate.year, _viewDate.month, dayNum);
+
+                // Bounds check
+                final cellDateTimeRaw = cellDate.toDateTime();
+                final cellDateTime = DateTime(
+                  cellDateTimeRaw.year,
+                  cellDateTimeRaw.month,
+                  cellDateTimeRaw.day,
+                );
+                final limitFirst = DateTime(
+                  widget.firstDate.year,
+                  widget.firstDate.month,
+                  widget.firstDate.day,
+                );
+                final limitLast = DateTime(
+                  widget.lastDate.year,
+                  widget.lastDate.month,
+                  widget.lastDate.day,
+                );
+                final isEnabled =
+                    !cellDateTime.isBefore(limitFirst) &&
+                    !cellDateTime.isAfter(limitLast);
+                final isSelected =
+                    cellDate.year == _selectedDate.year &&
+                    cellDate.month == _selectedDate.month &&
+                    cellDate.day == _selectedDate.day;
+
+                return InkWell(
+                  onTap: isEnabled
+                      ? () {
+                          setState(() {
+                            _selectedDate = cellDate;
+                          });
+                        }
+                      : null,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? colors.primary : Colors.transparent,
+                    ),
+                    child: Text(
+                      '$dayNum',
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 14,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.white
+                            : (isEnabled
+                                  ? colors.textPrimary
+                                  : colors.textSecondary.withValues(alpha: 0.3)),
+                      ),
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
@@ -546,62 +556,64 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
           ),
         ),
         const SizedBox(height: 12),
-        // Months grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2.2,
-          ),
-          itemCount: 12,
-          itemBuilder: (context, index) {
-            final monthIndex = index + 1;
-            final monthName = _persianMonths[index];
-            final isSelectedMonth =
-                _viewDate.month == monthIndex &&
-                _viewDate.year == _selectedYearPicker;
+        // Months adaptive grid
+        RitmoAdaptiveGrid(
+          minTileWidth: 85,
+          spacing: 8,
+          maxColumns: 3,
+          children: [
+            for (var index = 0; index < 12; index++) ...[
+              () {
+                final monthIndex = index + 1;
+                final monthName = _persianMonths[index];
+                final isSelectedMonth =
+                    _viewDate.month == monthIndex &&
+                    _viewDate.year == _selectedYearPicker;
 
-            return InkWell(
-              onTap: () {
-                setState(() {
-                  _viewDate = Jalali(_selectedYearPicker, monthIndex);
-                  _showYearMonthPicker = false;
-                });
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _viewDate = Jalali(_selectedYearPicker, monthIndex);
+                      _showYearMonthPicker = false;
+                    });
+                  },
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelectedMonth
-                        ? colors.primary
-                        : colors.border.withValues(alpha: 0.4),
-                    width: 1.5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelectedMonth
+                            ? colors.primary
+                            : colors.border.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                      color: isSelectedMonth
+                          ? colors.primary.withValues(alpha: 0.08)
+                          : Colors.transparent,
+                    ),
+                    child: Text(
+                      monthName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 13,
+                        fontWeight: isSelectedMonth
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelectedMonth
+                            ? colors.primary
+                            : colors.textPrimary,
+                      ),
+                    ),
                   ),
-                  color: isSelectedMonth
-                      ? colors.primary.withValues(alpha: 0.08)
-                      : Colors.transparent,
-                ),
-                child: Text(
-                  monthName,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 13,
-                    fontWeight: isSelectedMonth
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelectedMonth
-                        ? colors.primary
-                        : colors.textPrimary,
-                  ),
-                ),
-              ),
-            );
-          },
+                );
+              }(),
+            ],
+          ],
         ),
       ],
     );

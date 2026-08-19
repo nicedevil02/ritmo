@@ -763,11 +763,15 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
                             const SizedBox(height: 12),
 
                             // Actions Row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 // Stepper for Daily Target
                                 Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
                                       'هدف روزانه: ',
@@ -809,6 +813,7 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
 
                                 // Pay Buttons (Batch + Single)
                                 Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Custom/Batch button
                                     InkWell(

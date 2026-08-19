@@ -41,17 +41,25 @@ class CycleCalendarGrid extends StatelessWidget {
 
     final todayJalali = Jalali.fromDateTime(CycleClock.now);
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        childAspectRatio: 0.96,
-      ),
-      itemCount: emptyCells + monthLength,
-      itemBuilder: (context, index) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const columns = 7;
+        const spacing = 6.0;
+        final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final scale = context.textScale;
+        final cellHeight = (cellWidth * 1.05).clamp(38.0 * scale, 60.0 * scale);
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            mainAxisExtent: cellHeight,
+          ),
+          itemCount: emptyCells + monthLength,
+          itemBuilder: (context, index) {
         if (index < emptyCells) {
           return const SizedBox();
         }
@@ -227,7 +235,9 @@ class CycleCalendarGrid extends StatelessWidget {
         );
       },
     );
-  }
+  },
+);
+}
 
   String _buildSemanticsLabel(
     Jalali jDay,

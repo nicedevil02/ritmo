@@ -19,7 +19,6 @@ class CycleSettings {
   static const String keyConsentDashboard = 'cycle_consent_dashboard';
   static const String keyConsentEnergy = 'cycle_consent_energy';
   static const String keyConsentSleep = 'cycle_consent_sleep';
-  static const String keyFertilityVisible = 'cycle_fertility_visible';
   static const String keyPmsWindowDays = 'cycle_pms_window_days';
   static const String keyReminderLeadDays = 'cycle_reminder_lead_days';
   static const String keyReminderHour = 'cycle_reminder_hour';
@@ -171,13 +170,6 @@ class CycleSettings {
       if (aliasVal == 'true') return true;
     }
     return true; // fail-secure default
-  }
-
-  /// Returns whether fertility and ovulation indicators should be visible.
-  static bool isFertilityVisible(Map<String, dynamic> settings) {
-    final raw = settings[keyFertilityVisible]?.toString().toLowerCase();
-    if (raw == 'false') return false;
-    return true; // default visible
   }
 
   /// Parses lead days from comma-separated string, clamped to [1, 14], sorted descending.

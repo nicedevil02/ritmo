@@ -162,7 +162,7 @@ void main() {
     );
 
     test(
-      'F-13: fertilityVisible = false suppresses ovulation and fertile window in forecast',
+      'F-13: Ovulation and fertile window are always populated in forecast',
       () async {
         await db.insert('cycle_periods', {
           'id': '1',
@@ -172,7 +172,6 @@ void main() {
         final settings = {
           'user_gender': 'FEMALE',
           'module_cycle_enabled': 'true',
-          'cycle_fertility_visible': 'false',
         };
         final now = DateTime(2026, 1, 15);
         final output = await engine.calculate(
@@ -180,12 +179,12 @@ void main() {
         );
         expect(output.forecast.isNotEmpty, isTrue);
         for (final cycle in output.forecast) {
-          expect(cycle.ovulationDay, isNull);
-          expect(cycle.fertileStart, isNull);
-          expect(cycle.fertileEnd, isNull);
+          expect(cycle.ovulationDay, isNotNull);
+          expect(cycle.fertileStart, isNotNull);
+          expect(cycle.fertileEnd, isNotNull);
         }
-        expect(output.ovulationDay, isNull);
-        expect(output.fertileWindowStart, isNull);
+        expect(output.ovulationDay, isNotNull);
+        expect(output.fertileWindowStart, isNotNull);
       },
     );
 

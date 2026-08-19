@@ -1145,7 +1145,6 @@ class MigrationV19 extends Migration {
 
     final newSettings = {
       'cycle_consent_sleep': 'false',
-      'cycle_fertility_visible': 'false',
       'cycle_pms_window_days': '4',
       'cycle_length_days': avgLength,
       'period_duration_days': avgPeriod,

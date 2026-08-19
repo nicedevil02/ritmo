@@ -126,7 +126,6 @@ void main() {
         loggedDayKeys: {},
         forecast: [],
         lutealPhaseDays: 14,
-        isFertilityVisible: true,
       );
 
       // Check recorded period
@@ -142,27 +141,6 @@ void main() {
 
       // Day outside fertile window (e.g. 2026-07-01) should be normal
       expect(marks['2026-07-01']?.kind, equals(CycleDayKind.normal));
-    });
-
-    test('Historical Fertile Windows: isFertilityVisible: false suppresses ovulation and fertile days in past cycles', () {
-      final month = Jalali(1405, 4, 1);
-      final periods = [
-        {'startDate': '2026-06-25', 'endDate': '2026-06-30'},
-        {'startDate': '2026-07-23', 'endDate': '2026-07-28'},
-      ];
-
-      final marks = CycleCalendarView.buildMonthMarks(
-        month: month,
-        periods: periods,
-        loggedDayKeys: {},
-        forecast: [],
-        lutealPhaseDays: 14,
-        isFertilityVisible: false,
-      );
-
-      expect(marks['2026-06-25']?.kind, equals(CycleDayKind.recordedPeriod));
-      expect(marks['2026-07-09']?.kind, equals(CycleDayKind.normal));
-      expect(marks['2026-07-05']?.kind, equals(CycleDayKind.normal));
     });
 
     test('Historical Fertile Windows: handles long past cycle (e.g. 50 days) linking ovulation to next period start', () {
@@ -184,7 +162,6 @@ void main() {
         loggedDayKeys: {},
         forecast: [],
         lutealPhaseDays: 14,
-        isFertilityVisible: true,
       );
 
       expect(marks['2026-06-29']?.kind, equals(CycleDayKind.ovulation));
@@ -230,7 +207,6 @@ void main() {
         forecast: forecast,
         avgCycleLength: 28,
         lutealPhaseDays: 14,
-        isFertilityVisible: true,
       );
 
       expect(marks['2026-07-13']?.kind, equals(CycleDayKind.ovulation));

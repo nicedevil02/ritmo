@@ -52,6 +52,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v110_movement
 import 'package:ritmo/core/database/migration/migrations/migration_v111_medication_identity_backfill.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v112_medication_profiles.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v113_cycle_confirmations.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v114_cycle_fertility_cleanup.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -167,6 +168,7 @@ class MigrationRunner {
     MigrationV111MedicationIdentityBackfill(), // Medication Identity backfill (Phase 0)
     MigrationV112MedicationProfiles(), // Medication Profiles (Phase 1)
     MigrationV113CycleConfirmations(), // Cycle Confirmations and settings (Lifecycle & Privacy)
+    MigrationV114CycleFertilityCleanup(), // Cycle Fertility setting cleanup
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

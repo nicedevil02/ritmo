@@ -116,7 +116,6 @@ class SeedService {
       'assistant_briefing_enabled': 'true',
       'assistant_proactive_enabled': 'true',
       'cycle_consent_sleep': 'false',
-      'cycle_fertility_visible': 'false',
       'cycle_pms_window_days': '4',
       'cycle_length_days': '28',
       'period_duration_days': '6',

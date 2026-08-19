@@ -438,7 +438,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final actualAnchorStart = CycleDateContract.parseDayKey(
       periodRows.last['startDate']?.toString(),
     );
-    final fertilityVisible = CycleSettings.isFertilityVisible(appSettings);
 
     // 7. Find current status based on target date `now`
     Map<String, dynamic>? currentPeriodRow;
@@ -481,7 +480,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         discardedOutliers: discardedOutliers,
         anchorStart: actualAnchorStart ?? firstStart,
         horizonCycles: input.horizonCycles,
-        fertilityVisible: fertilityVisible,
       );
     }
 
@@ -511,7 +509,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       discardedOutliers: discardedOutliers,
       anchorStart: actualAnchorStart ?? currentPeriodStart,
       horizonCycles: input.horizonCycles,
-      fertilityVisible: fertilityVisible,
     );
   }
 
@@ -573,7 +570,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     required int discardedOutliers,
     required int horizonCycles,
     required DateTime now,
-    required bool fertilityVisible,
     bool isDelayedOrStale = false,
   }) {
     final cleanNow = CycleDateContract.cleanDate(now);
@@ -656,14 +652,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         }
       }
 
-      DateTime? ovulation;
-      DateTime? fertileStart;
-      DateTime? fertileEnd;
-      if (fertilityVisible) {
-        ovulation = start.subtract(Duration(days: lutealDays));
-        fertileStart = ovulation.subtract(const Duration(days: 5));
-        fertileEnd = ovulation.add(const Duration(days: 1));
-      }
+      final ovulation = start.subtract(Duration(days: lutealDays));
+      final fertileStart = ovulation.subtract(const Duration(days: 5));
+      final fertileEnd = ovulation.add(const Duration(days: 1));
 
       final pmsStart = start.subtract(Duration(days: pmsWindowDays));
       final pmsEnd = start.subtract(const Duration(days: 1));
@@ -709,7 +700,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     int discardedOutliers = 0,
     DateTime? anchorStart,
     int horizonCycles = defaultHorizonCycles,
-    bool fertilityVisible = true,
   }) {
     final cleanNow = CycleDateContract.cleanDate(now);
     final cleanStart = CycleDateContract.cleanDate(startDate);
@@ -835,7 +825,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       discardedOutliers: discardedOutliers,
       horizonCycles: horizonCycles,
       now: cleanNow,
-      fertilityVisible: fertilityVisible,
       isDelayedOrStale: needsUserAttention,
     );
 
@@ -890,7 +879,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     required List<int> cycleLengths,
     DateTime? anchorStart,
     int horizonCycles = defaultHorizonCycles,
-    bool fertilityVisible = true,
   }) {
     final regularity = _computeRegularity(cycleLengths);
     return _evaluateWithStart(
@@ -908,7 +896,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       cycleLengths,
       anchorStart: anchorStart,
       horizonCycles: horizonCycles,
-      fertilityVisible: fertilityVisible,
     );
   }
 
@@ -1008,10 +995,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         input.appSettings[CycleSettings.keyPmsWindowDays] ??
         CycleSettings.defaultPmsWindowDays.toString();
     final isPregnancy = CycleSettings.isPregnancyMode(input.appSettings);
-    final fertilityVisible =
-        input.appSettings[CycleSettings.keyFertilityVisible] ?? 'true';
     final horizon = input.horizonCycles;
-    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$fertilityVisible|$horizon';
+    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$horizon';
   }
 
   @override
@@ -1056,7 +1041,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final pmsWindowDays = int.tryParse(settings[CycleSettings.keyPmsWindowDays] ?? '4') ??
         CycleSettings.defaultPmsWindowDays;
     final lutealDays = CycleSettings.getLutealPhase(settings);
-    final fertilityVisible = CycleSettings.isFertilityVisible(settings);
 
     return buildForecast(
       anchorStart: cleanAnchor,
@@ -1072,7 +1056,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       isDelayedOrStale: isDelayedOrStale,
       lutealDays: lutealDays,
       pmsWindowDays: pmsWindowDays,
-      fertilityVisible: fertilityVisible,
     );
   }
 
@@ -1090,7 +1073,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     final pmsWindow = settings[CycleSettings.keyPmsWindowDays] ??
         CycleSettings.defaultPmsWindowDays.toString();
     final isPregnancy = CycleSettings.isPregnancyMode(settings);
-    final fertilityVisible = settings[CycleSettings.keyFertilityVisible] ?? 'true';
-    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$fertilityVisible|$horizonCycles';
+    return '$dayStamp|$cycleLen|$periodDur|$luteal|$pmsWindow|$isPregnancy|$horizonCycles';
   }
 }

@@ -20,6 +20,7 @@ enum ChatGptBridgeStatus {
   ready,
   generating,
   cloudflareChallenge,
+  vpnRequired,
   error,
 }
 
@@ -119,6 +120,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   /// Sentinel prefix emitted when response accumulator detects a non-prefix rewrite (A-12).
   static const String rewriteSentinel = '\u0000RITMO_REWRITE\u0000';
 
+  /// فلگ موقت کنترل استریمینگ برای انتقال پیام‌ها از ChatGPT به صفحه چت دستیار.
+  /// در صورت false بودن، پیام‌ها به صورت یکپارچه پس از اتمام یا بررسی موفق منتقل می‌شوند.
+  /// برای فعال‌سازی مجدد استریمینگ، این مقدار را به true تغییر دهید.
+  static const bool enableWebBridgeStreaming = false;
+
   static const String targetUrl = 'https://chatgpt.com/';
   static const Duration inactivityTimeout = ChatGptBridgeTimeouts.inactivityTimeout;
 
@@ -137,12 +143,23 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   final ValueNotifier<bool> _cloudflareNotifier = ValueNotifier<bool>(false);
   ValueListenable<bool> get cloudflareNotifier => _cloudflareNotifier;
 
+  final ValueNotifier<bool> _vpnRequiredNotifier = ValueNotifier<bool>(false);
+  ValueListenable<bool> get vpnRequiredNotifier => _vpnRequiredNotifier;
+
+  String? _lastRayId;
+  String? get lastRayId => _lastRayId;
+
+  String? _lastBlockedIp;
+  String? get lastBlockedIp => _lastBlockedIp;
+
   final ValueNotifier<ChatGptBridgeStatus> _statusNotifier =
       ValueNotifier<ChatGptBridgeStatus>(ChatGptBridgeStatus.idle);
   ValueListenable<ChatGptBridgeStatus> get statusNotifier => _statusNotifier;
 
   Timer? _inactivityTimer;
   Timer? _generationTimer;
+  Timer? _checkpointTimer1;
+  Timer? _checkpointTimer2;
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
 
@@ -254,6 +271,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _lastChunkSource = null;
     _lastAnswerWasPartial = false;
     _lastEmptyReasonDetail = null;
+    _lastRayId = null;
+    _lastBlockedIp = null;
+    _vpnRequiredNotifier.value = false;
+    _cloudflareNotifier.value = false;
     _accumulator.reset();
     _currentStreamController?.close();
     _currentStreamController = null;
@@ -308,6 +329,16 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   void _setStatus(ChatGptBridgeStatus newStatus) {
     _status = newStatus;
     _statusNotifier.value = newStatus;
+    if (newStatus == ChatGptBridgeStatus.cloudflareChallenge) {
+      _cloudflareNotifier.value = true;
+    } else if (_cloudflareNotifier.value && newStatus == ChatGptBridgeStatus.ready) {
+      _cloudflareNotifier.value = false;
+    }
+    if (newStatus == ChatGptBridgeStatus.vpnRequired) {
+      _vpnRequiredNotifier.value = true;
+    } else if (_vpnRequiredNotifier.value && newStatus == ChatGptBridgeStatus.ready) {
+      _vpnRequiredNotifier.value = false;
+    }
     RitmoLog.debug('ChatGptWebBridgeManager', 'Status changed to: $newStatus');
   }
 
@@ -324,6 +355,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     // WEB-01: Protect cloudflare challenge in progress
     if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
       RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted skipped: cloudflare challenge in progress (controller exists: ${_controller != null})');
+      return _controller != null;
+    }
+
+    // Protect vpnRequired in progress
+    if (_status == ChatGptBridgeStatus.vpnRequired) {
+      RitmoLog.debug('ChatGptWebBridgeManager', 'ensureBooted skipped: vpnRequired in progress (controller exists: ${_controller != null})');
       return _controller != null;
     }
 
@@ -556,6 +593,9 @@ if (typeof window.__ritmo_resume === 'function') {
     final oldController = _controller;
     _controller = null;
     _cloudflareNotifier.value = false;
+    _vpnRequiredNotifier.value = false;
+    _lastRayId = null;
+    _lastBlockedIp = null;
     _setStatus(ChatGptBridgeStatus.idle);
 
     if (oldController != null) {
@@ -591,7 +631,10 @@ if (typeof window.__ritmo_resume === 'function') {
     final start = DateTime.now();
     while (DateTime.now().difference(start) < timeout) {
       if (_status == ChatGptBridgeStatus.ready) return true;
-      if (_status == ChatGptBridgeStatus.cloudflareChallenge) return false;
+      if (_status == ChatGptBridgeStatus.cloudflareChallenge ||
+          _status == ChatGptBridgeStatus.vpnRequired) {
+        return false;
+      }
       await Future.delayed(const Duration(milliseconds: 300));
     }
     return _status == ChatGptBridgeStatus.ready;
@@ -611,7 +654,8 @@ if (typeof window.__ritmo_resume === 'function') {
 
       // WEB-07: Drop stale events belonging to previous or mismatched requests
       if (event is! BridgeReadyEvent &&
-          event is! BridgeCloudflareEvent) {
+          event is! BridgeCloudflareEvent &&
+          event is! BridgeVpnRequiredEvent) {
         final reqId = switch (event) {
           BridgeChunkEvent(:final requestId) => requestId,
           BridgeDoneEvent(:final requestId) => requestId,
@@ -696,6 +740,26 @@ if (typeof window.__ritmo_resume === 'function') {
             note: reason,
             level: BridgeTraceLevel.warn,
           );
+
+        case BridgeVpnRequiredEvent(:final reason, :final rayId, :final ip):
+          _lastRayId = rayId;
+          _lastBlockedIp = ip;
+          if (_status != ChatGptBridgeStatus.vpnRequired) {
+            _setStatus(ChatGptBridgeStatus.vpnRequired);
+            RitmoLog.warning(
+              'ChatGptWebBridge',
+              'VPN / Geo-block detected: reason=$reason, rayId=$rayId, ip=$ip',
+            );
+          }
+          BridgeTraceLog.instance.addEntry(
+            type: 'vpn_required',
+            source: source,
+            note: '$reason (rayId: $rayId, ip: $ip)',
+            level: BridgeTraceLevel.error,
+          );
+          if (_status == ChatGptBridgeStatus.generating && _accumulator.isEmpty) {
+            _failGeneration(WebBridgeException.vpnRequired(rayId: rayId, ip: ip));
+          }
 
         case BridgeResumedEvent(:final stage, :final requestId, :final recoveredLength):
           RitmoLog.debug(
@@ -1045,6 +1109,12 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   }
 
   EmptyResponseReason _computeEmptyResponseReason() {
+    if (_status == ChatGptBridgeStatus.vpnRequired) {
+      return EmptyResponseReason(
+        messageFa: 'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ). لطفاً فیلترشکن یا تحریم‌شکن خود را فعال کنید.${_lastRayId != null ? ' (Ray ID: $_lastRayId)' : ''}',
+        technicalDetail: 'status: vpnRequired (Ray ID: $_lastRayId, IP: $_lastBlockedIp)',
+      );
+    }
     if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
       return const EmptyResponseReason(
         messageFa: 'برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را کامل کنید.',
@@ -1150,10 +1220,12 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     if (result == null) return;
 
-    if (result.isRewrite) {
-      controller.add(rewriteSentinel + result.fullText);
-    } else {
-      controller.add(result.delta);
+    if (enableWebBridgeStreaming) {
+      if (result.isRewrite) {
+        controller.add(rewriteSentinel + result.fullText);
+      } else {
+        controller.add(result.delta);
+      }
     }
 
     _pendingRequest?.stage = PendingRequestStage.streaming;
@@ -1171,6 +1243,10 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   void _finishGeneration(String? fullText, {bool isPartial = false}) {
     _generationTimer?.cancel();
     _generationTimer = null;
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = null;
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = null;
 
     if (fullText != null && fullText.isNotEmpty) {
       _emitChunk(fullText, null, source: _lockedSource?.name ?? BridgeSource.harvest.name, isHarvest: true);
@@ -1198,6 +1274,12 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     );
 
     final controller = _currentStreamController;
+    if (!enableWebBridgeStreaming && controller != null && !controller.isClosed) {
+      if (finalText.isNotEmpty) {
+        controller.add(finalText);
+      }
+    }
+
     _setStatus(ChatGptBridgeStatus.ready);
     _currentStreamController = null;
     _accumulator.reset();
@@ -1216,6 +1298,10 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   void _failGeneration(dynamic errorOrMessageFa) {
     _generationTimer?.cancel();
     _generationTimer = null;
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = null;
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = null;
 
     final controller = _currentStreamController;
     _currentStreamController = null;
@@ -1253,6 +1339,10 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     // 1. Cancel timers
     _generationTimer?.cancel();
     _generationTimer = null;
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = null;
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = null;
 
     // 2. Instruct JS bridge to cancel active generation with error logging
     try {
@@ -1288,6 +1378,10 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _inactivityTimer = null;
     _generationTimer?.cancel();
     _generationTimer = null;
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = null;
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = null;
   }
 
   /// Sends a prompt and streams the assistant response back.
@@ -1328,6 +1422,11 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     final booted = await ensureBooted();
     if (!booted && _status == ChatGptBridgeStatus.cloudflareChallenge) {
       yield 'error:برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را در پنجره باز شده کامل کنید.';
+      return;
+    }
+
+    if (!booted && _status == ChatGptBridgeStatus.vpnRequired) {
+      yield 'error:دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ). لطفاً فیلترشکن یا تحریم‌شکن خود را فعال کرده و دوباره تلاش کنید.';
       return;
     }
 
@@ -1395,6 +1494,12 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       return;
     }
 
+    if (_status == ChatGptBridgeStatus.vpnRequired) {
+      _failGeneration(WebBridgeException.vpnRequired(rayId: _lastRayId, ip: _lastBlockedIp));
+      yield* streamController.stream;
+      return;
+    }
+
     final formattedPrompt = ChatGptJsInjector.formatPromptWithSystemDirective(
       userPrompt: prompt,
       personaTitle: personaTitle,
@@ -1447,7 +1552,104 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       }
     });
 
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = Timer(ChatGptBridgeTimeouts.checkpoint1Delay, () async {
+      if (!identical(_currentStreamController, streamController)) return;
+      await _runCheckpointCheck(1, streamController, reqId);
+    });
+
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = Timer(ChatGptBridgeTimeouts.checkpoint2Delay, () async {
+      if (!identical(_currentStreamController, streamController)) return;
+      await _runCheckpointCheck(2, streamController, reqId);
+    });
+
     yield* streamController.stream;
+  }
+
+  /// Checks WebView DOM at intermediate checkpoints before timeout to see if ChatGPT has answered.
+  Future<void> _runCheckpointCheck(
+    int checkpointNumber,
+    StreamController<String> streamController,
+    String reqId,
+  ) async {
+    if (!identical(_currentStreamController, streamController) ||
+        _status != ChatGptBridgeStatus.generating) {
+      return;
+    }
+
+    RitmoLog.debug('ChatGptWebBridge', 'Running checkpoint check #$checkpointNumber for reqId: $reqId');
+    BridgeTraceLog.instance.addEntry(
+      type: 'checkpoint_check_started',
+      source: BridgeSource.dart.name,
+      requestId: reqId,
+      note: 'checkpoint_$checkpointNumber',
+      level: BridgeTraceLevel.info,
+    );
+
+    try {
+      final harvested = await harvestVisibleAnswer();
+      if (!identical(_currentStreamController, streamController) ||
+          _status != ChatGptBridgeStatus.generating) {
+        return;
+      }
+
+      if (harvested != null && harvested.trim().isNotEmpty) {
+        // Inspect whether ChatGPT is still actively generating or completed
+        bool isStillGenerating = false;
+        try {
+          final evalResult = await _controller?.runJavaScriptReturningResult(
+            "(function() { var s = document.querySelector('button[data-testid=\"stop-button\"], button[aria-label=\"Stop generating\"], button[aria-label=\"توقف تولید\"], .result-streaming'); return !!s; })()",
+          );
+          if (evalResult != null) {
+            isStillGenerating = evalResult.toString() == 'true' || evalResult == true;
+          }
+        } catch (evalErr) {
+          RitmoLog.debug('ChatGptWebBridge', 'eval isGenerating check error: $evalErr');
+        }
+
+        if (!isStillGenerating) {
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Checkpoint check #$checkpointNumber detected completed answer (${harvested.length} chars, reqId: $reqId). Delivering response early.',
+          );
+          BridgeTraceLog.instance.addEntry(
+            type: 'checkpoint_check_success',
+            source: BridgeSource.harvest.name,
+            requestId: reqId,
+            textLength: harvested.length,
+            note: 'checkpoint_${checkpointNumber}_completed_early',
+            level: BridgeTraceLevel.info,
+          );
+          _finishGeneration(null, isPartial: false);
+          return;
+        } else {
+          RitmoLog.debug(
+            'ChatGptWebBridge',
+            'Checkpoint check #$checkpointNumber: response in progress (${harvested.length} chars, still generating)',
+          );
+          BridgeTraceLog.instance.addEntry(
+            type: 'checkpoint_check_in_progress',
+            source: BridgeSource.harvest.name,
+            requestId: reqId,
+            textLength: harvested.length,
+            note: 'checkpoint_${checkpointNumber}_generating',
+            level: BridgeTraceLevel.info,
+          );
+        }
+      } else {
+        RitmoLog.debug('ChatGptWebBridge', 'Checkpoint check #$checkpointNumber: no text found yet.');
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_check_empty',
+          source: BridgeSource.harvest.name,
+          requestId: reqId,
+          note: 'checkpoint_${checkpointNumber}_no_text',
+          level: BridgeTraceLevel.info,
+        );
+      }
+    } catch (e, st) {
+      RitmoLog.warning('ChatGptWebBridge', 'Checkpoint check #$checkpointNumber error: $e', e, st);
+    }
   }
 
   /// Resets the inactivity countdown.

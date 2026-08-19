@@ -187,6 +187,20 @@ $userPrompt
       return es;
     };
   }
+
+  // 4. Early Cookie Banner Suppression & Auto-Consent (A-38, A-106)
+  try {
+    var styleId = '__ritmo_cookie_suppress_css';
+    if (!document.getElementById(styleId)) {
+      var st = document.createElement('style');
+      st.id = styleId;
+      st.textContent = '#onetrust-banner-sdk, #onetrust-consent-sdk, .onetrust-pc-dark-filter, .cookie-banner, [data-testid="cookie-banner"], [id*="cookie-banner"], #onetrust-style { display: none !important; opacity: 0 !important; pointer-events: none !important; }';
+      (document.head || document.documentElement).appendChild(st);
+    }
+    if (typeof window.OnetrustActiveGroups === 'undefined') {
+      window.OnetrustActiveGroups = ',C0001,C0002,C0003,C0004,';
+    }
+  } catch (cookieEarlyErr) {}
 })();
 ''';
 
@@ -630,8 +644,52 @@ $_bridgeScriptBody''';
     return report;
   }
 
-  // --- 1. Cloudflare Turnstile & Security Challenge Watcher ---
+  // --- 1. Cloudflare Turnstile, Geo-Block & VPN Watcher ---
   var lastCfState = null;
+  var lastVpnState = null;
+
+  function checkVpnAndGeoBlockStatus() {
+    try {
+      var title = document.title || '';
+      var bodyEl = document.body;
+      var text = bodyEl ? (bodyEl.innerText || bodyEl.textContent || '') : '';
+      var lowerText = text.toLowerCase();
+      var lowerTitle = title.toLowerCase();
+
+      var isUnableToLoad = lowerText.indexOf('unable to load site') !== -1 || lowerTitle.indexOf('unable to load site') !== -1;
+      var isVpnNotice = lowerText.indexOf('if you are using a vpn') !== -1 || lowerText.indexOf('using a vpn, try turning it off') !== -1;
+      var isGeoBlocked = lowerText.indexOf('not available in your country') !== -1 ||
+                         lowerText.indexOf('services are not available in your country') !== -1 ||
+                         lowerText.indexOf('banned your ip') !== -1 ||
+                         lowerText.indexOf('banned your country') !== -1 ||
+                         lowerText.indexOf('you have been blocked') !== -1 ||
+                         lowerText.indexOf('unable to access chatgpt.com') !== -1;
+      var isRayBlocked = lowerText.indexOf('ray id:') !== -1 && (lowerText.indexOf('access denied') !== -1 || lowerText.indexOf('error') !== -1 || isUnableToLoad || isVpnNotice);
+      var isAccessDenied = lowerTitle.indexOf('access denied') !== -1 || (lowerText.indexOf('access denied') !== -1 && lowerText.indexOf('error code') !== -1);
+
+      var isVpnRequired = isUnableToLoad || isVpnNotice || isGeoBlocked || isRayBlocked || isAccessDenied;
+
+      if (isVpnRequired !== lastVpnState) {
+        lastVpnState = isVpnRequired;
+        if (isVpnRequired) {
+          var rayMatch = text.match(/ray id:\s*([a-f0-9]+)/i);
+          var ipMatch = text.match(/ip:\s*([a-f0-9:.]+)/i);
+          notifyFlutter('vpn_required', {
+            detected: true,
+            reason: isUnableToLoad ? 'unable_to_load_site' : (isVpnNotice ? 'vpn_notice' : 'geo_blocked'),
+            rayId: rayMatch ? rayMatch[1] : null,
+            ip: ipMatch ? ipMatch[1] : null,
+            title: title
+          });
+        }
+      }
+      return isVpnRequired;
+    } catch (e) {
+      console.warn('[Ritmo] checkVpnAndGeoBlockStatus error:', e);
+      return false;
+    }
+  }
+
   function checkCloudflareStatus() {
     var title = document.title || '';
     var isCfTitle = title.includes('Just a moment') || title.includes('Security Check') || title.includes('Cloudflare') || title.includes('Attention Required');
@@ -649,9 +707,39 @@ $_bridgeScriptBody''';
     return isChallenged;
   }
 
-  // --- 2. Auto Cookie Consent & Login Modal Dismissal (A-38) ---
+  function checkSecurityAndBlockStatus() {
+    var isVpn = checkVpnAndGeoBlockStatus();
+    var isCf = checkCloudflareStatus();
+    return { isVpn: isVpn, isCf: isCf, isBlocked: isVpn || isCf };
+  }
+
+  // --- 2. Auto Cookie Consent & Login Modal Dismissal (A-38, A-106) ---
   function autoDismissCookiesAndModals() {
     try {
+      // 2.1 Native OneTrust API Consent
+      try {
+        if (window.OneTrust && typeof window.OneTrust.AllowAll === 'function') {
+          window.OneTrust.AllowAll();
+          notifyFlutter('auto_dismiss', { label: 'OneTrust.AllowAll', source: 'lifecycle' });
+        } else if (window.OneTrust && typeof window.OneTrust.Close === 'function') {
+          window.OneTrust.Close();
+        }
+        if (typeof window.OnetrustActiveGroups !== 'undefined') {
+          window.OnetrustActiveGroups = ',C0001,C0002,C0003,C0004,';
+        }
+      } catch (otErr) {}
+
+      // 2.2 Inject CSS rule to hide cookie overlays immediately
+      try {
+        var styleId = '__ritmo_cookie_suppress_css';
+        if (!document.getElementById(styleId)) {
+          var st = document.createElement('style');
+          st.id = styleId;
+          st.textContent = '#onetrust-banner-sdk, #onetrust-consent-sdk, .onetrust-pc-dark-filter, .cookie-banner, [data-testid="cookie-banner"], [id*="cookie-banner"], #onetrust-style { display: none !important; opacity: 0 !important; pointer-events: none !important; }';
+          (document.head || document.documentElement).appendChild(st);
+        }
+      } catch (cssErr) {}
+
       // Never dismiss or click buttons while active generation is ongoing (A-38)
       if (window.__ritmo_active_req_id) return;
 
@@ -663,10 +751,15 @@ $_bridgeScriptBody''';
         'button[data-testid="accept-cookies"]',
         'button[data-testid="cookie-banner-accept"]',
         'button[data-testid="close-button"]',
+        'button[aria-label*="Accept all" i]',
+        'button[aria-label*="Accept cookies" i]',
+        'button[aria-label*="Allow all" i]',
         '.osano-cm-accept-all',
         '.cc-btn.cc-allow',
         '#cookie-accept',
-        '.cookie-accept'
+        '.cookie-accept',
+        'button[class*="cookie-accept"]',
+        'button[class*="accept-cookie"]'
       ];
 
       for (var i = 0; i < directSelectors.length; i++) {
@@ -681,7 +774,8 @@ $_bridgeScriptBody''';
       var modalContainers = queryAllSafe('[role="dialog"], [aria-modal="true"], [data-testid*="modal"], [id*="cookie"], [class*="cookie"], #onetrust-banner-sdk');
       var dismissKeywords = [
         'accept all', 'accept cookies', 'allow all', 'i accept', 'got it',
-        'accept essential cookies', 'قبول همه', 'موافقم'
+        'accept essential cookies', 'accept recommended cookies', 'allow cookies',
+        'قبول همه', 'موافقم', 'پذیرش همه', 'قبول'
       ];
 
       for (var m = 0; m < modalContainers.length; m++) {
@@ -968,7 +1062,7 @@ $_bridgeScriptBody''';
       var currentText = findLatestAssistantText();
 
       if (!currentText || currentText === previousBaselineText) {
-        if (totalDuration > 80000) {
+        if (totalDuration > 170000) {
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
           stopDomObserver();
@@ -985,7 +1079,7 @@ $_bridgeScriptBody''';
         stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream completed via multi-signal vote with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
-      } else if (totalDuration > 85000) {
+      } else if (totalDuration > 175000) {
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
@@ -1251,11 +1345,11 @@ $_bridgeScriptBody''';
   }
   window.__ritmo_checkAuthState = checkAuthState;
 
-  var challengedAtBoot = checkCloudflareStatus();
+  var securityStatus = checkSecurityAndBlockStatus();
   autoDismissCookiesAndModals();
   autoCloseSidebar();
   checkAuthState();
-  cfCheckTimer = setInterval(checkCloudflareStatus, 2000);
+  cfCheckTimer = setInterval(checkSecurityAndBlockStatus, 2000);
 
   // Self-test report at boot (A-28)
   try {
@@ -1271,7 +1365,7 @@ $_bridgeScriptBody''';
 
   console.log('[Ritmo] Bridge setup complete.');
 
-  if (!challengedAtBoot) {
+  if (!securityStatus.isBlocked) {
     notifyFlutter('ready', {
       version: requiredVersion,
       isWarm: false,
@@ -1279,7 +1373,11 @@ $_bridgeScriptBody''';
       hasComposer: checkComposerPresent()
     });
   } else {
-    console.warn('[Ritmo] Cloudflare challenge active at boot; withholding ready.');
+    if (securityStatus.isVpn) {
+      console.warn('[Ritmo] VPN/Geo-block detected at boot; withholding ready.');
+    } else {
+      console.warn('[Ritmo] Cloudflare challenge active at boot; withholding ready.');
+    }
   }
 })();
 ''';

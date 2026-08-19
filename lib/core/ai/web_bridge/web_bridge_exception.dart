@@ -2,6 +2,7 @@
 enum WebBridgeErrorKind {
   authRequired,
   cloudflareChallenge,
+  vpnRequired,
   rateLimited,
   serverError,
   timeout,
@@ -48,6 +49,18 @@ class WebBridgeException implements Exception {
       actionTextFa: 'تکمیل تایید امنیتی',
       messageKey: 'bridgeCloudflareChallenge',
       actionKey: 'bridgeCloudflareChallengeAction',
+    );
+  }
+
+  factory WebBridgeException.vpnRequired({String? messageFa, String? rayId, String? ip}) {
+    final detail = rayId != null ? ' (Ray ID: $rayId)' : '';
+    return WebBridgeException(
+      kind: WebBridgeErrorKind.vpnRequired,
+      messageFa: messageFa ??
+          'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ)$detail.\nلطفاً فیلترشکن (VPN) یا تحریم‌شکن (مثل شکن/بگذر) خود را فعال کرده و دوباره تلاش کنید.',
+      actionTextFa: 'فعال‌سازی فیلترشکن / تحریم‌شکن',
+      messageKey: 'bridgeVpnRequired',
+      actionKey: 'bridgeVpnRequiredAction',
     );
   }
 

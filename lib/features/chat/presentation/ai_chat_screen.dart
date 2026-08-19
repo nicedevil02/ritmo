@@ -1057,8 +1057,27 @@ class _AiChatScreenState extends State<AiChatScreen> {
         final currentContent = _messages[idx].content;
 
         String friendlySummary = AiErrorMessages.fa(exception: errorText);
-        if (errorText.contains('no_api_key') || errorText.contains('401') || errorText.contains('quota_exhausted')) {
+        String suggestedSteps = '''
+💡 **راهکار پیشنهادشده:**
+۱. اتصال اینترنت و فعال بودن فیلترشکن خود را بررسی کنید.
+۲. از چرخ‌دنده بالای صفحه، تنظیمات هوش مصنوعی را باز کرده و ارائه‌دهنده یا مدل دیگری (مانند OpenRouter یا Zhipu AI) انتخاب نمایید.''';
+
+        if (errorText.contains('vpnRequired') ||
+            errorText.contains('Unable to load site') ||
+            errorText.contains('تحریم یا فیلترینگ') ||
+            errorText.contains('مسدود است')) {
+          friendlySummary = 'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ 🛡️).\nبرای ادامه کار، لازم است فیلترشکن (VPN) یا تحریم‌شکن (مثل شکن / الکترون) خود را فعال کنید.';
+          suggestedSteps = '''
+💡 **راهکار حل مشکل تحریم و فیلترینگ ChatGPT:**
+۱. فیلترشکن (VPN) خود را روشن کرده و سرور اروپا (مانند هلند یا آلمان) را انتخاب کنید.
+۲. یا در تنظیمات وای‌فای/شبکه گوشی، DNS ضدتحریم (شکن: 178.22.122.100 و 185.51.200.2) را تنظیم کنید.
+۳. روی چیپ وضعیت بالای صفحه ضربه زده و گزینه «تلاش مجدد و بارگذاری دوباره» را بزنید.''';
+        } else if (errorText.contains('no_api_key') || errorText.contains('401') || errorText.contains('quota_exhausted')) {
           friendlySummary = 'کلید دسترسی (API Key) یا سهمیه هوش مصنوعی فعال نیست 🔌\nلطفاً وارد تنظیمات پروفایل (چرخ‌دنده بالای صفحه) -> «تنظیمات هوش مصنوعی (AI)» شوید و ارائه‌دهنده یا API Key خود را بررسی کنید.';
+        } else if (errorText.contains('authRequired')) {
+          friendlySummary = 'نشست ورود به حساب کاربری منقضی شده است یا نیاز به ورود به چت‌جی‌پی‌تی دارید 🔑.';
+        } else if (errorText.contains('cloudflareChallenge')) {
+          friendlySummary = 'تأیید هویت امنیتی کلودفلر ضروری است 🛡️.';
         } else if (errorText.contains('429')) {
           friendlySummary = 'سقف تعداد درخواست‌های لحظه‌ای پر شده است (Rate Limit). لطفاً چند لحظه دیگر دوباره تلاش کنید.';
         } else if (errorText.toLowerCase().contains('timeout')) {
@@ -1076,9 +1095,7 @@ $friendlySummary
 🔍 **علت دقیق و جزئیات فنی خطا:**
 `$cleanDetails`
 
-💡 **راهکار پیشنهادشده:**
-۱. اتصال اینترنت و فعال بودن فیلترشکن خود را بررسی کنید.
-۲. از چرخ‌دنده بالای صفحه، تنظیمات هوش مصنوعی را باز کرده و ارائه‌دهنده یا مدل دیگری (مانند OpenRouter یا Zhipu AI) انتخاب نمایید.''';
+$suggestedSteps''';
 
         final String finalContent = currentContent.isEmpty
             ? formattedBox

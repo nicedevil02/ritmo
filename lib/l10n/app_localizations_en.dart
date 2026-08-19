@@ -1239,6 +1239,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bridgeCloudflareChallengeAction => 'Complete verification';
 
   @override
+  String get bridgeVpnRequired =>
+      'Access to ChatGPT is blocked from this IP (Geo-blocked/Censored). Please enable a VPN or anti-sanction DNS to continue.';
+
+  @override
+  String get bridgeVpnRequiredAction => 'Enable VPN / Anti-sanction';
+
+  @override
   String get bridgeRateLimited =>
       'ChatGPT rate limit reached. Please wait a moment and try again.';
 

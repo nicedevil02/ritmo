@@ -135,6 +135,15 @@ sealed class WebBridgeEvent {
             source: src,
             reason: readString('reason') ?? readString('message'),
           );
+        case 'vpn_required':
+        case 'geo_blocked':
+        case 'ip_blocked':
+          return BridgeVpnRequiredEvent(
+            source: src,
+            reason: readString('reason') ?? readString('message'),
+            rayId: readString('rayId'),
+            ip: readString('ip'),
+          );
         case 'selector_health':
           return BridgeSelectorHealthEvent(
             source: src,
@@ -269,6 +278,19 @@ class BridgeCloudflareEvent extends WebBridgeEvent {
   });
 
   final String? reason;
+}
+
+class BridgeVpnRequiredEvent extends WebBridgeEvent {
+  const BridgeVpnRequiredEvent({
+    required super.source,
+    this.reason,
+    this.rayId,
+    this.ip,
+  });
+
+  final String? reason;
+  final String? rayId;
+  final String? ip;
 }
 
 class BridgeSelectorHealthEvent extends WebBridgeEvent {

@@ -687,6 +687,8 @@
   "bridgeAuthRequiredAction": "Sign in",
   "bridgeCloudflareChallenge": "Cloudflare security verification is required.",
   "bridgeCloudflareChallengeAction": "Complete verification",
+  "bridgeVpnRequired": "Access to ChatGPT is blocked from this IP (Geo-blocked/Censored). Please enable a VPN or anti-sanction DNS to continue.",
+  "bridgeVpnRequiredAction": "Enable VPN / Anti-sanction",
   "bridgeRateLimited": "ChatGPT rate limit reached. Please wait a moment and try again.",
   "bridgeRateLimitedAction": "Retry in a few minutes",
   "bridgeServerError": "Temporary error on ChatGPT servers. Please try again in a moment.",

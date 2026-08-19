@@ -434,6 +434,7 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
       ChatGptBridgeStatus.ready => Icons.check_circle_rounded,
       ChatGptBridgeStatus.generating => Icons.stream_rounded,
       ChatGptBridgeStatus.cloudflareChallenge => Icons.security_rounded,
+      ChatGptBridgeStatus.vpnRequired => Icons.vpn_lock_rounded,
       ChatGptBridgeStatus.error => Icons.error_rounded,
     };
   }
@@ -445,6 +446,7 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
       ChatGptBridgeStatus.ready => colors.success,
       ChatGptBridgeStatus.generating => colors.accent,
       ChatGptBridgeStatus.cloudflareChallenge => colors.warning,
+      ChatGptBridgeStatus.vpnRequired => colors.warning,
       ChatGptBridgeStatus.error => colors.error,
     };
   }

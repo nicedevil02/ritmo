@@ -2300,6 +2300,18 @@ abstract class AppLocalizations {
   /// **'تکمیل تایید امنیتی'**
   String get bridgeCloudflareChallengeAction;
 
+  /// No description provided for @bridgeVpnRequired.
+  ///
+  /// In fa, this message translates to:
+  /// **'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ). لطفاً فیلترشکن (VPN) یا تحریم‌شکن خود را فعال کرده و دوباره تلاش کنید.'**
+  String get bridgeVpnRequired;
+
+  /// No description provided for @bridgeVpnRequiredAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'فعال‌سازی فیلترشکن / تحریم‌شکن'**
+  String get bridgeVpnRequiredAction;
+
   /// No description provided for @bridgeRateLimited.
   ///
   /// In fa, this message translates to:

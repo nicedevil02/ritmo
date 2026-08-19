@@ -23,12 +23,12 @@ void main() {
       expect(script.contains('totalDuration > 35000'), isFalse);
     });
 
-    test('ChatGptWebBridgeManager master timer uses ChatGptBridgeTimeouts.generationTimeout (90s)', () {
+    test('ChatGptWebBridgeManager master timer uses ChatGptBridgeTimeouts.generationTimeout (180s)', () {
       expect(
         ChatGptWebBridgeManager.generationTimeout,
         equals(ChatGptBridgeTimeouts.generationTimeout),
       );
-      expect(ChatGptWebBridgeManager.generationTimeout.inSeconds, equals(90));
+      expect(ChatGptWebBridgeManager.generationTimeout.inSeconds, equals(180));
     });
 
     test('cancelCurrentStream immediately resets active generation and timer states', () {

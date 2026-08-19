@@ -111,6 +111,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                               ChatGptBridgeStatus.ready => colors.success,
                               ChatGptBridgeStatus.generating => colors.warning,
                               ChatGptBridgeStatus.cloudflareChallenge => colors.error,
+                              ChatGptBridgeStatus.vpnRequired => colors.warning,
                               _ => colors.textTertiary,
                             },
                           ),
@@ -235,6 +236,7 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
       ChatGptBridgeStatus.booting => 'در حال راه‌اندازی...',
       ChatGptBridgeStatus.generating => 'در حال تولید پاسخ...',
       ChatGptBridgeStatus.cloudflareChallenge => 'چالش کلودفلر',
+      ChatGptBridgeStatus.vpnRequired => 'نیاز به تحریم‌شکن / VPN',
       ChatGptBridgeStatus.error => 'خطا',
       _ => 'غیرفعال',
     };

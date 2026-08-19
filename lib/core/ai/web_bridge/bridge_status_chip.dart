@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
+import 'package:ritmo/core/ai/web_bridge/vpn_required_modal.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
 
@@ -52,6 +53,12 @@ class BridgeStatusChip extends StatelessWidget {
               colors.warning,
               true,
             ),
+          ChatGptBridgeStatus.vpnRequired => (
+              'نیاز به تحریم‌شکن / VPN',
+              CupertinoIcons.globe,
+              colors.warning,
+              true,
+            ),
           ChatGptBridgeStatus.error => (
               'اتصال قطع است',
               CupertinoIcons.exclamationmark_triangle_fill,
@@ -83,6 +90,8 @@ class BridgeStatusChip extends StatelessWidget {
                   ? () {
                       if (status == ChatGptBridgeStatus.cloudflareChallenge) {
                         CloudflareChallengeModal.show(context);
+                      } else if (status == ChatGptBridgeStatus.vpnRequired) {
+                        VpnRequiredModal.show(context);
                       } else if (status == ChatGptBridgeStatus.generating) {
                         ChatGptMiniPreview.show(context);
                       } else if (status == ChatGptBridgeStatus.error) {

@@ -11,6 +11,7 @@ void main() {
 
   setUp(() {
     manager = ChatGptWebBridgeManager.instance;
+    manager.resetStateForTest();
   });
 
   tearDown(() {
@@ -71,10 +72,27 @@ void main() {
 
       await Future.delayed(Duration.zero);
       expect(manager.lastChunkSource, equals('dom'));
-      expect(emittedItems, equals(['سلام کاربر']));
+      expect(manager.accumulator.text, equals('سلام کاربر'));
+
+      if (ChatGptWebBridgeManager.enableWebBridgeStreaming) {
+        expect(emittedItems, equals(['سلام کاربر']));
+      } else {
+        // When streaming is disabled, full text is delivered on completion
+        final doneMsg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'done',
+            'fullText': 'سلام کاربر',
+            'requestId': 'req_src_2',
+            'source': 'sse',
+          }),
+        );
+        manager.handleJsMessageForTest(doneMsg);
+        await pumpEventQueue();
+        expect(emittedItems, equals(['سلام کاربر']));
+      }
 
       await sub.cancel();
-      await streamController.close();
+      if (!streamController.isClosed) await streamController.close();
     });
 
     test('stream completion resets source tracking state', () {

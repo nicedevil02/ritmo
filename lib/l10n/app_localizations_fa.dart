@@ -1237,6 +1237,13 @@ class AppLocalizationsFa extends AppLocalizations {
   String get bridgeCloudflareChallengeAction => 'تکمیل تایید امنیتی';
 
   @override
+  String get bridgeVpnRequired =>
+      'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ). لطفاً فیلترشکن (VPN) یا تحریم‌شکن خود را فعال کرده و دوباره تلاش کنید.';
+
+  @override
+  String get bridgeVpnRequiredAction => 'فعال‌سازی فیلترشکن / تحریم‌شکن';
+
+  @override
   String get bridgeRateLimited =>
       'محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.';
 

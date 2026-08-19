@@ -687,6 +687,8 @@
   "bridgeAuthRequiredAction": "ورود به حساب کاربری",
   "bridgeCloudflareChallenge": "تایید امنیتی کلودفلر ضروری است.",
   "bridgeCloudflareChallengeAction": "تکمیل تایید امنیتی",
+  "bridgeVpnRequired": "دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ). لطفاً فیلترشکن (VPN) یا تحریم‌شکن خود را فعال کرده و دوباره تلاش کنید.",
+  "bridgeVpnRequiredAction": "فعال‌سازی فیلترشکن / تحریم‌شکن",
   "bridgeRateLimited": "محدودیت درخواست چت‌جی‌پی‌تی (Rate Limit). لطفاً کمی صبر کرده و مجدداً تلاش کنید.",
   "bridgeRateLimitedAction": "تلاش مجدد پس از چند دقیقه",
   "bridgeServerError": "خطای موقت در سرورهای ChatGPT. لطفاً لحظاتی دیگر مجدداً تلاش کنید.",

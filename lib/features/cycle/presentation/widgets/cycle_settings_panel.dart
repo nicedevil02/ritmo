@@ -163,8 +163,8 @@ class CycleSettingsPanel extends StatelessWidget {
                       const Text('🔑', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 8),
                       Text(
-                        settings['app_lock_password'] != null &&
-                                settings['app_lock_password']!.isNotEmpty
+                        settings['cycle_lock_pin_hash'] != null &&
+                                settings['cycle_lock_pin_hash']!.isNotEmpty
                             ? 'تغییر رمز عبور چرخه'
                             : 'تنظیم رمز عبور چرخه',
                         style: TextStyle(
@@ -182,6 +182,51 @@ class CycleSettingsPanel extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          Divider(height: 16, color: colors.border),
+          _buildToggleRow(
+            context,
+            title: 'تأیید تعاملی شروع موعد ریتم',
+            value: settings['cycle_confirm_start_enabled'] != 'false',
+            onChanged: (v) async {
+              final db = await DatabaseHelper.instance.database;
+              await db.insert('app_settings', {
+                'key': 'cycle_confirm_start_enabled',
+                'value': v.toString(),
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
+              onDataReloadNeeded();
+            },
+          ),
+          Divider(height: 16, color: colors.border),
+          _buildToggleRow(
+            context,
+            title: 'تأیید تعاملی پایان موعد ریتم',
+            value: settings['cycle_confirm_end_enabled'] != 'false',
+            onChanged: (v) async {
+              final db = await DatabaseHelper.instance.database;
+              await db.insert('app_settings', {
+                'key': 'cycle_confirm_end_enabled',
+                'value': v.toString(),
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
+              onDataReloadNeeded();
+            },
+          ),
+          Divider(height: 16, color: colors.border),
+          _buildToggleRow(
+            context,
+            title: 'ماسک‌کردن پیام‌های ریتم در صندوق اعلان‌ها',
+            value: settings['cycle_inbox_mask_enabled'] != 'false',
+            onChanged: (v) async {
+              final db = await DatabaseHelper.instance.database;
+              await db.insert('app_settings', {
+                'key': 'cycle_inbox_mask_enabled',
+                'value': v.toString(),
+                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
+              onDataReloadNeeded();
+            },
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(

@@ -45,7 +45,7 @@ void main() {
   });
 
   group('WEB-05: Navigation & Resource Errors Close In-Flight Streams', () {
-    test('sub-resource error (isForMainFrame: false) does NOT abort active stream', () {
+    test('sub-resource error (isForMainFrame: false) does NOT abort active stream', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
       final error = FakeWebResourceError(
@@ -54,12 +54,12 @@ void main() {
         isForMainFrame: false,
       );
 
-      manager.handleWebResourceError(error);
+      await manager.handleWebResourceError(error);
 
       expect(manager.status, equals(ChatGptBridgeStatus.generating));
     });
 
-    test('main-frame network disconnection error fails generation with Persian network message', () {
+    test('main-frame network disconnection error fails generation with Persian network message', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
       final error = FakeWebResourceError(
@@ -68,12 +68,12 @@ void main() {
         isForMainFrame: true,
       );
 
-      manager.handleWebResourceError(error);
+      await manager.handleWebResourceError(error);
 
       expect(manager.status, equals(ChatGptBridgeStatus.ready));
     });
 
-    test('main-frame generic error fails generation with Persian loading error message', () {
+    test('main-frame generic error fails generation with Persian loading error message', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
       final error = FakeWebResourceError(
@@ -82,31 +82,31 @@ void main() {
         isForMainFrame: true,
       );
 
-      manager.handleWebResourceError(error);
+      await manager.handleWebResourceError(error);
 
       expect(manager.status, equals(ChatGptBridgeStatus.ready));
     });
 
-    test('HTTP 5xx server error fails generation with Persian server error message', () {
+    test('HTTP 5xx server error fails generation with Persian server error message', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
       final error = FakeHttpResponseError(
         response: FakeWebResourceResponse(statusCode: 503),
       );
 
-      manager.handleHttpError(error);
+      await manager.handleHttpError(error);
 
       expect(manager.status, equals(ChatGptBridgeStatus.ready));
     });
 
-    test('HTTP 401/403 login required error fails generation with Persian login message', () {
+    test('HTTP 401/403 login required error fails generation with Persian login message', () async {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
 
       final error = FakeHttpResponseError(
         response: FakeWebResourceResponse(statusCode: 401),
       );
 
-      manager.handleHttpError(error);
+      await manager.handleHttpError(error);
 
       expect(manager.status, equals(ChatGptBridgeStatus.ready));
     });

@@ -177,7 +177,69 @@
 | A-53 | آزمون چرخه کامل موفقیت‌آمیز جریان (Happy Path E2E) | DONE | 9fbb460 | ایجاد end_to_end_happy_path_test.dart شامل شبیه‌سازی کامل چرخه از booting تا ready |
 | A-54 | آزمون بازرسی استاتیک برای حذف catchهای خاموش | DONE | 9fbb460 | ایجاد no_silent_catch_test.dart برای پایش عدم وجود هرگونه بلاک catch تهی در کدهای وب‌بریج |
 | A-55 | اجرای تحلیل ایستا و آزمون‌های جامع مخزن | DONE | 9fbb460 | اجرای flutter analyze (صفر خطا و صفر هشدار) و اجرای موفقیت‌آمیز تمامی ۲۷۱ آزمون هوش مصنوعی |
-| A-56 | به‌روزرسانی نهایی مستندات پیشرفت و ثبت کامیت فاز ۵ | DONE | 9fbb460 | به‌روزرسانی جدول تسک‌ها در WEB_BRIDGE_FIX_PROGRESS.md و ثبت کامیت نهایی فاز ۵ |
+## فاز ۶ — رفع ریشه‌ای ۵ شکست مسیر پاسخ (A-69 تا A-80)
+
+| شناسه | شرح تسک | وضعیت | توضیحات فنی |
+| --- | --- | :---: | --- |
+| A-69 | شمارش `BridgeSource.harvest` و متدهای کمکی | DONE | اضافه شدن مقدار `harvest` به `BridgeSource` و تعریف اکستنشن `BridgeSourceX` با `bypassesSourceLock` و `isStreamingSource`. |
+| A-70 | ثوابت زمانی جدید در `ChatGptBridgeTimeouts` | DONE | اضافه شدن `sourceRelockSilence = 4s` و `harvestTimeout = 6s` برای مدیریت قفل و برداشت مطمئن. |
+| A-71 | داوری قفل منبع منعطف با شکست سکوت ۴ ثانیه‌ای | DONE | آزادسازی قفل منبع در صورت سکوت ۴ ثانیه‌ای منبع فعال جهت پذیرش جریان جایگزین DOM/SSE. |
+| A-72 | ارتقای رویداد `done` بزرگتر به برداشت پایانی (`done_promoted`) | DONE | پذیرش رویدادهای `done` حاوی متن بلندتر از متن انباشتگر با منبع مخالف به عنوان برداشت معتبر. |
+| A-73 | محافظت از برداشت در حال پرواز و گارد عدم تداخل | DONE | پیاده‌سازی `_harvestInFlight` و گارد ضد race-condition در `harvestVisibleAnswer`. |
+| A-74 | مکانیزم برداشت نجات خودکار (`_harvestForSalvage`) | DONE | اتصال خودکار برداشت نجات به تایم‌اوت، خطای HTTP، خطای وب‌ریسورس و لوپ ناوبری. |
+| A-75 | پیگیری پاسخ‌های نیمه‌کاره با پرچم `isPartial` | DONE | افزودن فیلد `isPartial` به `ChatComplete` و `ChatMessage` و نمایش بنر هشدار در حباب چت. |
+| A-76 | رفع سرکوب نمایش در شروع نوبت جدید در `AgentStreamPresenter` | DONE | پاکسازی `_isSuppressed = false` به محض رسیدن `AgentTurnStartedEvent`. |
+| A-77 | اصلاح ترتیب رویدادهای ریست در `AgentLoopRunner` | DONE | ارسال `AgentDisplayResetEvent(finalAnswerTurn)` پیش از حلقهٔ استریم و حذف ریست زاید پس از پایان استریم. |
+| A-78 | محدودسازی بلوک‌های کد ابزار به برچسب‌های رسمی | DONE | تعیین `toolFenceLabels` فقط برای `ritmo_tool`, `tool_call`, `tool` و مستثنی‌کردن `json` عادی. |
+| A-79 | گارد اعتبارسنجی نام ابزار در JSONهای برهنه | DONE | پذیرش JSON برهنه تنها در صورت تطابق با فهرست `knownToolNames` ابزارهای مجاز نوبت. |
+| A-80 | ثبت ترجمه‌های محلی‌سازی و بنر هشدار پاسخ جزئی | DONE | افزودن کلیدهای ترجمه در `app_fa.arb`/`app_en.arb` و رندر بنر هشدار پاسخ نیمه‌کاره در `StreamingMessageBubble`. |
+
+---
+
+## فاز ۷ — رابط کاربری و ناوبری عیب‌یابی پل وب (A-81 تا A-86)
+
+| شناسه | شرح تسک | وضعیت | توضیحات فنی |
+| --- | --- | :---: | --- |
+| A-81 | ثبت مسیر `/bridge-diagnostics` در روتر سراسری | DONE | ثبت مقصد `WebBridgeDiagnosticsScreen` در `RitmoRouter.resolve` و سازگاری با ناوبری نوتیف‌ها و ایجنت. |
+| A-82 | کارت وضعیت زنده و نمایش شاخص‌های چرخه حیات | DONE | کارت مانیتورینگ زنده شامل نسخه پل، وضعیت اتصال، طول انباشتگر، منبع قفل‌شده و احراز هویت. |
+| A-83 | کارت اکشن‌های رفع مشکل و بازیابی دستی | DONE | دکمه‌های بازیابی مستقیم از DOM، راه‌اندازی مجدد اجباری (`forceReboot`) و کپی گزارش تشخیصی ردیاب. |
+| A-84 | جدول زنده ردیاب رویدادها (`BridgeTraceLog`) | DONE | نمایش آخرین ۳۰ رویداد زنده به همراه سطح، منبع، شناسه درخواست و جزئیات تکنیکال. |
+| A-85 | افزودن لانچر صفحهٔ تشخیص در تنظیمات هوش مصنوعی | DONE | ثبت دکمه اختصاصی در `AiConnectionScreen` برای دسترسی مستقیم کاربر به وضعیت پل وب. |
+| A-86 | پشتیبانی از کلیک طولانی (Long-Press) در `BridgeStatusChip` | DONE | باز شدن مستقیم `WebBridgeDiagnosticsScreen` با نگه‌داشتن چیپ وضعیت در هدر چت و شیت دستیار. |
+
+---
+
+## فاز ۸ — آزمون‌های تضمین کیفیت جامع (A-87 تا A-100)
+
+| شناسه | شرح تسک | وضعیت | فایل آزمون |
+| --- | --- | :---: | --- |
+| A-87 | آزمون عدم سقوط سرکوب پس از پایان استریم | DONE | `test/core/ai/post_stream_suppression_test.dart` |
+| A-88 | آزمون توالی نوبت‌های متوالی ایجنت و پاکسازی نوبت ابزار | DONE | `test/core/ai/consecutive_agent_turns_test.dart` |
+| A-89 | آزمون پذیرش `done` طولانی‌تر DOM در هنگام قفل SSE | DONE | `test/core/ai/web_bridge/done_with_longer_dom_test.dart` |
+| A-90 | آزمون گارد ضد انقباض متن انباشتگر | DONE | `test/core/ai/web_bridge/accumulator_shrink_guard_test.dart` |
+| A-91 | آزمون چرخه حیات بافر ردیاب و خروجی لاگ متنی | DONE | `test/core/ai/web_bridge/trace_log_lifecycle_test.dart` |
+| A-92 | آزمون پالایش پیشوندهای زاید مدل (`stripNoisePrefix`) | DONE | `test/core/ai/agent/strip_noise_prefix_test.dart` |
+| A-93 | آزمون گارد JSON برهنه و عدم تداخل با کدهای عادی | DONE | `test/core/ai/agent/bare_json_guard_test.dart` |
+| A-94 | آزمون رندر صفحهٔ تشخیص و اکشن‌ها در رابط کاربری | DONE | `test/core/ai/web_bridge/bridge_diagnostics_ui_test.dart` |
+| A-95 | آزمون لانچر Long-Press در `BridgeStatusChip` | DONE | `test/core/ai/web_bridge/bridge_diagnostics_ui_test.dart` |
+| A-96 | آزمون تایید صحت متدهای `describeEmptyResponseReason` | DONE | `test/core/ai/web_bridge/phase1_bridge_fixes_test.dart` |
+| A-97 | آزمون نگاشت کدهای خطای وب به پیام‌های فارسی | DONE | `test/core/ai/web_bridge/navigation_error_closes_stream_test.dart` |
+| A-98 | آزمون رندر دو مرحله‌ای و بافر سرکوب نشانه‌های باز | DONE | `test/core/ai/two_stage_render_test.dart` |
+| A-99 | آزمون واچ‌داگ و آزادسازی سرکوب در پرامپت‌های طولانی | DONE | `test/core/ai/agent/agent_loop_watchdog_test.dart` |
+| A-100 | آزمون جامع ۲۸۰ موردی آزمون‌های هوش مصنوعی و وب‌بریج | DONE | تمامی ۲۸۰ آزمون با موفقیت ۱۰۰٪ پاس شدند. |
+
+---
+
+## فاز ۹ — مستندسازی، چک‌لیست نهایی و تحلیل استاتیک (A-101 تا A-105)
+
+| شناسه | شرح تسک | وضعیت | توضیحات فنی |
+| --- | --- | :---: | --- |
+| A-101 | ثبت گزارش پیشرفت جامع در `WEB_BRIDGE_FIX_PROGRESS.md` | DONE | بروزرسانی کامل تمامی شناسه‌های A-01 تا A-105. |
+| A-102 | تدوین سند معماری تاب‌آوری پل وب `WEB_BRIDGE_RESILIENCE_GUIDE.md` | DONE | راهنمای جامع معماری تاب‌آوری، حل تعارض منابع، چرخهٔ نجات و دیاگرام لایه‌ها. |
+| A-103 | اجرای تحلیل استاتیک `flutter analyze` | DONE | نتیجه: صفر خطا و صفر هشدار در سراسر پروژه. |
+| A-104 | اجرای کل آزمون‌های هوش مصنوعی مخزن | DONE | نتیجه: تمامی آزمون‌ها در مخزن با موفقیت سبز شدند. |
+| A-105 | ثبت کامیت ساختاریافته در مخزن Git | DONE | کامیت رسمی و تمیز طبق پروتکل پروژه. |
+
 
 
 

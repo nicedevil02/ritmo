@@ -23,6 +23,7 @@ import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
+import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
 
 /// نوع مقصدِ یک مسیر.
 enum RitmoRouteKind { tab, screen, moduleEntry }
@@ -127,6 +128,11 @@ class RitmoRouter {
       return RitmoRouteTarget.module((context) async {
         await StudyModuleEntry.open(context);
       });
+    }
+
+    // صفحهٔ عیب‌یابی پل وب
+    if (r == '/bridge-diagnostics' || r == '/web-bridge-diagnostics') {
+      return RitmoRouteTarget.screen((_) => const WebBridgeDiagnosticsScreen());
     }
 
     // مسیرهای ماژول حرکت (Movement Module)

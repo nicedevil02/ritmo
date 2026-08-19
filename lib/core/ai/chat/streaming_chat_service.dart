@@ -275,6 +275,7 @@ class StreamingChatService {
     // Trigger memory consolidation for this session (fire-and-forget)
     unawaited(MemoryConsolidator.consolidateSession(sessionId, 'core'));
 
-    yield ChatComplete(assistantId, finalText, parsed.actions);
+    final isPartial = isChatGptWeb && ChatGptWebBridgeManager.instance.lastAnswerWasPartial;
+    yield ChatComplete(assistantId, finalText, parsed.actions, isPartial: isPartial);
   }
 }

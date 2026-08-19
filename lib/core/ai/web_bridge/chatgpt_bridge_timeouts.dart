@@ -24,4 +24,10 @@ abstract final class ChatGptBridgeTimeouts {
 
   /// Polling interval for fast UI and status readiness checks.
   static const Duration pollFastInterval = Duration(milliseconds: 200);
+
+  /// Silence duration for a locked streaming source before allowing re-arbitration (A-71).
+  static const Duration sourceRelockSilence = Duration(seconds: 4);
+
+  /// Maximum timeout for JavaScript harvest execution (A-75).
+  static const Duration harvestTimeout = Duration(seconds: 6);
 }

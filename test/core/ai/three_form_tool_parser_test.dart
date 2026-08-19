@@ -5,10 +5,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('WEB-28: Three-Form Tool Call Parsing', () {
-    test('Form 1: Markdown code block parsing with action and parameters', () {
+    test('Form 1: Markdown code block parsing with action and parameters (A-78)', () {
       const input = '''
 من هدف شما را ثبت می‌کنم:
-```json
+```tool
 {
   "action": "create_goal",
   "parameters": {
@@ -20,14 +20,14 @@ void main() {
 لطفاً بررسی کنید.
 ''';
 
-      final scan = AgentToolCallParser.scan(input);
+      final scan = AgentToolCallParser.scan(input, knownToolNames: {'create_goal'});
 
       expect(scan.hasCalls, isTrue);
       expect(scan.calls.length, equals(1));
       expect(scan.calls.first.toolName, equals('create_goal'));
       expect(scan.calls.first.parameters['title'], equals('ورزش روزانه'));
       expect(scan.calls.first.parameters['target'], equals(30));
-      expect(scan.cleanText.contains('```json'), isFalse);
+      expect(scan.cleanText.contains('```tool'), isFalse);
     });
 
     test('Form 2: Structured XML/Bracket tags (<tool_call>, <tool>, [TOOL_CALL])', () {
@@ -50,9 +50,9 @@ void main() {
       expect(scan3.calls.first.parameters['amount'], equals(250));
     });
 
-    test('Form 3: Plain / bare JSON response with equivalent keys', () {
+    test('Form 3: Plain / bare JSON response with equivalent keys (A-79)', () {
       const bareJsonInput = '{"tool": "calculate_stats", "data": {"days": 7}}';
-      final scan = AgentToolCallParser.scan(bareJsonInput);
+      final scan = AgentToolCallParser.scan(bareJsonInput, knownToolNames: {'calculate_stats'});
 
       expect(scan.hasCalls, isTrue);
       expect(scan.calls.first.toolName, equals('calculate_stats'));

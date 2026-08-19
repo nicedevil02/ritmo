@@ -1026,6 +1026,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             content: e.content,
             actions: e.actions,
             isStreaming: false,
+            isPartial: e.isPartial,
           );
         });
       }

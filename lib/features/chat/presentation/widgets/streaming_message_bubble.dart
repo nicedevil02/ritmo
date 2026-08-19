@@ -9,6 +9,7 @@ import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/markdown_parser.dart';
 import 'package:ritmo/features/chat/presentation/widgets/chat_action_chip.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 class StreamingMessageBubble extends StatefulWidget {
 
@@ -148,6 +149,44 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
                           onTap: () => widget.onAction(act),
                         ))
                     .toList(),
+              ),
+            ),
+          ],
+
+          // Warning banner for partial responses (A-80)
+          if (!widget.message.isStreaming && widget.message.isPartial) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colors.warning.withValues(alpha: 0.3),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    CupertinoIcons.exclamationmark_triangle_fill,
+                    size: 14,
+                    color: colors.warning,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      AppLocalizations.of(context)?.bridgePartialAnswerWarning ??
+                          '⚠️ این پاسخ کامل دریافت نشد. ارتباط با مرورگر پیش از پایان پاسخ قطع شد.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.warning,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

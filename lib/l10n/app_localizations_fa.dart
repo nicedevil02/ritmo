@@ -1288,6 +1288,14 @@ class AppLocalizationsFa extends AppLocalizations {
   String get bridgeDiagnosticsTitle => 'تشخیص پل هوش مصنوعی وب';
 
   @override
+  String get bridgeDiagnosticsSubtitle =>
+      'وضعیت اتصال، گزارش ردیاب و بازیابی دستی پاسخ';
+
+  @override
+  String get bridgeDiagnosticsSearchKeywords =>
+      'دستیار هوشمند، پل وب، چت جی پی تی، عیب یابی، تشخیص، لاگ، پاسخ نمی‌آید';
+
+  @override
   String get bridgeHarvestAction => 'بازیابی پاسخ از مرورگر';
 
   @override
@@ -1298,6 +1306,17 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get bridgeLiveBrowser => 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی';
+
+  @override
+  String get bridgePartialAnswerWarning =>
+      '⚠️ این پاسخ کامل دریافت نشد. ارتباط با مرورگر پیش از پایان پاسخ قطع شد.';
+
+  @override
+  String get bridgeChipLongPressHint =>
+      'برای مشاهدهٔ جزئیات عیب‌یابی، نگه دارید';
+
+  @override
+  String get bridgeWhyAction => 'چرا؟';
 
   @override
   String get cyclePregnancyBannerTitle => 'حالت بارداری فعال است';

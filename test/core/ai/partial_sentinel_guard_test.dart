@@ -23,18 +23,18 @@ void main() {
       expect(scan.cleanText, equals('در حال بررسی:'));
     });
 
-    test('Unfinished markdown json code block is suppressed and sets hasOpenTag=true', () {
-      const partialCodeBlock = 'ثبت برنامه:\n```json\n{"action": "add_routine", "parameters": {';
-      final scan = AgentToolCallParser.scan(partialCodeBlock);
+    test('Unfinished markdown tool code block is suppressed and sets hasOpenTag=true (A-78)', () {
+      const partialCodeBlock = 'ثبت برنامه:\n```tool\n{"action": "add_routine", "parameters": {';
+      final scan = AgentToolCallParser.scan(partialCodeBlock, knownToolNames: {'add_routine'});
 
       expect(scan.hasOpenTag, isTrue);
       expect(scan.hasCalls, isFalse);
       expect(scan.cleanText, equals('ثبت برنامه:'));
     });
 
-    test('Completing the tag closes hasOpenTag and yields parsed tool calls', () {
-      const fullText = 'ثبت برنامه:\n```json\n{"action": "add_routine", "parameters": {"name": "مطالعه"}}\n```\nانجام شد.';
-      final scan = AgentToolCallParser.scan(fullText);
+    test('Completing the tag closes hasOpenTag and yields parsed tool calls (A-78)', () {
+      const fullText = 'ثبت برنامه:\n```tool\n{"action": "add_routine", "parameters": {"name": "مطالعه"}}\n```\nانجام شد.';
+      final scan = AgentToolCallParser.scan(fullText, knownToolNames: {'add_routine'});
 
       expect(scan.hasOpenTag, isFalse);
       expect(scan.hasCalls, isTrue);
@@ -42,7 +42,7 @@ void main() {
       expect(scan.calls.first.parameters['name'], equals('مطالعه'));
       expect(scan.cleanText, contains('ثبت برنامه:'));
       expect(scan.cleanText, contains('انجام شد.'));
-      expect(scan.cleanText.contains('```json'), isFalse);
+      expect(scan.cleanText.contains('```tool'), isFalse);
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -154,6 +155,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
   BridgeSource? _lockedSource;
   BridgeSource? get lockedSource => _lockedSource;
+  DateTime? _lockedSourceLastChunkAt;
+  int _lockedSourceMaxLength = 0;
+
+  bool _lastAnswerWasPartial = false;
+  bool get lastAnswerWasPartial => _lastAnswerWasPartial;
+
+  String? _lastEmptyReasonDetail;
+  String? get lastEmptyReasonDetail => _lastEmptyReasonDetail;
 
   final BridgeResponseAccumulator _accumulator = BridgeResponseAccumulator();
   BridgeResponseAccumulator get accumulator => _accumulator;
@@ -177,6 +186,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   void _acquireSourceLockIfNeeded(BridgeSource src) {
     if (_lockedSource == null) {
       _lockedSource = src;
+      _lockedSourceLastChunkAt = DateTime.now();
+      _lockedSourceMaxLength = _accumulator.length;
       BridgeTraceLog.instance.addEntry(
         type: 'source_locked',
         source: src.name,
@@ -184,6 +195,32 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
         note: 'locked_to_${src.name}',
       );
     }
+  }
+
+  bool _shouldRejectForSourceLock(BridgeSource src) {
+    final locked = _lockedSource;
+    if (locked == null || locked == src) return false;
+    if (!src.isStreamingSource) return false;
+
+    final lastAt = _lockedSourceLastChunkAt;
+    final silentFor = lastAt == null
+        ? Duration.zero
+        : DateTime.now().difference(lastAt);
+
+    if (silentFor >= ChatGptBridgeTimeouts.sourceRelockSilence) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'source_relock',
+        level: BridgeTraceLevel.warn,
+        source: src.name,
+        requestId: _currentRequestId,
+        note: 'relock_from_${locked.name}_after_${silentFor.inMilliseconds}ms',
+      );
+      _lockedSource = null;
+      _lockedSourceMaxLength = 0;
+      _lockedSourceLastChunkAt = null;
+      return false;
+    }
+    return true;
   }
 
   @visibleForTesting
@@ -212,7 +249,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _currentRequestId = null;
     _pendingRequest = null;
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _lastChunkSource = null;
+    _lastAnswerWasPartial = false;
+    _lastEmptyReasonDetail = null;
     _accumulator.reset();
     _currentStreamController?.close();
     _currentStreamController = null;
@@ -340,10 +381,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           onWebResourceError: (error) {
             if (_controller != null && _controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'Web resource error: ${error.description}');
+            unawaited(handleWebResourceError(error));
           },
           onHttpError: (error) {
             if (_controller != null && _controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'HTTP error: ${error.response?.statusCode}');
+            unawaited(handleHttpError(error));
           },
         ),
       );
@@ -387,10 +430,11 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       RitmoLog.debug('ChatGptWebBridge', 'Navigation finished with pending request (count: $_navigationReloadCount)');
       if (_navigationReloadCount > maxNavigationReloads) {
         RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (> $maxNavigationReloads times). Aborting stream.');
-        if (!_accumulator.isEmpty) {
+        final harvested = await _harvestForSalvage(reason: 'navigation_loop');
+        if (!_accumulator.isEmpty || (harvested != null && harvested.isNotEmpty)) {
           RitmoLog.warning('ChatGptWebBridge',
               'Salvaging ${_accumulator.length} chars before aborting on navigation loop.');
-          _finishGeneration(null);
+          _finishGeneration(null, isPartial: true);
         } else {
           _failGeneration(WebBridgeException.navigationLoop());
         }
@@ -418,7 +462,7 @@ if (typeof window.__ritmo_resume === 'function') {
 
   /// Handles web resource loading errors from NavigationDelegate.
   @visibleForTesting
-  void handleWebResourceError(WebResourceError error) {
+  Future<void> handleWebResourceError(WebResourceError error) async {
     RitmoLog.error('ChatGptWebBridge', 'Resource Error (code=${error.errorCode}, isMainFrame=${error.isForMainFrame}): ${error.description}');
 
     // Only close in-flight stream if the error is confirmed to affect the main frame
@@ -429,10 +473,11 @@ if (typeof window.__ritmo_resume === 'function') {
     }
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
-      if (!_accumulator.isEmpty) {
+      final harvested = await _harvestForSalvage(reason: 'resource_error');
+      if (!_accumulator.isEmpty || (harvested != null && harvested.isNotEmpty)) {
         RitmoLog.warning('ChatGptWebBridge',
             'Salvaging ${_accumulator.length} chars before aborting on resource error.');
-        _finishGeneration(null);
+        _finishGeneration(null, isPartial: true);
         return;
       }
 
@@ -458,15 +503,16 @@ if (typeof window.__ritmo_resume === 'function') {
 
   /// Handles HTTP response status errors from NavigationDelegate.
   @visibleForTesting
-  void handleHttpError(HttpResponseError error) {
+  Future<void> handleHttpError(HttpResponseError error) async {
     final status = error.response?.statusCode;
     RitmoLog.error('ChatGptWebBridge', 'HTTP Error: statusCode=$status');
 
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
-      if (!_accumulator.isEmpty) {
+      final harvested = await _harvestForSalvage(reason: 'http_error');
+      if (!_accumulator.isEmpty || (harvested != null && harvested.isNotEmpty)) {
         RitmoLog.warning('ChatGptWebBridge',
             'Salvaging ${_accumulator.length} chars before aborting on HTTP error.');
-        _finishGeneration(null);
+        _finishGeneration(null, isPartial: true);
         return;
       }
 
@@ -684,15 +730,33 @@ if (typeof window.__ritmo_resume === 'function') {
 
         case BridgeDoneEvent(:final fullText, :final requestId):
           final src = parseBridgeSource(source);
-          if (_lockedSource != null && src != _lockedSource) {
-            RitmoLog.debug('ChatGptWebBridge',
-                'Ignoring done from non-locked source $src (locked: $_lockedSource)');
+          final incoming = fullText ?? '';
+          final isCompeting = _lockedSource != null && _lockedSource != src;
+
+          if (isCompeting) {
+            final current = _accumulator.text;
+            final isStrictlyBetter = incoming.trim().length > current.trim().length;
+            if (isStrictlyBetter) {
+              // قاعدهٔ ۰-۸: متن بلندتر معتبرتر است؛ به‌عنوان برداشت وارد می‌شود.
+              BridgeTraceLog.instance.addEntry(
+                type: 'done_promoted',
+                level: BridgeTraceLevel.warn,
+                source: src.name,
+                textLength: incoming.length,
+                requestId: requestId ?? _currentRequestId,
+                note: 'competing_done_longer_than_locked_${_lockedSource!.name}',
+              );
+              _emitChunk(incoming, null, source: BridgeSource.harvest.name, isHarvest: true);
+              _finishGeneration(null);
+              break;
+            }
             BridgeTraceLog.instance.addEntry(
               type: 'done_ignored',
-              source: source,
-              requestId: requestId,
-              note: 'ignored_non_locked_source (locked: ${_lockedSource?.name})',
               level: BridgeTraceLevel.info,
+              source: src.name,
+              textLength: incoming.length,
+              requestId: requestId ?? _currentRequestId,
+              note: 'shorter_than_accumulator_${current.length}',
             );
             break;
           }
@@ -760,7 +824,7 @@ if (typeof window.__ritmo_resume === 'function') {
         case BridgeHarvestResultEvent(:final fullText, :final error, :final requestId, :final strategy):
           BridgeTraceLog.instance.addEntry(
             type: 'harvest_result',
-            source: source,
+            source: BridgeSource.harvest.name,
             requestId: requestId,
             textLength: fullText.length,
             note: 'strategy="$strategy" error="$error"',
@@ -770,7 +834,7 @@ if (typeof window.__ritmo_resume === 'function') {
             _harvestCompleter!.complete(fullText.isNotEmpty ? fullText : null);
           }
           if (fullText.isNotEmpty && _status == ChatGptBridgeStatus.generating) {
-            _emitChunk(fullText, null, source: 'dom');
+            _emitChunk(fullText, null, source: BridgeSource.harvest.name, isHarvest: true);
           }
 
         case BridgeUnknownEvent(:final type, :final error, :final rawPayload):
@@ -842,12 +906,39 @@ if (typeof window.__ritmo_resume === 'function') {
   }
 
   Completer<String?>? _harvestCompleter;
+  bool _harvestInFlight = false;
 
-  /// Harvests visible assistant text directly from ChatGPT WebView DOM (A-40).
+  /// Harvests visible assistant text directly from ChatGPT WebView DOM (A-40, A-75).
   Future<String?> harvestVisibleAnswer() async {
-    final controller = _controller;
-    if (controller == null) return null;
+    if (_harvestInFlight) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'harvest_skipped',
+        source: BridgeSource.harvest.name,
+        requestId: _currentRequestId,
+        note: 'already_in_flight',
+        level: BridgeTraceLevel.info,
+      );
+      return null;
+    }
 
+    final controller = _controller;
+    if (controller == null) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'harvest_skipped',
+        source: BridgeSource.harvest.name,
+        requestId: _currentRequestId,
+        note: 'no_controller',
+        level: BridgeTraceLevel.info,
+      );
+      return null;
+    }
+
+    _harvestInFlight = true;
+
+    // Complete any hanging previous completer before creating a new one
+    if (_harvestCompleter != null && !_harvestCompleter!.isCompleted) {
+      _harvestCompleter!.complete(null);
+    }
     final completer = Completer<String?>();
     _harvestCompleter = completer;
 
@@ -859,27 +950,101 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 } else {
   var text = (typeof findLatestAssistantText === 'function') ? findLatestAssistantText() : '';
   if (typeof notifyFlutter === 'function') {
-    notifyFlutter('harvest_result', { fullText: text || '', requestId: '$reqId', source: 'dom', strategy: 'manual_fallback' });
+    notifyFlutter('harvest_result', { fullText: text || '', requestId: '$reqId', source: 'harvest', strategy: 'manual_fallback' });
   }
 }
 ''');
       final result = await completer.future.timeout(
-        ChatGptBridgeTimeouts.composerReadyTimeout,
-        onTimeout: () => null,
+        ChatGptBridgeTimeouts.harvestTimeout,
+        onTimeout: () {
+          BridgeTraceLog.instance.addEntry(
+            type: 'harvest_timeout',
+            source: BridgeSource.harvest.name,
+            requestId: _currentRequestId,
+            level: BridgeTraceLevel.warn,
+          );
+          return null;
+        },
       );
-      return result;
+
+      if (result != null && result.isNotEmpty) {
+        final sanitized = BridgeResponseAccumulator.sanitize(result);
+        if (sanitized.length < _accumulator.length) {
+          BridgeTraceLog.instance.addEntry(
+            type: 'harvest_result',
+            source: BridgeSource.harvest.name,
+            requestId: _currentRequestId,
+            textLength: sanitized.length,
+            note: 'shorter_than_accumulator_${_accumulator.length}',
+            level: BridgeTraceLevel.info,
+          );
+          return null;
+        }
+        _emitChunk(sanitized, null, source: BridgeSource.harvest.name, isHarvest: true);
+        return sanitized;
+      }
+      return null;
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'harvestVisibleAnswer error: $e', e, st);
       return null;
     } finally {
+      _harvestInFlight = false;
       if (_harvestCompleter == completer) {
         _harvestCompleter = null;
       }
     }
   }
 
-  /// Describes the probable cause of an empty response for diagnostics and UI (A-22).
+  /// Automatically executes salvage harvest before failing/completing on error or timeout (A-73, A-74).
+  Future<String?> _harvestForSalvage({required String reason}) async {
+    final activeReqId = _currentRequestId;
+    try {
+      final text = await harvestVisibleAnswer();
+      if (_currentRequestId != activeReqId) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'stale_event_dropped',
+          source: BridgeSource.harvest.name,
+          requestId: activeReqId,
+          note: 'salvage_request_id_mismatch (now: $_currentRequestId)',
+          level: BridgeTraceLevel.warn,
+        );
+        return null;
+      }
+      BridgeTraceLog.instance.addEntry(
+        type: 'salvage_harvest',
+        level: BridgeTraceLevel.info,
+        source: BridgeSource.harvest.name,
+        textLength: text?.length ?? 0,
+        requestId: _currentRequestId,
+        note: '${reason}_${text == null || text.isEmpty ? 'empty' : 'recovered'}',
+      );
+      return text;
+    } catch (e, st) {
+      RitmoLog.warning(
+        'ChatGptWebBridge',
+        'برداشت نجات در مسیر $reason شکست خورد: $e',
+        e,
+        st,
+      );
+      BridgeTraceLog.instance.addEntry(
+        type: 'salvage_harvest',
+        level: BridgeTraceLevel.error,
+        source: BridgeSource.harvest.name,
+        requestId: _currentRequestId,
+        note: '${reason}_threw',
+      );
+      return null;
+    }
+  }
+
+  /// Describes the probable cause of an empty response for diagnostics and UI (A-22, A-96).
   EmptyResponseReason describeEmptyResponseReason() {
+    final reason = _computeEmptyResponseReason();
+    _lastEmptyReasonDetail = reason.technicalDetail;
+    return reason;
+  }
+
+  EmptyResponseReason _computeEmptyResponseReason() {
     if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
       return const EmptyResponseReason(
         messageFa: 'برای ادامه گفتگو، لطفاً تایید امنیتی کلودفلر را کامل کنید.',
@@ -924,41 +1089,63 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     );
   }
 
-  void _emitChunk(String? full, String? delta, {String source = 'dom'}) {
-    final src = parseBridgeSource(source);
+  void _emitChunk(
+    String? full,
+    String? delta, {
+    required String source,
+    bool isHarvest = false,
+  }) {
+    final src = isHarvest ? BridgeSource.harvest : parseBridgeSource(source);
     if (src == BridgeSource.sse) {
       _hasActiveSseStream = true;
     }
-    _lastChunkSource = source;
+    _lastChunkSource = src.name;
 
     final controller = _currentStreamController;
     if (controller == null || controller.isClosed) {
       BridgeTraceLog.instance.addEntry(
         type: 'chunk_dropped',
-        source: source,
+        source: src.name,
         note: 'dropped_no_controller',
         level: BridgeTraceLevel.warn,
       );
       return;
     }
 
-    if (_lockedSource != null && _lockedSource != BridgeSource.dom && src == BridgeSource.dom) {
+    // ت-۸: برداشت هرگز توسط قفل منبع رد نمی‌شود.
+    if (!src.bypassesSourceLock) {
+      if (_shouldRejectForSourceLock(src)) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'chunk_dropped',
+          level: BridgeTraceLevel.warn,
+          source: src.name,
+          textLength: (full ?? delta ?? '').length,
+          requestId: _currentRequestId,
+          note: 'dropped_competing_chunk_locked_to_${_lockedSource?.name}',
+        );
+        return;
+      }
+      _acquireSourceLockIfNeeded(src);
+      _lockedSourceLastChunkAt = DateTime.now();
+      if (full != null) {
+        _lockedSourceMaxLength = max(_lockedSourceMaxLength, full.length);
+      }
+    } else {
       BridgeTraceLog.instance.addEntry(
-        type: 'chunk_dropped',
-        source: source,
-        note: 'dropped_competing_dom_chunk (locked: ${_lockedSource?.name})',
+        type: 'harvest_override',
         level: BridgeTraceLevel.info,
+        source: src.name,
+        textLength: (full ?? delta ?? '').length,
+        requestId: _currentRequestId,
+        note: 'harvest_bypassed_lock_${_lockedSource?.name ?? 'none'}',
       );
-      return;
     }
-
-    _acquireSourceLockIfNeeded(src);
 
     AccumulatorDelta? result;
     if (full != null && full.isNotEmpty) {
-      result = _accumulator.applyFull(full, source: source);
+      result = _accumulator.applyFull(full, source: src.name);
     } else if (delta != null && delta.isNotEmpty) {
-      result = _accumulator.applyDelta(delta, source: source);
+      result = _accumulator.applyDelta(delta, source: src.name);
     }
 
     if (result == null) return;
@@ -973,20 +1160,31 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _pendingRequest?.receivedLength = _accumulator.length;
     BridgeTraceLog.instance.addEntry(
       type: 'chunk',
-      source: source,
+      source: src.name,
       requestId: _currentRequestId,
       textLength: _accumulator.length,
       level: BridgeTraceLevel.info,
     );
   }
 
-  /// Flushes whatever the page ended up showing, then closes the stream.
-  void _finishGeneration(String? fullText) {
+  /// Flushes whatever the page ended up showing, then closes the stream (A-80).
+  void _finishGeneration(String? fullText, {bool isPartial = false}) {
     _generationTimer?.cancel();
     _generationTimer = null;
 
     if (fullText != null && fullText.isNotEmpty) {
-      _emitChunk(fullText, null, source: _lockedSource?.name ?? 'dom');
+      _emitChunk(fullText, null, source: _lockedSource?.name ?? BridgeSource.harvest.name, isHarvest: true);
+    }
+
+    _lastAnswerWasPartial = isPartial;
+    if (isPartial) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'partial_finish',
+        source: _lockedSource?.name ?? 'lifecycle',
+        requestId: _currentRequestId,
+        textLength: _accumulator.length,
+        level: BridgeTraceLevel.warn,
+      );
     }
 
     final finalText = _accumulator.text;
@@ -995,6 +1193,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       source: _lockedSource?.name ?? 'lifecycle',
       requestId: _currentRequestId,
       textLength: finalText.length,
+      note: isPartial ? 'partial_finish' : 'complete_finish',
       level: BridgeTraceLevel.info,
     );
 
@@ -1007,6 +1206,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _pendingRequest = null;
     _lastChunkSource = null;
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _hasActiveSseStream = false;
     controller?.close();
     _resetInactivityTimer();
@@ -1024,6 +1225,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _pendingRequest = null;
     _lastChunkSource = null;
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _hasActiveSseStream = false;
 
     _setStatus(ChatGptBridgeStatus.ready);
@@ -1060,6 +1263,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     // 3. Reset internal tracking state
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _accumulator.reset();
     _navigationReloadCount = 0;
     _currentRequestId = null;
@@ -1116,6 +1321,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _navigationReloadCount = 0;
     _lastChunkSource = null;
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _hasActiveSseStream = false;
 
     final booted = await ensureBooted();
@@ -1210,9 +1417,25 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     await _controller!.runJavaScript(jsCall);
 
     _generationTimer?.cancel();
-    _generationTimer = Timer(generationTimeout, () {
+    _generationTimer = Timer(ChatGptBridgeTimeouts.generationTimeout, () async {
       if (!identical(_currentStreamController, streamController)) return;
-      RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${generationTimeout.inSeconds}s (reqId: $reqId).');
+      RitmoLog.debug('ChatGptWebBridge', 'Generation timed out after ${ChatGptBridgeTimeouts.generationTimeout.inSeconds}s (reqId: $reqId).');
+      BridgeTraceLog.instance.addEntry(
+        type: 'generation_timeout',
+        level: BridgeTraceLevel.warn,
+        source: BridgeSource.dart.name,
+        textLength: _accumulator.length,
+        requestId: _currentRequestId,
+        note: 'accumulator_${_accumulator.isEmpty ? 'empty' : 'partial'}_before_harvest',
+      );
+
+      final harvested = await _harvestForSalvage(reason: 'generation_timeout');
+      if (!identical(_currentStreamController, streamController)) return;
+
+      if (harvested != null && harvested.trim().isNotEmpty) {
+        _finishGeneration(null, isPartial: false);
+        return;
+      }
       if (_accumulator.isEmpty) {
         _failGeneration(
           WebBridgeException.timeout(
@@ -1220,7 +1443,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
           ),
         );
       } else {
-        _finishGeneration(null);
+        _finishGeneration(null, isPartial: true);
       }
     });
 
@@ -1230,7 +1453,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   /// Resets the inactivity countdown.
   void _resetInactivityTimer() {
     _inactivityTimer?.cancel();
-    _inactivityTimer = Timer(inactivityTimeout, () {
+    _inactivityTimer = Timer(ChatGptBridgeTimeouts.inactivityTimeout, () {
       if (_status == ChatGptBridgeStatus.generating ||
           _currentStreamController != null) {
         _resetInactivityTimer();
@@ -1252,6 +1475,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _currentStreamController = null;
     _accumulator.reset();
     _lockedSource = null;
+    _lockedSourceLastChunkAt = null;
+    _lockedSourceMaxLength = 0;
     _navigationReloadCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;

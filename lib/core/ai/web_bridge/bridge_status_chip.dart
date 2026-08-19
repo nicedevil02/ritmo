@@ -94,6 +94,13 @@ class BridgeStatusChip extends StatelessWidget {
                       }
                     }
                   : null,
+              onLongPress: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const WebBridgeDiagnosticsScreen(),
+                  ),
+                );
+              },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

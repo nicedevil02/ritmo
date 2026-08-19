@@ -41,8 +41,8 @@ class AgentStreamPresenter {
       case AgentTurnStartedEvent(:final turn, :final maxTurns):
         _currentTurn = turn;
         _maxTurns = maxTurns;
-        // در شروع هر نوبت جدید، متن خام نوبت قبل نگه داشته نمی‌شود
-        // مگر اینکه نوبت پاسخ نهایی باشد.
+        _isSuppressed = false;
+        // در شروع هر نوبت جدید، سرکوب نوبت قبل پاک می‌شود تا متن نوبت جدید نمایش یابد.
 
       case AgentStepStartedEvent(:final step):
         _isWorking = true;

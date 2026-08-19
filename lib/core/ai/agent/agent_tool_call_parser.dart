@@ -50,15 +50,19 @@ class AgentToolCallScan {
 class AgentToolCallParser {
   const AgentToolCallParser._();
 
-  /// فقط وقتی اسکن کن که نشانهٔ واقعی فراخوانی ابزار در متن باشد (A-10).
+  /// برچسب‌های معتبر حصار کد برای فراخوانی ابزار (A-78)
+  static const List<String> toolFenceLabels = ['ritmo_tool', 'tool_call', 'tool'];
+
+  /// فقط وقتی اسکن کن که نشانهٔ واقعی فراخوانی ابزار در متن باشد (A-10, A-78).
   static bool shouldScanForToolCalls(String soFar) {
     return soFar.contains('<tool_call') ||
         soFar.contains('<ritmo-tool') ||
         soFar.contains('<actions') ||
         soFar.contains('<memory_ops') ||
         soFar.contains('<function') ||
+        soFar.contains('```ritmo_tool') ||
+        soFar.contains('```tool_call') ||
         soFar.contains('```tool') ||
-        soFar.contains('```json') ||
         soFar.contains('[tool_call') ||
         soFar.contains('[TOOL_CALL]') ||
         soFar.contains('[TOOL]');
@@ -70,8 +74,9 @@ class AgentToolCallParser {
   static final RegExp _functionTagRe = RegExp(
       r'<(?:function|tool)=([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/(?:function|tool)>',
       caseSensitive: false);
-  static final RegExp _codeBlockJsonRe =
-      RegExp(r'```(?:json|tool)?\s*(\{[\s\S]*?\})\s*```', caseSensitive: false);
+  static final RegExp _codeBlockJsonRe = RegExp(
+      r'```(?:ritmo_tool|tool_call|tool)\s*(\{[\s\S]*?\})\s*```',
+      caseSensitive: false);
   static final RegExp _danglingToolRe = RegExp(
       r'<(?:tool_call|tool)>[\s\S]*$|\[TOOL_CALL\][\s\S]*$|\[TOOL\][\s\S]*$',
       caseSensitive: false);
@@ -89,8 +94,11 @@ class AgentToolCallParser {
   static const String _openTag = '<tool_call>';
   static const String _closeTag = '</tool_call>';
 
-  /// پویش کامل متن خام یک نوبت
-  static AgentToolCallScan scan(String raw) {
+  /// پویش کامل متن خام یک نوبت (A-79)
+  static AgentToolCallScan scan(
+    String raw, {
+    Set<String>? knownToolNames,
+  }) {
     if (raw.isEmpty) return AgentToolCallScan.empty;
 
     final calls = <AgentToolCall>[];
@@ -121,11 +129,11 @@ class AgentToolCallParser {
       }
     }
 
-    // ۳. بلوک کد مارک‌داون شامل JSON ابزار
+    // ۳. بلوک کد مارک‌داون شامل JSON ابزار با برچسب‌های معتبر
     if (calls.isEmpty) {
       for (final match in _codeBlockJsonRe.allMatches(raw)) {
         final jsonText = match.group(1) ?? '';
-        final bare = _decodeBareJsonCall(jsonText);
+        final bare = _decodeBareJsonCall(jsonText, knownToolNames: knownToolNames);
         if (bare != null) {
           final signature = '${bare.toolName}|${stableArgs(bare.parameters)}';
           if (seen.add(signature)) {
@@ -148,13 +156,13 @@ class AgentToolCallParser {
 
     final hasDanglingTag = _danglingTagRe.hasMatch(textForDangling) || _partialTagRe.hasMatch(textForDangling);
 
-    // بررسی بلوک کد مارک‌داون باز (تعداد فرد ```)
+    // بررسی بلوک کد مارک‌داون باز (تعداد فرد ``` فقط با برچسب‌های معتبر ابزار)
     final fenceMatches = RegExp(r'```').allMatches(raw).toList();
     var hasOpenFenceTool = false;
     if (fenceMatches.length % 2 != 0) {
       final lastFencePos = fenceMatches.last.start;
       final fenceTail = raw.substring(lastFencePos);
-      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+      if (RegExp(r'^```(?:ritmo_tool|tool_call|tool)\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
         hasOpenFenceTool = true;
       }
     }
@@ -162,9 +170,9 @@ class AgentToolCallParser {
     final lastOpen = raw.lastIndexOf(_openTag);
     final hasOpenTag = hasDanglingTag || hasOpenFenceTool || (lastOpen >= 0 && lastOpen > lastClose);
 
-    // ۴. حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است
+    // ۴. حالت لبه: مدل بدون تگ، تنها یک JSON با کلید tool فرستاده است (با اعتبارسنجی نام)
     if (calls.isEmpty && !hasOpenTag) {
-      final bare = _decodeBareJsonCall(raw);
+      final bare = _decodeBareJsonCall(raw, knownToolNames: knownToolNames);
       if (bare != null) {
         return AgentToolCallScan(
           calls: <AgentToolCall>[bare],
@@ -178,7 +186,7 @@ class AgentToolCallParser {
 
     return AgentToolCallScan(
       calls: calls,
-      cleanText: cleanForDisplay(raw),
+      cleanText: cleanForDisplay(raw, knownToolNames: knownToolNames),
       hasOpenTag: hasOpenTag,
       tailLength: tail.length,
       parseErrors: errors,
@@ -186,15 +194,13 @@ class AgentToolCallParser {
   }
 
   /// حذف بلوک‌های ابزار (کامل و نیمه‌کاره) با حفظ تگ‌های actions و memory_ops.
-  /// خروجی همین تابع به ChatActionParser داده می‌شود؛ اگر tool_call حذف نشود،
-  /// JSON خام در پیام ذخیره‌شدهٔ چت برای کاربر ظاهر می‌شود.
-  static String stripToolCalls(String raw) {
+  static String stripToolCalls(String raw, {Set<String>? knownToolNames}) {
     var text = raw.replaceAll(_blockRe, '');
     text = text.replaceAll(_functionTagRe, '');
     text = text.replaceAll(_danglingToolRe, '');
     text = text.replaceAllMapped(_codeBlockJsonRe, (match) {
       final jsonText = match.group(1) ?? '';
-      if (_decodeBareJsonCall(jsonText) != null) {
+      if (_decodeBareJsonCall(jsonText, knownToolNames: knownToolNames) != null) {
         return '';
       }
       return match.group(0) ?? '';
@@ -202,15 +208,27 @@ class AgentToolCallParser {
     return text;
   }
 
-  static final RegExp _noisePrefixRe = RegExp(
+  static final RegExp noisePrefixRe = RegExp(
     r'^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*',
     caseSensitive: false,
     multiLine: true,
   );
 
+  /// پاک‌سازی پیشوندهای زائد مدل (A-92)
+  static String stripNoisePrefix(String text) {
+    var result = text;
+    while (true) {
+      final before = result;
+      result = result.replaceFirst(noisePrefixRe, '').trimLeft();
+      result = result.replaceFirst(RegExp(r'^[•\-\*:\s]+'), '').trimLeft();
+      if (result == before) break;
+    }
+    return result.trim();
+  }
+
   /// متن نهایی قابل نمایش به کاربر
-  static String cleanForDisplay(String raw) {
-    var text = stripToolCalls(raw);
+  static String cleanForDisplay(String raw, {Set<String>? knownToolNames}) {
+    var text = stripToolCalls(raw, knownToolNames: knownToolNames);
     text = text.replaceAll(_actionsRe, '');
     text = text.replaceAll(_memOpsRe, '');
     text = text.replaceAll(_danglingTagRe, '');
@@ -221,19 +239,13 @@ class AgentToolCallParser {
     if (fenceMatches.length % 2 != 0) {
       final lastFencePos = fenceMatches.last.start;
       final fenceTail = text.substring(lastFencePos);
-      if (RegExp(r'^```(?:json|tool)?\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
+      if (RegExp(r'^```(?:ritmo_tool|tool_call|tool)\s*\{?', caseSensitive: false).hasMatch(fenceTail)) {
         text = text.substring(0, lastFencePos);
       }
     }
 
     text = text.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
-    while (true) {
-      final before = text;
-      text = text.replaceFirst(_noisePrefixRe, '').trimLeft();
-      text = text.replaceFirst(RegExp(r'^[•\-\*:\s]+'), '').trimLeft();
-      if (text == before) break;
-    }
-    return text.trim();
+    return stripNoisePrefix(text);
   }
 
   /// امضای پایدار پارامترها (کلیدهای مرتب) برای تشخیص فراخوانی تکراری
@@ -265,7 +277,7 @@ class AgentToolCallParser {
     try {
       decoded = jsonDecode(text);
     } catch (_) {
-      final extracted = _extractFirstJsonObject(text);
+      final extracted = extractFirstJsonObject(text);
       if (extracted != null) {
         try {
           decoded = jsonDecode(extracted);
@@ -361,8 +373,8 @@ class AgentToolCallParser {
     return <AgentToolCall>[call];
   }
 
-  /// کاوش اولین شیء JSON کامل با تطبیق آکولاد (مقاوم به متن اضافی اطراف JSON)
-  static String? _extractFirstJsonObject(String text) {
+  /// کاوش اولین شیء JSON کامل با تطبیق آکولاد (مقاوم به متن اضافی اطراف JSON) (A-92)
+  static String? extractFirstJsonObject(String text) {
     final start = text.indexOf('{');
     if (start < 0) return null;
 
@@ -397,8 +409,16 @@ class AgentToolCallParser {
     return null;
   }
 
-  /// تشخیص حالتی که کل پاسخ فقط یک JSON فراخوانی ابزار بدون تگ است
-  static AgentToolCall? _decodeBareJsonCall(String raw) {
+  /// تشخیص حالتی که کل پاسخ فقط یک JSON فراخوانی ابزار بدون تگ است (A-79)
+  static AgentToolCall? _decodeBareJsonCall(
+    String raw, {
+    Set<String>? knownToolNames,
+  }) {
+    // اگر knownToolNames داده نشده یا خالی است -> رفتار محافظه‌کارانه: JSON برهنه ابزار نیست (قاعدهٔ ۰-۸)
+    if (knownToolNames == null || knownToolNames.isEmpty) {
+      return null;
+    }
+
     var text = raw.trim();
     text = text
         .replaceFirst(_fenceOpenRe, '')
@@ -406,26 +426,29 @@ class AgentToolCallParser {
         .trim();
     if (!text.startsWith('{') || !text.endsWith('}')) return null;
 
-    final hasNameKey = text.contains('"tool"') ||
-        text.contains('"action"') ||
-        text.contains('"name"') ||
-        text.contains('"tool_name"') ||
-        text.contains('"function"');
-
-    final hasArgsKey = text.contains('"parameters"') ||
-        text.contains('"arguments"') ||
-        text.contains('"args"') ||
-        text.contains('"params"') ||
-        text.contains('"data"') ||
-        text.contains('"input"');
-
-    if (!hasNameKey && !hasArgsKey) return null;
-
     try {
       final decoded = jsonDecode(text);
       if (decoded is Map) {
-        final calls = _fromMap(decoded.cast<String, dynamic>(), <String>[]);
-        if (calls.length == 1) return calls.first;
+        final map = decoded.cast<String, dynamic>();
+        final candidateName = map['name'] ??
+            map['tool'] ??
+            map['tool_name'] ??
+            map['function'] ??
+            map['action'];
+
+        if (candidateName == null || candidateName is! String) {
+          return null;
+        }
+
+        final normalizedName = candidateName.trim();
+        if (!knownToolNames.contains(normalizedName)) {
+          return null;
+        }
+
+        final calls = _fromMap(map, <String>[]);
+        if (calls.length == 1 && calls.first.toolName == normalizedName) {
+          return calls.first;
+        }
       }
     } catch (_) {
       return null;
@@ -456,7 +479,7 @@ class AgentToolCallParser {
         ];
       }
     } catch (_) {
-      final extracted = _extractFirstJsonObject(cleanBody);
+      final extracted = extractFirstJsonObject(cleanBody);
       if (extracted != null) {
         try {
           final decoded = jsonDecode(extracted);

@@ -2390,6 +2390,18 @@ abstract class AppLocalizations {
   /// **'تشخیص پل هوش مصنوعی وب'**
   String get bridgeDiagnosticsTitle;
 
+  /// No description provided for @bridgeDiagnosticsSubtitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'وضعیت اتصال، گزارش ردیاب و بازیابی دستی پاسخ'**
+  String get bridgeDiagnosticsSubtitle;
+
+  /// No description provided for @bridgeDiagnosticsSearchKeywords.
+  ///
+  /// In fa, this message translates to:
+  /// **'دستیار هوشمند، پل وب، چت جی پی تی، عیب یابی، تشخیص، لاگ، پاسخ نمی‌آید'**
+  String get bridgeDiagnosticsSearchKeywords;
+
   /// No description provided for @bridgeHarvestAction.
   ///
   /// In fa, this message translates to:
@@ -2413,6 +2425,24 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی'**
   String get bridgeLiveBrowser;
+
+  /// No description provided for @bridgePartialAnswerWarning.
+  ///
+  /// In fa, this message translates to:
+  /// **'⚠️ این پاسخ کامل دریافت نشد. ارتباط با مرورگر پیش از پایان پاسخ قطع شد.'**
+  String get bridgePartialAnswerWarning;
+
+  /// No description provided for @bridgeChipLongPressHint.
+  ///
+  /// In fa, this message translates to:
+  /// **'برای مشاهدهٔ جزئیات عیب‌یابی، نگه دارید'**
+  String get bridgeChipLongPressHint;
+
+  /// No description provided for @bridgeWhyAction.
+  ///
+  /// In fa, this message translates to:
+  /// **'چرا؟'**
+  String get bridgeWhyAction;
 
   /// No description provided for @cyclePregnancyBannerTitle.
   ///

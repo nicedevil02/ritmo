@@ -77,12 +77,12 @@ void main() {
       expect(manager.lockedSource?.name, equals('sse'));
       expect(manager.accumulator.text, equals('سلام از SSE'));
 
-      // DOM sends a 'done' event — must be ignored because locked source is SSE
+      // DOM sends a 'done' event with shorter text — must be ignored because locked source is SSE
       manager.handleJsMessageForTest(
         JavaScriptMessage(
           message: jsonEncode({
             'type': 'done',
-            'fullText': 'متن کوتاه DOM',
+            'fullText': 'متن',
             'source': 'dom',
             'requestId': 'req_lock_1',
           }),

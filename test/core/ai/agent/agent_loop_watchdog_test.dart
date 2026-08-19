@@ -19,9 +19,11 @@ void main() {
       expect(AgentToolCallParser.shouldScanForToolCalls('<memory_ops>'), isTrue);
       expect(AgentToolCallParser.shouldScanForToolCalls('<function=get_weather>'), isTrue);
       expect(AgentToolCallParser.shouldScanForToolCalls('```tool\n{"name": "a"}\n```'), isTrue);
-      expect(AgentToolCallParser.shouldScanForToolCalls('```json\n{"tool_call": "a"}\n```'), isTrue);
+      expect(AgentToolCallParser.shouldScanForToolCalls('```ritmo_tool\n{"name": "a"}\n```'), isTrue);
+      expect(AgentToolCallParser.shouldScanForToolCalls('```tool_call\n{"name": "a"}\n```'), isTrue);
       expect(AgentToolCallParser.shouldScanForToolCalls('[TOOL_CALL]{"tool":"a"}[/TOOL_CALL]'), isTrue);
       expect(AgentToolCallParser.shouldScanForToolCalls('[TOOL]{"tool":"a"}[/TOOL]'), isTrue);
+      expect(AgentToolCallParser.shouldScanForToolCalls('```json\n{"data": 123}\n```'), isFalse);
     });
   });
 }

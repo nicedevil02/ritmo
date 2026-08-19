@@ -1289,6 +1289,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bridgeDiagnosticsTitle => 'Web AI Bridge Diagnostics';
 
   @override
+  String get bridgeDiagnosticsSubtitle =>
+      'Connection status, trace log, and manual answer salvage';
+
+  @override
+  String get bridgeDiagnosticsSearchKeywords =>
+      'assistant, web bridge, chatgpt, diagnostics, logs, no response';
+
+  @override
   String get bridgeHarvestAction => 'Harvest response from browser';
 
   @override
@@ -1299,6 +1307,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get bridgeLiveBrowser => 'View ChatGPT browser window';
+
+  @override
+  String get bridgePartialAnswerWarning =>
+      '⚠️ This response was not fully received. Connection with browser was interrupted before completion.';
+
+  @override
+  String get bridgeChipLongPressHint => 'Long-press to view bridge diagnostics';
+
+  @override
+  String get bridgeWhyAction => 'Why?';
 
   @override
   String get cyclePregnancyBannerTitle => 'Pregnancy Mode Active';

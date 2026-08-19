@@ -1,7 +1,7 @@
 // A-02: WebBridgeEvent — Typed event model for JavaScript-to-Dart bridge communication
 import 'dart:convert';
 
-enum BridgeSource { sse, dom, fetch, lifecycle, dart }
+enum BridgeSource { sse, dom, fetch, harvest, lifecycle, dart }
 
 BridgeSource parseBridgeSource(String source) {
   switch (source.toLowerCase().trim()) {
@@ -11,11 +11,24 @@ BridgeSource parseBridgeSource(String source) {
       return BridgeSource.dom;
     case 'fetch':
       return BridgeSource.fetch;
+    case 'harvest':
+      return BridgeSource.harvest;
     case 'lifecycle':
       return BridgeSource.lifecycle;
     default:
       return BridgeSource.dart;
   }
+}
+
+extension BridgeSourceX on BridgeSource {
+  /// منابعی که جریان زندهٔ تدریجی تولید می‌کنند و موضوع داوری قفل هستند.
+  bool get isStreamingSource =>
+      this == BridgeSource.sse ||
+      this == BridgeSource.dom ||
+      this == BridgeSource.fetch;
+
+  /// منابعی که عمدی و یک‌باره‌اند و از قفل منبع معاف‌اند (ت-۸).
+  bool get bypassesSourceLock => this == BridgeSource.harvest;
 }
 
 sealed class WebBridgeEvent {

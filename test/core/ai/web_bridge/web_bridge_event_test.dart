@@ -128,8 +128,23 @@ void main() {
       expect(parseBridgeSource('sse'), equals(BridgeSource.sse));
       expect(parseBridgeSource('dom'), equals(BridgeSource.dom));
       expect(parseBridgeSource('fetch'), equals(BridgeSource.fetch));
+      expect(parseBridgeSource('harvest'), equals(BridgeSource.harvest));
       expect(parseBridgeSource('lifecycle'), equals(BridgeSource.lifecycle));
       expect(parseBridgeSource('other'), equals(BridgeSource.dart));
+    });
+
+    test('BridgeSourceX correctly identifies streaming sources and bypasses', () {
+      expect(BridgeSource.sse.isStreamingSource, isTrue);
+      expect(BridgeSource.dom.isStreamingSource, isTrue);
+      expect(BridgeSource.fetch.isStreamingSource, isTrue);
+      expect(BridgeSource.harvest.isStreamingSource, isFalse);
+      expect(BridgeSource.lifecycle.isStreamingSource, isFalse);
+      expect(BridgeSource.dart.isStreamingSource, isFalse);
+
+      expect(BridgeSource.harvest.bypassesSourceLock, isTrue);
+      expect(BridgeSource.sse.bypassesSourceLock, isFalse);
+      expect(BridgeSource.dom.bypassesSourceLock, isFalse);
+      expect(BridgeSource.fetch.bypassesSourceLock, isFalse);
     });
   });
 }

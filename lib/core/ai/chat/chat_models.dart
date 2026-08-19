@@ -62,6 +62,7 @@ class ChatMessage {   // in-memory only — به DB نمیرود
     this.tokensUsed,
     this.actions = const [],
     this.isStreaming = false,
+    this.isPartial = false,
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> m) {
@@ -84,6 +85,7 @@ class ChatMessage {   // in-memory only — به DB نمیرود
       timestamp: DateTime.fromMillisecondsSinceEpoch(m['timestamp'] as int? ?? 0),
       tokensUsed: m['tokens_used'] as int?,
       actions: acts,
+      isPartial: m['is_partial'] == 1 || m['is_partial'] == true,
     );
   }
   final String id;
@@ -94,12 +96,13 @@ class ChatMessage {   // in-memory only — به DB نمیرود
   final int? tokensUsed;
   final List<ChatAction> actions;
   final bool isStreaming;
+  final bool isPartial;
 
   String get cleanDisplayText => role == ChatRole.user
       ? content
       : ChatActionParser.extractCleanReplyText(content);
 
-  ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, int? tokensUsed}) =>
+  ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, bool? isPartial, int? tokensUsed}) =>
     ChatMessage(
       id: id, sessionId: sessionId, role: role,
       content: content ?? this.content,
@@ -107,6 +110,7 @@ class ChatMessage {   // in-memory only — به DB نمیرود
       tokensUsed: tokensUsed ?? this.tokensUsed,
       actions: actions ?? this.actions,
       isStreaming: isStreaming ?? this.isStreaming,
+      isPartial: isPartial ?? this.isPartial,
     );
 
   Map<String, dynamic> toMap() => {
@@ -156,8 +160,11 @@ class UserMessageSaved extends StreamingChatEvent { UserMessageSaved(this.messag
 class AssistantStarted extends StreamingChatEvent { AssistantStarted(this.messageId); final String messageId; }
 class ChatChunk extends StreamingChatEvent { ChatChunk(this.delta, this.accumulated); final String delta; final String accumulated; }
 class ChatComplete extends StreamingChatEvent {
-  ChatComplete(this.messageId, this.content, this.actions);
-  final String messageId; final String content; final List<ChatAction> actions;
+  ChatComplete(this.messageId, this.content, this.actions, {this.isPartial = false});
+  final String messageId;
+  final String content;
+  final List<ChatAction> actions;
+  final bool isPartial;
 }
 class ChatCancelled extends StreamingChatEvent { ChatCancelled(this.messageId, this.content); final String messageId; final String content; }
 class ChatErrorEvent extends StreamingChatEvent { ChatErrorEvent(this.code, this.message); final String code; final String message; }

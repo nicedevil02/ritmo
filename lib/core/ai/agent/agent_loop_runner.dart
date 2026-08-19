@@ -70,6 +70,9 @@ class AgentLoopRunner {
     /// همین پرسونای فعال را می‌خوانند.
     AgentToolScope.instance.setActivePersona(personaId);
     final allowedTools = AgentToolScope.instance.allowedToolNames(personaId);
+    final knownToolNames = allowedTools.isNotEmpty
+        ? allowedTools
+        : AgentToolRegistry.instance.allTools.map((t) => t.name).toSet();
 
     /// کش نتیجه ابزارهای فقط‌خواندنی در همین اجرا (فاز ۴ · P4-4):
     /// یک ابزار با پارامترهای یکسان دوبار به دیتابیس نمی‌زند.
@@ -163,6 +166,8 @@ class AgentLoopRunner {
       if (turn > 1 && followUp.trim().isEmpty) break;
 
       yield AgentTurnStartedEvent(turn: turn, maxTurns: budget.maxTurns);
+      // T-12 / A-77: پیش‌فرض هر نوبت را پاسخ نهایی فرض می‌کنیم تا سرکوب نوبت قبل رفع شود
+      yield AgentDisplayResetEvent(turnKind: AgentTurnKind.finalAnswerTurn, turn: turn);
       yield AgentStatusChangedEvent(
         statusTextFa: turn == 1
             ? 'در حال نگارش و تحلیل پاسخ نهایی...'
@@ -219,9 +224,9 @@ class AgentLoopRunner {
           }
           final soFar = turnRaw.toString();
 
-          // Stage 1: بررسی وضعیت partial token فقط در صورت وجود نشانهٔ واقعی (A-10)
+          // Stage 1: بررسی وضعیت partial token فقط در صورت وجود نشانهٔ واقعی (A-10, A-79)
           final live = AgentToolCallParser.shouldScanForToolCalls(soFar)
-              ? AgentToolCallParser.scan(soFar)
+              ? AgentToolCallParser.scan(soFar, knownToolNames: knownToolNames)
               : AgentToolCallScan.empty;
 
           // Stage 2: رندر با واچ‌داگ سرکوب (A-09)
@@ -256,7 +261,8 @@ class AgentLoopRunner {
 
           if (renderAllowed) {
             final combined = AgentToolCallParser.cleanForDisplay(
-              _join(rawBuffer, AgentToolCallParser.stripToolCalls(soFar)),
+              _join(rawBuffer, AgentToolCallParser.stripToolCalls(soFar, knownToolNames: knownToolNames)),
+              knownToolNames: knownToolNames,
             );
             if (combined != displayed) {
               final delta = combined.startsWith(displayed) && displayed.isNotEmpty
@@ -290,26 +296,20 @@ class AgentLoopRunner {
       }
 
       final raw = turnRaw.toString();
-      final scan = AgentToolCallParser.scan(raw);
+      final scan = AgentToolCallParser.scan(raw, knownToolNames: knownToolNames);
       if (scan.parseErrors.isNotEmpty) {
         RitmoLog.warning(
             'Agent',
             'tool_call parse issues: ${scan.parseErrors.join(' | ')}');
       }
 
-      // تعیین نوع نوبت (WEB-33)
-      final turnKind =
-          scan.hasCalls ? AgentTurnKind.toolCallTurn : AgentTurnKind.finalAnswerTurn;
-
-      rawBuffer = _join(rawBuffer, AgentToolCallParser.stripToolCalls(raw));
+      rawBuffer = _join(rawBuffer, AgentToolCallParser.stripToolCalls(raw, knownToolNames: knownToolNames));
       transcript.addAssistant(raw);
 
       // پاسخ نهایی: مدل دیگر ابزاری نخواسته است
       if (!scan.hasCalls) {
-        // رویداد بازنشانی برای نوبت پاسخ نهایی (جهت آگاهی مصرف‌کننده)
-        yield AgentDisplayResetEvent(turnKind: turnKind, turn: turn);
         if (streamErrorFa.isNotEmpty &&
-            AgentToolCallParser.cleanForDisplay(rawBuffer).isEmpty) {
+            AgentToolCallParser.cleanForDisplay(rawBuffer, knownToolNames: knownToolNames).isEmpty) {
           if (turn == 1 && allResults.isEmpty) {
             RitmoLog.debug(
                 'Agent',
@@ -322,8 +322,8 @@ class AgentLoopRunner {
         break;
       }
 
-      // نوبت ابزاری تمام شد — بافر نمایش بازنشانی می‌شود (WEB-33)
-      yield AgentDisplayResetEvent(turnKind: turnKind, turn: turn);
+      // نوبت ابزاری تمام شد — بافر نمایش بازنشانی می‌شود (WEB-33, A-77)
+      yield AgentDisplayResetEvent(turnKind: AgentTurnKind.toolCallTurn, turn: turn);
       // بافر نمایشی این نوبت دور ریخته می‌شود؛ نوبت بعدی از صفر شروع می‌کند
       displayed = '';
 

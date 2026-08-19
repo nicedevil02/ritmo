@@ -161,11 +161,8 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
           settingsMap['cycle_onboarding_just_completed'] == 'true';
 
       final periods = await CyclePeriodRepository.instance.getAllPeriods(db);
-      final active = await CyclePeriodRepository.instance.getActivePeriod(db);
-      final periodRows = await db.query(
-        'cycle_periods',
-        orderBy: 'startDate ASC',
-      );
+      final active = periods.where((p) => p.isOpen).firstOrNull;
+      final periodRows = periods.reversed.map((p) => p.toMap()).toList();
 
       DataQualityReport? dataQuality;
       List<SymptomForecast> symptomForecasts = const [];
@@ -343,8 +340,8 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
       final db = await DatabaseHelper.instance.database;
       final targetDate = startDate ?? CycleClock.now;
       await CyclePeriodRepository.instance.startPeriod(
-        targetDate,
-        dbExecutor: db,
+        db: db,
+        startDate: targetDate,
       );
       RitmoEventBus().fire(
         RitmoEvent(
@@ -352,7 +349,6 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
           payload: {'date': CycleDateContract.toDayKey(targetDate)},
         ),
       );
-      CycleEngine().invalidate();
       await loadState();
     } catch (e, st) {
       RitmoLogger.error(
@@ -369,13 +365,13 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
       final db = await DatabaseHelper.instance.database;
       final active =
           value.activePeriod ??
-          await CyclePeriodRepository.instance.getActivePeriod(db);
-      if (active != null && active.id != null) {
+          await CyclePeriodRepository.instance.getOpenPeriod(db);
+      if (active != null && active.id.isNotEmpty) {
         final targetDate = endDate ?? CycleClock.now;
         await CyclePeriodRepository.instance.endPeriod(
-          active.id!,
-          targetDate,
-          dbExecutor: db,
+          db: db,
+          id: active.id,
+          endDate: targetDate,
         );
         RitmoEventBus().fire(
           RitmoEvent(
@@ -383,8 +379,11 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
             payload: {'date': CycleDateContract.toDayKey(targetDate)},
           ),
         );
-        CycleEngine().invalidate();
         await loadState();
+      } else {
+        RitmoLogger.error(
+          '[CycleStateNotifier] endPeriod called but active period is missing or has empty id',
+        );
       }
     } catch (e, st) {
       RitmoLogger.error(
@@ -396,13 +395,16 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
   }
 
   /// Deletes a cycle period by [id].
-  Future<void> deletePeriod(int id) async {
+  Future<void> deletePeriod(String id) async {
     try {
-      await CyclePeriodRepository.instance.deletePeriod(id);
+      final db = await DatabaseHelper.instance.database;
+      await CyclePeriodRepository.instance.deletePeriod(
+        db: db,
+        id: id,
+      );
       RitmoEventBus().fire(
         RitmoEvent(type: 'CycleUpdated', payload: {'deletedId': id}),
       );
-      CycleEngine().invalidate();
       await loadState();
     } catch (e, st) {
       RitmoLogger.error(

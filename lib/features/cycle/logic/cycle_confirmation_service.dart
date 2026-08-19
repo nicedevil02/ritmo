@@ -165,8 +165,8 @@ class CycleConfirmationService {
     switch (answer) {
       case CycleConfirmationAnswer.startedToday:
         await CyclePeriodRepository.instance.startPeriod(
-          cleanNow,
-          dbExecutor: db,
+          db: db,
+          startDate: cleanNow,
           now: effectiveNow,
         );
         break;
@@ -174,32 +174,32 @@ class CycleConfirmationService {
       case CycleConfirmationAnswer.startedOnOtherDate:
         final dateToStart = resolvedDate ?? cleanNow;
         await CyclePeriodRepository.instance.startPeriod(
-          CycleDateContract.cleanDate(dateToStart),
-          dbExecutor: db,
+          db: db,
+          startDate: CycleDateContract.cleanDate(dateToStart),
           now: effectiveNow,
         );
         break;
 
       case CycleConfirmationAnswer.endedToday:
-        final active = await CyclePeriodRepository.instance.getActivePeriod(db);
-        if (active != null && active.id != null) {
+        final active = await CyclePeriodRepository.instance.getOpenPeriod(db);
+        if (active != null && active.id.isNotEmpty) {
           await CyclePeriodRepository.instance.endPeriod(
-            active.id!,
-            cleanNow,
-            dbExecutor: db,
+            db: db,
+            id: active.id,
+            endDate: cleanNow,
             now: effectiveNow,
           );
         }
         break;
 
       case CycleConfirmationAnswer.endedOnOtherDate:
-        final active = await CyclePeriodRepository.instance.getActivePeriod(db);
-        if (active != null && active.id != null) {
+        final active = await CyclePeriodRepository.instance.getOpenPeriod(db);
+        if (active != null && active.id.isNotEmpty) {
           final dateToEnd = resolvedDate ?? cleanNow;
           await CyclePeriodRepository.instance.endPeriod(
-            active.id!,
-            CycleDateContract.cleanDate(dateToEnd),
-            dbExecutor: db,
+            db: db,
+            id: active.id,
+            endDate: CycleDateContract.cleanDate(dateToEnd),
             now: effectiveNow,
           );
         }

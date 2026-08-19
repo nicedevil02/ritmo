@@ -81,10 +81,8 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
       'cycleEndDate': p.endDate != null ? CycleDateContract.toDayKey(p.endDate!) : null,
       'startDate': CycleDateContract.toDayKey(p.startDate),
       'endDate': p.endDate != null ? CycleDateContract.toDayKey(p.endDate!) : null,
-      'suppressedPrayer': p.suppressedPrayer ? 1 : 0,
-      'fastDebtCreated': p.fastDebtCreated ? 1 : 0,
-      'notes': p.notes,
-      'periodDuration': p.periodDuration,
+      'note': p.note,
+      'flowIntensity': p.flowIntensity,
     }).toList();
 
     if (mounted) {
@@ -297,31 +295,24 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       final endStr = endDate?.toIso8601String().substring(0, 10);
                       final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-                      if (isEdit && log['id'] != null) {
-                        final duration = endDate != null
-                            ? CycleDateContract.daysBetween(startDate, endDate) + 1
-                            : null;
-                        await db.update(
-                          'cycle_periods',
-                          {
-                            'startDate': startStr,
-                            'endDate': endStr,
-                            'periodDuration': duration,
-                            'updatedAt': nowMs,
-                          },
-                          where: 'id = ?',
-                          whereArgs: [log['id']],
+                      if (isEdit && log['id'] != null && (log['id'] as String).isNotEmpty) {
+                        await CyclePeriodRepository.instance.updatePeriod(
+                          db: db,
+                          id: log['id'] as String,
+                          startDate: startDate,
+                          endDate: endDate,
                         );
                       } else {
-                        await CyclePeriodRepository.instance.startPeriod(
-                          startDate,
-                          dbExecutor: db,
+                        final newId = await CyclePeriodRepository.instance.startPeriod(
+                          db: db,
+                          startDate: startDate,
                         );
                         if (endDate != null) {
-                          final active = await CyclePeriodRepository.instance.getActivePeriod(db);
-                          if (active != null) {
-                            await CyclePeriodRepository.instance.endPeriod(active.id!, endDate, dbExecutor: db);
-                          }
+                          await CyclePeriodRepository.instance.endPeriod(
+                            db: db,
+                            id: newId,
+                            endDate: endDate,
+                          );
                         }
                       }
 

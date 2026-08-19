@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/settings/presentation/groups/notification_privacy_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -18,6 +20,13 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('notif_privacy_test_');
+
+    SharedPreferences.setMockInitialValues({});
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (call) async => null,
+    );
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
@@ -39,6 +48,7 @@ void main() {
   });
 
   tearDown(() async {
+    SettingsService.instance.cancelPendingSignals();
     SettingsService.instance.resetForTesting();
     if (db != null) {
       await db!.close();
@@ -72,13 +82,15 @@ void main() {
 
       // 5. Tap on 'قفل‌شده' (locked) segment and verify live preview updates
       await tester.tap(find.text('قفل‌شده'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       expect(find.text('ریتمو: یادآوری خصوصی 🔒'), findsOneWidget);
 
       // 6. Tap on 'عادی' (none) segment and verify live preview updates to plain text
       await tester.tap(find.text('عادی'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       expect(find.text('یادآوری ریتمو 🌸'), findsOneWidget);
     });

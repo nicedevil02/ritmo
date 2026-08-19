@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 
 class QuickSettingsSheet extends StatelessWidget {
   const QuickSettingsSheet({super.key});
@@ -81,13 +82,10 @@ class QuickSettingsSheet extends StatelessWidget {
                   style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 20),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 2.2,
+                RitmoAdaptiveGrid(
+                  minTileWidth: RitmoBreakpoints.tileMinWidthCompact,
+                  spacing: 12,
+                  maxColumns: 2,
                   children: [
                     _QuickTile(
                       keyName: 'quick_quiet_tile',

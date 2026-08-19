@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_group_tile.dart';

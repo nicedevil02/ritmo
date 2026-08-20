@@ -76,22 +76,26 @@ abstract final class NotificationGateway {
     }
 
     // 4. Push to Central Inbox
-    await CentralInboxService.push(
-      category: InboxCategory.REMINDER,
-      sourceSystem: req.sourceSystem,
-      entityId: req.entityId ?? req.id,
-      eventType: 'routine_reminder',
-      title: req.title,
-      body: req.body,
-      priority: req.channel.isEssential ? 2 : 0,
-      linkEntityId: req.entityId,
-      payload: {
-        'channel': req.channel.name,
-        'privacy': req.privacy.name,
-        'isRedacted': decision.isRedacted,
-        ...?req.payload,
-      },
-    );
+    try {
+      await CentralInboxService.push(
+        category: InboxCategory.REMINDER,
+        sourceSystem: req.sourceSystem,
+        entityId: req.entityId ?? req.id,
+        eventType: 'routine_reminder',
+        title: req.title,
+        body: req.body,
+        priority: req.channel.isEssential ? 2 : 0,
+        linkEntityId: req.entityId,
+        payload: {
+          'channel': req.channel.name,
+          'privacy': req.privacy.name,
+          'isRedacted': decision.isRedacted,
+          ...?req.payload,
+        },
+      );
+    } catch (e) {
+      debugPrint('NotificationGateway: Failed to push to central inbox: $e');
+    }
 
     // 5. Delegate to platform
     final effectiveTitle = decision.isRedacted ? decision.redactedTitle! : req.title;

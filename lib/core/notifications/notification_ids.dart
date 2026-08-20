@@ -15,6 +15,9 @@ abstract final class NotificationIds {
   static const int cycleStartConfirmBase = 2030; // 2030..2039
   static const int cycleEndConfirmBase = 2040; // 2040..2049
   static const int cycleProlongedBase = 2050; // 2050..2059
+  static const int pregnancyVisitBase = 2060; // 2060..2069
+  static const int pregnancySupplement = 2070;
+  static const int pregnancyKick = 2080;
 
   static int leadReminder(int cycleIndex, int leadDays) =>
       cycleLeadReminderBase + (cycleIndex * 5) + (leadDays % 5);
@@ -22,6 +25,7 @@ abstract final class NotificationIds {
   static int startConfirm(int cycleIndex) => cycleStartConfirmBase + cycleIndex;
   static int endConfirm() => cycleEndConfirmBase;
   static int prolongedBleeding() => cycleProlongedBase;
+  static int pregnancyVisit(int index) => pregnancyVisitBase + (index % 10);
 
   // 3000-3999: Sleep, Recovery & Backups
   static const int sleepWinddown = 3001;
@@ -47,6 +51,9 @@ abstract final class NotificationIds {
     cycleStartConfirmBase,
     cycleEndConfirmBase,
     cycleProlongedBase,
+    pregnancyVisitBase,
+    pregnancySupplement,
+    pregnancyKick,
     sleepWinddown,
     weeklyBackup,
     persistentStatus,

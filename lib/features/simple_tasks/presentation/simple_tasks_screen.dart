@@ -16,11 +16,9 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
-import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
-import 'package:flutter/foundation.dart';
-import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:ritmo/features/simple_tasks/logic/my_day_service.dart';
@@ -237,7 +235,6 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       }
 
       await NotificationGateway.cancel(reminderId);
-      
       await NotificationGateway.schedule(
         NotificationRequest(
           id: reminderId,
@@ -260,17 +257,6 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       
       final updated = created.copyWith(reminderAtMs: targetMs, reminderId: reminderId);
       await SimpleTaskRepository.instance.updateTask(updated);
-      
-      await NotificationGateway.schedule(
-        NotificationRequest(
-          id: reminderId,
-          channel: NotificationChannelId.planning,
-          scheduledAt: DateTime.fromMillisecondsSinceEpoch(targetMs),
-          title: created.title,
-          sourceSystem: 'tasks',
-          entityId: created.id,
-        ),
-      );
       await AlarmSchedulerService.scheduleNextAlarms();
     }
 

@@ -38,14 +38,12 @@ class TaskDetailSheet extends StatefulWidget {
     required SimpleTask task,
     required VoidCallback onTaskUpdated,
     required VoidCallback onTaskDeleted,
-  }) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => TaskDetailSheet(task: task, onTaskUpdated: onTaskUpdated, onTaskDeleted: onTaskDeleted),
-    );
-  }
+  }) => showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => TaskDetailSheet(task: task, onTaskUpdated: onTaskUpdated, onTaskDeleted: onTaskDeleted),
+  );
 
   @override
   State<TaskDetailSheet> createState() => _TaskDetailSheetState();
@@ -141,16 +139,10 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     widget.onTaskDeleted();
 
     if (mounted && snapshot != null) {
-      RitmoToast.show(
-        context,
-        'کار «${snapshot.task.title}» حذف شد',
-        icon: CupertinoIcons.trash,
-        actionLabel: 'برگردان',
-        onAction: () async {
-          await SimpleTaskRepository.instance.restoreTask(snapshot);
-          widget.onTaskUpdated();
-        },
-      );
+      RitmoToast.show(context, 'کار «${snapshot.task.title}» حذف شد', icon: CupertinoIcons.trash, actionLabel: 'برگردان', onAction: () async {
+        await SimpleTaskRepository.instance.restoreTask(snapshot);
+        widget.onTaskUpdated();
+      });
     }
   }
 

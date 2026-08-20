@@ -5,7 +5,6 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
-import 'package:ritmo/core/ai/web_bridge/web_bridge_exception.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {

@@ -47,11 +47,12 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     if (intensity == null || !mounted) return;
 
     final dateIso = _controller.selectedDate.toIso8601String().split('T').first;
-    await _logService.quickCompleteOccurrence(
+    final log = await _logService.quickCompleteOccurrence(
       occurrenceId: occurrenceId,
       activityKindId: activityKindId,
       dateIso: dateIso,
       durationSec: 1800,
+      intensityTag: intensity,
     );
 
     if (!mounted) return;
@@ -59,6 +60,10 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
       context,
       message: 'تمرین با موفقیت ثبت شد',
       onUndo: () async {
+        await _logService.undoQuickComplete(
+          logId: log.id,
+          occurrenceId: occurrenceId,
+        );
         await _controller.refresh();
       },
     );

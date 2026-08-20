@@ -260,9 +260,9 @@ class MovementCenterError extends MovementCenterState {
 - `ActivityPicker` فقط ۸ نوع از `movement_activity_kinds` را نشان می‌دهد.
 
 **دروازهٔ پذیرش فاز ۴**
-- [ ] از لحظهٔ tap تا دیدن toast ≤ ۵ ثانیه (widget test با timer mock).
-- [ ] اگر sheet بسته شود بدون انتخاب، هیچ ردیفی در DB نیست.
-- [ ] `flutter analyze` سبز.
+- [x] از لحظهٔ tap تا دیدن toast ≤ ۵ ثانیه (widget test با timer mock).
+- [x] اگر sheet بسته شود بدون انتخاب، هیچ ردیفی در DB نیست.
+- [x] `flutter analyze` سبز.
 
 ---
 

@@ -108,12 +108,14 @@ class MovementLogService {
     String? startTime,
     required int durationSec,
     Map<String, dynamic>? metrics,
+    String? intensityTag,
     String? feeling,
     String? note,
   }) async {
     final db = await _database;
     final logId = 'log_quick_${DateTime.now().microsecondsSinceEpoch}';
     final now = DateTime.now().toUtc().toIso8601String();
+    final effectiveFeeling = intensityTag ?? feeling;
 
     await db.transaction((txn) async {
       // ۱. به‌روزرسانی وضعیت Occurrence
@@ -133,7 +135,7 @@ class MovementLogService {
         'startTime': startTime,
         'durationSec': durationSec,
         'metricJson': metrics != null ? jsonEncode(metrics) : null,
-        'feeling': feeling,
+        'feeling': effectiveFeeling,
         'note': note,
         'source': 'quickComplete',
         'createdAt': now,
@@ -149,12 +151,35 @@ class MovementLogService {
       startTime: startTime,
       durationSec: durationSec,
       metricJson: metrics != null ? jsonEncode(metrics) : null,
-      feeling: feeling,
+      feeling: effectiveFeeling,
       note: note,
       source: 'quickComplete',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
+  }
+
+  /// بازگردانی ثبت سریع (Undo Quick Complete)
+  Future<void> undoQuickComplete({
+    required String logId,
+    required String occurrenceId,
+    String previousStatus = 'planned',
+  }) async {
+    final db = await _database;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await db.transaction((txn) async {
+      await txn.delete(
+        MovementTables.tableWorkoutLogs,
+        where: 'id = ?',
+        whereArgs: [logId],
+      );
+      await txn.update(
+        MovementTables.tableOccurrences,
+        {'status': previousStatus, 'updatedAt': now},
+        where: 'id = ?',
+        whereArgs: [occurrenceId],
+      );
+    });
   }
 
   /// ذخیره یا به‌روزرسانی یکپارچهٔ لاگ تمرین

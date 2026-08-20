@@ -1348,8 +1348,14 @@ $_bridgeScriptBody''';
         return true;
       }
 
-      // Unconfirmed generating fallback (A-15)
-      if (lastLength > 0 && idleMs > 4000) {
+      // 2s steady state when stop button and streaming indicator are absent (DET-20)
+      if (lastLength > 0 && idleMs >= 2000) {
+        notifyFlutter('watcher_steady_done', {
+          textLength: lastLength,
+          idleMs: idleMs,
+          requestId: reqId,
+          source: 'dom'
+        });
         return true;
       }
 

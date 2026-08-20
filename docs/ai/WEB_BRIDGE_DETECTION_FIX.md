@@ -27,8 +27,8 @@
 | DET-16 | اصلاح تطبیق endpoint | D | DONE | 602add47 | گسترش ریجکس تطبیق endpointهای مکالمه در fetch/XHR/EventSource و افزودن لاگ رویداد fetch_matched |
 | DET-17 | پوشش fetch با شیء Request | D | DONE | 80e6cfd2 | پشتیبانی از ورودی Request Object در هوک fetch و استخراج صحیح URL و متد HTTP |
 | DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | DONE | adc4014f | تعبیهٔ کامل پارسر خطوط SSE و ریدر استریم در earlyHookScript برای عملکرد مستقل از زمان تزریق اسکریپت اصلی |
-| DET-19 | ترجیح SSE بر DOM | D | DONE | pending | تصاحب قفل منبع توسط SSE در صورت قفل بودن قبلی روی DOM با ثبت لاگ source_promoted و رد چانک‌های بعدی DOM |
-| DET-20 | حالت پایدار واچر | E | TODO | | |
+| DET-19 | ترجیح SSE بر DOM | D | DONE | 9479d606 | تصاحب قفل منبع توسط SSE در صورت قفل بودن قبلی روی DOM با ثبت لاگ source_promoted و رد چانک‌های بعدی DOM |
+| DET-20 | حالت پایدار واچر | E | DONE | pending | تشخیص حالت پایدار ۲ ثانیه‌ای بدون دکمهٔ توقف و بدون نشانگر استریمینگ با صدور رویداد watcher_steady_done |
 | DET-21 | resume ایدمپوتنت | E | TODO | | |
 | DET-22 | دباونس resume | E | TODO | | |
 | DET-23 | شمارش بارگذاری سرد | E | TODO | | |

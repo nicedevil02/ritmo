@@ -205,6 +205,13 @@ sealed class WebBridgeEvent {
             idleMs: readInt('idleMs') ?? 0,
             elapsedMs: readInt('elapsedMs') ?? 0,
           );
+        case 'watcher_steady_done':
+          return BridgeWatcherSteadyDoneEvent(
+            source: src,
+            textLength: readInt('textLength') ?? 0,
+            idleMs: readInt('idleMs') ?? 0,
+            requestId: readString('requestId'),
+          );
         case 'auto_dismiss':
           return BridgeAutoDismissEvent(
             source: src,
@@ -509,6 +516,19 @@ class BridgeFetchMatchedEvent extends WebBridgeEvent {
   final String url;
   final String method;
   final bool isStream;
+  final String? requestId;
+}
+
+class BridgeWatcherSteadyDoneEvent extends WebBridgeEvent {
+  const BridgeWatcherSteadyDoneEvent({
+    required super.source,
+    required this.textLength,
+    required this.idleMs,
+    this.requestId,
+  });
+
+  final int textLength;
+  final int idleMs;
   final String? requestId;
 }
 

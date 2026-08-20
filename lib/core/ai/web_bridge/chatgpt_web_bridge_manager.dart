@@ -824,6 +824,16 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.info,
           );
 
+        case BridgeWatcherSteadyDoneEvent(:final textLength, :final idleMs, :final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'watcher_steady_done',
+            source: source,
+            requestId: requestId,
+            textLength: textLength,
+            note: 'idleMs=${idleMs}ms',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeAuthRequiredEvent(:final url):
           _isAuthenticated = false;
           RitmoLog.warning(

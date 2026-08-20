@@ -892,6 +892,16 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.info,
           );
 
+        case BridgeStreamCompletionEvaluatedEvent(:final reason, :final idleMs, :final textLength, :final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'stream_completion_evaluated',
+            source: source,
+            requestId: requestId,
+            textLength: textLength,
+            note: 'reason=$reason idleMs=${idleMs}ms',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeAuthRequiredEvent(:final url):
           _isAuthenticated = false;
           RitmoLog.warning(

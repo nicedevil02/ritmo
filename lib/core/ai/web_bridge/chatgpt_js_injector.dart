@@ -1386,8 +1386,15 @@ $_bridgeScriptBody''';
 
       var idleMs = Date.now() - lastChangeTimestamp;
 
-      // Confirmed generating transition: stop button observed then disappeared (A-15)
-      if (sawGeneratingSignal && lastLength > 0 && idleMs > 800) {
+      // Confirmed generating transition: stop button observed then disappeared (A-15, DET-33)
+      if (sawGeneratingSignal && lastLength > 0 && idleMs >= 1200) {
+        notifyFlutter('stream_completion_evaluated', {
+          reason: 'stop_button_disappeared_and_silence_1200ms',
+          idleMs: idleMs,
+          textLength: lastLength,
+          requestId: reqId,
+          source: 'dom'
+        });
         return true;
       }
 

@@ -235,6 +235,14 @@ sealed class WebBridgeEvent {
             currentPath: readString('currentPath') ?? '',
             isGuest: payload['isGuest'] != false,
           );
+        case 'stream_completion_evaluated':
+          return BridgeStreamCompletionEvaluatedEvent(
+            source: src,
+            reason: readString('reason') ?? '',
+            idleMs: readInt('idleMs') ?? 0,
+            textLength: readInt('textLength') ?? 0,
+            requestId: readString('requestId'),
+          );
         case 'fetch_matched':
           return BridgeFetchMatchedEvent(
             source: src,
@@ -581,6 +589,21 @@ class BridgeGuestSessionDetectedEvent extends WebBridgeEvent {
   final bool hasLoginButton;
   final String currentPath;
   final bool isGuest;
+}
+
+class BridgeStreamCompletionEvaluatedEvent extends WebBridgeEvent {
+  const BridgeStreamCompletionEvaluatedEvent({
+    required super.source,
+    required this.reason,
+    required this.idleMs,
+    required this.textLength,
+    this.requestId,
+  });
+
+  final String reason;
+  final int idleMs;
+  final int textLength;
+  final String? requestId;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

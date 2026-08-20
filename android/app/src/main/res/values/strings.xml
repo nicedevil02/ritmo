@@ -24,4 +24,10 @@
     <string name="alarm_fullscreen_done">انجام شد</string>
     <string name="alarm_fullscreen_minimal">نسخهٔ حداقلی</string>
     <string name="alarm_fullscreen_first_step">اولین قدم</string>
+
+    <string name="shortcut_new_task">کار جدید</string>
+    <string name="shortcut_new_task_long">ثبت کار جدید در ریتمو</string>
+    <string name="shortcut_my_day">روز من</string>
+    <string name="shortcut_my_day_long">مشاهده کارهای روز من</string>
+    <string name="process_text_add_to_ritmo">افزودن به ریتمو</string>
 </resources>

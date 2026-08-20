@@ -30,6 +30,7 @@ import 'package:ritmo/features/courses/logic/course_timer_service.dart';
 import 'package:ritmo/features/onboarding/logic/onboarding_gate.dart';
 import 'package:ritmo/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:ritmo/features/onboarding/presentation/splash_screen.dart';
+import 'package:ritmo/features/simple_tasks/logic/share_target_handler.dart';
 import 'package:ritmo/features/today/presentation/home_navigation_shell.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -148,6 +149,11 @@ void main() async {
       ),
     ),
   );
+
+  // Initialize OS share target listener (T-32)
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    ShareTargetHandler.init();
+  }
 
   // Deferred non-critical Auth init after runApp (BOOT-02)
   unawaited(

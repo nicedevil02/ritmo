@@ -225,25 +225,16 @@ class MainActivity : FlutterFragmentActivity() {
             }
         }
 
-        // 7. Share Target MethodChannel (P-02)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ritmo/share").setMethodCallHandler { call, result ->
+        // 7. Share Target MethodChannel (P-02 & T-32 / T-33)
+        val shareChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.ritmo.app/share_target")
+        shareTargetMethodChannel = shareChannel
+        shareChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getInitialSharedText" -> {
-                    val sharedText = sharedTextPayload
+                    val sharedText = sharedTextPayload ?: extractSharedText(intent)
                     sharedTextPayload = null
-                    if (sharedText != null) {
-                        result.success(sharedText)
-                    } else {
-                        val act = intent?.action
-                        val type = intent?.type
-                        if (Intent.ACTION_SEND == act && type != null && "text/plain" == type) {
-                            val txt = intent?.getStringExtra(Intent.EXTRA_TEXT)
-                            intent?.action = null
-                            result.success(txt)
-                        } else {
-                            result.success(null)
-                        }
-                    }
+                    intent?.action = null
+                    result.success(sharedText)
                 }
                 else -> result.notImplemented()
             }
@@ -282,10 +273,35 @@ class MainActivity : FlutterFragmentActivity() {
     private var openModuleId: String? = null
     private var openQuickAdd: Boolean = false
     private var sharedTextPayload: String? = null
+    private var shareTargetMethodChannel: MethodChannel? = null
+
+    private fun extractSharedText(targetIntent: Intent?): String? {
+        if (targetIntent == null) return null
+        val act = targetIntent.action
+        val type = targetIntent.type
+        if (Intent.ACTION_SEND == act && type != null && type.startsWith("text/")) {
+            return targetIntent.getStringExtra(Intent.EXTRA_TEXT)
+        }
+        if (Intent.ACTION_PROCESS_TEXT == act && type != null && type.startsWith("text/")) {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                targetIntent.getStringExtra(Intent.EXTRA_PROCESS_TEXT_READONLY)
+                    ?: targetIntent.getStringExtra(Intent.EXTRA_PROCESS_TEXT)
+            } else {
+                targetIntent.getStringExtra(Intent.EXTRA_PROCESS_TEXT)
+            }
+        }
+        return null
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        val shared = extractSharedText(intent)
+        if (shared != null) {
+            sharedTextPayload = shared
+            shareTargetMethodChannel?.invokeMethod("onSharedText", shared)
+            android.util.Log.d("MainActivity", "onNewIntent: shared text received")
+        }
         when (intent.action) {
             "com.ritmo.app.START_TIMER" -> {
                 startTimerReminderId = intent.getStringExtra("reminderId")
@@ -298,12 +314,6 @@ class MainActivity : FlutterFragmentActivity() {
             "com.ritmo.app.OPEN_QUICK_ADD" -> {
                 openQuickAdd = true
                 android.util.Log.d("MainActivity", "onNewIntent: OPEN_QUICK_ADD received")
-            }
-            Intent.ACTION_SEND -> {
-                if (intent.type == "text/plain") {
-                    sharedTextPayload = intent.getStringExtra(Intent.EXTRA_TEXT)
-                    android.util.Log.d("MainActivity", "onNewIntent: ACTION_SEND received with text")
-                }
             }
         }
     }

@@ -41,6 +41,13 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - [x] **T-28**: Verified completion sound and haptics trigger exclusively on marking a task complete (no sound/haptic when unchecking). [DONE]
 - [x] **T-29**: Comprehensive unit test suite in `test/simple_tasks/task_sorting_test.dart` validating smart sort regression, Persian alphabetical sorting, cross-bucket immutability, and hide completed behavior. [DONE]
 
+## Phase 5: Quick Entry from OS
+- [x] **T-30**: Configured Android App Shortcuts (`shortcuts.xml`) for «کار جدید» (opens and focuses task add) and «روز من» (opens My Day). [DONE]
+- [x] **T-31**: Verified and wired Quick Settings Tile (`RitmoTaskTileService`) with label `@string/shortcut_new_task`. [DONE]
+- [x] **T-32**: Connected and verified Share Target channel (`com.ritmo.app/share_target`) with cold-start buffer and `ShareTargetHandler.init()` in `main.dart`. [DONE]
+- [x] **T-33**: Enabled `PROCESS_TEXT` intent-filter with label «افزودن به ریتمو», mapping long text (> 200 chars) to short title and full note. [DONE]
+- [x] **T-34**: Unit test suite in `test/simple_tasks/quick_entry_test.dart` verifying simple text, Persian date/time parsing, > 200 character overflow, and whitespace ignoring. [DONE]
+
 ## Verification Status:
 - `grep -rn "catch (_)" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "debugPrint" lib/features/simple_tasks/`: Clean (0 occurrences)
@@ -48,5 +55,5 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - `grep -rn "Random()" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `wc -l lib/features/simple_tasks/presentation/widgets/task_detail_sheet.dart`: 241 lines (<= 250)
 - All files in `lib/features/simple_tasks`: <= 500 lines
-- `flutter analyze lib/features/simple_tasks`: 0 errors / 0 warnings
-- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 47 tests passing
+- `flutter analyze lib/features/simple_tasks lib/main.dart`: 0 errors / 0 warnings
+- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 51 tests passing

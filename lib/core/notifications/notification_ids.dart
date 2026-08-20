@@ -18,6 +18,7 @@ abstract final class NotificationIds {
   static const int pregnancyVisitBase = 2060; // 2060..2069
   static const int pregnancySupplement = 2070;
   static const int pregnancyKick = 2080;
+  static const int pregnancyCycleResume = 2090;
 
   static int leadReminder(int cycleIndex, int leadDays) =>
       cycleLeadReminderBase + (cycleIndex * 5) + (leadDays % 5);
@@ -54,6 +55,7 @@ abstract final class NotificationIds {
     pregnancyVisitBase,
     pregnancySupplement,
     pregnancyKick,
+    pregnancyCycleResume,
     sleepWinddown,
     weeklyBackup,
     persistentStatus,

@@ -45,7 +45,10 @@ class PregnancyReminderScheduler {
       }
 
       final isPregnant = CycleSettings.isPregnancyMode(settings);
-      if (!isPregnant) {
+      final resumeMsStr = settings['preg_cycle_resume_reminder'];
+      final hasResumeReminder = resumeMsStr != null && resumeMsStr.isNotEmpty;
+
+      if (!isPregnant && !hasResumeReminder) {
         await cancelAll();
         return;
       }
@@ -59,136 +62,177 @@ class PregnancyReminderScheduler {
       final supplementEnabled = settings['preg_supplement_reminder'] == 'true';
       final kickEnabled = settings['preg_kick_reminder'] == 'true';
 
-      final lmpStr = settings['preg_start_date'] ?? settings['cycle_pregnancy_start_date'];
-      final lmp = CycleDateContract.parseDayKey(lmpStr) ?? cleanToday;
-      final ga = PregnancyDateEngine.calculateCurrentGestation(
-        lmp: lmp,
-        now: effectiveNow,
-      );
-
       final requests = <NotificationRequest>[];
 
-      // 1. Visit Reminders (from pregnancy_checkups & doctor_visits)
-      try {
-        final checkupTables = await db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='pregnancy_checkups'",
+      if (isPregnant) {
+        final lmpStr = settings['preg_start_date'] ?? settings['cycle_pregnancy_start_date'];
+        final lmp = CycleDateContract.parseDayKey(lmpStr) ?? cleanToday;
+        final ga = PregnancyDateEngine.calculateCurrentGestation(
+          lmp: lmp,
+          now: effectiveNow,
         );
-        if (checkupTables.isNotEmpty) {
-          final checkups = await db.query(
-            'pregnancy_checkups',
-            where: 'isDone != 1 AND isCompleted != 1',
-            orderBy: 'scheduledDate ASC',
+
+        // 1. Visit Reminders (from pregnancy_checkups & doctor_visits)
+        try {
+          final checkupTables = await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='pregnancy_checkups'",
           );
+          if (checkupTables.isNotEmpty) {
+            final checkups = await db.query(
+              'pregnancy_checkups',
+              where: 'isDone != 1 AND isCompleted != 1',
+              orderBy: 'scheduledDate ASC',
+            );
 
-          for (var i = 0; i < checkups.length; i++) {
-            final chk = checkups[i];
-            final scheduledMs = chk['scheduledDate'] as int?;
-            if (scheduledMs != null && scheduledMs > 0) {
-              final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
-              final reminderDate = CycleDateContract.cleanDate(scheduledDate).subtract(
-                Duration(days: leadDays),
-              );
-
-              if (CycleDateContract.isSameOrAfter(reminderDate, cleanToday)) {
-                final scheduledTime = DateTime(
-                  reminderDate.year,
-                  reminderDate.month,
-                  reminderDate.day,
-                  reminderHour,
-                  0,
+            for (var i = 0; i < checkups.length; i++) {
+              final chk = checkups[i];
+              final scheduledMs = chk['scheduledDate'] as int?;
+              if (scheduledMs != null && scheduledMs > 0) {
+                final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
+                final reminderDate = CycleDateContract.cleanDate(scheduledDate).subtract(
+                  Duration(days: leadDays),
                 );
 
-                if (scheduledTime.isAfter(effectiveNow)) {
-                  final title = isMasked ? maskedTitle : 'یادآوری ویزیت مامایی';
-                  final body = isMasked
-                      ? maskedBody
-                      : (chk['title']?.toString() ?? 'ویزیت مامایی در پیش است.');
-
-                  requests.add(
-                    NotificationRequest(
-                      id: NotificationIds.pregnancyVisit(i).toString(),
-                      channel: NotificationChannelId.privateChannel,
-                      scheduledAt: scheduledTime,
-                      title: title,
-                      body: body,
-                      privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-                      redactedTitle: redactedTitle,
-                      redactedBody: redactedBody,
-                      sourceSystem: 'pregnancy',
-                      entityId: 'pregnancy_visit',
-                    ),
+                if (CycleDateContract.isSameOrAfter(reminderDate, cleanToday)) {
+                  final scheduledTime = DateTime(
+                    reminderDate.year,
+                    reminderDate.month,
+                    reminderDate.day,
+                    reminderHour,
+                    0,
                   );
+
+                  if (scheduledTime.isAfter(effectiveNow)) {
+                    final title = isMasked
+                        ? maskedTitle
+                        : 'یادآوری نوبت مراقبت بارداری';
+                    final body = isMasked
+                        ? maskedBody
+                        : 'شما در تاریخ ${CycleDateContract.toDayKey(scheduledDate)} نوبت ویزیت یا آزمایش دارید.';
+
+                    requests.add(
+                      NotificationRequest(
+                        id: NotificationIds.pregnancyVisit(i).toString(),
+                        channel: NotificationChannelId.privateChannel,
+                        scheduledAt: scheduledTime,
+                        title: title,
+                        body: body,
+                        privacy: isMasked
+                            ? NotificationPrivacy.redacted
+                            : NotificationPrivacy.none,
+                        redactedTitle: redactedTitle,
+                        redactedBody: redactedBody,
+                        sourceSystem: 'pregnancy',
+                        entityId: 'pregnancy_visit',
+                      ),
+                    );
+                  }
                 }
               }
             }
           }
+        } catch (e, st) {
+          RitmoLogger.error(
+            '[PregnancyReminderScheduler] error querying checkups: $e',
+            error: e,
+            stack: st,
+          );
         }
-      } catch (e) {
-        RitmoLogger.warning('[PregnancyReminderScheduler] Error loading checkups: $e');
+
+        // 2. Daily Supplement Reminder
+        if (supplementEnabled) {
+          var reminderTime = DateTime(
+            cleanToday.year,
+            cleanToday.month,
+            cleanToday.day,
+            reminderHour,
+            0,
+          );
+          if (!reminderTime.isAfter(effectiveNow)) {
+            reminderTime = reminderTime.add(const Duration(days: 1));
+          }
+
+          final title = isMasked ? maskedTitle : 'یادآوری مکمل و ویتامین بارداری';
+          final body = isMasked ? maskedBody : 'زمان مصرف مکمل‌ها و اسیدفولیک/ویتامین روزانه است.';
+
+          requests.add(
+            NotificationRequest(
+              id: NotificationIds.pregnancySupplement.toString(),
+              channel: NotificationChannelId.privateChannel,
+              scheduledAt: reminderTime,
+              title: title,
+              body: body,
+              privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              redactedTitle: redactedTitle,
+              redactedBody: redactedBody,
+              sourceSystem: 'pregnancy',
+              entityId: 'pregnancy_supplement',
+            ),
+          );
+        }
+
+        // 3. Kick Counting Reminder (Week 28+)
+        if (kickEnabled && ga.weeks >= 28) {
+          var reminderTime = DateTime(
+            cleanToday.year,
+            cleanToday.month,
+            cleanToday.day,
+            reminderHour,
+            0,
+          );
+          if (!reminderTime.isAfter(effectiveNow)) {
+            reminderTime = reminderTime.add(const Duration(days: 1));
+          }
+
+          final title = isMasked ? maskedTitle : 'یادآوری لگدشماری';
+          final body = isMasked ? maskedBody : 'زمان ثبت و بررسی حرکات جنین است.';
+
+          requests.add(
+            NotificationRequest(
+              id: NotificationIds.pregnancyKick.toString(),
+              channel: NotificationChannelId.privateChannel,
+              scheduledAt: reminderTime,
+              title: title,
+              body: body,
+              privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              redactedTitle: redactedTitle,
+              redactedBody: redactedBody,
+              sourceSystem: 'pregnancy',
+              entityId: 'pregnancy_kick',
+            ),
+          );
+        }
       }
 
-      // 2. Daily Supplement Reminder
-      if (supplementEnabled) {
-        var reminderTime = DateTime(
-          cleanToday.year,
-          cleanToday.month,
-          cleanToday.day,
-          reminderHour,
-          0,
-        );
-        if (!reminderTime.isAfter(effectiveNow)) {
-          reminderTime = reminderTime.add(const Duration(days: 1));
+      // 4. Postpartum Cycle Resume Reminder
+      if (hasResumeReminder) {
+        final resumeMs = int.tryParse(resumeMsStr);
+        if (resumeMs != null && resumeMs > 0) {
+          final resumeTime = DateTime.fromMillisecondsSinceEpoch(resumeMs);
+          if (resumeTime.isAfter(effectiveNow)) {
+            final title = isMasked ? maskedTitle : 'پیگیری سلامت و چرخه قاعدگی';
+            final body = isMasked
+                ? maskedBody
+                : 'امیدواریم حال شما و نوزادتان خوب باشد. در صورت تمایل می‌توانید ثبت چرخهٔ قاعدگی را از سر بگیرید.';
+
+            requests.add(
+              NotificationRequest(
+                id: NotificationIds.pregnancyCycleResume.toString(),
+                channel: NotificationChannelId.privateChannel,
+                scheduledAt: resumeTime,
+                title: title,
+                body: body,
+                privacy: isMasked
+                    ? NotificationPrivacy.redacted
+                    : NotificationPrivacy.none,
+                redactedTitle: redactedTitle,
+                redactedBody: redactedBody,
+                sourceSystem: 'pregnancy',
+                entityId: 'pregnancy_cycle_resume',
+              ),
+            );
+          }
         }
-
-        final title = isMasked ? maskedTitle : 'یادآوری مکمل بارداری';
-        final body = isMasked ? maskedBody : 'زمان مصرف مکمل‌ها و ویتامین‌های روزانه است.';
-
-        requests.add(
-          NotificationRequest(
-            id: NotificationIds.pregnancySupplement.toString(),
-            channel: NotificationChannelId.privateChannel,
-            scheduledAt: reminderTime,
-            title: title,
-            body: body,
-            privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-            redactedTitle: redactedTitle,
-            redactedBody: redactedBody,
-            sourceSystem: 'pregnancy',
-            entityId: 'pregnancy_supplement',
-          ),
-        );
-      }
-
-      // 3. Kick Counting Reminder (Week 28+)
-      if (kickEnabled && ga.weeks >= 28) {
-        var reminderTime = DateTime(
-          cleanToday.year,
-          cleanToday.month,
-          cleanToday.day,
-          reminderHour,
-          0,
-        );
-        if (!reminderTime.isAfter(effectiveNow)) {
-          reminderTime = reminderTime.add(const Duration(days: 1));
-        }
-
-        final title = isMasked ? maskedTitle : 'یادآوری لگدشماری';
-        final body = isMasked ? maskedBody : 'زمان ثبت و بررسی حرکات جنین است.';
-
-        requests.add(
-          NotificationRequest(
-            id: NotificationIds.pregnancyKick.toString(),
-            channel: NotificationChannelId.privateChannel,
-            scheduledAt: reminderTime,
-            title: title,
-            body: body,
-            privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
-            redactedTitle: redactedTitle,
-            redactedBody: redactedBody,
-            sourceSystem: 'pregnancy',
-            entityId: 'pregnancy_kick',
-          ),
-        );
       }
 
       // Transactional wipe & schedule
@@ -211,12 +255,14 @@ class PregnancyReminderScheduler {
       await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_visit');
       await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_supplement');
       await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_kick');
+      await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_cycle_resume');
 
       for (var i = 0; i < 10; i++) {
         await NotificationGateway.cancel(NotificationIds.pregnancyVisit(i).toString());
       }
       await NotificationGateway.cancel(NotificationIds.pregnancySupplement.toString());
       await NotificationGateway.cancel(NotificationIds.pregnancyKick.toString());
+      await NotificationGateway.cancel(NotificationIds.pregnancyCycleResume.toString());
     } catch (e, st) {
       RitmoLogger.error(
         '[PregnancyReminderScheduler] error during cancelAll',
@@ -224,5 +270,21 @@ class PregnancyReminderScheduler {
         stack: st,
       );
     }
+  }
+
+  /// Schedules a 40-day postpartum cycle resume reminder and stores it in app_settings.
+  static Future<void> scheduleCycleResume({
+    required DateTime reminderDate,
+    Database? dbExecutor,
+    Map<String, String>? appSettings,
+  }) async {
+    final db = dbExecutor ?? await DatabaseHelper.instance.database;
+    await db.insert('app_settings', {
+      'key': 'preg_cycle_resume_reminder',
+      'value': reminderDate.millisecondsSinceEpoch.toString(),
+      'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+    await rescheduleAll(dbExecutor: db, appSettings: appSettings);
   }
 }

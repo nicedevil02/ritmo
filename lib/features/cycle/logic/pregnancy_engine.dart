@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/models/pregnancy_models.dart';
@@ -69,6 +70,47 @@ class PregnancyDateEngine {
     final cleanEdd = CycleDateContract.cleanDate(edd);
     final diff = CycleDateContract.daysBetween(cleanNow, cleanEdd);
     return diff < 0 ? 0 : diff;
+  }
+
+  /// Formats gestational age into Persian localized string.
+  static String formatGestationalAgeFa(
+    GestationalAge age, {
+    PregnancyAgeUnit unit = PregnancyAgeUnit.weeks,
+  }) {
+    final weekFa = PersianDigits.toFa(age.weeks.toString());
+    if (unit == PregnancyAgeUnit.months) {
+      final month = ((age.totalDays / 30.4).floor() + 1).clamp(1, 10);
+      final monthFa = PersianDigits.toFa(month.toString());
+      return 'ماه $monthFa (هفته $weekFa)';
+    }
+
+    if (age.days == 0) {
+      return 'هفته $weekFa';
+    }
+    final daysFa = PersianDigits.toFa(age.days.toString());
+    return 'هفته $weekFa و $daysFa روز';
+  }
+
+  /// Formats remaining pregnancy time until EDD into Persian localized string.
+  static String formatRemainingTimeFa(int remainingDays) {
+    if (remainingDays < 0) {
+      return 'از موعد گذشته';
+    }
+    if (remainingDays == 0) {
+      return 'امروز روز موعد است';
+    }
+    final weeks = remainingDays ~/ 7;
+    final days = remainingDays % 7;
+    final weeksFa = PersianDigits.toFa(weeks.toString());
+    final daysFa = PersianDigits.toFa(days.toString());
+
+    if (weeks == 0) {
+      return '$daysFa روز تا زایمان';
+    }
+    if (days == 0) {
+      return '$weeksFa هفته تا زایمان';
+    }
+    return '$weeksFa هفته و $daysFa روز تا زایمان';
   }
 
   /// Returns true if current date is strictly after EDD.

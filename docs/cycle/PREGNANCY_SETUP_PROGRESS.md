@@ -9,8 +9,8 @@
 | PRG-05 | hasValidDates و isPregnancyUsable | A | DONE | bc8d509a | بحرانی - تکمیل شد |
 | PRG-06 | حذف نوشتن خام در cycle_screen | A | DONE | a50e6d18 | تکمیل شد |
 | PRG-07 | موتور تاریخ بارداری | B | DONE | a58dcd60 | تکمیل شد |
-| PRG-08 | اعتبارسنجی تاریخ | B | DONE | pending | تکمیل شد |
-| PRG-09 | قالب‌بندی فارسی سن | B | TODO | | |
+| PRG-08 | اعتبارسنجی تاریخ | B | DONE | 1e4609a5 | تکمیل شد |
+| PRG-09 | قالب‌بندی فارسی سن | B | DONE | pending | تکمیل شد |
 | PRG-10 | dayShiftBetween | B | TODO | | |
 | PRG-11 | حذف فالبک امروز و حالت خالی | B | TODO | | بحرانی |
 | PRG-12 | کنترلر آنبوردینگ بارداری | C | TODO | | |

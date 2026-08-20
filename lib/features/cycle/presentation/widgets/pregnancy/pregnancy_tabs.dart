@@ -119,10 +119,12 @@ class PregnancyKicksTab extends StatelessWidget {
     super.key,
     required this.kickCount,
     required this.onKickTap,
+    this.targetCount = 10,
   });
 
   final int kickCount;
   final VoidCallback onKickTap;
+  final int targetCount;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +136,7 @@ class PregnancyKicksTab extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'جلسه واقعی «شمارش تا ۱۰» حرکات جنین',
+            'جلسه واقعی «شمارش تا ${PersianDigits.toFa(targetCount.toString())}» حرکات جنین',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -143,7 +145,7 @@ class PregnancyKicksTab extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'تعداد حرکات ثبت شده: ${PersianDigits.toFa(kickCount.toString())} / ۱۰',
+            'تعداد حرکات ثبت شده: ${PersianDigits.toFa(kickCount.toString())} / ${PersianDigits.toFa(targetCount.toString())}',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

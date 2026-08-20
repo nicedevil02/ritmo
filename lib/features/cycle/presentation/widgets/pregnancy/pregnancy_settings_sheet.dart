@@ -635,6 +635,190 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     );
   }
 
+  Future<void> _openKickTargetPicker() async {
+    final colors = context.colors;
+    int selected = _profile.kickTargetCount;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'تعداد هدف لگد',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.minus_circle_fill),
+                      iconSize: 32,
+                      color: selected > 5 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected > 5
+                          ? () => setModalState(() => selected--)
+                          : null,
+                    ),
+                    const SizedBox(width: 24),
+                    Text(
+                      '${PersianDigits.toFa(selected.toString())} حرکت',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.plus_circle_fill),
+                      iconSize: 32,
+                      color: selected < 20 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected < 20
+                          ? () => setModalState(() => selected++)
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(kickTargetCount: selected);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openKickWindowPicker() async {
+    final colors = context.colors;
+    int selected = _profile.kickWindowMinutes;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'مدت پنجرهٔ شمارش لگد',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.minus_circle_fill),
+                      iconSize: 32,
+                      color: selected > 30 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected > 30
+                          ? () => setModalState(() => selected = (selected - 15).clamp(30, 300))
+                          : null,
+                    ),
+                    const SizedBox(width: 24),
+                    Text(
+                      '${PersianDigits.toFa(selected.toString())} دقیقه',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.plus_circle_fill),
+                      iconSize: 32,
+                      color: selected < 300 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected < 300
+                          ? () => setModalState(() => selected = (selected + 15).clamp(30, 300))
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(kickWindowMinutes: selected);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildToggleRow(
     BuildContext context, {
     required String title,
@@ -925,6 +1109,29 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
           // Section 4: لگدشماری
           _buildSectionHeader(context, 'لگدشماری'),
+          _buildParameterRow(
+            context,
+            title: 'تعداد هدف لگد',
+            value: '${PersianDigits.toFa(_profile.kickTargetCount.toString())} حرکت',
+            onTap: _openKickTargetPicker,
+          ),
+          _buildParameterRow(
+            context,
+            title: 'مدت پنجرهٔ شمارش',
+            value: '${PersianDigits.toFa(_profile.kickWindowMinutes.toString())} دقیقه',
+            onTap: _openKickWindowPicker,
+          ),
+          _buildToggleRow(
+            context,
+            title: 'مقایسه با الگوی شخصی خودم',
+            value: _profile.kickBaselineComparison,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(kickBaselineComparison: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
           const SizedBox(height: 8),
           Divider(height: 16, color: colors.border),
 

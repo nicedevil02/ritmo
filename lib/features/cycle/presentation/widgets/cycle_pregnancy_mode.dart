@@ -64,6 +64,8 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
   bool _showCountdown = true;
 
   // UX-04 KickSessionTracker
+  int _kickTargetCount = 10;
+  int _kickWindowMinutes = 120;
   KickSessionTracker _kickTracker = KickSessionTracker();
   double? _personalBaselineSecs;
   String? _baselineFeedback;
@@ -105,13 +107,24 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
       _pregTone = map['preg_tone'] ?? 'warm';
       _eddSource = map['preg_edd_source'] ?? 'lmp';
       _showCountdown = map['preg_show_countdown'] != 'false';
+      _kickTargetCount =
+          int.tryParse(map['preg_kick_target_count'] ?? '') ?? 10;
+      _kickWindowMinutes =
+          int.tryParse(map['preg_kick_window_minutes'] ?? '') ?? 120;
 
       // Restore active kick session
       final restored = await KickSessionTracker.restoreFromSettings(
         CycleClock.now,
+        target: _kickTargetCount,
+        limit: Duration(minutes: _kickWindowMinutes),
       );
       if (restored != null) {
         _kickTracker = restored;
+      } else {
+        _kickTracker = KickSessionTracker(
+          target: _kickTargetCount,
+          limit: Duration(minutes: _kickWindowMinutes),
+        );
       }
 
       // Load kick baseline
@@ -254,14 +267,17 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
         baselineSecs: _personalBaselineSecs,
       );
 
-      _kickTracker = KickSessionTracker();
+      _kickTracker = KickSessionTracker(
+        target: _kickTargetCount,
+        limit: Duration(minutes: _kickWindowMinutes),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               _baselineFeedback ??
-                  '۱۰ حرکت کامل شد و جلسه با موفقیت ثبت گردید 🎉',
+                  '${PersianDigits.toFa(_kickTargetCount.toString())} حرکت کامل شد و جلسه با موفقیت ثبت گردید 🎉',
             ),
             backgroundColor: Colors.green,
           ),
@@ -271,13 +287,16 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
       final active = await PregnancyRepository.instance.getActiveTracker();
       final trackerId = active?['id'] as String? ?? 'preg_default';
       await _kickTracker.saveRecordToDb(pregnancyId: trackerId);
-      _kickTracker = KickSessionTracker();
+      _kickTracker = KickSessionTracker(
+        target: _kickTargetCount,
+        limit: Duration(minutes: _kickWindowMinutes),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'اگر پس از ۲ ساعت به ۱۰ حرکت نرسیدید، امروز با پزشک خود تماس بگیرید.',
+              'اگر پس از ${PersianDigits.toFa((_kickWindowMinutes ~/ 60).toString())} ساعت به ${PersianDigits.toFa(_kickTargetCount.toString())} حرکت نرسیدید، امروز با پزشک خود تماس بگیرید.',
             ),
             backgroundColor: Colors.orange,
           ),
@@ -590,6 +609,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
               // Tab 2: Kick Counter (UX-04)
               PregnancyKicksTab(
                 kickCount: _kickTracker.count,
+                targetCount: _kickTargetCount,
                 onKickTap: _registerKickTap,
               ),
 

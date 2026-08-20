@@ -7,23 +7,35 @@ import 'package:sqflite/sqflite.dart';
 /// app_settings persistence, and 7-session personal baseline comparison.
 class KickSessionTracker {
   static const burstGap = Duration(minutes: 2);
-  static const sessionLimit = Duration(hours: 2);
-  static const targetCount = 10;
+  static const defaultSessionLimit = Duration(hours: 2);
+  static const defaultTargetCount = 10;
+
+  // Alias constants for backward compatibility
+  static const sessionLimit = defaultSessionLimit;
+  static const targetCount = defaultTargetCount;
 
   int count = 0;
   DateTime? lastTap;
   DateTime? start;
+  final int target;
+  final Duration limit;
 
-  KickSessionTracker({this.count = 0, this.start, this.lastTap});
+  KickSessionTracker({
+    this.count = 0,
+    this.start,
+    this.lastTap,
+    this.target = defaultTargetCount,
+    this.limit = defaultSessionLimit,
+  });
 
-  /// Registers a tap at time [now]. Returns true if target count (10) reached.
+  /// Registers a tap at time [now]. Returns true if target count reached.
   bool registerTap(DateTime now) {
     start ??= now;
     if (lastTap == null || now.difference(lastTap!) > burstGap) {
       count++;
     }
     lastTap = now;
-    return count >= targetCount;
+    return count >= target;
   }
 
   /// Returns total active elapsed duration.
@@ -32,20 +44,24 @@ class KickSessionTracker {
     return (lastTap ?? start!).difference(start!);
   }
 
-  /// Checks if session has expired (> 2 hours without completion).
+  /// Checks if session has expired (> limit without completion).
   bool isExpired(DateTime now) {
     if (start == null) return false;
-    return now.difference(start!) > sessionLimit;
+    return now.difference(start!) > limit;
   }
 
   /// Restores session state from database `app_settings`.
-  static Future<KickSessionTracker?> restoreFromSettings(DateTime now) async {
+  static Future<KickSessionTracker?> restoreFromSettings(
+    DateTime now, {
+    int? target,
+    Duration? limit,
+  }) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query(
         'app_settings',
         where:
-            "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap')",
+            "key IN ('preg_kick_session_start', 'preg_kick_session_count', 'preg_kick_session_last_tap', 'preg_kick_target_count', 'preg_kick_window_minutes')",
       );
 
       final map = <String, String>{};
@@ -59,8 +75,15 @@ class KickSessionTracker {
       final startMs = int.tryParse(startMsStr);
       if (startMs == null) return null;
 
+      final targetVal = target ??
+          int.tryParse(map['preg_kick_target_count'] ?? '') ??
+          defaultTargetCount;
+      final windowMins =
+          int.tryParse(map['preg_kick_window_minutes'] ?? '') ?? 120;
+      final effectiveLimit = limit ?? Duration(minutes: windowMins);
+
       final startDt = DateTime.fromMillisecondsSinceEpoch(startMs);
-      if (now.difference(startDt) >= sessionLimit) {
+      if (now.difference(startDt) >= effectiveLimit) {
         // Session expired while app was closed
         await clearSettings();
         return null;
@@ -76,6 +99,8 @@ class KickSessionTracker {
         count: countVal,
         start: startDt,
         lastTap: lastTapDt,
+        target: targetVal,
+        limit: effectiveLimit,
       );
     } catch (e, st) {
       RitmoLogger.error(
@@ -88,8 +113,11 @@ class KickSessionTracker {
   }
 
   /// Loads persisted session state from `app_settings` table.
-  static Future<KickSessionTracker?> loadFromSettings() =>
-      restoreFromSettings(CycleClock.now);
+  static Future<KickSessionTracker?> loadFromSettings({
+    int? target,
+    Duration? limit,
+  }) =>
+      restoreFromSettings(CycleClock.now, target: target, limit: limit);
 
   /// Persists session state into `app_settings`.
   Future<void> saveToSettings() async {

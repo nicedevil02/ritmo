@@ -383,48 +383,85 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
           ),
           Divider(height: 16, color: colors.border),
           if (_localSettings['cycle_pregnancy_mode'] == 'true') ...[
-            InkWell(
-              onTap: () {
-                Navigator.pop(context);
-                PregnancyOnboardingShell.show(
-                  context,
-                  isEditMode: true,
-                  onCompleted: () {
-                    Navigator.pop(context);
-                    widget.onDataReloadNeeded();
-                  },
-                );
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('🤰', style: TextStyle(fontSize: 14)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ویرایش و بازبینی راه‌اندازی بارداری',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
+            if (_localSettings['preg_section_hidden'] == 'true') ...[
+              InkWell(
+                onTap: () async {
+                  await _updateSetting('preg_section_hidden', 'false');
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('👁️', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 8),
+                          Text(
+                            'نمایش مجدد بخش بارداری',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Icon(
-                      CupertinoIcons.chevron_left,
-                      color: colors.textSecondary,
-                      size: 14,
-                    ),
-                  ],
+                        ],
+                      ),
+                      Icon(
+                        CupertinoIcons.chevron_left,
+                        color: colors.primary,
+                        size: 14,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Divider(height: 16, color: colors.border),
+              Divider(height: 16, color: colors.border),
+            ] else ...[
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  PregnancyOnboardingShell.show(
+                    context,
+                    isEditMode: true,
+                    onCompleted: () {
+                      Navigator.pop(context);
+                      widget.onDataReloadNeeded();
+                    },
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('🤰', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ویرایش و بازبینی راه‌اندازی بارداری',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Icon(
+                        CupertinoIcons.chevron_left,
+                        color: colors.textSecondary,
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Divider(height: 16, color: colors.border),
+            ],
             InkWell(
               onTap: widget.onTogglePregnancyMode,
               borderRadius: BorderRadius.circular(8),

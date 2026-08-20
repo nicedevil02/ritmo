@@ -1145,6 +1145,42 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
           // Section 5: حریم خصوصی
           _buildSectionHeader(context, 'حریم خصوصی'),
+          _buildToggleRow(
+            context,
+            title: 'پوشش اعلان‌ها (پیام محرمانه)',
+            subtitle: 'متن اعلان‌ها بدون اشاره به بارداری نمایش داده می‌شود.',
+            value: _profile.maskNotifications,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(maskNotifications: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
+          _buildToggleRow(
+            context,
+            title: 'قفل اختصاصی بخش بارداری',
+            subtitle: 'ورود به این بخش نیازمند تأیید هویت خواهد بود.',
+            value: _profile.lockEnabled,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(lockEnabled: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
+          _buildToggleRow(
+            context,
+            title: 'پنهان‌سازی بخش بارداری',
+            subtitle: 'بخش بارداری از صفحهٔ اصلی چرخه موقتاً پنهان می‌شود.',
+            value: _profile.sectionHidden,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(sectionHidden: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
           const SizedBox(height: 8),
           Divider(height: 16, color: colors.border),
 

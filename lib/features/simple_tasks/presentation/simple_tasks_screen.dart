@@ -53,6 +53,8 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
   List<MyDaySuggestion> _myDaySuggestions = [];
   List<String> _activeTags = [];
   String? _selectedTag;
+  TaskSortMode _sortMode = TaskSortMode.smart;
+  bool _hideCompleted = false;
   Map<TaskBucket, List<SimpleTask>> _buckets = {};
   Map<String, (int done, int total)> _stepCounts = {};
   Map<String, int> _attachmentCounts = {};
@@ -111,9 +113,17 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
     try {
       await MyDayService.instance.resetIfNewDay();
 
+      final sortModeRaw = await TaskPreferences.getSortMode();
+      final sortMode = TaskSortMode.values.firstWhere((e) => e.name == sortModeRaw, orElse: () => TaskSortMode.smart);
+      final hideCompleted = await TaskPreferences.isHideCompleted();
+
       final myDayList = await MyDayService.instance.myDayTasks();
       final suggestionsList = await buildSuggestions(now: DateTime.now());
-      final buckets = await SimpleTaskRepository.instance.buckets(_todayIso);
+      final buckets = await SimpleTaskRepository.instance.buckets(
+        _todayIso,
+        sortMode: sortMode,
+        hideCompleted: hideCompleted,
+      );
       final activeTags = await SimpleTaskRepository.instance.getActiveTags(limit: 8);
 
       if (_selectedTag != null && !activeTags.contains(_selectedTag)) {
@@ -143,6 +153,8 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
 
       if (mounted) {
         setState(() {
+          _sortMode = sortMode;
+          _hideCompleted = hideCompleted;
           _activeTags = activeTags;
           _myDayTasks = displayMyDay;
           _myDaySuggestions = suggestionsList;
@@ -288,9 +300,9 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
   }
 
   Future<void> _toggleDone(SimpleTask task) async {
-    RitmoHaptics.tap();
     final newDoneState = !task.isDone;
     if (newDoneState) {
+      RitmoHaptics.tap();
       unawaited(_playSoundIfEnabled());
     }
     
@@ -401,75 +413,16 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       body: SafeArea(
         child: Column(
           children: [
-            // Top Bar: Title & Search Icon
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'کارها',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                      
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 22),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const GlobalSearchScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
+            SimpleTasksAppBar(
+              sortMode: _sortMode,
+              hideCompleted: _hideCompleted,
+              onPreferencesChanged: _loadTasks,
             ),
 
-            // Sticky Inline Add Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _addController,
-                        focusNode: _addFocusNode,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colors.textPrimary,
-                          
-                        ),
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _addTask(),
-                        decoration: InputDecoration(
-                          hintText: 'یک کار بنویس…',
-                          hintStyle: TextStyle(
-                            fontSize: 14,
-                            color: colors.textSecondary.withValues(alpha: 0.6),
-                            
-                          ),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(CupertinoIcons.add_circled_solid, color: colors.primary, size: 28),
-                      onPressed: _addTask,
-                    ),
-                  ],
-                ),
-              ),
+            TaskInlineAddBar(
+              controller: _addController,
+              focusNode: _addFocusNode,
+              onSubmitted: _addTask,
             ),
 
             if (_activeTags.isNotEmpty) ...[

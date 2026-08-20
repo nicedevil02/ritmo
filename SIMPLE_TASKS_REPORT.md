@@ -34,10 +34,19 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - [x] **T-23**: Added dynamic tag filter chips below search/add bar in `SimpleTasksScreen` with active tag filtering, empty state auto-hide, and single-selection toggle. [DONE]
 - [x] **T-24**: Enabled phone and URL interactive links in note view mode using `url_launcher`. [DONE]
 
+## Phase 4: Display, Sorting, & Momentary Satisfaction
+- [x] **T-25**: Added `TaskSortMode` (`smart`, `dueDate`, `importance`, `alphabetical`, `createdAt`) in `task_bucketing.dart` preserving bucket structure and persistence in `tasks_sort_mode`. [DONE]
+- [x] **T-26**: Added `tasks_hide_completed` toggle filtering done tasks from UI and removing `doneToday` bucket without mutating database rows. [DONE]
+- [x] **T-27**: Modularized `task_detail_sheet.dart` into `task_schedule_row.dart`, `task_note_field.dart`, `task_meta_row.dart`, and `task_attachments_section.dart` (241 lines, <= 250 max limit). [DONE]
+- [x] **T-28**: Verified completion sound and haptics trigger exclusively on marking a task complete (no sound/haptic when unchecking). [DONE]
+- [x] **T-29**: Comprehensive unit test suite in `test/simple_tasks/task_sorting_test.dart` validating smart sort regression, Persian alphabetical sorting, cross-bucket immutability, and hide completed behavior. [DONE]
+
 ## Verification Status:
 - `grep -rn "catch (_)" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "debugPrint" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "SharedPreferences" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "Random()" lib/features/simple_tasks/`: Clean (0 occurrences)
+- `wc -l lib/features/simple_tasks/presentation/widgets/task_detail_sheet.dart`: 241 lines (<= 250)
+- All files in `lib/features/simple_tasks`: <= 500 lines
 - `flutter analyze lib/features/simple_tasks`: 0 errors / 0 warnings
-- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 42 tests passing
+- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 47 tests passing

@@ -1,57 +1,24 @@
-import 'dart:io';
 import 'dart:async';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
-import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
+import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/detail/task_attachments_section.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/detail/task_meta_row.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/detail/task_note_field.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/detail/task_schedule_row.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_step_list.dart';
-import 'package:ritmo/features/notes/logic/promote_to_note.dart';
-
-import 'package:ritmo/core/logging/ritmo_logger.dart';
-import 'package:ritmo/core/notifications/notification_channel.dart';
-import 'package:ritmo/core/notifications/notification_gateway.dart';
-import 'package:ritmo/core/notifications/notification_request.dart';
-import 'package:ritmo/core/platform/alarm_platform.dart';
-import 'package:ritmo/core/di/service_locator.dart';
-import 'package:ritmo/core/services/alarm_scheduler_service.dart';
-import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-class ReminderPreset {
-  final String Function(DateTime resolved) label;
-  final DateTime? Function(DateTime now) resolve;
-  const ReminderPreset({required this.resolve, required this.label});
-}
-
-final _reminderPresets = <ReminderPreset>[
-  ReminderPreset(
-    resolve: (now) {
-      final t = DateTime(now.year, now.month, now.day, 21, 0);
-      return t.isAfter(now) ? t : null;
-    },
-    label: (t) => 'امشب ${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}'.toPersianDigits(),
-  ),
-  ReminderPreset(
-    resolve: (now) => DateTime(now.year, now.month, now.day, 9, 0).add(const Duration(days: 1)),
-    label: (t) => 'فردا صبح ${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}'.toPersianDigits(),
-  ),
-  ReminderPreset(
-    resolve: (now) => DateTime(now.year, now.month, now.day, 9, 0).add(const Duration(days: 7)),
-    label: (t) => 'هفته بعد',
-  ),
-];
 
 class TaskDetailSheet extends StatefulWidget {
   const TaskDetailSheet({
@@ -113,22 +80,13 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   }
 
   void _savePendingChanges() {
-    bool changed = false;
-    SimpleTask updated = _task;
-
     final newTitle = _titleController.text.trim();
-    if (newTitle.isNotEmpty && newTitle != _task.title) {
-      updated = updated.copyWith(title: newTitle);
-      changed = true;
-    }
-
     final newNote = _noteController.text.trim();
-    if (newNote != (_task.note ?? '')) {
-      updated = updated.copyWith(note: newNote);
-      changed = true;
-    }
-
-    if (changed) {
+    if ((newTitle.isNotEmpty && newTitle != _task.title) || newNote != (_task.note ?? '')) {
+      final updated = _task.copyWith(
+        title: newTitle.isNotEmpty ? newTitle : _task.title,
+        note: newNote.isNotEmpty ? newNote : null,
+      );
       SimpleTaskRepository.instance.updateTask(updated);
       widget.onTaskUpdated();
     }
@@ -138,36 +96,22 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     try {
       final steps = await TaskStepRepository.instance.forTask(_task.id);
       final attachments = await TaskAttachmentRepository.instance.forTask(_task.id);
-      if (mounted) {
-        setState(() {
-          _steps = steps;
-          _attachments = attachments;
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() { _steps = steps; _attachments = attachments; _isLoading = false; });
     } catch (e, st) {
       RitmoLog.warning('TaskDetailSheet', 'Failed to load task details', e, st);
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _playSoundIfEnabled() async {
-    final soundEnabled = await TaskPreferences.isCompletionSoundEnabled();
-    if (soundEnabled) {
-      await SystemSound.play(SystemSoundType.click);
-    }
-  }
-
   Future<void> _toggleDone() async {
-    RitmoHaptics.tap();
     final newDone = !_task.isDone;
     if (newDone) {
-      await _playSoundIfEnabled();
+      RitmoHaptics.tap();
+      final soundEnabled = await TaskPreferences.isCompletionSoundEnabled();
+      if (soundEnabled) await SystemSound.play(SystemSoundType.click);
     }
     await SimpleTaskRepository.instance.setDone(_task.id, done: newDone);
-    setState(() {
-      _task = _task.copyWith(isDone: newDone, doneAt: newDone ? DateTime.now() : null);
-    });
+    setState(() => _task = _task.copyWith(isDone: newDone, doneAt: newDone ? DateTime.now() : null));
     widget.onTaskUpdated();
   }
 
@@ -175,285 +119,51 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     RitmoHaptics.tap();
     final newStar = !_task.isImportant;
     await SimpleTaskRepository.instance.setImportant(_task.id, important: newStar);
-    setState(() {
-      _task = _task.copyWith(
-        isImportant: newStar,
-        importantAt: newStar ? DateTime.now() : null,
-      );
-    });
-    widget.onTaskUpdated();
-  }
-
-  Future<void> _saveTitle() async {
-    final newTitle = _titleController.text.trim();
-    if (newTitle.isEmpty || newTitle == _task.title) return;
-    final updated = _task.copyWith(title: newTitle);
-    await SimpleTaskRepository.instance.updateTask(updated);
-    setState(() => _task = updated);
-    widget.onTaskUpdated();
-  }
-
-  Timer? _noteDebounce;
-
-  Future<void> _saveNote() async {
-    if (_noteDebounce?.isActive ?? false) _noteDebounce!.cancel();
-    
-    // We still want to update the UI immediately for _buildNoteWithLinks
-    setState(() {});
-    
-    _noteDebounce = Timer(const Duration(milliseconds: 500), () async {
-      final newNote = _noteController.text.trim();
-      if (newNote == (_task.note ?? '')) return;
-      final updated = _task.copyWith(note: newNote.isEmpty ? null : newNote);
-      await SimpleTaskRepository.instance.updateTask(updated);
-      if (mounted) {
-        setState(() => _task = updated);
-        widget.onTaskUpdated();
-      }
-    });
-  }
-
-  Future<void> _setQuickReminder(DateTime at, String label) async {
-    final reminderId = 'rem_${_task.id}';
-
-    // 1) اطمینان از مجوز
-    if (!await sl<AlarmPlatform>().checkExactAlarmPermission()) {
-      final granted = await sl<AlarmPlatform>().requestExactAlarmPermission();
-      if (!granted) {
-        if (mounted) {
-          RitmoToast.show(context, 'مجوز یادآور داده نشد', icon: CupertinoIcons.exclamationmark_triangle);
-        }
-        return;
-      }
-    }
-
-    // 2) لغو یادآور قبلی (idempotent)
-    await NotificationGateway.cancel(reminderId);
-
-    // 3) زمان‌بندی از طریق NotificationGateway
-    await NotificationGateway.schedule(
-      NotificationRequest(
-        id: reminderId,
-        channel: NotificationChannelId.planning,
-        scheduledAt: at,
-        title: 'یادآور کار: ${_task.title}',
-        body: _task.note ?? '',
-        sourceSystem: 'tasks',
-        entityId: _task.id,
-      ),
-    );
-
-    // 4) نوشتن در DB
-    final targetMs = at.millisecondsSinceEpoch;
-    await SimpleTaskRepository.instance.addPendingReminder(
-      reminderId: reminderId,
-      title: 'یادآور کار: ${_task.title}',
-      body: _task.note ?? '',
-      scheduledTimeMs: targetMs,
-      taskId: _task.id,
-    );
-
-    final updated = _task.copyWith(reminderAtMs: targetMs, reminderId: reminderId);
-    await SimpleTaskRepository.instance.updateTask(updated);
-    setState(() => _task = updated);
-    widget.onTaskUpdated();
-
-    // 4) زمان‌بندی واقعی
-    await NotificationGateway.schedule(
-      NotificationRequest(
-        id: reminderId,
-        channel: NotificationChannelId.planning,
-        scheduledAt: DateTime.fromMillisecondsSinceEpoch(targetMs),
-        title: _task.title,
-        sourceSystem: 'tasks',
-        entityId: _task.id,
-      ),
-    );
-    await AlarmSchedulerService.scheduleNextAlarms();
-
-    if (mounted) {
-      RitmoToast.show(context, 'یادآور برای $label تنظیم شد', icon: CupertinoIcons.bell);
-    }
-  }
-
-  Future<void> _pickAttachment() async {
-    try {
-      final result = await FilePickerPlatform.instance.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final fileName = result.files.single.name;
-
-        final att = await TaskAttachmentRepository.instance.add(
-          taskId: _task.id,
-          sourceFile: file,
-          fileName: fileName,
-        );
-
-        setState(() => _attachments.add(att));
-        widget.onTaskUpdated();
-      }
-    } catch (e) {
-      if (mounted) {
-        RitmoToast.show(
-          context,
-          e.toString().replaceAll('Exception: ', ''),
-          icon: Icons.error_outline,
-          iconColor: context.colors.medicalRed,
-        );
-      }
-    }
-  }
-
-  Future<void> _deleteAttachment(TaskAttachment att) async {
-    await TaskAttachmentRepository.instance.delete(att.id);
-    setState(() => _attachments.removeWhere((a) => a.id == att.id));
+    setState(() => _task = _task.copyWith(isImportant: newStar, importantAt: newStar ? DateTime.now() : null));
     widget.onTaskUpdated();
   }
 
   Future<void> _confirmAndDeleteTask() async {
-    if (mounted) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (dialogCtx) => AlertDialog(
-          backgroundColor: context.colors.card,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'حذف کار؟',
-            style: TextStyle(
-              color: context.colors.medicalRed,
-              
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            'کار «${_task.title}» حذف شود؟',
-            style: TextStyle(
-              color: context.colors.textSecondary,
-              
-              fontSize: 13,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, false),
-              child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, true),
-              child: Text('حذف', style: TextStyle(color: context.colors.medicalRed, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      );
-      if (confirm != true) return;
-    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.colors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('حذف کار؟', style: TextStyle(color: context.colors.medicalRed, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Text('کار «${_task.title}» حذف شود؟', style: TextStyle(color: context.colors.textSecondary, fontSize: 13, height: 1.5)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('انصراف', style: TextStyle(color: context.colors.textSecondary))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('حذف', style: TextStyle(color: context.colors.medicalRed, fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+    if (confirm != true) return;
 
-    final taskSnapshot = await SimpleTaskRepository.instance.delete(_task.id);
+    final snapshot = await SimpleTaskRepository.instance.delete(_task.id);
     if (mounted) Navigator.pop(context);
     widget.onTaskDeleted();
 
-    if (mounted && taskSnapshot != null) {
+    if (mounted && snapshot != null) {
       RitmoToast.show(
         context,
-        'کار «${taskSnapshot.task.title}» حذف شد',
+        'کار «${snapshot.task.title}» حذف شد',
         icon: CupertinoIcons.trash,
         actionLabel: 'برگردان',
         onAction: () async {
-          await SimpleTaskRepository.instance.restoreTask(taskSnapshot);
+          await SimpleTaskRepository.instance.restoreTask(snapshot);
           widget.onTaskUpdated();
         },
       );
     }
   }
 
-  String _formatShamsiDate(DateTime dt) {
+  String _formatDate(DateTime dt) {
     final j = Jalali.fromDateTime(dt);
     return '${PersianDigits.toPersian(j.year)}/${PersianDigits.toPersian(j.month.toString().padLeft(2, '0'))}/${PersianDigits.toPersian(j.day.toString().padLeft(2, '0'))}';
   }
 
-  Widget _buildNoteWithLinks(String noteText, BuildContext context) {
-    final colors = context.colors;
-    final linkOrPhonePattern = RegExp(r'(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\+?\d{10,13}|09\d{9})');
-    final matches = linkOrPhonePattern.allMatches(noteText);
-
-    if (matches.isEmpty) {
-      return Text(
-        noteText,
-        style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5),
-      );
-    }
-
-    final spans = <TextSpan>[];
-    int lastMatchEnd = 0;
-
-    for (final match in matches) {
-      if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(
-          text: noteText.substring(lastMatchEnd, match.start),
-          style: TextStyle(color: colors.textPrimary),
-        ));
-      }
-      final matchedText = match.group(0)!;
-      final isPhone = RegExp(r'^\+?\d+$').hasMatch(matchedText);
-
-      spans.add(TextSpan(
-        text: matchedText,
-        style: TextStyle(color: colors.primary, decoration: TextDecoration.underline),
-        recognizer: TapGestureRecognizer()
-          ..onTap = () async {
-            if (isPhone) {
-              final phoneUri = Uri.tryParse('tel:$matchedText');
-              if (phoneUri != null) {
-                await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
-              }
-            } else {
-              var urlStr = matchedText;
-              if (!urlStr.startsWith('http')) urlStr = 'https://$urlStr';
-              final uri = Uri.tryParse(urlStr);
-              if (uri != null) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            }
-          },
-      ));
-      lastMatchEnd = match.end;
-    }
-
-    if (lastMatchEnd < noteText.length) {
-      spans.add(TextSpan(
-        text: noteText.substring(lastMatchEnd),
-        style: TextStyle(color: colors.textPrimary),
-      ));
-    }
-
-    return SelectableText.rich(
-      TextSpan(
-        style: TextStyle(fontSize: 13, height: 1.5, color: colors.textPrimary),
-        children: spans,
-      ),
-    );
-  }
-
-  List<Widget> _buildReminderChips(DateTime now) {
-    final chips = <Widget>[];
-    for (final preset in _reminderPresets) {
-      final t = preset.resolve(now);
-      if (t == null) continue;
-      chips.add(
-        ActionChip(
-          label: Text(preset.label(t), style: const TextStyle(fontSize: 11)),
-          onPressed: () => _setQuickReminder(t, preset.label(t)),
-        ),
-      );
-    }
-    return chips;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final colors = context.colors;
 
     return DraggableScrollableSheet(
@@ -464,266 +174,84 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       snap: true,
       builder: (context, scrollController) {
         return Container(
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border.all(color: colors.border, width: 1),
-            ),
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator(color: colors.primary))
-                : ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      // Handle
-                      Center(
-                        child: Container(
-                          width: 36,
-                          height: 4.5,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: colors.textTertiary.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: colors.border),
+          ),
+          child: _isLoading
+              ? Center(child: CircularProgressIndicator(color: colors.primary))
+              : ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4.5,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(color: colors.textTertiary.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(3)),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(_task.isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle, color: _task.isDone ? colors.success : colors.textTertiary, size: 26),
+                          onPressed: _toggleDone,
                         ),
-                      ),
-
-                      // 1. Header: Checkbox + Title + Star
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              _task.isDone ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle,
-                              color: _task.isDone ? colors.success : colors.textTertiary,
-                              size: 26,
-                            ),
-                            onPressed: _toggleDone,
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: _titleController,
-                              style: TextStyle(
-                                
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _task.isDone ? colors.textTertiary : colors.textPrimary,
-                                decoration: _task.isDone ? TextDecoration.lineThrough : null,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'عنوان کار...',
-                              ),
-                              onEditingComplete: _saveTitle,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              _task.isImportant ? CupertinoIcons.star_fill : CupertinoIcons.star,
-                              color: _task.isImportant ? colors.accent : colors.textTertiary,
-                              size: 24,
-                            ),
-                            onPressed: _toggleStar,
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-
-                      // 2. Sub-steps
-                      Text(
-                        'زیرگام‌ها',
-                        style: TextStyle(
-                          
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TaskStepList(
-                        taskId: _task.id,
-                        steps: _steps,
-                        onStepsChanged: _loadData,
-                      ),
-                      const Divider(height: 24),
-
-                      // 3. Reminders Quick Buttons
-                      Text(
-                        'یادآور',
-                        style: TextStyle(
-                          
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          ..._buildReminderChips(now),
-                          ActionChip(
-                            label: const Text('زمان دلخواه...', style: TextStyle(fontSize: 11)),
-                            onPressed: () {
-                              // TODO: Implement custom time picker (P4 UX)
+                        Expanded(
+                          child: TextField(
+                            controller: _titleController,
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _task.isDone ? colors.textTertiary : colors.textPrimary, decoration: _task.isDone ? TextDecoration.lineThrough : null),
+                            decoration: const InputDecoration(border: InputBorder.none, hintText: 'عنوان کار...'),
+                            onEditingComplete: () {
+                              final updated = _task.copyWith(title: _titleController.text.trim());
+                              SimpleTaskRepository.instance.updateTask(updated);
+                              setState(() => _task = updated);
+                              widget.onTaskUpdated();
                             },
                           ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-
-                      // 4. Note
-                      Text(
-                        'یادداشت',
-                        style: TextStyle(
-                          
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _noteController,
-                        maxLines: 3,
-                        style: TextStyle(fontSize: 13, color: colors.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'توضیحات و لینک‌های مرتبط...',
-                          hintStyle: TextStyle(fontSize: 12, color: colors.textTertiary),
-                          filled: true,
-                          fillColor: colors.surfaceSunken,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.border),
-                          ),
+                        IconButton(
+                          icon: Icon(_task.isImportant ? CupertinoIcons.star_fill : CupertinoIcons.star, color: _task.isImportant ? colors.accent : colors.textTertiary, size: 24),
+                          onPressed: _toggleStar,
                         ),
-                        onChanged: (_) => _saveNote(),
-                      ),
-                      if (_noteController.text.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        _buildNoteWithLinks(_noteController.text, context),
-                        const SizedBox(height: 8),
-                        if (_noteController.text.length > 300)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'این یادداشت بلند شده — می‌خواهی به دفترچه منتقلش کنی؟',
-                                    style: TextStyle(fontSize: 11, color: colors.primary),
-                                  ),
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    NotePromoter.instance.promote(
-                                      context: context,
-                                      module: 'tasks',
-                                      entityId: _task.id,
-                                      text: _noteController.text,
-                                      titleHint: _task.title,
-                                    );
-                                  },
-                                  icon: const Text('📓', style: TextStyle(fontSize: 14)),
-                                  label: const Text('انتقال به دفترچه', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton.icon(
-                              onPressed: () {
-                                NotePromoter.instance.promote(
-                                  context: context,
-                                  module: 'tasks',
-                                  entityId: _task.id,
-                                  text: _noteController.text,
-                                  titleHint: _task.title,
-                                );
-                              },
-                              icon: const Text('📓', style: TextStyle(fontSize: 14)),
-                              label: const Text('تبدیل به یادداشت دفترچه', style: TextStyle(fontSize: 11)),
-                            ),
-                          ),
                       ],
-                      const Divider(height: 24),
-
-
-                      // 5. Attachments
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'پیوست‌ها (${PersianDigits.toPersian(_attachments.length)})',
-                            style: TextStyle(
-                              
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          TextButton.icon(
-                            onPressed: _pickAttachment,
-                            icon: const Icon(CupertinoIcons.paperclip, size: 16),
-                            label: const Text('+ افزودن فایل', style: TextStyle(fontSize: 11)),
-                          ),
-                        ],
-                      ),
-                      if (_attachments.isNotEmpty)
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _attachments.length,
-                          itemBuilder: (context, index) {
-                            final att = _attachments[index];
-                            final sizeKb = (att.fileSizeBytes / 1024).toStringAsFixed(1);
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(CupertinoIcons.doc_fill),
-                              title: Text(att.fileName, style: TextStyle(fontSize: 12, color: colors.textPrimary)),
-                              subtitle: Text('${PersianDigits.toPersian(sizeKb)} KB', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-                              trailing: IconButton(
-                                icon: Icon(CupertinoIcons.trash, color: colors.medicalRed, size: 18),
-                                onPressed: () => _deleteAttachment(att),
-                              ),
-                            );
-                          },
-                        ),
-                      const Divider(height: 24),
-
-                      // 6. Timestamp Footer
-                      Text(
-                        'ساخته‌شده: ${_formatShamsiDate(_task.createdAt)}',
-                        style: TextStyle(fontSize: 11, color: colors.textTertiary),
-                      ),
-                      if (_task.doneAt != null)
-                        Text(
-                          'انجام‌شده: ${_formatShamsiDate(_task.doneAt!)}',
-                          style: TextStyle(fontSize: 11, color: colors.success),
-                        ),
-                      const SizedBox(height: 20),
-
-                      // 7. Delete Button
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.medicalRed,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: _confirmAndDeleteTask,
-                        icon: const Icon(CupertinoIcons.trash, size: 18),
-                        label: const Text('حذف کار', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-          );
+                    ),
+                    const Divider(height: 24),
+                    TaskMetaRow(task: _task, onTaskChanged: (t) { setState(() => _task = t); widget.onTaskUpdated(); }),
+                    const Divider(height: 24),
+                    TaskScheduleRow(task: _task, onTaskChanged: (t) { setState(() => _task = t); widget.onTaskUpdated(); }),
+                    const Divider(height: 24),
+                    Text('زیرگام‌ها', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                    const SizedBox(height: 8),
+                    TaskStepList(taskId: _task.id, steps: _steps, onStepsChanged: _loadData),
+                    const Divider(height: 24),
+                    TaskNoteField(
+                      task: _task,
+                      controller: _noteController,
+                      onChanged: () {
+                        final updated = _task.copyWith(note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim());
+                        SimpleTaskRepository.instance.updateTask(updated);
+                        setState(() => _task = updated);
+                        widget.onTaskUpdated();
+                      },
+                    ),
+                    const Divider(height: 24),
+                    TaskAttachmentsSection(taskId: _task.id, attachments: _attachments, onAttachmentsChanged: _loadData),
+                    const Divider(height: 24),
+                    Text('ساخته‌شده: ${_formatDate(_task.createdAt)}', style: TextStyle(fontSize: 11, color: colors.textTertiary)),
+                    if (_task.doneAt != null) Text('انجام‌شده: ${_formatDate(_task.doneAt!)}', style: TextStyle(fontSize: 11, color: colors.success)),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(backgroundColor: colors.medicalRed, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                      onPressed: _confirmAndDeleteTask,
+                      icon: const Icon(CupertinoIcons.trash, size: 18),
+                      label: const Text('حذف کار', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+        );
       },
     );
   }

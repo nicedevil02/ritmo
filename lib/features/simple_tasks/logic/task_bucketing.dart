@@ -2,6 +2,14 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
+enum TaskSortMode {
+  smart,
+  dueDate,
+  importance,
+  alphabetical,
+  createdAt,
+}
+
 TaskBucket bucketOf(SimpleTask task, {required DateTime now}) {
   final todayDt = DateTime(now.year, now.month, now.day);
   final todayStr = _formatIso(todayDt);
@@ -42,11 +50,20 @@ TaskBucket bucketOf(SimpleTask task, {required DateTime now}) {
   return TaskBucket.later;
 }
 
-Map<TaskBucket, List<SimpleTask>> groupTasks(List<SimpleTask> tasks, {required DateTime now}) {
+Map<TaskBucket, List<SimpleTask>> groupTasks(
+  List<SimpleTask> tasks, {
+  DateTime? now,
+  TaskSortMode sortMode = TaskSortMode.smart,
+  bool hideCompleted = false,
+}) {
+  final effectiveNow = now ?? DateTime.now();
   final result = <TaskBucket, List<SimpleTask>>{};
 
-  for (final task in tasks) {
-    final b = bucketOf(task, now: now);
+  final filteredTasks = hideCompleted ? tasks.where((t) => !t.isDone).toList() : tasks;
+
+  for (final task in filteredTasks) {
+    final b = bucketOf(task, now: effectiveNow);
+    if (hideCompleted && b == TaskBucket.doneToday) continue;
     result.putIfAbsent(b, () => []).add(task);
   }
 
@@ -56,20 +73,52 @@ Map<TaskBucket, List<SimpleTask>> groupTasks(List<SimpleTask> tasks, {required D
       if (a.isDone != b.isDone) {
         return a.isDone ? 1 : -1;
       }
-      if (a.isImportant != b.isImportant) {
-        return a.isImportant ? -1 : 1;
+      switch (sortMode) {
+        case TaskSortMode.smart:
+          if (a.isImportant != b.isImportant) {
+            return a.isImportant ? -1 : 1;
+          }
+          if (a.dueDate != b.dueDate) {
+            if (a.dueDate == null) return 1;
+            if (b.dueDate == null) return -1;
+            return a.dueDate!.compareTo(b.dueDate!);
+          }
+          if (a.dueTime != b.dueTime) {
+            if (a.dueTime == null) return 1;
+            if (b.dueTime == null) return -1;
+            return a.dueTime!.compareTo(b.dueTime!);
+          }
+          return a.orderIndex.compareTo(b.orderIndex);
+
+        case TaskSortMode.dueDate:
+          if (a.dueDate != b.dueDate) {
+            if (a.dueDate == null) return 1;
+            if (b.dueDate == null) return -1;
+            return a.dueDate!.compareTo(b.dueDate!);
+          }
+          if (a.dueTime != b.dueTime) {
+            if (a.dueTime == null) return 1;
+            if (b.dueTime == null) return -1;
+            return a.dueTime!.compareTo(b.dueTime!);
+          }
+          return a.orderIndex.compareTo(b.orderIndex);
+
+        case TaskSortMode.importance:
+          if (a.isImportant != b.isImportant) {
+            return a.isImportant ? -1 : 1;
+          }
+          if (a.importantAt != null && b.importantAt != null) {
+            final cmp = b.importantAt!.compareTo(a.importantAt!);
+            if (cmp != 0) return cmp;
+          }
+          return a.orderIndex.compareTo(b.orderIndex);
+
+        case TaskSortMode.alphabetical:
+          return a.title.compareTo(b.title);
+
+        case TaskSortMode.createdAt:
+          return b.createdAt.compareTo(a.createdAt);
       }
-      if (a.dueDate != b.dueDate) {
-        if (a.dueDate == null) return 1;
-        if (b.dueDate == null) return -1;
-        return a.dueDate!.compareTo(b.dueDate!);
-      }
-      if (a.dueTime != b.dueTime) {
-        if (a.dueTime == null) return 1;
-        if (b.dueTime == null) return -1;
-        return a.dueTime!.compareTo(b.dueTime!);
-      }
-      return a.orderIndex.compareTo(b.orderIndex);
     });
   }
 

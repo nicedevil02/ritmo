@@ -551,6 +551,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
             context,
             onDataReloadNeeded: _loadSettingsAndSession,
             onEndPregnancy: _showEndPregnancySheet,
+            onExitPregnancy: widget.onDeactivated,
           ),
         ),
 

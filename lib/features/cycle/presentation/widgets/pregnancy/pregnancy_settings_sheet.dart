@@ -18,17 +18,23 @@ class PregnancySettingsSheet extends StatefulWidget {
     super.key,
     this.onDataReloadNeeded,
     this.onEndPregnancy,
+    this.onExitPregnancy,
+    this.onOpenGeneralSettings,
     this.initialProfile,
   });
 
   final VoidCallback? onDataReloadNeeded;
   final VoidCallback? onEndPregnancy;
+  final VoidCallback? onExitPregnancy;
+  final VoidCallback? onOpenGeneralSettings;
   final PregnancyProfile? initialProfile;
 
   static Future<void> show(
     BuildContext context, {
     VoidCallback? onDataReloadNeeded,
     VoidCallback? onEndPregnancy,
+    VoidCallback? onExitPregnancy,
+    VoidCallback? onOpenGeneralSettings,
     PregnancyProfile? initialProfile,
   }) {
     return showModalBottomSheet<void>(
@@ -44,6 +50,8 @@ class PregnancySettingsSheet extends StatefulWidget {
           child: PregnancySettingsSheet(
             onDataReloadNeeded: onDataReloadNeeded,
             onEndPregnancy: onEndPregnancy,
+            onExitPregnancy: onExitPregnancy,
+            onOpenGeneralSettings: onOpenGeneralSettings,
             initialProfile: initialProfile,
           ),
         ),
@@ -1142,6 +1150,42 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
           // Section 6: ناحیهٔ خطر
           _buildSectionHeader(context, 'ناحیهٔ خطر'),
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: _confirmExitPregnancy,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.arrow_right_circle,
+                        color: colors.warning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'خروج از حالت بارداری',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colors.warning,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Icon(
+                    CupertinoIcons.chevron_left,
+                    color: colors.warning,
+                    size: 14,
+                  ),
+                ],
+              ),
+            ),
+          ),
           if (widget.onEndPregnancy != null) ...[
             const SizedBox(height: 4),
             InkWell(
@@ -1164,7 +1208,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'پایان دوره بارداری و بازگشت به چرخه',
+                          'پایان دوره بارداری',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -1183,9 +1227,86 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
               ),
             ),
           ],
+          if (widget.onOpenGeneralSettings != null) ...[
+            const SizedBox(height: 4),
+            InkWell(
+              onTap: () {
+                Navigator.of(context).pop();
+                widget.onOpenGeneralSettings!();
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.settings,
+                          color: colors.primary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'تنظیمات عمومی چرخه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      color: colors.primary,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmExitPregnancy() async {
+    final colors = context.colors;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('خروج از حالت بارداری'),
+        content: const Text(
+          'آیا مطمئن هستید که می‌خواهید حالت بارداری را غیرفعال کنید و به چرخهٔ عادی بازگردید؟',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('انصراف'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: colors.warning),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('بله، بازگشت به چرخه', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final db = await DatabaseHelper.instance.database;
+      await PregnancySettings.setPregnancyActive(false, db: db);
+      if (mounted) {
+        widget.onExitPregnancy?.call();
+        widget.onDataReloadNeeded?.call();
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      }
+    }
   }
 }

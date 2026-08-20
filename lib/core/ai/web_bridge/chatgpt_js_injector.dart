@@ -52,6 +52,133 @@ $userPrompt
         || (/[\/\.-]conversation/i.test(url) && /[\/\.-]backend/i.test(url));
   }
 
+  function parseSSELine(line, state, reqId) {
+    if (!line || typeof line !== 'string' || line.indexOf('data: ') !== 0) return null;
+    var rawData = line.substring(6).trim();
+    if (rawData === '[DONE]') {
+      return { type: 'done', fullText: (state && state.accumulatedText) || '', requestId: reqId, source: 'sse' };
+    }
+    try {
+      var json = JSON.parse(rawData);
+      var text = '';
+      var isReplace = false;
+
+      if (json.o === 'patch' && Array.isArray(json.v)) {
+        var patchDelta = '';
+        for (var p = 0; p < json.v.length; p++) {
+          var op = json.v[p];
+          if (op && op.p && typeof op.p === 'string' && op.p.indexOf('/message/content/parts/') === 0) {
+            if (op.o === 'append' && typeof op.v === 'string') {
+              patchDelta += op.v;
+            } else if (op.o === 'replace' && typeof op.v === 'string') {
+              text = op.v;
+              isReplace = true;
+            }
+          }
+        }
+        if (patchDelta && !isReplace) {
+          text = ((state && state.accumulatedText) || '') + patchDelta;
+        }
+      } else if (json.o === 'append' && json.p && typeof json.p === 'string' && json.p.indexOf('/message/content/parts/') === 0 && typeof json.v === 'string') {
+        text = ((state && state.accumulatedText) || '') + json.v;
+      } else if (json.o === 'replace' && json.p && typeof json.p === 'string' && json.p.indexOf('/message/content/parts/') === 0 && typeof json.v === 'string') {
+        text = json.v;
+        isReplace = true;
+      } else if (json.message && json.message.content && json.message.content.parts && json.message.content.parts.length > 0) {
+        text = json.message.content.parts.join('');
+      } else if (json.delta && json.delta.content) {
+        text = ((state && state.accumulatedText) || '') + json.delta.content;
+      } else if (json.v && json.v.message && json.v.message.content && json.v.message.content.parts) {
+        text = json.v.message.content.parts.join('');
+      }
+
+      if (text && text !== (state && state.accumulatedText)) {
+        var prev = (state && state.accumulatedText) || '';
+        var delta = '';
+        if (isReplace) {
+          delta = text;
+        } else if (text.length > prev.length && text.indexOf(prev) === 0) {
+          delta = text.substring(prev.length);
+        } else {
+          delta = text;
+        }
+        if (state) state.accumulatedText = text;
+        return { type: 'chunk', delta: delta, fullText: text, requestId: reqId, source: 'sse' };
+      }
+    } catch (e) {}
+    return null;
+  }
+  window.__ritmo_parseSSELine = parseSSELine;
+
+  function readSSEStream(reader, reqId) {
+    var state = { accumulatedText: '', firstTokenEmitted: false, startTime: Date.now() };
+    var decoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8') : null;
+    var buffer = '';
+
+    function emitEvent(evtType, payload) {
+      try {
+        if (typeof notifyFlutter === 'function') {
+          notifyFlutter(evtType, payload);
+        } else if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
+          var data = payload || {};
+          data.type = evtType;
+          if (!data.source) data.source = 'sse';
+          window.RitmoChatBridge.postMessage(JSON.stringify(data));
+        }
+      } catch (e) {}
+    }
+
+    function pump() {
+      return reader.read().then(function(result) {
+        if (result.done) {
+          if (state.accumulatedText.length > 0) {
+            setTimeout(function() {
+              emitEvent('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+            }, 500);
+          }
+          return;
+        }
+
+        var chunkStr = decoder ? decoder.decode(result.value, { stream: true }) : String.fromCharCode.apply(null, result.value);
+        buffer += chunkStr;
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (var i = 0; i < lines.length; i++) {
+          var trimmed = lines[i].trim();
+          if (trimmed.length > 0) {
+            var event = parseSSELine(trimmed, state, reqId);
+            if (event) {
+              if (event.type === 'done') {
+                setTimeout(function() {
+                  emitEvent('done', { fullText: state.accumulatedText, requestId: reqId, source: 'sse' });
+                }, 500);
+                return;
+              }
+              if (!state.firstTokenEmitted && event.type === 'chunk') {
+                state.firstTokenEmitted = true;
+                emitEvent('first_token', {
+                  length: (event.delta && event.delta.length) || 0,
+                  requestId: reqId,
+                  latencyMs: Date.now() - state.startTime,
+                  source: 'sse'
+                });
+              }
+              emitEvent(event.type, event);
+            }
+          }
+        }
+
+        return pump();
+      }).catch(function(err) {
+        console.warn('[Ritmo] SSE stream read error:', err);
+      });
+    }
+
+    return pump();
+  }
+  window.__ritmo_readSSEStream = readSSEStream;
+
   // 1. Fetch Hook with response.body.tee availability guard (A-34)
   var originalFetch = window.fetch;
   if (originalFetch && !window.__ritmo_fetch_hooked) {

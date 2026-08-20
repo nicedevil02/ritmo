@@ -160,6 +160,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   Timer? _generationTimer;
   Timer? _checkpointTimer1;
   Timer? _checkpointTimer2;
+  Timer? _resumeDebounceTimer;
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
 
@@ -263,6 +264,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _isAuthenticated = auth;
   }
 
+  void _cancelResumeDebounce() {
+    _resumeDebounceTimer?.cancel();
+    _resumeDebounceTimer = null;
+  }
+
+  @visibleForTesting
+  Timer? get resumeDebounceTimerForTest => _resumeDebounceTimer;
+
   @visibleForTesting
   void resetStateForTest() {
     _inactivityTimer?.cancel();
@@ -273,6 +282,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _checkpointTimer1 = null;
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
+    _cancelResumeDebounce();
     _setStatus(ChatGptBridgeStatus.idle, force: true);
     _currentRequestId = null;
     _pendingRequest = null;
@@ -525,23 +535,38 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
         return;
       }
 
-      await _attemptResumePendingRequest(controller);
+      _attemptResumePendingRequest(controller);
     }
   }
 
-  Future<void> _attemptResumePendingRequest(WebViewController controller) async {
-    RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation for req: ${_pendingRequest?.requestId}...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    try {
-      final payload = jsonEncode(_pendingRequest?.toJson() ?? {});
-      await controller.runJavaScript('''
+  void _attemptResumePendingRequest(WebViewController controller) {
+    _cancelResumeDebounce();
+
+    final reqId = _pendingRequest?.requestId ?? _currentRequestId;
+    BridgeTraceLog.instance.addEntry(
+      type: 'resume_debounced',
+      source: BridgeSource.dart.name,
+      requestId: reqId,
+      note: 'delayMs=500',
+      level: BridgeTraceLevel.info,
+    );
+
+    _resumeDebounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      if (!hasPendingRequest && _status != ChatGptBridgeStatus.generating) return;
+      if (_currentStreamController == null || _currentStreamController!.isClosed) return;
+
+      RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation for req: ${_pendingRequest?.requestId}...');
+      try {
+        final payload = jsonEncode(_pendingRequest?.toJson() ?? {});
+        await controller.runJavaScript('''
 if (typeof window.__ritmo_resume === 'function') {
   window.__ritmo_resume($payload);
 }
 ''');
-    } catch (e, st) {
-      RitmoLog.error('ChatGptWebBridge', 'Error calling __ritmo_resume: $e', e, st);
-    }
+      } catch (e, st) {
+        RitmoLog.error('ChatGptWebBridge', 'Error calling __ritmo_resume: $e', e, st);
+      }
+    });
   }
 
   /// Handles web resource loading errors from NavigationDelegate.
@@ -1447,6 +1472,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   void _finishGeneration(String? fullText, {bool isPartial = false}) {
     _isFinishingOrFailingGeneration = true;
     try {
+      _cancelResumeDebounce();
       _generationTimer?.cancel();
       _generationTimer = null;
       _checkpointTimer1?.cancel();
@@ -1507,6 +1533,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   void _failGeneration(dynamic errorOrMessageFa) {
     _isFinishingOrFailingGeneration = true;
     try {
+      _cancelResumeDebounce();
       _generationTimer?.cancel();
       _generationTimer = null;
       _checkpointTimer1?.cancel();
@@ -1926,6 +1953,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
   /// Resets the inactivity countdown.
   void _resetInactivityTimer() {
+    _cancelResumeDebounce();
     _inactivityTimer?.cancel();
     _inactivityTimer = Timer(ChatGptBridgeTimeouts.inactivityTimeout, () {
       if (_status == ChatGptBridgeStatus.generating ||
@@ -1940,6 +1968,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
   /// Drops this side's references to the WebView after safely halting native background activity.
   void disposeWebView() {
+    _cancelResumeDebounce();
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
     _generationTimer?.cancel();

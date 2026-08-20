@@ -146,8 +146,8 @@ class ReadinessNoData extends ReadinessResult {}
 - دکمهٔ «شروع جلسه» فعال است.
 
 **دروازهٔ پذیرش فاز ۲**
-- [ ] `flutter analyze` سبز.
-- [ ] `flutter test test/movement/readiness_service_test.dart` — حداقل: شاخهٔ قاعدگی سقف `minimal/40` را برمی‌گرداند، شاخهٔ بدون داده `ReadinessNoData` برمی‌گرداند.
+- [x] `flutter analyze` سبز.
+- [x] `flutter test test/movement/readiness_service_test.dart` — حداقل: شاخهٔ قاعدگی سقف `minimal/40` را برمی‌گرداند، شاخهٔ بدون داده `ReadinessNoData` برمی‌گرداند.
 
 ---
 

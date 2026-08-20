@@ -4,7 +4,36 @@ import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
 import 'package:ritmo/features/movement/domain/models/movement_readiness_checkin.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// مدل نتیجهٔ ارزیابی آمادگی (صرفاً وصفی و بدون عدد/درصد)
+/// سطوح آمادگی بدنی روزانه (P-05)
+enum ReadinessTier { rest, minimal, light, full }
+
+/// وضعیت‌های چرخهٔ فیزیولوژیک جهت تنظیم سقف آمادگی (P-05)
+enum MovementCycleStatus { none, menstruation, pms, fertile, pregnancy, other }
+
+/// کلاس پایهٔ نتایج ارزیابی آمادگی (P-05)
+sealed class ReadinessResult {
+  const ReadinessResult();
+}
+
+class ReadinessReady extends ReadinessResult {
+  const ReadinessReady({
+    required this.tier,
+    required this.score,
+    required this.suggestionFa,
+    required this.isEstimated,
+  });
+
+  final ReadinessTier tier; // rest | minimal | light | full
+  final int score; // 0-100
+  final String suggestionFa; // یک جمله، فارسی
+  final bool isEstimated; // true اگر هر داده‌ای null بود
+}
+
+class ReadinessNoData extends ReadinessResult {
+  const ReadinessNoData();
+}
+
+/// مدل نتیجهٔ ارزیابی آمادگی جهت نمایش در کارت‌های توصیفی
 class ReadinessEvaluationResult {
   const ReadinessEvaluationResult({
     required this.statusHeadline,
@@ -14,10 +43,10 @@ class ReadinessEvaluationResult {
 
   final String statusHeadline;
   final String reasonSummary;
-  final List<String> suggestions; // حداکثر ۳ پیشنهاد
+  final List<String> suggestions;
 }
 
-/// مدل پیشنهاد مربی (سه لایه: پیشنهاد + دلیل + اکشن‌ها)
+/// مدل پیشنهاد مربی هوشمند (سه لایه: پیشنهاد + دلیل + اکشن‌ها)
 class CoachSuggestion {
   const CoachSuggestion({
     required this.id,
@@ -38,7 +67,7 @@ class CoachSuggestion {
   final String dismissActionLabel;
 }
 
-/// سرویس مدیریت آمادگی، چک‌این و پیشنهادات مربی (Gate 5)
+/// سرویس مدیریت و ارزیابی آمادگی واقعی بر اساس وضعیت ۲۴ ساعت گذشته و سقف فیزیولوژیک (P-05 / P-06)
 class MovementReadinessService {
   MovementReadinessService({this.db});
 
@@ -68,12 +97,6 @@ class MovementReadinessService {
     return MovementReadinessCheckin.fromMap(rows.first);
   }
 
-  /// بررسی لزوم نمایش خودکار چک‌این (حداکثر ۱ بار در روز)
-  Future<bool> shouldShowAutoCheckin([DateTime? date]) async {
-    final existing = await getTodayCheckin(date);
-    return existing == null;
-  }
-
   /// ثبت یا به‌روزرسانی چک‌این روزانه
   Future<void> recordCheckin(MovementReadinessCheckin checkin) async {
     final dbExec = await _database;
@@ -84,7 +107,112 @@ class MovementReadinessService {
     );
   }
 
-  /// ارزیابی آمادگی بر اساس چک‌این (بدون عدد از ۱۰۰ یا درصد ریکاوری)
+  /// ارزیابی آمادگی بر اساس چک‌این و وضعیت فیزیولوژیک (P-05)
+  ReadinessResult evaluateReadiness({
+    required MovementReadinessCheckin? checkin,
+    MovementCycleStatus cycleStatus = MovementCycleStatus.none,
+  }) {
+    if (checkin == null) {
+      return const ReadinessNoData();
+    }
+
+    // بررسی سقف وضعیت فیزیولوژیک (P-05)
+    ReadinessTier ceilTier = ReadinessTier.full;
+    int ceilScore = 100;
+
+    switch (cycleStatus) {
+      case MovementCycleStatus.menstruation:
+        ceilTier = ReadinessTier.minimal;
+        ceilScore = 40;
+        break;
+      case MovementCycleStatus.pms:
+        ceilTier = ReadinessTier.light;
+        ceilScore = 65;
+        break;
+      case MovementCycleStatus.fertile:
+        ceilTier = ReadinessTier.full;
+        ceilScore = 100;
+        break;
+      case MovementCycleStatus.pregnancy:
+        ceilTier = ReadinessTier.rest;
+        ceilScore = 20;
+        break;
+      case MovementCycleStatus.none:
+      case MovementCycleStatus.other:
+        ceilTier = ReadinessTier.full;
+        ceilScore = 100;
+        break;
+    }
+
+    final bool isEstimated = (checkin.sleep == null ||
+        checkin.energy == null ||
+        checkin.soreness == null ||
+        checkin.stress == null);
+
+    // محاسبه خام امتیاز (0-100)
+    final sleep = (checkin.sleep ?? 3).clamp(1, 5);
+    final energy = (checkin.energy ?? 3).clamp(1, 5);
+    final soreness = (checkin.soreness ?? 1).clamp(1, 5);
+    final stress = (checkin.stress ?? 1).clamp(1, 5);
+
+    final sleepScore = ((sleep - 1) / 4.0) * 30.0;
+    final energyScore = ((energy - 1) / 4.0) * 35.0;
+    final sorenessScore = ((5 - soreness) / 4.0) * 20.0;
+    final stressScore = ((5 - stress) / 4.0) * 15.0;
+
+    final rawScore =
+        (sleepScore + energyScore + sorenessScore + stressScore).round().clamp(0, 100);
+
+    // اعمال سقف
+    final finalScore = rawScore > ceilScore ? ceilScore : rawScore;
+
+    // تعیین تیر نهایی با احترام به سقف
+    ReadinessTier finalTier;
+    if (finalScore <= 25 || ceilTier == ReadinessTier.rest) {
+      finalTier = ReadinessTier.rest;
+    } else if (finalScore <= 45 || ceilTier == ReadinessTier.minimal) {
+      finalTier = ReadinessTier.minimal;
+    } else if (finalScore <= 70 || ceilTier == ReadinessTier.light) {
+      finalTier = ReadinessTier.light;
+    } else {
+      finalTier = ReadinessTier.full;
+    }
+
+    // تولید جملهٔ پیشنهاد بر اساس الگوی استاندارد بدون ذکر چرخه (P-06)
+    final String suggestionFa;
+    switch (finalTier) {
+      case ReadinessTier.rest:
+        suggestionFa = 'امروز استراحت کردن هم یه انتخاب خوبه.';
+        break;
+      case ReadinessTier.minimal:
+        suggestionFa = 'با توجه به وضعیت امروزت، ۱۵ دقیقه تمرین سبک بهت میاد.';
+        break;
+      case ReadinessTier.light:
+        suggestionFa = 'با توجه به وضعیت امروزت، ۳۰ دقیقه بهت میاد.';
+        break;
+      case ReadinessTier.full:
+        suggestionFa = 'با توجه به وضعیت امروزت، ۴۵ دقیقه بهت میاد.';
+        break;
+    }
+
+    return ReadinessReady(
+      tier: finalTier,
+      score: finalScore,
+      suggestionFa: suggestionFa,
+      isEstimated: isEstimated,
+    );
+  }
+
+  /// دریافت نتیجه آمادگی روزانه با بازیابی از دیتابیس
+  Future<ReadinessResult> getTodayReadinessResult({
+    DateTime? date,
+    MovementCycleStatus cycleStatus = MovementCycleStatus.none,
+  }) async {
+    final checkin = await getTodayCheckin(date);
+    return evaluateReadiness(checkin: checkin, cycleStatus: cycleStatus);
+  }
+
+  /// ارزیابی آمادگی بر اساس چک‌این (جهت ویجت‌های نمایشی)
   ReadinessEvaluationResult computeReadinessResult(
     MovementReadinessCheckin checkin,
   ) {
@@ -126,59 +254,20 @@ class MovementReadinessService {
     );
   }
 
-  /// دریافت پیشنهاد مربی هوشمند (حداکثر ۱ پیشنهاد بر اساس وضعیت، بدون اعمال خودکار)
+  /// دریافت پیشنهاد مربی هوشمند
   Future<CoachSuggestion?> getCoachSuggestion({
     required MovementReadinessCheckin? checkin,
     required List<String> dismissedSuggestionIds,
   }) async {
-    if (checkin == null) {
-      if (!dismissedSuggestionIds.contains('sug_general_consistency')) {
-        return const CoachSuggestion(
-          id: 'sug_general_consistency',
-          text:
-              'ثبت منظم وضعیت آمادگی به تنظیم دقیق‌تر حجم و فشار تمرینات کمک می‌کند.',
-          reason: 'پیوستگی تمرینی',
-          reasonIcon: 'fitness_center',
-          primaryActionLabel: 'ثبت آمادگی امروز',
-          secondaryActionLabel: 'یادآوری بعداً',
-          dismissActionLabel: 'رد کردن',
-        );
-      }
-      return null;
-    }
-
+    if (checkin == null) return null;
     final eval = computeReadinessResult(checkin);
-
-    if (eval.suggestions.any((s) => s.contains('Plan B'))) {
-      if (!dismissedSuggestionIds.contains('sug_plan_b_recovery')) {
-        return const CoachSuggestion(
-          id: 'sug_plan_b_recovery',
-          text:
-              'پیشنهاد می‌شود امروز از نسخهٔ سبک‌تر جلسه (Plan B) با ۲۰٪ شدت کمتر استفاده کنید.',
-          reason: 'ریکاوری هوشمند',
-          reasonIcon: 'auto_mode',
-          primaryActionLabel: 'انتخاب Plan B',
-          secondaryActionLabel: 'مشاهدهٔ گزینه‌ها',
-          dismissActionLabel: 'رد پیشنهاد',
-        );
-      }
+    if (eval.statusHeadline.contains('ریکاوری')) {
+      return const CoachSuggestion(
+        id: 'sug_recovery',
+        text: 'امروز تمرکز روی حرکات سبک و ریکاوری به بدنت کمک می‌کنه.',
+        reason: 'ریکاوری',
+      );
     }
-
-    if (eval.statusHeadline.contains('بسیار مناسب')) {
-      if (!dismissedSuggestionIds.contains('sug_high_energy_focus')) {
-        return const CoachSuggestion(
-          id: 'sug_high_energy_focus',
-          text:
-              'آمادگی بالای امروز فرصت مناسبی برای تمرکز روی تمپو و کیفیت اجرای حرکات است.',
-          reason: 'کیفیت حرکت',
-          reasonIcon: 'verified',
-          primaryActionLabel: 'شروع جلسه',
-          secondaryActionLabel: 'تنظیم اهداف',
-          dismissActionLabel: 'رد پیشنهاد',
-        );
-      }
-    }
-
     return null;
   }
 }

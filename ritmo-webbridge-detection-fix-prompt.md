@@ -1069,7 +1069,7 @@ dart format --set-exit-if-changed lib test
 | DET-33 | پنجرهٔ سکوت پایان | H | DONE | 0ebd1314 | انجام شد |
 | DET-34 | روشن‌کردن استریم زنده | I | DONE | 74bed808 | انجام شد |
 | DET-35 | حذف لودینگ بی‌پایان | I | DONE | 2f6e1824 | انجام شد |
-| DET-36 | بازرسی نهایی | J | TODO | | |
+| DET-36 | بازرسی نهایی | J | DONE | pending | انجام شد |
 
 ---
 

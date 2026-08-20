@@ -13,6 +13,7 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/services/feature_limits.dart';
+import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/logic/duration_estimator.dart';
 import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet.dart';
@@ -21,7 +22,6 @@ import 'package:ritmo/features/routines/domain/strategies/planner_save_context.d
 import 'package:ritmo/features/routines/domain/strategies/planner_strategy_registry.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
 
 class OccupiedRange {
   OccupiedRange({required this.start, required this.end, required this.title, required this.timeStr});
@@ -818,16 +818,7 @@ class PlannerController extends ChangeNotifier {
                         onPressed: () async {
                           Navigator.pop(context);
                           try {
-                            final db = await DatabaseHelper.instance.database;
-                            await db.insert(
-                              'app_settings',
-                              {
-                                'key': settingKey,
-                                'value': 'true',
-                                'updatedAt': DateTime.now().millisecondsSinceEpoch,
-                              },
-                              conflictAlgorithm: ConflictAlgorithm.replace,
-                            );
+                            await ModuleManagementService.instance.setModuleEnabled(settingKey, true);
                             await _loadModuleSettings();
                             onActivated();
                           } catch (e) {

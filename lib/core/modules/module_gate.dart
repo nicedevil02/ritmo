@@ -31,8 +31,7 @@ class ModuleGate {
 
   bool isEnabled(String moduleKey) {
     var effectiveKey = moduleKey;
-    if (moduleKey == 'module_sports_enabled' ||
-        moduleKey == 'module_movement_enabled') {
+    if (moduleKey == 'module_sports_enabled') {
       effectiveKey = 'module_supplementary_sports_enabled';
     } else if (moduleKey == 'module_health_enabled') {
       effectiveKey = 'module_medicine_enabled';
@@ -41,6 +40,14 @@ class ModuleGate {
     final desc = ModuleRegistry.findByKey(effectiveKey);
     if (desc != null) {
       if (desc.isCore) return true;
+      if (desc.key == 'module_medicine_enabled') {
+        return SettingsService.instance.get<bool>('module_medicine_enabled') ||
+            SettingsService.instance.get<bool>('module_health_enabled');
+      }
+      if (desc.key == 'module_supplementary_sports_enabled') {
+        return SettingsService.instance.get<bool>('module_supplementary_sports_enabled') ||
+            SettingsService.instance.get<bool>('module_sports_enabled');
+      }
       return SettingsService.instance.get<bool>(desc.key);
     }
     RitmoLog.warning('Modules', 'درخواست وضعیت برای ماژول ناشناخته "$moduleKey"');
@@ -49,8 +56,7 @@ class ModuleGate {
 
   bool isEnabledFrom(Map<String, String> settings, String moduleKey) {
     var effectiveKey = moduleKey;
-    if (moduleKey == 'module_sports_enabled' ||
-        moduleKey == 'module_movement_enabled') {
+    if (moduleKey == 'module_sports_enabled') {
       effectiveKey = 'module_supplementary_sports_enabled';
     } else if (moduleKey == 'module_health_enabled') {
       effectiveKey = 'module_medicine_enabled';
@@ -62,7 +68,14 @@ class ModuleGate {
       return false;
     }
     if (desc.isCore) return true;
-    final rawVal = settings[effectiveKey];
+    String? rawVal;
+    if (effectiveKey == 'module_medicine_enabled') {
+      rawVal = settings['module_medicine_enabled'] ?? settings['module_health_enabled'];
+    } else if (effectiveKey == 'module_supplementary_sports_enabled') {
+      rawVal = settings['module_supplementary_sports_enabled'] ?? settings['module_sports_enabled'];
+    } else {
+      rawVal = settings[effectiveKey];
+    }
     if (rawVal == null) return desc.defaultEnabled;
     return rawVal == 'true' || rawVal == '1' || rawVal == 'yes';
   }

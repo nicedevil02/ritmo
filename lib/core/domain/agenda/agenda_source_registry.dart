@@ -150,15 +150,11 @@ class AgendaSourceRegistry {
           final movementEnabled =
               ModuleGate.instance.isEnabledFrom(
                 ctx.settingsMap,
-                'module_movement_enabled',
+                'module_supplementary_sports_enabled',
               ) ||
               ModuleGate.instance.isEnabledFrom(
                 ctx.settingsMap,
                 'module_sports_enabled',
-              ) ||
-              ModuleGate.instance.isEnabledFrom(
-                ctx.settingsMap,
-                'module_supplementary_sports_enabled',
               );
           if (!movementEnabled) {
             return MovementAgendaSource.disabled();

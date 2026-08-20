@@ -100,7 +100,11 @@ class ModuleManagementService {
 
       // 2. Invalidate DayAgenda cache & schedule alarms
       DayAgendaService.instance.invalidateAll();
-      await AlarmSchedulerService.scheduleNextAlarms();
+      try {
+        await AlarmSchedulerService.scheduleNextAlarms();
+      } catch (e, st) {
+        RitmoLog.warning('Modules', 'Non-fatal alarm scheduling issue during module $key activation', e, st);
+      }
 
       // 3. Refresh ModuleGate state
       await ModuleGate.instance.refresh();

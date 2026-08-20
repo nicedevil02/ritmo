@@ -746,6 +746,16 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.error,
           );
 
+        case BridgeWatcherTickEvent(:final requestId, :final textLength, :final hasStopButton, :final hasStreamingIndicator, :final assistantNodes, :final turnCount, :final markdownBodies, :final idleMs, :final elapsedMs):
+          BridgeTraceLog.instance.addEntry(
+            type: 'watcher_tick',
+            source: source,
+            requestId: requestId,
+            textLength: textLength,
+            note: 'stop=$hasStopButton stream=$hasStreamingIndicator assistants=$assistantNodes turns=$turnCount md=$markdownBodies idle=${idleMs}ms elapsed=${elapsedMs}ms',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeAuthRequiredEvent(:final url):
           _isAuthenticated = false;
           RitmoLog.warning(

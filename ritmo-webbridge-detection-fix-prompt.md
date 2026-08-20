@@ -1035,8 +1035,8 @@ dart format --set-exit-if-changed lib test
 | ID | عنوان | فاز | وضعیت | commit | یادداشت |
 |----|------|-----|-------|--------|---------|
 | DET-01 | دفترچه و کلید source روی همهٔ پیلودها | A | DONE | f85ac419 | انجام شد |
-| DET-02 | رویدادهای مسیر ارسال | A | DONE | pending | انجام شد |
-| DET-03 | تیک دوره‌ای واچر | A | TODO | | |
+| DET-02 | رویدادهای مسیر ارسال | A | DONE | f84ac071 | انجام شد |
+| DET-03 | تیک دوره‌ای واچر | A | DONE | pending | انجام شد |
 | DET-04 | فازبندی selector_health | A | TODO | | |
 | DET-05 | افزایش نسخهٔ بریج به ۹ | A | TODO | | |
 | DET-06 | افزودن case error | B | TODO | | |

@@ -177,6 +177,19 @@ sealed class WebBridgeEvent {
             source: src,
             requestId: readString('requestId'),
           );
+        case 'watcher_tick':
+          return BridgeWatcherTickEvent(
+            source: src,
+            requestId: readString('requestId'),
+            textLength: readInt('textLength') ?? 0,
+            hasStopButton: readBool('hasStopButton') ?? false,
+            hasStreamingIndicator: readBool('hasStreamingIndicator') ?? false,
+            assistantNodes: readInt('assistantNodes') ?? 0,
+            turnCount: readInt('turnCount') ?? 0,
+            markdownBodies: readInt('markdownBodies') ?? 0,
+            idleMs: readInt('idleMs') ?? 0,
+            elapsedMs: readInt('elapsedMs') ?? 0,
+          );
         case 'auto_dismiss':
           return BridgeAutoDismissEvent(
             source: src,
@@ -407,6 +420,31 @@ class BridgeComposerNotFoundEvent extends WebBridgeEvent {
   });
 
   final String? requestId;
+}
+
+class BridgeWatcherTickEvent extends WebBridgeEvent {
+  const BridgeWatcherTickEvent({
+    required super.source,
+    this.requestId,
+    this.textLength = 0,
+    this.hasStopButton = false,
+    this.hasStreamingIndicator = false,
+    this.assistantNodes = 0,
+    this.turnCount = 0,
+    this.markdownBodies = 0,
+    this.idleMs = 0,
+    this.elapsedMs = 0,
+  });
+
+  final String? requestId;
+  final int textLength;
+  final bool hasStopButton;
+  final bool hasStreamingIndicator;
+  final int assistantNodes;
+  final int turnCount;
+  final int markdownBodies;
+  final int idleMs;
+  final int elapsedMs;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

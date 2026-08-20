@@ -1060,8 +1060,34 @@ $_bridgeScriptBody''';
       }
     }
 
+    var lastWatcherTickTime = Date.now();
+
     streamCheckTimer = setInterval(function() {
       checkAndEmitChunk(false);
+
+      var now = Date.now();
+      if (!lastWatcherTickTime || (now - lastWatcherTickTime >= 5000)) {
+        lastWatcherTickTime = now;
+        var stopBtnEl = querySafe(RITMO_SELECTORS.stopButton);
+        var isStreamingEl = querySafe(RITMO_SELECTORS.streamingIndicator);
+        var assistantNodesCount = queryAllSafe(RITMO_SELECTORS.assistantMessage).length;
+        var turnCountNum = queryAllSafe(RITMO_SELECTORS.conversationTurns).length;
+        var markdownBodiesCount = queryAllSafe(RITMO_SELECTORS.markdownBodies).length;
+        var idleMsNum = now - lastChangeTimestamp;
+        var elapsedMsNum = now - streamStartTime;
+        notifyFlutter('watcher_tick', {
+          requestId: reqId,
+          source: 'dom',
+          textLength: lastLength,
+          hasStopButton: !!stopBtnEl,
+          hasStreamingIndicator: !!isStreamingEl,
+          assistantNodes: assistantNodesCount,
+          turnCount: turnCountNum,
+          markdownBodies: markdownBodiesCount,
+          idleMs: idleMsNum,
+          elapsedMs: elapsedMsNum
+        });
+      }
 
       var totalDuration = Date.now() - streamStartTime;
       var currentText = findLatestAssistantText();

@@ -21,6 +21,7 @@ class ParsedAssistantResponse {
     this.usedFields,
     this.commands,
     this.handoff,
+    this.questions,
   });
   final String? reply;
   final String? skill;
@@ -28,6 +29,7 @@ class ParsedAssistantResponse {
   final List<String>? usedFields;
   final List<ParsedCommand>? commands;
   final String? handoff;
+  final List<String>? questions;
 }
 
 enum ValidationSeverity {
@@ -71,7 +73,7 @@ class PersonaResponseValidator {
     ValidationSeverity overallSeverity = ValidationSeverity.annotate;
 
     // 1. Privacy Fence (BLOCK)
-    if (persona.id != 'cycle') {
+    if (persona.id != 'cycle' && persona.id != 'pregnancy') {
       final hasCycleInReply = ValidatorLexicon.containsPhrase(reply, ValidatorLexicon.cyclePhrases);
       final hasCycleInCommands = res.commands?.any(
             (c) => ValidatorLexicon.containsPhrase(c.labelFa, ValidatorLexicon.cyclePhrases),
@@ -91,18 +93,30 @@ class PersonaResponseValidator {
       }
     }
 
-    // 2. Out-of-manifest Commands (SANITIZE)
+    // PSN-39: Questions vs Commands Conflict (SANITIZE)
+    final hasQuestions = res.questions != null && res.questions!.isNotEmpty;
     final validCommands = <ParsedCommand>[];
-    if (res.commands != null) {
-      for (final cmd in res.commands!) {
-        if (manifestCommandIds.contains(cmd.id)) {
-          validCommands.add(cmd);
-        } else {
-          droppedCommands.add(cmd.id);
-          annotations.add('فرمان نامعتبر "${cmd.id}" حذف شد.');
-          RitmoLog.warning('PersonaResponseValidator', 'Dropped unmanifested command "${cmd.id}" for persona "${persona.id}"');
-          overallSeverity = ValidationSeverity.sanitize;
-          primaryReason ??= 'unmanifested_command';
+
+    if (res.commands != null && res.commands!.isNotEmpty) {
+      if (hasQuestions) {
+        // Model cannot have both questions and commands simultaneously
+        droppedCommands.addAll(res.commands!.map((c) => c.id));
+        annotations.add('فرمان‌ها به دلیل وجود پرسش‌های شفاف‌سازی حذف شدند.');
+        RitmoLog.warning('PersonaResponseValidator', 'Response contained both questions and commands; dropping commands.');
+        overallSeverity = ValidationSeverity.sanitize;
+        primaryReason ??= 'questions_commands_conflict';
+      } else {
+        // 2. Out-of-manifest Commands (SANITIZE)
+        for (final cmd in res.commands!) {
+          if (manifestCommandIds.contains(cmd.id)) {
+            validCommands.add(cmd);
+          } else {
+            droppedCommands.add(cmd.id);
+            annotations.add('فرمان نامعتبر "${cmd.id}" حذف شد.');
+            RitmoLog.warning('PersonaResponseValidator', 'Dropped unmanifested command "${cmd.id}" for persona "${persona.id}"');
+            overallSeverity = ValidationSeverity.sanitize;
+            primaryReason ??= 'unmanifested_command';
+          }
         }
       }
     }
@@ -169,6 +183,7 @@ class PersonaResponseValidator {
         usedFields: res.usedFields,
         commands: validCommands,
         handoff: validHandoff,
+        questions: res.questions,
       ),
     );
   }

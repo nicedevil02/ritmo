@@ -598,6 +598,29 @@ class PersonaSkillRegistry {
       queryPrompt: 'آیا حجم برنامه‌های من با ظرفیت آزاد روزانه‌ام تناسب دارد؟',
       priority: 6,
     ),
+
+    // ───────────────────────────────────────────────────────── pregnancy ──
+    PersonaSkillDef(
+      id: 'pregnancy_week_guide',
+      personaId: 'pregnancy',
+      labelFa: 'راهنمای وضعیت هفته‌به‌هفته',
+      queryPrompt: 'وضعیت رشد جنین و تغییرات این هفته چگونه است؟',
+      priority: 10,
+    ),
+    PersonaSkillDef(
+      id: 'kick_counter_prep',
+      personaId: 'pregnancy',
+      labelFa: 'آمادگی شمارش حرکات جنین',
+      queryPrompt: 'چطور حرکات و تکان‌های جنین را به درستی پایش کنم؟',
+      priority: 8,
+    ),
+    PersonaSkillDef(
+      id: 'symptom_triage',
+      personaId: 'pregnancy',
+      labelFa: 'بررسی و تریاژ علائم',
+      queryPrompt: 'آیا این علامت طبیعی است یا نیاز به مراجعه به پزشک دارد؟',
+      priority: 6,
+    ),
   ];
 
   static bool _sleepConsistencyRelevant(DomainBrief? brief) {

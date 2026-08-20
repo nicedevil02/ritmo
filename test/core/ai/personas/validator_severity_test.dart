@@ -121,5 +121,30 @@ void main() {
       expect(result.sanitizedResponse!.confidence, equals(BriefConfidence.none));
       expect(result.annotations, isNotEmpty);
     });
+
+    test('PSN-39: When response contains both questions and commands, commands are sanitized (dropped)', () {
+      final sleepPersona = PersonaRegistry.instance.getPersona('sleep')!;
+      const res = ParsedAssistantResponse(
+        reply: 'ساعت خواب مدنظرتان چند است؟',
+        confidence: BriefConfidence.medium,
+        questions: ['آیا ساعت خواب شما ثابت است؟'],
+        commands: [
+          ParsedCommand(id: 'sleep.log', payload: {}, labelFa: 'ثبت خواب'),
+        ],
+      );
+
+      final result = validator.validate(
+        res: res,
+        persona: sleepPersona,
+        brief: brief,
+        manifestCommandIds: ['sleep.log'],
+      );
+
+      expect(result.isValid, isTrue);
+      expect(result.severity, equals(ValidationSeverity.sanitize));
+      expect(result.droppedCommandIds, contains('sleep.log'));
+      expect(result.sanitizedResponse!.commands, isEmpty);
+      expect(result.sanitizedResponse!.questions, isNotEmpty);
+    });
   });
 }

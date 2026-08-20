@@ -10,12 +10,12 @@ class PersonaRegistry {
   final Map<String, AssistantPersona> _personas = {};
 
   void register(AssistantPersona persona) {
-    // Privacy Enforcer: Only cycle & health personas read cycle/medical domains
-    if (persona.reads.contains(DataDomain.cycle) && persona.id != 'cycle') {
-      throw SecurityError('فقط پرسونای سیکل مجاز به خواندن DataDomain.cycle است.');
+    // Privacy Enforcer: Only cycle, health & pregnancy personas read cycle/medical domains
+    if (persona.reads.contains(DataDomain.cycle) && persona.id != 'cycle' && persona.id != 'pregnancy') {
+      throw SecurityError('فقط پرسونای سیکل و بارداری مجاز به خواندن DataDomain.cycle هستند.');
     }
-    if (persona.reads.contains(DataDomain.medical) && persona.id != 'health') {
-      throw SecurityError('فقط پرسونای سلامت مجاز به خواندن DataDomain.medical است.');
+    if (persona.reads.contains(DataDomain.medical) && persona.id != 'health' && persona.id != 'pregnancy') {
+      throw SecurityError('فقط پرسونای سلامت و بارداری مجاز به خواندن DataDomain.medical هستند.');
     }
 
     const exemptCommands = {'assistant.handoff', 'app.openPage', 'setting.update'};
@@ -29,10 +29,10 @@ class PersonaRegistry {
       final cmd = RitmoCommandBus.instance.getCommand(cmdId);
       if (cmd != null) {
         // Medical / Cycle protection
-        if (cmd.touches.contains(DataDomain.medical) && persona.id != 'health') {
+        if (cmd.touches.contains(DataDomain.medical) && persona.id != 'health' && persona.id != 'pregnancy') {
           continue;
         }
-        if (cmd.touches.contains(DataDomain.cycle) && persona.id != 'cycle') {
+        if (cmd.touches.contains(DataDomain.cycle) && persona.id != 'cycle' && persona.id != 'pregnancy') {
           continue;
         }
         // General domain touch check
@@ -218,6 +218,15 @@ class PersonaRegistry {
         'assistant.handoff', 'app.openPage', 'setting.update',
       },
       handoffHint: 'یادداشت، ایده، تجربه، درس زندگی، «قبلاً نوشته بودم»، جست‌وجو در نوشته‌ها',
+    ));
+
+    register(AssistantPersona(
+      id: 'pregnancy',
+      displayName: 'دستیار دوران بارداری',
+      systemPromptKey: 'system_prompt_pregnancy',
+      reads: {DataDomain.cycle, DataDomain.energy, DataDomain.medical, DataDomain.routines},
+      commandIds: {'app.openPage', 'assistant.handoff', 'setting.update', 'energy.log'},
+      handoffHint: 'وضعیت جنین، هفته‌های بارداری، مراقبت‌های مادر',
     ));
   }
 

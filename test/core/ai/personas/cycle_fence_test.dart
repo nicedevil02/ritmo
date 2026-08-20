@@ -120,5 +120,41 @@ void main() {
 
       expect(result.isValid, isTrue);
     });
+
+    test('Allows pregnancy and cycle keywords in pregnancy persona', () {
+      final pregPersona = PersonaRegistry.instance.getPersona('pregnancy')!;
+      const res = ParsedAssistantResponse(
+        reply: 'در هفته ۱۶ بارداری و تغییرات چرخه هورمونی، استراحت کافی اهمیت دارد.',
+        confidence: BriefConfidence.medium,
+      );
+
+      final result = validator.validate(
+        res: res,
+        persona: pregPersona,
+        brief: brief,
+        manifestCommandIds: ['app.openPage'],
+      );
+
+      expect(result.isValid, isTrue);
+    });
+
+    test('Blocks pregnancy and cycle keywords in sleep persona', () {
+      final sleepPersona = PersonaRegistry.instance.getPersona('sleep')!;
+      const res = ParsedAssistantResponse(
+        reply: 'این الگوی خواب با دوران قاعدگی ارتباط دارد.',
+        confidence: BriefConfidence.medium,
+      );
+
+      final result = validator.validate(
+        res: res,
+        persona: sleepPersona,
+        brief: brief,
+        manifestCommandIds: ['app.openPage'],
+      );
+
+      expect(result.isValid, isFalse);
+      expect(result.severity, equals(ValidationSeverity.block));
+      expect(result.reason, equals('privacy_fence_cycle'));
+    });
   });
 }

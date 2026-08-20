@@ -36,6 +36,7 @@ class PersonaInferenceProfile {
     'health',
     'notes',
     'planning',
+    'pregnancy',
   };
 
   static bool hasExplicitProfile(String personaId) => explicitPersonaIds.contains(personaId);
@@ -70,6 +71,8 @@ class PersonaInferenceProfile {
         return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.5, maxTokens: 900, stream: true);
       case 'planning':
         return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 950, stream: false);
+      case 'pregnancy':
+        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.15, maxTokens: 500, stream: true);
       default:
         // Default to global
         return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.4, maxTokens: 700, stream: true);

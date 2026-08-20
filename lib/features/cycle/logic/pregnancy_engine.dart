@@ -80,4 +80,94 @@ class PregnancyDateEngine {
     final cleanEdd = CycleDateContract.cleanDate(edd);
     return cleanNow.isAfter(cleanEdd);
   }
+
+  /// Validates pregnancy date boundaries.
+  static PregnancyDateValidationResult validatePregnancyDates({
+    required DateTime lmp,
+    required DateTime edd,
+    DateTime? now,
+  }) {
+    final cleanNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
+    final cleanLmp = CycleDateContract.cleanDate(lmp);
+    final cleanEdd = CycleDateContract.cleanDate(edd);
+
+    if (cleanLmp.isAfter(cleanNow)) {
+      return const PregnancyDateValidationResult.invalid(
+        errorCode: PregnancyDateErrorCode.futureLmp,
+        errorMessageFa: 'تاریخ شروع نمی‌تواند در آینده باشد.',
+      );
+    }
+
+    if (!cleanEdd.isAfter(cleanLmp)) {
+      return const PregnancyDateValidationResult.invalid(
+        errorCode: PregnancyDateErrorCode.eddBeforeLmp,
+        errorMessageFa: 'تاریخ تخمینی زایمان باید بعد از تاریخ شروع باشد.',
+      );
+    }
+
+    final spanDays = CycleDateContract.daysBetween(cleanLmp, cleanEdd);
+    if (spanDays < 240 || spanDays > 300) {
+      return const PregnancyDateValidationResult.invalid(
+        errorCode: PregnancyDateErrorCode.invalidGestationSpan,
+        errorMessageFa: 'فاصله زمانی بارداری باید بین ۲۴۰ تا ۳۰۰ روز باشد.',
+      );
+    }
+
+    final currentDays = CycleDateContract.daysBetween(cleanLmp, cleanNow);
+    if (currentDays < 0) {
+      return const PregnancyDateValidationResult.invalid(
+        errorCode: PregnancyDateErrorCode.negativeGestation,
+        errorMessageFa: 'سن بارداری نمی‌تواند منفی باشد.',
+      );
+    }
+
+    if (currentDays > 294) {
+      return const PregnancyDateValidationResult.invalid(
+        errorCode: PregnancyDateErrorCode.gestationExceeds42Weeks,
+        errorMessageFa: 'سن بارداری نباید بیشتر از ۴۲ هفته باشد.',
+      );
+    }
+
+    return const PregnancyDateValidationResult.valid();
+  }
+}
+
+enum PregnancyDateErrorCode {
+  futureLmp,
+  eddBeforeLmp,
+  invalidGestationSpan,
+  gestationExceeds42Weeks,
+  negativeGestation,
+}
+
+class PregnancyDateValidationResult {
+  final bool isValid;
+  final String? errorMessageFa;
+  final PregnancyDateErrorCode? errorCode;
+
+  const PregnancyDateValidationResult.valid()
+      : isValid = true,
+        errorMessageFa = null,
+        errorCode = null;
+
+  const PregnancyDateValidationResult.invalid({
+    required this.errorCode,
+    required this.errorMessageFa,
+  }) : isValid = false;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PregnancyDateValidationResult &&
+          runtimeType == other.runtimeType &&
+          isValid == other.isValid &&
+          errorMessageFa == other.errorMessageFa &&
+          errorCode == other.errorCode;
+
+  @override
+  int get hashCode => Object.hash(isValid, errorMessageFa, errorCode);
+
+  @override
+  String toString() =>
+      'PregnancyDateValidationResult(isValid: $isValid, error: $errorCode, message: $errorMessageFa)';
 }

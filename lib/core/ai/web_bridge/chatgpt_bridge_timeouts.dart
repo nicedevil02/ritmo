@@ -19,6 +19,9 @@ abstract final class ChatGptBridgeTimeouts {
   /// Second checkpoint delay to verify if ChatGPT has answered.
   static const Duration checkpoint2Delay = Duration(seconds: 55);
 
+  /// Third checkpoint delay to verify if ChatGPT has answered (A-88, DET-30).
+  static const Duration checkpoint3Delay = Duration(seconds: 90);
+
   /// Maximum time to wait for the web composer textarea to be present and enabled.
   static const Duration composerReadyTimeout = Duration(seconds: 8);
 

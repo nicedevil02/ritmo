@@ -160,6 +160,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   Timer? _generationTimer;
   Timer? _checkpointTimer1;
   Timer? _checkpointTimer2;
+  Timer? _checkpointTimer3;
   Timer? _resumeDebounceTimer;
   StreamController<String>? _currentStreamController;
   Completer<bool>? _bootCompleter;
@@ -282,6 +283,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _checkpointTimer1 = null;
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
+    _checkpointTimer3?.cancel();
+    _checkpointTimer3 = null;
     _cancelResumeDebounce();
     _navigationReloadCount = 0;
     _coldNavigationCount = 0;
@@ -1522,6 +1525,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       _checkpointTimer1 = null;
       _checkpointTimer2?.cancel();
       _checkpointTimer2 = null;
+      _checkpointTimer3?.cancel();
+      _checkpointTimer3 = null;
 
       if (fullText != null && fullText.isNotEmpty) {
         _emitChunk(fullText, null, source: _lockedSource?.name ?? BridgeSource.harvest.name, isHarvest: true);
@@ -1584,6 +1589,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       _checkpointTimer1 = null;
       _checkpointTimer2?.cancel();
       _checkpointTimer2 = null;
+      _checkpointTimer3?.cancel();
+      _checkpointTimer3 = null;
 
       final controller = _currentStreamController;
       _currentStreamController = null;
@@ -1629,6 +1636,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _checkpointTimer1 = null;
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
+    _checkpointTimer3?.cancel();
+    _checkpointTimer3 = null;
 
     // 2. Instruct JS bridge to cancel active generation with error logging
     try {
@@ -1669,6 +1678,8 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _checkpointTimer1 = null;
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
+    _checkpointTimer3?.cancel();
+    _checkpointTimer3 = null;
   }
 
   /// Sends a prompt and streams the assistant response back.
@@ -1868,6 +1879,21 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
         return;
       }
       await _runCheckpointCheck(2, streamController, reqId);
+    });
+
+    _checkpointTimer3?.cancel();
+    _checkpointTimer3 = Timer(ChatGptBridgeTimeouts.checkpoint3Delay, () async {
+      if (!identical(_currentStreamController, streamController)) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_skipped',
+          source: BridgeSource.dart.name,
+          requestId: reqId,
+          note: 'timer3_controller_mismatch',
+          level: BridgeTraceLevel.info,
+        );
+        return;
+      }
+      await _runCheckpointCheck(3, streamController, reqId);
     });
 
     yield* streamController.stream;

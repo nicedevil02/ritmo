@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_layout.dart';
-import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 
 /// نوار تایمر استراحت بین ست‌ها با ارتفاع استاندارد kRestTimerBarHeight
 class RestTimerBar extends StatefulWidget {

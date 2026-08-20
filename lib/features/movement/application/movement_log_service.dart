@@ -30,9 +30,11 @@ class MovementLogService {
     final today = DateTime.now();
     final todayMidnight = DateTime(today.year, today.month, today.day);
 
-    if (parsedDate != null &&
-        parsedDate.isAfter(todayMidnight.add(const Duration(days: 1)))) {
-      throw ArgumentError('ثبت فعالیت برای تاریخ‌های آینده امکان‌پذیر نیست.');
+    if (parsedDate != null) {
+      final inputDate = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+      if (inputDate.isAfter(todayMidnight)) {
+        throw ArgumentError('ثبت فعالیت برای تاریخ‌های آینده امکان‌پذیر نیست.');
+      }
     }
 
     final db = await _database;
@@ -133,7 +135,7 @@ class MovementLogService {
         'metricJson': metrics != null ? jsonEncode(metrics) : null,
         'feeling': feeling,
         'note': note,
-        'source': 'quick',
+        'source': 'quickComplete',
         'createdAt': now,
         'updatedAt': now,
       });
@@ -149,7 +151,7 @@ class MovementLogService {
       metricJson: metrics != null ? jsonEncode(metrics) : null,
       feeling: feeling,
       note: note,
-      source: 'quick',
+      source: 'quickComplete',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

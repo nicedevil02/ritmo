@@ -14,6 +14,7 @@ class MovementSessionService {
   MovementSessionService({this.db});
 
   final Database? db;
+  static int _eventSeq = 0;
 
   Future<Database> get _database async =>
       db ?? await DatabaseHelper.instance.database;
@@ -155,7 +156,7 @@ class MovementSessionService {
   }) async {
     final dbExec = await _database;
     final now = (at ?? DateTime.now()).toUtc();
-    final eventId = 'evt_${now.millisecondsSinceEpoch}_${type.name}';
+    final eventId = 'evt_${now.microsecondsSinceEpoch}_${_eventSeq++}_${type.name}';
 
     final event = MovementSessionEvent(
       id: eventId,
@@ -333,7 +334,6 @@ class MovementSessionService {
         MovementTables.tableLiveSessions,
         {
           'status': MovementLiveSessionStatus.completed.name,
-          'finishedAt': now.toIso8601String(),
           'updatedAt': now.toIso8601String(),
         },
         where: 'id = ?',
@@ -390,7 +390,6 @@ class MovementSessionService {
         MovementTables.tableLiveSessions,
         {
           'status': MovementLiveSessionStatus.abandoned.name,
-          'finishedAt': now.toIso8601String(),
           'updatedAt': now.toIso8601String(),
         },
         where: 'id = ?',

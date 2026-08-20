@@ -366,6 +366,7 @@ void main() {
           'durationSec': 2700,
           'source': 'retro',
           'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
         });
 
         await service.deleteWithScope(

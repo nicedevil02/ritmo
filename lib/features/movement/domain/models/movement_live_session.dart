@@ -132,7 +132,6 @@ class MovementLiveSession {
       'startedAt': startedAt?.toIso8601String(),
       'accumulatedPauseMs': accumulatedPauseMs,
       'targetSnapshotJson': targetSnapshotJson,
-      'finishedAt': finishedAt?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

@@ -1,0 +1,1610 @@
+[
+  {
+    "code": "bo001_side_leg_lift",
+    "nameFa": "بالا بردن پا از پهلو خوابیده",
+    "nameEn": "side leg lift",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo002_mountain_climbers",
+    "nameFa": "حرکت کوهنوردی شکم",
+    "nameEn": "mountain climbers",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo003_back_forth_squat",
+    "nameFa": "اسکوات رفت و برگشتی",
+    "nameEn": "back forth squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo004_frog_jumps",
+    "nameFa": "پرش قورباغه‌ای",
+    "nameEn": "frog jumps",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo005_front_kicks",
+    "nameFa": "لگد به جلو ایستاده",
+    "nameEn": "front kicks",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo006_lunges",
+    "nameFa": "لانژ تناوبی",
+    "nameEn": "lunges",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo007_toe_balancing_lunge",
+    "nameFa": "لانژ حفظ تعادل روی پنجه",
+    "nameEn": "toe balancing lunge",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo008_pistol_squats",
+    "nameFa": "اسکوات تک پا (پیستول)",
+    "nameEn": "pistol squats",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo009_squats",
+    "nameFa": "اسکوات سوئدی (وزن بدن)",
+    "nameEn": "squats",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo010_prisoners_squat",
+    "nameFa": "اسکوات دست پشت سر (زندانی)",
+    "nameEn": "prisoners squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo011_sumo_squat",
+    "nameFa": "اسکوات سومو",
+    "nameEn": "sumo squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo012_march_and_clap",
+    "nameFa": "پیاده‌روی درجا همراه با دست زدن",
+    "nameEn": "march and clap",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo013_jogging",
+    "nameFa": "دویدن نرم درجا",
+    "nameEn": "jogging",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo014_running_in_place",
+    "nameFa": "دویدن سریع درجا",
+    "nameEn": "running in place",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo015_running_sprinter",
+    "nameFa": "دوی سرعت استارت درجا",
+    "nameEn": "running sprinter",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo016_rear_lunges",
+    "nameFa": "لانژ معکوس (به عقب)",
+    "nameEn": "rear lunges",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo017_diagonal_lunges",
+    "nameFa": "لانژ مورب",
+    "nameEn": "diagonal lunges",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo018_one_calf_raises",
+    "nameFa": "ساق پا تک پا ایستاده",
+    "nameEn": "one calf raises",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo019_calf_raises",
+    "nameFa": "ساق پا دو پا ایستاده",
+    "nameEn": "calf raises",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo020_jumping_lunges",
+    "nameFa": "پرش لانژ تناوبی",
+    "nameEn": "jumping lunges",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo021_jump_squats",
+    "nameFa": "اسکوات پرشی",
+    "nameEn": "jump squats",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo022_high_jump",
+    "nameFa": "بلند پرشی",
+    "nameEn": "high jump",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo023_one_leg_jumps",
+    "nameFa": "تک Leg پرش",
+    "nameEn": "one leg jumps",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo024_side_to_side_jumps",
+    "nameFa": "پهلو to پهلو پرش",
+    "nameEn": "side to side jumps",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo025_jump_rope",
+    "nameFa": "پرشی Rope",
+    "nameEn": "jump rope",
+    "descFa": "به آرامی روی پاهایتان فرود بیایید."
+  },
+  {
+    "code": "bo026_one_leg_rope_jump",
+    "nameFa": "تک Leg Rope پرشی",
+    "nameEn": "one leg rope jump",
+    "descFa": "از جمع شدن زانوها به داخل خودداری کنید."
+  },
+  {
+    "code": "bo027_high_knees",
+    "nameFa": "بلند Knees",
+    "nameEn": "high knees",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo029_butt_kickers",
+    "nameFa": "Butt Kickers",
+    "nameEn": "butt kickers",
+    "descFa": "پشت خود را صاف و ثابت نگه دارید."
+  },
+  {
+    "code": "bo030_plank_ins",
+    "nameFa": "پلانک رفت و برگشتی پا",
+    "nameEn": "plank ins",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo031_plank_jacks",
+    "nameFa": "پلانک پروانه‌ای پا",
+    "nameEn": "plank jacks",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo033_hurdler_stretch",
+    "nameFa": "Hurdler کشش",
+    "nameEn": "hurdler stretch",
+    "descFa": "تمرین خودمراقبتی و تقویت عضلات بدن."
+  },
+  {
+    "code": "bo035_hundred_pike",
+    "nameFa": "Hundred Pike",
+    "nameEn": "hundred pike",
+    "descFa": "از عضلات شکم خود برای مقاومت در برابر حرکت استفاده کنید."
+  },
+  {
+    "code": "bo036_the_hundred",
+    "nameFa": "The Hundred",
+    "nameEn": "the hundred",
+    "descFa": "از عضلات شکم خود برای مقاومت در برابر حرکت استفاده کنید."
+  },
+  {
+    "code": "bo037_wide_leg_bend",
+    "nameFa": "Wide Leg Bend",
+    "nameEn": "wide leg bend",
+    "descFa": "از طریق باسن به سمت جلو تا کنید."
+  },
+  {
+    "code": "bo039_single_leg_circles",
+    "nameFa": "تک Leg چرخشی",
+    "nameEn": "single leg circles",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo040_plank_and_rear_kick",
+    "nameFa": "پلانک و Rear Kick",
+    "nameEn": "plank and rear kick",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo041_back_plank_and_kick",
+    "nameFa": "پشت پلانک و Kick",
+    "nameEn": "back plank and kick",
+    "descFa": "عضلات گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo042_outer_thigh_bicycle",
+    "nameFa": "Outer Thigh Bicycle",
+    "nameEn": "outer thigh bicycle",
+    "descFa": "لگن خود را ثابت نگه دارید."
+  },
+  {
+    "code": "bo043_outer_thigh_triangle",
+    "nameFa": "Outer Thigh Triangle",
+    "nameEn": "outer thigh triangle",
+    "descFa": "لگن خود را ثابت نگه دارید."
+  },
+  {
+    "code": "bo044_outer_thigh_raises",
+    "nameFa": "Outer Thigh بالا آوردن",
+    "nameEn": "outer thigh raises",
+    "descFa": "لگن خود را ثابت نگه دارید."
+  },
+  {
+    "code": "bo045_inner_thigh_raises",
+    "nameFa": "Inner Thigh بالا آوردن",
+    "nameEn": "inner thigh raises",
+    "descFa": "لگن خود را ثابت نگه دارید."
+  },
+  {
+    "code": "bo047_chin_up_kick",
+    "nameFa": "Chin Up Kick",
+    "nameEn": "chin up kick",
+    "descFa": "عضلات پشت خود را درگیر کنید."
+  },
+  {
+    "code": "bo049_shoulder_stand",
+    "nameFa": "سرشانه Stand",
+    "nameEn": "shoulder stand",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo050_plow_pose",
+    "nameFa": "Plow حرکت / ژست",
+    "nameEn": "plow pose",
+    "descFa": "سعی کنید به یک طرف خم نشوید."
+  },
+  {
+    "code": "bo051_pigeon_pose",
+    "nameFa": "Lazy کبوتر",
+    "nameEn": "pigeon pose",
+    "descFa": "استخوان ساق پا و پا را به تشک فشار دهید."
+  },
+  {
+    "code": "bo052_sit_ups",
+    "nameFa": "Sit Ups",
+    "nameEn": "sit ups",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo053_mason_twist",
+    "nameFa": "Mason Twist",
+    "nameEn": "mason twist",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo054_v_sit_ups",
+    "nameFa": "V Sit Ups",
+    "nameEn": "v sit ups",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo055_elevated_crunches",
+    "nameFa": "Elevated کرانچ",
+    "nameEn": "elevated crunches",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo056_reaching_crunch",
+    "nameFa": "Reaching کرانچ",
+    "nameEn": "reaching crunch",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo057_back_wrist_stretch",
+    "nameFa": "پشت مچ دست کشش",
+    "nameEn": "back wrist stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo058_front_wrist_stretch",
+    "nameFa": "Front مچ دست کشش",
+    "nameEn": "front wrist stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo059_upper_back_stretch",
+    "nameFa": "Upper پشت کشش",
+    "nameEn": "upper back stretch",
+    "descFa": "سعی کنید به یک طرف خم نشوید."
+  },
+  {
+    "code": "bo060_wrist_circles",
+    "nameFa": "مچ دست چرخشی",
+    "nameEn": "wrist circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo061_forearm_stretch",
+    "nameFa": "Forearm کشش",
+    "nameEn": "forearm stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo062_squat_and_knee_kick",
+    "nameFa": "اسکوات و زانو Kick",
+    "nameEn": "squat and knee kick",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo063_donkey_kick",
+    "nameFa": "Donkey Kick",
+    "nameEn": "donkey kick",
+    "descFa": "سر و لگن خود را در راستای ستون فقرات خود نگه دارید."
+  },
+  {
+    "code": "bo064_doggy_p",
+    "nameFa": "Doggy P",
+    "nameEn": "doggy p",
+    "descFa": "سر و لگن خود را در راستای ستون فقرات خود نگه دارید."
+  },
+  {
+    "code": "bo065_shoulder_tap_plank",
+    "nameFa": "سرشانه Tap پلانک",
+    "nameEn": "shoulder tap plank",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo066_jump_planks",
+    "nameFa": "پرشی پلانک",
+    "nameEn": "jump planks",
+    "descFa": "عضلات شکم و گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo067_side_to_side_jump_squat",
+    "nameFa": "پهلو to پهلو پرشی اسکوات",
+    "nameEn": "side to side jump squat",
+    "descFa": "پشت خود را صاف و ثابت نگه دارید."
+  },
+  {
+    "code": "bo069_lunge_run",
+    "nameFa": "لانژ دویدن",
+    "nameEn": "lunge run",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo070_cancan_jump",
+    "nameFa": "Cancan پرشی",
+    "nameEn": "cancan jump",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo071_puppet_hops",
+    "nameFa": "Puppet Hops",
+    "nameEn": "puppet hops",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo072_puppet_spin",
+    "nameFa": "Puppet Spin",
+    "nameEn": "puppet spin",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo075_burpees",
+    "nameFa": "Burpees",
+    "nameEn": "burpees",
+    "descFa": "پشت خود را خم نکنید."
+  },
+  {
+    "code": "bo076_push_up_burpees",
+    "nameFa": "Push Up Burpees",
+    "nameEn": "push up burpees",
+    "descFa": "پشت خود را خم نکنید."
+  },
+  {
+    "code": "bo077_bridge_kick",
+    "nameFa": "پل Kick",
+    "nameEn": "bridge kick",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo078_running_burpees",
+    "nameFa": "دویدن Burpees",
+    "nameEn": "running burpees",
+    "descFa": "پشت خود را صاف و ثابت نگه دارید."
+  },
+  {
+    "code": "bo079_step_touch",
+    "nameFa": "Step Touch",
+    "nameEn": "step touch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo080_toe_touch_walk",
+    "nameFa": "پنجه پا Touch Walk",
+    "nameEn": "toe touch walk",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo081_star_jump",
+    "nameFa": "Star پرشی",
+    "nameEn": "star jump",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo082_low_jump_jacks",
+    "nameFa": "کوتاه پرشی Jacks",
+    "nameEn": "low jump jacks",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo083_slow_box",
+    "nameFa": "Slow Box",
+    "nameEn": "slow box",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo084_knee_circles",
+    "nameFa": "زانو چرخشی",
+    "nameEn": "knee circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo085_hip_circles",
+    "nameFa": "باسن چرخشی",
+    "nameEn": "hip circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo086_ski_sit",
+    "nameFa": "Ski Sit",
+    "nameEn": "ski sit",
+    "descFa": "کمر خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo087_skaters",
+    "nameFa": "Skaters",
+    "nameEn": "skaters",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo088_single_leg_hops",
+    "nameFa": "تک Leg Hops",
+    "nameEn": "single leg hops",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo089_side_neck_stretch",
+    "nameFa": "پهلو گردن کشش",
+    "nameEn": "side neck stretch",
+    "descFa": "به طور فعال شانه مخالف را بکشید و بازو را پایین بیاورید."
+  },
+  {
+    "code": "bo090_back_neck_stretch",
+    "nameFa": "پشت گردن کشش",
+    "nameEn": "back neck stretch",
+    "descFa": "هر دو شانه را به سمت پایین بکشید."
+  },
+  {
+    "code": "bo091_front_neck_stretch",
+    "nameFa": "Front گردن کشش",
+    "nameEn": "front neck stretch",
+    "descFa": "هر دو شانه را به سمت پایین بکشید."
+  },
+  {
+    "code": "bo092_side_neck_resistance",
+    "nameFa": "پهلو گردن Resistance",
+    "nameEn": "side neck resistance",
+    "descFa": "هر دو شانه را به سمت پایین بکشید."
+  },
+  {
+    "code": "bo093_neck_looking_around",
+    "nameFa": "گردن Looking Around",
+    "nameEn": "neck looking around",
+    "descFa": "هر دو شانه را به سمت پایین بکشید."
+  },
+  {
+    "code": "bo094_front_neck_resistance",
+    "nameFa": "Front گردن Resistance",
+    "nameEn": "front neck resistance",
+    "descFa": "هر دو شانه را به سمت پایین بکشید."
+  },
+  {
+    "code": "bo095_backward_shoulder_circles",
+    "nameFa": "Backward سرشانه چرخشی",
+    "nameEn": "backward shoulder circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo096_front_shoulder_circles",
+    "nameFa": "Front سرشانه چرخشی",
+    "nameEn": "front shoulder circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo097_armpit_check_stretch",
+    "nameFa": "Armpit Check کشش",
+    "nameEn": "armpit check stretch",
+    "descFa": "به طور فعال شانه مخالف را بکشید و بازو را پایین بیاورید."
+  },
+  {
+    "code": "bo098_deltoid_stretch",
+    "nameFa": "Deltoid کشش",
+    "nameEn": "deltoid stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo099_rollouts",
+    "nameFa": "Roll Outs",
+    "nameEn": "rollouts",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo100_bridge_kicker",
+    "nameFa": "پل Kicker",
+    "nameEn": "bridge kicker",
+    "descFa": "قسمت داخلی ران و باسن خود را درگیر کنید."
+  },
+  {
+    "code": "bo101_chair_pose_twist",
+    "nameFa": "Chair حرکت / ژست Twist",
+    "nameEn": "chair pose twist",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo103_chair_pose",
+    "nameFa": "Chair حرکت / ژست",
+    "nameEn": "chair pose",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo104_low_cobra",
+    "nameFa": "کوتاه کبرا",
+    "nameEn": "low cobra",
+    "descFa": "هر دو لگن را روی زمین نگه دارید."
+  },
+  {
+    "code": "bo105_swan_pose",
+    "nameFa": "Swan حرکت / ژست",
+    "nameEn": "swan pose",
+    "descFa": "ستون فقرات خود را صاف کرده و از کمر بلند کنید."
+  },
+  {
+    "code": "bo106_crow_pose",
+    "nameFa": "Crow حرکت / ژست",
+    "nameEn": "crow pose",
+    "descFa": "مچ دست و شانه های خود را در یک خط قرار دهید."
+  },
+  {
+    "code": "bo107_fish_pose",
+    "nameFa": "Fish حرکت / ژست",
+    "nameEn": "fish pose",
+    "descFa": "سینه خود را بالا بیاورید"
+  },
+  {
+    "code": "bo108_forward_fold",
+    "nameFa": "Forward Fold",
+    "nameEn": "forward fold",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo109_deep_breathing",
+    "nameFa": "Deep Breathing",
+    "nameEn": "deep breathing",
+    "descFa": "پشت خود را به داخل تشک فشار دهید."
+  },
+  {
+    "code": "bo110_mountain_pose",
+    "nameFa": "کوهنوردی حرکت / ژست",
+    "nameEn": "mountain pose",
+    "descFa": "دنبالچه خود را جمع کنید"
+  },
+  {
+    "code": "bo111_plank_pose",
+    "nameFa": "وضعیت پلانک کلاسیک",
+    "nameEn": "plank pose",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo113_yoga_backbend",
+    "nameFa": "یوگا Backbend",
+    "nameEn": "yoga backbend",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo114_namaste_breathing",
+    "nameFa": "Namaste Breathing",
+    "nameEn": "namaste breathing",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo115_side_angle_extension",
+    "nameFa": "پهلو Angle Extension",
+    "nameEn": "side angle extension",
+    "descFa": "زانوی خم شده دقیقاً بالای مچ پا قرار گرفته است."
+  },
+  {
+    "code": "bo116_triangle_pose",
+    "nameFa": "Triangle حرکت / ژست",
+    "nameEn": "triangle pose",
+    "descFa": "انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود."
+  },
+  {
+    "code": "bo117_side_bend",
+    "nameFa": "پهلو Bend",
+    "nameEn": "side bend",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo118_half_triangle",
+    "nameFa": "Half Triangle",
+    "nameEn": "half triangle",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo119_warrior_2",
+    "nameFa": "جنگجو II",
+    "nameEn": "warrior 2",
+    "descFa": "انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود."
+  },
+  {
+    "code": "bo120_over_head_clap",
+    "nameFa": "Overhead Clap",
+    "nameEn": "over head clap",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo121_supine_hamstring_stretch",
+    "nameFa": "Supine Hamstring کشش",
+    "nameEn": "supine hamstring stretch",
+    "descFa": "پای خود را کاملاً کشیده نگه دارید."
+  },
+  {
+    "code": "bo122_extended_arm_circles",
+    "nameFa": "Extended دست / بازو چرخشی",
+    "nameEn": "extended arm circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo124_squat_and_reach",
+    "nameFa": "اسکوات و Reach",
+    "nameEn": "squat and reach",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo125_windmill",
+    "nameFa": "Windmill",
+    "nameEn": "windmill",
+    "descFa": "پشت خود را خم نکنید."
+  },
+  {
+    "code": "bo126_calf_and_ham_stretch",
+    "nameFa": "ساق پا و Ham کشش",
+    "nameEn": "calf and ham stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo127_standing_chest_stretch",
+    "nameFa": "ایستاده سینه کشش",
+    "nameEn": "standing chest stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo128_v_sit_rowing",
+    "nameFa": "V Sit Rowing",
+    "nameEn": "v sit rowing",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo129_abs_rollups",
+    "nameFa": "Ab Rollups",
+    "nameEn": "abs rollups",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo130_seated_core_twist",
+    "nameFa": "نشسته شکم (هسته) Twist",
+    "nameEn": "seated core twist",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo131_teaser",
+    "nameFa": "Teaser",
+    "nameEn": "teaser",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo133_arm_circles",
+    "nameFa": "Forward دست / بازو چرخشی",
+    "nameEn": "arm circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo134_air_row",
+    "nameFa": "Air Row",
+    "nameEn": "air row",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo135_t_raise",
+    "nameFa": "T بالا آوردن",
+    "nameEn": "t raise",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo136_t_chin_ups",
+    "nameFa": "T Chin Ups",
+    "nameEn": "t chin ups",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo137_y_raise",
+    "nameFa": "Y بالا آوردن",
+    "nameEn": "y raise",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo138_swimmer",
+    "nameFa": "Swimmer",
+    "nameEn": "swimmer",
+    "descFa": "شانه های خود را بالا نبرید."
+  },
+  {
+    "code": "bo140_threading_the_needle",
+    "nameFa": "Threading the Needle",
+    "nameEn": "threading the needle",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo141_side_oblique_stretch",
+    "nameFa": "پهلو مورب شکم کشش",
+    "nameEn": "side oblique stretch",
+    "descFa": "کشش تمام طرف بدن را احساس کنید."
+  },
+  {
+    "code": "bo143_like_and_dislike",
+    "nameFa": "Like و Dislike",
+    "nameEn": "like and dislike",
+    "descFa": "عضلات پشت خود را درگیر کنید."
+  },
+  {
+    "code": "bo144_bent_over_stretch",
+    "nameFa": "Bent Over کشش",
+    "nameEn": "bent over stretch",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo145_resisted_chest_stretch",
+    "nameFa": "Resisted سینه کشش",
+    "nameEn": "resisted chest stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo146_sprinters_calf_stretch",
+    "nameFa": "Sprinter's ساق پا کشش",
+    "nameEn": "sprinters calf stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo148_standing_torso_twist",
+    "nameFa": "ایستاده Torso Twist",
+    "nameEn": "standing torso twist",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo149_roof_pose",
+    "nameFa": "Roof حرکت / ژست",
+    "nameEn": "roof pose",
+    "descFa": "پاشنه های خود را به سمت زمین رها کنید."
+  },
+  {
+    "code": "bo150_quadricep_stretch",
+    "nameFa": "Quadricep کشش",
+    "nameEn": "quadricep stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo151_hip_flexor_stretch",
+    "nameFa": "باسن Flexor کشش",
+    "nameEn": "hip flexor stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo153_hip_flexion",
+    "nameFa": "باسن Flexion",
+    "nameEn": "hip flexion",
+    "descFa": "شانه های خود را بالا نبرید."
+  },
+  {
+    "code": "bo154_forward_bend",
+    "nameFa": "Forward Bend",
+    "nameEn": "forward bend",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo155_wide_legged_bend",
+    "nameFa": "Wide Legged Bend",
+    "nameEn": "wide legged bend",
+    "descFa": "انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود."
+  },
+  {
+    "code": "bo156_bent_over_twist",
+    "nameFa": "Bent Over Twist",
+    "nameEn": "bent over twist",
+    "descFa": "پاهای خود را به صورت موازی تنظیم کنید."
+  },
+  {
+    "code": "bo157_alternating_side_lunge",
+    "nameFa": "تناوبی پهلو لانژ",
+    "nameEn": "alternating side lunge",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo158_deep_squat_stretch",
+    "nameFa": "Deep اسکوات کشش",
+    "nameEn": "deep squat stretch",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo159_ankle_twist",
+    "nameFa": "Ankle Twist",
+    "nameEn": "ankle twist",
+    "descFa": "مطمئن شوید که چرخش از مچ پای شما می آید."
+  },
+  {
+    "code": "bo160_child_pose",
+    "nameFa": "کودک حرکت / ژست",
+    "nameEn": "child pose",
+    "descFa": "سینه را به سمت تشک ذوب کنید."
+  },
+  {
+    "code": "bo161_bird_dog",
+    "nameFa": "Bird سگ",
+    "nameEn": "bird dog",
+    "descFa": "عضلات پشت خود را درگیر کنید."
+  },
+  {
+    "code": "bo162_butterfly_stretch",
+    "nameFa": "پروانه کشش",
+    "nameEn": "butterfly stretch",
+    "descFa": "از طریق باسن به سمت جلو تا کنید."
+  },
+  {
+    "code": "bo163_elbow_cat_cow_pose",
+    "nameFa": "آرنج گربه گاو حرکت / ژست",
+    "nameEn": "elbow cat cow pose",
+    "descFa": "زانوهای خود را درست زیر باسن قرار دهید."
+  },
+  {
+    "code": "bo164_cat_cow_pose",
+    "nameFa": "گربه گاو حرکت / ژست",
+    "nameEn": "cat cow pose",
+    "descFa": "زانوهای خود را درست زیر باسن قرار دهید."
+  },
+  {
+    "code": "bo165_seated_forward_bend",
+    "nameFa": "نشسته Forward Bend",
+    "nameEn": "seated forward bend",
+    "descFa": "از طریق باسن به سمت جلو تا کنید."
+  },
+  {
+    "code": "bo166_lying_glute_stretch",
+    "nameFa": "خوابیده باسن (سرینی) کشش",
+    "nameEn": "lying glute stretch",
+    "descFa": "شانه های خود را بالا نبرید."
+  },
+  {
+    "code": "bo168_reclined_cobblers_pose",
+    "nameFa": "Reclined Cobbler's حرکت / ژست",
+    "nameEn": "reclined cobblers pose",
+    "descFa": "پشت خود را به داخل تشک فشار دهید."
+  },
+  {
+    "code": "bo169_lumbar_rotation",
+    "nameFa": "Lumbar Rotation",
+    "nameEn": "lumbar rotation",
+    "descFa": "شانه های خود را روی زمین فشار دهید."
+  },
+  {
+    "code": "bo170_half_shoulder_stand",
+    "nameFa": "Half سرشانه Stand",
+    "nameEn": "half shoulder stand",
+    "descFa": "هسته خود را همیشه سفت نگه دارید."
+  },
+  {
+    "code": "bo172_bridge_pose",
+    "nameFa": "پل حرکت / ژست",
+    "nameEn": "bridge pose",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo173_bridges",
+    "nameFa": "پل",
+    "nameEn": "bridges",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo174_corkscrew",
+    "nameFa": "Corkscrew",
+    "nameEn": "corkscrew",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo175_pigeon_king",
+    "nameFa": "کبوتر حرکت / ژست",
+    "nameEn": "pigeon king",
+    "descFa": "استخوان ساق پا و پا را به تشک فشار دهید."
+  },
+  {
+    "code": "bo176_hamstring_kickback",
+    "nameFa": "Hamstring Kickback",
+    "nameEn": "hamstring kickback",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo177_toe_touches",
+    "nameFa": "پنجه پا Touches",
+    "nameEn": "toe touches",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo178_roof_kickback",
+    "nameFa": "Roof Kickback",
+    "nameEn": "roof kickback",
+    "descFa": "عضلات گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo179_heisman_lunges",
+    "nameFa": "Heisman لانژ",
+    "nameEn": "heisman lunges",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo180_low_runner",
+    "nameFa": "کوتاه Runner",
+    "nameEn": "low runner",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo181_warrior_3",
+    "nameFa": "جنگجو III",
+    "nameEn": "warrior 3",
+    "descFa": "انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود."
+  },
+  {
+    "code": "bo182_side_lunge_march",
+    "nameFa": "پهلو لانژ March",
+    "nameEn": "side lunge march",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo183_walking_plank",
+    "nameFa": "Walking پلانک",
+    "nameEn": "walking plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo184_leg_lifts",
+    "nameFa": "Leg بالا آوردن",
+    "nameEn": "leg lifts",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo185_cross_country_run",
+    "nameFa": "Cross Country دویدن",
+    "nameEn": "cross country run",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo186_scissor_run",
+    "nameFa": "Scissor دویدن",
+    "nameEn": "scissor run",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo188_twisted_mountain_climbers",
+    "nameFa": "Twisted کوهنوردی کوهنوردی",
+    "nameEn": "twisted mountain climbers",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo189_free_arm_squat",
+    "nameFa": "Free دست / بازو اسکوات",
+    "nameEn": "free arm squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo190_hero_jump",
+    "nameFa": "قهرمان پرشی",
+    "nameEn": "hero jump",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo191_side_plank_balancing",
+    "nameFa": "پهلو پلانک Balancing",
+    "nameEn": "side plank balancing",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo192_toe_touch_squat",
+    "nameFa": "پنجه پا Touch اسکوات",
+    "nameEn": "toe touch squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo195_russian_twist",
+    "nameFa": "Russian Twist",
+    "nameEn": "russian twist",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo196_bulgarian_squat",
+    "nameFa": "Bulgarian اسکوات",
+    "nameEn": "bulgarian squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo197_wall_sit",
+    "nameFa": "دیوار Sit",
+    "nameEn": "wall sit",
+    "descFa": "زانوها به اندازه عرض لگن از هم باز شوند."
+  },
+  {
+    "code": "bo198_step_ups",
+    "nameFa": "Step Ups",
+    "nameEn": "step ups",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo199_tricep_dips",
+    "nameFa": "پشت بازو Dips",
+    "nameEn": "tricep dips",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo200_push_up_and_rotation",
+    "nameFa": "Push Up و Rotation",
+    "nameEn": "push up and rotation",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo203_crunches",
+    "nameFa": "کرانچ",
+    "nameEn": "crunches",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo204_arm_raise_plank",
+    "nameFa": "دست / بازو بالا آوردن پلانک",
+    "nameEn": "arm raise plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo205_one_arm_plank",
+    "nameFa": "تک دست / بازو پلانک",
+    "nameEn": "one arm plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo206_one_leg_plank",
+    "nameFa": "تک Leg پلانک",
+    "nameEn": "one leg plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo207_two_point_plank",
+    "nameFa": "Two Point پلانک",
+    "nameEn": "two point plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo208_one_elbow_plank",
+    "nameFa": "تک آرنج پلانک",
+    "nameEn": "one elbow plank",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo212_kneeled_narrow_pushups",
+    "nameFa": "Kneeled Narrow Push Ups",
+    "nameEn": "kneeled narrow pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo213_kneeled_diamond_pushups",
+    "nameFa": "Kneeled Diamond Push Ups",
+    "nameEn": "kneeled diamond pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo214_kneeled_pushups",
+    "nameFa": "Kneeled Push Ups",
+    "nameEn": "kneeled pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo215_kneeled_wide_pushups",
+    "nameFa": "Kneeled Wide Push Ups",
+    "nameEn": "kneeled wide pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo216_table_pose",
+    "nameFa": "Table حرکت / ژست",
+    "nameEn": "table pose",
+    "descFa": "لگن را در راستای ستون فقرات نگه دارید."
+  },
+  {
+    "code": "bo217_jumping_jacks",
+    "nameFa": "پرشی Jacks",
+    "nameEn": "jumping jacks",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo219_tricep_pikes",
+    "nameFa": "پشت بازو Pikes",
+    "nameEn": "tricep pikes",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo220_slalom_hops",
+    "nameFa": "Slalom Hops",
+    "nameEn": "slalom hops",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo221_low_jacks",
+    "nameFa": "کوتاه Jacks",
+    "nameEn": "low jacks",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo223_push_up_and_pike",
+    "nameFa": "Push Up و Pike",
+    "nameEn": "push up and pike",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo224_grasshopper_pushups",
+    "nameFa": "Grasshopper Push Ups",
+    "nameEn": "grasshopper pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo225_hindu_pushups",
+    "nameFa": "Hindu Push Ups",
+    "nameEn": "hindu pushups",
+    "descFa": "پاهای خود را کاملاً کشیده نگه دارید."
+  },
+  {
+    "code": "bo226_shoulder_push_ups",
+    "nameFa": "سرشانه Push Ups",
+    "nameEn": "shoulder push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo227_punching_squat",
+    "nameFa": "Punching اسکوات",
+    "nameEn": "punching squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo228_one_leg_side_hops",
+    "nameFa": "تک Leg پهلو Hops",
+    "nameEn": "one leg side hops",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo229_shoulder_tap_push_ups",
+    "nameFa": "سرشانه Tap Push Ups",
+    "nameEn": "shoulder tap push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo230_arm_clap_push_ups",
+    "nameFa": "دست / بازو Clap Push Ups",
+    "nameEn": "arm clap push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo231_one_leg_push_up",
+    "nameFa": "تک Leg Push Ups",
+    "nameEn": "one leg push up",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo232_spiderman_push_ups",
+    "nameFa": "Spiderman Push Ups",
+    "nameEn": "spiderman push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo233_push_ups",
+    "nameFa": "Push Ups",
+    "nameEn": "push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo234_narrow_push_ups",
+    "nameFa": "Narrow Push Ups",
+    "nameEn": "narrow push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo235_wide_arm_push_ups",
+    "nameFa": "Wide دست / بازو Push Ups",
+    "nameEn": "wide arm push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo236_diamond_push_ups",
+    "nameFa": "Diamond Push Ups",
+    "nameEn": "diamond push ups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo238_shoulder_opener",
+    "nameFa": "سرشانه Opener",
+    "nameEn": "shoulder opener",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo239_arm_circles",
+    "nameFa": "Backward دست / بازو چرخشی",
+    "nameEn": "arm circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo300_scapular_pushups",
+    "nameFa": "Scapular Push Ups",
+    "nameEn": "scapular pushups",
+    "descFa": "تیغه های شانه را فشار دهید و سپس آنها را از هم جدا کنید."
+  },
+  {
+    "code": "bo301_scapular_planks",
+    "nameFa": "Scapular پلانک",
+    "nameEn": "scapular planks",
+    "descFa": "تیغه های شانه را فشار دهید و سپس آنها را از هم جدا کنید."
+  },
+  {
+    "code": "bo302_reverse_snow_angels",
+    "nameFa": "معکوس Snow Angels",
+    "nameEn": "reverse snow angels",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo303_seal_pushups",
+    "nameFa": "Seal Push Ups",
+    "nameEn": "seal pushups",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo304_pulse_rows",
+    "nameFa": "Pulse Rows",
+    "nameEn": "pulse rows",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo305_reachers",
+    "nameFa": "Reachers",
+    "nameEn": "reachers",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo306_supermans",
+    "nameFa": "Superman",
+    "nameEn": "supermans",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo307_roll_like_a_ball",
+    "nameFa": "Roll Like a Ball",
+    "nameEn": "roll like a ball",
+    "descFa": "مطمئن شوید که سطح نرمی دارید."
+  },
+  {
+    "code": "bo308_belly_pinguin",
+    "nameFa": "Belly Penguin",
+    "nameEn": "belly pinguin",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo309_plank_pushups",
+    "nameFa": "تناوبی پلانک",
+    "nameEn": "plank pushups",
+    "descFa": "عضلات شکم و گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo310_plank",
+    "nameFa": "پلانک",
+    "nameEn": "plank",
+    "descFa": "عضلات شکم و گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo311_side_plank",
+    "nameFa": "پهلو پلانک",
+    "nameEn": "side plank",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo312_side_plank_raises",
+    "nameFa": "پهلو پلانک بالا آوردن",
+    "nameEn": "side plank raises",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo313_easy_side_plank",
+    "nameFa": "Easy پهلو پلانک",
+    "nameEn": "easy side plank",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo314_easy_side_plank_raises",
+    "nameFa": "Easy پهلو پلانک بالا آوردن",
+    "nameEn": "easy side plank raises",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo315_oblique_rotations",
+    "nameFa": "مورب شکم Rotations",
+    "nameEn": "oblique rotations",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo316_reverse_plank",
+    "nameFa": "معکوس پلانک",
+    "nameEn": "reverse plank",
+    "descFa": "عضلات شکم و گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo317_side_crunches",
+    "nameFa": "پهلو کرانچ",
+    "nameEn": "side crunches",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo318_elbow_to_the_knee",
+    "nameFa": "آرنج to the زانو",
+    "nameEn": "elbow to the knee",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo319_bridge_marching",
+    "nameFa": "پل Marching",
+    "nameEn": "bridge marching",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo320_rotation_resistance",
+    "nameFa": "Rotation Resistance",
+    "nameEn": "rotation resistance",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo321_single_leg_plank",
+    "nameFa": "تک Leg پلانک",
+    "nameEn": "single leg plank",
+    "descFa": "عضلات شکم و گلوتئال خود را منقبض کنید."
+  },
+  {
+    "code": "bo322_bicep_curls",
+    "nameFa": "جلو بازو Curls",
+    "nameEn": "bicep curls",
+    "descFa": "شانه های خود را بالا نبرید."
+  },
+  {
+    "code": "bo323_incline_pushups",
+    "nameFa": "Incline Push Ups",
+    "nameEn": "incline pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo324_decline_pushups",
+    "nameFa": "Decline Push Ups",
+    "nameEn": "decline pushups",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo325_upside_down_pushup",
+    "nameFa": "Upside Down Push Ups",
+    "nameEn": "upside down pushup",
+    "descFa": "پشت خود را صاف کنید."
+  },
+  {
+    "code": "bo326_swifted_leg_scissors",
+    "nameFa": "Swifted Leg Scissors",
+    "nameEn": "swifted leg scissors",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo327_bench_butt_kicks",
+    "nameFa": "Butt Kicks",
+    "nameEn": "bench butt kicks",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo328_two_way_butt_kicks",
+    "nameFa": "Two Way Butt Kicks",
+    "nameEn": "two way butt kicks",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo329_bouncing_squat",
+    "nameFa": "Bouncing اسکوات",
+    "nameEn": "bouncing squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo330_butt_lifters",
+    "nameFa": "Butt Lifters",
+    "nameEn": "butt lifters",
+    "descFa": "عضلات گلوتئال را احساس کنید - نه کمر خود را."
+  },
+  {
+    "code": "bo331_shoulder_roof",
+    "nameFa": "سرشانه Roof",
+    "nameEn": "shoulder roof",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo332_one_arm_side_pushup",
+    "nameFa": "تک دست / بازو پهلو Push Ups",
+    "nameEn": "one arm side pushup",
+    "descFa": "انقباض عضلات قفسه سینه خود را احساس کنید."
+  },
+  {
+    "code": "bo333_mountain_walkers",
+    "nameFa": "کوهنوردی Walkers",
+    "nameEn": "mountain walkers",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo334_tricep_press",
+    "nameFa": "پشت بازو Press",
+    "nameEn": "tricep press",
+    "descFa": "آرنج خود را نزدیک بدن نگه دارید."
+  },
+  {
+    "code": "bo335_tricep_stretch",
+    "nameFa": "پشت بازو کشش",
+    "nameEn": "tricep stretch",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo337_opposite_arm_circles",
+    "nameFa": "Opposite دست / بازو چرخشی",
+    "nameEn": "opposite arm circles",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo338_single_leg_runner",
+    "nameFa": "تک Leg Runner",
+    "nameEn": "single leg runner",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo367_cross_legged_lumbar_rotation",
+    "nameFa": "X Legged Spinal Twist",
+    "nameEn": "cross legged lumbar rotation",
+    "descFa": "شانه های خود را روی زمین فشار دهید."
+  },
+  {
+    "code": "bo368_crab_walk",
+    "nameFa": "Crab Walk",
+    "nameEn": "crab walk",
+    "descFa": "تمرین خودمراقبتی و تقویت عضلات بدن."
+  },
+  {
+    "code": "bo354_inchwarms",
+    "nameFa": "Inchworms",
+    "nameEn": "inchwarms",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo350_mountain_runner",
+    "nameFa": "کوهنوردی Runner",
+    "nameEn": "mountain runner",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo351_wall_tricep_press",
+    "nameFa": "دیوار پشت بازو Press",
+    "nameEn": "wall tricep press",
+    "descFa": "آرنج خود را نزدیک بدن نگه دارید."
+  },
+  {
+    "code": "bo352_standing_butterfly_stroke",
+    "nameFa": "ایستاده پروانه Stroke",
+    "nameEn": "standing butterfly stroke",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo353_standing_crawl_stroke",
+    "nameFa": "ایستاده Crawl Stroke",
+    "nameEn": "standing crawl stroke",
+    "descFa": "تیغه های شانه خود را به هم فشار دهید."
+  },
+  {
+    "code": "bo355_bicycle_crunch",
+    "nameFa": "Bicycle کرانچ",
+    "nameEn": "bicycle crunch",
+    "descFa": "عضلات مورب خود را درگیر کنید."
+  },
+  {
+    "code": "bo356_heel_touches",
+    "nameFa": "Heel Touches",
+    "nameEn": "heel touches",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo357_adbdominal_hip_raise",
+    "nameFa": "شکم باسن بالا آوردن",
+    "nameEn": "adbdominal hip raise",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo358_abdominal_marching",
+    "nameFa": "Supine Marching",
+    "nameEn": "abdominal marching",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo359_alternating_leg_raises",
+    "nameFa": "تناوبی Leg بالا آوردن",
+    "nameEn": "alternating leg raises",
+    "descFa": "عضلات شکم خود را منقبض کنید."
+  },
+  {
+    "code": "bo360_chair_squats",
+    "nameFa": "Chair اسکوات",
+    "nameEn": "chair squats",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo361_wide_chair_squat",
+    "nameFa": "Sumo Chair اسکوات",
+    "nameEn": "wide chair squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo362_dynamic_rollups",
+    "nameFa": "پویا Rollups",
+    "nameEn": "dynamic rollups",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  },
+  {
+    "code": "bo363_side_to_side_reach",
+    "nameFa": "پهلو to پهلو Reach",
+    "nameEn": "side to side reach",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo364_straight_leg_donkey_kick",
+    "nameFa": "Straight Leg Donkey Kick",
+    "nameEn": "straight leg donkey kick",
+    "descFa": "سر و لگن خود را در راستای ستون فقرات خود نگه دارید."
+  },
+  {
+    "code": "bo365_one_leg_chair_squat",
+    "nameFa": "تک Leg Chair اسکوات",
+    "nameEn": "one leg chair squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo366_jacks_and_burpees",
+    "nameFa": "Jacks و Burpees",
+    "nameEn": "jacks and burpees",
+    "descFa": "پشت خود را صاف و ثابت نگه دارید."
+  },
+  {
+    "code": "bo400_body_weight_atg_split_squat",
+    "nameFa": "ATG Split اسکوات",
+    "nameEn": "body weight atg split squat",
+    "descFa": "پشت خود را صاف نگه دارید."
+  },
+  {
+    "code": "bo401_v_sit_hold",
+    "nameFa": "V Sit ایستایی",
+    "nameEn": "v sit hold",
+    "descFa": "از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند."
+  }
+]

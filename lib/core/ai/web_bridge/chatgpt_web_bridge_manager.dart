@@ -910,6 +910,15 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.info,
           );
 
+        case BridgeResumeSkippedDuplicateEvent(:final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'resume_skipped_duplicate',
+            source: source,
+            requestId: requestId,
+            note: 'watcher_already_running',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeFirstTokenEvent(:final requestId):
           RitmoLog.debug(
             'ChatGptWebBridge',

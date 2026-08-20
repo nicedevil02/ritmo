@@ -400,20 +400,25 @@ class MovementPlanningService {
     for (final row in rows) {
       final occTime = row['startTime'] as String?;
       if (occTime != null && occTime.isNotEmpty) {
-        // تداخل زمانی تقریبی: ساعت یکسان
-        if (occTime == timeOfDay) {
-          MovementActivityKind? kind;
-          if (row['k_nameFa'] != null) {
-            kind = MovementActivityKind(
-              id: row['activityKindId'] as String,
-              nameFa: row['k_nameFa'] as String,
-              family: row['k_family'] as String? ?? 'general',
-              icon: row['k_icon'] as String? ?? 'directions_run',
-              primaryMetric: 'duration',
-              createdAt: DateTime.now(),
-            );
+        final occParts = occTime.split(':');
+        final targetParts = timeOfDay.split(':');
+        if (occParts.length >= 2 && targetParts.length >= 2) {
+          final occMins = (int.tryParse(occParts[0]) ?? 0) * 60 + (int.tryParse(occParts[1]) ?? 0);
+          final targetMins = (int.tryParse(targetParts[0]) ?? 0) * 60 + (int.tryParse(targetParts[1]) ?? 0);
+          if ((occMins - targetMins).abs() <= 30) {
+            MovementActivityKind? kind;
+            if (row['k_nameFa'] != null) {
+              kind = MovementActivityKind(
+                id: row['activityKindId'] as String,
+                nameFa: row['k_nameFa'] as String,
+                family: row['k_family'] as String? ?? 'general',
+                icon: row['k_icon'] as String? ?? 'directions_run',
+                primaryMetric: 'duration',
+                createdAt: DateTime.now(),
+              );
+            }
+            results.add(MovementOccurrence.fromMap(row, activityKind: kind));
           }
-          results.add(MovementOccurrence.fromMap(row, activityKind: kind));
         }
       }
     }

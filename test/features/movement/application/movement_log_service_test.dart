@@ -153,6 +153,7 @@ void main() {
           'durationSec': 1200,
           'source': 'retro',
           'createdAt': now.toIso8601String(),
+          'updatedAt': now.toIso8601String(),
         });
 
         await db!.insert(MovementTables.tableWorkoutLogs, {
@@ -162,6 +163,7 @@ void main() {
           'durationSec': 1800,
           'source': 'retro',
           'createdAt': now.toIso8601String(),
+          'updatedAt': now.toIso8601String(),
         });
 
         final logs = await logService.getWorkoutLogsForRange(

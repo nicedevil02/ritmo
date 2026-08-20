@@ -284,6 +284,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                             ),
                           ),
                         ),
+                      );
                     },
                   );
                 },

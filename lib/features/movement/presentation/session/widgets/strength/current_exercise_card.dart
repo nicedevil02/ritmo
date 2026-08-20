@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/movement/domain/models/movement_exercise.dart';
 
 /// کارت نمایش حرکت جاری تمرین قدرتی

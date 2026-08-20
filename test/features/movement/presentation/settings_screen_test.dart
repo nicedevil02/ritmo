@@ -3,45 +3,37 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/application/movement_preferences_service.dart';
 import 'package:ritmo/features/movement/presentation/settings/movement_settings_screen.dart';
-import 'package:ritmo/features/movement/presentation/settings/widgets/settings_choice_row.dart';
+import 'package:ritmo/features/movement/presentation/settings/widgets/settings_danger_row.dart';
 import 'package:ritmo/features/movement/presentation/settings/widgets/settings_group.dart';
-import 'package:ritmo/features/movement/presentation/settings/widgets/settings_switch_row.dart';
 
 class FakeMovementPreferencesService extends MovementPreferencesService {
-  final Map<String, dynamic> _store = {
-    'distanceUnit': 'km',
-    'weightUnit': 'kg',
-    'defaultReminderTime': '08:00',
-    'morningReminder': true,
-    'preSessionReminder': true,
-    'quietMode': false,
-    'keepScreenOn': true,
-    'soundEnabled': true,
-    'hapticEnabled': true,
-    'countdownSeconds': 3,
-    'smartSuggestionsEnabled': true,
-    'interventionLevel': 'medium',
-    'planBBehavior': 'auto_suggest',
-  };
+  int _weeklyGoal = 3;
+  List<int> _days = [0, 2, 4];
+  int? _reminder = 8;
 
   @override
-  Future<Map<String, dynamic>> getAllSettings() async {
-    return Map.from(_store);
-  }
+  Future<int> getWeeklyGoalSessions() async => _weeklyGoal;
 
   @override
-  Future<void> setString(String key, String value) async {
-    _store[key] = value;
-  }
+  Future<void> setWeeklyGoalSessions(int count) async => _weeklyGoal = count;
 
   @override
-  Future<void> setBool(String key, bool value) async {
-    _store[key] = value;
-  }
+  Future<List<int>> getPreferredDays() async => _days;
 
   @override
-  Future<void> setInt(String key, int value) async {
-    _store[key] = value;
+  Future<void> setPreferredDays(List<int> days) async => _days = days;
+
+  @override
+  Future<int?> getReminderHour() async => _reminder;
+
+  @override
+  Future<void> setReminderHour(int? hour) async => _reminder = hour;
+
+  @override
+  Future<void> deleteAllMovementData() async {
+    _weeklyGoal = 3;
+    _days = [0, 2, 4];
+    _reminder = 8;
   }
 }
 
@@ -56,8 +48,8 @@ void main() {
     );
   }
 
-  group('MovementSettingsScreen Tests (Gate 5)', () {
-    testWidgets('renders all 6 setting groups with switches and choices', (
+  group('MovementSettingsScreen Tests (D-39)', () {
+    testWidgets('renders streamlined settings screen with 3 main settings', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -71,12 +63,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('تنظیمات حرکت'), findsOneWidget);
-      expect(find.byType(SettingsGroup), findsNWidgets(6));
-      expect(find.byType(SettingsSwitchRow), findsWidgets);
-      expect(find.byType(SettingsChoiceRow<String>), findsWidgets);
-
-      // Verify medical disclaimer is present
-      expect(find.text('این بخش جایگزین مربی یا پزشک نیست.'), findsOneWidget);
+      expect(find.text('هدف هفتگی'), findsOneWidget);
+      expect(find.text('روزهای ترجیحی تمرین'), findsOneWidget);
+      expect(find.text('یادآور روزانه'), findsOneWidget);
+      expect(find.byType(SettingsGroup), findsNWidgets(3));
+      expect(find.byType(SettingsDangerRow), findsOneWidget);
     });
   });
 }

@@ -217,6 +217,11 @@ sealed class WebBridgeEvent {
             source: src,
             label: readString('label') ?? '',
           );
+        case 'resume_skipped_duplicate':
+          return BridgeResumeSkippedDuplicateEvent(
+            source: src,
+            requestId: readString('requestId'),
+          );
         case 'fetch_matched':
           return BridgeFetchMatchedEvent(
             source: src,
@@ -529,6 +534,15 @@ class BridgeWatcherSteadyDoneEvent extends WebBridgeEvent {
 
   final int textLength;
   final int idleMs;
+  final String? requestId;
+}
+
+class BridgeResumeSkippedDuplicateEvent extends WebBridgeEvent {
+  const BridgeResumeSkippedDuplicateEvent({
+    required super.source,
+    this.requestId,
+  });
+
   final String? requestId;
 }
 

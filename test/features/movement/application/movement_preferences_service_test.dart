@@ -9,7 +9,7 @@ void main() {
     sqfliteFfiInit();
   } catch (_) {}
 
-  group('MovementPreferencesService Tests (Gate 5)', () {
+  group('MovementPreferencesService Tests (D-38)', () {
     Database? db;
     bool dbInitialized = false;
     late MovementPreferencesService service;
@@ -32,50 +32,39 @@ void main() {
       }
     });
 
-    test('reads default values when no record exists', () async {
+    test('reads default values for weeklyGoal, preferredDays, reminderHour', () async {
       if (!dbInitialized) return;
-      final dist = await service.getString(
-        MovementPreferencesService.keyDistanceUnit,
-        defaultValue: 'km',
-      );
-      final morning = await service.getBool(
-        MovementPreferencesService.keyMorningReminder,
-        defaultValue: true,
-      );
-      final countdown = await service.getInt(
-        MovementPreferencesService.keyCountdownSeconds,
-        defaultValue: 3,
-      );
+      final goal = await service.getWeeklyGoalSessions();
+      final days = await service.getPreferredDays();
+      final reminder = await service.getReminderHour();
 
-      expect(dist, equals('km'));
-      expect(morning, isTrue);
-      expect(countdown, equals(3));
+      expect(goal, equals(3));
+      expect(days, equals([0, 2, 4]));
+      expect(reminder, equals(8));
     });
 
-    test('persists and updates preferences across keys', () async {
+    test('persists and updates 3 core preferences', () async {
       if (!dbInitialized) return;
-      await service.setString(MovementPreferencesService.keyDistanceUnit, 'mi');
-      await service.setBool(MovementPreferencesService.keyQuietMode, true);
-      await service.setInt(MovementPreferencesService.keyCountdownSeconds, 5);
+      await service.setWeeklyGoalSessions(5);
+      await service.setPreferredDays([1, 3, 5]);
+      await service.setReminderHour(7);
 
-      final dist = await service.getString(
-        MovementPreferencesService.keyDistanceUnit,
-      );
-      final quiet = await service.getBool(
-        MovementPreferencesService.keyQuietMode,
-      );
-      final countdown = await service.getInt(
-        MovementPreferencesService.keyCountdownSeconds,
-      );
+      final goal = await service.getWeeklyGoalSessions();
+      final days = await service.getPreferredDays();
+      final reminder = await service.getReminderHour();
 
-      expect(dist, equals('mi'));
-      expect(quiet, isTrue);
-      expect(countdown, equals(5));
+      expect(goal, equals(5));
+      expect(days, equals([1, 3, 5]));
+      expect(reminder, equals(7));
+
+      await service.setReminderHour(null);
+      final noReminder = await service.getReminderHour();
+      expect(noReminder, isNull);
     });
 
-    test('deleteAllMovementData wipes movement tables cleanly', () async {
+    test('deleteAllMovementData wipes movement tables cleanly in transaction', () async {
       if (!dbInitialized || db == null) return;
-      await service.setString(MovementPreferencesService.keyDistanceUnit, 'mi');
+      await service.setWeeklyGoalSessions(5);
       await db!.insert(MovementTables.tableOccurrences, {
         'id': 'occ_temp',
         'activityKindId': 'kind_walking',

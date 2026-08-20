@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
+import 'package:ritmo/core/ai/personas/persona_skill.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
 
@@ -53,6 +54,25 @@ void main() {
           PersonaInferenceProfile.hasExplicitProfile(p.id),
           isTrue,
           reason: 'Persona "${p.id}" does not have an explicit inference profile case (expected green in PSN-35)',
+        );
+      }
+    });
+
+    test('invariant 4 skill catalog covers every persona', () {
+      final personas = PersonaRegistry.instance.allPersonas;
+
+      for (final p in personas) {
+        expect(
+          PersonaSkill.catalogPersonaIds.contains(p.id),
+          isTrue,
+          reason: 'Persona "${p.id}" missing from PersonaSkill catalog',
+        );
+
+        final skills = PersonaSkill.getSkillsForPersona(p.id, null);
+        expect(
+          skills,
+          isNotEmpty,
+          reason: 'Persona "${p.id}" has empty skills list',
         );
       }
     });

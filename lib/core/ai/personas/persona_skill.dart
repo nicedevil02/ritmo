@@ -19,6 +19,8 @@ class PersonaSkill {
   final bool Function(DomainBrief? brief) isRelevant;
   final int priority;
 
+  static Set<String> get catalogPersonaIds => _skillsCatalog.keys.toSet();
+
   static List<PersonaSkill> getSkillsForPersona(String personaId, DomainBrief? brief) {
     final allSkills = _skillsCatalog[personaId] ?? [];
     final relevant = allSkills.where((s) => s.isRelevant(brief)).toList();

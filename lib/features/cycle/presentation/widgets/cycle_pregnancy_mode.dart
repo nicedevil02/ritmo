@@ -347,13 +347,17 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
               ElevatedButton(
                 onPressed: () async {
                   Navigator.of(ctx).pop();
-                  final remindDate = CycleClock.now.add(const Duration(days: 40));
+                  final remindDate = CycleClock.now.add(
+                    const Duration(days: 40),
+                  );
                   await PregnancyReminderScheduler.scheduleCycleResume(
                     reminderDate: remindDate,
                   );
                   widget.onDeactivated();
                 },
-                child: const Text('یادآوری ۴۰ روز بعد (دوره نفاس/پس از زایمان)'),
+                child: const Text(
+                  'یادآوری ۴۰ روز بعد (دوره نفاس/پس از زایمان)',
+                ),
               ),
             ],
           ),

@@ -32,9 +32,13 @@ Widget _buildTestWidget({
 
 void main() {
   group('PregStep2Dates Tests (PRG-19)', () {
-    testWidgets('renders all 3 method cards and default LMP section', (tester) async {
+    testWidgets('renders all 3 method cards and default LMP section', (
+      tester,
+    ) async {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 56)),
+      );
       final due = PregnancyDateEngine.dueDateFromLmp(lmp);
 
       final data = PregnancyOnboardingData(
@@ -43,10 +47,9 @@ void main() {
         dueDate: due,
       );
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onDataChanged: (_) {},
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(data: data, onDataChanged: (_) {}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('مبنای محاسبهٔ تاریخ'), findsOneWidget);
@@ -61,82 +64,96 @@ void main() {
       expect(find.textContaining('یعنی الان'), findsOneWidget);
     });
 
-    testWidgets('switching to Doctor EDD changes eddSource and displays EDD section', (tester) async {
+    testWidgets(
+      'switching to Doctor EDD changes eddSource and displays EDD section',
+      (tester) async {
+        final now = CycleClock.now;
+        final lmp = CycleDateContract.cleanDate(
+          now.subtract(const Duration(days: 56)),
+        );
+        final due = PregnancyDateEngine.dueDateFromLmp(lmp);
+
+        PregnancyOnboardingData currentData = PregnancyOnboardingData(
+          eddSource: PregnancyEddSource.lmp,
+          lmpDate: lmp,
+          dueDate: due,
+        );
+
+        await tester.pumpWidget(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return _buildTestWidget(
+                data: currentData,
+                onDataChanged: (updated) {
+                  setState(() {
+                    currentData = updated;
+                  });
+                },
+              );
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap Doctor EDD
+        await tester.tap(find.text('تاریخ زایمان را پزشک گفته'));
+        await tester.pumpAndSettle();
+
+        expect(currentData.eddSource, PregnancyEddSource.doctorEdd);
+        expect(find.text('تاریخ تخمینی زایمان (EDD):'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'switching to Ultrasound displays scan date and counters, recalculates dates',
+      (tester) async {
+        final now = CycleClock.now;
+        final lmp = CycleDateContract.cleanDate(
+          now.subtract(const Duration(days: 56)),
+        );
+        final due = PregnancyDateEngine.dueDateFromLmp(lmp);
+
+        PregnancyOnboardingData currentData = PregnancyOnboardingData(
+          eddSource: PregnancyEddSource.lmp,
+          lmpDate: lmp,
+          dueDate: due,
+        );
+
+        await tester.pumpWidget(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return _buildTestWidget(
+                data: currentData,
+                onDataChanged: (updated) {
+                  setState(() {
+                    currentData = updated;
+                  });
+                },
+              );
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap Ultrasound
+        await tester.tap(find.text('جواب سونوگرافی دارم'));
+        await tester.pumpAndSettle();
+
+        expect(currentData.eddSource, PregnancyEddSource.ultrasound);
+        expect(find.text('تاریخ انجام سونوگرافی:'), findsOneWidget);
+        expect(find.text('سن جنین در تاریخ سونوگرافی:'), findsOneWidget);
+        expect(find.text('هفته'), findsOneWidget);
+        expect(find.text('روز'), findsOneWidget);
+      },
+    );
+
+    testWidgets('shows error banner when dates are invalid (future LMP)', (
+      tester,
+    ) async {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
-      final due = PregnancyDateEngine.dueDateFromLmp(lmp);
-
-      PregnancyOnboardingData currentData = PregnancyOnboardingData(
-        eddSource: PregnancyEddSource.lmp,
-        lmpDate: lmp,
-        dueDate: due,
+      final futureLmp = CycleDateContract.cleanDate(
+        now.add(const Duration(days: 10)),
       );
-
-      await tester.pumpWidget(
-        StatefulBuilder(
-          builder: (context, setState) {
-            return _buildTestWidget(
-              data: currentData,
-              onDataChanged: (updated) {
-                setState(() {
-                  currentData = updated;
-                });
-              },
-            );
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Tap Doctor EDD
-      await tester.tap(find.text('تاریخ زایمان را پزشک گفته'));
-      await tester.pumpAndSettle();
-
-      expect(currentData.eddSource, PregnancyEddSource.doctorEdd);
-      expect(find.text('تاریخ تخمینی زایمان (EDD):'), findsOneWidget);
-    });
-
-    testWidgets('switching to Ultrasound displays scan date and counters, recalculates dates', (tester) async {
-      final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
-      final due = PregnancyDateEngine.dueDateFromLmp(lmp);
-
-      PregnancyOnboardingData currentData = PregnancyOnboardingData(
-        eddSource: PregnancyEddSource.lmp,
-        lmpDate: lmp,
-        dueDate: due,
-      );
-
-      await tester.pumpWidget(
-        StatefulBuilder(
-          builder: (context, setState) {
-            return _buildTestWidget(
-              data: currentData,
-              onDataChanged: (updated) {
-                setState(() {
-                  currentData = updated;
-                });
-              },
-            );
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Tap Ultrasound
-      await tester.tap(find.text('جواب سونوگرافی دارم'));
-      await tester.pumpAndSettle();
-
-      expect(currentData.eddSource, PregnancyEddSource.ultrasound);
-      expect(find.text('تاریخ انجام سونوگرافی:'), findsOneWidget);
-      expect(find.text('سن جنین در تاریخ سونوگرافی:'), findsOneWidget);
-      expect(find.text('هفته'), findsOneWidget);
-      expect(find.text('روز'), findsOneWidget);
-    });
-
-    testWidgets('shows error banner when dates are invalid (future LMP)', (tester) async {
-      final now = CycleClock.now;
-      final futureLmp = CycleDateContract.cleanDate(now.add(const Duration(days: 10)));
       final futureDue = PregnancyDateEngine.dueDateFromLmp(futureLmp);
 
       final data = PregnancyOnboardingData(
@@ -145,10 +162,9 @@ void main() {
         dueDate: futureDue,
       );
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onDataChanged: (_) {},
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(data: data, onDataChanged: (_) {}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('تاریخ شروع نمی‌تواند در آینده باشد.'), findsOneWidget);

@@ -32,49 +32,58 @@ void main() {
       await db.close();
     });
 
-    test('CycleEngine.calculate suppresses predictions and returns pregnancy output when pregnancy mode is true', () async {
-      final now = CycleClock.now;
+    test(
+      'CycleEngine.calculate suppresses predictions and returns pregnancy output when pregnancy mode is true',
+      () async {
+        final now = CycleClock.now;
 
-      // Insert some period history
-      final p1Start = CycleDateContract.cleanDate(now.subtract(const Duration(days: 60)));
-      final p1End = CycleDateContract.cleanDate(now.subtract(const Duration(days: 55)));
-      await db.insert(CyclePeriodContract.table, {
-        CyclePeriodContract.colId: 'p1',
-        CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(p1Start),
-        CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(p1End),
-        CyclePeriodContract.colFlowIntensity: 'MEDIUM',
-        CyclePeriodContract.colIsPredicted: 0,
-        CyclePeriodContract.colCreatedAt: CycleClock.nowMillisecondsSinceEpoch,
-        CyclePeriodContract.colUpdatedAt: CycleClock.nowMillisecondsSinceEpoch,
-      });
+        // Insert some period history
+        final p1Start = CycleDateContract.cleanDate(
+          now.subtract(const Duration(days: 60)),
+        );
+        final p1End = CycleDateContract.cleanDate(
+          now.subtract(const Duration(days: 55)),
+        );
+        await db.insert(CyclePeriodContract.table, {
+          CyclePeriodContract.colId: 'p1',
+          CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(p1Start),
+          CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(p1End),
+          CyclePeriodContract.colFlowIntensity: 'MEDIUM',
+          CyclePeriodContract.colIsPredicted: 0,
+          CyclePeriodContract.colCreatedAt:
+              CycleClock.nowMillisecondsSinceEpoch,
+          CyclePeriodContract.colUpdatedAt:
+              CycleClock.nowMillisecondsSinceEpoch,
+        });
 
-      final appSettings = <String, String>{
-        'user_gender': 'female',
-        'module_cycle_enabled': 'true',
-        'cycle_setup_done': 'true',
-        CycleSettings.keyPregnancyMode: 'true',
-      };
+        final appSettings = <String, String>{
+          'user_gender': 'female',
+          'module_cycle_enabled': 'true',
+          'cycle_setup_done': 'true',
+          CycleSettings.keyPregnancyMode: 'true',
+        };
 
-      final input = CycleEngineInput(
-        db: db,
-        appSettings: appSettings,
-        now: now,
-      );
+        final input = CycleEngineInput(
+          db: db,
+          appSettings: appSettings,
+          now: now,
+        );
 
-      final output = await engine.calculate(input);
+        final output = await engine.calculate(input);
 
-      expect(output.currentPhase, CyclePhase.pregnancy);
-      expect(output.nextPeriodPrediction, isNull);
-      expect(output.fertileWindowStart, isNull);
-      expect(output.fertileWindowEnd, isNull);
-      expect(output.ovulationDay, isNull);
-      expect(output.nextPeriodWindowStart, isNull);
-      expect(output.nextPeriodWindowEnd, isNull);
-      expect(output.pmsWindowStart, isNull);
-      expect(output.pmsWindowEnd, isNull);
-      expect(output.forecast, isEmpty);
-      expect(output.regularityLevel, RegularityLevel.pregnancy);
-      expect(output.disclaimerCode, CycleDisclaimerCode.pregnancyModeActive);
-    });
+        expect(output.currentPhase, CyclePhase.pregnancy);
+        expect(output.nextPeriodPrediction, isNull);
+        expect(output.fertileWindowStart, isNull);
+        expect(output.fertileWindowEnd, isNull);
+        expect(output.ovulationDay, isNull);
+        expect(output.nextPeriodWindowStart, isNull);
+        expect(output.nextPeriodWindowEnd, isNull);
+        expect(output.pmsWindowStart, isNull);
+        expect(output.pmsWindowEnd, isNull);
+        expect(output.forecast, isEmpty);
+        expect(output.regularityLevel, RegularityLevel.pregnancy);
+        expect(output.disclaimerCode, CycleDisclaimerCode.pregnancyModeActive);
+      },
+    );
   });
 }

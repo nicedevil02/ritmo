@@ -19,7 +19,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Pregnancy EDD Source Badge Tests (PRG-33)', () {
-    testWidgets('renders correct badge for ultrasound, doctor_edd, and lmp', (tester) async {
+    testWidgets('renders correct badge for ultrasound, doctor_edd, and lmp', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

@@ -44,45 +44,48 @@ void main() {
       expect(daysDiff84, inInclusiveRange(178, 186));
     });
 
-    test('calculateCurrentGestation handles day 0, day 14, day 280, and post-term day 285', () {
-      final lmp = DateTime(2026, 1, 1);
+    test(
+      'calculateCurrentGestation handles day 0, day 14, day 280, and post-term day 285',
+      () {
+        final lmp = DateTime(2026, 1, 1);
 
-      // Day 0 (LMP day)
-      final ga0 = PregnancyDateEngine.calculateCurrentGestation(
-        lmp: lmp,
-        now: DateTime(2026, 1, 1),
-      );
-      expect(ga0.totalDays, equals(0));
-      expect(ga0.weeks, equals(0));
-      expect(ga0.days, equals(0));
+        // Day 0 (LMP day)
+        final ga0 = PregnancyDateEngine.calculateCurrentGestation(
+          lmp: lmp,
+          now: DateTime(2026, 1, 1),
+        );
+        expect(ga0.totalDays, equals(0));
+        expect(ga0.weeks, equals(0));
+        expect(ga0.days, equals(0));
 
-      // Day 14 (2 weeks)
-      final ga14 = PregnancyDateEngine.calculateCurrentGestation(
-        lmp: lmp,
-        now: DateTime(2026, 1, 15),
-      );
-      expect(ga14.totalDays, equals(14));
-      expect(ga14.weeks, equals(2));
-      expect(ga14.days, equals(0));
+        // Day 14 (2 weeks)
+        final ga14 = PregnancyDateEngine.calculateCurrentGestation(
+          lmp: lmp,
+          now: DateTime(2026, 1, 15),
+        );
+        expect(ga14.totalDays, equals(14));
+        expect(ga14.weeks, equals(2));
+        expect(ga14.days, equals(0));
 
-      // Day 280 (40 weeks)
-      final ga280 = PregnancyDateEngine.calculateCurrentGestation(
-        lmp: lmp,
-        now: DateTime(2026, 10, 8),
-      );
-      expect(ga280.totalDays, equals(280));
-      expect(ga280.weeks, equals(40));
-      expect(ga280.days, equals(0));
+        // Day 280 (40 weeks)
+        final ga280 = PregnancyDateEngine.calculateCurrentGestation(
+          lmp: lmp,
+          now: DateTime(2026, 10, 8),
+        );
+        expect(ga280.totalDays, equals(280));
+        expect(ga280.weeks, equals(40));
+        expect(ga280.days, equals(0));
 
-      // Day 285 (40 weeks + 5 days)
-      final ga285 = PregnancyDateEngine.calculateCurrentGestation(
-        lmp: lmp,
-        now: DateTime(2026, 10, 13),
-      );
-      expect(ga285.totalDays, equals(285));
-      expect(ga285.weeks, equals(40));
-      expect(ga285.days, equals(5));
-    });
+        // Day 285 (40 weeks + 5 days)
+        final ga285 = PregnancyDateEngine.calculateCurrentGestation(
+          lmp: lmp,
+          now: DateTime(2026, 10, 13),
+        );
+        expect(ga285.totalDays, equals(285));
+        expect(ga285.weeks, equals(40));
+        expect(ga285.days, equals(5));
+      },
+    );
 
     test('calculateTrimester correctly maps day boundaries', () {
       expect(PregnancyDateEngine.calculateTrimester(1), equals(1));
@@ -94,23 +97,38 @@ void main() {
       expect(PregnancyDateEngine.calculateTrimester(290), equals(3));
     });
 
-    test('calculateRemainingDays and isOverdue handle pre, on, and post EDD', () {
-      final edd = DateTime(2026, 10, 8);
+    test(
+      'calculateRemainingDays and isOverdue handle pre, on, and post EDD',
+      () {
+        final edd = DateTime(2026, 10, 8);
 
-      // 10 days before EDD
-      final nowBefore = DateTime(2026, 9, 28);
-      expect(PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowBefore), equals(10));
-      expect(PregnancyDateEngine.isOverdue(edd: edd, now: nowBefore), isFalse);
+        // 10 days before EDD
+        final nowBefore = DateTime(2026, 9, 28);
+        expect(
+          PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowBefore),
+          equals(10),
+        );
+        expect(
+          PregnancyDateEngine.isOverdue(edd: edd, now: nowBefore),
+          isFalse,
+        );
 
-      // On EDD
-      final nowOn = DateTime(2026, 10, 8);
-      expect(PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowOn), equals(0));
-      expect(PregnancyDateEngine.isOverdue(edd: edd, now: nowOn), isFalse);
+        // On EDD
+        final nowOn = DateTime(2026, 10, 8);
+        expect(
+          PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowOn),
+          equals(0),
+        );
+        expect(PregnancyDateEngine.isOverdue(edd: edd, now: nowOn), isFalse);
 
-      // 3 days after EDD
-      final nowAfter = DateTime(2026, 10, 11);
-      expect(PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowAfter), equals(0));
-      expect(PregnancyDateEngine.isOverdue(edd: edd, now: nowAfter), isTrue);
-    });
+        // 3 days after EDD
+        final nowAfter = DateTime(2026, 10, 11);
+        expect(
+          PregnancyDateEngine.calculateRemainingDays(edd: edd, now: nowAfter),
+          equals(0),
+        );
+        expect(PregnancyDateEngine.isOverdue(edd: edd, now: nowAfter), isTrue);
+      },
+    );
   });
 }

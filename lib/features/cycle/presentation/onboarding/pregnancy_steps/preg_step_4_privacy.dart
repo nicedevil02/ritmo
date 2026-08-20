@@ -77,7 +77,8 @@ class _PregStep4PrivacyState extends State<PregStep4Privacy> {
             subtitle: 'مستقل از قفل بخش چرخه است.',
             icon: CupertinoIcons.lock_fill,
             value: data.lockEnabled,
-            onChanged: (val) => widget.onDataChanged(data.copyWith(lockEnabled: val)),
+            onChanged: (val) =>
+                widget.onDataChanged(data.copyWith(lockEnabled: val)),
           ),
 
           // Lock helper if enabled and no password set
@@ -119,20 +120,24 @@ class _PregStep4PrivacyState extends State<PregStep4Privacy> {
           // 2. Hide from dashboard
           _buildToggleRow(
             title: 'پنهان کردن بارداری از صفحهٔ امروز',
-            subtitle: 'اطلاعات بارداری در کارت امروز داشبورد اصلی نمایش داده نمی‌شود.',
+            subtitle:
+                'اطلاعات بارداری در کارت امروز داشبورد اصلی نمایش داده نمی‌شود.',
             icon: CupertinoIcons.eye_slash_fill,
             value: data.hideFromDashboard,
-            onChanged: (val) => widget.onDataChanged(data.copyWith(hideFromDashboard: val)),
+            onChanged: (val) =>
+                widget.onDataChanged(data.copyWith(hideFromDashboard: val)),
           ),
           const SizedBox(height: 12),
 
           // 3. Mask notifications
           _buildToggleRow(
             title: 'پوشاندن متن یادآوری‌ها در اعلان‌ها',
-            subtitle: 'متن اعلان فقط می‌نویسد یادآوری ریتمو و هیچ اشاره‌ای به بارداری ندارد.',
+            subtitle:
+                'متن اعلان فقط می‌نویسد یادآوری ریتمو و هیچ اشاره‌ای به بارداری ندارد.',
             icon: CupertinoIcons.bell_fill,
             value: data.maskNotifications,
-            onChanged: (val) => widget.onDataChanged(data.copyWith(maskNotifications: val)),
+            onChanged: (val) =>
+                widget.onDataChanged(data.copyWith(maskNotifications: val)),
           ),
           const SizedBox(height: 24),
 
@@ -142,9 +147,7 @@ class _PregStep4PrivacyState extends State<PregStep4Privacy> {
             decoration: BoxDecoration(
               color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: primaryColor.withValues(alpha: 0.25),
-              ),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -210,8 +213,8 @@ class _PregStep4PrivacyState extends State<PregStep4Privacy> {
         color: value
             ? primaryColor.withValues(alpha: isDark ? 0.14 : 0.06)
             : (isDark
-                ? Colors.black.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.6)),
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.6)),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: value
@@ -228,8 +231,8 @@ class _PregStep4PrivacyState extends State<PregStep4Privacy> {
               color: value
                   ? primaryColor.withValues(alpha: 0.2)
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.04)),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.04)),
               shape: BoxShape.circle,
             ),
             child: Icon(

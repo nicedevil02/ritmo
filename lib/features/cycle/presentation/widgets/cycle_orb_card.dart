@@ -70,13 +70,15 @@ class CycleOrbCard extends StatelessWidget {
         remainingText = 'محاسبات چرخه متوقف شده است';
         phaseColor = colors.primary;
         emoji = '🤰';
-        statusTip = 'حالت بارداری فعال است و ریتم متناسب با این دوران تنظیم شده است.';
+        statusTip =
+            'حالت بارداری فعال است و ریتم متناسب با این دوران تنظیم شده است.';
       case CyclePhase.noData:
         phaseText = 'در انتظار ثبت داده';
         remainingText = 'اولین دورهٔ خود را ثبت کنید';
         phaseColor = colors.textSecondary;
         emoji = '📅';
-        statusTip = 'برای شروع تحلیل‌های هوشمند، اولین دورهٔ ریتم خود را ثبت کنید.';
+        statusTip =
+            'برای شروع تحلیل‌های هوشمند، اولین دورهٔ ریتم خود را ثبت کنید.';
       case CyclePhase.follicular:
         phaseText = 'فاز فولیکولار (رشد)';
         remainingText =

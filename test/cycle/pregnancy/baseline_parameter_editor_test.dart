@@ -66,8 +66,12 @@ void main() {
 
       // Insert a closed period so CycleScreen shows dashboard
       final now = CycleClock.now;
-      final pStart = CycleDateContract.cleanDate(now.subtract(const Duration(days: 20)));
-      final pEnd = CycleDateContract.cleanDate(now.subtract(const Duration(days: 15)));
+      final pStart = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 20)),
+      );
+      final pEnd = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 15)),
+      );
       await db.insert(CyclePeriodContract.table, {
         CyclePeriodContract.colId: 'seed_period',
         CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(pStart),
@@ -87,63 +91,68 @@ void main() {
       await db.close();
     });
 
-    testWidgets('editing cycle_avg_length updates database and dual-writes aliases', (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'editing cycle_avg_length updates database and dual-writes aliases',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        await tester.pumpWidget(_buildCycleScreenApp());
-        for (var i = 0; i < 5; i++) {
-          await Future.delayed(const Duration(milliseconds: 30));
-          await tester.pump(const Duration(milliseconds: 50));
-        }
+        await tester.runAsync(() async {
+          await tester.pumpWidget(_buildCycleScreenApp());
+          for (var i = 0; i < 5; i++) {
+            await Future.delayed(const Duration(milliseconds: 30));
+            await tester.pump(const Duration(milliseconds: 50));
+          }
 
-        // Open settings panel
-        final settingsBtn = find.byIcon(CupertinoIcons.gear_alt);
-        expect(settingsBtn, findsOneWidget);
-        await tester.tap(settingsBtn);
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pump(const Duration(milliseconds: 500));
+          // Open settings panel
+          final settingsBtn = find.byIcon(CupertinoIcons.gear_alt);
+          expect(settingsBtn, findsOneWidget);
+          await tester.tap(settingsBtn);
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump(const Duration(milliseconds: 500));
 
-        // Tap on average cycle length row
-        final lengthRow = find.text('متوسط طول چرخه (فاصله شروع دو پریود)');
-        expect(lengthRow, findsOneWidget);
-        await tester.ensureVisible(lengthRow);
-        await tester.tap(lengthRow);
-        await tester.pump(const Duration(milliseconds: 500));
-        await tester.pump(const Duration(milliseconds: 500));
+          // Tap on average cycle length row
+          final lengthRow = find.text('متوسط طول چرخه (فاصله شروع دو پریود)');
+          expect(lengthRow, findsOneWidget);
+          await tester.ensureVisible(lengthRow);
+          await tester.tap(lengthRow);
+          await tester.pump(const Duration(milliseconds: 500));
+          await tester.pump(const Duration(milliseconds: 500));
 
-        // Verify picker modal opened with title
-        expect(find.text('طول کل چرخه بدنی'), findsOneWidget);
+          // Verify picker modal opened with title
+          expect(find.text('طول کل چرخه بدنی'), findsOneWidget);
 
-        // Tap plus icon to increment from 28 to 29
-        final plusIconFinder = find.byIcon(CupertinoIcons.plus_circle_fill);
-        if (plusIconFinder.evaluate().isNotEmpty) {
-          await tester.tap(plusIconFinder.first);
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+          // Tap plus icon to increment from 28 to 29
+          final plusIconFinder = find.byIcon(CupertinoIcons.plus_circle_fill);
+          if (plusIconFinder.evaluate().isNotEmpty) {
+            await tester.tap(plusIconFinder.first);
+            await tester.pump(const Duration(milliseconds: 100));
+          }
 
-        // Tap 'تأیید و ذخیره'
-        final saveBtn = find.widgetWithText(ElevatedButton, 'تأیید و ذخیره');
-        expect(saveBtn, findsOneWidget);
-        await tester.ensureVisible(saveBtn);
-        await tester.tap(saveBtn);
-        for (var i = 0; i < 5; i++) {
-          await Future.delayed(const Duration(milliseconds: 30));
-          await tester.pump(const Duration(milliseconds: 100));
-        }
+          // Tap 'تأیید و ذخیره'
+          final saveBtn = find.widgetWithText(ElevatedButton, 'تأیید و ذخیره');
+          expect(saveBtn, findsOneWidget);
+          await tester.ensureVisible(saveBtn);
+          await tester.tap(saveBtn);
+          for (var i = 0; i < 5; i++) {
+            await Future.delayed(const Duration(milliseconds: 30));
+            await tester.pump(const Duration(milliseconds: 100));
+          }
 
-        // Verify database updated
-        final rawSettings = await db.query('app_settings');
-        final settings = {for (final row in rawSettings) row['key'] as String: row['value']};
+          // Verify database updated
+          final rawSettings = await db.query('app_settings');
+          final settings = {
+            for (final row in rawSettings) row['key'] as String: row['value'],
+          };
 
-        expect(settings['cycle_avg_length'], isNotNull);
-        expect(settings['user_cycle_length'], isNotNull);
-      });
-    });
+          expect(settings['cycle_avg_length'], isNotNull);
+          expect(settings['user_cycle_length'], isNotNull);
+        });
+      },
+    );
   });
 }

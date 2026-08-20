@@ -79,10 +79,7 @@ class PregnancyOnboardingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUltrasound({
-    required DateTime date,
-    required int crlMm,
-  }) {
+  void setUltrasound({required DateTime date, required int crlMm}) {
     final calculatedDue = PregnancyDateEngine.calculateEddFromUltrasound(
       ultrasoundDate: date,
       crownRumpLengthMm: crlMm,
@@ -176,8 +173,11 @@ class PregnancyOnboardingController extends ChangeNotifier {
     final d = customData ?? buildOnboardingData();
     final cleanNow = CycleDateContract.cleanDate(CycleClock.now);
     final effectiveLmp = d.lmpDate ?? cleanNow;
-    final effectiveDue = d.dueDate ??
-        effectiveLmp.add(const Duration(days: PregnancyProfile.gestationTotalDays));
+    final effectiveDue =
+        d.dueDate ??
+        effectiveLmp.add(
+          const Duration(days: PregnancyProfile.gestationTotalDays),
+        );
 
     return PregnancyProfile(
       lmpDate: effectiveLmp,
@@ -229,7 +229,8 @@ class PregnancyOnboardingController extends ChangeNotifier {
         ],
       );
       final existingConsentMap = {
-        for (final r in existingConsentRows) r['key'] as String: r['value']?.toString()
+        for (final r in existingConsentRows)
+          r['key'] as String: r['value']?.toString(),
       };
 
       // 4. Pause cycle predictions consent
@@ -240,7 +241,11 @@ class PregnancyOnboardingController extends ChangeNotifier {
           prev,
           txn,
         );
-        await PregnancySettings.saveSetting('cycle_consent_reminders', 'false', txn);
+        await PregnancySettings.saveSetting(
+          'cycle_consent_reminders',
+          'false',
+          txn,
+        );
       }
 
       // 5. Suspend worship consent
@@ -251,7 +256,11 @@ class PregnancyOnboardingController extends ChangeNotifier {
           prev,
           txn,
         );
-        await PregnancySettings.saveSetting('cycle_consent_worship', 'false', txn);
+        await PregnancySettings.saveSetting(
+          'cycle_consent_worship',
+          'false',
+          txn,
+        );
       }
 
       // 6. Hide from dashboard consent
@@ -262,14 +271,19 @@ class PregnancyOnboardingController extends ChangeNotifier {
           prev,
           txn,
         );
-        await PregnancySettings.saveSetting('cycle_consent_dashboard', 'false', txn);
+        await PregnancySettings.saveSetting(
+          'cycle_consent_dashboard',
+          'false',
+          txn,
+        );
       }
 
       // 7. Close open cycle period if any
       try {
         final openPeriods = await txn.query(
           CyclePeriodContract.table,
-          where: '${CyclePeriodContract.colEndDate} IS NULL OR ${CyclePeriodContract.colEndDate} = ?',
+          where:
+              '${CyclePeriodContract.colEndDate} IS NULL OR ${CyclePeriodContract.colEndDate} = ?',
           whereArgs: [''],
         );
         for (final row in openPeriods) {
@@ -282,7 +296,9 @@ class PregnancyOnboardingController extends ChangeNotifier {
               await txn.update(
                 CyclePeriodContract.table,
                 {
-                  CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(defaultEnd),
+                  CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(
+                    defaultEnd,
+                  ),
                   CyclePeriodContract.colUpdatedAt: nowMs,
                 },
                 where: '${CyclePeriodContract.colId} = ?',

@@ -117,63 +117,80 @@ void main() {
   });
 
   group('Cycle Resume Reminder Tests (PRG-39)', () {
-    test('schedules cycle resume reminder 40 days after birth when unmasked', () async {
-      final now = DateTime(2026, 6, 1, 10, 0);
-      final resumeDate = now.add(const Duration(days: 40));
+    test(
+      'schedules cycle resume reminder 40 days after birth when unmasked',
+      () async {
+        final now = DateTime(2026, 6, 1, 10, 0);
+        final resumeDate = now.add(const Duration(days: 40));
 
-      final settings = {
-        'cycle_pregnancy_mode': 'false',
-        'preg_cycle_resume_reminder': resumeDate.millisecondsSinceEpoch.toString(),
-        'preg_mask_notifications': 'false',
-      };
+        final settings = {
+          'cycle_pregnancy_mode': 'false',
+          'preg_cycle_resume_reminder': resumeDate.millisecondsSinceEpoch
+              .toString(),
+          'preg_mask_notifications': 'false',
+        };
 
-      await PregnancyReminderScheduler.rescheduleAll(
-        dbExecutor: db,
-        appSettings: settings,
-        now: now,
-      );
+        await PregnancyReminderScheduler.rescheduleAll(
+          dbExecutor: db,
+          appSettings: settings,
+          now: now,
+        );
 
-      expect(mockAlarm.scheduledIds, contains(NotificationIds.pregnancyCycleResume.toString()));
+        expect(
+          mockAlarm.scheduledIds,
+          contains(NotificationIds.pregnancyCycleResume.toString()),
+        );
 
-      final inbox = await db.query('inbox_items');
-      final resumeItems = inbox.where(
-        (r) => r['linkEntityId'] == 'pregnancy_cycle_resume',
-      ).toList();
+        final inbox = await db.query('inbox_items');
+        final resumeItems = inbox
+            .where((r) => r['linkEntityId'] == 'pregnancy_cycle_resume')
+            .toList();
 
-      expect(resumeItems, isNotEmpty);
-      expect(resumeItems.first['title'], 'پیگیری سلامت و چرخه قاعدگی');
-    });
+        expect(resumeItems, isNotEmpty);
+        expect(resumeItems.first['title'], 'پیگیری سلامت و چرخه قاعدگی');
+      },
+    );
 
-    test('schedules cycle resume reminder with masked title when masked', () async {
-      final now = DateTime(2026, 6, 1, 10, 0);
-      final resumeDate = now.add(const Duration(days: 40));
+    test(
+      'schedules cycle resume reminder with masked title when masked',
+      () async {
+        final now = DateTime(2026, 6, 1, 10, 0);
+        final resumeDate = now.add(const Duration(days: 40));
 
-      final settings = {
-        'cycle_pregnancy_mode': 'false',
-        'preg_cycle_resume_reminder': resumeDate.millisecondsSinceEpoch.toString(),
-        'preg_mask_notifications': 'true',
-      };
+        final settings = {
+          'cycle_pregnancy_mode': 'false',
+          'preg_cycle_resume_reminder': resumeDate.millisecondsSinceEpoch
+              .toString(),
+          'preg_mask_notifications': 'true',
+        };
 
-      await PregnancyReminderScheduler.rescheduleAll(
-        dbExecutor: db,
-        appSettings: settings,
-        now: now,
-      );
+        await PregnancyReminderScheduler.rescheduleAll(
+          dbExecutor: db,
+          appSettings: settings,
+          now: now,
+        );
 
-      expect(mockAlarm.scheduledIds, contains(NotificationIds.pregnancyCycleResume.toString()));
+        expect(
+          mockAlarm.scheduledIds,
+          contains(NotificationIds.pregnancyCycleResume.toString()),
+        );
 
-      final inbox = await db.query('inbox_items');
-      final resumeItems = inbox.where(
-        (r) => r['linkEntityId'] == 'pregnancy_cycle_resume',
-      ).toList();
+        final inbox = await db.query('inbox_items');
+        final resumeItems = inbox
+            .where((r) => r['linkEntityId'] == 'pregnancy_cycle_resume')
+            .toList();
 
-      expect(resumeItems, isNotEmpty);
-      expect(resumeItems.first['title'], 'یادآوری ریتمو');
-    });
+        expect(resumeItems, isNotEmpty);
+        expect(resumeItems.first['title'], 'یادآوری ریتمو');
+      },
+    );
 
     test('cancelAll cancels cycle resume reminder ID 2090', () async {
       await PregnancyReminderScheduler.cancelAll();
-      expect(mockAlarm.cancelledIds, contains(NotificationIds.pregnancyCycleResume.toString()));
+      expect(
+        mockAlarm.cancelledIds,
+        contains(NotificationIds.pregnancyCycleResume.toString()),
+      );
     });
   });
 }

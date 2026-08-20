@@ -20,20 +20,23 @@ void main() {
       expect(res.errorMessageFa, contains('آینده'));
     });
 
-    test('2. Negative: eddBeforeLmp error when EDD is not strictly after LMP', () {
-      final lmp = DateTime(2026, 2, 1);
-      final edd = DateTime(2026, 1, 15);
+    test(
+      '2. Negative: eddBeforeLmp error when EDD is not strictly after LMP',
+      () {
+        final lmp = DateTime(2026, 2, 1);
+        final edd = DateTime(2026, 1, 15);
 
-      final res = PregnancyDateEngine.validatePregnancyDates(
-        lmp: lmp,
-        edd: edd,
-        now: referenceNow,
-      );
+        final res = PregnancyDateEngine.validatePregnancyDates(
+          lmp: lmp,
+          edd: edd,
+          now: referenceNow,
+        );
 
-      expect(res.isValid, isFalse);
-      expect(res.errorCode, equals(PregnancyDateErrorCode.eddBeforeLmp));
-      expect(res.errorMessageFa, contains('بعد از تاریخ شروع'));
-    });
+        expect(res.isValid, isFalse);
+        expect(res.errorCode, equals(PregnancyDateErrorCode.eddBeforeLmp));
+        expect(res.errorMessageFa, contains('بعد از تاریخ شروع'));
+      },
+    );
 
     test('3. Negative: invalidGestationSpan when span is < 240 days', () {
       final lmp = DateTime(2026, 2, 1);
@@ -46,7 +49,10 @@ void main() {
       );
 
       expect(res.isValid, isFalse);
-      expect(res.errorCode, equals(PregnancyDateErrorCode.invalidGestationSpan));
+      expect(
+        res.errorCode,
+        equals(PregnancyDateErrorCode.invalidGestationSpan),
+      );
       expect(res.errorMessageFa, contains('۲۴۰ تا ۳۰۰'));
     });
 
@@ -61,23 +67,36 @@ void main() {
       );
 
       expect(res.isValid, isFalse);
-      expect(res.errorCode, equals(PregnancyDateErrorCode.invalidGestationSpan));
-    });
-
-    test('5. Negative: gestationExceeds42Weeks when gestation is > 42 weeks', () {
-      final lmp = DateTime(2025, 7, 1); // > 300 days ago relative to 2026-06-01
-      final edd = DateTime(2026, 4, 7); // 280 days after LMP
-
-      final res = PregnancyDateEngine.validatePregnancyDates(
-        lmp: lmp,
-        edd: edd,
-        now: referenceNow,
+      expect(
+        res.errorCode,
+        equals(PregnancyDateErrorCode.invalidGestationSpan),
       );
-
-      expect(res.isValid, isFalse);
-      expect(res.errorCode, equals(PregnancyDateErrorCode.gestationExceeds42Weeks));
-      expect(res.errorMessageFa, contains('۴۲ هفته'));
     });
+
+    test(
+      '5. Negative: gestationExceeds42Weeks when gestation is > 42 weeks',
+      () {
+        final lmp = DateTime(
+          2025,
+          7,
+          1,
+        ); // > 300 days ago relative to 2026-06-01
+        final edd = DateTime(2026, 4, 7); // 280 days after LMP
+
+        final res = PregnancyDateEngine.validatePregnancyDates(
+          lmp: lmp,
+          edd: edd,
+          now: referenceNow,
+        );
+
+        expect(res.isValid, isFalse);
+        expect(
+          res.errorCode,
+          equals(PregnancyDateErrorCode.gestationExceeds42Weeks),
+        );
+        expect(res.errorMessageFa, contains('۴۲ هفته'));
+      },
+    );
 
     test('6. Positive: Normal valid dates within acceptable boundaries', () {
       final lmp = DateTime(2026, 2, 1);

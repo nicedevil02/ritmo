@@ -65,30 +65,35 @@ void main() {
       }
     }
 
-    testWidgets('shows incomplete state card instead of 0-week pregnancy view when dates are missing', (tester) async {
-      await tester.runAsync(() async {
-        await CycleStateNotifier.instance.loadState();
-        await pumpScreen(tester);
-      });
+    testWidgets(
+      'shows incomplete state card instead of 0-week pregnancy view when dates are missing',
+      (tester) async {
+        await tester.runAsync(() async {
+          await CycleStateNotifier.instance.loadState();
+          await pumpScreen(tester);
+        });
 
-      expect(find.text('اطلاعات بارداری ناقص است'), findsOneWidget);
-      expect(find.text('تکمیل راه‌اندازی بارداری'), findsOneWidget);
-      expect(find.byType(CyclePregnancyModeView), findsNothing);
-    });
+        expect(find.text('اطلاعات بارداری ناقص است'), findsOneWidget);
+        expect(find.text('تکمیل راه‌اندازی بارداری'), findsOneWidget);
+        expect(find.byType(CyclePregnancyModeView), findsNothing);
+      },
+    );
 
-    testWidgets('shows CyclePregnancyModeView when dates are valid', (tester) async {
+    testWidgets('shows CyclePregnancyModeView when dates are valid', (
+      tester,
+    ) async {
       await tester.runAsync(() async {
         // Add valid dates
-        await db.insert(
-          'app_settings',
-          {'key': 'preg_start_date', 'value': '2026-01-01', 'updatedAt': 1},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        await db.insert(
-          'app_settings',
-          {'key': 'preg_due_date', 'value': '2026-10-08', 'updatedAt': 1},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('app_settings', {
+          'key': 'preg_start_date',
+          'value': '2026-01-01',
+          'updatedAt': 1,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'preg_due_date',
+          'value': '2026-10-08',
+          'updatedAt': 1,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
 
         await CycleStateNotifier.instance.loadState();
         await pumpScreen(tester);

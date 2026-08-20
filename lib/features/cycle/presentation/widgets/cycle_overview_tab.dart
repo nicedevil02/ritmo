@@ -68,10 +68,15 @@ class CycleOverviewTab extends StatelessWidget {
 
     final today = CycleClock.now;
     final periodModels = periods.map((p) => CyclePeriod.fromMap(p)).toList();
-    final isTodayPeriod =
-        CyclePeriodStatus.isConfirmedPeriodDay(periodModels, today, today);
-    final activePeriodDay =
-        CyclePeriodStatus.activeDayNumber(periodModels, today);
+    final isTodayPeriod = CyclePeriodStatus.isConfirmedPeriodDay(
+      periodModels,
+      today,
+      today,
+    );
+    final activePeriodDay = CyclePeriodStatus.activeDayNumber(
+      periodModels,
+      today,
+    );
     final phase = engineOutput?.currentPhase ?? CyclePhase.noData;
 
     return Column(
@@ -82,10 +87,9 @@ class CycleOverviewTab extends StatelessWidget {
             engineOutput: engineOutput!,
             pendingRequest: pendingConfirmation,
             onOpenConfirmation: onOpenConfirmation ?? () {},
-            onCloseForgottenPeriod:
-                forgottenPeriod != null
-                    ? () => onCloseForgottenPeriod(forgottenPeriod!)
-                    : null,
+            onCloseForgottenPeriod: forgottenPeriod != null
+                ? () => onCloseForgottenPeriod(forgottenPeriod!)
+                : null,
           ),
         if (forgottenPeriod != null && pendingConfirmation == null) ...[
           _buildForgottenPeriodWarning(context, colors, isDark),

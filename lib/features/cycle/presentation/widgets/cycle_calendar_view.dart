@@ -101,7 +101,8 @@ class CycleCalendarView extends StatefulWidget {
         distinctStarts.add(pStart);
       }
     }
-    final sortedStarts = distinctStarts.toList()..sort((a, b) => a.compareTo(b));
+    final sortedStarts = distinctStarts.toList()
+      ..sort((a, b) => a.compareTo(b));
 
     void markRetrospectiveCycle(
       DateTime start,
@@ -161,14 +162,18 @@ class CycleCalendarView extends StatefulWidget {
     // 2.2 Process the cycle starting at the last recorded start up to the first forecast cycle
     if (sortedStarts.isNotEmpty) {
       final sLast = sortedStarts.last;
-      final firstForecastStart =
-          forecast.isNotEmpty
-              ? CycleDateContract.cleanDate(forecast.first.predictedStart)
-              : null;
+      final firstForecastStart = forecast.isNotEmpty
+          ? CycleDateContract.cleanDate(forecast.first.predictedStart)
+          : null;
 
       if (firstForecastStart == null) {
         final nextStart = sLast.add(Duration(days: effectiveAvgCycle));
-        markRetrospectiveCycle(sLast, nextStart, lutealPhaseDays, pmsWindowDays);
+        markRetrospectiveCycle(
+          sLast,
+          nextStart,
+          lutealPhaseDays,
+          pmsWindowDays,
+        );
       } else {
         var currStart = sLast;
         while (currStart.isBefore(firstForecastStart)) {
@@ -344,9 +349,15 @@ class _CycleCalendarViewState extends State<CycleCalendarView> {
 
     final pDur = CycleSettings.getPeriodDuration(widget.settings);
     final lutealDays = CycleSettings.getLutealPhase(widget.settings);
-    final pmsDays = int.tryParse(widget.settings[CycleSettings.keyPmsWindowDays] ?? '4') ?? 4;
-    final avgL = widget.engineOutput?.stats.avgCycleLength ??
-        (double.tryParse(widget.settings[CycleSettings.keyCycleLength] ?? '28') ?? 28.0);
+    final pmsDays =
+        int.tryParse(widget.settings[CycleSettings.keyPmsWindowDays] ?? '4') ??
+        4;
+    final avgL =
+        widget.engineOutput?.stats.avgCycleLength ??
+        (double.tryParse(
+              widget.settings[CycleSettings.keyCycleLength] ?? '28',
+            ) ??
+            28.0);
     final forecast = widget.engineOutput?.forecast ?? const <PredictedCycle>[];
 
     _marks = CycleCalendarView.buildMonthMarks(

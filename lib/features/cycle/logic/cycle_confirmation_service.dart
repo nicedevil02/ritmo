@@ -12,8 +12,7 @@ import 'package:sqflite/sqflite.dart';
 
 class CycleConfirmationService {
   CycleConfirmationService._();
-  static final CycleConfirmationService instance =
-      CycleConfirmationService._();
+  static final CycleConfirmationService instance = CycleConfirmationService._();
 
   static const int maxAutoAsksPerCycle = 3;
 
@@ -30,8 +29,8 @@ class CycleConfirmationService {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
 
       // بررسی تعویق (Snooze)
-      final snoozeUntilStr =
-          settings[CycleSettings.keyConfirmSnoozeUntil]?.toString();
+      final snoozeUntilStr = settings[CycleSettings.keyConfirmSnoozeUntil]
+          ?.toString();
       if (snoozeUntilStr != null && snoozeUntilStr.isNotEmpty) {
         final snoozeDate = CycleDateContract.parseDayKey(snoozeUntilStr);
         if (snoozeDate != null &&
@@ -45,10 +44,9 @@ class CycleConfirmationService {
           !engineOutput.isBleedingConfirmed &&
           (engineOutput.isStartDueToday ||
               engineOutput.awaitingStartConfirmation)) {
-        final kind =
-            engineOutput.isStartDueToday
-                ? CycleConfirmationKind.startDue
-                : CycleConfirmationKind.startOverdue;
+        final kind = engineOutput.isStartDueToday
+            ? CycleConfirmationKind.startDue
+            : CycleConfirmationKind.startOverdue;
 
         final targetDate =
             engineOutput.nextPeriodPrediction ??
@@ -77,10 +75,9 @@ class CycleConfirmationService {
       if (CycleSettings.isConfirmEndEnabled(settings) &&
           (engineOutput.awaitingEndConfirmation ||
               engineOutput.isOpenPeriodBeyondAverage)) {
-        final kind =
-            engineOutput.isOpenPeriodBeyondAverage
-                ? CycleConfirmationKind.bleedingProlonged
-                : CycleConfirmationKind.endDue;
+        final kind = engineOutput.isOpenPeriodBeyondAverage
+            ? CycleConfirmationKind.bleedingProlonged
+            : CycleConfirmationKind.endDue;
 
         final targetDate = engineOutput.actualPeriodStart ?? cleanNow;
         final reqId = CycleConfirmationRequest.buildId(kind, targetDate);
@@ -149,10 +146,9 @@ class CycleConfirmationService {
                   requestId.startsWith('bleedingProlonged')
               ? 'endDue'
               : 'startDue'),
-      'targetDate':
-          existing != null
-              ? CycleDateContract.toDayKey(existing.targetDate)
-              : CycleDateContract.toDayKey(cleanNow),
+      'targetDate': existing != null
+          ? CycleDateContract.toDayKey(existing.targetDate)
+          : CycleDateContract.toDayKey(cleanNow),
       'answer': answer.name,
       'answeredAt': nowMs,
       'askCount': newAskCount,
@@ -280,7 +276,8 @@ class CycleConfirmationService {
 
       await db.delete(
         'cycle_confirmations',
-        where: "(kind = 'endDue' OR kind = 'bleedingProlonged') AND targetDate <= ?",
+        where:
+            "(kind = 'endDue' OR kind = 'bleedingProlonged') AND targetDate <= ?",
         whereArgs: [CycleDateContract.toDayKey(maxTargetDate)],
       );
     } catch (e, st) {

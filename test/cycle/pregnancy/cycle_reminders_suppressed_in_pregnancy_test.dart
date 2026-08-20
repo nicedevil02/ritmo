@@ -45,47 +45,53 @@ void main() {
       await db.close();
     });
 
-    test('scheduleForecastReminders with pregnancyMode=true does not schedule reminders', () async {
-      final now = CycleClock.now;
-      final forecastCycles = [
-        PredictedCycle(
-          index: 1,
-          predictedStart: now.add(const Duration(days: 10)),
-          predictedEnd: now.add(const Duration(days: 15)),
-          windowStart: now.add(const Duration(days: 8)),
-          windowEnd: now.add(const Duration(days: 12)),
-          sigmaDays: 2.0,
-          periodDays: 5,
-          confidence: 0.9,
-          confidenceLevel: PredictionConfidenceLevel.high,
-          basis: ForecastBasis.measured,
-        ),
-      ];
+    test(
+      'scheduleForecastReminders with pregnancyMode=true does not schedule reminders',
+      () async {
+        final now = CycleClock.now;
+        final forecastCycles = [
+          PredictedCycle(
+            index: 1,
+            predictedStart: now.add(const Duration(days: 10)),
+            predictedEnd: now.add(const Duration(days: 15)),
+            windowStart: now.add(const Duration(days: 8)),
+            windowEnd: now.add(const Duration(days: 12)),
+            sigmaDays: 2.0,
+            periodDays: 5,
+            confidence: 0.9,
+            confidenceLevel: PredictionConfidenceLevel.high,
+            basis: ForecastBasis.measured,
+          ),
+        ];
 
-      await CycleNotificationService.scheduleForecastReminders(
-        forecastCycles: forecastCycles,
-        consentReminders: true,
-        pregnancyMode: true,
-        now: now,
-      );
+        await CycleNotificationService.scheduleForecastReminders(
+          forecastCycles: forecastCycles,
+          consentReminders: true,
+          pregnancyMode: true,
+          now: now,
+        );
 
-      final logRows = await db.query('alarm_delivery_log');
-      expect(logRows, isEmpty);
-    });
+        final logRows = await db.query('alarm_delivery_log');
+        expect(logRows, isEmpty);
+      },
+    );
 
-    test('scheduleReminders with pregnancyMode=true does not schedule reminders', () async {
-      final now = CycleClock.now;
-      final nextPeriod = now.add(const Duration(days: 10));
+    test(
+      'scheduleReminders with pregnancyMode=true does not schedule reminders',
+      () async {
+        final now = CycleClock.now;
+        final nextPeriod = now.add(const Duration(days: 10));
 
-      await CycleNotificationService.scheduleReminders(
-        nextPeriodWindowStart: nextPeriod,
-        consentReminders: true,
-        pregnancyMode: true,
-        now: now,
-      );
+        await CycleNotificationService.scheduleReminders(
+          nextPeriodWindowStart: nextPeriod,
+          consentReminders: true,
+          pregnancyMode: true,
+          now: now,
+        );
 
-      final logRows = await db.query('alarm_delivery_log');
-      expect(logRows, isEmpty);
-    });
+        final logRows = await db.query('alarm_delivery_log');
+        expect(logRows, isEmpty);
+      },
+    );
   });
 }

@@ -39,20 +39,18 @@ class CycleSegmentedTabs extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 2),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color:
-                  isActive
-                      ? activeThemeColor.withValues(alpha: 0.12)
-                      : (isDark
-                          ? Colors.white.withValues(alpha: 0.02)
-                          : Colors.black.withValues(alpha: 0.02)),
+              color: isActive
+                  ? activeThemeColor.withValues(alpha: 0.12)
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : Colors.black.withValues(alpha: 0.02)),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color:
-                    isActive
-                        ? activeThemeColor
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : colors.border),
+                color: isActive
+                    ? activeThemeColor
+                    : (isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : colors.border),
                 width: 1.2,
               ),
             ),
@@ -62,10 +60,9 @@ class CycleSegmentedTabs extends StatelessWidget {
                 Icon(
                   icon,
                   size: 13,
-                  color:
-                      isActive
-                          ? activeThemeColor
-                          : (isDark ? Colors.white54 : colors.textSecondary),
+                  color: isActive
+                      ? activeThemeColor
+                      : (isDark ? Colors.white54 : colors.textSecondary),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -73,10 +70,9 @@ class CycleSegmentedTabs extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    color:
-                        isActive
-                            ? activeThemeColor
-                            : (isDark ? Colors.white70 : colors.textSecondary),
+                    color: isActive
+                        ? activeThemeColor
+                        : (isDark ? Colors.white70 : colors.textSecondary),
                   ),
                 ),
               ],

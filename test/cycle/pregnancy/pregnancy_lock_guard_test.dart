@@ -40,47 +40,55 @@ void main() {
       await db.close();
     });
 
-    testWidgets('PregnancyLockGate renders child directly when preg_lock_enabled is false', (tester) async {
-      await tester.runAsync(() async {
-        final settings = {'preg_lock_enabled': 'false'};
+    testWidgets(
+      'PregnancyLockGate renders child directly when preg_lock_enabled is false',
+      (tester) async {
+        await tester.runAsync(() async {
+          final settings = {'preg_lock_enabled': 'false'};
 
-        await tester.pumpWidget(
-          _buildTestApp(
-            PregnancyLockGate(
-              settings: settings,
-              child: const Text('محتوای محافظت‌شده بارداری'),
+          await tester.pumpWidget(
+            _buildTestApp(
+              PregnancyLockGate(
+                settings: settings,
+                child: const Text('محتوای محافظت‌شده بارداری'),
+              ),
             ),
-          ),
-        );
-        await Future.delayed(const Duration(milliseconds: 100));
-        await tester.pump();
+          );
+          await Future.delayed(const Duration(milliseconds: 100));
+          await tester.pump();
 
-        expect(find.text('محتوای محافظت‌شده بارداری'), findsOneWidget);
-        expect(find.text('بخش بارداری قفل است'), findsNothing);
-      });
-    });
+          expect(find.text('محتوای محافظت‌شده بارداری'), findsOneWidget);
+          expect(find.text('بخش بارداری قفل است'), findsNothing);
+        });
+      },
+    );
 
-    testWidgets('PregnancyLockGate blocks child and shows lock screen when preg_lock_enabled is true', (tester) async {
-      await tester.runAsync(() async {
-        final settings = {'preg_lock_enabled': 'true'};
+    testWidgets(
+      'PregnancyLockGate blocks child and shows lock screen when preg_lock_enabled is true',
+      (tester) async {
+        await tester.runAsync(() async {
+          final settings = {'preg_lock_enabled': 'true'};
 
-        await tester.pumpWidget(
-          _buildTestApp(
-            PregnancyLockGate(
-              settings: settings,
-              child: const Text('محتوای محافظت‌شده بارداری'),
+          await tester.pumpWidget(
+            _buildTestApp(
+              PregnancyLockGate(
+                settings: settings,
+                child: const Text('محتوای محافظت‌شده بارداری'),
+              ),
             ),
-          ),
-        );
-        await Future.delayed(const Duration(milliseconds: 100));
-        await tester.pump();
+          );
+          await Future.delayed(const Duration(milliseconds: 100));
+          await tester.pump();
 
-        expect(find.text('محتوای محافظت‌شده بارداری'), findsNothing);
-        expect(find.text('حریم خصوصی بارداری'), findsOneWidget);
-      });
-    });
+          expect(find.text('محتوای محافظت‌شده بارداری'), findsNothing);
+          expect(find.text('حریم خصوصی بارداری'), findsOneWidget);
+        });
+      },
+    );
 
-    testWidgets('Entering PIN unlocks PregnancyLockGate and reveals child', (tester) async {
+    testWidgets('Entering PIN unlocks PregnancyLockGate and reveals child', (
+      tester,
+    ) async {
       await tester.runAsync(() async {
         await CycleLockService.instance.setPin('1234', db);
         final settings = {'preg_lock_enabled': 'true'};

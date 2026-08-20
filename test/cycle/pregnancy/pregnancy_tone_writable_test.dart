@@ -53,77 +53,90 @@ void main() {
       await db.close();
     });
 
-    testWidgets('renders Section 2 rows and editing tone/unit/countdown saves to db', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'renders Section 2 rows and editing tone/unit/countdown saves to db',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        final now = CycleClock.now;
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
-        final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
+        await tester.runAsync(() async {
+          final now = CycleClock.now;
+          final lmp = CycleDateContract.cleanDate(
+            now.subtract(const Duration(days: 70)),
+          );
+          final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
 
-        final profile = PregnancyProfile(
-          lmpDate: lmp,
-          dueDate: due,
-          eddSource: PregnancyEddSource.lmp,
-          tone: PregnancyTone.warm,
-          ageUnit: PregnancyAgeUnit.weeks,
-          showCountdown: true,
-        );
-        await PregnancySettings.saveProfile(profile, db);
+          final profile = PregnancyProfile(
+            lmpDate: lmp,
+            dueDate: due,
+            eddSource: PregnancyEddSource.lmp,
+            tone: PregnancyTone.warm,
+            ageUnit: PregnancyAgeUnit.weeks,
+            showCountdown: true,
+          );
+          await PregnancySettings.saveProfile(profile, db);
 
-        await tester.pumpWidget(_buildTestApp(PregnancySettingsSheet(initialProfile: profile)));
-        await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpWidget(
+            _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
 
-        expect(find.text('لحن و نمایش'), findsOneWidget);
-        expect(find.text('لحن همراهی و متن‌ها'), findsOneWidget);
-        expect(find.text('گرما و صمیمانه'), findsOneWidget);
-        expect(find.text('نمایش شمارش معکوس تا زایمان'), findsOneWidget);
-        expect(find.text('واحد نمایش سن بارداری'), findsOneWidget);
-        expect(find.text('هفته و روز'), findsOneWidget);
+          expect(find.text('لحن و نمایش'), findsOneWidget);
+          expect(find.text('لحن همراهی و متن‌ها'), findsOneWidget);
+          expect(find.text('گرما و صمیمانه'), findsOneWidget);
+          expect(find.text('نمایش شمارش معکوس تا زایمان'), findsOneWidget);
+          expect(find.text('واحد نمایش سن بارداری'), findsOneWidget);
+          expect(find.text('هفته و روز'), findsOneWidget);
 
-        // Tap tone row to open tone picker
-        await tester.tap(find.text('لحن همراهی و متن‌ها'));
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+          // Tap tone row to open tone picker
+          await tester.tap(find.text('لحن همراهی و متن‌ها'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
 
-        expect(find.text('انتخاب لحن همراهی'), findsOneWidget);
-        expect(find.text('آرام و علمی'), findsOneWidget);
+          expect(find.text('انتخاب لحن همراهی'), findsOneWidget);
+          expect(find.text('آرام و علمی'), findsOneWidget);
 
-        // Select calm tone
-        await tester.tap(find.text('آرام و علمی'));
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+          // Select calm tone
+          await tester.tap(find.text('آرام و علمی'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
 
-        // Verify database updated
-        final rawRows = await db.query('app_settings');
-        final settings = {for (final r in rawRows) r['key'] as String: r['value']};
-        expect(settings['preg_tone'], 'neutral');
+          // Verify database updated
+          final rawRows = await db.query('app_settings');
+          final settings = {
+            for (final r in rawRows) r['key'] as String: r['value'],
+          };
+          expect(settings['preg_tone'], 'neutral');
 
-        // Tap age unit row to open age unit picker
-        await tester.tap(find.text('واحد نمایش سن بارداری'));
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+          // Tap age unit row to open age unit picker
+          await tester.tap(find.text('واحد نمایش سن بارداری'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
 
-        expect(find.text('واحد نمایش سن بارداری'), findsWidgets);
-        expect(find.text('ماه و هفته'), findsOneWidget);
+          expect(find.text('واحد نمایش سن بارداری'), findsWidgets);
+          expect(find.text('ماه و هفته'), findsOneWidget);
 
-        // Select month unit
-        await tester.tap(find.text('ماه و هفته'));
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
+          // Select month unit
+          await tester.tap(find.text('ماه و هفته'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
 
-        final rawRows2 = await db.query('app_settings');
-        final settings2 = {for (final r in rawRows2) r['key'] as String: r['value']};
-        expect(settings2['preg_age_unit'], 'months');
-      });
-    });
+          final rawRows2 = await db.query('app_settings');
+          final settings2 = {
+            for (final r in rawRows2) r['key'] as String: r['value'],
+          };
+          expect(settings2['preg_age_unit'], 'months');
+        });
+      },
+    );
 
-    testWidgets('PregnancyHeader renders calm title when tone is calm', (tester) async {
+    testWidgets('PregnancyHeader renders calm title when tone is calm', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -132,7 +145,9 @@ void main() {
       });
 
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 70)),
+      );
 
       await tester.pumpWidget(
         _buildTestApp(

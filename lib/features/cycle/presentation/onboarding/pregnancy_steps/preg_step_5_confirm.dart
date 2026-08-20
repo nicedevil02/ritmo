@@ -32,9 +32,15 @@ class PregStep5Confirm extends StatelessWidget {
     final primaryColor = colors.primary;
     final now = CycleClock.now;
     final effectiveLmp = data.lmpDate ?? now.subtract(const Duration(days: 56));
-    final effectiveDue = data.dueDate ?? PregnancyDateEngine.dueDateFromLmp(effectiveLmp);
-    final age = PregnancyDateEngine.calculateCurrentGestation(lmp: effectiveLmp);
-    final formattedAge = PregnancyDateEngine.formatGestationalAgeFa(age, unit: data.ageUnit);
+    final effectiveDue =
+        data.dueDate ?? PregnancyDateEngine.dueDateFromLmp(effectiveLmp);
+    final age = PregnancyDateEngine.calculateCurrentGestation(
+      lmp: effectiveLmp,
+    );
+    final formattedAge = PregnancyDateEngine.formatGestationalAgeFa(
+      age,
+      unit: data.ageUnit,
+    );
 
     return SingleChildScrollView(
       key: const ValueKey('preg_step_5_confirm'),
@@ -42,7 +48,9 @@ class PregStep5Confirm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isEditMode ? 'بازبینی و ذخیرهٔ تغییرات' : 'تأیید و راه‌اندازی بارداری',
+            isEditMode
+                ? 'بازبینی و ذخیرهٔ تغییرات'
+                : 'تأیید و راه‌اندازی بارداری',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -91,12 +99,16 @@ class PregStep5Confirm extends StatelessWidget {
                 const Divider(height: 20),
                 _buildSummaryRow(
                   label: 'لحن همراهی:',
-                  value: data.tone == PregnancyTone.warm ? 'گرم و صمیمی' : 'آرام و ساده',
+                  value: data.tone == PregnancyTone.warm
+                      ? 'گرم و صمیمی'
+                      : 'آرام و ساده',
                 ),
                 const Divider(height: 20),
                 _buildSummaryRow(
                   label: 'پیش‌بینی پریود:',
-                  value: data.pauseCyclePredictions ? 'متوقف می‌شود' : 'فعال می‌ماند',
+                  value: data.pauseCyclePredictions
+                      ? 'متوقف می‌شود'
+                      : 'فعال می‌ماند',
                 ),
                 const Divider(height: 20),
                 _buildSummaryRow(
@@ -157,8 +169,13 @@ class PregStep5Confirm extends StatelessWidget {
                   child: isSaving
                       ? const CupertinoActivityIndicator(color: Colors.white)
                       : Text(
-                          isEditMode ? 'ذخیرهٔ تغییرات' : 'فعال‌سازی حالت بارداری',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          isEditMode
+                              ? 'ذخیرهٔ تغییرات'
+                              : 'فعال‌سازی حالت بارداری',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
@@ -179,10 +196,7 @@ class PregStep5Confirm extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            color: colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -220,8 +234,18 @@ class PregStep5Confirm extends StatelessWidget {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

@@ -46,7 +46,8 @@ class PregnancyOnboardingShell extends StatefulWidget {
   }
 
   @override
-  State<PregnancyOnboardingShell> createState() => _PregnancyOnboardingShellState();
+  State<PregnancyOnboardingShell> createState() =>
+      _PregnancyOnboardingShellState();
 }
 
 class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
@@ -112,7 +113,10 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
     setState(() => _isSaving = true);
     try {
       final data = _controller.buildOnboardingData();
-      await _controller.savePregnancyOnboarding(data, isEditMode: widget.isEditMode);
+      await _controller.savePregnancyOnboarding(
+        data,
+        isEditMode: widget.isEditMode,
+      );
 
       if (mounted) {
         // 1. If lockEnabled and no passcode configured, open passcode setup sheet
@@ -203,7 +207,9 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
               margin: EdgeInsets.only(bottom: viewInsets.bottom),
               decoration: BoxDecoration(
                 color: colors.surfaceElevated,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -219,7 +225,8 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                           onPressed: () async {
                             final canExit = await _confirmExit();
                             if (canExit && context.mounted) {
-                              (widget.onCancel ?? () => Navigator.of(context).pop())();
+                              (widget.onCancel ??
+                                  () => Navigator.of(context).pop())();
                             }
                           },
                         ),
@@ -227,7 +234,9 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                           child: Column(
                             children: [
                               Text(
-                                widget.isEditMode ? 'بازبینی راه‌اندازی بارداری' : 'راه‌اندازی بارداری',
+                                widget.isEditMode
+                                    ? 'بازبینی راه‌اندازی بارداری'
+                                    : 'راه‌اندازی بارداری',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -253,7 +262,10 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
 
                   // 5-segment Progress bar
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: List.generate(5, (index) {
                         final isActive = index <= _controller.currentStep;
@@ -265,7 +277,9 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                             decoration: BoxDecoration(
                               color: isCurrent
                                   ? colors.primary
-                                  : (isActive ? colors.primary.withValues(alpha: 0.5) : colors.border),
+                                  : (isActive
+                                        ? colors.primary.withValues(alpha: 0.5)
+                                        : colors.border),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -278,7 +292,12 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                   Flexible(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: _buildStepWidget(context, currentData, colors, isDark),
+                      child: _buildStepWidget(
+                        context,
+                        currentData,
+                        colors,
+                        isDark,
+                      ),
                     ),
                   ),
 
@@ -291,8 +310,13 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                           if (_controller.currentStep > 0) ...[
                             OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
                               onPressed: _controller.previousStep,
                               child: const Text('مرحله قبل'),
@@ -304,13 +328,22 @@ class _PregnancyOnboardingShellState extends State<PregnancyOnboardingShell> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colors.primary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
-                              onPressed: _isSaving ? null : () => _controller.nextStep(),
+                              onPressed: _isSaving
+                                  ? null
+                                  : () => _controller.nextStep(),
                               child: const Text(
                                 'مرحله بعد',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
                               ),
                             ),
                           ),

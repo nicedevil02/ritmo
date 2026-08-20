@@ -39,57 +39,66 @@ void main() {
   });
 
   group('Pregnancy Exit Dialog Copy Tests (PRG-43)', () {
-    testWidgets('PregnancyEndSheet renders all 3 paths with clear data fate copy', (tester) async {
-      bool birthTapped = false;
-      bool lossTapped = false;
-      bool mistakeTapped = false;
+    testWidgets(
+      'PregnancyEndSheet renders all 3 paths with clear data fate copy',
+      (tester) async {
+        bool birthTapped = false;
+        bool lossTapped = false;
+        bool mistakeTapped = false;
 
-      await tester.pumpWidget(
-        _buildTestApp(
-          PregnancyEndSheet(
-            onBirth: () => birthTapped = true,
-            onLoss: () => lossTapped = true,
-            onMistake: () => mistakeTapped = true,
+        await tester.pumpWidget(
+          _buildTestApp(
+            PregnancyEndSheet(
+              onBirth: () => birthTapped = true,
+              onLoss: () => lossTapped = true,
+              onMistake: () => mistakeTapped = true,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Verify Path 1: Birth
-      expect(find.text('تولد نوزاد 🎉'), findsOneWidget);
-      expect(
-        find.text('داده‌های بارداری نگه داشته می‌شوند و حالت بارداری بسته می‌شود.'),
-        findsOneWidget,
-      );
+        // Verify Path 1: Birth
+        expect(find.text('تولد نوزاد 🎉'), findsOneWidget);
+        expect(
+          find.text(
+            'داده‌های بارداری نگه داشته می‌شوند و حالت بارداری بسته می‌شود.',
+          ),
+          findsOneWidget,
+        );
 
-      // Verify Path 2: Loss
-      expect(find.text('پایان زودهنگام یا از دست رفتن 🤍'), findsOneWidget);
-      expect(
-        find.text('حالت بارداری بسته می‌شود. می‌توانی انتخاب کنی داده‌ها بمانند یا پاک شوند.'),
-        findsOneWidget,
-      );
+        // Verify Path 2: Loss
+        expect(find.text('پایان زودهنگام یا از دست رفتن 🤍'), findsOneWidget);
+        expect(
+          find.text(
+            'حالت بارداری بسته می‌شود. می‌توانی انتخاب کنی داده‌ها بمانند یا پاک شوند.',
+          ),
+          findsOneWidget,
+        );
 
-      // Verify Path 3: Mistake / Simple Exit
-      expect(find.text('ثبت اشتباهی یا خروج ساده 🔄'), findsOneWidget);
-      expect(
-        find.text('همهٔ داده‌های بارداری پاک می‌شوند و چرخه برمی‌گردد.'),
-        findsOneWidget,
-      );
+        // Verify Path 3: Mistake / Simple Exit
+        expect(find.text('ثبت اشتباهی یا خروج ساده 🔄'), findsOneWidget);
+        expect(
+          find.text('همهٔ داده‌های بارداری پاک می‌شوند و چرخه برمی‌گردد.'),
+          findsOneWidget,
+        );
 
-      // Tap Path 1
-      await tester.tap(find.text('تولد نوزاد 🎉'));
-      expect(birthTapped, isTrue);
+        // Tap Path 1
+        await tester.tap(find.text('تولد نوزاد 🎉'));
+        expect(birthTapped, isTrue);
 
-      // Tap Path 2
-      await tester.tap(find.text('پایان زودهنگام یا از دست رفتن 🤍'));
-      expect(lossTapped, isTrue);
+        // Tap Path 2
+        await tester.tap(find.text('پایان زودهنگام یا از دست رفتن 🤍'));
+        expect(lossTapped, isTrue);
 
-      // Tap Path 3
-      await tester.tap(find.text('ثبت اشتباهی یا خروج ساده 🔄'));
-      expect(mistakeTapped, isTrue);
-    });
+        // Tap Path 3
+        await tester.tap(find.text('ثبت اشتباهی یا خروج ساده 🔄'));
+        expect(mistakeTapped, isTrue);
+      },
+    );
 
-    testWidgets('PregnancyEndSheet.show opens bottom sheet with all 3 paths', (tester) async {
+    testWidgets('PregnancyEndSheet.show opens bottom sheet with all 3 paths', (
+      tester,
+    ) async {
       bool birthCalled = false;
 
       await tester.pumpWidget(

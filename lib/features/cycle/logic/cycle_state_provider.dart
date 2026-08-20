@@ -398,10 +398,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
   Future<void> deletePeriod(String id) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await CyclePeriodRepository.instance.deletePeriod(
-        db: db,
-        id: id,
-      );
+      await CyclePeriodRepository.instance.deletePeriod(db: db, id: id);
       RitmoEventBus().fire(
         RitmoEvent(type: 'CycleUpdated', payload: {'deletedId': id}),
       );

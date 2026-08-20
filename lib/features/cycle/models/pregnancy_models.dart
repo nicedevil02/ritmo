@@ -210,16 +210,22 @@ class PregnancyProfile {
 
   factory PregnancyProfile.fromMap(Map<String, dynamic> map) {
     final cleanNow = CycleDateContract.cleanDate(CycleClock.now);
-    final parsedLmp = CycleDateContract.parseDayKey(map['preg_start_date']?.toString());
+    final parsedLmp = CycleDateContract.parseDayKey(
+      map['preg_start_date']?.toString(),
+    );
     final lmp = parsedLmp ?? cleanNow;
 
-    final parsedDue = CycleDateContract.parseDayKey(map['preg_due_date']?.toString());
+    final parsedDue = CycleDateContract.parseDayKey(
+      map['preg_due_date']?.toString(),
+    );
     final due = parsedDue ?? lmp.add(const Duration(days: gestationTotalDays));
 
     return PregnancyProfile(
       lmpDate: lmp,
       dueDate: due,
-      eddSource: PregnancyEddSource.fromStorage(map['preg_edd_source']?.toString()),
+      eddSource: PregnancyEddSource.fromStorage(
+        map['preg_edd_source']?.toString(),
+      ),
       tone: PregnancyTone.fromStorage(map['preg_tone']?.toString()),
       ageUnit: PregnancyAgeUnit.fromStorage(map['preg_age_unit']?.toString()),
       isMultiple: map['preg_is_multiple']?.toString() == 'true',
@@ -227,16 +233,23 @@ class PregnancyProfile {
       sectionHidden: map['preg_section_hidden']?.toString() == 'true',
       maskNotifications: map['preg_mask_notifications']?.toString() == 'true',
       lockEnabled: map['preg_lock_enabled']?.toString() == 'true',
-      cycleResumeReminder: map['preg_cycle_resume_reminder']?.toString() == 'true',
-      kickTargetCount: int.tryParse(map['preg_kick_target_count']?.toString() ?? '') ??
+      cycleResumeReminder:
+          map['preg_cycle_resume_reminder']?.toString() == 'true',
+      kickTargetCount:
+          int.tryParse(map['preg_kick_target_count']?.toString() ?? '') ??
           defaultKickTargetCount,
-      kickWindowMinutes: int.tryParse(map['preg_kick_window_minutes']?.toString() ?? '') ??
+      kickWindowMinutes:
+          int.tryParse(map['preg_kick_window_minutes']?.toString() ?? '') ??
           defaultKickWindowMinutes,
-      kickBaselineComparison: map['preg_kick_baseline_compare']?.toString() == 'true',
+      kickBaselineComparison:
+          map['preg_kick_baseline_compare']?.toString() == 'true',
       visitReminderLeadDays:
-          int.tryParse(map['preg_visit_reminder_lead_days']?.toString() ?? '') ??
-              defaultVisitReminderLeadDays,
-      reminderHour: int.tryParse(map['preg_reminder_hour']?.toString() ?? '') ??
+          int.tryParse(
+            map['preg_visit_reminder_lead_days']?.toString() ?? '',
+          ) ??
+          defaultVisitReminderLeadDays,
+      reminderHour:
+          int.tryParse(map['preg_reminder_hour']?.toString() ?? '') ??
           defaultReminderHour,
       showCountdown: map['preg_show_countdown']?.toString() != 'false',
       supplementReminder: map['preg_supplement_reminder']?.toString() == 'true',
@@ -268,23 +281,23 @@ class PregnancyProfile {
 
   @override
   int get hashCode => Object.hash(
-        CycleDateContract.toDayKey(lmpDate),
-        CycleDateContract.toDayKey(dueDate),
-        eddSource,
-        tone,
-        ageUnit,
-        isMultiple,
-        isHighRisk,
-        sectionHidden,
-        maskNotifications,
-        lockEnabled,
-        cycleResumeReminder,
-        kickTargetCount,
-        kickWindowMinutes,
-        kickBaselineComparison,
-        visitReminderLeadDays,
-        reminderHour,
-      );
+    CycleDateContract.toDayKey(lmpDate),
+    CycleDateContract.toDayKey(dueDate),
+    eddSource,
+    tone,
+    ageUnit,
+    isMultiple,
+    isHighRisk,
+    sectionHidden,
+    maskNotifications,
+    lockEnabled,
+    cycleResumeReminder,
+    kickTargetCount,
+    kickWindowMinutes,
+    kickBaselineComparison,
+    visitReminderLeadDays,
+    reminderHour,
+  );
 }
 
 @immutable
@@ -303,11 +316,7 @@ class GestationalAge {
     final clamped = totalDays < 0 ? 0 : totalDays;
     final w = clamped ~/ 7;
     final d = clamped % 7;
-    return GestationalAge(
-      weeks: w,
-      days: d,
-      totalDays: clamped,
-    );
+    return GestationalAge(weeks: w, days: d, totalDays: clamped);
   }
 
   @override
@@ -323,7 +332,8 @@ class GestationalAge {
   int get hashCode => Object.hash(weeks, days, totalDays);
 
   @override
-  String toString() => 'GestationalAge(weeks: $weeks, days: $days, totalDays: $totalDays)';
+  String toString() =>
+      'GestationalAge(weeks: $weeks, days: $days, totalDays: $totalDays)';
 }
 
 @immutable
@@ -399,4 +409,3 @@ class PregnancyOnboardingData {
     );
   }
 }
-

@@ -56,13 +56,14 @@ void main() {
       await db.close();
     });
 
-    testWidgets('renders title, all 3 privacy toggles and privacy pill', (tester) async {
+    testWidgets('renders title, all 3 privacy toggles and privacy pill', (
+      tester,
+    ) async {
       const data = PregnancyOnboardingData(lockEnabled: false);
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onDataChanged: (_) {},
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(data: data, onDataChanged: (_) {}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('حریم خصوصی و قفل'), findsOneWidget);
@@ -72,17 +73,22 @@ void main() {
       expect(find.text('اطلاعات فقط روی گوشی'), findsOneWidget);
     });
 
-    testWidgets('when lockEnabled is true without configured PIN, shows helper text', (tester) async {
-      const data = PregnancyOnboardingData(lockEnabled: true);
+    testWidgets(
+      'when lockEnabled is true without configured PIN, shows helper text',
+      (tester) async {
+        const data = PregnancyOnboardingData(lockEnabled: true);
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onDataChanged: (_) {},
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildTestWidget(data: data, onDataChanged: (_) {}),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('رمز بعد از پایان راه‌اندازی تنظیم می‌شود.'), findsOneWidget);
-    });
+        expect(
+          find.text('رمز بعد از پایان راه‌اندازی تنظیم می‌شود.'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('toggling switches updates data accordingly', (tester) async {
       PregnancyOnboardingData currentData = const PregnancyOnboardingData(

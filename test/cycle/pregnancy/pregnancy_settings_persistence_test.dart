@@ -72,8 +72,14 @@ void main() {
 
     test('isSetupDone returns true only when preg_setup_done is true', () {
       expect(PregnancySettings.isSetupDone(const {}), isFalse);
-      expect(PregnancySettings.isSetupDone(const {'preg_setup_done': 'false'}), isFalse);
-      expect(PregnancySettings.isSetupDone(const {'preg_setup_done': 'true'}), isTrue);
+      expect(
+        PregnancySettings.isSetupDone(const {'preg_setup_done': 'false'}),
+        isFalse,
+      );
+      expect(
+        PregnancySettings.isSetupDone(const {'preg_setup_done': 'true'}),
+        isTrue,
+      );
     });
 
     test('clearAll removes all preg_* keys from app_settings', () async {
@@ -84,26 +90,20 @@ void main() {
       await PregnancySettings.saveProfile(profile, db);
 
       // Verify keys exist
-      var rows = await db.query(
-        'app_settings',
-        where: "key LIKE 'preg_%'",
-      );
+      var rows = await db.query('app_settings', where: "key GLOB 'preg_*'");
       expect(rows, isNotEmpty);
 
       // Clear all
       await PregnancySettings.clearAll(db);
 
       // Verify no preg_* keys remain
-      rows = await db.query(
-        'app_settings',
-        where: "key LIKE 'preg_%'",
-      );
+      rows = await db.query('app_settings', where: "key GLOB 'preg_*'");
       expect(rows, isEmpty);
 
       // Non-preg keys must still remain intact
       final nonPregRows = await db.query(
         'app_settings',
-        where: "key NOT LIKE 'preg_%'",
+        where: "key NOT GLOB 'preg_*'",
       );
       expect(nonPregRows, isNotEmpty);
     });

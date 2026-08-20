@@ -109,8 +109,18 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';
@@ -214,7 +224,10 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
               Material(
                 color: Colors.transparent,
                 child: ListTile(
-                  leading: Icon(CupertinoIcons.calendar_today, color: colors.primary),
+                  leading: Icon(
+                    CupertinoIcons.calendar_today,
+                    color: colors.primary,
+                  ),
                   title: const Text('بر اساس تاریخ آخرین پریود (LMP)'),
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
@@ -226,7 +239,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     );
                     if (picked != null) {
                       final cleanLmp = CycleDateContract.cleanDate(picked);
-                      final cleanDue = PregnancyDateEngine.calculateEddFromLmp(cleanLmp);
+                      final cleanDue = PregnancyDateEngine.calculateEddFromLmp(
+                        cleanLmp,
+                      );
                       await _handleDateChange(
                         newLmp: cleanLmp,
                         newDue: cleanDue,
@@ -239,7 +254,10 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
               Material(
                 color: Colors.transparent,
                 child: ListTile(
-                  leading: Icon(CupertinoIcons.person_crop_circle_badge_checkmark, color: colors.primary),
+                  leading: Icon(
+                    CupertinoIcons.person_crop_circle_badge_checkmark,
+                    color: colors.primary,
+                  ),
                   title: const Text('بر اساس تاریخ اعلامی پزشک (EDD)'),
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
@@ -251,7 +269,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     );
                     if (picked != null) {
                       final cleanDue = CycleDateContract.cleanDate(picked);
-                      final cleanLmp = PregnancyDateEngine.calculateLmpFromEdd(cleanDue);
+                      final cleanLmp = PregnancyDateEngine.calculateLmpFromEdd(
+                        cleanDue,
+                      );
                       await _handleDateChange(
                         newLmp: cleanLmp,
                         newDue: cleanDue,
@@ -264,7 +284,10 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
               Material(
                 color: Colors.transparent,
                 child: ListTile(
-                  leading: Icon(CupertinoIcons.waveform_path_ecg, color: colors.primary),
+                  leading: Icon(
+                    CupertinoIcons.waveform_path_ecg,
+                    color: colors.primary,
+                  ),
                   title: const Text('بر اساس جواب سونوگرافی'),
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
@@ -275,8 +298,12 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                       lastDate: now,
                     );
                     if (picked != null) {
-                      final cleanLmp = CycleDateContract.cleanDate(picked.subtract(const Duration(days: 70)));
-                      final cleanDue = PregnancyDateEngine.calculateEddFromLmp(cleanLmp);
+                      final cleanLmp = CycleDateContract.cleanDate(
+                        picked.subtract(const Duration(days: 70)),
+                      );
+                      final cleanDue = PregnancyDateEngine.calculateEddFromLmp(
+                        cleanLmp,
+                      );
                       await _handleDateChange(
                         newLmp: cleanLmp,
                         newDue: cleanDue,
@@ -332,12 +359,19 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                 child: ListTile(
                   leading: Icon(
                     CupertinoIcons.heart_fill,
-                    color: _profile.tone == PregnancyTone.warm ? colors.primary : colors.textSecondary,
+                    color: _profile.tone == PregnancyTone.warm
+                        ? colors.primary
+                        : colors.textSecondary,
                   ),
                   title: const Text('گرما و صمیمانه'),
-                  subtitle: const Text('با عبارات دلگرم‌کننده و پیام‌های محبت‌آمیز'),
+                  subtitle: const Text(
+                    'با عبارات دلگرم‌کننده و پیام‌های محبت‌آمیز',
+                  ),
                   trailing: _profile.tone == PregnancyTone.warm
-                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      ? Icon(
+                          CupertinoIcons.checkmark_alt,
+                          color: colors.primary,
+                        )
                       : null,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
@@ -353,16 +387,23 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                 child: ListTile(
                   leading: Icon(
                     CupertinoIcons.doc_text_fill,
-                    color: _profile.tone == PregnancyTone.neutral ? colors.primary : colors.textSecondary,
+                    color: _profile.tone == PregnancyTone.neutral
+                        ? colors.primary
+                        : colors.textSecondary,
                   ),
                   title: const Text('آرام و علمی'),
                   subtitle: const Text('اطلاعات دقیق، مختصر و بدون اغراق'),
                   trailing: _profile.tone == PregnancyTone.neutral
-                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      ? Icon(
+                          CupertinoIcons.checkmark_alt,
+                          color: colors.primary,
+                        )
                       : null,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(tone: PregnancyTone.neutral);
+                    final updated = _profile.copyWith(
+                      tone: PregnancyTone.neutral,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
@@ -415,16 +456,23 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                 child: ListTile(
                   leading: Icon(
                     CupertinoIcons.calendar,
-                    color: _profile.ageUnit == PregnancyAgeUnit.weeks ? colors.primary : colors.textSecondary,
+                    color: _profile.ageUnit == PregnancyAgeUnit.weeks
+                        ? colors.primary
+                        : colors.textSecondary,
                   ),
                   title: const Text('هفته و روز'),
                   subtitle: const Text('مثال: هفتهٔ ۲۴ و ۳ روز'),
                   trailing: _profile.ageUnit == PregnancyAgeUnit.weeks
-                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      ? Icon(
+                          CupertinoIcons.checkmark_alt,
+                          color: colors.primary,
+                        )
                       : null,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(ageUnit: PregnancyAgeUnit.weeks);
+                    final updated = _profile.copyWith(
+                      ageUnit: PregnancyAgeUnit.weeks,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
@@ -436,16 +484,23 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                 child: ListTile(
                   leading: Icon(
                     CupertinoIcons.calendar_badge_plus,
-                    color: _profile.ageUnit == PregnancyAgeUnit.months ? colors.primary : colors.textSecondary,
+                    color: _profile.ageUnit == PregnancyAgeUnit.months
+                        ? colors.primary
+                        : colors.textSecondary,
                   ),
                   title: const Text('ماه و هفته'),
                   subtitle: const Text('مثال: ماه ۶، هفتهٔ ۲'),
                   trailing: _profile.ageUnit == PregnancyAgeUnit.months
-                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      ? Icon(
+                          CupertinoIcons.checkmark_alt,
+                          color: colors.primary,
+                        )
                       : null,
                   onTap: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(ageUnit: PregnancyAgeUnit.months);
+                    final updated = _profile.copyWith(
+                      ageUnit: PregnancyAgeUnit.months,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
@@ -501,7 +556,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.minus_circle_fill),
                       iconSize: 32,
-                      color: selected > 1 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected > 1
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected > 1
                           ? () => setModalState(() => selected--)
                           : null,
@@ -519,7 +576,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.plus_circle_fill),
                       iconSize: 32,
-                      color: selected < 7 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected < 7
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected < 7
                           ? () => setModalState(() => selected++)
                           : null,
@@ -531,17 +590,24 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(visitReminderLeadDays: selected);
+                    final updated = _profile.copyWith(
+                      visitReminderLeadDays: selected,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'تأیید و ذخیره',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -593,7 +659,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.minus_circle_fill),
                       iconSize: 32,
-                      color: selected > 6 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected > 6
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected > 6
                           ? () => setModalState(() => selected--)
                           : null,
@@ -611,7 +679,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.plus_circle_fill),
                       iconSize: 32,
-                      color: selected < 22 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected < 22
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected < 22
                           ? () => setModalState(() => selected++)
                           : null,
@@ -623,7 +693,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () async {
@@ -633,7 +705,10 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'تأیید و ذخیره',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -685,7 +760,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.minus_circle_fill),
                       iconSize: 32,
-                      color: selected > 5 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected > 5
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected > 5
                           ? () => setModalState(() => selected--)
                           : null,
@@ -703,7 +780,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.plus_circle_fill),
                       iconSize: 32,
-                      color: selected < 20 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected < 20
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected < 20
                           ? () => setModalState(() => selected++)
                           : null,
@@ -715,17 +794,24 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(kickTargetCount: selected);
+                    final updated = _profile.copyWith(
+                      kickTargetCount: selected,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'تأیید و ذخیره',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -777,9 +863,13 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.minus_circle_fill),
                       iconSize: 32,
-                      color: selected > 30 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected > 30
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected > 30
-                          ? () => setModalState(() => selected = (selected - 15).clamp(30, 300))
+                          ? () => setModalState(
+                              () => selected = (selected - 15).clamp(30, 300),
+                            )
                           : null,
                     ),
                     const SizedBox(width: 24),
@@ -795,9 +885,13 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                     IconButton(
                       icon: const Icon(CupertinoIcons.plus_circle_fill),
                       iconSize: 32,
-                      color: selected < 300 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      color: selected < 300
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.3),
                       onPressed: selected < 300
-                          ? () => setModalState(() => selected = (selected + 15).clamp(30, 300))
+                          ? () => setModalState(
+                              () => selected = (selected + 15).clamp(30, 300),
+                            )
                           : null,
                     ),
                   ],
@@ -807,17 +901,24 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () async {
                     Navigator.of(sheetCtx).pop();
-                    final updated = _profile.copyWith(kickWindowMinutes: selected);
+                    final updated = _profile.copyWith(
+                      kickWindowMinutes: selected,
+                    );
                     await PregnancySettings.saveProfile(updated);
                     if (mounted) setState(() => _profile = updated);
                     widget.onDataReloadNeeded?.call();
                   },
-                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'تأیید و ذخیره',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -848,7 +949,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
                   title,
                   style: TextStyle(
                     fontSize: 14,
-                    color: onChanged != null ? colors.textPrimary : colors.textSecondary,
+                    color: onChanged != null
+                        ? colors.textPrimary
+                        : colors.textSecondary,
                   ),
                 ),
                 if (subtitle != null) ...[
@@ -1050,7 +1153,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
           _buildParameterRow(
             context,
             title: 'لحن همراهی و متن‌ها',
-            value: _profile.tone == PregnancyTone.warm ? 'گرما و صمیمانه' : 'آرام و علمی',
+            value: _profile.tone == PregnancyTone.warm
+                ? 'گرما و صمیمانه'
+                : 'آرام و علمی',
             onTap: _openTonePicker,
           ),
           _buildToggleRow(
@@ -1067,7 +1172,9 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
           _buildParameterRow(
             context,
             title: 'واحد نمایش سن بارداری',
-            value: _profile.ageUnit == PregnancyAgeUnit.weeks ? 'هفته و روز' : 'ماه و هفته',
+            value: _profile.ageUnit == PregnancyAgeUnit.weeks
+                ? 'هفته و روز'
+                : 'ماه و هفته',
             onTap: _openAgeUnitPicker,
           ),
           const SizedBox(height: 8),
@@ -1078,13 +1185,15 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
           _buildParameterRow(
             context,
             title: 'یادآوری ویزیت مامایی',
-            value: '${PersianDigits.toFa(_profile.visitReminderLeadDays.toString())} روز قبل',
+            value:
+                '${PersianDigits.toFa(_profile.visitReminderLeadDays.toString())} روز قبل',
             onTap: _openLeadDaysPicker,
           ),
           _buildParameterRow(
             context,
             title: 'ساعت یادآوری‌های بارداری',
-            value: 'ساعت ${PersianDigits.toFa(_profile.reminderHour.toString())}:۰۰',
+            value:
+                'ساعت ${PersianDigits.toFa(_profile.reminderHour.toString())}:۰۰',
             onTap: _openReminderHourPicker,
           ),
           _buildToggleRow(
@@ -1120,13 +1229,15 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
           _buildParameterRow(
             context,
             title: 'تعداد هدف لگد',
-            value: '${PersianDigits.toFa(_profile.kickTargetCount.toString())} حرکت',
+            value:
+                '${PersianDigits.toFa(_profile.kickTargetCount.toString())} حرکت',
             onTap: _openKickTargetPicker,
           ),
           _buildParameterRow(
             context,
             title: 'مدت پنجرهٔ شمارش',
-            value: '${PersianDigits.toFa(_profile.kickWindowMinutes.toString())} دقیقه',
+            value:
+                '${PersianDigits.toFa(_profile.kickWindowMinutes.toString())} دقیقه',
             onTap: _openKickWindowPicker,
           ),
           _buildToggleRow(
@@ -1327,7 +1438,10 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colors.warning),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('بله، بازگشت به چرخه', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'بله، بازگشت به چرخه',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

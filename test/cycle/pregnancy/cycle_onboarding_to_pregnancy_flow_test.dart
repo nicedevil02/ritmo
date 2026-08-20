@@ -42,70 +42,73 @@ void main() {
       await db.close();
     });
 
-    testWidgets('Step2CycleStatus triggers onNavigateToPregnancy callback when pregnancy shortcut is tapped', (tester) async {
-      bool navigated = false;
+    testWidgets(
+      'Step2CycleStatus triggers onNavigateToPregnancy callback when pregnancy shortcut is tapped',
+      (tester) async {
+        bool navigated = false;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('fa'),
-          home: Scaffold(
-            body: Step2CycleStatus(
-              data: CycleOnboardingData(startDate: DateTime(2026, 1, 1)),
-              onDataChanged: (_) {},
-              onNext: () {},
-              onBack: () {},
-              onNavigateToPregnancy: () => navigated = true,
-              colors: kJadeNoirLight,
-              isDark: false,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('fa'),
+            home: Scaffold(
+              body: Step2CycleStatus(
+                data: CycleOnboardingData(startDate: DateTime(2026, 1, 1)),
+                onDataChanged: (_) {},
+                onNext: () {},
+                onBack: () {},
+                onNavigateToPregnancy: () => navigated = true,
+                colors: kJadeNoirLight,
+                isDark: false,
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      final shortcut = find.textContaining('الان باردارم');
-      expect(shortcut, findsOneWidget);
+        final shortcut = find.textContaining('الان باردارم');
+        expect(shortcut, findsOneWidget);
 
-      await tester.tap(shortcut);
-      await tester.pump();
+        await tester.tap(shortcut);
+        await tester.pump();
 
-      expect(navigated, isTrue);
-    });
+        expect(navigated, isTrue);
+      },
+    );
 
-    testWidgets('PregnancyOnboardingShell.show renders the pregnancy onboarding wizard', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('fa'),
-          home: Builder(
-            builder: (ctx) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    PregnancyOnboardingShell.show(
-                      ctx,
-                      onCompleted: () {},
-                    );
-                  },
-                  child: const Text('Open Pregnancy'),
+    testWidgets(
+      'PregnancyOnboardingShell.show renders the pregnancy onboarding wizard',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('fa'),
+            home: Builder(
+              builder: (ctx) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      PregnancyOnboardingShell.show(ctx, onCompleted: () {});
+                    },
+                    child: const Text('Open Pregnancy'),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      await tester.tap(find.text('Open Pregnancy'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Open Pregnancy'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(PregnancyOnboardingShell), findsOneWidget);
-      expect(find.text('راه‌اندازی همراهی بارداری'), findsOneWidget);
-    });
+        expect(find.byType(PregnancyOnboardingShell), findsOneWidget);
+        expect(find.text('راه‌اندازی بارداری'), findsOneWidget);
+      },
+    );
   });
 }

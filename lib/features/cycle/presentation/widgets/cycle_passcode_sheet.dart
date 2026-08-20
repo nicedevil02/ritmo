@@ -15,11 +15,7 @@ enum CyclePasscodeSheetMode {
 }
 
 class CyclePasscodeSheet extends StatefulWidget {
-  const CyclePasscodeSheet({
-    super.key,
-    required this.mode,
-    this.onSuccess,
-  });
+  const CyclePasscodeSheet({super.key, required this.mode, this.onSuccess});
 
   final CyclePasscodeSheetMode mode;
   final VoidCallback? onSuccess;
@@ -62,9 +58,10 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _shakeAnimation = Tween<double>(begin: 0, end: 12)
-        .chain(CurveTween(curve: Curves.elasticIn))
-        .animate(_shakeController);
+    _shakeAnimation = Tween<double>(
+      begin: 0,
+      end: 12,
+    ).chain(CurveTween(curve: Curves.elasticIn)).animate(_shakeController);
 
     _checkInitialState();
   }
@@ -137,12 +134,17 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
               await CycleLockService.instance.setPin(_enteredPin);
               await HapticFeedback.mediumImpact();
               if (mounted) {
-                RitmoToast.show(context, 'رمز عبور اختصاصی چرخه با موفقیت تنظیم شد 🔒');
+                RitmoToast.show(
+                  context,
+                  'رمز عبور اختصاصی چرخه با موفقیت تنظیم شد 🔒',
+                );
                 widget.onSuccess?.call();
                 Navigator.pop(context, true);
               }
             } else {
-              _triggerErrorShake('رمز عبور با تکرار آن مطابقت ندارد. دوباره وارد کنید.');
+              _triggerErrorShake(
+                'رمز عبور با تکرار آن مطابقت ندارد. دوباره وارد کنید.',
+              );
               setState(() {
                 _firstEnteredPin = null;
                 _step = 1;
@@ -153,7 +155,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
           break;
 
         case CyclePasscodeSheetMode.verifyBeforeEnable:
-          final isValid = await CycleLockService.instance.verifyPin(_enteredPin);
+          final isValid = await CycleLockService.instance.verifyPin(
+            _enteredPin,
+          );
           if (isValid) {
             await CycleLockService.instance.setLockEnabled(true);
             await HapticFeedback.mediumImpact();
@@ -169,7 +173,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
           break;
 
         case CyclePasscodeSheetMode.verifyBeforeDisable:
-          final isValid = await CycleLockService.instance.verifyPin(_enteredPin);
+          final isValid = await CycleLockService.instance.verifyPin(
+            _enteredPin,
+          );
           if (isValid) {
             await CycleLockService.instance.setLockEnabled(false);
             await HapticFeedback.mediumImpact();
@@ -187,7 +193,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
         case CyclePasscodeSheetMode.change:
           if (_hasDedicatedPin && _step == 1) {
             // Step 1: Verify current PIN
-            final isValid = await CycleLockService.instance.verifyPin(_enteredPin);
+            final isValid = await CycleLockService.instance.verifyPin(
+              _enteredPin,
+            );
             if (isValid) {
               setState(() {
                 _step = 2;
@@ -212,7 +220,10 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
               await CycleLockService.instance.setPin(_enteredPin);
               await HapticFeedback.mediumImpact();
               if (mounted) {
-                RitmoToast.show(context, 'رمز عبور چرخه با موفقیت تغییر یافت 🔒');
+                RitmoToast.show(
+                  context,
+                  'رمز عبور چرخه با موفقیت تغییر یافت 🔒',
+                );
                 widget.onSuccess?.call();
                 Navigator.pop(context, true);
               }
@@ -293,7 +304,8 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
       case CyclePasscodeSheetMode.change:
         if (_hasDedicatedPin && _step == 1) {
           return 'ورود رمز عبور فعلی';
-        } else if ((_hasDedicatedPin && _step == 2) || (!_hasDedicatedPin && _step == 1)) {
+        } else if ((_hasDedicatedPin && _step == 2) ||
+            (!_hasDedicatedPin && _step == 1)) {
           return 'تعیین رمز عبور جدید';
         } else {
           return 'تکرار رمز عبور جدید';
@@ -316,7 +328,8 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
       case CyclePasscodeSheetMode.change:
         if (_hasDedicatedPin && _step == 1) {
           return 'برای تغییر رمز، ابتدا رمز عبور فعلی را وارد کنید.';
-        } else if ((_hasDedicatedPin && _step == 2) || (!_hasDedicatedPin && _step == 1)) {
+        } else if ((_hasDedicatedPin && _step == 2) ||
+            (!_hasDedicatedPin && _step == 1)) {
           return 'یک رمز عبور ۴ رقمی جدید وارد کنید.';
         } else {
           return 'رمز عبور جدید را مجدداً وارد نمایید.';
@@ -361,7 +374,11 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: Icon(CupertinoIcons.xmark, size: 20, color: colors.textSecondary),
+                      icon: Icon(
+                        CupertinoIcons.xmark,
+                        size: 20,
+                        color: colors.textSecondary,
+                      ),
                       onPressed: () => Navigator.pop(context, false),
                     ),
                     Expanded(
@@ -404,7 +421,10 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                     builder: (context, child) {
                       return Transform.translate(
                         offset: Offset(
-                          _shakeAnimation.value * (_shakeController.isAnimating ? (1 - _shakeController.value) : 0),
+                          _shakeAnimation.value *
+                              (_shakeController.isAnimating
+                                  ? (1 - _shakeController.value)
+                                  : 0),
                           0,
                         ),
                         child: child,
@@ -433,8 +453,10 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                   _buildKeypad(colors, isDark),
 
                   // Forgot Password / Reset Link (Zero-Lockout safety net)
-                  if (_currentMode == CyclePasscodeSheetMode.verifyBeforeEnable ||
-                      (_currentMode == CyclePasscodeSheetMode.change && _step == 1)) ...[
+                  if (_currentMode ==
+                          CyclePasscodeSheetMode.verifyBeforeEnable ||
+                      (_currentMode == CyclePasscodeSheetMode.change &&
+                          _step == 1)) ...[
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
@@ -475,7 +497,8 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
             icon: CupertinoIcons.lock_shield_fill,
             iconColor: colors.primary,
             title: 'استفاده از رمز عبور اصلی برنامه',
-            subtitle: 'با همان رمزی که برای ورود به اپلیکیشن تعیین کرده‌اید، قفل چرخه باز می‌شود.',
+            subtitle:
+                'با همان رمزی که برای ورود به اپلیکیشن تعیین کرده‌اید، قفل چرخه باز می‌شود.',
             onTap: _selectAppLockSource,
           ),
         const SizedBox(height: 12),
@@ -485,7 +508,8 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
           icon: Icons.vpn_key_rounded,
           iconColor: colors.accent,
           title: 'تعریف رمز اختصاصی ۴ رقمی برای چرخه',
-          subtitle: 'یک رمز عبور مستقل و جداگانه فقط برای محافظت از بخش چرخه بدن تعیین کنید.',
+          subtitle:
+              'یک رمز عبور مستقل و جداگانه فقط برای محافظت از بخش چرخه بدن تعیین کنید.',
           onTap: () {
             setState(() {
               _currentMode = CyclePasscodeSheetMode.setup;
@@ -515,7 +539,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colors.border.withValues(alpha: 0.5)),
         ),
@@ -545,15 +571,16 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                   ),
                 ],
               ),
             ),
-            Icon(CupertinoIcons.chevron_left, color: colors.textSecondary, size: 14),
+            Icon(
+              CupertinoIcons.chevron_left,
+              color: colors.textSecondary,
+              size: 14,
+            ),
           ],
         ),
       ),
@@ -578,8 +605,14 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
             gradient: isFilled
                 ? LinearGradient(
                     colors: isErr
-                        ? [colors.error as Color, (colors.error as Color).withValues(alpha: 0.8)]
-                        : [colors.primary as Color, (colors.primary as Color).withValues(alpha: 0.85)],
+                        ? [
+                            colors.error as Color,
+                            (colors.error as Color).withValues(alpha: 0.8),
+                          ]
+                        : [
+                            colors.primary as Color,
+                            (colors.primary as Color).withValues(alpha: 0.85),
+                          ],
                   )
                 : null,
             color: isFilled
@@ -594,7 +627,11 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
             boxShadow: isFilled
                 ? [
                     BoxShadow(
-                      color: (isErr ? colors.error as Color : colors.primary as Color).withValues(alpha: 0.4),
+                      color:
+                          (isErr
+                                  ? colors.error as Color
+                                  : colors.primary as Color)
+                              .withValues(alpha: 0.4),
                       blurRadius: 8,
                       spreadRadius: 1,
                     ),
@@ -682,7 +719,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isDark
-                          ? (colors.borderSubtle as Color).withValues(alpha: 0.4)
+                          ? (colors.borderSubtle as Color).withValues(
+                              alpha: 0.4,
+                            )
                           : colors.borderSubtle as Color,
                       width: 1.0,
                     ),
@@ -717,7 +756,9 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
         height: 68,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isDark ? (colors.surfaceElevated as Color) : (colors.surface as Color),
+          color: isDark
+              ? (colors.surfaceElevated as Color)
+              : (colors.surface as Color),
           border: Border.all(
             color: isDark
                 ? (colors.borderSubtle as Color).withValues(alpha: 0.5)

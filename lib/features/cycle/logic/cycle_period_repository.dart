@@ -48,8 +48,9 @@ class CyclePeriod {
     return {
       CyclePeriodContract.colId: id,
       CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(startDate),
-      CyclePeriodContract.colEndDate:
-          endDate != null ? CycleDateContract.toDayKey(endDate!) : null,
+      CyclePeriodContract.colEndDate: endDate != null
+          ? CycleDateContract.toDayKey(endDate!)
+          : null,
       CyclePeriodContract.colFlowIntensity: flowIntensity,
       CyclePeriodContract.colIsPredicted: isPredicted ? 1 : 0,
       CyclePeriodContract.colNote: note,
@@ -71,12 +72,13 @@ class CyclePeriod {
       endDate: CycleDateContract.parseDayKey(endRaw?.toString()),
       flowIntensity:
           (map[CyclePeriodContract.colFlowIntensity] as String?) ?? 'MEDIUM',
-      isPredicted:
-          (map[CyclePeriodContract.colIsPredicted] as int? ?? 0) == 1,
+      isPredicted: (map[CyclePeriodContract.colIsPredicted] as int? ?? 0) == 1,
       note: (map[CyclePeriodContract.colNote] ?? map['notes']) as String?,
-      createdAt: map[CyclePeriodContract.colCreatedAt] as int? ??
+      createdAt:
+          map[CyclePeriodContract.colCreatedAt] as int? ??
           CycleClock.nowMillisecondsSinceEpoch,
-      updatedAt: map[CyclePeriodContract.colUpdatedAt] as int? ??
+      updatedAt:
+          map[CyclePeriodContract.colUpdatedAt] as int? ??
           CycleClock.nowMillisecondsSinceEpoch,
     );
   }
@@ -159,8 +161,9 @@ class CyclePeriodRepository {
         await db.update(
           CyclePeriodContract.table,
           {
-            CyclePeriodContract.colEndDate:
-                CycleDateContract.toDayKey(active.startDate),
+            CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(
+              active.startDate,
+            ),
             CyclePeriodContract.colNote: 'auto_closed_unknown_end',
             CyclePeriodContract.colUpdatedAt:
                 effectiveNow.millisecondsSinceEpoch,
@@ -186,7 +189,8 @@ class CyclePeriodRepository {
       RitmoLogger.warning(
         '[CyclePeriodRepository] Existing period on same start date: $startKey',
       );
-      return (existingSameDay.first[CyclePeriodContract.colId] as String?) ?? '';
+      return (existingSameDay.first[CyclePeriodContract.colId] as String?) ??
+          '';
     }
 
     // R4: Overlap check with existing periods
@@ -302,8 +306,9 @@ class CyclePeriodRepository {
     final effectiveNow = now ?? CycleClock.now;
     final cleanToday = CycleDateContract.cleanDate(effectiveNow);
     final cleanStart = CycleDateContract.cleanDate(startDate);
-    final cleanEnd =
-        endDate != null ? CycleDateContract.cleanDate(endDate) : null;
+    final cleanEnd = endDate != null
+        ? CycleDateContract.cleanDate(endDate)
+        : null;
 
     final rows = await db.query(
       CyclePeriodContract.table,
@@ -327,8 +332,7 @@ class CyclePeriodRepository {
       if (cleanEnd.isAfter(cleanToday)) {
         throw ArgumentError('endDate cannot be in the future.');
       }
-      final duration =
-          CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
+      final duration = CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
       if (duration > CycleSettings.forgottenOpenPeriodDays) {
         throw ArgumentError(
           'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.',
@@ -342,23 +346,20 @@ class CyclePeriodRepository {
       if (p.id == id) continue;
       final pEnd = p.endDate ?? cleanToday;
       if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
-        throw ArgumentError(
-          'startDate overlaps with another period.',
-        );
+        throw ArgumentError('startDate overlaps with another period.');
       }
       if (cleanEnd != null &&
           CycleDateContract.inWindow(cleanEnd, p.startDate, pEnd)) {
-        throw ArgumentError(
-          'endDate overlaps with another period.',
-        );
+        throw ArgumentError('endDate overlaps with another period.');
       }
     }
 
     final nowMs = effectiveNow.millisecondsSinceEpoch;
     final updateMap = <String, dynamic>{
       CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(cleanStart),
-      CyclePeriodContract.colEndDate:
-          cleanEnd != null ? CycleDateContract.toDayKey(cleanEnd) : null,
+      CyclePeriodContract.colEndDate: cleanEnd != null
+          ? CycleDateContract.toDayKey(cleanEnd)
+          : null,
       CyclePeriodContract.colUpdatedAt: nowMs,
     };
     if (flowIntensity != null) {
@@ -415,8 +416,9 @@ class CyclePeriodRepository {
     final effectiveNow = now ?? CycleClock.now;
     final cleanToday = CycleDateContract.cleanDate(effectiveNow);
     final cleanStart = CycleDateContract.cleanDate(startDate);
-    final cleanEnd =
-        endDate != null ? CycleDateContract.cleanDate(endDate) : null;
+    final cleanEnd = endDate != null
+        ? CycleDateContract.cleanDate(endDate)
+        : null;
 
     if (cleanStart.isAfter(cleanToday)) {
       return 'startDate cannot be in the future.';
@@ -428,8 +430,7 @@ class CyclePeriodRepository {
       if (cleanEnd.isAfter(cleanToday)) {
         return 'endDate cannot be in the future.';
       }
-      final duration =
-          CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
+      final duration = CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
       if (duration > CycleSettings.forgottenOpenPeriodDays) {
         return 'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.';
       }

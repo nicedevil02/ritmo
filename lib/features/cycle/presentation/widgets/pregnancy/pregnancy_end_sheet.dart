@@ -81,7 +81,11 @@ class PregnancyEndSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.heart_fill, color: colors.success, size: 24),
+                Icon(
+                  CupertinoIcons.heart_fill,
+                  color: colors.success,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -98,7 +102,10 @@ class PregnancyEndSheet extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'داده‌های بارداری نگه داشته می‌شوند و حالت بارداری بسته می‌شود.',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -122,7 +129,11 @@ class PregnancyEndSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.heart, color: colors.textSecondary, size: 24),
+                Icon(
+                  CupertinoIcons.heart,
+                  color: colors.textSecondary,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -139,7 +150,10 @@ class PregnancyEndSheet extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'حالت بارداری بسته می‌شود. می‌توانی انتخاب کنی داده‌ها بمانند یا پاک شوند.',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -163,7 +177,11 @@ class PregnancyEndSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(CupertinoIcons.arrow_counterclockwise, color: colors.textSecondary, size: 24),
+                Icon(
+                  CupertinoIcons.arrow_counterclockwise,
+                  color: colors.textSecondary,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -180,7 +198,10 @@ class PregnancyEndSheet extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'همهٔ داده‌های بارداری پاک می‌شوند و چرخه برمی‌گردد.',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),

@@ -27,9 +27,7 @@ void main() {
 
   group('Pregnancy Flag Reconcile Tests (PRG-48)', () {
     test('Reconciles when only cycle_pregnancy_mode is true', () async {
-      final settings = <String, dynamic>{
-        'cycle_pregnancy_mode': 'true',
-      };
+      final settings = <String, dynamic>{'cycle_pregnancy_mode': 'true'};
 
       await PregnancySettings.reconcileFlags(settings, db);
 
@@ -45,9 +43,7 @@ void main() {
     });
 
     test('Reconciles when only pregnancy_mode is true', () async {
-      final settings = <String, dynamic>{
-        'pregnancy_mode': 'true',
-      };
+      final settings = <String, dynamic>{'pregnancy_mode': 'true'};
 
       await PregnancySettings.reconcileFlags(settings, db);
 
@@ -57,9 +53,7 @@ void main() {
     });
 
     test('Reconciles when only cycle_is_pregnant is true', () async {
-      final settings = <String, dynamic>{
-        'cycle_is_pregnant': 'true',
-      };
+      final settings = <String, dynamic>{'cycle_is_pregnant': 'true'};
 
       await PregnancySettings.reconcileFlags(settings, db);
 

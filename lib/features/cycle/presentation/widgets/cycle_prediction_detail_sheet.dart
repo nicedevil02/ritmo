@@ -33,7 +33,10 @@ class CyclePredictionDetailSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final jDate = Jalali.fromDateTime(selectedDate);
     final cycle = mark.predictedCycle;
-    final isPast = CycleDateContract.isSameOrBefore(selectedDate, CycleClock.now);
+    final isPast = CycleDateContract.isSameOrBefore(
+      selectedDate,
+      CycleClock.now,
+    );
 
     final String title;
     final IconData icon;
@@ -51,7 +54,9 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         headerColor = colors.textSecondary;
         break;
       case CycleDayKind.ovulation:
-        title = isPast ? 'روز تخمک‌گذاری (دوره گذشته)' : 'روز تخمک‌گذاری تخمینی';
+        title = isPast
+            ? 'روز تخمک‌گذاری (دوره گذشته)'
+            : 'روز تخمک‌گذاری تخمینی';
         icon = CupertinoIcons.sparkles;
         headerColor = colors.accent;
         break;
@@ -87,9 +92,10 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         'محاسبه‌شده با داده‌های محدود اولیه؛ با ثبت چرخه‌های بیشتر دقت افزایش می‌یابد.',
       ForecastBasis.defaultAssumption =>
         'محاسبه‌شده بر اساس تنظیمات پیش‌فرض بالینی، به دلیل نبود چرخه‌های ثبت‌شده کافی.',
-      null => isPast
-          ? 'محاسبه‌شده گذشته‌نگر بر پایهٔ تاریخ شروع دورهٔ بعدی و فاز لوتئال (Luteal Phase). این بازه بیشترین احتمال باروری چرخه را داشته است.'
-          : 'محاسبه‌شده بر اساس الگوهای زمانی.',
+      null =>
+        isPast
+            ? 'محاسبه‌شده گذشته‌نگر بر پایهٔ تاریخ شروع دورهٔ بعدی و فاز لوتئال (Luteal Phase). این بازه بیشترین احتمال باروری چرخه را داشته است.'
+            : 'محاسبه‌شده بر اساس الگوهای زمانی.',
     };
 
     final disclaimer =

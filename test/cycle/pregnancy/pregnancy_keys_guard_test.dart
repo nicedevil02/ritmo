@@ -11,22 +11,37 @@ void main() {
       expect(keys.length, greaterThanOrEqualTo(22));
 
       for (final key in keys) {
-        expect(key.startsWith('preg_'), isTrue, reason: 'Key $key must start with preg_');
-        expect(key, isNot(startsWith('cycle_')), reason: 'Key $key must not collide with cycle_ prefix');
+        expect(
+          key.startsWith('preg_'),
+          isTrue,
+          reason: 'Key $key must start with preg_',
+        );
+        expect(
+          key,
+          isNot(startsWith('cycle_')),
+          reason: 'Key $key must not collide with cycle_ prefix',
+        );
       }
 
       // Check uniqueness
       final uniqueKeys = keys.toSet();
-      expect(uniqueKeys.length, keys.length, reason: 'Keys in allKeys must be unique');
+      expect(
+        uniqueKeys.length,
+        keys.length,
+        reason: 'Keys in allKeys must be unique',
+      );
     });
 
     test('pregnancyFlagKeys contains exactly the 3 sync flags', () {
       const flags = PregnancySettings.pregnancyFlagKeys;
-      expect(flags, containsAll([
-        'cycle_pregnancy_mode',
-        'pregnancy_mode',
-        'cycle_is_pregnant',
-      ]));
+      expect(
+        flags,
+        containsAll([
+          'cycle_pregnancy_mode',
+          'pregnancy_mode',
+          'cycle_is_pregnant',
+        ]),
+      );
       expect(flags.length, 3);
     });
 
@@ -48,14 +63,21 @@ void main() {
       expect(defaultProfile.supplementReminder, isFalse);
       expect(defaultProfile.kickReminder, isFalse);
 
-      final diff = CycleDateContract.daysBetween(defaultProfile.lmpDate, defaultProfile.dueDate);
+      final diff = CycleDateContract.daysBetween(
+        defaultProfile.lmpDate,
+        defaultProfile.dueDate,
+      );
       expect(diff, 280);
     });
 
     test('round-trip profile serialization preserves all properties', () {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 40)));
-      final due = CycleDateContract.cleanDate(now.add(const Duration(days: 240)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 40)),
+      );
+      final due = CycleDateContract.cleanDate(
+        now.add(const Duration(days: 240)),
+      );
 
       final original = PregnancyProfile(
         lmpDate: lmp,

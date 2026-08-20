@@ -148,8 +148,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final periodModels =
-          await CyclePeriodRepository.instance.getAllPeriods(db);
+      final periodModels = await CyclePeriodRepository.instance.getAllPeriods(
+        db,
+      );
       _periods = periodModels.map((p) => p.toMap()).toList();
 
       _forgottenPeriod = null;
@@ -231,8 +232,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           phase: _engineOutput!.currentPhase,
         );
 
-        _pendingConfirmation =
-            await CycleConfirmationService.instance.evaluatePendingRequest(
+        _pendingConfirmation = await CycleConfirmationService.instance
+            .evaluatePendingRequest(
               dbExecutor: db,
               engineOutput: _engineOutput!,
               settings: _settings,
@@ -329,9 +330,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       RitmoLog.error('CycleScreen', 'togglePeriodToday failed: $e', e, st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ثبت انجام نشد. دوباره تلاش کنید.'),
-          ),
+          const SnackBar(content: Text('ثبت انجام نشد. دوباره تلاش کنید.')),
         );
       }
     } finally {
@@ -404,11 +403,13 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }) {
     final targetExistingId =
         existingId ?? (period != null ? period['id']?.toString() : null);
-    final targetStart = initialStartDate ??
+    final targetStart =
+        initialStartDate ??
         (period != null
             ? CycleDateContract.parseDayKey(period['startDate']?.toString())
             : null);
-    final targetEnd = initialEndDate ??
+    final targetEnd =
+        initialEndDate ??
         (period != null
             ? CycleDateContract.parseDayKey(period['endDate']?.toString())
             : null);
@@ -418,7 +419,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddEditPeriodSheet(
-        period: period ??
+        period:
+            period ??
             () {
               final m = <String, dynamic>{};
               if (targetExistingId != null) m['id'] = targetExistingId;
@@ -480,11 +482,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final id = period['id']?.toString();
     if (id == null || id.isEmpty) return;
     final db = await DatabaseHelper.instance.database;
-    final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
+    final start = CycleDateContract.parseDayKey(
+      period['startDate']?.toString(),
+    );
     if (start == null) return;
     final pDur = CycleSettings.getPeriodDuration(_settings);
     final end = start.add(Duration(days: pDur - 1));
-    await CyclePeriodRepository.instance.updatePeriod(db: db, id: id, startDate: start, endDate: end);
+    await CyclePeriodRepository.instance.updatePeriod(
+      db: db,
+      id: id,
+      startDate: start,
+      endDate: end,
+    );
     await _syncConfirmations();
     await _syncFastingDebt();
     await _loadData();
@@ -497,8 +506,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final mode = (hasApp && !hasDedicated)
         ? CyclePasscodeSheetMode.chooseSource
         : hasDedicated
-            ? CyclePasscodeSheetMode.change
-            : CyclePasscodeSheetMode.setup;
+        ? CyclePasscodeSheetMode.change
+        : CyclePasscodeSheetMode.setup;
     await CyclePasscodeSheet.show(context, mode: mode);
     await _loadData();
   }
@@ -533,7 +542,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             return Container(
               decoration: BoxDecoration(
                 color: colors.surfaceElevated,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
               child: Column(
@@ -563,7 +574,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       IconButton(
                         icon: const Icon(CupertinoIcons.minus_circle_fill),
                         iconSize: 32,
-                        color: selectedValue > minVal ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        color: selectedValue > minVal
+                            ? colors.primary
+                            : colors.textSecondary.withValues(alpha: 0.3),
                         onPressed: selectedValue > minVal
                             ? () => setPickerState(() => selectedValue--)
                             : null,
@@ -581,7 +594,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       IconButton(
                         icon: const Icon(CupertinoIcons.plus_circle_fill),
                         iconSize: 32,
-                        color: selectedValue < maxVal ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        color: selectedValue < maxVal
+                            ? colors.primary
+                            : colors.textSecondary.withValues(alpha: 0.3),
                         onPressed: selectedValue < maxVal
                             ? () => setPickerState(() => selectedValue++)
                             : null,
@@ -595,7 +610,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       onPressed: () async {
@@ -605,25 +622,63 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         final valStr = selectedValue.toString();
 
                         final batch = db.batch();
-                        batch.insert('app_settings', {
-                          'key': key,
-                          'value': valStr,
-                          'updatedAt': nowMs,
-                        }, conflictAlgorithm: ConflictAlgorithm.replace);
+                        batch.insert(
+                          'app_settings',
+                          {'key': key, 'value': valStr, 'updatedAt': nowMs},
+                          conflictAlgorithm: ConflictAlgorithm.replace,
+                        );
 
                         if (key == 'cycle_avg_length') {
-                          batch.insert('app_settings', {'key': 'user_cycle_length', 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                          batch.insert('app_settings', {'key': CycleSettings.keyCycleLength, 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                          batch.insert(
+                            'app_settings',
+                            {
+                              'key': 'user_cycle_length',
+                              'value': valStr,
+                              'updatedAt': nowMs,
+                            },
+                            conflictAlgorithm: ConflictAlgorithm.replace,
+                          );
+                          batch.insert(
+                            'app_settings',
+                            {
+                              'key': CycleSettings.keyCycleLength,
+                              'value': valStr,
+                              'updatedAt': nowMs,
+                            },
+                            conflictAlgorithm: ConflictAlgorithm.replace,
+                          );
                         } else if (key == 'cycle_avg_period') {
-                          batch.insert('app_settings', {'key': 'user_period_length', 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
-                          batch.insert('app_settings', {'key': CycleSettings.keyPeriodDuration, 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                          batch.insert(
+                            'app_settings',
+                            {
+                              'key': 'user_period_length',
+                              'value': valStr,
+                              'updatedAt': nowMs,
+                            },
+                            conflictAlgorithm: ConflictAlgorithm.replace,
+                          );
+                          batch.insert(
+                            'app_settings',
+                            {
+                              'key': CycleSettings.keyPeriodDuration,
+                              'value': valStr,
+                              'updatedAt': nowMs,
+                            },
+                            conflictAlgorithm: ConflictAlgorithm.replace,
+                          );
                         }
                         await batch.commit(noResult: true);
 
                         CycleEngine().invalidate();
                         await _loadData();
                       },
-                      child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text(
+                        'تأیید و ذخیره',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -642,7 +697,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => RitmoSheetGlassCard(
         child: Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 20, top: 16),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            top: 16,
+          ),
           child: SingleChildScrollView(
             child: CycleSettingsPanel(
               settings: _settings,
@@ -659,9 +717,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 await PregnancySettings.setPregnancyActive(!isActive, db: db);
                 await _loadData();
               },
-              onEditBaselineParameter: (key, title, minVal, maxVal, defVal) async {
-                await _openBaselineParameterPicker(key, title, minVal, maxVal, defVal);
-              },
+              onEditBaselineParameter:
+                  (key, title, minVal, maxVal, defVal) async {
+                    await _openBaselineParameterPicker(
+                      key,
+                      title,
+                      minVal,
+                      maxVal,
+                      defVal,
+                    );
+                  },
             ),
           ),
         ),
@@ -744,7 +809,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ),
                   actions: [
                     IconButton(
-                       icon: Icon(
+                      icon: Icon(
                         CupertinoIcons.sparkles,
                         color: colors.primary,
                         size: 20,
@@ -764,83 +829,93 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               ],
               body: isPregnancyActive
                   ? (hasValidPregnancyDates
-                      ? PregnancyLockGate(
-                          settings: _settings,
-                          child: CyclePregnancyModeView(
-                            pregnancyStartDate: _settings['preg_start_date']!,
-                            pregnancyDueDate: _settings['preg_due_date']!,
-                            onDeactivated: () async {
-                              final db = await DatabaseHelper.instance.database;
-                              await PregnancySettings.setPregnancyActive(false, db: db);
-                              await _loadData();
-                            },
+                        ? PregnancyLockGate(
                             settings: _settings,
-                            dayLogs: _dayLogs,
-                            engineOutput: _engineOutput,
-                          ),
-                        )
-                      : Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: RitmoSheetGlassCard(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.exclamationmark_triangle_fill,
-                                        size: 48,
-                                        color: colors.warning,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'اطلاعات بارداری ناقص است',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.textPrimary,
+                            child: CyclePregnancyModeView(
+                              pregnancyStartDate: _settings['preg_start_date']!,
+                              pregnancyDueDate: _settings['preg_due_date']!,
+                              onDeactivated: () async {
+                                final db =
+                                    await DatabaseHelper.instance.database;
+                                await PregnancySettings.setPregnancyActive(
+                                  false,
+                                  db: db,
+                                );
+                                await _loadData();
+                              },
+                              settings: _settings,
+                              dayLogs: _dayLogs,
+                              engineOutput: _engineOutput,
+                            ),
+                          )
+                        : Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: RitmoSheetGlassCard(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons
+                                              .exclamationmark_triangle_fill,
+                                          size: 48,
+                                          color: colors.warning,
                                         ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: colors.textSecondary,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: colors.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                            vertical: 12,
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'اطلاعات بارداری ناقص است',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: colors.textPrimary,
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: colors.textSecondary,
                                           ),
+                                          textAlign: TextAlign.center,
                                         ),
-                                        icon: const Icon(CupertinoIcons.pencil),
-                                        label: const Text(
-                                          'تکمیل راه‌اندازی بارداری',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        const SizedBox(height: 20),
+                                        ElevatedButton.icon(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: colors.primary,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            CupertinoIcons.pencil,
+                                          ),
+                                          label: const Text(
+                                            'تکمیل راه‌اندازی بارداری',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          onPressed: _openPregnancyOnboarding,
                                         ),
-                                        onPressed: _openPregnancyOnboarding,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ))
+                          ))
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
@@ -851,8 +926,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                         children: [
                           CycleSegmentedTabs(
                             activeTab: _activeTab,
-                            onTabChanged:
-                                (index) => setState(() => _activeTab = index),
+                            onTabChanged: (index) =>
+                                setState(() => _activeTab = index),
                             settings: _settings,
                             activeThemeColor: _getActivePhaseColor(context),
                           ),
@@ -898,12 +973,11 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               onEditPeriod: (p) =>
                                   _openAddEditPeriodSheet(period: p),
                               pendingConfirmation: _pendingConfirmation,
-                              onOpenConfirmation:
-                                  _pendingConfirmation != null
-                                      ? () => _openConfirmationSheet(
-                                        _pendingConfirmation!,
-                                      )
-                                      : null,
+                              onOpenConfirmation: _pendingConfirmation != null
+                                  ? () => _openConfirmationSheet(
+                                      _pendingConfirmation!,
+                                    )
+                                  : null,
                             ),
                             const SizedBox(height: 16),
                             CycleCalendarView(
@@ -969,12 +1043,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               fastingDebts: _fastingDebts,
                               settings: _settings,
                               onToggleSync: (enabled) async {
-                                final db = await DatabaseHelper.instance.database;
-                                await db.insert('app_settings', {
-                                  'key': 'cycle_send_fasting_debt_to_worship',
-                                  'value': enabled.toString(),
-                                  'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-                                }, conflictAlgorithm: ConflictAlgorithm.replace);
+                                final db =
+                                    await DatabaseHelper.instance.database;
+                                await db.insert(
+                                  'app_settings',
+                                  {
+                                    'key': 'cycle_send_fasting_debt_to_worship',
+                                    'value': enabled.toString(),
+                                    'updatedAt':
+                                        CycleClock.nowMillisecondsSinceEpoch,
+                                  },
+                                  conflictAlgorithm: ConflictAlgorithm.replace,
+                                );
                                 await _loadData();
                               },
                               onReloadData: _loadData,

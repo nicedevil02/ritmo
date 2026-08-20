@@ -73,7 +73,8 @@ class PregStep3Context extends StatelessWidget {
             subtitle: 'در طول دورهٔ بارداری پیش‌بینی‌های قاعدگی متوقف می‌شوند',
             icon: CupertinoIcons.bell_slash_fill,
             value: data.pauseCyclePredictions,
-            onChanged: (val) => onDataChanged(data.copyWith(pauseCyclePredictions: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(pauseCyclePredictions: val)),
           ),
           const SizedBox(height: 12),
 
@@ -83,7 +84,8 @@ class PregStep3Context extends StatelessWidget {
             subtitle: 'هماهنگی خودکار وضعیت عبادات و روزه‌های قضا در اپلیکیشن',
             icon: CupertinoIcons.sparkles,
             value: data.suspendWorship,
-            onChanged: (val) => onDataChanged(data.copyWith(suspendWorship: val)),
+            onChanged: (val) =>
+                onDataChanged(data.copyWith(suspendWorship: val)),
           ),
           const SizedBox(height: 24),
 
@@ -93,9 +95,7 @@ class PregStep3Context extends StatelessWidget {
             decoration: BoxDecoration(
               color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: primaryColor.withValues(alpha: 0.25),
-              ),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.25)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,8 +139,8 @@ class PregStep3Context extends StatelessWidget {
         color: value
             ? primaryColor.withValues(alpha: isDark ? 0.14 : 0.06)
             : (isDark
-                ? Colors.black.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.6)),
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.6)),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: value
@@ -157,8 +157,8 @@ class PregStep3Context extends StatelessWidget {
               color: value
                   ? primaryColor.withValues(alpha: 0.2)
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.04)),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.04)),
               shape: BoxShape.circle,
             ),
             child: Icon(

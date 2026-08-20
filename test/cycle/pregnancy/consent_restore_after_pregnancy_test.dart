@@ -53,7 +53,9 @@ void main() {
 
       // Verify consents suspended
       final duringRows = await db.query('app_settings');
-      final duringMap = {for (final r in duringRows) r['key'] as String: r['value']};
+      final duringMap = {
+        for (final r in duringRows) r['key'] as String: r['value'],
+      };
       expect(duringMap['cycle_consent_reminders'], 'false');
       expect(duringMap['cycle_consent_worship'], 'false');
       expect(duringMap['cycle_consent_dashboard'], 'false');
@@ -69,40 +71,54 @@ void main() {
 
       // 4. Verify original consents restored
       final afterRows = await db.query('app_settings');
-      final afterMap = {for (final r in afterRows) r['key'] as String: r['value']};
+      final afterMap = {
+        for (final r in afterRows) r['key'] as String: r['value'],
+      };
       expect(afterMap['cycle_pregnancy_mode'], 'false');
       expect(afterMap['cycle_consent_reminders'], 'true');
       expect(afterMap['cycle_consent_worship'], 'false');
       expect(afterMap['cycle_consent_dashboard'], 'true');
 
       // Verify backup keys cleaned up
-      expect(afterMap.containsKey(PregnancySettings.keyPrevConsentReminders), isFalse);
-      expect(afterMap.containsKey(PregnancySettings.keyPrevConsentWorship), isFalse);
-      expect(afterMap.containsKey(PregnancySettings.keyPrevConsentDashboard), isFalse);
+      expect(
+        afterMap.containsKey(PregnancySettings.keyPrevConsentReminders),
+        isFalse,
+      );
+      expect(
+        afterMap.containsKey(PregnancySettings.keyPrevConsentWorship),
+        isFalse,
+      );
+      expect(
+        afterMap.containsKey(PregnancySettings.keyPrevConsentDashboard),
+        isFalse,
+      );
     });
 
-    test('defaults to true for legacy users without backup consent keys', () async {
-      await db.insert('app_settings', {
-        'key': 'cycle_pregnancy_mode',
-        'value': 'true',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-      await db.insert('app_settings', {
-        'key': 'cycle_consent_reminders',
-        'value': 'false',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-      await db.insert('app_settings', {
-        'key': 'cycle_consent_worship',
-        'value': 'false',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    test(
+      'defaults to true for legacy users without backup consent keys',
+      () async {
+        await db.insert('app_settings', {
+          'key': 'cycle_pregnancy_mode',
+          'value': 'true',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'cycle_consent_reminders',
+          'value': 'false',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('app_settings', {
+          'key': 'cycle_consent_worship',
+          'value': 'false',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-      // Call restoreCycleConsents without any backup keys in app_settings
-      await PregnancySettings.restoreCycleConsents(db: db);
+        // Call restoreCycleConsents without any backup keys in app_settings
+        await PregnancySettings.restoreCycleConsents(db: db);
 
-      final rows = await db.query('app_settings');
-      final map = {for (final r in rows) r['key'] as String: r['value']};
-      expect(map['cycle_consent_reminders'], 'true');
-      expect(map['cycle_consent_worship'], 'true');
-      expect(map['cycle_consent_dashboard'], 'true');
-    });
+        final rows = await db.query('app_settings');
+        final map = {for (final r in rows) r['key'] as String: r['value']};
+        expect(map['cycle_consent_reminders'], 'true');
+        expect(map['cycle_consent_worship'], 'true');
+        expect(map['cycle_consent_dashboard'], 'true');
+      },
+    );
   });
 }

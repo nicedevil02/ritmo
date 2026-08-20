@@ -39,7 +39,9 @@ void main() {
   group('PregStep5Confirm Tests (PRG-22)', () {
     testWidgets('renders all summary rows matching data', (tester) async {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 56)),
+      );
       final due = PregnancyDateEngine.dueDateFromLmp(lmp);
 
       final data = PregnancyOnboardingData(
@@ -54,11 +56,9 @@ void main() {
         maskNotifications: true,
       );
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onSave: () {},
-        onBack: () {},
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(data: data, onSave: () {}, onBack: () {}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('تأیید و راه‌اندازی بارداری'), findsOneWidget);
@@ -76,24 +76,27 @@ void main() {
       expect(find.text('فعال‌سازی حالت بارداری'), findsOneWidget);
     });
 
-    testWidgets('tapping onSave triggers callback and shows edit mode label', (tester) async {
+    testWidgets('tapping onSave triggers callback and shows edit mode label', (
+      tester,
+    ) async {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 56)),
+      );
       final due = PregnancyDateEngine.dueDateFromLmp(lmp);
 
-      final data = PregnancyOnboardingData(
-        lmpDate: lmp,
-        dueDate: due,
-      );
+      final data = PregnancyOnboardingData(lmpDate: lmp, dueDate: due);
 
       var saved = false;
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onSave: () => saved = true,
-        onBack: () {},
-        isEditMode: true,
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(
+          data: data,
+          onSave: () => saved = true,
+          onBack: () {},
+          isEditMode: true,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('بازبینی و ذخیرهٔ تغییرات'), findsOneWidget);
@@ -108,20 +111,21 @@ void main() {
 
     testWidgets('shows loading spinner when isSaving is true', (tester) async {
       final now = CycleClock.now;
-      final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 56)));
+      final lmp = CycleDateContract.cleanDate(
+        now.subtract(const Duration(days: 56)),
+      );
       final due = PregnancyDateEngine.dueDateFromLmp(lmp);
 
-      final data = PregnancyOnboardingData(
-        lmpDate: lmp,
-        dueDate: due,
-      );
+      final data = PregnancyOnboardingData(lmpDate: lmp, dueDate: due);
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onSave: () {},
-        onBack: () {},
-        isSaving: true,
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(
+          data: data,
+          onSave: () {},
+          onBack: () {},
+          isSaving: true,
+        ),
+      );
       await tester.pump();
 
       expect(find.byType(CupertinoActivityIndicator), findsOneWidget);

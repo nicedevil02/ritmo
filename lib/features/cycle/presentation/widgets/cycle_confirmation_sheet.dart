@@ -26,11 +26,8 @@ class CycleConfirmationSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => CycleConfirmationSheet(
-            request: request,
-            onAnswered: onAnswered,
-          ),
+      builder: (context) =>
+          CycleConfirmationSheet(request: request, onAnswered: onAnswered),
     );
   }
 
@@ -116,13 +113,15 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
 
     final title = _isStartKind
         ? 'بازبینی موعد ریتم بدنی'
-        : (_isBleedingProlonged ? 'بررسی تداوم خونریزی' : 'بررسی وضعیت پایان دوره');
+        : (_isBleedingProlonged
+              ? 'بررسی تداوم خونریزی'
+              : 'بررسی وضعیت پایان دوره');
 
     final description = _isStartKind
         ? 'بر اساس میانگین و پیش‌بینی‌ها، موعد ریتم بدنی شما رسیده است. آیا دورهٔ شما آغاز شده است؟'
         : (_isBleedingProlonged
-            ? 'مدت خونریزی بیش از میانگین معمول طول کشیده است. آیا خونریزی شما پایان یافته است؟'
-            : 'بر اساس میانگین روزهای خونریزی، احتمالاً دورهٔ شما به پایان رسیده است. آیا خونریزی متوقف شده است؟');
+              ? 'مدت خونریزی بیش از میانگین معمول طول کشیده است. آیا خونریزی شما پایان یافته است؟'
+              : 'بر اساس میانگین روزهای خونریزی، احتمالاً دورهٔ شما به پایان رسیده است. آیا خونریزی متوقف شده است؟');
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -216,7 +215,8 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
                 label: 'بله، امروز شروع شد',
                 icon: CupertinoIcons.check_mark,
                 isPrimary: true,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.startedToday),
+                onTap: () =>
+                    _submitAnswer(CycleConfirmationAnswer.startedToday),
               ),
               const SizedBox(height: 10),
               _buildActionButton(
@@ -230,7 +230,8 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
                 label: 'هنوز شروع نشده',
                 icon: CupertinoIcons.xmark_circle,
                 isPrimary: false,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.notStartedYet),
+                onTap: () =>
+                    _submitAnswer(CycleConfirmationAnswer.notStartedYet),
               ),
               const SizedBox(height: 10),
               _buildActionButton(
@@ -258,7 +259,8 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
                 label: 'هنوز ادامه دارد',
                 icon: CupertinoIcons.arrow_clockwise,
                 isPrimary: false,
-                onTap: () => _submitAnswer(CycleConfirmationAnswer.stillOngoing),
+                onTap: () =>
+                    _submitAnswer(CycleConfirmationAnswer.stillOngoing),
               ),
               const SizedBox(height: 10),
               _buildActionButton(

@@ -52,7 +52,9 @@ void main() {
       await db.close();
     });
 
-    testWidgets('renders section 1 rows with gestational age and due date', (tester) async {
+    testWidgets('renders section 1 rows with gestational age and due date', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -62,40 +64,9 @@ void main() {
 
       await tester.runAsync(() async {
         final now = CycleClock.now;
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
-        final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
-
-        final profile = PregnancyProfile(
-          lmpDate: lmp,
-          dueDate: due,
-          eddSource: PregnancyEddSource.lmp,
-          tone: PregnancyTone.warm,
-          ageUnit: PregnancyAgeUnit.weeks,
+        final lmp = CycleDateContract.cleanDate(
+          now.subtract(const Duration(days: 70)),
         );
-        await PregnancySettings.saveProfile(profile, db);
-
-        await tester.pumpWidget(_buildTestApp(PregnancySettingsSheet(initialProfile: profile)));
-        await tester.pump(const Duration(milliseconds: 100));
-
-        expect(find.text('تاریخ و سن بارداری'), findsOneWidget);
-        expect(find.text('سن بارداری امروز'), findsOneWidget);
-        expect(find.text('تاریخ تقریبی زایمان'), findsOneWidget);
-        expect(find.text('مبنای محاسبه'), findsOneWidget);
-        expect(find.text('اولین روز آخرین پریود (LMP)'), findsOneWidget);
-      });
-    });
-
-    testWidgets('tapping due date opens method options and shows shift warning dialog on update', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.runAsync(() async {
-        final now = CycleClock.now;
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
         final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
 
         final profile = PregnancyProfile(
@@ -108,24 +79,60 @@ void main() {
         await PregnancySettings.saveProfile(profile, db);
 
         await tester.pumpWidget(
-          _buildTestApp(
-            PregnancySettingsSheet(
-              initialProfile: profile,
-            ),
-          ),
+          _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
         );
         await tester.pump(const Duration(milliseconds: 100));
 
-        // Tap due date row
-        await tester.tap(find.text('تاریخ تقریبی زایمان'));
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.pump(const Duration(milliseconds: 300));
-
-        expect(find.text('ویرایش تاریخ بارداری'), findsOneWidget);
-        expect(find.text('بر اساس تاریخ آخرین پریود (LMP)'), findsOneWidget);
-        expect(find.text('بر اساس تاریخ اعلامی پزشک (EDD)'), findsOneWidget);
-        expect(find.text('بر اساس جواب سونوگرافی'), findsOneWidget);
+        expect(find.text('تاریخ و سن بارداری'), findsOneWidget);
+        expect(find.text('سن بارداری امروز'), findsOneWidget);
+        expect(find.text('تاریخ تقریبی زایمان'), findsOneWidget);
+        expect(find.text('مبنای محاسبه'), findsOneWidget);
+        expect(find.text('اولین روز آخرین پریود (LMP)'), findsOneWidget);
       });
     });
+
+    testWidgets(
+      'tapping due date opens method options and shows shift warning dialog on update',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.runAsync(() async {
+          final now = CycleClock.now;
+          final lmp = CycleDateContract.cleanDate(
+            now.subtract(const Duration(days: 70)),
+          );
+          final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
+
+          final profile = PregnancyProfile(
+            lmpDate: lmp,
+            dueDate: due,
+            eddSource: PregnancyEddSource.lmp,
+            tone: PregnancyTone.warm,
+            ageUnit: PregnancyAgeUnit.weeks,
+          );
+          await PregnancySettings.saveProfile(profile, db);
+
+          await tester.pumpWidget(
+            _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+
+          // Tap due date row
+          await tester.tap(find.text('تاریخ تقریبی زایمان'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+
+          expect(find.text('ویرایش تاریخ بارداری'), findsOneWidget);
+          expect(find.text('بر اساس تاریخ آخرین پریود (LMP)'), findsOneWidget);
+          expect(find.text('بر اساس تاریخ اعلامی پزشک (EDD)'), findsOneWidget);
+          expect(find.text('بر اساس جواب سونوگرافی'), findsOneWidget);
+        });
+      },
+    );
   });
 }

@@ -70,18 +70,30 @@ void main() {
       expect(customTracker.limit, const Duration(minutes: 30));
 
       for (var i = 0; i < 4; i++) {
-        final reached = customTracker.registerTap(now.add(Duration(minutes: i * 3)));
+        final reached = customTracker.registerTap(
+          now.add(Duration(minutes: i * 3)),
+        );
         expect(reached, isFalse);
       }
-      final reached5th = customTracker.registerTap(now.add(const Duration(minutes: 12)));
+      final reached5th = customTracker.registerTap(
+        now.add(const Duration(minutes: 12)),
+      );
       expect(reached5th, isTrue);
 
       // Expiry check
-      expect(customTracker.isExpired(now.add(const Duration(minutes: 20))), isFalse);
-      expect(customTracker.isExpired(now.add(const Duration(minutes: 35))), isTrue);
+      expect(
+        customTracker.isExpired(now.add(const Duration(minutes: 20))),
+        isFalse,
+      );
+      expect(
+        customTracker.isExpired(now.add(const Duration(minutes: 35))),
+        isTrue,
+      );
     });
 
-    testWidgets('PregnancyKicksTab displays custom targetCount', (tester) async {
+    testWidgets('PregnancyKicksTab displays custom targetCount', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -91,11 +103,7 @@ void main() {
 
       await tester.pumpWidget(
         _buildTestApp(
-          PregnancyKicksTab(
-            kickCount: 3,
-            targetCount: 15,
-            onKickTap: () {},
-          ),
+          PregnancyKicksTab(kickCount: 3, targetCount: 15, onKickTap: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -104,51 +112,60 @@ void main() {
       expect(find.text('تعداد حرکات ثبت شده: ۳ / ۱۵'), findsOneWidget);
     });
 
-    testWidgets('PregnancySettingsSheet Section 4 renders and saves kick settings', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'PregnancySettingsSheet Section 4 renders and saves kick settings',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        final now = CycleClock.now;
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
-        final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
+        await tester.runAsync(() async {
+          final now = CycleClock.now;
+          final lmp = CycleDateContract.cleanDate(
+            now.subtract(const Duration(days: 70)),
+          );
+          final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
 
-        final profile = PregnancyProfile(
-          lmpDate: lmp,
-          dueDate: due,
-          kickTargetCount: 10,
-          kickWindowMinutes: 120,
-          kickBaselineComparison: false,
-        );
-        await PregnancySettings.saveProfile(profile, db);
+          final profile = PregnancyProfile(
+            lmpDate: lmp,
+            dueDate: due,
+            kickTargetCount: 10,
+            kickWindowMinutes: 120,
+            kickBaselineComparison: false,
+          );
+          await PregnancySettings.saveProfile(profile, db);
 
-        await tester.pumpWidget(_buildTestApp(PregnancySettingsSheet(initialProfile: profile)));
-        await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpWidget(
+            _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
 
-        expect(find.text('لگدشماری'), findsOneWidget);
-        expect(find.text('تعداد هدف لگد'), findsOneWidget);
-        expect(find.text('۱۰ حرکت'), findsOneWidget);
-        expect(find.text('مدت پنجرهٔ شمارش'), findsOneWidget);
-        expect(find.text('۱۲۰ دقیقه'), findsOneWidget);
-        expect(find.text('مقایسه با الگوی شخصی خودم'), findsOneWidget);
+          expect(find.text('لگدشماری'), findsOneWidget);
+          expect(find.text('تعداد هدف لگد'), findsOneWidget);
+          expect(find.text('۱۰ حرکت'), findsOneWidget);
+          expect(find.text('مدت پنجرهٔ شمارش'), findsOneWidget);
+          expect(find.text('۱۲۰ دقیقه'), findsOneWidget);
+          expect(find.text('مقایسه با الگوی شخصی خودم'), findsOneWidget);
 
-        // Toggle baseline comparison switch (find all switches)
-        final switches = find.byType(CupertinoSwitch);
-        expect(switches, findsWidgets);
+          // Toggle baseline comparison switch (find all switches)
+          final switches = find.byType(CupertinoSwitch);
+          expect(switches, findsWidgets);
 
-        // Tap on toggle row text
-        await tester.tap(find.text('مقایسه با الگوی شخصی خودم'));
-        await tester.pump(const Duration(milliseconds: 300));
+          // Tap on toggle row text
+          await tester.tap(find.text('مقایسه با الگوی شخصی خودم'));
+          await tester.pump(const Duration(milliseconds: 300));
 
-        final rawRows = await db.query('app_settings');
-        final settings = {for (final r in rawRows) r['key'] as String: r['value']};
-        expect(settings['preg_kick_target_count'], '10');
-        expect(settings['preg_kick_window_minutes'], '120');
-      });
-    });
+          final rawRows = await db.query('app_settings');
+          final settings = {
+            for (final r in rawRows) r['key'] as String: r['value'],
+          };
+          expect(settings['preg_kick_target_count'], '10');
+          expect(settings['preg_kick_window_minutes'], '120');
+        });
+      },
+    );
   });
 }

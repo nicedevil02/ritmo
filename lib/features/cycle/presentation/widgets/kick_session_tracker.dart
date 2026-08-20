@@ -75,7 +75,8 @@ class KickSessionTracker {
       final startMs = int.tryParse(startMsStr);
       if (startMs == null) return null;
 
-      final targetVal = target ??
+      final targetVal =
+          target ??
           int.tryParse(map['preg_kick_target_count'] ?? '') ??
           defaultTargetCount;
       final windowMins =
@@ -116,8 +117,7 @@ class KickSessionTracker {
   static Future<KickSessionTracker?> loadFromSettings({
     int? target,
     Duration? limit,
-  }) =>
-      restoreFromSettings(CycleClock.now, target: target, limit: limit);
+  }) => restoreFromSettings(CycleClock.now, target: target, limit: limit);
 
   /// Persists session state into `app_settings`.
   Future<void> saveToSettings() async {

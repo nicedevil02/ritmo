@@ -53,88 +53,104 @@ void main() {
       await db.close();
     });
 
-    testWidgets('renders all 4 care settings rows and disables kick reminder before week 28', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'renders all 4 care settings rows and disables kick reminder before week 28',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        final now = CycleClock.now;
-        // Week 10
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 70)));
-        final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
+        await tester.runAsync(() async {
+          final now = CycleClock.now;
+          // Week 10
+          final lmp = CycleDateContract.cleanDate(
+            now.subtract(const Duration(days: 70)),
+          );
+          final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
 
-        final profile = PregnancyProfile(
-          lmpDate: lmp,
-          dueDate: due,
-          visitReminderLeadDays: 3,
-          reminderHour: 9,
-          supplementReminder: false,
-          kickReminder: false,
-        );
-        await PregnancySettings.saveProfile(profile, db);
+          final profile = PregnancyProfile(
+            lmpDate: lmp,
+            dueDate: due,
+            visitReminderLeadDays: 3,
+            reminderHour: 9,
+            supplementReminder: false,
+            kickReminder: false,
+          );
+          await PregnancySettings.saveProfile(profile, db);
 
-        await tester.pumpWidget(_buildTestApp(PregnancySettingsSheet(initialProfile: profile)));
-        await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpWidget(
+            _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
 
-        expect(find.text('مراقبت‌ها و یادآوری‌ها'), findsOneWidget);
-        expect(find.text('یادآوری ویزیت مامایی'), findsOneWidget);
-        expect(find.text('۳ روز قبل'), findsOneWidget);
-        expect(find.text('ساعت یادآوری‌های بارداری'), findsOneWidget);
-        expect(find.text('ساعت ۹:۰۰'), findsOneWidget);
-        expect(find.text('یادآوری مکمل‌ها و ویتامین‌ها'), findsOneWidget);
-        expect(find.text('یادآوری لگدشماری از هفتهٔ ۲۸'), findsOneWidget);
-        expect(find.text('از هفتهٔ ۲۸ به بعد فعال می‌شود.'), findsOneWidget);
-      });
-    });
+          expect(find.text('مراقبت‌ها و یادآوری‌ها'), findsOneWidget);
+          expect(find.text('یادآوری ویزیت مامایی'), findsOneWidget);
+          expect(find.text('۳ روز قبل'), findsOneWidget);
+          expect(find.text('ساعت یادآوری‌های بارداری'), findsOneWidget);
+          expect(find.text('ساعت ۹:۰۰'), findsOneWidget);
+          expect(find.text('یادآوری مکمل‌ها و ویتامین‌ها'), findsOneWidget);
+          expect(find.text('یادآوری لگدشماری از هفتهٔ ۲۸'), findsOneWidget);
+          expect(find.text('از هفتهٔ ۲۸ به بعد فعال می‌شود.'), findsOneWidget);
+        });
+      },
+    );
 
-    testWidgets('enables kick reminder on week 30 and toggles supplement reminder', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'enables kick reminder on week 30 and toggles supplement reminder',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        final now = CycleClock.now;
-        // Week 30 (210 days)
-        final lmp = CycleDateContract.cleanDate(now.subtract(const Duration(days: 210)));
-        final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
+        await tester.runAsync(() async {
+          final now = CycleClock.now;
+          // Week 30 (210 days)
+          final lmp = CycleDateContract.cleanDate(
+            now.subtract(const Duration(days: 210)),
+          );
+          final due = PregnancyDateEngine.calculateEddFromLmp(lmp);
 
-        final profile = PregnancyProfile(
-          lmpDate: lmp,
-          dueDate: due,
-          visitReminderLeadDays: 3,
-          reminderHour: 9,
-          supplementReminder: false,
-          kickReminder: false,
-        );
-        await PregnancySettings.saveProfile(profile, db);
+          final profile = PregnancyProfile(
+            lmpDate: lmp,
+            dueDate: due,
+            visitReminderLeadDays: 3,
+            reminderHour: 9,
+            supplementReminder: false,
+            kickReminder: false,
+          );
+          await PregnancySettings.saveProfile(profile, db);
 
-        await tester.pumpWidget(_buildTestApp(PregnancySettingsSheet(initialProfile: profile)));
-        await tester.pump(const Duration(milliseconds: 100));
+          await tester.pumpWidget(
+            _buildTestApp(PregnancySettingsSheet(initialProfile: profile)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
 
-        // Subtitle should not appear because week >= 28
-        expect(find.text('از هفتهٔ ۲۸ به بعد فعال می‌شود.'), findsNothing);
+          // Subtitle should not appear because week >= 28
+          expect(find.text('از هفتهٔ ۲۸ به بعد فعال می‌شود.'), findsNothing);
 
-        // Find switches
-        final cupertinoSwitches = find.byType(CupertinoSwitch);
-        expect(cupertinoSwitches, findsWidgets);
+          // Find switches
+          final cupertinoSwitches = find.byType(CupertinoSwitch);
+          expect(cupertinoSwitches, findsWidgets);
 
-        // Toggle supplement reminder (third switch overall: countdown is 1st, supplement is 2nd, kick is 3rd)
-        await tester.tap(find.text('یادآوری مکمل‌ها و ویتامین‌ها'));
-        await tester.pump(const Duration(milliseconds: 200));
+          // Toggle supplement reminder (third switch overall: countdown is 1st, supplement is 2nd, kick is 3rd)
+          await tester.tap(find.text('یادآوری مکمل‌ها و ویتامین‌ها'));
+          await tester.pump(const Duration(milliseconds: 200));
 
-        // Verify database updated
-        final rawRows = await db.query('app_settings');
-        final settings = {for (final r in rawRows) r['key'] as String: r['value']};
-        expect(settings['preg_visit_reminder_lead_days'], '3');
-        expect(settings['preg_reminder_hour'], '9');
-      });
-    });
+          // Verify database updated
+          final rawRows = await db.query('app_settings');
+          final settings = {
+            for (final r in rawRows) r['key'] as String: r['value'],
+          };
+          expect(settings['preg_visit_reminder_lead_days'], '3');
+          expect(settings['preg_reminder_hour'], '9');
+        });
+      },
+    );
   });
 }

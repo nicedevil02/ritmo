@@ -56,18 +56,23 @@ class PregnancyReminderScheduler {
       final effectiveNow = now ?? CycleClock.now;
       final cleanToday = CycleDateContract.cleanDate(effectiveNow);
 
-      final isMasked = settings['preg_mask_notifications'] == 'true' ||
+      final isMasked =
+          settings['preg_mask_notifications'] == 'true' ||
           settings['preg_lock_enabled'] == 'true' ||
           settings['cycle_inbox_mask_enabled'] == 'true';
-      final leadDays = int.tryParse(settings['preg_visit_reminder_lead_days'] ?? '3') ?? 3;
-      final reminderHour = int.tryParse(settings['preg_reminder_hour'] ?? '9') ?? 9;
+      final leadDays =
+          int.tryParse(settings['preg_visit_reminder_lead_days'] ?? '3') ?? 3;
+      final reminderHour =
+          int.tryParse(settings['preg_reminder_hour'] ?? '9') ?? 9;
       final supplementEnabled = settings['preg_supplement_reminder'] == 'true';
       final kickEnabled = settings['preg_kick_reminder'] == 'true';
 
       final requests = <NotificationRequest>[];
 
       if (isPregnant) {
-        final lmpStr = settings['preg_start_date'] ?? settings['cycle_pregnancy_start_date'];
+        final lmpStr =
+            settings['preg_start_date'] ??
+            settings['cycle_pregnancy_start_date'];
         final lmp = CycleDateContract.parseDayKey(lmpStr) ?? cleanToday;
         final ga = PregnancyDateEngine.calculateCurrentGestation(
           lmp: lmp,
@@ -90,10 +95,12 @@ class PregnancyReminderScheduler {
               final chk = checkups[i];
               final scheduledMs = chk['scheduledDate'] as int?;
               if (scheduledMs != null && scheduledMs > 0) {
-                final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledMs);
-                final reminderDate = CycleDateContract.cleanDate(scheduledDate).subtract(
-                  Duration(days: leadDays),
+                final scheduledDate = DateTime.fromMillisecondsSinceEpoch(
+                  scheduledMs,
                 );
+                final reminderDate = CycleDateContract.cleanDate(
+                  scheduledDate,
+                ).subtract(Duration(days: leadDays));
 
                 if (CycleDateContract.isSameOrAfter(reminderDate, cleanToday)) {
                   final scheduledTime = DateTime(
@@ -154,8 +161,12 @@ class PregnancyReminderScheduler {
             reminderTime = reminderTime.add(const Duration(days: 1));
           }
 
-          final title = isMasked ? maskedTitle : 'یادآوری مکمل و ویتامین بارداری';
-          final body = isMasked ? maskedBody : 'زمان مصرف مکمل‌ها و اسیدفولیک/ویتامین روزانه است.';
+          final title = isMasked
+              ? maskedTitle
+              : 'یادآوری مکمل و ویتامین بارداری';
+          final body = isMasked
+              ? maskedBody
+              : 'زمان مصرف مکمل‌ها و اسیدفولیک/ویتامین روزانه است.';
 
           requests.add(
             NotificationRequest(
@@ -164,7 +175,9 @@ class PregnancyReminderScheduler {
               scheduledAt: reminderTime,
               title: title,
               body: body,
-              privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              privacy: isMasked
+                  ? NotificationPrivacy.redacted
+                  : NotificationPrivacy.none,
               redactedTitle: redactedTitle,
               redactedBody: redactedBody,
               sourceSystem: 'pregnancy',
@@ -187,7 +200,9 @@ class PregnancyReminderScheduler {
           }
 
           final title = isMasked ? maskedTitle : 'یادآوری لگدشماری';
-          final body = isMasked ? maskedBody : 'زمان ثبت و بررسی حرکات جنین است.';
+          final body = isMasked
+              ? maskedBody
+              : 'زمان ثبت و بررسی حرکات جنین است.';
 
           requests.add(
             NotificationRequest(
@@ -196,7 +211,9 @@ class PregnancyReminderScheduler {
               scheduledAt: reminderTime,
               title: title,
               body: body,
-              privacy: isMasked ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              privacy: isMasked
+                  ? NotificationPrivacy.redacted
+                  : NotificationPrivacy.none,
               redactedTitle: redactedTitle,
               redactedBody: redactedBody,
               sourceSystem: 'pregnancy',
@@ -255,16 +272,30 @@ class PregnancyReminderScheduler {
   static Future<void> cancelAll() async {
     try {
       await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_visit');
-      await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_supplement');
+      await NotificationGateway.cancelForEntity(
+        'pregnancy',
+        'pregnancy_supplement',
+      );
       await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_kick');
-      await NotificationGateway.cancelForEntity('pregnancy', 'pregnancy_cycle_resume');
+      await NotificationGateway.cancelForEntity(
+        'pregnancy',
+        'pregnancy_cycle_resume',
+      );
 
       for (var i = 0; i < 10; i++) {
-        await NotificationGateway.cancel(NotificationIds.pregnancyVisit(i).toString());
+        await NotificationGateway.cancel(
+          NotificationIds.pregnancyVisit(i).toString(),
+        );
       }
-      await NotificationGateway.cancel(NotificationIds.pregnancySupplement.toString());
-      await NotificationGateway.cancel(NotificationIds.pregnancyKick.toString());
-      await NotificationGateway.cancel(NotificationIds.pregnancyCycleResume.toString());
+      await NotificationGateway.cancel(
+        NotificationIds.pregnancySupplement.toString(),
+      );
+      await NotificationGateway.cancel(
+        NotificationIds.pregnancyKick.toString(),
+      );
+      await NotificationGateway.cancel(
+        NotificationIds.pregnancyCycleResume.toString(),
+      );
     } catch (e, st) {
       RitmoLogger.error(
         '[PregnancyReminderScheduler] error during cancelAll',

@@ -14,11 +14,7 @@ import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 /// Independent lock gate for the pregnancy section (`preg_lock_enabled`).
 /// Enforces PIN/Biometric verification when pregnancy lock is activated.
 class PregnancyLockGate extends StatefulWidget {
-  const PregnancyLockGate({
-    super.key,
-    required this.child,
-    this.settings,
-  });
+  const PregnancyLockGate({super.key, required this.child, this.settings});
 
   final Widget child;
   final Map<String, String>? settings;
@@ -312,7 +308,10 @@ class _PregnancyLockGateState extends State<PregnancyLockGate>
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: ConstrainedBox(
@@ -321,10 +320,15 @@ class _PregnancyLockGateState extends State<PregnancyLockGate>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.pill,
+                            ),
                             border: Border.all(
                               color: colors.primary.withValues(alpha: 0.2),
                               width: 1,
@@ -417,11 +421,15 @@ class _PregnancyLockGateState extends State<PregnancyLockGate>
                               height: 14,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: filled ? colors.primary : Colors.transparent,
+                                color: filled
+                                    ? colors.primary
+                                    : Colors.transparent,
                                 border: Border.all(
                                   color: filled
                                       ? colors.primary
-                                      : colors.textSecondary.withValues(alpha: 0.4),
+                                      : colors.textSecondary.withValues(
+                                          alpha: 0.4,
+                                        ),
                                   width: 2,
                                 ),
                               ),
@@ -463,7 +471,8 @@ class _PregnancyLockGateState extends State<PregnancyLockGate>
                   ? Colors.white.withValues(alpha: 0.05)
                   : Colors.black.withValues(alpha: 0.03),
             ),
-            child: customChild ??
+            child:
+                customChild ??
                 Text(
                   PersianDigits.toFa(text),
                   style: TextStyle(

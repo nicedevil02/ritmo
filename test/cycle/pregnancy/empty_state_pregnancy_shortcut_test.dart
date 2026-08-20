@@ -51,37 +51,40 @@ void main() {
       await db.close();
     });
 
-    testWidgets('tapping secondary pregnancy CTA in empty state opens PregnancyOnboardingShell directly', (tester) async {
-      tester.view.physicalSize = const Size(800, 1200);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'tapping secondary pregnancy CTA in empty state opens PregnancyOnboardingShell directly',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 1200);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      await tester.runAsync(() async {
-        await tester.pumpWidget(_buildTestApp());
-        for (var i = 0; i < 5; i++) {
-          await Future.delayed(const Duration(milliseconds: 20));
-          await tester.pump();
-        }
+        await tester.runAsync(() async {
+          await tester.pumpWidget(_buildTestApp());
+          for (var i = 0; i < 5; i++) {
+            await Future.delayed(const Duration(milliseconds: 20));
+            await tester.pump();
+          }
 
-        // 1. Verify both buttons exist in Empty State
-        expect(find.text('راه‌اندازی چرخه'), findsOneWidget);
-        final pregnancyCta = find.text('در حال حاضر باردار هستم');
-        expect(pregnancyCta, findsOneWidget);
+          // 1. Verify both buttons exist in Empty State
+          expect(find.text('راه‌اندازی چرخه'), findsOneWidget);
+          final pregnancyCta = find.text('در حال حاضر باردار هستم');
+          expect(pregnancyCta, findsOneWidget);
 
-        // 2. Tap pregnancy CTA
-        await tester.tap(pregnancyCta);
-        for (var i = 0; i < 5; i++) {
-          await Future.delayed(const Duration(milliseconds: 20));
-          await tester.pump();
-        }
+          // 2. Tap pregnancy CTA
+          await tester.tap(pregnancyCta);
+          for (var i = 0; i < 5; i++) {
+            await Future.delayed(const Duration(milliseconds: 20));
+            await tester.pump();
+          }
 
-        // 3. Verify PregnancyOnboardingShell is opened directly
-        expect(find.byType(PregnancyOnboardingShell), findsOneWidget);
-        expect(find.text('راه‌اندازی همراهی بارداری'), findsOneWidget);
-      });
-    });
+          // 3. Verify PregnancyOnboardingShell is opened directly
+          expect(find.byType(PregnancyOnboardingShell), findsOneWidget);
+          expect(find.text('راه‌اندازی بارداری'), findsOneWidget);
+        });
+      },
+    );
   });
 }

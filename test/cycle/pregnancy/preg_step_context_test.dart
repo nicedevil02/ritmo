@@ -30,13 +30,14 @@ Widget _buildTestWidget({
 
 void main() {
   group('PregStep3Context Tests (PRG-20)', () {
-    testWidgets('renders title, all 4 toggle rows, and reassuring note', (tester) async {
+    testWidgets('renders title, all 4 toggle rows, and reassuring note', (
+      tester,
+    ) async {
       const data = PregnancyOnboardingData();
 
-      await tester.pumpWidget(_buildTestWidget(
-        data: data,
-        onDataChanged: (_) {},
-      ));
+      await tester.pumpWidget(
+        _buildTestWidget(data: data, onDataChanged: (_) {}),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('شرایط و اتصالات بارداری'), findsOneWidget);
@@ -44,7 +45,10 @@ void main() {
       expect(find.text('بارداری پرخطر بر اساس نظر پزشک'), findsOneWidget);
       expect(find.text('توقف پیش‌بینی و یادآوری پریود'), findsOneWidget);
       expect(find.text('تعلیق نماز و روزه در عبادات'), findsOneWidget);
-      expect(find.textContaining('سابقهٔ چرخه‌ات دست‌نخورده می‌ماند'), findsOneWidget);
+      expect(
+        find.textContaining('سابقهٔ چرخه‌ات دست‌نخورده می‌ماند'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('toggling switches updates data correctly', (tester) async {

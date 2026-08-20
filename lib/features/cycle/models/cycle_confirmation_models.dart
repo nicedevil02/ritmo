@@ -82,7 +82,8 @@ class CycleConfirmationRequest {
       id: map['id']?.toString() ?? buildId(kind, targetDate),
       kind: kind,
       targetDate: targetDate,
-      askCount: (map['askCount'] is int
+      askCount:
+          (map['askCount'] is int
               ? map['askCount'] as int
               : int.tryParse(map['askCount']?.toString() ?? '')) ??
           0,

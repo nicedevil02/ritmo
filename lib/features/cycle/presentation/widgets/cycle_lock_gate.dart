@@ -321,7 +321,10 @@ class _CycleLockGateState extends State<CycleLockGate>
                     child: Center(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         child: Directionality(
                           textDirection: TextDirection.rtl,
                           child: ConstrainedBox(
@@ -331,15 +334,20 @@ class _CycleLockGateState extends State<CycleLockGate>
                               children: [
                                 // Top Header Bar
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     IconButton(
                                       icon: Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
                                           color: isDark
-                                              ? Colors.white.withValues(alpha: 0.08)
-                                              : Colors.black.withValues(alpha: 0.05),
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.08,
+                                                )
+                                              : Colors.black.withValues(
+                                                  alpha: 0.05,
+                                                ),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
@@ -348,15 +356,25 @@ class _CycleLockGateState extends State<CycleLockGate>
                                           size: 16,
                                         ),
                                       ),
-                                      onPressed: () => Navigator.maybePop(context),
+                                      onPressed: () =>
+                                          Navigator.maybePop(context),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: colors.primary.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                        color: colors.primary.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          RitmoRadius.pill,
+                                        ),
                                         border: Border.all(
-                                          color: colors.primary.withValues(alpha: 0.2),
+                                          color: colors.primary.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           width: 1,
                                         ),
                                       ),
@@ -380,7 +398,9 @@ class _CycleLockGateState extends State<CycleLockGate>
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 40), // Balanced spacing
+                                    const SizedBox(
+                                      width: 40,
+                                    ), // Balanced spacing
                                   ],
                                 ),
                                 const SizedBox(height: 24),
@@ -390,10 +410,14 @@ class _CycleLockGateState extends State<CycleLockGate>
                                   width: 80,
                                   height: 80,
                                   decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.08),
+                                    color: colors.primary.withValues(
+                                      alpha: 0.08,
+                                    ),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: colors.primary.withValues(alpha: 0.2),
+                                      color: colors.primary.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       width: 1.5,
                                     ),
                                   ),
@@ -406,8 +430,12 @@ class _CycleLockGateState extends State<CycleLockGate>
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            colors.primary.withValues(alpha: 0.2),
-                                            colors.primary.withValues(alpha: 0.08),
+                                            colors.primary.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            colors.primary.withValues(
+                                              alpha: 0.08,
+                                            ),
                                           ],
                                         ),
                                         shape: BoxShape.circle,
@@ -434,7 +462,9 @@ class _CycleLockGateState extends State<CycleLockGate>
                                 ),
                                 const SizedBox(height: 6),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
                                   child: Text(
                                     subtitleText,
                                     textAlign: TextAlign.center,
@@ -450,12 +480,19 @@ class _CycleLockGateState extends State<CycleLockGate>
                                 // Lockout Notice / Error Message
                                 if (_lockoutSeconds > 0) ...[
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: colors.warning.withValues(alpha: 0.12),
+                                      color: colors.warning.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: colors.warning.withValues(alpha: 0.3),
+                                        color: colors.warning.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                     ),
                                     child: Text(
@@ -470,12 +507,19 @@ class _CycleLockGateState extends State<CycleLockGate>
                                   ),
                                 ] else if (_pinErrorMessage.isNotEmpty) ...[
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: colors.error.withValues(alpha: 0.12),
+                                      color: colors.error.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: colors.error.withValues(alpha: 0.3),
+                                        color: colors.error.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                     ),
                                     child: Text(
@@ -494,90 +538,166 @@ class _CycleLockGateState extends State<CycleLockGate>
                                 // PIN Indicator Glowing Capsules with Shake Animation
                                 Semantics(
                                   liveRegion: true,
-                                  label: '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: List.generate(4, (index) {
-                                      final isActive = _enteredPin.length > index;
-                                      final isErr = _pinErrorMessage.isNotEmpty;
+                                  label:
+                                      '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
+                                  child:
+                                      Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: List.generate(4, (index) {
+                                              final isActive =
+                                                  _enteredPin.length > index;
+                                              final isErr =
+                                                  _pinErrorMessage.isNotEmpty;
 
-                                      return AnimatedContainer(
-                                        duration: const Duration(milliseconds: 200),
-                                        curve: Curves.easeOutCubic,
-                                        margin: const EdgeInsets.symmetric(horizontal: 9),
-                                        height: 15,
-                                        width: isActive ? 18 : 15,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: isActive
-                                              ? LinearGradient(
-                                                  colors: isErr
-                                                      ? [colors.error, colors.error.withValues(alpha: 0.8)]
-                                                      : [colors.primary, colors.primary.withValues(alpha: 0.85)],
-                                                )
-                                              : null,
-                                          color: isActive
-                                              ? null
-                                              : (isDark
-                                                  ? Colors.white.withValues(alpha: 0.12)
-                                                  : Colors.black.withValues(alpha: 0.08)),
-                                          border: Border.all(
-                                            color: isActive
-                                                ? (isErr ? colors.error : colors.primary)
-                                                : colors.borderSubtle,
-                                            width: 1.2,
-                                          ),
-                                          boxShadow: isActive
-                                              ? [
-                                                  BoxShadow(
-                                                    color: (isErr ? colors.error : colors.primary).withValues(alpha: 0.4),
-                                                    blurRadius: 8,
-                                                    spreadRadius: 1,
+                                              return AnimatedContainer(
+                                                duration: const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                                curve: Curves.easeOutCubic,
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 9,
+                                                    ),
+                                                height: 15,
+                                                width: isActive ? 18 : 15,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  gradient: isActive
+                                                      ? LinearGradient(
+                                                          colors: isErr
+                                                              ? [
+                                                                  colors.error,
+                                                                  colors.error
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.8,
+                                                                      ),
+                                                                ]
+                                                              : [
+                                                                  colors
+                                                                      .primary,
+                                                                  colors.primary
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.85,
+                                                                      ),
+                                                                ],
+                                                        )
+                                                      : null,
+                                                  color: isActive
+                                                      ? null
+                                                      : (isDark
+                                                            ? Colors.white
+                                                                  .withValues(
+                                                                    alpha: 0.12,
+                                                                  )
+                                                            : Colors.black
+                                                                  .withValues(
+                                                                    alpha: 0.08,
+                                                                  )),
+                                                  border: Border.all(
+                                                    color: isActive
+                                                        ? (isErr
+                                                              ? colors.error
+                                                              : colors.primary)
+                                                        : colors.borderSubtle,
+                                                    width: 1.2,
                                                   ),
-                                                ]
-                                              : null,
-                                        ),
-                                      );
-                                    }),
-                                  )
-                                  .animate(target: _pinErrorMessage.isNotEmpty ? 1.0 : 0.0)
-                                  .shake(hz: 4, curve: Curves.easeInOut),
+                                                  boxShadow: isActive
+                                                      ? [
+                                                          BoxShadow(
+                                                            color:
+                                                                (isErr
+                                                                        ? colors
+                                                                              .error
+                                                                        : colors
+                                                                              .primary)
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.4,
+                                                                    ),
+                                                            blurRadius: 8,
+                                                            spreadRadius: 1,
+                                                          ),
+                                                        ]
+                                                      : null,
+                                                ),
+                                              );
+                                            }),
+                                          )
+                                          .animate(
+                                            target: _pinErrorMessage.isNotEmpty
+                                                ? 1.0
+                                                : 0.0,
+                                          )
+                                          .shake(
+                                            hz: 4,
+                                            curve: Curves.easeInOut,
+                                          ),
                                 ),
                                 const SizedBox(height: 32),
 
                                 // Responsive Ergonomic Keypad
                                 ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 290),
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 290,
+                                  ),
                                   child: Column(
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: ['1', '2', '3']
-                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .map(
+                                              (k) => _buildKeyBtn(
+                                                k,
+                                                colors,
+                                                isDark,
+                                              ),
+                                            )
                                             .toList(),
                                       ),
                                       const SizedBox(height: 16),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: ['4', '5', '6']
-                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .map(
+                                              (k) => _buildKeyBtn(
+                                                k,
+                                                colors,
+                                                isDark,
+                                              ),
+                                            )
                                             .toList(),
                                       ),
                                       const SizedBox(height: 16),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: ['7', '8', '9']
-                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .map(
+                                              (k) => _buildKeyBtn(
+                                                k,
+                                                colors,
+                                                isDark,
+                                              ),
+                                            )
                                             .toList(),
                                       ),
                                       const SizedBox(height: 16),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           // Biometric Quick Action Button (or placeholder)
-                                          if (_hasPin && _lockoutSeconds == 0 && !kIsWeb)
+                                          if (_hasPin &&
+                                              _lockoutSeconds == 0 &&
+                                              !kIsWeb)
                                             Semantics(
-                                              label: 'ورود با اثر انگشت یا چهره',
+                                              label:
+                                                  'ورود با اثر انگشت یا چهره',
                                               button: true,
                                               child: InkResponse(
                                                 onTap: _authenticateBiometrics,
@@ -586,16 +706,21 @@ class _CycleLockGateState extends State<CycleLockGate>
                                                   height: 68,
                                                   width: 68,
                                                   decoration: BoxDecoration(
-                                                    color: colors.primary.withValues(alpha: 0.1),
+                                                    color: colors.primary
+                                                        .withValues(alpha: 0.1),
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
-                                                      color: colors.primary.withValues(alpha: 0.25),
+                                                      color: colors.primary
+                                                          .withValues(
+                                                            alpha: 0.25,
+                                                          ),
                                                       width: 1.2,
                                                     ),
                                                   ),
                                                   child: Center(
                                                     child: Icon(
-                                                      CupertinoIcons.device_phone_portrait,
+                                                      CupertinoIcons
+                                                          .device_phone_portrait,
                                                       color: colors.primary,
                                                       size: 24,
                                                     ),
@@ -604,7 +729,10 @@ class _CycleLockGateState extends State<CycleLockGate>
                                               ),
                                             )
                                           else
-                                            const SizedBox(width: 68, height: 68),
+                                            const SizedBox(
+                                              width: 68,
+                                              height: 68,
+                                            ),
 
                                           // Digit 0
                                           _buildKeyBtn('0', colors, isDark),
@@ -614,19 +742,28 @@ class _CycleLockGateState extends State<CycleLockGate>
                                             label: 'پاک کردن رقم قبلی',
                                             button: true,
                                             child: InkResponse(
-                                              onTap: _lockoutSeconds > 0 ? null : _onBackspaceTapped,
+                                              onTap: _lockoutSeconds > 0
+                                                  ? null
+                                                  : _onBackspaceTapped,
                                               radius: 36,
                                               child: Container(
                                                 height: 68,
                                                 width: 68,
                                                 decoration: BoxDecoration(
                                                   color: isDark
-                                                      ? Colors.white.withValues(alpha: 0.05)
-                                                      : Colors.black.withValues(alpha: 0.04),
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.05,
+                                                        )
+                                                      : Colors.black.withValues(
+                                                          alpha: 0.04,
+                                                        ),
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
                                                     color: isDark
-                                                        ? colors.borderSubtle.withValues(alpha: 0.4)
+                                                        ? colors.borderSubtle
+                                                              .withValues(
+                                                                alpha: 0.4,
+                                                              )
                                                         : colors.borderSubtle,
                                                     width: 1.0,
                                                   ),

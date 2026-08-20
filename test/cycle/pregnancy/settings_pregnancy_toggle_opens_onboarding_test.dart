@@ -31,41 +31,48 @@ Widget _buildSettingsPanel({
 
 void main() {
   group('Settings Pregnancy Toggle Tests (PRG-25, PRG-26)', () {
-    testWidgets('when pregnancy is inactive, shows activation row and triggers onboarding callback on tap', (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'when pregnancy is inactive, shows activation row and triggers onboarding callback on tap',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      var onboardingOpened = false;
+        var onboardingOpened = false;
 
-      final settings = <String, String>{
-        'cycle_pregnancy_mode': 'false',
-        'preg_setup_done': 'false',
-      };
+        final settings = <String, String>{
+          'cycle_pregnancy_mode': 'false',
+          'preg_setup_done': 'false',
+        };
 
-      await tester.pumpWidget(_buildSettingsPanel(
-        settings: settings,
-        onOpenPregnancyOnboarding: () => onboardingOpened = true,
-        onTogglePregnancyMode: () {},
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSettingsPanel(
+            settings: settings,
+            onOpenPregnancyOnboarding: () => onboardingOpened = true,
+            onTogglePregnancyMode: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final activationRow = find.text('فعالسازی حالت بارداری');
-      expect(activationRow, findsOneWidget);
-      expect(find.text('ویرایش و بازبینی راه‌اندازی بارداری'), findsNothing);
-      expect(find.text('پایان دوره بارداری و بازگشت به چرخه'), findsNothing);
+        final activationRow = find.text('فعالسازی حالت بارداری');
+        expect(activationRow, findsOneWidget);
+        expect(find.text('ویرایش و بازبینی راه‌اندازی بارداری'), findsNothing);
+        expect(find.text('پایان دوره بارداری و بازگشت به چرخه'), findsNothing);
 
-      await tester.ensureVisible(activationRow);
-      await tester.tap(activationRow);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(activationRow);
+        await tester.tap(activationRow);
+        await tester.pumpAndSettle();
 
-      expect(onboardingOpened, true);
-    });
+        expect(onboardingOpened, true);
+      },
+    );
 
-    testWidgets('when pregnancy is active, shows edit row and return row', (tester) async {
+    testWidgets('when pregnancy is active, shows edit row and return row', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -80,11 +87,13 @@ void main() {
         'preg_setup_done': 'true',
       };
 
-      await tester.pumpWidget(_buildSettingsPanel(
-        settings: settings,
-        onOpenPregnancyOnboarding: () {},
-        onTogglePregnancyMode: () => toggleCalled = true,
-      ));
+      await tester.pumpWidget(
+        _buildSettingsPanel(
+          settings: settings,
+          onOpenPregnancyOnboarding: () {},
+          onTogglePregnancyMode: () => toggleCalled = true,
+        ),
+      );
       await tester.pumpAndSettle();
 
       final editRow = find.text('ویرایش و بازبینی راه‌اندازی بارداری');

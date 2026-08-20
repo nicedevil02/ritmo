@@ -248,7 +248,9 @@ class PregnancyHeader extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.08),
+                    color: colors.primary.withValues(
+                      alpha: isDark ? 0.2 : 0.08,
+                    ),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(

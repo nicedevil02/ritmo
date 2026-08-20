@@ -129,7 +129,9 @@ class PregnancySettings {
     });
 
     if (anyActive) {
-      final allAlreadyTrue = pregnancyFlagKeys.every((k) => settings[k] == 'true');
+      final allAlreadyTrue = pregnancyFlagKeys.every(
+        (k) => settings[k] == 'true',
+      );
       if (!allAlreadyTrue) {
         final executor = db ?? await DatabaseHelper.instance.database;
         final now = CycleClock.nowMillisecondsSinceEpoch;
@@ -204,7 +206,7 @@ class PregnancySettings {
         ],
       );
       final map = {
-        for (final r in rows) r['key'] as String: r['value']?.toString()
+        for (final r in rows) r['key'] as String: r['value']?.toString(),
       };
 
       final restoreReminders = map[keyPrevConsentReminders] ?? 'true';

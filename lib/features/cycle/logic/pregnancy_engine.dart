@@ -20,7 +20,9 @@ class PregnancyDateEngine {
   /// Calculates LMP from given EDD.
   static DateTime calculateLmpFromEdd(DateTime edd) {
     final clean = CycleDateContract.cleanDate(edd);
-    return clean.subtract(const Duration(days: PregnancyProfile.gestationTotalDays));
+    return clean.subtract(
+      const Duration(days: PregnancyProfile.gestationTotalDays),
+    );
   }
 
   /// Alias for calculateLmpFromEdd.
@@ -85,10 +87,7 @@ class PregnancyDateEngine {
   }
 
   /// Calculates remaining days until delivery, lower bounded at 0.
-  static int calculateRemainingDays({
-    required DateTime edd,
-    DateTime? now,
-  }) {
+  static int calculateRemainingDays({required DateTime edd, DateTime? now}) {
     final currentNow = now ?? CycleClock.now;
     final diff = dayShiftBetween(currentNow, edd);
     return diff < 0 ? 0 : diff;
@@ -136,10 +135,7 @@ class PregnancyDateEngine {
   }
 
   /// Returns true if current date is strictly after EDD.
-  static bool isOverdue({
-    required DateTime edd,
-    DateTime? now,
-  }) {
+  static bool isOverdue({required DateTime edd, DateTime? now}) {
     final currentNow = now ?? CycleClock.now;
     final cleanNow = CycleDateContract.cleanDate(currentNow);
     final cleanEdd = CycleDateContract.cleanDate(edd);
@@ -212,9 +208,9 @@ class PregnancyDateValidationResult {
   final PregnancyDateErrorCode? errorCode;
 
   const PregnancyDateValidationResult.valid()
-      : isValid = true,
-        errorMessageFa = null,
-        errorCode = null;
+    : isValid = true,
+      errorMessageFa = null,
+      errorCode = null;
 
   const PregnancyDateValidationResult.invalid({
     required this.errorCode,

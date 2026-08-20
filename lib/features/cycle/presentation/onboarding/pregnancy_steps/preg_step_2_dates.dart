@@ -115,23 +115,34 @@ class PregStep2Dates extends StatelessWidget {
         if (data.eddSource != source) {
           final now = CycleClock.now;
           if (source == PregnancyEddSource.lmp) {
-            final effectiveLmp = data.lmpDate ?? now.subtract(const Duration(days: 56));
-            final effectiveDue = PregnancyDateEngine.dueDateFromLmp(effectiveLmp);
-            onDataChanged(data.copyWith(
-              eddSource: source,
-              lmpDate: effectiveLmp,
-              dueDate: effectiveDue,
-            ));
+            final effectiveLmp =
+                data.lmpDate ?? now.subtract(const Duration(days: 56));
+            final effectiveDue = PregnancyDateEngine.dueDateFromLmp(
+              effectiveLmp,
+            );
+            onDataChanged(
+              data.copyWith(
+                eddSource: source,
+                lmpDate: effectiveLmp,
+                dueDate: effectiveDue,
+              ),
+            );
           } else if (source == PregnancyEddSource.doctorEdd) {
-            final effectiveDue = data.dueDate ?? now.add(const Duration(days: 224));
-            final effectiveLmp = PregnancyDateEngine.lmpFromDueDate(effectiveDue);
-            onDataChanged(data.copyWith(
-              eddSource: source,
-              lmpDate: effectiveLmp,
-              dueDate: effectiveDue,
-            ));
+            final effectiveDue =
+                data.dueDate ?? now.add(const Duration(days: 224));
+            final effectiveLmp = PregnancyDateEngine.lmpFromDueDate(
+              effectiveDue,
+            );
+            onDataChanged(
+              data.copyWith(
+                eddSource: source,
+                lmpDate: effectiveLmp,
+                dueDate: effectiveDue,
+              ),
+            );
           } else if (source == PregnancyEddSource.ultrasound) {
-            final scanDate = data.scanDate ?? now.subtract(const Duration(days: 7));
+            final scanDate =
+                data.scanDate ?? now.subtract(const Duration(days: 7));
             final scanWeeks = data.scanWeeks > 0 ? data.scanWeeks : 8;
             final scanDays = data.scanDays;
             final effectiveLmp = PregnancyDateEngine.lmpFromUltrasound(
@@ -139,15 +150,19 @@ class PregStep2Dates extends StatelessWidget {
               weeksAtScan: scanWeeks,
               daysAtScan: scanDays,
             );
-            final effectiveDue = PregnancyDateEngine.dueDateFromLmp(effectiveLmp);
-            onDataChanged(data.copyWith(
-              eddSource: source,
-              scanDate: scanDate,
-              scanWeeks: scanWeeks,
-              scanDays: scanDays,
-              lmpDate: effectiveLmp,
-              dueDate: effectiveDue,
-            ));
+            final effectiveDue = PregnancyDateEngine.dueDateFromLmp(
+              effectiveLmp,
+            );
+            onDataChanged(
+              data.copyWith(
+                eddSource: source,
+                scanDate: scanDate,
+                scanWeeks: scanWeeks,
+                scanDays: scanDays,
+                lmpDate: effectiveLmp,
+                dueDate: effectiveDue,
+              ),
+            );
           }
         }
       },
@@ -159,8 +174,8 @@ class PregStep2Dates extends StatelessWidget {
           color: isSelected
               ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
               : (isDark
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : Colors.white.withValues(alpha: 0.6)),
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : Colors.white.withValues(alpha: 0.6)),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
@@ -177,8 +192,8 @@ class PregStep2Dates extends StatelessWidget {
                 color: isSelected
                     ? primaryColor.withValues(alpha: 0.2)
                     : (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.04)),
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.04)),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -225,7 +240,8 @@ class PregStep2Dates extends StatelessWidget {
   }
 
   Widget _buildLmpSection(BuildContext context) {
-    final lmp = data.lmpDate ?? CycleClock.now.subtract(const Duration(days: 56));
+    final lmp =
+        data.lmpDate ?? CycleClock.now.subtract(const Duration(days: 56));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +289,8 @@ class PregStep2Dates extends StatelessWidget {
   }
 
   Widget _buildUltrasoundSection(BuildContext context) {
-    final scanDate = data.scanDate ?? CycleClock.now.subtract(const Duration(days: 7));
+    final scanDate =
+        data.scanDate ?? CycleClock.now.subtract(const Duration(days: 7));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,11 +335,13 @@ class PregStep2Dates extends StatelessWidget {
                     daysAtScan: data.scanDays,
                   );
                   final newDue = PregnancyDateEngine.dueDateFromLmp(newLmp);
-                  onDataChanged(data.copyWith(
-                    scanWeeks: w,
-                    lmpDate: newLmp,
-                    dueDate: newDue,
-                  ));
+                  onDataChanged(
+                    data.copyWith(
+                      scanWeeks: w,
+                      lmpDate: newLmp,
+                      dueDate: newDue,
+                    ),
+                  );
                 },
               ),
             ),
@@ -341,11 +360,13 @@ class PregStep2Dates extends StatelessWidget {
                     daysAtScan: d,
                   );
                   final newDue = PregnancyDateEngine.dueDateFromLmp(newLmp);
-                  onDataChanged(data.copyWith(
-                    scanDays: d,
-                    lmpDate: newLmp,
-                    dueDate: newDue,
-                  ));
+                  onDataChanged(
+                    data.copyWith(
+                      scanDays: d,
+                      lmpDate: newLmp,
+                      dueDate: newDue,
+                    ),
+                  );
                 },
               ),
             ),
@@ -372,20 +393,14 @@ class PregStep2Dates extends StatelessWidget {
               ? Colors.black.withValues(alpha: 0.25)
               : Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colors.border.withValues(alpha: 0.5),
-          ),
+          border: Border.all(color: colors.border.withValues(alpha: 0.5)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
-                Icon(
-                  CupertinoIcons.calendar,
-                  color: primaryColor,
-                  size: 20,
-                ),
+                Icon(CupertinoIcons.calendar, color: primaryColor, size: 20),
                 const SizedBox(width: 10),
                 Text(
                   _formatJalaliDate(date),
@@ -399,10 +414,7 @@ class PregStep2Dates extends StatelessWidget {
             ),
             Text(
               'تغییر تاریخ',
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
           ],
         ),
@@ -426,16 +438,16 @@ class PregStep2Dates extends StatelessWidget {
             ? Colors.black.withValues(alpha: 0.25)
             : Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.border.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             icon: const Icon(CupertinoIcons.minus_circle, size: 24),
-            color: value > min ? primaryColor : colors.textSecondary.withValues(alpha: 0.3),
+            color: value > min
+                ? primaryColor
+                : colors.textSecondary.withValues(alpha: 0.3),
             onPressed: value > min ? () => onChanged(value - 1) : null,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -452,16 +464,15 @@ class PregStep2Dates extends StatelessWidget {
               ),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 11, color: colors.textSecondary),
               ),
             ],
           ),
           IconButton(
             icon: const Icon(CupertinoIcons.plus_circle, size: 24),
-            color: value < max ? primaryColor : colors.textSecondary.withValues(alpha: 0.3),
+            color: value < max
+                ? primaryColor
+                : colors.textSecondary.withValues(alpha: 0.3),
             onPressed: value < max ? () => onChanged(value + 1) : null,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -491,7 +502,11 @@ class PregStep2Dates extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(CupertinoIcons.exclamationmark_triangle_fill, color: Colors.red, size: 20),
+            const Icon(
+              CupertinoIcons.exclamationmark_triangle_fill,
+              color: Colors.red,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -509,9 +524,16 @@ class PregStep2Dates extends StatelessWidget {
       );
     }
 
-    final age = PregnancyDateEngine.calculateCurrentGestation(lmp: data.lmpDate!);
-    final remainingDays = PregnancyDateEngine.calculateRemainingDays(edd: data.dueDate!);
-    final formattedAge = PregnancyDateEngine.formatGestationalAgeFa(age, unit: data.ageUnit);
+    final age = PregnancyDateEngine.calculateCurrentGestation(
+      lmp: data.lmpDate!,
+    );
+    final remainingDays = PregnancyDateEngine.calculateRemainingDays(
+      edd: data.dueDate!,
+    );
+    final formattedAge = PregnancyDateEngine.formatGestationalAgeFa(
+      age,
+      unit: data.ageUnit,
+    );
     final countdownStr = PregnancyHelpers.formatHumanCountdown(remainingDays);
 
     return Container(
@@ -555,14 +577,14 @@ class PregStep2Dates extends StatelessWidget {
     if (picked != null) {
       final cleanPicked = CycleDateContract.cleanDate(picked.toDateTime());
       final cleanDue = PregnancyDateEngine.dueDateFromLmp(cleanPicked);
-      onDataChanged(data.copyWith(
-        lmpDate: cleanPicked,
-        dueDate: cleanDue,
-      ));
+      onDataChanged(data.copyWith(lmpDate: cleanPicked, dueDate: cleanDue));
     }
   }
 
-  Future<void> _pickDoctorDueDate(BuildContext context, DateTime initialDate) async {
+  Future<void> _pickDoctorDueDate(
+    BuildContext context,
+    DateTime initialDate,
+  ) async {
     final today = CycleClock.now;
     final threeHundredDaysLater = today.add(const Duration(days: 300));
 
@@ -576,10 +598,7 @@ class PregStep2Dates extends StatelessWidget {
     if (picked != null) {
       final cleanPicked = CycleDateContract.cleanDate(picked.toDateTime());
       final cleanLmp = PregnancyDateEngine.lmpFromDueDate(cleanPicked);
-      onDataChanged(data.copyWith(
-        dueDate: cleanPicked,
-        lmpDate: cleanLmp,
-      ));
+      onDataChanged(data.copyWith(dueDate: cleanPicked, lmpDate: cleanLmp));
     }
   }
 
@@ -602,11 +621,13 @@ class PregStep2Dates extends StatelessWidget {
         daysAtScan: data.scanDays,
       );
       final cleanDue = PregnancyDateEngine.dueDateFromLmp(cleanLmp);
-      onDataChanged(data.copyWith(
-        scanDate: cleanPicked,
-        lmpDate: cleanLmp,
-        dueDate: cleanDue,
-      ));
+      onDataChanged(
+        data.copyWith(
+          scanDate: cleanPicked,
+          lmpDate: cleanLmp,
+          dueDate: cleanDue,
+        ),
+      );
     }
   }
 
@@ -619,8 +640,18 @@ class PregStep2Dates extends StatelessWidget {
 
   String _monthNameFa(int m) {
     const months = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (m >= 1 && m <= 12) return months[m - 1];
     return '';

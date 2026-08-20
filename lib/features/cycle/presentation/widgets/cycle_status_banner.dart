@@ -30,14 +30,12 @@ class CycleStatusBanner extends StatelessWidget {
           pendingRequest!.kind == CycleConfirmationKind.startDue ||
           pendingRequest!.kind == CycleConfirmationKind.startOverdue;
 
-      final title =
-          isStart
-              ? 'بازبینی موعد ریتم بدنی'
-              : 'بررسی وضعیت پایان دوره';
-      final subtitle =
-          isStart
-              ? 'امروز موعد تخمینی آغاز دوره است. برای تأیید یا اصلاح کلیک کنید.'
-              : 'بر اساس میانگین شما، دوره پایان یافته است. برای ثبت وضعیت کلیک کنید.';
+      final title = isStart
+          ? 'بازبینی موعد ریتم بدنی'
+          : 'بررسی وضعیت پایان دوره';
+      final subtitle = isStart
+          ? 'امروز موعد تخمینی آغاز دوره است. برای تأیید یا اصلاح کلیک کنید.'
+          : 'بر اساس میانگین شما، دوره پایان یافته است. برای ثبت وضعیت کلیک کنید.';
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
@@ -182,11 +180,7 @@ class CycleStatusBanner extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(
-                  CupertinoIcons.clock_fill,
-                  color: colors.accent,
-                  size: 22,
-                ),
+                Icon(CupertinoIcons.clock_fill, color: colors.accent, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

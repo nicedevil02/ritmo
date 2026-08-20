@@ -109,8 +109,8 @@ class PregStep1Tone extends StatelessWidget {
           color: isSelected
               ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
               : (isDark
-                  ? Colors.black.withValues(alpha: 0.25)
-                  : Colors.white.withValues(alpha: 0.6)),
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : Colors.white.withValues(alpha: 0.6)),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
@@ -127,8 +127,8 @@ class PregStep1Tone extends StatelessWidget {
                 color: isSelected
                     ? primaryColor.withValues(alpha: 0.2)
                     : (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.04)),
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.04)),
                 shape: BoxShape.circle,
               ),
               child: Icon(

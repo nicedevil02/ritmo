@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
@@ -16,11 +17,7 @@ Widget _buildShellApp({required VoidCallback onCompleted}) {
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('fa'),
-    home: Scaffold(
-      body: PregnancyOnboardingShell(
-        onCompleted: onCompleted,
-      ),
-    ),
+    home: Scaffold(body: PregnancyOnboardingShell(onCompleted: onCompleted)),
   );
 }
 
@@ -28,12 +25,17 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
 
+  setUpAll(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   group('PregnancyOnboardingShell Tests (PRG-13)', () {
     late Database db;
     late CycleEngine engine;
     late EngineRegistry registry;
 
     setUp(() async {
+      FlutterSecureStorage.setMockInitialValues({});
       db = await openCycleTestDb();
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
 
@@ -46,7 +48,9 @@ void main() {
       await db.close();
     });
 
-    testWidgets('completes all 5 steps and saves valid profile to database', (tester) async {
+    testWidgets('completes all 5 steps and saves valid profile to database', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -57,61 +61,55 @@ void main() {
       bool completed = false;
 
       await tester.runAsync(() async {
-        await tester.pumpWidget(_buildShellApp(onCompleted: () => completed = true));
+        await tester.pumpWidget(
+          _buildShellApp(onCompleted: () => completed = true),
+        );
         for (var i = 0; i < 5; i++) {
           await Future.delayed(const Duration(milliseconds: 20));
           await tester.pump();
         }
 
-        // Step 0: Method Selection
-        expect(find.text('محاسبه تاریخ زایمان و سن بارداری'), findsOneWidget);
-        expect(find.text('اولین روز آخرین قاعدگی (LMP)'), findsOneWidget);
+        // Step 0: Tone
+        expect(find.text('قراره کنارت باشیم تا روز تولد'), findsOneWidget);
         final nextButton = find.text('مرحله بعد');
         expect(nextButton, findsOneWidget);
 
-        // Advance to Step 1
+        // Advance to Step 1: Dates
         await tester.tap(nextButton);
         for (var i = 0; i < 5; i++) {
           await Future.delayed(const Duration(milliseconds: 20));
           await tester.pump();
         }
 
-        // Step 1: Date Selection
-        expect(find.text('تاریخ اولین روز آخرین قاعدگی'), findsOneWidget);
-        expect(find.text('سن بارداری کنونی:'), findsOneWidget);
+        expect(find.text('مبنای محاسبهٔ تاریخ'), findsOneWidget);
 
-        // Advance to Step 2
+        // Advance to Step 2: Context
         await tester.tap(nextButton);
         for (var i = 0; i < 5; i++) {
           await Future.delayed(const Duration(milliseconds: 20));
           await tester.pump();
         }
 
-        // Step 2: Medical Info
-        expect(find.text('اطلاعات پایه پزشکی'), findsOneWidget);
-        expect(find.text('بارداری دوقلو یا چندقلو'), findsOneWidget);
+        expect(find.text('شرایط و اتصالات بارداری'), findsOneWidget);
 
-        // Advance to Step 3
+        // Advance to Step 3: Privacy
         await tester.tap(nextButton);
         for (var i = 0; i < 5; i++) {
           await Future.delayed(const Duration(milliseconds: 20));
           await tester.pump();
         }
 
-        // Step 3: Tone & Units
-        expect(find.text('سفارشی‌سازی نمایش و لحن'), findsOneWidget);
-        expect(find.text('صمیمی و پرانرژی 🌸'), findsOneWidget);
+        expect(find.text('حریم خصوصی و قفل'), findsOneWidget);
 
-        // Advance to Step 4
+        // Advance to Step 4: Confirm
         await tester.tap(nextButton);
         for (var i = 0; i < 5; i++) {
           await Future.delayed(const Duration(milliseconds: 20));
           await tester.pump();
         }
 
-        // Step 4: Summary & Finish
-        expect(find.text('یادآورها و تأیید نهایی'), findsOneWidget);
-        final finishButton = find.text('شروع همراهی بارداری 🌸');
+        expect(find.text('تأیید و راه‌اندازی بارداری'), findsOneWidget);
+        final finishButton = find.text('فعال‌سازی حالت بارداری');
         expect(finishButton, findsOneWidget);
 
         // Tap finish

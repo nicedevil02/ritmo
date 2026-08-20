@@ -260,9 +260,11 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             value: hasBiometrics,
             onChanged: (v) async {
               if (v) {
-                final didAuth = await CycleLockService.instance.authenticateBiometric(
-                  localizedReason: 'تأیید هویت جهت فعال‌سازی قفل بیومتریک چرخه',
-                );
+                final didAuth = await CycleLockService.instance
+                    .authenticateBiometric(
+                      localizedReason:
+                          'تأیید هویت جهت فعال‌سازی قفل بیومتریک چرخه',
+                    );
                 if (!didAuth) return;
               }
               await _updateSetting('cycle_biometric_enabled', v.toString());
@@ -311,21 +313,24 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             context,
             title: 'تأیید تعاملی شروع موعد ریتم',
             value: _localSettings['cycle_confirm_start_enabled'] != 'false',
-            onChanged: (v) => _updateSetting('cycle_confirm_start_enabled', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_confirm_start_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تأیید تعاملی پایان موعد ریتم',
             value: _localSettings['cycle_confirm_end_enabled'] != 'false',
-            onChanged: (v) => _updateSetting('cycle_confirm_end_enabled', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_confirm_end_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'ماسک‌کردن پیام‌های ریتم در صندوق اعلان‌ها',
             value: _localSettings['cycle_inbox_mask_enabled'] != 'false',
-            onChanged: (v) => _updateSetting('cycle_inbox_mask_enabled', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_inbox_mask_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
@@ -351,35 +356,40 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             context,
             title: 'تعدیل فشار در روتین‌ها و انرژی',
             value: _localSettings['cycle_consent_energy'] == 'true',
-            onChanged: (v) => _updateSetting('cycle_consent_energy', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_consent_energy', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تعدیل فشار در کیفیت خواب',
             value: _localSettings['cycle_consent_sleep'] == 'true',
-            onChanged: (v) => _updateSetting('cycle_consent_sleep', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_consent_sleep', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'یادآوری‌های حریم خصوصی',
             value: _localSettings['cycle_consent_reminders'] == 'true',
-            onChanged: (v) => _updateSetting('cycle_consent_reminders', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_consent_reminders', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'کارت داشبورد صفحه اصلی',
             value: _localSettings['cycle_consent_dashboard'] == 'true',
-            onChanged: (v) => _updateSetting('cycle_consent_dashboard', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('cycle_consent_dashboard', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'نمایش چرخه در تقویم و ریتم‌های روزانه',
             value: _localSettings['show_cycle_in_calendar'] == 'true',
-            onChanged: (v) => _updateSetting('show_cycle_in_calendar', v.toString()),
+            onChanged: (v) =>
+                _updateSetting('show_cycle_in_calendar', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           if (_localSettings['cycle_pregnancy_mode'] == 'true') ...[
@@ -390,7 +400,10 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 4,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -433,7 +446,10 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 4,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -476,10 +492,7 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
                         const SizedBox(width: 8),
                         Text(
                           'پایان دوره بارداری و بازگشت به چرخه',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colors.primary,
-                          ),
+                          style: TextStyle(fontSize: 14, color: colors.primary),
                         ),
                       ],
                     ),

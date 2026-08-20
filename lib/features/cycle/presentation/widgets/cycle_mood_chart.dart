@@ -33,8 +33,7 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       final db = await DatabaseHelper.instance.database;
 
       // 1. Get recent cycle periods to map dates to cycle days
-      final allPeriods =
-          await CyclePeriodRepository.instance.getAllPeriods(db);
+      final allPeriods = await CyclePeriodRepository.instance.getAllPeriods(db);
       final periods = allPeriods.take(6).toList();
 
       if (periods.isEmpty) {
@@ -52,8 +51,7 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
       final Map<int, int> energyBuckets = {};
 
       for (final log in logs) {
-        final dateIso =
-            (log['logDate'] ?? log['dateIso']) as String?;
+        final dateIso = (log['logDate'] ?? log['dateIso']) as String?;
         if (dateIso == null) continue;
         final logDate = CycleDateContract.parseDayKey(dateIso);
         if (logDate == null) continue;

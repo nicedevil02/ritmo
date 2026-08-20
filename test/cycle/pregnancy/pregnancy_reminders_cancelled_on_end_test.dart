@@ -116,40 +116,49 @@ void main() {
   });
 
   group('Pregnancy Reminders Cancelled on End Tests (PRG-46)', () {
-    test('PregnancyReminderScheduler.cancelAll executes without errors and triggers cancellation', () async {
-      await PregnancyReminderScheduler.cancelAll();
-      // cancelAll succeeds without throwing and coordinates with gateway/alarms
-      expect(true, isTrue);
-    });
+    test(
+      'PregnancyReminderScheduler.cancelAll executes without errors and triggers cancellation',
+      () async {
+        await PregnancyReminderScheduler.cancelAll();
+        // cancelAll succeeds without throwing and coordinates with gateway/alarms
+        expect(true, isTrue);
+      },
+    );
 
-    test('rescheduleAll cancels reminders and schedules nothing when pregnancy mode is inactive', () async {
-      await db.insert('app_settings', {
-        'key': 'cycle_pregnancy_mode',
-        'value': 'false',
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    test(
+      'rescheduleAll cancels reminders and schedules nothing when pregnancy mode is inactive',
+      () async {
+        await db.insert('app_settings', {
+          'key': 'cycle_pregnancy_mode',
+          'value': 'false',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-      mockAlarm.reset();
-      await PregnancyReminderScheduler.rescheduleAll(dbExecutor: db);
+        mockAlarm.reset();
+        await PregnancyReminderScheduler.rescheduleAll(dbExecutor: db);
 
-      // No alarms should be scheduled when pregnancy is inactive and no resume reminder
-      expect(mockAlarm.scheduledIds, isEmpty);
-    });
+        // No alarms should be scheduled when pregnancy is inactive and no resume reminder
+        expect(mockAlarm.scheduledIds, isEmpty);
+      },
+    );
 
-    test('scheduleCycleResume schedules postpartum reminder after cancelAll', () async {
-      // 1. Cancel all pregnancy reminders
-      await PregnancyReminderScheduler.cancelAll();
+    test(
+      'scheduleCycleResume schedules postpartum reminder after cancelAll',
+      () async {
+        // 1. Cancel all pregnancy reminders
+        await PregnancyReminderScheduler.cancelAll();
 
-      mockAlarm.reset();
+        mockAlarm.reset();
 
-      // 2. Schedule 40-day postpartum reminder
-      final futureDate = DateTime.now().add(const Duration(days: 40));
-      await PregnancyReminderScheduler.scheduleCycleResume(
-        reminderDate: futureDate,
-        dbExecutor: db,
-      );
+        // 2. Schedule 40-day postpartum reminder
+        final futureDate = DateTime.now().add(const Duration(days: 40));
+        await PregnancyReminderScheduler.scheduleCycleResume(
+          reminderDate: futureDate,
+          dbExecutor: db,
+        );
 
-      // Verify the reminder was scheduled
-      expect(mockAlarm.scheduledIds, isNotEmpty);
-    });
+        // Verify the reminder was scheduled
+        expect(mockAlarm.scheduledIds, isNotEmpty);
+      },
+    );
   });
 }

@@ -20,47 +20,53 @@ void main() {
       await db.close();
     });
 
-    test('setPregnancyActive(true) writes all three flags simultaneously to true', () async {
-      await PregnancySettings.setPregnancyActive(true, db: db);
+    test(
+      'setPregnancyActive(true) writes all three flags simultaneously to true',
+      () async {
+        await PregnancySettings.setPregnancyActive(true, db: db);
 
-      final rows = await db.query(
-        'app_settings',
-        where: 'key IN (?, ?, ?)',
-        whereArgs: [
-          PregnancySettings.keyCyclePregnancyMode,
-          PregnancySettings.keyPregnancyMode,
-          PregnancySettings.keyCycleIsPregnant,
-        ],
-      );
+        final rows = await db.query(
+          'app_settings',
+          where: 'key IN (?, ?, ?)',
+          whereArgs: [
+            PregnancySettings.keyCyclePregnancyMode,
+            PregnancySettings.keyPregnancyMode,
+            PregnancySettings.keyCycleIsPregnant,
+          ],
+        );
 
-      expect(rows.length, equals(3));
-      for (final row in rows) {
-        expect(row['value'], equals('true'));
-      }
-    });
+        expect(rows.length, equals(3));
+        for (final row in rows) {
+          expect(row['value'], equals('true'));
+        }
+      },
+    );
 
-    test('setPregnancyActive(false) writes all three flags simultaneously to false', () async {
-      // First enable
-      await PregnancySettings.setPregnancyActive(true, db: db);
+    test(
+      'setPregnancyActive(false) writes all three flags simultaneously to false',
+      () async {
+        // First enable
+        await PregnancySettings.setPregnancyActive(true, db: db);
 
-      // Now disable
-      await PregnancySettings.setPregnancyActive(false, db: db);
+        // Now disable
+        await PregnancySettings.setPregnancyActive(false, db: db);
 
-      final rows = await db.query(
-        'app_settings',
-        where: 'key IN (?, ?, ?)',
-        whereArgs: [
-          PregnancySettings.keyCyclePregnancyMode,
-          PregnancySettings.keyPregnancyMode,
-          PregnancySettings.keyCycleIsPregnant,
-        ],
-      );
+        final rows = await db.query(
+          'app_settings',
+          where: 'key IN (?, ?, ?)',
+          whereArgs: [
+            PregnancySettings.keyCyclePregnancyMode,
+            PregnancySettings.keyPregnancyMode,
+            PregnancySettings.keyCycleIsPregnant,
+          ],
+        );
 
-      expect(rows.length, equals(3));
-      for (final row in rows) {
-        expect(row['value'], equals('false'));
-      }
-    });
+        expect(rows.length, equals(3));
+        for (final row in rows) {
+          expect(row['value'], equals('false'));
+        }
+      },
+    );
 
     test('setPregnancyActive works within a transaction', () async {
       await db.transaction((txn) async {

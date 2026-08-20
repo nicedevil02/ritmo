@@ -26,17 +26,20 @@ void main() {
   });
 
   group('Pregnancy Migration Prompt Tests (PRG-47)', () {
-    test('shouldShowMigrationPrompt returns true when pregnancy mode is active but dates are missing and prompt not shown', () {
-      final settings = <String, dynamic>{
-        'cycle_pregnancy_mode': 'true',
-        'pregnancy_mode': 'true',
-        // No preg_start_date / preg_due_date
-        // preg_setup_done is missing
-        // preg_migration_prompt_shown is missing
-      };
+    test(
+      'shouldShowMigrationPrompt returns true when pregnancy mode is active but dates are missing and prompt not shown',
+      () {
+        final settings = <String, dynamic>{
+          'cycle_pregnancy_mode': 'true',
+          'pregnancy_mode': 'true',
+          // No preg_start_date / preg_due_date
+          // preg_setup_done is missing
+          // preg_migration_prompt_shown is missing
+        };
 
-      expect(PregnancySettings.shouldShowMigrationPrompt(settings), isTrue);
-    });
+        expect(PregnancySettings.shouldShowMigrationPrompt(settings), isTrue);
+      },
+    );
 
     test('shouldShowMigrationPrompt returns false when dates are valid', () {
       final settings = <String, dynamic>{
@@ -49,34 +52,43 @@ void main() {
       expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
     });
 
-    test('shouldShowMigrationPrompt returns false when setup was explicitly done', () {
-      final settings = <String, dynamic>{
-        'cycle_pregnancy_mode': 'true',
-        'pregnancy_mode': 'true',
-        'preg_setup_done': 'true',
-      };
+    test(
+      'shouldShowMigrationPrompt returns false when setup was explicitly done',
+      () {
+        final settings = <String, dynamic>{
+          'cycle_pregnancy_mode': 'true',
+          'pregnancy_mode': 'true',
+          'preg_setup_done': 'true',
+        };
 
-      expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
-    });
+        expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
+      },
+    );
 
-    test('shouldShowMigrationPrompt returns false when prompt was already shown once', () {
-      final settings = <String, dynamic>{
-        'cycle_pregnancy_mode': 'true',
-        'pregnancy_mode': 'true',
-        PregnancySettings.keyMigrationPromptShown: 'true',
-      };
+    test(
+      'shouldShowMigrationPrompt returns false when prompt was already shown once',
+      () {
+        final settings = <String, dynamic>{
+          'cycle_pregnancy_mode': 'true',
+          'pregnancy_mode': 'true',
+          PregnancySettings.keyMigrationPromptShown: 'true',
+        };
 
-      expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
-    });
+        expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
+      },
+    );
 
-    test('shouldShowMigrationPrompt returns false when pregnancy mode is false', () {
-      final settings = <String, dynamic>{
-        'cycle_pregnancy_mode': 'false',
-        'pregnancy_mode': 'false',
-      };
+    test(
+      'shouldShowMigrationPrompt returns false when pregnancy mode is false',
+      () {
+        final settings = <String, dynamic>{
+          'cycle_pregnancy_mode': 'false',
+          'pregnancy_mode': 'false',
+        };
 
-      expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
-    });
+        expect(PregnancySettings.shouldShowMigrationPrompt(settings), isFalse);
+      },
+    );
 
     test('Saving keyMigrationPromptShown persists to app_settings', () async {
       await PregnancySettings.saveSetting(

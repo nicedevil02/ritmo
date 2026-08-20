@@ -91,7 +91,10 @@ class CycleLockService {
 
   /// Returns whether the main app lock password exists in SecureKeyStore.
   Future<bool> hasAppLockPassword([DatabaseExecutor? dbExecutor]) async {
-    final appPass = await SecureKeyStore.getKey('app_lock_password', dbExecutor);
+    final appPass = await SecureKeyStore.getKey(
+      'app_lock_password',
+      dbExecutor,
+    );
     return appPass != null && appPass.isNotEmpty;
   }
 
@@ -212,7 +215,10 @@ class CycleLockService {
     String enteredPin, [
     DatabaseExecutor? dbExecutor,
   ]) async {
-    final storedHash = await SecureKeyStore.getKey('app_lock_password', dbExecutor);
+    final storedHash = await SecureKeyStore.getKey(
+      'app_lock_password',
+      dbExecutor,
+    );
     if (storedHash == null || storedHash.isEmpty) return false;
     return PinHasher.verifyPin(enteredPin, storedHash);
   }

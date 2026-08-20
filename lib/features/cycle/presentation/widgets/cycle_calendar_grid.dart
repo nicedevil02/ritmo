@@ -45,7 +45,8 @@ class CycleCalendarGrid extends StatelessWidget {
       builder: (context, constraints) {
         const columns = 7;
         const spacing = 6.0;
-        final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final cellWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
         final scale = context.textScale;
         final cellHeight = (cellWidth * 1.05).clamp(38.0 * scale, 60.0 * scale);
 
@@ -60,184 +61,189 @@ class CycleCalendarGrid extends StatelessWidget {
           ),
           itemCount: emptyCells + monthLength,
           itemBuilder: (context, index) {
-        if (index < emptyCells) {
-          return const SizedBox();
-        }
-
-        final dayNum = index - emptyCells + 1;
-        final dayJalali = Jalali(year, month, dayNum);
-        final dayGregorian = CycleDateContract.cleanDate(
-          dayJalali.toDateTime(),
-        );
-        final dayKey = CycleDateContract.toDayKey(dayGregorian);
-
-        // F-26: O(1) read from precomputed marks with ZERO loops
-        final mark =
-            marks[dayKey] ?? const CycleDayMark(kind: CycleDayKind.normal);
-
-        final isToday =
-            dayJalali.year == todayJalali.year &&
-            dayJalali.month == todayJalali.month &&
-            dayJalali.day == todayJalali.day;
-
-        final isSelected =
-            selectedDay != null &&
-            selectedDay!.year == dayGregorian.year &&
-            selectedDay!.month == dayGregorian.month &&
-            selectedDay!.day == dayGregorian.day;
-
-        Color? cellBg;
-        Border? cellBorder;
-        var textColor = colors.textPrimary;
-        FontWeight textWeight = FontWeight.w700;
-
-        // F-29 & F-30: Style determination based on day kind & confidence
-        switch (mark.kind) {
-          case CycleDayKind.recordedPeriod:
-            cellBg = colors.error.withValues(alpha: isDark ? 0.38 : 0.30);
-            textColor = colors.textPrimary;
-            textWeight = FontWeight.w900;
-            cellBorder = Border.all(
-              color: colors.error.withValues(alpha: 0.7),
-              width: 1.2,
-            );
-            break;
-          case CycleDayKind.predictedPeriod:
-            if (mark.confidenceLevel == PredictionConfidenceLevel.high) {
-              cellBg = colors.error.withValues(alpha: isDark ? 0.20 : 0.15);
-              cellBorder = Border.all(
-                color: colors.error.withValues(alpha: 0.6),
-                width: 1.3,
-              );
-            } else if (mark.confidenceLevel ==
-                PredictionConfidenceLevel.medium) {
-              cellBg = colors.error.withValues(alpha: isDark ? 0.12 : 0.08);
-              cellBorder = Border.all(
-                color: colors.error.withValues(alpha: 0.4),
-                width: 1.0,
-              );
-            } else {
-              // Low confidence (F-30)
-              cellBg = Colors.transparent;
-              cellBorder = Border.all(
-                color: colors.error.withValues(alpha: 0.35),
-                width: 1.0,
-              );
-              textColor = colors.textSecondary;
+            if (index < emptyCells) {
+              return const SizedBox();
             }
-            break;
-          case CycleDayKind.predictionWindow:
-            // F-29: Possible window shift range (no fill, dashed style)
-            cellBg = Colors.transparent;
-            cellBorder = Border.all(
-              color: colors.error.withValues(alpha: 0.25),
-              width: 1.0,
+
+            final dayNum = index - emptyCells + 1;
+            final dayJalali = Jalali(year, month, dayNum);
+            final dayGregorian = CycleDateContract.cleanDate(
+              dayJalali.toDateTime(),
             );
-            textColor = colors.textSecondary;
-            break;
-          case CycleDayKind.ovulation:
-            cellBg = colors.accent.withValues(alpha: isDark ? 0.45 : 0.35);
-            cellBorder = Border.all(color: colors.accent, width: 1.8);
-            textWeight = FontWeight.w900;
-            break;
-          case CycleDayKind.fertileWindow:
-            cellBg = colors.accent.withValues(alpha: isDark ? 0.26 : 0.20);
-            cellBorder = Border.all(
-              color: colors.accent.withValues(alpha: 0.55),
-              width: 1.1,
+            final dayKey = CycleDateContract.toDayKey(dayGregorian);
+
+            // F-26: O(1) read from precomputed marks with ZERO loops
+            final mark =
+                marks[dayKey] ?? const CycleDayMark(kind: CycleDayKind.normal);
+
+            final isToday =
+                dayJalali.year == todayJalali.year &&
+                dayJalali.month == todayJalali.month &&
+                dayJalali.day == todayJalali.day;
+
+            final isSelected =
+                selectedDay != null &&
+                selectedDay!.year == dayGregorian.year &&
+                selectedDay!.month == dayGregorian.month &&
+                selectedDay!.day == dayGregorian.day;
+
+            Color? cellBg;
+            Border? cellBorder;
+            var textColor = colors.textPrimary;
+            FontWeight textWeight = FontWeight.w700;
+
+            // F-29 & F-30: Style determination based on day kind & confidence
+            switch (mark.kind) {
+              case CycleDayKind.recordedPeriod:
+                cellBg = colors.error.withValues(alpha: isDark ? 0.38 : 0.30);
+                textColor = colors.textPrimary;
+                textWeight = FontWeight.w900;
+                cellBorder = Border.all(
+                  color: colors.error.withValues(alpha: 0.7),
+                  width: 1.2,
+                );
+                break;
+              case CycleDayKind.predictedPeriod:
+                if (mark.confidenceLevel == PredictionConfidenceLevel.high) {
+                  cellBg = colors.error.withValues(alpha: isDark ? 0.20 : 0.15);
+                  cellBorder = Border.all(
+                    color: colors.error.withValues(alpha: 0.6),
+                    width: 1.3,
+                  );
+                } else if (mark.confidenceLevel ==
+                    PredictionConfidenceLevel.medium) {
+                  cellBg = colors.error.withValues(alpha: isDark ? 0.12 : 0.08);
+                  cellBorder = Border.all(
+                    color: colors.error.withValues(alpha: 0.4),
+                    width: 1.0,
+                  );
+                } else {
+                  // Low confidence (F-30)
+                  cellBg = Colors.transparent;
+                  cellBorder = Border.all(
+                    color: colors.error.withValues(alpha: 0.35),
+                    width: 1.0,
+                  );
+                  textColor = colors.textSecondary;
+                }
+                break;
+              case CycleDayKind.predictionWindow:
+                // F-29: Possible window shift range (no fill, dashed style)
+                cellBg = Colors.transparent;
+                cellBorder = Border.all(
+                  color: colors.error.withValues(alpha: 0.25),
+                  width: 1.0,
+                );
+                textColor = colors.textSecondary;
+                break;
+              case CycleDayKind.ovulation:
+                cellBg = colors.accent.withValues(alpha: isDark ? 0.45 : 0.35);
+                cellBorder = Border.all(color: colors.accent, width: 1.8);
+                textWeight = FontWeight.w900;
+                break;
+              case CycleDayKind.fertileWindow:
+                cellBg = colors.accent.withValues(alpha: isDark ? 0.26 : 0.20);
+                cellBorder = Border.all(
+                  color: colors.accent.withValues(alpha: 0.55),
+                  width: 1.1,
+                );
+                textWeight = FontWeight.w800;
+                break;
+              case CycleDayKind.pms:
+                cellBg = colors.primary.withValues(alpha: isDark ? 0.18 : 0.12);
+                break;
+              case CycleDayKind.normal:
+                break;
+            }
+
+            if (isToday) {
+              cellBorder = Border.all(color: activePhaseColor, width: 2.2);
+              textWeight = FontWeight.w900;
+            }
+
+            if (isSelected && !isToday) {
+              cellBorder = Border.all(
+                color: colors.textPrimary.withValues(alpha: 0.8),
+                width: 1.8,
+              );
+            }
+
+            // F-34: Screen-reader semantics
+            final l10n = AppLocalizations.of(context);
+            final semanticsLabel = _buildSemanticsLabel(
+              dayJalali,
+              mark,
+              isToday,
+              l10n,
             );
-            textWeight = FontWeight.w800;
-            break;
-          case CycleDayKind.pms:
-            cellBg = colors.primary.withValues(alpha: isDark ? 0.18 : 0.12);
-            break;
-          case CycleDayKind.normal:
-            break;
-        }
 
-        if (isToday) {
-          cellBorder = Border.all(color: activePhaseColor, width: 2.2);
-          textWeight = FontWeight.w900;
-        }
-
-        if (isSelected && !isToday) {
-          cellBorder = Border.all(
-            color: colors.textPrimary.withValues(alpha: 0.8),
-            width: 1.8,
-          );
-        }
-
-        // F-34: Screen-reader semantics
-        final l10n = AppLocalizations.of(context);
-        final semanticsLabel = _buildSemanticsLabel(dayJalali, mark, isToday, l10n);
-
-        return Semantics(
-          label: semanticsLabel,
-          button: true,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(13),
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onDayTapped?.call(dayGregorian, mark);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                color: cellBg,
-                border: cellBorder,
+            return Semantics(
+              label: semanticsLabel,
+              button: true,
+              child: InkWell(
                 borderRadius: BorderRadius.circular(13),
-                boxShadow:
-                    (mark.kind == CycleDayKind.recordedPeriod ||
-                        mark.kind == CycleDayKind.ovulation)
-                    ? [
-                        BoxShadow(
-                          color:
-                              (mark.kind == CycleDayKind.recordedPeriod
-                                      ? colors.error
-                                      : colors.accent)
-                                  .withValues(alpha: 0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Center(
-                    child: Text(
-                      PersianDigits.toFa(dayNum.toString()),
-                      style: RitmoTextStyles.cardTitle(
-                        textColor,
-                      ).copyWith(fontWeight: textWeight),
-                    ),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onDayTapped?.call(dayGregorian, mark);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  decoration: BoxDecoration(
+                    color: cellBg,
+                    border: cellBorder,
+                    borderRadius: BorderRadius.circular(13),
+                    boxShadow:
+                        (mark.kind == CycleDayKind.recordedPeriod ||
+                            mark.kind == CycleDayKind.ovulation)
+                        ? [
+                            BoxShadow(
+                              color:
+                                  (mark.kind == CycleDayKind.recordedPeriod
+                                          ? colors.error
+                                          : colors.accent)
+                                      .withValues(alpha: 0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
-                  if (mark.hasLog)
-                    Positioned(
-                      bottom: 3,
-                      child: Container(
-                        height: 5,
-                        width: 5,
-                        decoration: BoxDecoration(
-                          color: mark.kind == CycleDayKind.recordedPeriod
-                              ? colors.textPrimary
-                              : activePhaseColor,
-                          shape: BoxShape.circle,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Center(
+                        child: Text(
+                          PersianDigits.toFa(dayNum.toString()),
+                          style: RitmoTextStyles.cardTitle(
+                            textColor,
+                          ).copyWith(fontWeight: textWeight),
                         ),
                       ),
-                    ),
-                ],
+                      if (mark.hasLog)
+                        Positioned(
+                          bottom: 3,
+                          child: Container(
+                            height: 5,
+                            width: 5,
+                            decoration: BoxDecoration(
+                              color: mark.kind == CycleDayKind.recordedPeriod
+                                  ? colors.textPrimary
+                                  : activePhaseColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
-  },
-);
-}
+  }
 
   String _buildSemanticsLabel(
     Jalali jDay,
@@ -255,15 +261,22 @@ class CycleCalendarGrid extends StatelessWidget {
         buffer.write(l10n?.cycleSemanticsRecordedPeriod ?? '، قاعدگی ثبت شده');
         break;
       case CycleDayKind.predictedPeriod:
-        buffer.write(l10n?.cycleSemanticsPredictedPeriod ?? '، پیش‌بینی قاعدگی');
+        buffer.write(
+          l10n?.cycleSemanticsPredictedPeriod ?? '، پیش‌بینی قاعدگی',
+        );
         if (mark.confidenceLevel == PredictionConfidenceLevel.low) {
           buffer.write(l10n?.cycleSemanticsLowConfidence ?? ' با اطمینان کم');
         } else if (mark.confidenceLevel == PredictionConfidenceLevel.high) {
-          buffer.write(l10n?.cycleSemanticsHighConfidence ?? ' با اطمینان بالا');
+          buffer.write(
+            l10n?.cycleSemanticsHighConfidence ?? ' با اطمینان بالا',
+          );
         }
         break;
       case CycleDayKind.predictionWindow:
-        buffer.write(l10n?.cycleSemanticsPredictionWindow ?? '، بازه احتمالی جابجایی قاعدگی');
+        buffer.write(
+          l10n?.cycleSemanticsPredictionWindow ??
+              '، بازه احتمالی جابجایی قاعدگی',
+        );
         break;
       case CycleDayKind.ovulation:
         buffer.write(l10n?.cycleSemanticsOvulation ?? '، روز تخمک‌گذاری');
@@ -277,7 +290,8 @@ class CycleCalendarGrid extends StatelessWidget {
       case CycleDayKind.normal:
         break;
     }
-    if (mark.hasLog) buffer.write(l10n?.cycleSemanticsHasLogs ?? '، دارای علائم ثبت‌شده');
+    if (mark.hasLog)
+      buffer.write(l10n?.cycleSemanticsHasLogs ?? '، دارای علائم ثبت‌شده');
     return buffer.toString();
   }
 }

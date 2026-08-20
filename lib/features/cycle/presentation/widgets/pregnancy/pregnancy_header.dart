@@ -166,7 +166,11 @@ class PregnancyHeader extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Sub Row: Status Badges (Privacy + EDD Source) & Human Countdown Summary
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               // UX-15 Privacy Badge
               InkWell(
@@ -207,8 +211,9 @@ class PregnancyHeader extends StatelessWidget {
                 ),
               ),
 
-              if (eddSource == 'ultrasound') ...[
-                const SizedBox(width: 6),
+              if (eddSource == 'ultrasound' ||
+                  eddSource == 'doctor_edd' ||
+                  eddSource == 'doctorEdd') ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -223,7 +228,9 @@ class PregnancyHeader extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'سونوگرافی 🩺',
+                    eddSource == 'ultrasound'
+                        ? 'سونوگرافی 🩺'
+                        : 'تایید پزشک 🩺',
                     style: TextStyle(
                       fontSize: 10,
                       color: colors.accent,
@@ -234,7 +241,6 @@ class PregnancyHeader extends StatelessWidget {
               ],
 
               if (showCountdown) ...[
-                const Spacer(),
                 // Human Countdown Summary Pill
                 Container(
                   padding: const EdgeInsets.symmetric(

@@ -18,7 +18,7 @@
 | PSN-08 | ناوردای ۶ — دامنهٔ فرمان درون خواندنی | A | انجام‌شد | 9765684f | قرمز مورد انتظار؛ PSN-33 سبزش می‌کند |
 | PSN-09 | ناوردای ۷ — فرمان ثبت‌نشده | A | انجام‌شد | 8f33ff2a | قرمز مورد انتظار (شناسه‌های گمشده در konkur: study.addTopic, study.setSubjectPriority, study.planSession, study.logSession, study.logMockResult, study.generateWeeklyPlan, study.setExamDate, study.setDailyBudget)؛ PSN-44 سبزش می‌کند |
 | PSN-10 | شناسهٔ ثابت قوانین لایهٔ صفر | A | انجام‌شد | 6eeb7edc | |
-| PSN-11 | رجیستری واحد مهارت‌ها | B | مانده | | |
+| PSN-11 | رجیستری واحد مهارت‌ها | B | انجام‌شد | pending | |
 | PSN-12 | مهاجرت همهٔ مهارت‌های منشور | B | مانده | | سنگین‌ترین تسک |
 | PSN-13 | بلوک مهارت‌ها در پرامپت | B | مانده | | |
 | PSN-14 | بازنویسی انتخاب مهارت | B | مانده | | |

@@ -138,8 +138,10 @@ void main() {
           manifestCommandIds: ['sleep.log'],
         );
 
-        expect(result.isValid, isFalse);
+        expect(result.isValid, isTrue);
+        expect(result.severity, equals(ValidationSeverity.annotate));
         expect(result.reason, equals('causal_language'));
+        expect(result.annotations, isNotEmpty);
       });
 
       test('rejects Gregorian dates', () {
@@ -156,8 +158,11 @@ void main() {
           manifestCommandIds: ['sleep.log'],
         );
 
-        expect(result.isValid, isFalse);
+        expect(result.isValid, isTrue);
+        expect(result.severity, equals(ValidationSeverity.sanitize));
         expect(result.reason, equals('gregorian_date'));
+        expect(result.sanitizedResponse, isNotNull);
+        expect(result.sanitizedResponse!.reply, isNot(contains('2026-08-10')));
       });
 
       test('enforces privacy fence for cycle terms in non-cycle personas', () {

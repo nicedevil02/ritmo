@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
-
 import 'package:ritmo/core/ai/personas/persona_skill_registry.dart';
 
 void main() {
@@ -37,17 +36,22 @@ void main() {
       }
     });
 
-    test(
-      'every promised skill in charter exists in the single-source skill registry and vice-versa',
-      () {
-        // Will be populated and un-skipped in PSN-16
-        final personas = PersonaRegistry.instance.allPersonas;
-        for (final p in personas) {
-          final charter = AssistantCharters.charters[p.systemPromptKey] ?? '';
-          expect(charter, isNotEmpty);
-        }
-      },
-      skip: 'enabled by PSN-16',
-    );
+    test('every promised skill in charter exists in the single-source skill registry and vice-versa', () {
+      final allSkills = PersonaSkillRegistry.all;
+      final registeredPersonaIds = PersonaRegistry.instance.allPersonas.map((p) => p.id).toSet();
+
+      for (final skill in allSkills) {
+        expect(registeredPersonaIds.contains(skill.personaId), isTrue,
+            reason: 'Skill "${skill.id}" belongs to unregistered persona "${skill.personaId}"');
+
+        expect(skill.queryPrompt.trim(), isNotEmpty,
+            reason: 'Skill "${skill.id}" has empty queryPrompt');
+
+        final persona = PersonaRegistry.instance.getPersona(skill.personaId)!;
+        final charter = AssistantCharters.charters[persona.systemPromptKey] ?? '';
+        expect(charter.contains(skill.id), isTrue,
+            reason: 'Skill "${skill.id}" promised for persona "${skill.personaId}" is missing from charter key "${persona.systemPromptKey}"');
+      }
+    });
   });
 }

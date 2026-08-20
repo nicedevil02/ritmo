@@ -220,9 +220,9 @@ class MovementCenterError extends MovementCenterState {
 - هیچ انیمیشن پیچیده‌ای ندارد.
 
 **دروازهٔ پذیرش فاز ۳**
-- [ ] صفحهٔ خانه با سه حالت مختلف در widget test رندر می‌شود.
-- [ ] هیچ فایل `dart` در این فاز بیشتر از ۵۰۰ خط نیست.
-- [ ] `flutter analyze` سبز.
+- [x] صفحهٔ خانه با سه حالت مختلف در widget test رندر می‌شود.
+- [x] هیچ فایل `dart` در این فاز بیشتر از ۵۰۰ خط نیست.
+- [x] `flutter analyze` سبز.
 
 ---
 

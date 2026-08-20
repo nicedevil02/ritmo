@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
+import 'package:ritmo/features/movement/domain/models/movement_absence_status.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/domain/models/movement_week_stats.dart';
@@ -325,5 +326,38 @@ class MovementOccurrenceService {
       where: 'id = ?',
       whereArgs: [occurrenceId],
     );
+  }
+
+  /// بررسی وضعیت غیبت کاربر بر اساس تاریخ آخرین لاگ ثبت‌شده (P-14)
+  Future<AbsenceStatus> checkAbsence([DateTime? now]) async {
+    final dbExec = await _database;
+    final rows = await dbExec.query(
+      MovementTables.tableWorkoutLogs,
+      columns: ['dateIso', 'createdAt'],
+      orderBy: 'dateIso DESC, createdAt DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) {
+      return AbsenceStatus.none;
+    }
+    final lastDateStr = rows.first['dateIso'] as String;
+    final parts = lastDateStr.split('-');
+    if (parts.length != 3) return AbsenceStatus.none;
+    final lastDate = DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+
+    final current = now ?? DateTime.now();
+    final today = DateTime(current.year, current.month, current.day);
+    final diffDays = today.difference(lastDate).inDays;
+
+    if (diffDays >= 21) {
+      return AbsenceStatus.longAbsence;
+    } else if (diffDays >= 7) {
+      return AbsenceStatus.shortAbsence;
+    }
+    return AbsenceStatus.none;
   }
 }

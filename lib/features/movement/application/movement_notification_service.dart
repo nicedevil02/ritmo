@@ -74,7 +74,7 @@ class MovementNotificationService {
         'type': 'session_reminder',
         'occurrenceId': occurrence.id,
         'dateIso': occurrence.dateIso,
-        'route': MovementRoutes.occurrence,
+        'route': MovementRoutes.center,
       },
     );
 
@@ -219,11 +219,11 @@ class MovementNotificationService {
     final occurrenceId = payload['occurrenceId'] as String?;
     final dateIso = payload['dateIso'] as String?;
 
-    if (route == MovementRoutes.occurrence &&
+    if (route == MovementRoutes.center &&
         occurrenceId != null &&
         occurrenceId.isNotEmpty) {
       Navigator.of(context).pushNamed(
-        MovementRoutes.occurrence,
+        MovementRoutes.center,
         arguments: {'occurrenceId': occurrenceId, 'dateIso': dateIso},
       );
       return;

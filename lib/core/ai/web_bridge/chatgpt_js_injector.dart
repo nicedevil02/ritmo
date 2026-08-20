@@ -644,6 +644,16 @@ $_bridgeScriptBody''';
   }
   window.__ritmo_readSSEStream = readSSEStream;
 
+  // --- Centralized RITMO Timeout Constants (DET-32) ---
+  var RITMO_TIMEOUTS = {
+    watcherTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 10000},
+    watcherHardTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 5000},
+    heartbeatIntervalMs: 5000,
+    streamPollIntervalMs: ${ChatGptBridgeTimeouts.heartbeatInterval.inMilliseconds},
+    cfCheckIntervalMs: 2000,
+    fastPollMs: ${ChatGptBridgeTimeouts.pollFastInterval.inMilliseconds}
+  };
+
   // --- Centralized RITMO Selector Table (A-27) ---
   var RITMO_SELECTORS = {
     composer: [
@@ -1280,7 +1290,7 @@ $_bridgeScriptBody''';
       checkAndEmitChunk(false);
 
       var now = Date.now();
-      if (!lastWatcherTickTime || (now - lastWatcherTickTime >= 5000)) {
+      if (!lastWatcherTickTime || (now - lastWatcherTickTime >= RITMO_TIMEOUTS.heartbeatIntervalMs)) {
         lastWatcherTickTime = now;
         var stopBtnEl = querySafe(RITMO_SELECTORS.stopButton);
         var isStreamingEl = querySafe(RITMO_SELECTORS.streamingIndicator);
@@ -1311,7 +1321,7 @@ $_bridgeScriptBody''';
                        (baseline.turnCount > 0 && currentTurnCount > baseline.turnCount);
 
       if (!currentText || (currentText === previousBaselineText && !hasNewNode)) {
-        if (totalDuration > 170000) {
+        if (totalDuration > RITMO_TIMEOUTS.watcherTimeoutMs) {
           window.__ritmo_watcher_running = false;
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
@@ -1339,7 +1349,7 @@ $_bridgeScriptBody''';
         stopDomObserver();
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream completed via multi-signal vote with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
-      } else if (totalDuration > 175000) {
+      } else if (totalDuration > RITMO_TIMEOUTS.watcherHardTimeoutMs) {
         window.__ritmo_watcher_running = false;
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
@@ -1360,7 +1370,7 @@ $_bridgeScriptBody''';
           notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
       }
-    }, 350);
+    }, RITMO_TIMEOUTS.streamPollIntervalMs);
 
     var sawGeneratingSignal = false;
 
@@ -1594,7 +1604,7 @@ $_bridgeScriptBody''';
               verifySubmissionAndRetry(true);
             }
           }
-        }, 100);
+        }, RITMO_TIMEOUTS.fastPollMs);
       }
 
     } catch (e) {
@@ -1749,7 +1759,7 @@ $_bridgeScriptBody''';
   autoDismissCookiesAndModals();
   autoCloseSidebar();
   checkAuthState();
-  cfCheckTimer = setInterval(checkSecurityAndBlockStatus, 2000);
+  cfCheckTimer = setInterval(checkSecurityAndBlockStatus, RITMO_TIMEOUTS.cfCheckIntervalMs);
 
   // Self-test report at boot (A-28, DET-04)
   try {

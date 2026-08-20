@@ -75,7 +75,7 @@ class SportAgendaRenderer extends AgendaTileRenderer {
             // دیپ‌لینک به جزئیات جلسه یا مرکز حرکت
             Navigator.of(context)
                 .pushNamed(
-                  MovementRoutes.occurrence,
+                  MovementRoutes.center,
                   arguments: {
                     'occurrenceId': item.sourceId,
                     'dateIso': item.dateStr,

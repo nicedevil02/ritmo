@@ -437,11 +437,14 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
   Future<void> _purgeAllPregnancyTables() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.delete('pregnancy_tracker');
-      await db.delete('pregnancy_checkups');
-      await db.delete('pregnancy_symptoms');
-      await db.delete('kick_counts');
-      await db.delete('contraction_timer');
+      await db.transaction((txn) async {
+        await txn.delete('pregnancy_tracker');
+        await txn.delete('pregnancy_checkups');
+        await txn.delete('pregnancy_symptoms');
+        await txn.delete('kick_counts');
+        await txn.delete('contraction_timer');
+        await PregnancySettings.clearAll(txn);
+      });
       await KickSessionTracker.clearSettings();
     } catch (e, st) {
       RitmoLog.error(

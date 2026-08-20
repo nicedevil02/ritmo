@@ -206,6 +206,38 @@ class PregnancySettings {
     }
   }
 
+  /// Wipes all dedicated pregnancy keys (preg_*) and deactivates pregnancy mode.
+  /// Only invoked during full pregnancy data purge explicitly initiated by the user.
+  static Future<void> clearAll([DatabaseExecutor? dbExecutor]) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final pregKeys = allKeys.where((k) => k.startsWith('preg_')).toList();
+      for (final key in pregKeys) {
+        if (db is Database) {
+          await db.delete('app_settings', where: 'key = ?', whereArgs: [key]);
+        } else {
+          await db.rawDelete('DELETE FROM app_settings WHERE key = ?', [key]);
+        }
+      }
+
+      // Also ensure any wild card preg_* keys are removed
+      if (db is Database) {
+        await db.delete('app_settings', where: "key LIKE 'preg_%'");
+      } else {
+        await db.rawDelete("DELETE FROM app_settings WHERE key LIKE 'preg_%'");
+      }
+
+      await setPregnancyActive(false, db: db);
+      CycleEngine().invalidate();
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[PregnancySettings] error in clearAll: $e',
+        error: e,
+        stack: st,
+      );
+    }
+  }
+
   static Future<void> saveProfile(
     PregnancyProfile profile, [
     DatabaseExecutor? dbExecutor,
@@ -242,23 +274,6 @@ class PregnancySettings {
         stack: st,
       );
       rethrow;
-    }
-  }
-
-  static Future<void> clearAll([DatabaseExecutor? dbExecutor]) async {
-    try {
-      final db = dbExecutor ?? await DatabaseHelper.instance.database;
-      for (final key in allKeys) {
-        await db.delete('app_settings', where: 'key = ?', whereArgs: [key]);
-      }
-      await db.delete('app_settings', where: "key LIKE 'preg_%'");
-      CycleEngine().invalidate();
-    } catch (e, st) {
-      RitmoLogger.error(
-        '[PregnancySettings] error clearing all settings',
-        error: e,
-        stack: st,
-      );
     }
   }
 

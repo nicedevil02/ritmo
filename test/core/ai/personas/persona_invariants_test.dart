@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
+import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
 
@@ -42,6 +43,18 @@ void main() {
         isEmpty,
         reason: 'Found orphan charter keys without consuming persona: $orphanKeys (expected green in PSN-38)',
       );
+    });
+
+    test('invariant 3 explicit inference profile for all personas', () {
+      final personas = PersonaRegistry.instance.allPersonas;
+
+      for (final p in personas) {
+        expect(
+          PersonaInferenceProfile.hasExplicitProfile(p.id),
+          isTrue,
+          reason: 'Persona "${p.id}" does not have an explicit inference profile case (expected green in PSN-35)',
+        );
+      }
     });
   });
 }

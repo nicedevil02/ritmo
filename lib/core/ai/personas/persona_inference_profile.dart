@@ -15,6 +15,24 @@ class PersonaInferenceProfile {
   final bool stream;
   final int timeoutMs;
 
+  /// Explicitly configured persona IDs.
+  /// Keep this set in sync with switch cases below!
+  static const Set<String> explicitPersonaIds = {
+    'global',
+    'sleep',
+    'wellbeing',
+    'reflection',
+    'goals',
+    'konkur',
+    'courses',
+    'sports',
+    'worship',
+    'cycle',
+    'health',
+  };
+
+  static bool hasExplicitProfile(String personaId) => explicitPersonaIds.contains(personaId);
+
   static PersonaInferenceProfile getProfile(String personaId) {
     switch (personaId) {
       case 'global':

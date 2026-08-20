@@ -51,6 +51,7 @@ enum PregnancyTone {
     final trimmed = raw.trim().toLowerCase();
     switch (trimmed) {
       case 'neutral':
+      case 'calm':
         return PregnancyTone.neutral;
       case 'warm':
       default:
@@ -111,6 +112,7 @@ class PregnancyProfile {
   final bool kickBaselineComparison;
   final int visitReminderLeadDays;
   final int reminderHour;
+  final bool showCountdown;
 
   const PregnancyProfile({
     required this.lmpDate,
@@ -129,6 +131,7 @@ class PregnancyProfile {
     this.kickBaselineComparison = false,
     this.visitReminderLeadDays = defaultVisitReminderLeadDays,
     this.reminderHour = defaultReminderHour,
+    this.showCountdown = true,
   });
 
   PregnancyProfile copyWith({
@@ -148,6 +151,7 @@ class PregnancyProfile {
     bool? kickBaselineComparison,
     int? visitReminderLeadDays,
     int? reminderHour,
+    bool? showCountdown,
   }) {
     return PregnancyProfile(
       lmpDate: lmpDate ?? this.lmpDate,
@@ -168,6 +172,7 @@ class PregnancyProfile {
       visitReminderLeadDays:
           visitReminderLeadDays ?? this.visitReminderLeadDays,
       reminderHour: reminderHour ?? this.reminderHour,
+      showCountdown: showCountdown ?? this.showCountdown,
     );
   }
 
@@ -189,6 +194,7 @@ class PregnancyProfile {
       'preg_kick_baseline_compare': kickBaselineComparison.toString(),
       'preg_visit_reminder_lead_days': visitReminderLeadDays.toString(),
       'preg_reminder_hour': reminderHour.toString(),
+      'preg_show_countdown': showCountdown.toString(),
     };
   }
 
@@ -222,6 +228,7 @@ class PregnancyProfile {
               defaultVisitReminderLeadDays,
       reminderHour: int.tryParse(map['preg_reminder_hour']?.toString() ?? '') ??
           defaultReminderHour,
+      showCountdown: map['preg_show_countdown']?.toString() != 'false',
     );
   }
 

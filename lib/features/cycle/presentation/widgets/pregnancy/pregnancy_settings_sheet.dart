@@ -285,6 +285,200 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     );
   }
 
+  Future<void> _openTonePicker() async {
+    final colors = context.colors;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => RitmoSheetGlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'انتخاب لحن همراهی',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Icon(
+                    CupertinoIcons.heart_fill,
+                    color: _profile.tone == PregnancyTone.warm ? colors.primary : colors.textSecondary,
+                  ),
+                  title: const Text('گرما و صمیمانه'),
+                  subtitle: const Text('با عبارات دلگرم‌کننده و پیام‌های محبت‌آمیز'),
+                  trailing: _profile.tone == PregnancyTone.warm
+                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(tone: PregnancyTone.warm);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Icon(
+                    CupertinoIcons.doc_text_fill,
+                    color: _profile.tone == PregnancyTone.neutral ? colors.primary : colors.textSecondary,
+                  ),
+                  title: const Text('آرام و علمی'),
+                  subtitle: const Text('اطلاعات دقیق، مختصر و بدون اغراق'),
+                  trailing: _profile.tone == PregnancyTone.neutral
+                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(tone: PregnancyTone.neutral);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAgeUnitPicker() async {
+    final colors = context.colors;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => RitmoSheetGlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'واحد نمایش سن بارداری',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Icon(
+                    CupertinoIcons.calendar,
+                    color: _profile.ageUnit == PregnancyAgeUnit.weeks ? colors.primary : colors.textSecondary,
+                  ),
+                  title: const Text('هفته و روز'),
+                  subtitle: const Text('مثال: هفتهٔ ۲۴ و ۳ روز'),
+                  trailing: _profile.ageUnit == PregnancyAgeUnit.weeks
+                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(ageUnit: PregnancyAgeUnit.weeks);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Icon(
+                    CupertinoIcons.calendar_badge_plus,
+                    color: _profile.ageUnit == PregnancyAgeUnit.months ? colors.primary : colors.textSecondary,
+                  ),
+                  title: const Text('ماه و هفته'),
+                  subtitle: const Text('مثال: ماه ۶، هفتهٔ ۲'),
+                  trailing: _profile.ageUnit == PregnancyAgeUnit.months
+                      ? Icon(CupertinoIcons.checkmark_alt, color: colors.primary)
+                      : null,
+                  onTap: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(ageUnit: PregnancyAgeUnit.months);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleRow(
+    BuildContext context, {
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(fontSize: 14, color: colors.textPrimary),
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            activeTrackColor: colors.primary,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(BuildContext context, String title) {
     final colors = context.colors;
     return Padding(
@@ -458,6 +652,29 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
           // Section 2: لحن و نمایش
           _buildSectionHeader(context, 'لحن و نمایش'),
+          _buildParameterRow(
+            context,
+            title: 'لحن همراهی و متن‌ها',
+            value: _profile.tone == PregnancyTone.warm ? 'گرما و صمیمانه' : 'آرام و علمی',
+            onTap: _openTonePicker,
+          ),
+          _buildToggleRow(
+            context,
+            title: 'نمایش شمارش معکوس تا زایمان',
+            value: _profile.showCountdown,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(showCountdown: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
+          _buildParameterRow(
+            context,
+            title: 'واحد نمایش سن بارداری',
+            value: _profile.ageUnit == PregnancyAgeUnit.weeks ? 'هفته و روز' : 'ماه و هفته',
+            onTap: _openAgeUnitPicker,
+          ),
           const SizedBox(height: 8),
           Divider(height: 16, color: colors.border),
 

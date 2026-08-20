@@ -61,6 +61,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
 
   // UX-13 EDD source
   String _eddSource = 'lmp';
+  bool _showCountdown = true;
 
   // UX-04 KickSessionTracker
   KickSessionTracker _kickTracker = KickSessionTracker();
@@ -103,6 +104,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
 
       _pregTone = map['preg_tone'] ?? 'warm';
       _eddSource = map['preg_edd_source'] ?? 'lmp';
+      _showCountdown = map['preg_show_countdown'] != 'false';
 
       // Restore active kick session
       final restored = await KickSessionTracker.restoreFromSettings(
@@ -525,6 +527,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
           eddSource: _eddSource,
           startDate: _startDate,
           onShowPrivacy: _showPrivacyBadgeSheet,
+          showCountdown: _showCountdown,
           onShowSettings: () => PregnancySettingsSheet.show(
             context,
             onDataReloadNeeded: _loadSettingsAndSession,

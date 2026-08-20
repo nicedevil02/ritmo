@@ -19,6 +19,7 @@ class PregnancyHeader extends StatelessWidget {
     required this.startDate,
     required this.onShowPrivacy,
     required this.onShowSettings,
+    this.showCountdown = true,
   });
 
   final int currentWeek;
@@ -29,6 +30,7 @@ class PregnancyHeader extends StatelessWidget {
   final DateTime startDate;
   final VoidCallback onShowPrivacy;
   final VoidCallback onShowSettings;
+  final bool showCountdown;
 
   Widget _buildHeaderActionButton({
     required IconData icon,
@@ -101,7 +103,7 @@ class PregnancyHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    pregTone == 'neutral'
+                    pregTone == 'neutral' || pregTone == 'calm'
                         ? 'بارداری شما'
                         : 'دوران شیرین بارداری 🎀',
                     style: TextStyle(
@@ -231,41 +233,42 @@ class PregnancyHeader extends StatelessWidget {
                 ),
               ],
 
-              const Spacer(),
-
-              // Human Countdown Summary Pill
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'هفته ${PersianDigits.toFa(currentWeek.toString())} + ${PersianDigits.toFa(currentDayInWeek.toString())} روز',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
+              if (showCountdown) ...[
+                const Spacer(),
+                // Human Countdown Summary Pill
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: isDark ? 0.2 : 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'هفته ${PersianDigits.toFa(currentWeek.toString())} + ${PersianDigits.toFa(currentDayInWeek.toString())} روز',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '• ${PregnancyHelpers.formatHumanCountdown(remainingDays)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: colors.accent,
+                      const SizedBox(width: 4),
+                      Text(
+                        '• ${PregnancyHelpers.formatHumanCountdown(remainingDays)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: colors.accent,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ],

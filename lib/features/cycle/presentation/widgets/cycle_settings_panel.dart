@@ -7,11 +7,13 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_passcode_sheet.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:sqflite/sqflite.dart';
 
-class CycleSettingsPanel extends StatelessWidget {
+class CycleSettingsPanel extends StatefulWidget {
   const CycleSettingsPanel({
     super.key,
     required this.settings,
@@ -35,9 +37,141 @@ class CycleSettingsPanel extends StatelessWidget {
   onEditBaselineParameter;
 
   @override
+  State<CycleSettingsPanel> createState() => _CycleSettingsPanelState();
+}
+
+class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
+  late Map<String, String> _localSettings;
+  bool _hasAppLock = false;
+  bool _hasDedicatedPin = false;
+  CycleLockSource _lockSource = CycleLockSource.dedicated;
+
+  @override
+  void initState() {
+    super.initState();
+    _localSettings = Map<String, String>.from(widget.settings);
+    _loadLockMetadata();
+  }
+
+  @override
+  void didUpdateWidget(CycleSettingsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.settings != oldWidget.settings) {
+      setState(() {
+        _localSettings = Map<String, String>.from(widget.settings);
+      });
+      _loadLockMetadata();
+    }
+  }
+
+  Future<void> _loadLockMetadata() async {
+    final hasApp = await CycleLockService.instance.hasAppLockPassword();
+    final hasDedicated = await CycleLockService.instance.hasCyclePin();
+    final source = await CycleLockService.instance.getLockSource();
+    if (mounted) {
+      setState(() {
+        _hasAppLock = hasApp;
+        _hasDedicatedPin = hasDedicated;
+        _lockSource = source;
+      });
+    }
+  }
+
+  Future<void> _updateSetting(String key, String value) async {
+    setState(() {
+      _localSettings[key] = value;
+    });
+    final db = await DatabaseHelper.instance.database;
+    await db.insert('app_settings', {
+      'key': key,
+      'value': value,
+      'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    widget.onDataReloadNeeded();
+  }
+
+  Future<void> _handleLockToggle(bool newValue) async {
+    if (newValue) {
+      // Turning ON - verify or setup
+      bool? success;
+      if (_hasDedicatedPin) {
+        success = await CyclePasscodeSheet.show(
+          context,
+          mode: CyclePasscodeSheetMode.verifyBeforeEnable,
+        );
+      } else if (_hasAppLock) {
+        success = await CyclePasscodeSheet.show(
+          context,
+          mode: CyclePasscodeSheetMode.chooseSource,
+        );
+      } else {
+        success = await CyclePasscodeSheet.show(
+          context,
+          mode: CyclePasscodeSheetMode.setup,
+        );
+      }
+      if (success == true && mounted) {
+        setState(() {
+          _localSettings['cycle_lock_enabled'] = 'true';
+        });
+        await _loadLockMetadata();
+        widget.onDataReloadNeeded();
+      }
+    } else {
+      // Turning OFF - verify first
+      final success = await CyclePasscodeSheet.show(
+        context,
+        mode: CyclePasscodeSheetMode.verifyBeforeDisable,
+      );
+      if (success == true && mounted) {
+        setState(() {
+          _localSettings['cycle_lock_enabled'] = 'false';
+        });
+        await _loadLockMetadata();
+        widget.onDataReloadNeeded();
+      }
+    }
+  }
+
+  Future<void> _handleOpenPasscodeSheet() async {
+    bool? success;
+    if (_hasAppLock && !_hasDedicatedPin) {
+      success = await CyclePasscodeSheet.show(
+        context,
+        mode: CyclePasscodeSheetMode.chooseSource,
+      );
+    } else if (_hasDedicatedPin) {
+      success = await CyclePasscodeSheet.show(
+        context,
+        mode: CyclePasscodeSheetMode.change,
+      );
+    } else {
+      success = await CyclePasscodeSheet.show(
+        context,
+        mode: CyclePasscodeSheetMode.setup,
+      );
+    }
+    if (success == true && mounted) {
+      await _loadLockMetadata();
+      widget.onDataReloadNeeded();
+    }
+  }
+
+  String _getPasscodeSubtitle() {
+    if (_lockSource == CycleLockSource.appLock && _hasAppLock) {
+      return 'متصل به رمز قفل اصلی برنامه (تغییر)';
+    } else if (_hasDedicatedPin) {
+      return 'تغییر رمز عبور ۴ رقمی اختصاصی';
+    } else {
+      return 'تنظیم رمز عبور چرخه';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final hasBiometrics = settings['cycle_biometric_enabled'] == 'true';
+    final hasBiometrics = _localSettings['cycle_biometric_enabled'] == 'true';
+    final isLockEnabled = _localSettings['cycle_lock_enabled'] == 'true';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -74,11 +208,11 @@ class CycleSettingsPanel extends StatelessWidget {
                   isEditMode: true,
                   onCompleted: () {
                     Navigator.pop(context);
-                    onDataReloadNeeded();
+                    widget.onDataReloadNeeded();
                   },
                   onNavigateToPregnancy: () {
                     Navigator.pop(context);
-                    onDataReloadNeeded();
+                    widget.onDataReloadNeeded();
                   },
                 ),
               );
@@ -122,36 +256,25 @@ class CycleSettingsPanel extends StatelessWidget {
             title: 'قفل اثر انگشت / تشخیص چهره',
             value: hasBiometrics,
             onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_biometric_enabled',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
+              if (v) {
+                final didAuth = await CycleLockService.instance.authenticateBiometric(
+                  localizedReason: 'تأیید هویت جهت فعال‌سازی قفل بیومتریک چرخه',
+                );
+                if (!didAuth) return;
+              }
+              await _updateSetting('cycle_biometric_enabled', v.toString());
             },
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'رمز عبور حریم خصوصی چرخه',
-            value: settings['cycle_lock_enabled'] != 'false',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_lock_enabled',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: isLockEnabled,
+            onChanged: _handleLockToggle,
           ),
           Divider(height: 16, color: colors.border),
           InkWell(
-            onTap: () {
-              Navigator.pop(context);
-              onOpenPasscodeSheet();
-            },
+            onTap: _handleOpenPasscodeSheet,
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -163,10 +286,7 @@ class CycleSettingsPanel extends StatelessWidget {
                       const Text('🔑', style: TextStyle(fontSize: 14)),
                       const SizedBox(width: 8),
                       Text(
-                        settings['cycle_lock_pin_hash'] != null &&
-                                settings['cycle_lock_pin_hash']!.isNotEmpty
-                            ? 'تغییر رمز عبور چرخه'
-                            : 'تنظیم رمز عبور چرخه',
+                        _getPasscodeSubtitle(),
                         style: TextStyle(
                           fontSize: 14,
                           color: colors.textSecondary,
@@ -187,59 +307,30 @@ class CycleSettingsPanel extends StatelessWidget {
           _buildToggleRow(
             context,
             title: 'تأیید تعاملی شروع موعد ریتم',
-            value: settings['cycle_confirm_start_enabled'] != 'false',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_confirm_start_enabled',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_confirm_start_enabled'] != 'false',
+            onChanged: (v) => _updateSetting('cycle_confirm_start_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تأیید تعاملی پایان موعد ریتم',
-            value: settings['cycle_confirm_end_enabled'] != 'false',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_confirm_end_enabled',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_confirm_end_enabled'] != 'false',
+            onChanged: (v) => _updateSetting('cycle_confirm_end_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'ماسک‌کردن پیام‌های ریتم در صندوق اعلان‌ها',
-            value: settings['cycle_inbox_mask_enabled'] != 'false',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_inbox_mask_enabled',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_inbox_mask_enabled'] != 'false',
+            onChanged: (v) => _updateSetting('cycle_inbox_mask_enabled', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تعلیق نماز و روزه در عبادات',
-            value: settings['cycle_consent_worship'] == 'true',
+            value: _localSettings['cycle_consent_worship'] == 'true',
             onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_consent_worship',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
+              await _updateSetting('cycle_consent_worship', v.toString());
               WorshipEngine.instance.invalidate();
               final todayStr = CycleDateContract.toDayKey(CycleClock.now);
               DayAgendaService.instance.invalidateDate(todayStr);
@@ -250,87 +341,46 @@ class CycleSettingsPanel extends StatelessWidget {
                   payload: {'date': todayStr},
                 ),
               );
-              onDataReloadNeeded();
             },
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تعدیل فشار در روتین‌ها و انرژی',
-            value: settings['cycle_consent_energy'] == 'true',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_consent_energy',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_consent_energy'] == 'true',
+            onChanged: (v) => _updateSetting('cycle_consent_energy', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'تعدیل فشار در کیفیت خواب',
-            value: settings['cycle_consent_sleep'] == 'true',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_consent_sleep',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_consent_sleep'] == 'true',
+            onChanged: (v) => _updateSetting('cycle_consent_sleep', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'یادآوری‌های حریم خصوصی',
-            value: settings['cycle_consent_reminders'] == 'true',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_consent_reminders',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_consent_reminders'] == 'true',
+            onChanged: (v) => _updateSetting('cycle_consent_reminders', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'کارت داشبورد صفحه اصلی',
-            value: settings['cycle_consent_dashboard'] == 'true',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'cycle_consent_dashboard',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['cycle_consent_dashboard'] == 'true',
+            onChanged: (v) => _updateSetting('cycle_consent_dashboard', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           _buildToggleRow(
             context,
             title: 'نمایش چرخه در تقویم و ریتم‌های روزانه',
-            value: settings['show_cycle_in_calendar'] == 'true',
-            onChanged: (v) async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'show_cycle_in_calendar',
-                'value': v.toString(),
-                'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.replace);
-              onDataReloadNeeded();
-            },
+            value: _localSettings['show_cycle_in_calendar'] == 'true',
+            onChanged: (v) => _updateSetting('show_cycle_in_calendar', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
           InkWell(
-            onTap: onTogglePregnancyMode,
+            onTap: widget.onTogglePregnancyMode,
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -340,19 +390,19 @@ class CycleSettingsPanel extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        settings['cycle_pregnancy_mode'] == 'true'
+                        _localSettings['cycle_pregnancy_mode'] == 'true'
                             ? '🔄'
                             : '🤰',
                         style: const TextStyle(fontSize: 14),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        settings['cycle_pregnancy_mode'] == 'true'
+                        _localSettings['cycle_pregnancy_mode'] == 'true'
                             ? 'بازگشت به حالت عادی چرخه قاعدگی'
                             : 'فعالسازی حالت بارداری',
                         style: TextStyle(
                           fontSize: 14,
-                          color: settings['cycle_pregnancy_mode'] == 'true'
+                          color: _localSettings['cycle_pregnancy_mode'] == 'true'
                               ? colors.primary
                               : colors.textSecondary,
                         ),
@@ -382,8 +432,8 @@ class CycleSettingsPanel extends StatelessWidget {
             context,
             title: 'متوسط طول چرخه (فاصله شروع دو پریود)',
             value:
-                '${PersianDigits.toFa(settings['cycle_avg_length'] ?? '28')} روز',
-            onTap: () => onEditBaselineParameter(
+                '${PersianDigits.toFa(_localSettings['cycle_avg_length'] ?? '28')} روز',
+            onTap: () => widget.onEditBaselineParameter(
               'cycle_avg_length',
               'طول کل چرخه بدنی',
               21,
@@ -396,8 +446,8 @@ class CycleSettingsPanel extends StatelessWidget {
             context,
             title: 'متوسط طول دوره قاعدگی (خونریزی)',
             value:
-                '${PersianDigits.toFa(settings['cycle_avg_period'] ?? '6')} روز',
-            onTap: () => onEditBaselineParameter(
+                '${PersianDigits.toFa(_localSettings['cycle_avg_period'] ?? '6')} روز',
+            onTap: () => widget.onEditBaselineParameter(
               'cycle_avg_period',
               'طول دوره قاعدگی',
               3,
@@ -410,8 +460,8 @@ class CycleSettingsPanel extends StatelessWidget {
             context,
             title: 'فاصلهٔ روزهای یادآوری تا موعد',
             value:
-                '${PersianDigits.toFa(settings['cycle_reminder_lead_days'] ?? '2')} روز قبل',
-            onTap: () => onEditBaselineParameter(
+                '${PersianDigits.toFa(_localSettings['cycle_reminder_lead_days'] ?? '2')} روز قبل',
+            onTap: () => widget.onEditBaselineParameter(
               'cycle_reminder_lead_days',
               'روزهای پیش از موعد',
               1,
@@ -424,8 +474,8 @@ class CycleSettingsPanel extends StatelessWidget {
             context,
             title: 'ساعت ارسال اعلان و یادآوری',
             value:
-                'ساعت ${PersianDigits.toFa(settings['cycle_reminder_hour'] ?? '9')}:۰۰',
-            onTap: () => onEditBaselineParameter(
+                'ساعت ${PersianDigits.toFa(_localSettings['cycle_reminder_hour'] ?? '9')}:۰۰',
+            onTap: () => widget.onEditBaselineParameter(
               'cycle_reminder_hour',
               'ساعت اعلان (۰ تا ۲۳)',
               0,

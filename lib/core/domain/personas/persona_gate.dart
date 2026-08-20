@@ -1,10 +1,11 @@
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PersonaGate {
-  static Future<Set<DataDomain>> readableDomains(String personaId) async {
-    final db = await DatabaseHelper.instance.database;
+  static Future<Set<DataDomain>> readableDomains(String personaId, [DatabaseExecutor? executor]) async {
+    final db = executor ?? await DatabaseHelper.instance.database;
     final settings = await db.query('app_settings');
     final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
 
@@ -72,8 +73,8 @@ class PersonaGate {
     return readable.intersection(persona?.reads ?? const <DataDomain>{});
   }
 
-  static Future<bool> canWriteDomain(String personaId, Set<DataDomain> touches) async {
-    final db = await DatabaseHelper.instance.database;
+  static Future<bool> canWriteDomain(String personaId, Set<DataDomain> touches, [DatabaseExecutor? executor]) async {
+    final db = executor ?? await DatabaseHelper.instance.database;
     final settings = await db.query('app_settings');
     final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
 

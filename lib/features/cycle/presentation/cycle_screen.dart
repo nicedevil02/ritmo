@@ -37,6 +37,8 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_fasting_debt_vie
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_history_list.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_lock_gate.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_log_today_sheet.dart';
+import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/cycle_passcode_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_overview_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_personal_forecast_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
@@ -473,21 +475,26 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     final id = period['id']?.toString();
     if (id == null || id.isEmpty) return;
     final db = await DatabaseHelper.instance.database;
-    final start = CycleDateContract.parseDayKey(
-      period['startDate']?.toString(),
-    );
+    final start = CycleDateContract.parseDayKey(period['startDate']?.toString());
     if (start == null) return;
     final pDur = CycleSettings.getPeriodDuration(_settings);
     final end = start.add(Duration(days: pDur - 1));
-
-    await CyclePeriodRepository.instance.updatePeriod(
-      db: db,
-      id: id,
-      startDate: start,
-      endDate: end,
-    );
+    await CyclePeriodRepository.instance.updatePeriod(db: db, id: id, startDate: start, endDate: end);
     await _syncConfirmations();
     await _syncFastingDebt();
+    await _loadData();
+  }
+
+  Future<void> _openPasscodeSheet() async {
+    final hasApp = await CycleLockService.instance.hasAppLockPassword();
+    final hasDedicated = await CycleLockService.instance.hasCyclePin();
+    if (!mounted) return;
+    final mode = (hasApp && !hasDedicated)
+        ? CyclePasscodeSheetMode.chooseSource
+        : hasDedicated
+            ? CyclePasscodeSheetMode.change
+            : CyclePasscodeSheetMode.setup;
+    await CyclePasscodeSheet.show(context, mode: mode);
     await _loadData();
   }
 
@@ -498,15 +505,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => RitmoSheetGlassCard(
         child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            top: 16,
-          ),
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom + 20, top: 16),
           child: SingleChildScrollView(
             child: CycleSettingsPanel(
               settings: _settings,
               onDataReloadNeeded: _loadData,
-              onOpenPasscodeSheet: () {},
+              onOpenPasscodeSheet: _openPasscodeSheet,
               onTogglePregnancyMode: () async {
                 Navigator.pop(ctx);
                 final isActive = _settings['cycle_pregnancy_mode'] == 'true';
@@ -518,9 +522,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 }, conflictAlgorithm: ConflictAlgorithm.replace);
                 await _loadData();
               },
-              onEditBaselineParameter: (key, title, min, max, defVal) async {
-                // Implementation for parameter edit
-              },
+              onEditBaselineParameter: (key, title, min, max, defVal) async {},
             ),
           ),
         ),
@@ -767,18 +769,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               fastingDebts: _fastingDebts,
                               settings: _settings,
                               onToggleSync: (enabled) async {
-                                final db =
-                                    await DatabaseHelper.instance.database;
-                                await db.insert(
-                                  'app_settings',
-                                  {
-                                    'key': 'cycle_send_fasting_debt_to_worship',
-                                    'value': enabled.toString(),
-                                    'updatedAt':
-                                        CycleClock.nowMillisecondsSinceEpoch,
-                                  },
-                                  conflictAlgorithm: ConflictAlgorithm.replace,
-                                );
+                                final db = await DatabaseHelper.instance.database;
+                                await db.insert('app_settings', {
+                                  'key': 'cycle_send_fasting_debt_to_worship',
+                                  'value': enabled.toString(),
+                                  'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+                                }, conflictAlgorithm: ConflictAlgorithm.replace);
                                 await _loadData();
                               },
                               onReloadData: _loadData,

@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
@@ -68,7 +69,7 @@ class _CycleLockGateState extends State<CycleLockGate>
   Future<void> _loadLockStateAndAuth() async {
     try {
       final lockEnabled = await _lockService.isLockEnabled();
-      final hasPin = await _lockService.hasCyclePin();
+      final hasPin = await _lockService.hasAnyActivePin();
       final lockoutSecs = await _lockService.remainingLockoutSeconds();
 
       if (mounted) {
@@ -299,282 +300,369 @@ class _CycleLockGateState extends State<CycleLockGate>
               excluding: false,
               child: Stack(
                 children: [
-                  // Blur background overlay
+                  // Fullscreen Immersive Glass Blur Backdrop
                   Positioned.fill(
                     child: ClipRect(
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                         child: Container(
-                          color: isDark
-                              ? colors.background.withValues(alpha: 0.85)
-                              : colors.background.withValues(alpha: 0.9),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? colors.background.withValues(alpha: 0.88)
+                                : colors.background.withValues(alpha: 0.94),
+                          ),
                         ),
                       ),
                     ),
                   ),
 
-                  // PIN Entry Card
-                  Center(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 32,
-                        ),
+                  // Modern 2026 Passcode Gateway
+                  SafeArea(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         child: Directionality(
                           textDirection: TextDirection.rtl,
-                          child: RitmoTheme.glassCardLight(
-                            borderRadius: 28,
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              constraints: const BoxConstraints(maxWidth: 340),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Header Row
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 380),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Top Header Bar
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    IconButton(
+                                      icon: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Colors.white.withValues(alpha: 0.08)
+                                              : Colors.black.withValues(alpha: 0.05),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
                                           CupertinoIcons.xmark,
                                           color: colors.textSecondary,
-                                          size: 20,
-                                        ),
-                                        onPressed: () =>
-                                            Navigator.maybePop(context),
-                                      ),
-                                      Text(
-                                        'حریم خصوصی چرخه',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.textPrimary,
+                                          size: 16,
                                         ),
                                       ),
-                                      Icon(
-                                        CupertinoIcons.lock_fill,
+                                      onPressed: () => Navigator.maybePop(context),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: colors.primary.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                        border: Border.all(
+                                          color: colors.primary.withValues(alpha: 0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.lock_shield_fill,
+                                            color: colors.primary,
+                                            size: 14,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'حریم خصوصی چرخه',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: colors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 40), // Balanced spacing
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Illuminated Dual-Ring Security Shield Badge
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: colors.primary.withValues(alpha: 0.08),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colors.primary.withValues(alpha: 0.2),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Container(
+                                      width: 58,
+                                      height: 58,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            colors.primary.withValues(alpha: 0.2),
+                                            colors.primary.withValues(alpha: 0.08),
+                                          ],
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.shield_fill,
                                         color: colors.primary,
-                                        size: 20,
+                                        size: 28,
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  Divider(height: 20, color: colors.divider),
+                                ),
+                                const SizedBox(height: 16),
 
-                                  // Shield Icon
-                                  Container(
-                                    height: 48,
-                                    width: 48,
-                                    decoration: BoxDecoration(
-                                      color: colors.primary.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      CupertinoIcons.shield_fill,
-                                      color: colors.primary,
-                                      size: 24,
-                                    ),
+                                // Title & Subtitle
+                                Text(
+                                  titleText,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.textPrimary,
+                                    fontFamily: 'Vazirmatn',
                                   ),
-                                  const SizedBox(height: 10),
-
-                                  // Title & Subtitle
-                                  Text(
-                                    titleText,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
+                                ),
+                                const SizedBox(height: 6),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  child: Text(
                                     subtitleText,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12.5,
                                       color: colors.textSecondary,
-                                      height: 1.4,
+                                      height: 1.45,
                                     ),
                                   ),
+                                ),
+                                const SizedBox(height: 12),
 
-                                  // Lockout Notice / Error Message
-                                  if (_lockoutSeconds > 0) ...[
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'قفل به دلیل تلاش‌های مکرر ناموفق: ${_toPersianDigits(_lockoutSeconds.toString())} ثانیه باقیمانده',
+                                // Lockout Notice / Error Message
+                                if (_lockoutSeconds > 0) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: colors.warning.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: colors.warning.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'قفل به دلیل تلاش‌های ناموفق: ${_toPersianDigits(_lockoutSeconds.toString())} ثانیه باقیمانده',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         color: colors.warning,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ] else if (_pinErrorMessage.isNotEmpty) ...[
-                                    const SizedBox(height: 10),
-                                    Text(
+                                  ),
+                                ] else if (_pinErrorMessage.isNotEmpty) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: colors.error.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: colors.error.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Text(
                                       _pinErrorMessage,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontSize: 11,
-                                        color: colors.warning,
+                                        fontSize: 12,
+                                        color: colors.error,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ],
-                                  const SizedBox(height: 16),
-
-                                  // PIN Dots with Accessibility LiveRegion
-                                  Semantics(
-                                    liveRegion: true,
-                                    label:
-                                        '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: List.generate(4, (index) {
-                                        final isActive =
-                                            _enteredPin.length > index;
-                                        return Container(
-                                          margin: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                          ),
-                                          height: 12,
-                                          width: 12,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: isActive
-                                                ? colors.primary
-                                                : colors.textTertiary
-                                                      .withValues(alpha: 0.3),
-                                          ),
-                                        );
-                                      }),
-                                    ),
                                   ),
+                                ],
+                                const SizedBox(height: 20),
 
-                                  // Biometrics Button (if PIN is set)
-                                  if (_hasPin &&
-                                      _lockoutSeconds == 0 &&
-                                      !kIsWeb) ...[
-                                    const SizedBox(height: 14),
-                                    TextButton.icon(
-                                      onPressed: _authenticateBiometrics,
-                                      icon: Icon(
-                                        CupertinoIcons.device_phone_portrait,
-                                        size: 16,
-                                        color: colors.primary,
-                                      ),
-                                      label: Text(
-                                        'ورود با اثر انگشت / چهره',
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                // PIN Indicator Glowing Capsules with Shake Animation
+                                Semantics(
+                                  liveRegion: true,
+                                  label: '${_toPersianDigits(_enteredPin.length.toString())} رقم وارد شده',
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(4, (index) {
+                                      final isActive = _enteredPin.length > index;
+                                      final isErr = _pinErrorMessage.isNotEmpty;
 
-                                  // Opt-out option for new users
-                                  if (!_hasPin) ...[
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                      onPressed: _optOutLock,
-                                      child: Text(
-                                        'فعلاً قفل نمی‌خواهم',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: colors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-
-                                  const SizedBox(height: 16),
-
-                                  // Responsive Keypad
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 260,
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: ['1', '2', '3']
-                                              .map(
-                                                (k) => _buildKeyBtn(k, colors),
-                                              )
-                                              .toList(),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: ['4', '5', '6']
-                                              .map(
-                                                (k) => _buildKeyBtn(k, colors),
-                                              )
-                                              .toList(),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: ['7', '8', '9']
-                                              .map(
-                                                (k) => _buildKeyBtn(k, colors),
-                                              )
-                                              .toList(),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            const SizedBox(
-                                              width: 52,
-                                              height: 52,
-                                            ),
-                                            _buildKeyBtn('0', colors),
-                                            Semantics(
-                                              label: 'پاک کردن رقم قبلی',
-                                              button: true,
-                                              child: InkWell(
-                                                onTap: _lockoutSeconds > 0
-                                                    ? null
-                                                    : _onBackspaceTapped,
-                                                borderRadius:
-                                                    BorderRadius.circular(26),
-                                                child: Container(
-                                                  height: 52,
-                                                  width: 52,
-                                                  decoration: BoxDecoration(
-                                                    color: colors.textPrimary
-                                                        .withValues(
-                                                          alpha: 0.04,
-                                                        ),
-                                                    shape: BoxShape.circle,
+                                      return AnimatedContainer(
+                                        duration: const Duration(milliseconds: 200),
+                                        curve: Curves.easeOutCubic,
+                                        margin: const EdgeInsets.symmetric(horizontal: 9),
+                                        height: 15,
+                                        width: isActive ? 18 : 15,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: isActive
+                                              ? LinearGradient(
+                                                  colors: isErr
+                                                      ? [colors.error, colors.error.withValues(alpha: 0.8)]
+                                                      : [colors.primary, colors.primary.withValues(alpha: 0.85)],
+                                                )
+                                              : null,
+                                          color: isActive
+                                              ? null
+                                              : (isDark
+                                                  ? Colors.white.withValues(alpha: 0.12)
+                                                  : Colors.black.withValues(alpha: 0.08)),
+                                          border: Border.all(
+                                            color: isActive
+                                                ? (isErr ? colors.error : colors.primary)
+                                                : colors.borderSubtle,
+                                            width: 1.2,
+                                          ),
+                                          boxShadow: isActive
+                                              ? [
+                                                  BoxShadow(
+                                                    color: (isErr ? colors.error : colors.primary).withValues(alpha: 0.4),
+                                                    blurRadius: 8,
+                                                    spreadRadius: 1,
                                                   ),
+                                                ]
+                                              : null,
+                                        ),
+                                      );
+                                    }),
+                                  )
+                                  .animate(target: _pinErrorMessage.isNotEmpty ? 1.0 : 0.0)
+                                  .shake(hz: 4, curve: Curves.easeInOut),
+                                ),
+                                const SizedBox(height: 32),
+
+                                // Responsive Ergonomic Keypad
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 290),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: ['1', '2', '3']
+                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .toList(),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: ['4', '5', '6']
+                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .toList(),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: ['7', '8', '9']
+                                            .map((k) => _buildKeyBtn(k, colors, isDark))
+                                            .toList(),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          // Biometric Quick Action Button (or placeholder)
+                                          if (_hasPin && _lockoutSeconds == 0 && !kIsWeb)
+                                            Semantics(
+                                              label: 'ورود با اثر انگشت یا چهره',
+                                              button: true,
+                                              child: InkResponse(
+                                                onTap: _authenticateBiometrics,
+                                                radius: 36,
+                                                child: Container(
+                                                  height: 68,
+                                                  width: 68,
+                                                  decoration: BoxDecoration(
+                                                    color: colors.primary.withValues(alpha: 0.1),
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: colors.primary.withValues(alpha: 0.25),
+                                                      width: 1.2,
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: Icon(
+                                                      CupertinoIcons.device_phone_portrait,
+                                                      color: colors.primary,
+                                                      size: 24,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            const SizedBox(width: 68, height: 68),
+
+                                          // Digit 0
+                                          _buildKeyBtn('0', colors, isDark),
+
+                                          // Backspace Button
+                                          Semantics(
+                                            label: 'پاک کردن رقم قبلی',
+                                            button: true,
+                                            child: InkResponse(
+                                              onTap: _lockoutSeconds > 0 ? null : _onBackspaceTapped,
+                                              radius: 36,
+                                              child: Container(
+                                                height: 68,
+                                                width: 68,
+                                                decoration: BoxDecoration(
+                                                  color: isDark
+                                                      ? Colors.white.withValues(alpha: 0.05)
+                                                      : Colors.black.withValues(alpha: 0.04),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: isDark
+                                                        ? colors.borderSubtle.withValues(alpha: 0.4)
+                                                        : colors.borderSubtle,
+                                                    width: 1.0,
+                                                  ),
+                                                ),
+                                                child: Center(
                                                   child: Icon(
                                                     CupertinoIcons.delete_left,
                                                     color: colors.textPrimary,
-                                                    size: 18,
+                                                    size: 22,
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Opt-out option for initial setup
+                                if (!_hasPin) ...[
+                                  const SizedBox(height: 24),
+                                  TextButton(
+                                    onPressed: _optOutLock,
+                                    child: Text(
+                                      'فعلاً قفل نمی‌خواهم',
+                                      style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.textSecondary,
+                                      ),
                                     ),
                                   ),
                                 ],
-                              ),
+                              ],
                             ),
                           ),
                         ),
@@ -589,28 +677,42 @@ class _CycleLockGateState extends State<CycleLockGate>
     );
   }
 
-  Widget _buildKeyBtn(String key, RitmoColors colors) {
+  Widget _buildKeyBtn(String key, RitmoColors colors, bool isDark) {
     final disabled = _lockoutSeconds > 0;
     return Semantics(
       label: 'رقم ${_toPersianDigits(key)}',
       button: true,
       enabled: !disabled,
-      child: InkWell(
+      child: InkResponse(
         onTap: disabled ? null : () => _onPinKeyTapped(key),
-        borderRadius: BorderRadius.circular(26),
+        radius: 36,
         child: Container(
-          height: 52,
-          width: 52,
+          height: 68,
+          width: 68,
           decoration: BoxDecoration(
-            color: colors.textPrimary.withValues(alpha: disabled ? 0.02 : 0.06),
+            color: isDark ? colors.surfaceElevated : colors.surface,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark
+                  ? colors.borderSubtle.withValues(alpha: 0.5)
+                  : colors.borderSubtle,
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Center(
             child: Text(
               _toPersianDigits(key),
               style: TextStyle(
-                fontSize: 19,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Vazirmatn',
                 color: disabled ? colors.textTertiary : colors.textPrimary,
               ),
             ),

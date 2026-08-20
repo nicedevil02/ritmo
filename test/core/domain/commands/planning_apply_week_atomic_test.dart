@@ -71,14 +71,18 @@ void main() {
         ''');
         await d.execute('''
           CREATE TABLE IF NOT EXISTS routine_occurrences (
-            id TEXT PRIMARY KEY,
+            routine_id TEXT,
             routineId TEXT,
+            date TEXT,
             targetDate TEXT,
+            scheduled_time TEXT,
             plannedTime TEXT,
-            status TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
             completedAt INTEGER,
+            ownerModule TEXT,
             createdAt INTEGER,
-            updatedAt INTEGER
+            updatedAt INTEGER,
+            PRIMARY KEY (routine_id, date)
           );
         ''');
         await d.execute('''

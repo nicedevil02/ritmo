@@ -39,6 +39,7 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
   void initState() {
     super.initState();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(_onCloudflareStatusChanged);
+    ChatGptWebBridgeManager.instance.attachViewer();
   }
 
   @override
@@ -69,8 +70,8 @@ class _CloudflareChallengeModalState extends State<CloudflareChallengeModal> {
     final controller = ChatGptWebBridgeManager.instance.controller;
 
     return RitmoFullBleedSheet(
-      minHeightFactor: 0.6,
-      maxHeightFactor: 0.9,
+      minHeightFactor: 0.42,
+      maxHeightFactor: 0.58,
       child: Container(
         decoration: BoxDecoration(
           color: colors.surface,

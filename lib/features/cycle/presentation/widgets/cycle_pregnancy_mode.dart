@@ -528,6 +528,12 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
         TabBar(
           controller: _tabController,
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+          indicatorColor: colors.primary,
+          indicatorSize: TabBarIndicatorSize.label,
+          dividerColor: Colors.transparent,
           labelColor: colors.primary,
           unselectedLabelColor: colors.textSecondary,
           labelStyle: const TextStyle(

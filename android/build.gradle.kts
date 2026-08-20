@@ -2,9 +2,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://jitpack.io") }
     }
 }
 
@@ -18,22 +18,10 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
-    project.evaluationDependsOn(":app")
-}
-subprojects {
-    val configureAndroid = {
-        val android = extensions.findByType<com.android.build.gradle.BaseExtension>()
-        if (android != null) {
-            android.compileSdkVersion(36)
-        }
-    }
-    if (state.executed) {
-        configureAndroid()
-    } else {
-        afterEvaluate {
-            configureAndroid()
-        }
+    plugins.withId("com.android.library") {
+        extensions.findByType<com.android.build.gradle.BaseExtension>()?.compileSdkVersion(36)
     }
 }
 

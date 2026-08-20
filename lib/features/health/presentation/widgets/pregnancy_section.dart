@@ -703,7 +703,12 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
             TabBar(
               controller: _tabController,
               isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 12),
               indicatorColor: colors.primary,
+              indicatorSize: TabBarIndicatorSize.label,
+              dividerColor: Colors.transparent,
               labelColor: colors.textPrimary,
               unselectedLabelColor: colors.textSecondary,
               tabs: const [

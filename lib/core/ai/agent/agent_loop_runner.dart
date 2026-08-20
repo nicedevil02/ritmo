@@ -35,10 +35,6 @@ class AgentLoopRunner {
   /// سقف متن خام یک نوبت (محافظ مدل‌های پرگو)
   static const int _maxRawCharsPerTurn = 20000;
 
-  /// اگر مدل پس از بستن tool_call بیش از این مقدار نوشت، استریم قطع می‌شود
-  /// تا نتیجه خیالی ابزار را نسازد.
-  static const int _tailCutoffAfterToolCall = 220;
-
   /// اگر پس از باز شدن یک تگ، بیش از این تعداد کاراکتر بدون بسته شدن آمد،
   /// تگ را متن عادی تلقی کن و رندر را آزاد کن (A-09).
   static const int _maxSuppressedChars = 600;
@@ -274,7 +270,7 @@ class AgentLoopRunner {
           }
           // else: تگ باز است — متن موقتاً سرکوب می‌شود
 
-          if (live.hasCalls && live.tailLength > _tailCutoffAfterToolCall) {
+          if (live.hasCalls) {
             cutEarly = true;
             break;
           }
@@ -640,7 +636,7 @@ class AgentLoopRunner {
 
     // ۵. جمع‌بندی
     var finalRaw = rawBuffer.trim();
-    var finalAnswer = AgentToolCallParser.cleanForDisplay(finalRaw);
+    var finalAnswer = AgentToolCallParser.cleanForDisplay(finalRaw, knownToolNames: knownToolNames);
 
     if (finalAnswer.isEmpty) {
       final fallback = AgentToolProtocol.fallbackAnswerFromResults(allResults);
@@ -649,6 +645,16 @@ class AgentLoopRunner {
       RitmoLog.debug(
           'Agent',
           'empty model answer -> deterministic fallback from ${allResults.length} result(s)');
+    } else {
+      // اگر ابزار تغییردهنده‌ای در دیتابیس با موفقیت اجرا شده ولی هنوز متنش در خروجی نیامده، اضافه کن
+      final writeResults = allResults.where((r) => r.isSuccess && r.summaryFa.trim().isNotEmpty).toList();
+      for (final wr in writeResults) {
+        final shortSummary = wr.summaryFa.trim();
+        if (shortSummary.isNotEmpty && !finalAnswer.contains(shortSummary)) {
+          finalAnswer = '$finalAnswer\n\n✨ $shortSummary';
+          finalRaw = '$finalRaw\n\n✨ $shortSummary';
+        }
+      }
     }
 
     if (stopNoteFa.isNotEmpty) {

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
@@ -69,7 +68,7 @@ class RitmoCommandBus {
         blockers.add('دستیار اجازهٔ انجام این کار را ندارد: ${cmd.humanTitle}');
         continue;
       }
-      final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches);
+      final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches, exec);
       if (!allowedWrite) {
         blockers.add('دستیار اجازهٔ دسترسی به این بخش اطلاعات را ندارد: ${cmd.humanTitle}');
         continue;
@@ -132,7 +131,7 @@ class RitmoCommandBus {
           if (!persona.commandIds.contains(cmd.id)) {
             throw Exception('این دستیار اجازهٔ این کار را ندارد: ${cmd.humanTitle}');
           }
-          final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches);
+          final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches, txn);
           if (!allowedWrite) {
             throw Exception('دستیار اجازهٔ دسترسی و ویرایش این بخش از اطلاعات را ندارد.');
           }

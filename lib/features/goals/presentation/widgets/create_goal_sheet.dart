@@ -354,7 +354,8 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
     if (_titleController.text.trim().isEmpty) return;
 
     // بررسی سقف اهداف فعال — فقط هنگام ثبت هدف جدید (نه ویرایش)
-    if (widget.goalToEdit == null) {
+    final isRealEdit = widget.goalToEdit != null && widget.goalToEdit!.id.trim().isNotEmpty;
+    if (!isRealEdit) {
       final existingGoals = await GoalsRepository.instance.getGoals();
       final activeGoalsCount = existingGoals.where((g) => g.status == 'ACTIVE').length;
       final limit = FeatureLimits.current.maxActiveGoals;
@@ -419,7 +420,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
         }
       }
 
-      if (widget.goalToEdit != null) {
+      if (isRealEdit) {
         final updated = widget.goalToEdit!.copyWith(
           title: _titleController.text.trim(),
           description: _descController.text.trim().isNotEmpty ? _descController.text.trim() : null,
@@ -1367,7 +1368,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                     child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
                   )
                 : Text(
-                    _currentStep == 2 ? (widget.goalToEdit != null ? 'ذخیره تغییرات' : 'ایجاد هدف') : 'مرحله بعد',
+                    _currentStep == 2 ? ((widget.goalToEdit != null && widget.goalToEdit!.id.trim().isNotEmpty) ? 'ذخیره تغییرات' : 'ایجاد هدف') : 'مرحله بعد',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
           ),

@@ -158,9 +158,10 @@ class StreamingChatService {
           errorCode = event.errorMessageFa;
           yield AgentStreamEvent(event);
           break;
+        } else if (event is AgentDisplayResetEvent) {
+          yield AgentStreamEvent(event);
         } else {
-          // A-19: پیش‌فرض — هر رویداد دیگری (AgentDisplayResetEvent، AgentAwaitingQuestionEvent،
-          // AgentQuestionResolvedEvent، و هر زیرکلاس جدید AgentEvent) به UI عبور داده می‌شود.
+          // A-19: پیش‌فرض — هر رویداد دیگری (AgentAwaitingQuestionEvent، AgentQuestionResolvedEvent، و ...) به UI عبور داده می‌شود.
           yield AgentStreamEvent(event);
         }
       }

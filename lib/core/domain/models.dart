@@ -331,14 +331,24 @@ class RecurrenceRule {
   });
 
   factory RecurrenceRule.fromMap(Map<String, dynamic> map) {
+    DateTime? parseDate(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return v;
+      if (v is String) return DateTime.tryParse(v);
+      return null;
+    }
+
     return RecurrenceRule(
       weekdays: List<int>.from(map['weekdays'] ?? []),
       intervalDays: map['intervalDays'] as int?,
       monthDay: map['monthDay'] as int?,
-      startDate: map['startDate'] != null ? DateTime.parse(map['startDate'] as String) : null,
-      endDate: map['endDate'] != null ? DateTime.parse(map['endDate'] as String) : null,
+      startDate: parseDate(map['startDate']),
+      endDate: parseDate(map['endDate']),
       excludedDates: map['excludedDates'] != null
-          ? (map['excludedDates'] as List).map((d) => DateTime.parse(d as String)).toList()
+          ? (map['excludedDates'] as List)
+              .map((d) => parseDate(d))
+              .whereType<DateTime>()
+              .toList()
           : null,
       reminderTimes: List<String>.from(map['reminderTimes'] ?? []),
       intervalHours: map['intervalHours'] as int?,

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -20,6 +22,8 @@ class ChatGptMiniPreview extends StatefulWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      enableDrag: false,
+      isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -184,12 +188,15 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                   // WebView Body
                   if (!_isMinimized)
                     SizedBox(
-                      height: 280,
+                      height: 380,
                       width: double.infinity,
                       child: controller != null
                           ? WebViewWidget(
                               key: const ValueKey('chatgpt_mini_preview_webview'),
                               controller: controller,
+                              gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{
+                                Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+                              },
                             )
                           : Center(
                               child: InkWell(

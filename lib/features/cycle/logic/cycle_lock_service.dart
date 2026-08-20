@@ -1,6 +1,6 @@
 // C-06, C-07, C-08: CycleLockService
 // Sole source of truth for Cycle lock state, secure hashed PIN storage, independent from App PIN,
-// with exponential backoff brute-force protection and biometric authentication.
+// with exponential backoff brute-force protection, app-lock PIN integration, and biometric authentication.
 import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
@@ -8,9 +8,12 @@ import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:sqflite/sqflite.dart';
+
+enum CycleLockSource { dedicated, appLock }
 
 class CycleLockService {
   CycleLockService._();
@@ -22,6 +25,7 @@ class CycleLockService {
   static const String _keySalt = 'cycle_lock_salt';
   static const String _keyFailedAttempts = 'cycle_lock_failed_attempts';
   static const String _keyLockoutUntilMs = 'cycle_lockout_until_ms';
+  static const String keyLockSource = 'cycle_lock_source';
 
   /// Constant-time string comparison to prevent timing attacks.
   bool _constantTimeEquals(String a, String b) {
@@ -47,6 +51,50 @@ class CycleLockService {
     return base64Url.encode(bytes);
   }
 
+  /// Returns the current lock source (dedicated or appLock).
+  Future<CycleLockSource> getLockSource([DatabaseExecutor? dbExecutor]) async {
+    try {
+      final val = await SecureKeyStore.getKey(keyLockSource, dbExecutor);
+      if (val == 'app_lock') {
+        return CycleLockSource.appLock;
+      }
+      return CycleLockSource.dedicated;
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleLockService] error reading lock source setting',
+        error: e,
+        stack: st,
+      );
+      return CycleLockSource.dedicated;
+    }
+  }
+
+  /// Sets whether the cycle lock source is dedicated or uses main app lock.
+  Future<void> setLockSource(
+    CycleLockSource source, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
+    try {
+      await SecureKeyStore.setKey(
+        keyLockSource,
+        source == CycleLockSource.appLock ? 'app_lock' : 'dedicated',
+        dbExecutor,
+      );
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleLockService] error saving lock source setting',
+        error: e,
+        stack: st,
+      );
+    }
+  }
+
+  /// Returns whether the main app lock password exists in SecureKeyStore.
+  Future<bool> hasAppLockPassword([DatabaseExecutor? dbExecutor]) async {
+    final appPass = await SecureKeyStore.getKey('app_lock_password', dbExecutor);
+    return appPass != null && appPass.isNotEmpty;
+  }
+
   /// Returns whether the cycle lock is enabled.
   /// Defaults to true (fail-secure) if PIN exists, unless cycle_lock_enabled is explicitly 'false'.
   Future<bool> isLockEnabled([DatabaseExecutor? dbExecutor]) async {
@@ -64,7 +112,7 @@ class CycleLockService {
         if (val == 'true') return true;
       }
       // If setting is unset, lock is enabled if a PIN is configured
-      return await hasCyclePin(dbExecutor);
+      return await hasAnyActivePin(dbExecutor);
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleLockService] error reading lock enabled setting',
@@ -97,13 +145,23 @@ class CycleLockService {
     }
   }
 
-  /// Checks if a cycle PIN is stored in SecureKeyStore.
+  /// Checks if a dedicated cycle PIN is stored in SecureKeyStore.
   Future<bool> hasCyclePin([DatabaseExecutor? dbExecutor]) async {
     final hash = await SecureKeyStore.getKey(_keyPinHash, dbExecutor);
     return hash != null && hash.isNotEmpty;
   }
 
-  /// Sets a new cycle PIN. Hashes it securely with a salt and stores only in SecureKeyStore.
+  /// Checks if any active PIN is configured (dedicated or app lock according to source).
+  Future<bool> hasAnyActivePin([DatabaseExecutor? dbExecutor]) async {
+    final source = await getLockSource(dbExecutor);
+    if (source == CycleLockSource.appLock) {
+      final hasApp = await hasAppLockPassword(dbExecutor);
+      if (hasApp) return true;
+    }
+    return await hasCyclePin(dbExecutor);
+  }
+
+  /// Sets a new dedicated cycle PIN. Hashes it securely with a salt and stores only in SecureKeyStore.
   Future<void> setPin(String newPin, [DatabaseExecutor? dbExecutor]) async {
     final salt = _generateSalt();
     final hash = _hashPin(newPin, salt);
@@ -113,15 +171,17 @@ class CycleLockService {
     await SecureKeyStore.setKey(_keyFailedAttempts, '0', dbExecutor);
     await SecureKeyStore.setKey(_keyLockoutUntilMs, '0', dbExecutor);
 
+    await setLockSource(CycleLockSource.dedicated, dbExecutor);
     await setLockEnabled(true, dbExecutor);
   }
 
-  /// Clears the cycle PIN and resets lockout state.
+  /// Clears the dedicated cycle PIN and resets lockout state.
   Future<void> clearPin([DatabaseExecutor? dbExecutor]) async {
     await SecureKeyStore.deleteKey(_keyPinHash, dbExecutor);
     await SecureKeyStore.deleteKey(_keySalt, dbExecutor);
     await SecureKeyStore.deleteKey(_keyFailedAttempts, dbExecutor);
     await SecureKeyStore.deleteKey(_keyLockoutUntilMs, dbExecutor);
+    await SecureKeyStore.deleteKey(keyLockSource, dbExecutor);
 
     await setLockEnabled(false, dbExecutor);
   }
@@ -147,7 +207,29 @@ class CycleLockService {
     return (await remainingLockoutSeconds(dbExecutor)) > 0;
   }
 
-  /// Verifies [enteredPin] against stored hash with brute-force rate limiting.
+  /// Specifically verifies against the main app lock PIN.
+  Future<bool> verifyAppLockPin(
+    String enteredPin, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
+    final storedHash = await SecureKeyStore.getKey('app_lock_password', dbExecutor);
+    if (storedHash == null || storedHash.isEmpty) return false;
+    return PinHasher.verifyPin(enteredPin, storedHash);
+  }
+
+  /// Specifically verifies against the dedicated cycle PIN.
+  Future<bool> verifyDedicatedPin(
+    String enteredPin, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
+    final salt = await SecureKeyStore.getKey(_keySalt, dbExecutor);
+    final storedHash = await SecureKeyStore.getKey(_keyPinHash, dbExecutor);
+    if (salt == null || storedHash == null || storedHash.isEmpty) return false;
+    final computedHash = _hashPin(enteredPin, salt);
+    return _constantTimeEquals(computedHash, storedHash);
+  }
+
+  /// Verifies [enteredPin] against active source (or fallback) with brute-force rate limiting.
   Future<bool> verifyPin(
     String enteredPin, [
     DatabaseExecutor? dbExecutor,
@@ -158,16 +240,22 @@ class CycleLockService {
       return false;
     }
 
-    // 2. Fetch stored salt and hash
-    final salt = await SecureKeyStore.getKey(_keySalt, dbExecutor);
-    final storedHash = await SecureKeyStore.getKey(_keyPinHash, dbExecutor);
+    final source = await getLockSource(dbExecutor);
+    bool isMatch = false;
 
-    if (salt == null || storedHash == null || storedHash.isEmpty) {
-      return false;
+    if (source == CycleLockSource.appLock) {
+      isMatch = await verifyAppLockPin(enteredPin, dbExecutor);
+      // Fallback to dedicated if app lock failed but dedicated matches
+      if (!isMatch) {
+        isMatch = await verifyDedicatedPin(enteredPin, dbExecutor);
+      }
+    } else {
+      isMatch = await verifyDedicatedPin(enteredPin, dbExecutor);
+      // Fallback to app lock if dedicated is not configured or failed
+      if (!isMatch && !(await hasCyclePin(dbExecutor))) {
+        isMatch = await verifyAppLockPin(enteredPin, dbExecutor);
+      }
     }
-
-    final computedHash = _hashPin(enteredPin, salt);
-    final isMatch = _constantTimeEquals(computedHash, storedHash);
 
     if (isMatch) {
       // Reset failed attempts on success
@@ -213,7 +301,7 @@ class CycleLockService {
 
   /// Authenticates using biometrics. Returns true ONLY on successful authentication.
   Future<bool> authenticateBiometric({
-    String localizedReason = 'Cycle Vault Authentication',
+    String localizedReason = 'Cycle Vault Biometric Authentication',
   }) async {
     if (kIsWeb) return false;
 

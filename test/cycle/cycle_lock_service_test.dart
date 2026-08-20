@@ -1,6 +1,7 @@
 // C-05..C-08: Unit tests for CycleLockService
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 
@@ -98,5 +99,32 @@ void main() {
         expect(await service.isLockedOut(), isFalse);
       },
     );
+
+    test('dual source: app_lock source verifies against app_lock_password', () async {
+      final hashedAppPass = PinHasher.hashPin('7788');
+      await SecureKeyStore.setKey('app_lock_password', hashedAppPass);
+
+      await service.setLockSource(CycleLockSource.appLock);
+      await service.setLockEnabled(true);
+
+      expect(await service.getLockSource(), equals(CycleLockSource.appLock));
+      expect(await service.hasAppLockPassword(), isTrue);
+      expect(await service.hasAnyActivePin(), isTrue);
+
+      expect(await service.verifyPin('7788'), isTrue);
+      expect(await service.verifyPin('0000'), isFalse);
+    });
+
+    test('dual source: dedicated source takes priority when selected', () async {
+      final hashedAppPass = PinHasher.hashPin('7788');
+      await SecureKeyStore.setKey('app_lock_password', hashedAppPass);
+
+      await service.setPin('1234');
+      await service.setLockSource(CycleLockSource.dedicated);
+
+      expect(await service.getLockSource(), equals(CycleLockSource.dedicated));
+      expect(await service.verifyPin('1234'), isTrue);
+      expect(await service.verifyPin('7788'), isFalse);
+    });
   });
 }

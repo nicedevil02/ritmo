@@ -33,7 +33,7 @@ class KonkurPlanner {
       mockResults: mockResults,
       existingPlanItems: existingPlanItems,
       today: cleanFrom,
-      planningHorizonDays: daysUntilExam.clamp(7, 30),
+      planningHorizonDays: daysUntilExam.clamp(1, 30),
       dailyCapacityMinutes: dailyTargetMinutes,
       energyProfile: energyLevel,
       energyContext: energyContext,
@@ -54,7 +54,8 @@ class KonkurPlanner {
 
     for (final topic in topics) {
       if (topic.isConceptFinished ||
-          topic.masteryLevel == MasteryLevel.needsReview) {
+          topic.masteryLevel == MasteryLevel.needsReview ||
+          topic.masteryLevel == MasteryLevel.mastered) {
         final dueStr = topic.nextReviewDate;
         if (dueStr != null &&
             dueStr.isNotEmpty &&

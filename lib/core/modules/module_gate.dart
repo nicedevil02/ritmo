@@ -31,7 +31,8 @@ class ModuleGate {
 
   bool isEnabled(String moduleKey) {
     var effectiveKey = moduleKey;
-    if (moduleKey == 'module_sports_enabled') {
+    if (moduleKey == 'module_sports_enabled' ||
+        moduleKey == 'module_movement_enabled') {
       effectiveKey = 'module_supplementary_sports_enabled';
     } else if (moduleKey == 'module_health_enabled') {
       effectiveKey = 'module_medicine_enabled';
@@ -48,7 +49,8 @@ class ModuleGate {
 
   bool isEnabledFrom(Map<String, String> settings, String moduleKey) {
     var effectiveKey = moduleKey;
-    if (moduleKey == 'module_sports_enabled') {
+    if (moduleKey == 'module_sports_enabled' ||
+        moduleKey == 'module_movement_enabled') {
       effectiveKey = 'module_supplementary_sports_enabled';
     } else if (moduleKey == 'module_health_enabled') {
       effectiveKey = 'module_medicine_enabled';

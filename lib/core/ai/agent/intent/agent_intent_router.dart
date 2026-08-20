@@ -169,6 +169,20 @@ class AgentIntentRouter {
       'استریک',
       'پیوستگی',
       'کارهای من',
+      'کارهام',
+      'مدیتیشن',
+      'ثبت کردی',
+      'ثبت شد',
+      'ثبت شده',
+      'ساختی',
+      'ساخته شد',
+      'چک کن',
+      'بررسی کن',
+      'لیست روتین',
+      'وضعیت روتین',
+      'ثبت',
+      'بساز',
+      'ایجاد',
     ])) {
       toolsToRun['get_routines_overview'] = <String, dynamic>{};
       toolsToRun['get_routine_streak_stats'] = <String, dynamic>{};

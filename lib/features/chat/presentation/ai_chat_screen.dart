@@ -14,11 +14,8 @@ import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
-import 'package:ritmo/core/analytics/assistant_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
@@ -27,11 +24,9 @@ import 'package:ritmo/features/assistant/logic/day_plan_composer.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_template_service.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_validator.dart';
 import 'package:ritmo/features/assistant/logic/settings_action_guard.dart';
-import 'package:ritmo/features/assistant/models/assistant_models.dart';
 import 'package:ritmo/features/assistant/models/day_plan_models.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_day_planner_preview_sheet.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/ai_weekly_planner_preview_sheet.dart';
-import 'package:ritmo/features/assistant/presentation/widgets/assistant_briefing_section.dart';
 import 'package:ritmo/features/chat/presentation/chat_session_list_screen.dart';
 import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_policy_gate.dart';
@@ -70,10 +65,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final Map<String, Timer> _pendingDeleteTimers = {};
   final Map<String, ChatMessage> _pendingDeletedMsgs = {};
 
-  DailyBriefing? _briefing;
-  List<NextAction> _nextActions = [];
-  bool _isLoadingBriefing = false;
-
   bool get _isStreaming => _sub != null || _isAgentWorking;
 
   DayPlanDraft? _pendingDayPlanDraft;
@@ -92,8 +83,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (_sessionId != null) {
       _loadMessages();
     }
-    _loadBriefingData();
     _checkLastCommit();
+    unawaited(_runLearningLoop());
     _initSpeech();
     ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(_handleCloudflarePrompt);
   }
@@ -185,73 +176,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
       final text = _textController.text.trim();
       if (text.isNotEmpty) {
         unawaited(_send(text));
-      }
-    }
-  }
-
-  Future<void> _loadBriefingData() async {
-    if (mounted) setState(() => _isLoadingBriefing = true);
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final today = DateTime.now();
-
-      final settings = await db.query('app_settings');
-      final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
-      
-      final briefingEnabled = settingsMap['assistant_briefing_enabled'] != 'false';
-      final proactiveEnabled = settingsMap['assistant_proactive_enabled'] != 'false';
-      final gender = settingsMap['user_gender'] ?? 'UNSET';
-      final isFemale = gender.toUpperCase() == 'FEMALE';
-      final cycleConsent = settingsMap['cycle_consent_energy'] == 'true';
-
-      final routines = await db.query('routines');
-      final routineCompletions = await db.query('routine_completions');
-      final sleepLogs = await db.query('bedtime_diagnostics');
-      final energyLogs = await db.query('energy_logs');
-      final moodLogs = await db.query('mood_logs');
-      final goals = await db.query('goals');
-      final goalSteps = await db.query('goal_steps');
-      final konkurStudySessions = await db.query('konkur_study_sessions');
-
-      final isEnergyTuned = await CycleConsentBridge.isEnergyTuned();
-
-      final input = AssistantEngineInput(
-        routines: routines,
-        routineCompletions: routineCompletions,
-        sleepLogs: sleepLogs,
-        energyLogs: energyLogs,
-        moodLogs: moodLogs,
-        goals: goals,
-        goalSteps: goalSteps,
-        konkurStudySessions: konkurStudySessions,
-        today: today,
-        isBriefingEnabled: briefingEnabled,
-        isProactiveEnabled: proactiveEnabled,
-        isUserFemale: isFemale,
-        cycleConsent: cycleConsent,
-        isEnergyTuned: isEnergyTuned,
-      );
-
-      RitmoEngineBus.instance.invalidate(AssistantEngine);
-
-      final output = await RitmoEngineBus.instance.execute<AssistantEngineInput, AssistantEngineOutput>(
-        AssistantEngine,
-        input,
-      );
-
-      if (mounted) {
-        setState(() {
-          _briefing = output.dailyBriefing;
-          _nextActions = output.nextActions;
-          _isLoadingBriefing = false;
-        });
-        unawaited(_checkLastCommit());
-        unawaited(_runLearningLoop());
-      }
-    } catch (e) {
-      debugPrint('Error loading assistant engine data in chat screen: $e');
-      if (mounted) {
-        setState(() => _isLoadingBriefing = false);
       }
     }
   }
@@ -373,75 +297,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
     } catch (e) {
       debugPrint('[AI Learning Loop] Error running learning loop: $e');
     }
-  }
-
-  void _showTodayBriefingSheet(BuildContext context) {
-    if (_isLoadingBriefing && _briefing == null) {
-      showCupertinoModalPopup(
-        context: context,
-        builder: (context) => const Center(child: CupertinoActivityIndicator(radius: 15)),
-      );
-      return;
-    }
-
-    final colors = context.colors;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: RitmoTheme.glassCardLight(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
-                  ),
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Column(
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: colors.textSecondary.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(2.5),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: _briefing == null
-                            ? Center(
-                                child: Text(
-                                  'در حال بارگذاری تحلیل امروز...',
-                                  style: TextStyle(color: colors.textSecondary),
-                                ),
-                              )
-                            : AssistantBriefingSection(
-                                briefing: _briefing!,
-                                nextActions: _nextActions,
-                                onActionComplete: () async {
-                                  await _loadBriefingData();
-                                  setModalState(() {});
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   void _showAuditLogSheet(BuildContext context) {
@@ -791,7 +646,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   context,
                   initialDraft: enriched,
                   onSaved: () {
-                    _loadBriefingData();
                     _checkLastCommit();
                     _saveSystemConfirmationMessage('برنامه روز شما با موفقیت ثبت شد ⚡');
                     _showTopToast(
@@ -800,7 +654,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       context.colors.primary,
                       onUndo: () async {
                         await AssistantActionRegistry.undoLastDayPlanCommit(context);
-                        unawaited(_loadBriefingData());
                         unawaited(_checkLastCommit());
                       }
                     );
@@ -844,7 +697,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 context,
                 initialDrafts: result.multiDayDrafts!,
                 onSaved: () {
-                  _loadBriefingData();
                   _checkLastCommit();
                   _saveSystemConfirmationMessage('برنامه هفتگی شما با موفقیت ثبت شد ⚡');
                   _showTopToast(
@@ -853,7 +705,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     context.colors.primary,
                     onUndo: () async {
                       await AssistantActionRegistry.undoLastDayPlanCommit(context);
-                      unawaited(_loadBriefingData());
                       unawaited(_checkLastCommit());
                     }
                   );
@@ -916,7 +767,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   context,
                   initialDraft: draft,
                   onSaved: () {
-                    _loadBriefingData();
                     _checkLastCommit();
                     _saveSystemConfirmationMessage('برنامه روز شما با موفقیت ثبت شد ⚡');
                     _showTopToast(
@@ -925,7 +775,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       context.colors.primary,
                       onUndo: () async {
                         await AssistantActionRegistry.undoLastDayPlanCommit(context);
-                        unawaited(_loadBriefingData());
                         unawaited(_checkLastCommit());
                       }
                     );
@@ -1261,45 +1110,13 @@ $suggestedSteps''';
                     icon: RitmoIcons.back(context, color: colors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'دستیار هوشمند',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _showTodayBriefingSheet(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xff06B6D4).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xff06B6D4).withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(CupertinoIcons.calendar, size: 13, color: Color(0xff06B6D4)),
-                        SizedBox(width: 4),
-                        Text(
-                          'امروز',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xff06B6D4),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+            title: Text(
+              'دستیار هوشمند',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
             centerTitle: true,
             actions: [
@@ -1355,7 +1172,6 @@ $suggestedSteps''';
                       TextButton(
                         onPressed: () async {
                           await AssistantActionRegistry.undoLastDayPlanCommit(context);
-                          unawaited(_loadBriefingData());
                           unawaited(_checkLastCommit());
                         },
                         child: Text(
@@ -1496,24 +1312,49 @@ $suggestedSteps''';
 
               if (_currentQuickReplies.isNotEmpty)
                 Container(
-                  height: 48,
+                  height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ListView.builder(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _currentQuickReplies.length,
+                    separatorBuilder: (context, index) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final text = _currentQuickReplies[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: ActionChip(
-                          label: Text(
-                            text,
-                            style: const TextStyle(
-                              fontSize: 12,
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            RitmoHapticsPolicy.selection();
+                            _send(text);
+                          },
+                          borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                              border: Border.all(
+                                color: colors.primary.withValues(alpha: 0.25),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.bolt_rounded, size: 14, color: colors.primary),
+                                const SizedBox(width: 5),
+                                Text(
+                                  text,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          backgroundColor: colors.primary.withValues(alpha: 0.1),
-                          onPressed: () => _send(text),
                         ),
                       );
                     },
@@ -1530,109 +1371,148 @@ $suggestedSteps''';
               // Agent Confirmation Card Host
               const AgentConfirmationHost(),
 
-              // Live Mini ChatGPT Preview Window
-              const ChatGptMiniPreview(),
-
-              // Chat Input row
+              // 2026 Floating Chat Input Bar
               Builder(
                 builder: (context) {
                   final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
                   final effectiveBottomPadding = isKeyboardOpen
                       ? 12.0
-                      : (widget.isTab ? 84.0 : 12.0);
+                      : (widget.isTab ? 88.0 : 16.0);
 
                   return SafeArea(
                     bottom: !widget.isTab && !isKeyboardOpen,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        12,
-                        12,
-                        12,
+                        16,
+                        8,
+                        16,
                         effectiveBottomPadding,
                       ),
-                  child: Row(
-                    children: [
-                      if (!_isStreaming) ...[
-                        GestureDetector(
-                          onLongPressStart: (_) => _startListening(),
-                          onLongPressEnd: (_) => _stopListening(),
-                          onLongPressCancel: _stopListening,
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: _isListening ? Colors.redAccent : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
-                            child: Icon(
-                              _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
-                              color: _isListening ? Colors.white : colors.textPrimary,
-                              size: 18,
-                            ),
-                          )
-                          .animate(target: _isListening ? 1.0 : 0.0)
-                          .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 150.ms)
-                          .then()
-                          .shake(hz: 3, curve: Curves.easeInOut),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
-                            ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isDark ? colors.surfaceElevated : colors.surface,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: isDark
+                                ? colors.borderSubtle.withValues(alpha: 0.6)
+                                : colors.borderSubtle,
+                            width: 1.2,
                           ),
-                          child: TextField(
-                            controller: _textController,
-                            minLines: 1,
-                            maxLines: 4,
-                            enabled: !_isStreaming,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.textPrimary,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
                             ),
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              border: InputBorder.none,
-                              hintText: _isStreaming ? 'دستیار در حال نوشتن است...' : 'گفتگو با دستیار ریتمو...',
-                              hintStyle: TextStyle(
-                                fontSize: 12,
-                                color: colors.textSecondary.withValues(alpha: 0.6),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (!_isStreaming) ...[
+                              GestureDetector(
+                                onLongPressStart: (_) => _startListening(),
+                                onLongPressEnd: (_) => _stopListening(),
+                                onLongPressCancel: _stopListening,
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: _isListening
+                                        ? colors.error
+                                        : colors.primary.withValues(alpha: 0.08),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
+                                    color: _isListening ? Colors.white : colors.primary,
+                                    size: 20,
+                                  ),
+                                )
+                                .animate(target: _isListening ? 1.0 : 0.0)
+                                .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 150.ms)
+                                .then()
+                                .shake(hz: 3, curve: Curves.easeInOut),
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: TextField(
+                                  controller: _textController,
+                                  minLines: 1,
+                                  maxLines: 4,
+                                  enabled: !_isStreaming,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: colors.textPrimary,
+                                  ),
+                                  decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                    isDense: true,
+                                    border: InputBorder.none,
+                                    hintText: _isStreaming ? 'دستیار در حال نوشتن است...' : 'گفتگو با دستیار ریتمو...',
+                                    hintStyle: TextStyle(
+                                      fontSize: 12.5,
+                                      color: colors.textSecondary.withValues(alpha: 0.55),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                                  },
+                                  onChanged: (val) {
+                                    if (val.isNotEmpty) {
+                                      unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                                    }
+                                  },
+                                ),
                               ),
                             ),
-                            onTap: () {
-                              unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
-                            },
-                            onChanged: (val) {
-                              if (val.isNotEmpty) {
-                                unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
-                              }
-                            },
-                          ),
+                            GestureDetector(
+                              onTap: () {
+                                RitmoHapticsPolicy.tap();
+                                if (_isStreaming) {
+                                  _cancelStream();
+                                } else {
+                                  _send(_textController.text);
+                                }
+                              },
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: _isStreaming
+                                        ? [colors.error, colors.error.withValues(alpha: 0.85)]
+                                        : [colors.primary, colors.primary.withValues(alpha: 0.88)],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (_isStreaming ? colors.error : colors.primary).withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  _isStreaming ? CupertinoIcons.stop_fill : CupertinoIcons.arrow_up,
+                                  color: Colors.white,
+                                  size: _isStreaming ? 15 : 20,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: _isStreaming ? _cancelStream : () => _send(_textController.text),
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: _isStreaming
-                              ? const Color(0xffEF4444)
-                              : const Color(0xff5B8AF5),
-                          child: Icon(
-                            _isStreaming ? CupertinoIcons.stop_fill : CupertinoIcons.arrow_up,
-                            color: Colors.white,
-                            size: _isStreaming ? 14 : 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                    ),
+                  );
+                },
+              ),
         ],
       ),
     ),

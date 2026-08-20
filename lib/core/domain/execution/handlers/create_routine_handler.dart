@@ -49,7 +49,19 @@ class CreateRoutineHandler
       await context.txn.insert('routine_schedules', schedule);
 
       final ruleMap = jsonDecode(schedule['recurrenceRule'] as String? ?? '{}');
-      final rule = RecurrenceRule.fromMap(ruleMap);
+      var rule = RecurrenceRule.fromMap(ruleMap);
+      if (rule.reminderTimes.isEmpty && schedule['timeOfDay'] != null) {
+        rule = RecurrenceRule(
+          weekdays: rule.weekdays,
+          intervalDays: rule.intervalDays,
+          monthDay: rule.monthDay,
+          startDate: rule.startDate,
+          endDate: rule.endDate,
+          excludedDates: rule.excludedDates,
+          reminderTimes: [schedule['timeOfDay'] as String],
+          intervalHours: rule.intervalHours,
+        );
+      }
 
       await RoutineOccurrenceGenerator.generateFutureOccurrences(
         context.txn,

@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/param_spec.dart';
@@ -7,7 +5,7 @@ import 'package:ritmo/core/domain/commands/command_plan.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/completion/snooze_policy.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
-import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
 
 String _genId() => DateTime.now().microsecondsSinceEpoch.toString();
 
@@ -94,11 +92,18 @@ class RoutineCreateCommand extends RitmoCommand {
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };
 
+    final recurrenceRuleStr = encodeRecurrenceRule(
+      recurrence: const DailyRecurrence(),
+      startDate: DateTime.now(),
+      reminderTimes: [scheduledTime],
+    );
+
     final scheduleData = <String, dynamic>{
       'id': 'sched_$routineId',
       'routineId': routineId,
       'scheduleType': scheduleType.toUpperCase(),
       'timeOfDay': scheduledTime,
+      'recurrenceRule': recurrenceRuleStr,
       'createdAt': DateTime.now().millisecondsSinceEpoch,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };

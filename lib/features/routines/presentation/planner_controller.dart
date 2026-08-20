@@ -209,10 +209,12 @@ class PlannerController extends ChangeNotifier {
   List<Map<String, dynamic>> frequentStations = [];
 
   void init() {
-    isEditing = routineToEdit != null;
-    if (isEditing) {
+    final editId = routineToEdit?['id']?.toString().trim();
+    isEditing = routineToEdit != null && (editId != null && editId.isNotEmpty);
+    if (routineToEdit != null) {
       _loadEditData();
-    } else if (prefilledTime != null) {
+    }
+    if (prefilledTime != null) {
       selectedTime = prefilledTime!;
     }
     

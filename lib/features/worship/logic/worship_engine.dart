@@ -1167,9 +1167,11 @@ class WorshipEngine {
         );
       ''');
       // Add column if missing (for existing users)
-      try {
+      final info = await db.rawQuery('PRAGMA table_info(worship_day_context)');
+      final hasExemptPrayers = info.any((c) => c['name'] == 'exemptPrayers');
+      if (!hasExemptPrayers) {
         await db.execute('ALTER TABLE worship_day_context ADD COLUMN exemptPrayers TEXT;');
-      } catch (_) {}
+      }
     } catch (_) {}
   }
 
@@ -1180,7 +1182,7 @@ class WorshipEngine {
 
   Future<WorshipDayContext> _loadDayContext(DatabaseExecutor db, DateTime date) async {
     final suspended = await CycleConsentBridge.isWorshipSuspended(targetDate: date);
-    List<String> calculatedExemptPrayers = [];
+    final calculatedExemptPrayers = <String>[];
     bool isFullDayExempt = suspended;
 
     if (suspended) {

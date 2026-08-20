@@ -163,6 +163,7 @@ class SettingsService {
           k.startsWith('pregnancy_') ||
           k.startsWith('module_') ||
           k.startsWith('worship_') ||
+          k.startsWith('last_worship_') ||
           k.startsWith('sleep_') ||
           k.startsWith('nutrition_') ||
           k.startsWith('energy_') ||

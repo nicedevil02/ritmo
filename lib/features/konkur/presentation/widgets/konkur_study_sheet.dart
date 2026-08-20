@@ -349,50 +349,74 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<KonkurSubject>(
-                  value: _selectedSubject,
+                child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'درس',
                     labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   ),
-                  items: widget.subjects.map((sub) {
-                    return DropdownMenuItem(
-                      value: sub,
-                      child: Text(sub.name, style: const TextStyle(fontSize: 13)),
-                    );
-                  }).toList(),
-                  onChanged: (sub) {
-                    setState(() {
-                      _selectedSubject = sub;
-                      final list = widget.topics.where((t) => t.subjectId == sub?.id).toList();
-                      _selectedTopic = list.isNotEmpty ? list.first : null;
-                      _promotedMastery = _selectedTopic?.masteryLevel;
-                    });
-                  },
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<KonkurSubject>(
+                      value: _selectedSubject,
+                      isExpanded: true,
+                      isDense: true,
+                      items: widget.subjects.map((sub) {
+                        return DropdownMenuItem(
+                          value: sub,
+                          child: Text(
+                            sub.name,
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (sub) {
+                        setState(() {
+                          _selectedSubject = sub;
+                          final list = widget.topics.where((t) => t.subjectId == sub?.id).toList();
+                          _selectedTopic = list.isNotEmpty ? list.first : null;
+                          _promotedMastery = _selectedTopic?.masteryLevel;
+                        });
+                      },
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: DropdownButtonFormField<KonkurTopic>(
-                  value: _selectedTopic,
+                child: InputDecorator(
                   decoration: const InputDecoration(
                     labelText: 'مبحث',
                     labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   ),
-                  items: subTopics.map((topic) {
-                    return DropdownMenuItem(
-                      value: topic,
-                      child: Text(topic.name, style: const TextStyle(fontSize: 13)),
-                    );
-                  }).toList(),
-                  onChanged: (topic) {
-                    setState(() {
-                      _selectedTopic = topic;
-                      _promotedMastery = topic?.masteryLevel;
-                    });
-                  },
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<KonkurTopic>(
+                      value: _selectedTopic,
+                      isExpanded: true,
+                      isDense: true,
+                      items: subTopics.map((topic) {
+                        return DropdownMenuItem(
+                          value: topic,
+                          child: Text(
+                            topic.name,
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (topic) {
+                        setState(() {
+                          _selectedTopic = topic;
+                          _promotedMastery = topic?.masteryLevel;
+                        });
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -543,8 +567,9 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
               style: TextStyle(fontSize: 13, color: colors.textSecondary),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: MasteryLevel.values.map((lvl) {
                 final isSelected = _promotedMastery == lvl;
                 return ChoiceChip(

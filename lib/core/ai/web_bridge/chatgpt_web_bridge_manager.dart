@@ -1531,7 +1531,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       if (isPartial) {
         BridgeTraceLog.instance.addEntry(
           type: 'partial_finish',
-          source: _lockedSource?.name ?? 'lifecycle',
+          source: _lockedSource?.name ?? BridgeSource.lifecycle.name,
           requestId: _currentRequestId,
           textLength: _accumulator.length,
           level: BridgeTraceLevel.warn,
@@ -1541,7 +1541,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       final finalText = _accumulator.text;
       BridgeTraceLog.instance.addEntry(
         type: 'finish',
-        source: _lockedSource?.name ?? 'lifecycle',
+        source: _lockedSource?.name ?? BridgeSource.lifecycle.name,
         requestId: _currentRequestId,
         textLength: finalText.length,
         note: isPartial ? 'partial_finish' : 'complete_finish',
@@ -1689,7 +1689,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       );
       BridgeTraceLog.instance.addEntry(
         type: 'send_refused',
-        source: 'lifecycle',
+        source: BridgeSource.lifecycle.name,
         requestId: _currentRequestId,
         note: 'already_generating',
         level: BridgeTraceLevel.warn,

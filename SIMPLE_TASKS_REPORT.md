@@ -27,10 +27,17 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - [x] **T-18**: Verified exact alarm permissions (`SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`) in `AndroidManifest.xml` and user permission flow. [DONE]
 - [x] **T-19**: Comprehensive reminder engine test suite in `test/simple_tasks/reminder_engine_test.dart` verifying all scheduling, snoozing, and recovery rules. [DONE]
 
+## Phase 3: Tags & Full Search Normalization
+- [x] **T-20**: Created `lib/features/simple_tasks/logic/task_tag_parser.dart` to extract up to 3 normalized hashtags from titles, keeping excess tags in title and avoiding untitled tasks. [DONE]
+- [x] **T-21**: Added migration V116 for `tagsJson` and normalized search columns with backfill; updated `SimpleTask` and `TaskStep` models. [DONE]
+- [x] **T-22**: Fixed search query bug in `SimpleTaskRepository.search()` by querying exclusively against `titleNormalized`, `noteNormalized`, `titleNormalized` (steps), and `tagsJson`. [DONE]
+- [x] **T-23**: Added dynamic tag filter chips below search/add bar in `SimpleTasksScreen` with active tag filtering, empty state auto-hide, and single-selection toggle. [DONE]
+- [x] **T-24**: Enabled phone and URL interactive links in note view mode using `url_launcher`. [DONE]
+
 ## Verification Status:
 - `grep -rn "catch (_)" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "debugPrint" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "SharedPreferences" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "Random()" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `flutter analyze lib/features/simple_tasks`: 0 errors / 0 warnings
-- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 35 tests passing
+- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 42 tests passing

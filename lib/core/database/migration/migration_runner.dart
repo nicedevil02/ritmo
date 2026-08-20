@@ -54,6 +54,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v112_medicati
 import 'package:ritmo/core/database/migration/migrations/migration_v113_cycle_confirmations.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v114_cycle_fertility_cleanup.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v115_my_day.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v116_tags_and_normalized_fields.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -171,6 +172,7 @@ class MigrationRunner {
     MigrationV113CycleConfirmations(), // Cycle Confirmations and settings (Lifecycle & Privacy)
     MigrationV114CycleFertilityCleanup(), // Cycle Fertility setting cleanup
     MigrationV115MyDay(), // Simple Tasks: addedToMyDayAt column
+    MigrationV116TagsAndNormalizedFields(), // Simple Tasks: tagsJson, noteNormalized, titleNormalized
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

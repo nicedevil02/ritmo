@@ -375,8 +375,8 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
 
   Widget _buildNoteWithLinks(String noteText, BuildContext context) {
     final colors = context.colors;
-    final urlPattern = RegExp(r'(https?:\/\/[^\s]+)|(www\.[^\s]+)');
-    final matches = urlPattern.allMatches(noteText);
+    final linkOrPhonePattern = RegExp(r'(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\+?\d{10,13}|09\d{9})');
+    final matches = linkOrPhonePattern.allMatches(noteText);
 
     if (matches.isEmpty) {
       return Text(
@@ -395,17 +395,26 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           style: TextStyle(color: colors.textPrimary),
         ));
       }
-      final url = match.group(0)!;
+      final matchedText = match.group(0)!;
+      final isPhone = RegExp(r'^\+?\d+$').hasMatch(matchedText);
+
       spans.add(TextSpan(
-        text: url,
+        text: matchedText,
         style: TextStyle(color: colors.primary, decoration: TextDecoration.underline),
         recognizer: TapGestureRecognizer()
           ..onTap = () async {
-            var urlStr = url;
-            if (!urlStr.startsWith('http')) urlStr = 'https://$urlStr';
-            final uri = Uri.tryParse(urlStr);
-            if (uri != null) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            if (isPhone) {
+              final phoneUri = Uri.tryParse('tel:$matchedText');
+              if (phoneUri != null) {
+                await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+              }
+            } else {
+              var urlStr = matchedText;
+              if (!urlStr.startsWith('http')) urlStr = 'https://$urlStr';
+              final uri = Uri.tryParse(urlStr);
+              if (uri != null) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
             }
           },
       ));

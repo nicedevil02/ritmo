@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
@@ -7,6 +8,7 @@ class SimpleTask {
   final String id;
   final String title;
   final String? note;
+  final List<String> tags;
   final bool isDone;
   final DateTime? doneAt;
   final String? dueDate; // 'YYYY-MM-DD'
@@ -26,6 +28,7 @@ class SimpleTask {
     required this.id,
     required this.title,
     this.note,
+    this.tags = const [],
     this.isDone = false,
     this.doneAt,
     this.dueDate,
@@ -48,10 +51,22 @@ class SimpleTask {
   bool get isInMyDay => addedToMyDayAt != null;
 
   factory SimpleTask.fromMap(Map<String, dynamic> m) {
+    List<String> parsedTags = const [];
+    final rawTagsJson = m['tagsJson'];
+    if (rawTagsJson != null && rawTagsJson is String && rawTagsJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawTagsJson);
+        if (decoded is List) {
+          parsedTags = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    }
+
     return SimpleTask(
       id: m['id'] as String,
       title: m['title'] as String,
       note: m['note'] as String?,
+      tags: parsedTags,
       isDone: (m['isDone'] as int? ?? 0) == 1,
       doneAt: m['doneAt'] != null ? DateTime.fromMillisecondsSinceEpoch(m['doneAt'] as int) : null,
       dueDate: m['dueDate'] as String?,
@@ -75,6 +90,8 @@ class SimpleTask {
       'title': title,
       'titleNormalized': normalizeFa(title),
       'note': note,
+      'noteNormalized': note != null ? normalizeFa(note!) : null,
+      'tagsJson': tags.isNotEmpty ? jsonEncode(tags) : null,
       'isDone': isDone ? 1 : 0,
       'doneAt': doneAt?.millisecondsSinceEpoch,
       'dueDate': dueDate,
@@ -96,6 +113,7 @@ class SimpleTask {
     String? id,
     String? title,
     Object? note = _unset,
+    List<String>? tags,
     bool? isDone,
     Object? doneAt = _unset,
     Object? dueDate = _unset,
@@ -117,6 +135,7 @@ class SimpleTask {
       id: id ?? this.id,
       title: title ?? this.title,
       note: identical(note, _unset) ? this.note : note as String?,
+      tags: tags ?? this.tags,
       isDone: isDone ?? this.isDone,
       doneAt: identical(doneAt, _unset) ? this.doneAt : doneAt as DateTime?,
       dueDate: identical(dueDate, _unset) ? this.dueDate : dueDate as String?,

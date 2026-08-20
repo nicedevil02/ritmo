@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -14,6 +16,7 @@ import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
+import 'package:ritmo/features/simple_tasks/logic/task_tag_parser.dart';
 
 class TaskSnapshot {
   final SimpleTask task;
@@ -167,6 +170,7 @@ class SimpleTaskRepository {
     String? dueDate,
     String? dueTime,
     String? note,
+    List<String>? tags,
     int? reminderAtMs,
     String? reminderId,
     bool isImportant = false,
@@ -174,14 +178,19 @@ class SimpleTaskRepository {
     final db = await _db;
     final now = DateTime.now();
 
+    final parsed = parseTags(title);
+    final finalTitle = parsed.cleanTitle.isNotEmpty ? parsed.cleanTitle : title.trim();
+    final finalTags = (tags != null && tags.isNotEmpty) ? tags : parsed.tags;
+
     return await db.transaction((txn) async {
       final maxOrderRows = await txn.rawQuery('SELECT MAX(orderIndex) as maxOrder FROM simple_tasks');
       final maxOrder = (maxOrderRows.first['maxOrder'] as int?) ?? 0;
 
       final task = SimpleTask(
         id: RitmoIdFactory.task(),
-        title: title.trim(),
+        title: finalTitle,
         note: note?.trim(),
+        tags: finalTags,
         isDone: false,
         dueDate: dueDate,
         dueTime: dueTime,
@@ -279,7 +288,14 @@ class SimpleTaskRepository {
   /// Update full task data
   Future<void> updateTask(SimpleTask task) async {
     final db = await _db;
-    final updated = task.copyWith(updatedAt: DateTime.now());
+    final parsed = parseTags(task.title);
+    final finalTitle = parsed.cleanTitle.isNotEmpty ? parsed.cleanTitle : task.title.trim();
+    final finalTags = task.tags.isNotEmpty ? task.tags : parsed.tags;
+    final updated = task.copyWith(
+      title: finalTitle,
+      tags: finalTags,
+      updatedAt: DateTime.now(),
+    );
     await db.update(
       'simple_tasks',
       updated.toMap(),
@@ -441,7 +457,7 @@ class SimpleTaskRepository {
     );
   }
 
-  /// Search tasks by title, note, or sub-step title
+  /// Search tasks by title, note, sub-step title, or tags
   Future<List<SimpleTask>> search(String query) async {
     final normalized = normalizeFa(query);
     if (normalized.isEmpty) return [];
@@ -450,10 +466,45 @@ class SimpleTaskRepository {
     final rows = await db.rawQuery('''
       SELECT DISTINCT t.* FROM simple_tasks t
       LEFT JOIN task_steps s ON s.taskId = t.id
-      WHERE t.titleNormalized LIKE ? OR t.note LIKE ? OR s.title LIKE ?
+      WHERE t.titleNormalized LIKE ? OR t.noteNormalized LIKE ? OR s.titleNormalized LIKE ? OR t.tagsJson LIKE ?
       ORDER BY t.isDone ASC, t.isImportant DESC, t.updatedAt DESC
       LIMIT 20
-    ''', [q, q, q]);
+    ''', [q, q, q, q]);
     return rows.map((m) => SimpleTask.fromMap(m)).toList();
+  }
+
+  /// Returns top tags with at least one active (isDone = 0) task, ordered by count DESC (max 8)
+  Future<List<String>> getActiveTags({int limit = 8}) async {
+    try {
+      final db = await _db;
+      final rows = await db.query(
+        'simple_tasks',
+        columns: ['tagsJson'],
+        where: "isDone = 0 AND tagsJson IS NOT NULL AND tagsJson != ''",
+      );
+      final tagCounts = <String, int>{};
+      for (final r in rows) {
+        final raw = r['tagsJson'] as String?;
+        if (raw != null && raw.isNotEmpty) {
+          try {
+            final decoded = jsonDecode(raw);
+            if (decoded is List) {
+              for (final t in decoded) {
+                final tagStr = t.toString();
+                if (tagStr.isNotEmpty) {
+                  tagCounts[tagStr] = (tagCounts[tagStr] ?? 0) + 1;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+      }
+      final sortedTags = tagCounts.keys.toList()
+        ..sort((a, b) => tagCounts[b]!.compareTo(tagCounts[a]!));
+      return sortedTags.take(limit).toList();
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading active tags', e, st);
+      return [];
+    }
   }
 }

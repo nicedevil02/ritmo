@@ -80,6 +80,8 @@ void main() {
               title TEXT NOT NULL,
               titleNormalized TEXT,
               note TEXT,
+              noteNormalized TEXT,
+              tagsJson TEXT,
               isDone INTEGER NOT NULL DEFAULT 0,
               doneAt INTEGER,
               dueDate TEXT,

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
 class TaskStep {
@@ -40,6 +41,7 @@ class TaskStep {
       'id': id,
       'taskId': taskId,
       'title': title,
+      'titleNormalized': normalizeFa(title),
       'isCompleted': isCompleted ? 1 : 0,
       'displayOrder': displayOrder,
       'createdAt': createdAt.millisecondsSinceEpoch,

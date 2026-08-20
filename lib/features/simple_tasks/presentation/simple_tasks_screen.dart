@@ -51,6 +51,8 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
 
   List<SimpleTask> _myDayTasks = [];
   List<MyDaySuggestion> _myDaySuggestions = [];
+  List<String> _activeTags = [];
+  String? _selectedTag;
   Map<TaskBucket, List<SimpleTask>> _buckets = {};
   Map<String, (int done, int total)> _stepCounts = {};
   Map<String, int> _attachmentCounts = {};
@@ -112,11 +114,27 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       final myDayList = await MyDayService.instance.myDayTasks();
       final suggestionsList = await buildSuggestions(now: DateTime.now());
       final buckets = await SimpleTaskRepository.instance.buckets(_todayIso);
+      final activeTags = await SimpleTaskRepository.instance.getActiveTags(limit: 8);
+
+      if (_selectedTag != null && !activeTags.contains(_selectedTag)) {
+        _selectedTag = null;
+      }
+
+      var displayMyDay = myDayList;
+      var displayBuckets = buckets;
+
+      if (_selectedTag != null) {
+        displayMyDay = myDayList.where((t) => t.tags.contains(_selectedTag)).toList();
+        displayBuckets = {
+          for (final entry in buckets.entries)
+            entry.key: entry.value.where((t) => t.tags.contains(_selectedTag)).toList(),
+        };
+      }
 
       final allTaskIds = <String>[];
-      allTaskIds.addAll(myDayList.map((t) => t.id));
+      allTaskIds.addAll(displayMyDay.map((t) => t.id));
       allTaskIds.addAll(suggestionsList.map((s) => s.task.id));
-      for (final list in buckets.values) {
+      for (final list in displayBuckets.values) {
         allTaskIds.addAll(list.map((t) => t.id));
       }
 
@@ -125,9 +143,10 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
 
       if (mounted) {
         setState(() {
-          _myDayTasks = myDayList;
+          _activeTags = activeTags;
+          _myDayTasks = displayMyDay;
           _myDaySuggestions = suggestionsList;
-          _buckets = buckets;
+          _buckets = displayBuckets;
           _stepCounts = stepCounts;
           _attachmentCounts = attachmentCounts;
         });
@@ -453,7 +472,53 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
               ),
             ),
 
-            const SizedBox(height: 10),
+            if (_activeTags.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 32,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _activeTags.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final tag = _activeTags[index];
+                    final isSelected = _selectedTag == tag;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        setState(() {
+                          _selectedTag = isSelected ? null : tag;
+                        });
+                        _loadTasks();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected ? colors.primary : colors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '#$tag',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.white : colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 8),
 
             // Main List View of Buckets & My Day
             Expanded(

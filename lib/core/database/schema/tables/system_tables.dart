@@ -322,7 +322,10 @@ class SystemTables {
       CREATE TABLE IF NOT EXISTS simple_tasks (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
+          titleNormalized TEXT,
           note TEXT,
+          noteNormalized TEXT,
+          tagsJson TEXT,
           isDone INTEGER NOT NULL DEFAULT 0,
           doneAt INTEGER,
           dueDate TEXT,
@@ -344,18 +347,21 @@ class SystemTables {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_order ON simple_tasks(orderIndex);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_important ON simple_tasks(isImportant);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_myDay ON simple_tasks(addedToMyDayAt);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_simple_tasks_noteNormalized ON simple_tasks(noteNormalized);');
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS task_steps (
           id TEXT PRIMARY KEY,
           taskId TEXT NOT NULL,
           title TEXT NOT NULL,
+          titleNormalized TEXT,
           isCompleted INTEGER NOT NULL DEFAULT 0,
           displayOrder INTEGER NOT NULL DEFAULT 0,
           createdAt INTEGER NOT NULL,
           completedAt INTEGER
       );
     ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_task_steps_titleNormalized ON task_steps(titleNormalized);');
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS task_attachments (

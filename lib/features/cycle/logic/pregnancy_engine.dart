@@ -14,10 +14,27 @@ class PregnancyDateEngine {
     return clean.add(const Duration(days: PregnancyProfile.gestationTotalDays));
   }
 
+  /// Alias for calculateEddFromLmp.
+  static DateTime dueDateFromLmp(DateTime lmp) => calculateEddFromLmp(lmp);
+
   /// Calculates LMP from given EDD.
   static DateTime calculateLmpFromEdd(DateTime edd) {
     final clean = CycleDateContract.cleanDate(edd);
     return clean.subtract(const Duration(days: PregnancyProfile.gestationTotalDays));
+  }
+
+  /// Alias for calculateLmpFromEdd.
+  static DateTime lmpFromDueDate(DateTime due) => calculateLmpFromEdd(due);
+
+  /// Calculates LMP from Ultrasound date and gestational age at scan.
+  static DateTime lmpFromUltrasound({
+    required DateTime scanDate,
+    required int weeksAtScan,
+    required int daysAtScan,
+  }) {
+    final cleanScan = CycleDateContract.cleanDate(scanDate);
+    final totalDays = weeksAtScan * 7 + daysAtScan;
+    return cleanScan.subtract(Duration(days: totalDays));
   }
 
   /// Calculates EDD from known conception date (266 days = 38 weeks).

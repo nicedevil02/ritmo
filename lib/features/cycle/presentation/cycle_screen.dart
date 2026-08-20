@@ -174,6 +174,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       await CycleStateNotifier.instance.loadState();
       final state = CycleStateNotifier.instance.value;
       _settings = state.settings;
+      await PregnancySettings.reconcileFlags(_settings, db);
       _engineOutput = state.engineOutput;
       _dataQualityReport = state.dataQuality;
       _personalForecasts = state.symptomForecasts;

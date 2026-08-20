@@ -116,6 +116,35 @@ class PregnancySettings {
     return isPreg && !hasDates && !setupDone && !alreadyPrompted;
   }
 
+  /// Reconciles the three legacy pregnancy flags (PRG-48).
+  /// Rule: If ANY of the three keys is 'true' or true, all three become 'true'.
+  /// If none is true, does nothing.
+  static Future<void> reconcileFlags(
+    Map<String, dynamic> settings, [
+    DatabaseExecutor? db,
+  ]) async {
+    final anyActive = pregnancyFlagKeys.any((k) {
+      final v = settings[k];
+      return v == 'true' || v == true || v == 1 || v == '1';
+    });
+
+    if (anyActive) {
+      final allAlreadyTrue = pregnancyFlagKeys.every((k) => settings[k] == 'true');
+      if (!allAlreadyTrue) {
+        final executor = db ?? await DatabaseHelper.instance.database;
+        final now = CycleClock.nowMillisecondsSinceEpoch;
+        for (final k in pregnancyFlagKeys) {
+          settings[k] = 'true';
+          await executor.insert('app_settings', {
+            'key': k,
+            'value': 'true',
+            'updatedAt': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+    }
+  }
+
   static Future<void> setPregnancyActive(
     bool active, {
     DatabaseExecutor? db,

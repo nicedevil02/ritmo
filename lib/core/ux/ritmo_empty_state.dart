@@ -12,6 +12,8 @@ class RitmoEmptyState extends StatelessWidget {
     this.description,
     this.ctaLabel,
     this.onCta,
+    this.secondaryCtaLabel,
+    this.onSecondaryCta,
     super.key,
   });
   /// Icon to display in the central soft circle.
@@ -28,6 +30,12 @@ class RitmoEmptyState extends StatelessWidget {
 
   /// Optional call-to-action callback.
   final VoidCallback? onCta;
+
+  /// Optional secondary call-to-action button label.
+  final String? secondaryCtaLabel;
+
+  /// Optional secondary call-to-action callback.
+  final VoidCallback? onSecondaryCta;
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +111,30 @@ class RitmoEmptyState extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Vazirmatn',
                     fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+            if (secondaryCtaLabel != null && onSecondaryCta != null) ...[
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: onSecondaryCta,
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  secondaryCtaLabel!,
+                  style: const TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

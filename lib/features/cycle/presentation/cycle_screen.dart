@@ -580,6 +580,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 },
               ),
             ),
+            secondaryCtaLabel: 'در حال حاضر باردار هستم',
+            onSecondaryCta: _openPregnancyOnboarding,
           ),
         ),
       );

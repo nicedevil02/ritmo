@@ -21,6 +21,7 @@ import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/logic/cycle_state_provider.dart';
+import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/models/cycle_confirmation_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
@@ -515,11 +516,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 Navigator.pop(ctx);
                 final isActive = _settings['cycle_pregnancy_mode'] == 'true';
                 final db = await DatabaseHelper.instance.database;
-                await db.insert('app_settings', {
-                  'key': 'cycle_pregnancy_mode',
-                  'value': (!isActive).toString(),
-                  'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
-                }, conflictAlgorithm: ConflictAlgorithm.replace);
+                await PregnancySettings.setPregnancyActive(!isActive, db: db);
                 await _loadData();
               },
               onEditBaselineParameter: (key, title, min, max, defVal) async {},
@@ -630,11 +627,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                           ),
                       onDeactivated: () async {
                         final db = await DatabaseHelper.instance.database;
-                        await db.insert(
-                          'app_settings',
-                          {'key': 'cycle_pregnancy_mode', 'value': 'false'},
-                          conflictAlgorithm: ConflictAlgorithm.replace,
-                        );
+                        await PregnancySettings.setPregnancyActive(false, db: db);
                         await _loadData();
                       },
                       settings: _settings,

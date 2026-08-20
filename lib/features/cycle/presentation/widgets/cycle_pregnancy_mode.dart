@@ -14,12 +14,12 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_header.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_progress_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_tabs.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
-import 'package:sqflite/sqflite.dart';
 
 class CyclePregnancyModeView extends StatefulWidget {
   const CyclePregnancyModeView({
@@ -176,10 +176,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
     try {
       final db = await DatabaseHelper.instance.database;
       final jsonStr = jsonEncode(_hospitalBagItems);
-      await db.insert('app_settings', {
-        'key': 'preg_hospital_bag',
-        'value': jsonStr,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await PregnancySettings.saveSetting(
+        PregnancySettings.keyHospitalBag,
+        jsonStr,
+        db,
+      );
     } catch (e, st) {
       RitmoLog.error(
         'CyclePregnancyMode',
@@ -389,10 +390,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
                   final remindMs = CycleClock.now
                       .add(const Duration(days: 40))
                       .millisecondsSinceEpoch;
-                  await db.insert('app_settings', {
-                    'key': 'preg_cycle_resume_reminder',
-                    'value': remindMs.toString(),
-                  }, conflictAlgorithm: ConflictAlgorithm.replace);
+                  await PregnancySettings.saveSetting(
+                    PregnancySettings.keyCycleResumeReminder,
+                    remindMs.toString(),
+                    db,
+                  );
                   widget.onDeactivated();
                 },
                 child: const Text('بعداً یادآوری کن (۴۰ روز بعد)'),
@@ -419,10 +421,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 final db = await DatabaseHelper.instance.database;
-                await db.insert('app_settings', {
-                  'key': 'preg_section_hidden',
-                  'value': 'true',
-                }, conflictAlgorithm: ConflictAlgorithm.replace);
+                await PregnancySettings.saveSetting(
+                  PregnancySettings.keySectionHidden,
+                  'true',
+                  db,
+                );
                 widget.onDeactivated();
               },
               child: const Text('پنهان کردن کامل این بخش'),

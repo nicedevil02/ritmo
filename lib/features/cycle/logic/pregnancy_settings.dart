@@ -47,6 +47,7 @@ class PregnancySettings {
   static const String keyPrevConsentWorship = 'preg_prev_consent_worship';
   static const String keyPrevConsentDashboard = 'preg_prev_consent_dashboard';
   static const String keyMigrationPromptShown = 'preg_migration_prompt_shown';
+  static const String keyHospitalBag = 'preg_hospital_bag';
 
   static const List<String> allKeys = [
     keyStartDate,
@@ -73,6 +74,7 @@ class PregnancySettings {
     keyPrevConsentWorship,
     keyPrevConsentDashboard,
     keyMigrationPromptShown,
+    keyHospitalBag,
   ];
 
   static PregnancyProfile loadProfile(Map<String, dynamic> settings) {

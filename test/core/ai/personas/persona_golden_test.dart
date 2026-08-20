@@ -23,29 +23,32 @@ void main() {
       PersonaRegistry.instance.initStandardPersonas();
     });
 
-    test('All registered personas must contain assistant.handoff and app.openPage in commandIds', () {
-      final personas = PersonaRegistry.instance.allPersonas;
-      expect(personas.length, equals(15));
+    test(
+      'All registered personas must contain assistant.handoff and app.openPage in commandIds',
+      () {
+        final personas = PersonaRegistry.instance.allPersonas;
+        expect(personas.length, equals(15));
 
-      for (final persona in personas) {
-        expect(
-          persona.commandIds.contains('assistant.handoff'),
-          isTrue,
-          reason: '${persona.id} missing assistant.handoff',
-        );
-        expect(
-          persona.commandIds.contains('app.openPage'),
-          isTrue,
-          reason: '${persona.id} missing app.openPage',
-        );
-      }
+        for (final persona in personas) {
+          expect(
+            persona.commandIds.contains('assistant.handoff'),
+            isTrue,
+            reason: '${persona.id} missing assistant.handoff',
+          );
+          expect(
+            persona.commandIds.contains('app.openPage'),
+            isTrue,
+            reason: '${persona.id} missing app.openPage',
+          );
+        }
 
-      expect(
-        PersonaRegistry.instance.getPersona('global')!.commandIds.length,
-        greaterThan(2),
-        reason: 'global persona must have registered commands',
-      );
-    });
+        expect(
+          PersonaRegistry.instance.getPersona('global')!.commandIds.length,
+          greaterThan(2),
+          reason: 'global persona must have registered commands',
+        );
+      },
+    );
 
     test('PersonaPromptBuilder must output all 5 layers correctly', () {
       final personas = PersonaRegistry.instance.allPersonas;
@@ -64,7 +67,11 @@ void main() {
         // Layer 1 Expert Charter
         expect(prompt, contains('── تخصص تو ──'));
         final charter = AssistantCharters.charters[persona.systemPromptKey]!;
-        expect(charter.length, greaterThan(200), reason: '${persona.id} charter too short');
+        expect(
+          charter.length,
+          greaterThan(200),
+          reason: '${persona.id} charter too short',
+        );
 
         // Skills Manifest
         expect(prompt, contains('── مهارت‌های تو ──'));
@@ -87,17 +94,17 @@ void main() {
     });
 
     test('PersonaPromptBuilder throws StateError when charter is missing', () {
-      final badPersona = AssistantPersona(
+      const persona = AssistantPersona(
         id: 'unknown_dummy',
         displayName: 'تست ساختگی',
         systemPromptKey: 'non_existent_key_xyz',
-        reads: const {},
-        commandIds: const {'app.openPage', 'assistant.handoff'},
+        reads: {},
+        commandIds: {'app.openPage', 'assistant.handoff'},
       );
 
       expect(
         () => PersonaPromptBuilder.buildPrompt(
-          persona: badPersona,
+          persona: persona,
           todayJalali: '1405/05/19',
           briefJson: '{}',
           memoryBlock: '',
@@ -106,13 +113,16 @@ void main() {
       );
     });
 
-    test('PersonaInferenceProfile must return explicit profiles for all personas', () {
-      for (final persona in PersonaRegistry.instance.allPersonas) {
-        final profile = PersonaInferenceProfile.getProfile(persona.id);
-        expect(profile.maxTokens, greaterThan(0));
-        expect(profile.temperature, greaterThanOrEqualTo(0.0));
-      }
-    });
+    test(
+      'PersonaInferenceProfile must return explicit profiles for all personas',
+      () {
+        for (final persona in PersonaRegistry.instance.allPersonas) {
+          final profile = PersonaInferenceProfile.getProfile(persona.id);
+          expect(profile.maxTokens, greaterThan(0));
+          expect(profile.temperature, greaterThanOrEqualTo(0.0));
+        }
+      },
+    );
 
     group('PersonaResponseValidator anti-hallucination guardrails', () {
       late PersonaResponseValidator validator;
@@ -142,7 +152,11 @@ void main() {
           res: res,
           persona: persona,
           brief: brief,
-          manifestCommandIds: ['sleep.log', 'app.openPage', 'assistant.handoff'],
+          manifestCommandIds: [
+            'sleep.log',
+            'app.openPage',
+            'assistant.handoff',
+          ],
         );
 
         expect(result.isValid, isTrue);

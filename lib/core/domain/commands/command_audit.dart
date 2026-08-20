@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 
@@ -123,12 +122,26 @@ class StepAuditRecord {
 }
 
 class CommandAuditRepository {
-  static Future<void> savePlan(DatabaseExecutor txn, PlanAuditRecord plan) async {
-    await txn.insert('assistant_plans', plan.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  static Future<void> savePlan(
+    DatabaseExecutor txn,
+    PlanAuditRecord plan,
+  ) async {
+    await txn.insert(
+      'assistant_plans',
+      plan.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  static Future<void> saveStep(DatabaseExecutor txn, StepAuditRecord step) async {
-    await txn.insert('assistant_audit_log', step.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  static Future<void> saveStep(
+    DatabaseExecutor txn,
+    StepAuditRecord step,
+  ) async {
+    await txn.insert(
+      'assistant_audit_log',
+      step.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<List<PlanAuditRecord>> getRecentPlans({int limit = 50}) async {
@@ -143,7 +156,9 @@ class CommandAuditRepository {
 
   static Future<int> getPlansCountInLast7Days() async {
     final db = await DatabaseHelper.instance.database;
-    final cutoff = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+    final cutoff = DateTime.now()
+        .subtract(const Duration(days: 7))
+        .millisecondsSinceEpoch;
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM assistant_plans WHERE status = "applied" AND appliedAt >= ?',
       [cutoff],

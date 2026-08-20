@@ -31,7 +31,8 @@ class _PersonaTelemetryScreenState extends State<PersonaTelemetryScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final records = PersonaTelemetryCollector.instance.records.reversed.toList();
+    final records = PersonaTelemetryCollector.instance.records.reversed
+        .toList();
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -58,13 +59,16 @@ class _PersonaTelemetryScreenState extends State<PersonaTelemetryScreen> {
             ? Center(
                 child: Text(
                   'هیچ رکورد تله‌متری ثبت نشده است.',
-                  style: TextStyle(color: colors.textSecondary, fontFamily: 'Vazirmatn'),
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontFamily: 'Vazirmatn',
+                  ),
                 ),
               )
             : ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: records.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final r = records[index];
                   return Container(
@@ -72,7 +76,10 @@ class _PersonaTelemetryScreenState extends State<PersonaTelemetryScreen> {
                     decoration: BoxDecoration(
                       color: colors.surfaceElevated,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.borderSubtle, width: 0.8),
+                      border: Border.all(
+                        color: colors.borderSubtle,
+                        width: 0.8,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,15 +111,35 @@ class _PersonaTelemetryScreenState extends State<PersonaTelemetryScreen> {
                           runSpacing: 6,
                           children: [
                             if (r.selectedSkill != null)
-                              _buildChip('مهارت: ${r.selectedSkill}', colors.primary, colors),
+                              _buildChip(
+                                'مهارت: ${r.selectedSkill}',
+                                colors.primary,
+                                colors,
+                              ),
                             if (r.finalConfidence != null)
-                              _buildChip('اطمینان: ${r.finalConfidence}', colors.accent, colors),
+                              _buildChip(
+                                'اطمینان: ${r.finalConfidence}',
+                                colors.accent,
+                                colors,
+                              ),
                             if (r.validationSeverity != null)
-                              _buildChip('اعتبارسنجی: ${r.validationSeverity}', colors.warning, colors),
+                              _buildChip(
+                                'اعتبارسنجی: ${r.validationSeverity}',
+                                colors.warning,
+                                colors,
+                              ),
                             if (r.violatedRuleId != null)
-                              _buildChip('قاعده: ${r.violatedRuleId}', colors.error, colors),
+                              _buildChip(
+                                'قاعده: ${r.violatedRuleId}',
+                                colors.error,
+                                colors,
+                              ),
                             if (r.droppedCommandsCount > 0)
-                              _buildChip('فرمان حذفی: ${r.droppedCommandsCount}', colors.error, colors),
+                              _buildChip(
+                                'فرمان حذفی: ${r.droppedCommandsCount}',
+                                colors.error,
+                                colors,
+                              ),
                           ],
                         ),
                         if (r.incompleteDomains.isNotEmpty) ...[
@@ -145,7 +172,11 @@ class _PersonaTelemetryScreenState extends State<PersonaTelemetryScreen> {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 10.5, color: colors.textPrimary, fontFamily: 'Vazirmatn'),
+        style: TextStyle(
+          fontSize: 10.5,
+          color: colors.textPrimary,
+          fontFamily: 'Vazirmatn',
+        ),
       ),
     );
   }

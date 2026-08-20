@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/ai/brief/domain_brief.dart';
-import 'package:ritmo/core/ai/brief/persona_context_provider.dart';
 import 'package:ritmo/core/ai/brief/briefs/rhythm_brief.dart';
 import 'package:ritmo/core/ai/personas/persona_response_validator.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
@@ -29,31 +28,34 @@ void main() {
       );
     });
 
-    test('Validates field from another domain when allowedFieldNames contains it', () {
-      final globalPersona = PersonaRegistry.instance.getPersona('global')!;
-      const res = ParsedAssistantResponse(
-        reply: 'بر اساس اهداف فعال و خواب شما',
-        confidence: BriefConfidence.medium,
-        usedFields: ['goals.activeGoalsCount', 'sleep.sleepDebtMinutes'],
-      );
+    test(
+      'Validates field from another domain when allowedFieldNames contains it',
+      () {
+        final globalPersona = PersonaRegistry.instance.getPersona('global')!;
+        const res = ParsedAssistantResponse(
+          reply: 'بر اساس اهداف فعال و خواب شما',
+          confidence: BriefConfidence.medium,
+          usedFields: ['goals.activeGoalsCount', 'sleep.sleepDebtMinutes'],
+        );
 
-      final allowedFields = {
-        'goals.activeGoalsCount',
-        'sleep.sleepDebtMinutes',
-        'rhythm.dailyCapacityMinutes',
-      };
+        final allowedFields = {
+          'goals.activeGoalsCount',
+          'sleep.sleepDebtMinutes',
+          'rhythm.dailyCapacityMinutes',
+        };
 
-      final result = validator.validate(
-        res: res,
-        persona: globalPersona,
-        brief: primaryBrief,
-        manifestCommandIds: ['app.openPage'],
-        allowedFieldNames: allowedFields,
-      );
+        final result = validator.validate(
+          res: res,
+          persona: globalPersona,
+          brief: primaryBrief,
+          manifestCommandIds: ['app.openPage'],
+          allowedFieldNames: allowedFields,
+        );
 
-      expect(result.isValid, isTrue);
-      expect(result.reason, isNull);
-    });
+        expect(result.isValid, isTrue);
+        expect(result.reason, isNull);
+      },
+    );
 
     test('Annotates fictitious field not in allowedFieldNames', () {
       final globalPersona = PersonaRegistry.instance.getPersona('global')!;

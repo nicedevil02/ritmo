@@ -1037,8 +1037,8 @@ dart format --set-exit-if-changed lib test
 | DET-01 | دفترچه و کلید source روی همهٔ پیلودها | A | DONE | f85ac419 | انجام شد |
 | DET-02 | رویدادهای مسیر ارسال | A | DONE | f84ac071 | انجام شد |
 | DET-03 | تیک دوره‌ای واچر | A | DONE | 5547eaf7 | انجام شد |
-| DET-04 | فازبندی selector_health | A | DONE | pending | انجام شد |
-| DET-05 | افزایش نسخهٔ بریج به ۹ | A | TODO | | |
+| DET-04 | فازبندی selector_health | A | DONE | dbd9502f | انجام شد |
+| DET-05 | افزایش نسخهٔ بریج به ۹ | A | DONE | pending | انجام شد |
 | DET-06 | افزودن case error | B | TODO | | |
 | DET-07 | افزودن case cloudflare_resolved | B | TODO | | |
 | DET-08 | دام ایمنی رویداد ناشناخته | B | TODO | | |

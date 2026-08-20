@@ -198,6 +198,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   PendingWebBridgeRequest? _pendingRequest;
   PendingWebBridgeRequest? get pendingRequest => _pendingRequest;
 
+  static const int requiredBridgeVersion = ChatGptJsInjector.bridgeVersion;
   int get bridgeVersion => ChatGptJsInjector.bridgeVersion;
 
   void _acquireSourceLockIfNeeded(BridgeSource src) {

@@ -2,8 +2,8 @@ import 'dart:convert';
 
 /// Utilities and JavaScript scripts for injecting into ChatGPT Web (chatgpt.com)
 class ChatGptJsInjector {
-  /// Source of truth version for the JavaScript bridge script.
-  static const int bridgeVersion = 8;
+  /// The current protocol version of the bridge script. Bump whenever JS/Dart communication contract changes.
+  static const int bridgeVersion = 9;
 
   /// Wraps user query with Ritmo's Persona, Context (RAG/Goals/Routines) and System Directives
   static String formatPromptWithSystemDirective({

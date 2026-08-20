@@ -24,6 +24,7 @@ const Set<String> kAllKnownBridgeEventTypes = {
   'resumed',
   'harvest_result',
   'auth_required',
+  'fetch_matched',
 };
 
 void main() {

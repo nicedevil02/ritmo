@@ -45,6 +45,13 @@ $userPrompt
   if (window.__ritmo_early_hooks_injected) return;
   window.__ritmo_early_hooks_injected = true;
 
+  function isConversationEndpoint(url) {
+    if (typeof url !== 'string') return false;
+    return /[\/\.-]backend-(?:api|anon)\/(?:conversation|lat\/r|f\/r|synthesize)/i.test(url)
+        || /[\/\.-]backend-api\/conversation/i.test(url)
+        || (/[\/\.-]conversation/i.test(url) && /[\/\.-]backend/i.test(url));
+  }
+
   // 1. Fetch Hook with response.body.tee availability guard (A-34)
   var originalFetch = window.fetch;
   if (originalFetch && !window.__ritmo_fetch_hooked) {
@@ -53,14 +60,25 @@ $userPrompt
     window.fetch = function() {
       var args = arguments;
       var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
+      var options = (args[1] && typeof args[1] === 'object') ? args[1] : (args[0] && typeof args[0] === 'object' && args[0].method) ? args[0] : {};
 
-      var isConvo = typeof url === 'string' && (
-        url.indexOf('/backend-api/conversation') !== -1 ||
-        url.indexOf('/backend-anon/conversation') !== -1
-      ) && url.indexOf('/lat/r') === -1;
+      var isConvo = isConversationEndpoint(url);
+      var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
+
+      if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
+        try {
+          window.RitmoChatBridge.postMessage(JSON.stringify({
+            type: 'fetch_matched',
+            url: (typeof url === 'string') ? url.slice(0, 150) : '',
+            method: (options && options.method) || 'GET',
+            isStream: isConvo,
+            requestId: activeReqId,
+            source: 'fetch_hook'
+          }));
+        } catch (e) {}
+      }
 
       if (isConvo) {
-        var activeReqId = window.__ritmo_active_req_id || '';
         try {
           if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
             window.RitmoChatBridge.postMessage(JSON.stringify({
@@ -128,10 +146,7 @@ $userPrompt
     };
     window.XMLHttpRequest.prototype.send = function() {
       var url = this.__ritmo_url || '';
-      var isConvo = typeof url === 'string' && (
-        url.indexOf('/backend-api/conversation') !== -1 ||
-        url.indexOf('/backend-anon/conversation') !== -1
-      ) && url.indexOf('/lat/r') === -1;
+      var isConvo = isConversationEndpoint(url);
 
       if (isConvo) {
         var xhr = this;
@@ -165,10 +180,7 @@ $userPrompt
     var OrigEventSource = window.EventSource;
     window.EventSource = function(url, options) {
       var es = new OrigEventSource(url, options);
-      var isConvo = typeof url === 'string' && (
-        url.indexOf('/backend-api/conversation') !== -1 ||
-        url.indexOf('/backend-anon/conversation') !== -1
-      ) && url.indexOf('/lat/r') === -1;
+      var isConvo = isConversationEndpoint(url);
 
       if (isConvo) {
         var sseState = { accumulatedText: '', firstTokenEmitted: false, startTime: Date.now() };
@@ -272,6 +284,13 @@ $userPrompt
 $_bridgeScriptBody''';
 
   static const String _bridgeScriptBody = r'''
+  function isConversationEndpoint(url) {
+    if (typeof url !== 'string') return false;
+    return /[\/\.-]backend-(?:api|anon)\/(?:conversation|lat\/r|f\/r|synthesize)/i.test(url)
+        || /[\/\.-]backend-api\/conversation/i.test(url)
+        || (/[\/\.-]conversation/i.test(url) && /[\/\.-]backend/i.test(url));
+  }
+
   // --- 0. Global Fetch Interceptor Hook (A-34, A-35) ---
   var originalFetch = window.fetch;
   if (originalFetch && !window.__ritmo_fetch_hooked) {
@@ -280,14 +299,20 @@ $_bridgeScriptBody''';
     window.fetch = function() {
       var args = arguments;
       var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
-      
-      var isConvo = typeof url === 'string' && (
-        url.indexOf('/backend-api/conversation') !== -1 ||
-        url.indexOf('/backend-anon/conversation') !== -1
-      ) && url.indexOf('/lat/r') === -1;
+      var options = (args[1] && typeof args[1] === 'object') ? args[1] : (args[0] && typeof args[0] === 'object' && args[0].method) ? args[0] : {};
+
+      var isConvo = isConversationEndpoint(url);
+      var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
+
+      notifyFlutter('fetch_matched', {
+        url: (typeof url === 'string') ? url.slice(0, 150) : '',
+        method: (options && options.method) || 'GET',
+        isStream: isConvo,
+        requestId: activeReqId,
+        source: 'fetch_hook'
+      });
 
       if (isConvo) {
-        var activeReqId = window.__ritmo_active_req_id || '';
         console.log('[Ritmo] Intercepted conversation network request: ' + url + ' (reqId: ' + activeReqId + ')');
         notifyFlutter('network_conversation_started', {
           url: url,

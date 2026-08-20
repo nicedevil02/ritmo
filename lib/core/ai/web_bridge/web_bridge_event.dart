@@ -210,6 +210,14 @@ sealed class WebBridgeEvent {
             source: src,
             label: readString('label') ?? '',
           );
+        case 'fetch_matched':
+          return BridgeFetchMatchedEvent(
+            source: src,
+            url: readString('url') ?? '',
+            method: readString('method') ?? 'GET',
+            isStream: payload['isStream'] == true || decoded['isStream'] == true,
+            requestId: readString('requestId'),
+          );
         case 'harvest_result':
           return BridgeHarvestResultEvent(
             source: src,
@@ -486,6 +494,21 @@ class BridgeErrorEvent extends WebBridgeEvent {
   });
 
   final String? message;
+  final String? requestId;
+}
+
+class BridgeFetchMatchedEvent extends WebBridgeEvent {
+  const BridgeFetchMatchedEvent({
+    required super.source,
+    required this.url,
+    required this.method,
+    required this.isStream,
+    this.requestId,
+  });
+
+  final String url;
+  final String method;
+  final bool isStream;
   final String? requestId;
 }
 

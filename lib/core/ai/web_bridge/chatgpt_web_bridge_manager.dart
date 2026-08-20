@@ -1030,6 +1030,15 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.info,
           );
 
+        case BridgeFetchMatchedEvent(:final url, :final method, :final isStream, :final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'fetch_matched',
+            source: source,
+            requestId: requestId,
+            note: 'method=$method isStream=$isStream url=$url',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeHarvestResultEvent(:final fullText, :final error, :final requestId, :final strategy):
           BridgeTraceLog.instance.addEntry(
             type: 'harvest_result',

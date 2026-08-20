@@ -27,6 +27,7 @@ import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_models.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
+import 'package:ritmo/features/cycle/presentation/onboarding/pregnancy_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/add_edit_period_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_ai_consent_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_animated_background.dart';
@@ -500,20 +501,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   }
 
   void _openPregnancyOnboarding() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => CycleOnboardingShell(
-        onCompleted: () {
-          Navigator.pop(ctx);
-          _loadData();
-        },
-        onNavigateToPregnancy: () {
-          Navigator.pop(ctx);
-          _loadData();
-        },
-      ),
+    PregnancyOnboardingShell.show(
+      context,
+      onCompleted: () {
+        Navigator.of(context).pop();
+        _loadData();
+      },
     );
   }
 
@@ -579,7 +572,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 },
                 onNavigateToPregnancy: () {
                   Navigator.pop(ctx);
-                  _loadData();
+                  _openPregnancyOnboarding();
                 },
               ),
             ),

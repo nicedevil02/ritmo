@@ -348,8 +348,8 @@ String weekContractLabel() {
 این جایگزین streak می‌شود. هیچ streak counter نمایش داده نمی‌شود.
 
 **دروازهٔ پذیرش فاز ۶**
-- [ ] پلنر با سه سؤال کار می‌کند و occurrences ثبت می‌شوند.
-- [ ] `flutter analyze` سبز.
+- [x] پلنر با سه سؤال کار می‌کند و occurrences ثبت می‌شوند.
+- [x] `flutter analyze` سبز.
 
 ---
 

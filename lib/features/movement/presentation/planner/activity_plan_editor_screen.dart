@@ -1,152 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/movement/application/movement_analytics_service.dart';
-import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
-import 'package:ritmo/features/movement/domain/models/movement_change_scope.dart';
-import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
-import 'package:ritmo/features/movement/presentation/common/error_block.dart';
-import 'package:ritmo/features/movement/presentation/common/movement_icons.dart';
-import 'package:ritmo/features/movement/presentation/common/movement_screen_shell.dart';
+import 'package:ritmo/features/movement/application/movement_planning_service.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
-import 'package:ritmo/features/movement/presentation/common/skeletons.dart';
-import 'package:ritmo/features/movement/presentation/common/undo_toast.dart';
-import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_controller.dart';
-import 'package:ritmo/features/movement/presentation/planner/sheets/scope_picker_sheet.dart';
-import 'package:ritmo/features/movement/presentation/planner/widgets/conflict_panel.dart';
-import 'package:ritmo/features/movement/presentation/planner/widgets/goal_field_group.dart';
-import 'package:ritmo/features/movement/presentation/planner/widgets/plan_preview_card.dart';
-import 'package:ritmo/features/movement/presentation/planner/widgets/weekday_chips.dart';
 
-/// صفحهٔ جامع برنامه‌ریزی ۸مرحله‌ای تک‌صفحه‌ای حرکت (ActivityPlanEditorScreen)
+/// صفحهٔ ویرایشگر و تنظیم برنامهٔ هفتگی (P-16 / P-17 — زیر ۲۵۰ خط)
+/// شامل ۳ سؤال ساده: تعداد روزها، روزهای هفته، ساعت یادآوری
 class ActivityPlanEditorScreen extends StatefulWidget {
   const ActivityPlanEditorScreen({
     super.key,
-    this.controller,
+    this.planningService,
     this.activityKindId,
-    this.existingTemplateId,
-    this.initialDate,
   });
 
-  final ActivityPlanEditorController? controller;
+  final MovementPlanningService? planningService;
   final String? activityKindId;
-  final String? existingTemplateId;
-  final DateTime? initialDate;
 
   @override
-  State<ActivityPlanEditorScreen> createState() =>
-      _ActivityPlanEditorScreenState();
+  State<ActivityPlanEditorScreen> createState() => _ActivityPlanEditorScreenState();
 }
 
 class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
-  late final ActivityPlanEditorController _controller;
-  final _scrollController = ScrollController();
+  late final MovementPlanningService _planningService;
+
+  int _daysPerWeek = 3;
+  final Set<int> _selectedWeekdays = {0, 2, 4}; // شنبه، دوشنبه، چهارشنبه
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 8, minute: 0);
+  bool _isSaving = false;
+
+  static const List<String> _dayNames = [
+    'شنبه',
+    'یکشنبه',
+    'دوشنبه',
+    'سه‌شنبه',
+    'چهارشنبه',
+    'پنج‌شنبه',
+    'جمعه',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        widget.controller ??
-        ActivityPlanEditorController(
-          initialActivityKindId: widget.activityKindId,
-          existingTemplateId: widget.existingTemplateId,
-          initialDate: widget.initialDate,
-        );
-
-    if (_controller.isLoading) {
-      _controller.init();
-    }
+    _planningService = widget.planningService ?? MovementPlanningService();
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    if (widget.controller == null) {
-      _controller.dispose();
-    }
-    super.dispose();
+  void _toggleWeekday(int index) {
+    setState(() {
+      if (_selectedWeekdays.contains(index)) {
+        if (_selectedWeekdays.length > 1) {
+          _selectedWeekdays.remove(index);
+          _daysPerWeek = _selectedWeekdays.length;
+        }
+      } else {
+        if (_selectedWeekdays.length < 6) {
+          _selectedWeekdays.add(index);
+          _daysPerWeek = _selectedWeekdays.length;
+        }
+      }
+    });
   }
 
-  Future<bool> _onWillPop() async {
-    if (!_controller.isDirty) return true;
-
-    final result = await showDialog<String>(
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
       context: context,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        final sportsColor = ctx.modules.sports;
-
-        return AlertDialog(
-          backgroundColor: colors.surfaceElevated,
-          title: Text(
-            MovementStrings.plannerDiscardTitle,
-            style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
-          ),
-          content: Text(
-            MovementStrings.plannerDiscardMessage,
-            style: RitmoTextStyles.body(colors.textSecondary),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop('discard'),
-              child: Text(
-                MovementStrings.plannerActionDiscard,
-                style: RitmoTextStyles.label(colors.error),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop('continue'),
-              child: Text(
-                MovementStrings.plannerActionContinue,
-                style: RitmoTextStyles.label(colors.textPrimary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop('save'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: sportsColor,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                MovementStrings.plannerActionSaveAndExit,
-                style: RitmoTextStyles.label(Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
+      initialTime: _reminderTime,
     );
-
-    if (result == 'discard') return true;
-    if (result == 'save') {
-      await _handleSave();
-      return true;
+    if (picked != null) {
+      setState(() => _reminderTime = picked);
     }
-    return false;
   }
 
   Future<void> _handleSave() async {
-    MovementChangeScope scope = MovementChangeScope.wholePlan;
-    if (_controller.existingTemplateId != null) {
-      final pickedScope = await ScopePickerSheet.show(context);
-      if (pickedScope == null) return;
-      scope = pickedScope;
-    }
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
 
-    final createdCount = await _controller.savePlan(scope: scope);
-    if (!mounted) return;
+    try {
+      final hourStr = _reminderTime.hour.toString().padLeft(2, '0');
+      final minStr = _reminderTime.minute.toString().padLeft(2, '0');
+      final timeStr = '$hourStr:$minStr';
 
-    if (createdCount > 0) {
-      MovementAnalyticsService.instance.logPlanSaved(
-        occurrencesCount: createdCount,
-        recurrenceType: _controller.sessionType,
+      final weekdaysList = _selectedWeekdays.toList()..sort();
+
+      await _planningService.createWeeklySimplePlan(
+        weeklyGoalSessions: _daysPerWeek,
+        preferredWeekdays: weekdaysList,
+        reminderTime: timeStr,
+        activityKindId: widget.activityKindId ?? 'kind_walking',
       );
 
-      MovementUndoToast.show(
-        context,
-        message: MovementStrings.planSavedToast(createdCount),
+      RitmoEventBus().fire(
+        RitmoEvent(type: RitmoEventType.routineCreated.code),
       );
-      Navigator.of(context).pop(true);
+
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -155,347 +108,132 @@ class _ActivityPlanEditorScreenState extends State<ActivityPlanEditorScreen> {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    return PopScope(
-      canPop: !_controller.isDirty,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final shouldPop = await _onWillPop();
-        if (shouldPop && context.mounted) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          return MovementScreenShell(
-            title: MovementStrings.plannerTitle,
-            subtitle: _controller.activityKind?.nameFa ?? 'برنامه‌ریزی جدید',
-            body: _controller.isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(RitmoSpacing.lg),
-                    child: Column(
-                      children: [
-                        CardSkeleton(height: 120),
-                        SizedBox(height: RitmoSpacing.md),
-                        CardSkeleton(height: 160),
-                        SizedBox(height: RitmoSpacing.md),
-                        CardSkeleton(height: 180),
-                      ],
+    final hourStr = toPersianDigits(_reminderTime.hour.toString().padLeft(2, '0'));
+    final minStr = toPersianDigits(_reminderTime.minute.toString().padLeft(2, '0'));
+
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(
+        title: Text(
+          MovementStrings.plannerTitle,
+          style: RitmoTextStyles.cardTitle(colors.textPrimary),
+        ),
+        backgroundColor: colors.background,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // سؤال ۱: چند روز در هفته؟
+              Text(
+                '۱. چند روز در هفته می‌خوای تمرین کنی؟',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+              ),
+              const SizedBox(height: RitmoSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  for (int i = 2; i <= 6; i++)
+                    ChoiceChip(
+                      label: Text('${toPersianDigits(i)} روز'),
+                      selected: _daysPerWeek == i,
+                      selectedColor: sportsColor.withValues(alpha: 0.2),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _daysPerWeek = i;
+                            // تنظیم خودکار روزها
+                            _selectedWeekdays.clear();
+                            for (int d = 0; d < i; d++) {
+                              _selectedWeekdays.add((d * 2) % 7);
+                            }
+                          });
+                        }
+                      },
                     ),
-                  )
-                : SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: RitmoSpacing.lg,
-                      vertical: RitmoSpacing.md,
+                ],
+              ),
+              const SizedBox(height: RitmoSpacing.xxl),
+
+              // سؤال ۲: کدوم روزها؟
+              Text(
+                '۲. کدوم روزها برات مناسب‌تره؟',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+              ),
+              const SizedBox(height: RitmoSpacing.sm),
+              Wrap(
+                spacing: RitmoSpacing.sm,
+                runSpacing: RitmoSpacing.sm,
+                children: [
+                  for (int i = 0; i < 7; i++)
+                    FilterChip(
+                      label: Text(_dayNames[i]),
+                      selected: _selectedWeekdays.contains(i),
+                      selectedColor: sportsColor.withValues(alpha: 0.2),
+                      checkmarkColor: sportsColor,
+                      onSelected: (_) => _toggleWeekday(i),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // پیام خطا در صورت شکست
-                        if (_controller.errorMessage != null) ...[
-                          ErrorBlock(
-                            title: 'خطا در بارگذاری برنامه',
-                            message: _controller.errorMessage!,
-                            onRetry: _controller.init,
-                            isBannerMode: true,
-                          ),
-                          const SizedBox(height: RitmoSpacing.md),
-                        ],
+                ],
+              ),
+              const SizedBox(height: RitmoSpacing.xxl),
 
-                        // مرحله ۱: انتخاب فعالیت
-                        _buildStepHeader(
-                          context,
-                          1,
-                          MovementStrings.plannerStepActivity,
-                        ),
-                        _buildActivitySelectionCard(
-                          context,
-                          colors,
-                          sportsColor,
-                        ),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۲: نوع جلسه
-                        _buildStepHeader(
-                          context,
-                          2,
-                          MovementStrings.plannerStepSessionType,
-                        ),
-                        _buildSessionTypeChips(context, colors, sportsColor),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۳: هدف
-                        _buildStepHeader(
-                          context,
-                          3,
-                          MovementStrings.plannerStepGoal,
-                        ),
-                        if (_controller.activityKind != null)
-                          GoalFieldGroup(
-                            family: _controller.activityKind!.family,
-                            primaryMetric:
-                                _controller.activityKind!.primaryMetric,
-                            initialGoalType: _controller.goalType,
-                            initialGoalValue: _controller.goalValue,
-                            initialGoalUnit: _controller.goalUnit,
-                            onGoalChanged: (type, val, unit) {
-                              _controller.setGoal(type, val, unit);
-                            },
-                          ),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۴: زمان‌بندی
-                        _buildStepHeader(
-                          context,
-                          4,
-                          MovementStrings.plannerStepSchedule,
-                        ),
-                        WeekdayChips(
-                          initialSchedules: _controller.schedules,
-                          onSchedulesChanged: (schs) {
-                            _controller.setSchedules(schs);
-                          },
-                        ),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۵: یادآوری
-                        _buildStepHeader(
-                          context,
-                          5,
-                          MovementStrings.plannerStepReminder,
-                        ),
-                        _buildReminderChips(context, colors, sportsColor),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۶: محدودیت‌ها و تداخل
-                        _buildStepHeader(
-                          context,
-                          6,
-                          MovementStrings.plannerStepConstraints,
-                        ),
-                        ConflictPanel(
-                          conflicts: _controller.conflicts,
-                          onSuggestionPickOtherTime: () {},
-                          onSuggestionShorten: () {
-                            _controller.setGoal(
-                              _controller.goalType,
-                              15.0,
-                              _controller.goalUnit,
-                            );
-                          },
-                          onSuggestionMoveToFreeDay: () {},
-                          onSuggestionKeepBoth: () {},
-                        ),
-                        const SizedBox(height: RitmoSpacing.xl),
-
-                        // مرحله ۷ و ۸: پیش‌نمایش و تأیید و ذخیره
-                        _buildStepHeader(
-                          context,
-                          7,
-                          MovementStrings.plannerStepPreview,
-                        ),
-                        if (_controller.activityKind != null)
-                          PlanPreviewCard(
-                            activityKind: _controller.activityKind!,
-                            schedules: _controller.schedules,
-                            goalType: _controller.goalType,
-                            goalValue: _controller.goalValue,
-                            goalUnit: _controller.goalUnit,
-                            reminderType: _controller.reminderType,
-                            isSaving:
-                                _controller.state == PlanEditorState.saving,
-                            disabledReason: _controller.disabledReason,
-                            onConfirm: _controller.isValid ? _handleSave : null,
-                            onEdit: () {
-                              _scrollController.animateTo(
-                                0,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                              );
-                            },
-                          ),
-                        const SizedBox(height: RitmoSpacing.xxxl),
-                      ],
-                    ),
+              // سؤال ۳: چه ساعتی یادآوری کنیم؟
+              Text(
+                '۳. چه ساعتی بهت یادآوری کنیم؟',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary),
+              ),
+              const SizedBox(height: RitmoSpacing.sm),
+              InkWell(
+                onTap: _pickReminderTime,
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.lg,
+                    vertical: RitmoSpacing.md,
                   ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildStepHeader(BuildContext context, int stepIndex, String title) {
-    final colors = context.colors;
-    final sportsColor = context.modules.sports;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: RitmoSpacing.sm),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: sportsColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              toPersianDigits(stepIndex),
-              style: RitmoTextStyles.badge(sportsColor),
-            ),
-          ),
-          const SizedBox(width: RitmoSpacing.sm),
-          Text(
-            title,
-            style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivitySelectionCard(
-    BuildContext context,
-    dynamic colors,
-    Color sportsColor,
-  ) {
-    final kind = _controller.activityKind;
-    if (kind == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.md),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: sportsColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              MovementIcons.fromKey(kind.icon),
-              color: sportsColor,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: RitmoSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  kind.nameFa,
-                  style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                ),
-                Text(
-                  'خانوادهٔ ${kind.family}',
-                  style: RitmoTextStyles.caption(colors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newKind = await Navigator.of(context).push<dynamic>(
-                MaterialPageRoute(
-                  builder: (_) => ActivityPickerScreen(
-                    intent: ActivityPickerIntent.addToPlan,
-                    onSelected: (k) => Navigator.of(context).pop(k),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(RitmoRadius.card),
+                    border: Border.all(color: colors.borderSubtle),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time_rounded, color: sportsColor),
+                      const SizedBox(width: RitmoSpacing.md),
+                      Text(
+                        'ساعت $hourStr:$minStr',
+                        style: RitmoTextStyles.body(colors.textPrimary),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.edit_outlined, size: 18, color: colors.textSecondary),
+                    ],
                   ),
                 ),
-              );
-              if (newKind is MovementActivityKind) {
-                _controller.setActivityKind(newKind);
-              }
-            },
-            child: Text(
-              'تغییر فعالیت',
-              style: RitmoTextStyles.label(sportsColor),
-            ),
+              ),
+              const SizedBox(height: RitmoSpacing.xxxl),
+
+              // دکمهٔ ذخیره برنامه
+              ElevatedButton(
+                onPressed: _isSaving ? null : _handleSave,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: sportsColor,
+                  foregroundColor: colors.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                  ),
+                ),
+                child: _isSaving
+                    ? const Text('در حال ذخیره...')
+                    : const Text('ذخیره و ایجاد برنامه'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildSessionTypeChips(
-    BuildContext context,
-    dynamic colors,
-    Color sportsColor,
-  ) {
-    final types = {
-      'repeating': MovementStrings.plannerSessionRepeating,
-      'simple': MovementStrings.plannerSessionSimple,
-      'structured': MovementStrings.plannerSessionStructured,
-      'event': MovementStrings.plannerSessionEvent,
-      'retro': MovementStrings.plannerSessionRetro,
-    };
-
-    return Wrap(
-      spacing: RitmoSpacing.sm,
-      children: types.entries.map((e) {
-        final isSelected = _controller.sessionType == e.key;
-        return ChoiceChip(
-          label: Text(
-            e.value,
-            style: RitmoTextStyles.caption(
-              isSelected ? Colors.white : colors.textPrimary,
-            ),
-          ),
-          selected: isSelected,
-          selectedColor: sportsColor,
-          backgroundColor: colors.surface,
-          side: BorderSide(color: isSelected ? sportsColor : colors.border),
-          onSelected: (sel) {
-            if (sel) _controller.setSessionType(e.key);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildReminderChips(
-    BuildContext context,
-    dynamic colors,
-    Color sportsColor,
-  ) {
-    final reminders = {
-      'none': MovementStrings.plannerReminderNone,
-      'preSession': MovementStrings.plannerReminderPreSession,
-      'morning': MovementStrings.plannerReminderMorning,
-    };
-
-    return Wrap(
-      spacing: RitmoSpacing.sm,
-      children: reminders.entries.map((e) {
-        final isSelected = _controller.reminderType == e.key;
-        return ChoiceChip(
-          label: Text(
-            e.value,
-            style: RitmoTextStyles.caption(
-              isSelected ? Colors.white : colors.textPrimary,
-            ),
-          ),
-          selected: isSelected,
-          selectedColor: sportsColor,
-          backgroundColor: colors.surface,
-          side: BorderSide(color: isSelected ? sportsColor : colors.border),
-          onSelected: (sel) {
-            if (sel) {
-              _controller.setReminder(e.key, e.key == 'preSession' ? 15 : null);
-            }
-          },
-        );
-      }).toList(),
     );
   }
 }

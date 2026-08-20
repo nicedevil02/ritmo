@@ -424,4 +424,84 @@ class MovementPlanningService {
     }
     return results;
   }
+
+  /// تنظیم برنامهٔ سادهٔ هفتگی ۳ سؤالی (P-16 / P-17)
+  Future<void> createWeeklySimplePlan({
+    required int weeklyGoalSessions,
+    required List<int> preferredWeekdays, // 0=شنبه تا 6=جمعه
+    required String reminderTime, // e.g. "08:00"
+    String activityKindId = 'kind_walking',
+    DateTime? fromDate,
+  }) async {
+    final db = await _database;
+    final now = fromDate ?? DateTime.now();
+    final todayIso = formatIso(now);
+
+    await db.transaction((txn) async {
+      // ۱. ذخیره در جدول Preferences
+      await txn.insert(
+        MovementTables.tablePreferences,
+        {'key': 'weekly_goal_sessions', 'value': weeklyGoalSessions.toString()},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await txn.insert(
+        MovementTables.tablePreferences,
+        {
+          'key': 'preferred_days',
+          'value': jsonEncode(preferredWeekdays),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await txn.insert(
+        MovementTables.tablePreferences,
+        {'key': 'reminder_hour', 'value': reminderTime},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // ۲. حذف رخدادهای آیندهٔ قبلی با وضعیت planned (گذشته دست‌نخورده می‌ماند)
+      await txn.delete(
+        MovementTables.tableOccurrences,
+        where: 'dateIso >= ? AND status = ?',
+        whereArgs: [todayIso, 'planned'],
+      );
+
+      // ۳. ایجاد رخدادهای ۴ هفتهٔ آینده
+      final sat = DateTime(now.year, now.month, now.day).subtract(
+        Duration(days: (now.weekday % 7 + 1) % 7),
+      );
+
+      int occCounter = 0;
+      for (int week = 0; week < 4; week++) {
+        for (final dayIdx in preferredWeekdays) {
+          final targetDate = sat.add(Duration(days: (week * 7) + dayIdx));
+          final targetIso = formatIso(targetDate);
+
+          // اگر تاریخ در گذشته نباشد، رخداد اضافه شود
+          if (!targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
+            final occId = 'occ_plan_${targetIso}_${occCounter++}';
+            await txn.insert(
+              MovementTables.tableOccurrences,
+              {
+                'id': occId,
+                'activityKindId': activityKindId,
+                'templateId': null,
+                'scheduleId': null,
+                'dateIso': targetIso,
+                'startTime': reminderTime,
+                'status': 'planned',
+                'goalType': 'duration',
+                'goalValue': 30.0,
+                'goalUnit': 'minutes',
+                'movedToDateIso': null,
+                'origin': 'template',
+                'createdAt': DateTime.now().toUtc().toIso8601String(),
+                'updatedAt': DateTime.now().toUtc().toIso8601String(),
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+        }
+      }
+    });
+  }
 }

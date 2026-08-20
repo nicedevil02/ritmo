@@ -307,3 +307,77 @@ class GestationalAge {
   String toString() => 'GestationalAge(weeks: $weeks, days: $days, totalDays: $totalDays)';
 }
 
+@immutable
+class PregnancyOnboardingData {
+  final PregnancyTone tone;
+  final PregnancyEddSource eddSource;
+  final DateTime? lmpDate;
+  final DateTime? dueDate;
+  final DateTime? scanDate;
+  final int scanWeeks;
+  final int scanDays;
+  final bool isMultiple;
+  final bool isHighRisk;
+  final bool pauseCyclePredictions;
+  final bool suspendWorship;
+  final bool lockEnabled;
+  final bool hideFromDashboard;
+  final bool maskNotifications;
+  final PregnancyAgeUnit ageUnit;
+
+  const PregnancyOnboardingData({
+    this.tone = PregnancyTone.warm,
+    this.eddSource = PregnancyEddSource.lmp,
+    this.lmpDate,
+    this.dueDate,
+    this.scanDate,
+    this.scanWeeks = 8,
+    this.scanDays = 0,
+    this.isMultiple = false,
+    this.isHighRisk = false,
+    this.pauseCyclePredictions = true,
+    this.suspendWorship = false,
+    this.lockEnabled = false,
+    this.hideFromDashboard = true,
+    this.maskNotifications = true,
+    this.ageUnit = PregnancyAgeUnit.weeks,
+  });
+
+  PregnancyOnboardingData copyWith({
+    PregnancyTone? tone,
+    PregnancyEddSource? eddSource,
+    DateTime? lmpDate,
+    DateTime? dueDate,
+    DateTime? scanDate,
+    int? scanWeeks,
+    int? scanDays,
+    bool? isMultiple,
+    bool? isHighRisk,
+    bool? pauseCyclePredictions,
+    bool? suspendWorship,
+    bool? lockEnabled,
+    bool? hideFromDashboard,
+    bool? maskNotifications,
+    PregnancyAgeUnit? ageUnit,
+  }) {
+    return PregnancyOnboardingData(
+      tone: tone ?? this.tone,
+      eddSource: eddSource ?? this.eddSource,
+      lmpDate: lmpDate ?? this.lmpDate,
+      dueDate: dueDate ?? this.dueDate,
+      scanDate: scanDate ?? this.scanDate,
+      scanWeeks: scanWeeks ?? this.scanWeeks,
+      scanDays: scanDays ?? this.scanDays,
+      isMultiple: isMultiple ?? this.isMultiple,
+      isHighRisk: isHighRisk ?? this.isHighRisk,
+      pauseCyclePredictions:
+          pauseCyclePredictions ?? this.pauseCyclePredictions,
+      suspendWorship: suspendWorship ?? this.suspendWorship,
+      lockEnabled: lockEnabled ?? this.lockEnabled,
+      hideFromDashboard: hideFromDashboard ?? this.hideFromDashboard,
+      maskNotifications: maskNotifications ?? this.maskNotifications,
+      ageUnit: ageUnit ?? this.ageUnit,
+    );
+  }
+}
+

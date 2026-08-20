@@ -8,6 +8,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
+import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_passcode_sheet.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
@@ -20,6 +21,7 @@ class CycleSettingsPanel extends StatefulWidget {
     required this.onDataReloadNeeded,
     required this.onOpenPasscodeSheet,
     required this.onTogglePregnancyMode,
+    this.onOpenPregnancyOnboarding,
     required this.onEditBaselineParameter,
   });
 
@@ -27,6 +29,7 @@ class CycleSettingsPanel extends StatefulWidget {
   final VoidCallback onDataReloadNeeded;
   final VoidCallback onOpenPasscodeSheet;
   final VoidCallback onTogglePregnancyMode;
+  final VoidCallback? onOpenPregnancyOnboarding;
   final Future<void> Function(
     String key,
     String title,
@@ -380,7 +383,14 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
           ),
           Divider(height: 16, color: colors.border),
           InkWell(
-            onTap: widget.onTogglePregnancyMode,
+            onTap: () {
+              final isCurrentlyPregnant = _localSettings['cycle_pregnancy_mode'] == 'true';
+              if (!isCurrentlyPregnant && !PregnancySettings.isSetupDone(_localSettings) && widget.onOpenPregnancyOnboarding != null) {
+                widget.onOpenPregnancyOnboarding!();
+              } else {
+                widget.onTogglePregnancyMode();
+              }
+            },
             borderRadius: BorderRadius.circular(8),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),

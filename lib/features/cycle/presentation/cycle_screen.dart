@@ -523,6 +523,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               settings: _settings,
               onDataReloadNeeded: _loadData,
               onOpenPasscodeSheet: _openPasscodeSheet,
+              onOpenPregnancyOnboarding: () {
+                Navigator.pop(ctx);
+                _openPregnancyOnboarding();
+              },
               onTogglePregnancyMode: () async {
                 Navigator.pop(ctx);
                 final isActive = _settings['cycle_pregnancy_mode'] == 'true';

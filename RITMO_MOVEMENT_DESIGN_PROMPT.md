@@ -525,29 +525,29 @@ movement_tier_unlock_hidden   — «مخفی کردن دکمهٔ تیر ۳» (پ
 ### P-28 — دروازهٔ پذیرش نهایی
 
 **ساختار**
-- [ ] `lib/features/supplementary_sports/` وجود ندارد.
-- [ ] `grep -rn "supplementary_sports" lib/ test/` خالی.
-- [ ] هیچ فایل `dart` در ماژول حرکت بیشتر از ۵۰۰ خط نیست.
-- [ ] دقیقاً ۶ مسیر ثبت‌شده.
-- [ ] حداکثر ۸ کلید در تنظیمات.
+- [x] `lib/features/supplementary_sports/` وجود ندارد.
+- [x] `grep -rn "supplementary_sports" lib/ test/` خالی.
+- [x] هیچ فایل `dart` در ماژول حرکت بیشتر از ۵۰۰ خط نیست.
+- [x] دقیقاً ۶ مسیر ثبت‌شده.
+- [x] حداکثر ۸ کلید در تنظیمات.
 
 **دیتابیس**
-- [ ] دقیقاً ۱۲ جدول `movement_*`.
-- [ ] هیچ جدول `ss_*`.
-- [ ] `idx_movement_personal_records_unique` وجود دارد.
+- [x] دقیقاً ۱۲ جدول `movement_*`.
+- [x] هیچ جدول `ss_*`.
+- [x] `idx_movement_personal_records_unique` وجود دارد.
 
 **رفتار**
-- [ ] از tap تا ثبت جلسه: ≤ ۲ tap.
-- [ ] از نصب تا اولین جلسه: ≤ ۶۰ ثانیه.
-- [ ] حداکثر ۳ عدد در صفحهٔ خانه.
-- [ ] حداکثر ۴ اعلان در هفته.
-- [ ] هیچ رنگ قرمزی برای روز ازدست‌رفته.
+- [x] از tap تا ثبت جلسه: ≤ ۲ tap.
+- [x] از نصب تا اولین جلسه: ≤ ۶۰ ثانیه.
+- [x] حداکثر ۳ عدد در صفحهٔ خانه.
+- [x] حداکثر ۴ اعلان در هفته.
+- [x] هیچ رنگ قرمزی برای روز ازدست‌رفته.
 
 **ابزار**
-- [ ] `flutter pub get` بدون خطا.
-- [ ] `flutter analyze` صفر خطا (تعداد هشدار ≤ baseline).
-- [ ] `flutter test` ۱۰۰٪ سبز.
-- [ ] `DESIGN_REPORT.md` برای `P-01` تا `P-28` وضعیت دارد.
+- [x] `flutter pub get` بدون خطا.
+- [x] `flutter analyze` صفر خطا (تعداد هشدار ≤ baseline).
+- [x] `flutter test` ۱۰۰٪ سبز.
+- [x] `DESIGN_REPORT.md` برای `P-01` تا `P-28` وضعیت دارد.
 
 **پوش:** فقط یک بار، در انتها، روی شاخهٔ `feat/movement-redesign`.
 

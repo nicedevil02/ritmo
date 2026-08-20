@@ -41,8 +41,10 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_lock_gate.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_log_today_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_passcode_sheet.dart';
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_overview_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_personal_forecast_card.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_detail_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
@@ -51,7 +53,6 @@ import 'package:ritmo/features/cycle/presentation/widgets/cycle_settings_panel.d
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_trends_section.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import 'package:sqflite/sqflite.dart';
 
 class CycleScreen extends StatelessWidget {
   const CycleScreen({super.key});
@@ -510,6 +511,128 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
+  Future<void> _openBaselineParameterPicker(
+    String key,
+    String title,
+    int minVal,
+    int maxVal,
+    int defaultVal,
+  ) async {
+    final currentStr = _settings[key] ?? defaultVal.toString();
+    var selectedValue = int.tryParse(currentStr) ?? defaultVal;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setPickerState) {
+            final colors = context.colors;
+            return Container(
+              decoration: BoxDecoration(
+                color: colors.surfaceElevated,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.minus_circle_fill),
+                        iconSize: 32,
+                        color: selectedValue > minVal ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        onPressed: selectedValue > minVal
+                            ? () => setPickerState(() => selectedValue--)
+                            : null,
+                      ),
+                      const SizedBox(width: 24),
+                      Text(
+                        '${RitmoNumber.fa(selectedValue.toString())} روز',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: colors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      IconButton(
+                        icon: const Icon(CupertinoIcons.plus_circle_fill),
+                        iconSize: 32,
+                        color: selectedValue < maxVal ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                        onPressed: selectedValue < maxVal
+                            ? () => setPickerState(() => selectedValue++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final db = await DatabaseHelper.instance.database;
+                        final nowMs = CycleClock.nowMillisecondsSinceEpoch;
+                        final valStr = selectedValue.toString();
+
+                        final batch = db.batch();
+                        batch.insert('app_settings', {
+                          'key': key,
+                          'value': valStr,
+                          'updatedAt': nowMs,
+                        }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+                        if (key == 'cycle_avg_length') {
+                          batch.insert('app_settings', {'key': 'user_cycle_length', 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                          batch.insert('app_settings', {'key': CycleSettings.keyCycleLength, 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                        } else if (key == 'cycle_avg_period') {
+                          batch.insert('app_settings', {'key': 'user_period_length', 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                          batch.insert('app_settings', {'key': CycleSettings.keyPeriodDuration, 'value': valStr, 'updatedAt': nowMs}, conflictAlgorithm: ConflictAlgorithm.replace);
+                        }
+                        await batch.commit(noResult: true);
+
+                        CycleEngine().invalidate();
+                        await _loadData();
+                      },
+                      child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _openSettingsSheet() {
     showModalBottomSheet(
       context: context,
@@ -534,7 +657,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 await PregnancySettings.setPregnancyActive(!isActive, db: db);
                 await _loadData();
               },
-              onEditBaselineParameter: (key, title, min, max, defVal) async {},
+              onEditBaselineParameter: (key, title, minVal, maxVal, defVal) async {
+                await _openBaselineParameterPicker(key, title, minVal, maxVal, defVal);
+              },
             ),
           ),
         ),

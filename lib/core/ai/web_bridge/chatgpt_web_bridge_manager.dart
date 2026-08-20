@@ -178,6 +178,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   bool _lastAnswerWasPartial = false;
   bool get lastAnswerWasPartial => _lastAnswerWasPartial;
 
+  bool _isFinishingOrFailingGeneration = false;
+
   String? _lastEmptyReasonDetail;
   String? get lastEmptyReasonDetail => _lastEmptyReasonDetail;
 
@@ -271,7 +273,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _checkpointTimer1 = null;
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
-    _status = ChatGptBridgeStatus.idle;
+    _setStatus(ChatGptBridgeStatus.idle, force: true);
     _currentRequestId = null;
     _pendingRequest = null;
     _lockedSource = null;
@@ -290,8 +292,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   }
 
   @visibleForTesting
-  void setStatusForTest(ChatGptBridgeStatus status) {
-    _setStatus(status);
+  void setStatusForTest(ChatGptBridgeStatus status, {bool force = false}) {
+    _setStatus(status, force: force);
   }
 
   @visibleForTesting
@@ -328,14 +330,41 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     WebViewController? controller,
     Completer<bool>? bootCompleter,
     StreamController<String>? streamController,
+    bool force = true,
   }) {
-    if (status != null) _setStatus(status);
+    if (status != null) _setStatus(status, force: force);
     if (controller != null) _controller = controller;
     if (bootCompleter != null) _bootCompleter = bootCompleter;
     if (streamController != null) _currentStreamController = streamController;
   }
 
-  void _setStatus(ChatGptBridgeStatus newStatus) {
+  void _setStatus(ChatGptBridgeStatus newStatus, {bool force = false}) {
+    if (_status == newStatus) return;
+
+    if (_status == ChatGptBridgeStatus.generating &&
+        !force &&
+        !_isFinishingOrFailingGeneration &&
+        _currentStreamController != null &&
+        !_currentStreamController!.isClosed) {
+      if (newStatus != ChatGptBridgeStatus.error &&
+          newStatus != ChatGptBridgeStatus.idle &&
+          newStatus != ChatGptBridgeStatus.cloudflareChallenge &&
+          newStatus != ChatGptBridgeStatus.vpnRequired) {
+        RitmoLog.warning(
+          'ChatGptWebBridge',
+          'Blocked illegal status transition from generating to $newStatus while stream is active.',
+        );
+        BridgeTraceLog.instance.addEntry(
+          type: 'illegal_status_transition_blocked',
+          source: BridgeSource.dart.name,
+          requestId: _currentRequestId,
+          note: 'from_generating_to_${newStatus.name}',
+          level: BridgeTraceLevel.warn,
+        );
+        return;
+      }
+    }
+
     _status = newStatus;
     _statusNotifier.value = newStatus;
     if (newStatus == ChatGptBridgeStatus.cloudflareChallenge) {
@@ -422,6 +451,15 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
           onPageFinished: (url) async {
             if (_controller != null && _controller != controller) return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading finished: $url');
+            if (_status == ChatGptBridgeStatus.generating) {
+              BridgeTraceLog.instance.addEntry(
+                type: 'page_finished_during_generation',
+                source: BridgeSource.dart.name,
+                requestId: _currentRequestId,
+                note: 'url=$url',
+                level: BridgeTraceLevel.info,
+              );
+            }
             await handlePageFinished(url, controller);
           },
           onWebResourceError: (error) {
@@ -1366,97 +1404,107 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
   /// Flushes whatever the page ended up showing, then closes the stream (A-80).
   void _finishGeneration(String? fullText, {bool isPartial = false}) {
-    _generationTimer?.cancel();
-    _generationTimer = null;
-    _checkpointTimer1?.cancel();
-    _checkpointTimer1 = null;
-    _checkpointTimer2?.cancel();
-    _checkpointTimer2 = null;
+    _isFinishingOrFailingGeneration = true;
+    try {
+      _generationTimer?.cancel();
+      _generationTimer = null;
+      _checkpointTimer1?.cancel();
+      _checkpointTimer1 = null;
+      _checkpointTimer2?.cancel();
+      _checkpointTimer2 = null;
 
-    if (fullText != null && fullText.isNotEmpty) {
-      _emitChunk(fullText, null, source: _lockedSource?.name ?? BridgeSource.harvest.name, isHarvest: true);
-    }
+      if (fullText != null && fullText.isNotEmpty) {
+        _emitChunk(fullText, null, source: _lockedSource?.name ?? BridgeSource.harvest.name, isHarvest: true);
+      }
 
-    _lastAnswerWasPartial = isPartial;
-    if (isPartial) {
+      _lastAnswerWasPartial = isPartial;
+      if (isPartial) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'partial_finish',
+          source: _lockedSource?.name ?? 'lifecycle',
+          requestId: _currentRequestId,
+          textLength: _accumulator.length,
+          level: BridgeTraceLevel.warn,
+        );
+      }
+
+      final finalText = _accumulator.text;
       BridgeTraceLog.instance.addEntry(
-        type: 'partial_finish',
+        type: 'finish',
         source: _lockedSource?.name ?? 'lifecycle',
         requestId: _currentRequestId,
-        textLength: _accumulator.length,
-        level: BridgeTraceLevel.warn,
+        textLength: finalText.length,
+        note: isPartial ? 'partial_finish' : 'complete_finish',
+        level: BridgeTraceLevel.info,
       );
-    }
 
-    final finalText = _accumulator.text;
-    BridgeTraceLog.instance.addEntry(
-      type: 'finish',
-      source: _lockedSource?.name ?? 'lifecycle',
-      requestId: _currentRequestId,
-      textLength: finalText.length,
-      note: isPartial ? 'partial_finish' : 'complete_finish',
-      level: BridgeTraceLevel.info,
-    );
-
-    final controller = _currentStreamController;
-    if (!enableWebBridgeStreaming && controller != null && !controller.isClosed) {
-      if (finalText.isNotEmpty) {
-        controller.add(finalText);
+      final controller = _currentStreamController;
+      if (!enableWebBridgeStreaming && controller != null && !controller.isClosed) {
+        if (finalText.isNotEmpty) {
+          controller.add(finalText);
+        }
       }
-    }
 
-    _setStatus(ChatGptBridgeStatus.ready);
-    _currentStreamController = null;
-    _accumulator.reset();
-    _navigationReloadCount = 0;
-    _currentRequestId = null;
-    _pendingRequest = null;
-    _lastChunkSource = null;
-    _lockedSource = null;
-    _lockedSourceLastChunkAt = null;
-    _lockedSourceMaxLength = 0;
-    _hasActiveSseStream = false;
-    controller?.close();
-    _resetInactivityTimer();
+      _setStatus(ChatGptBridgeStatus.ready);
+      _currentStreamController = null;
+      _accumulator.reset();
+      _navigationReloadCount = 0;
+      _currentRequestId = null;
+      _pendingRequest = null;
+      _lastChunkSource = null;
+      _lockedSource = null;
+      _lockedSourceLastChunkAt = null;
+      _lockedSourceMaxLength = 0;
+      _hasActiveSseStream = false;
+      controller?.close();
+      _resetInactivityTimer();
+    } finally {
+      _isFinishingOrFailingGeneration = false;
+    }
   }
 
   void _failGeneration(dynamic errorOrMessageFa) {
-    _generationTimer?.cancel();
-    _generationTimer = null;
-    _checkpointTimer1?.cancel();
-    _checkpointTimer1 = null;
-    _checkpointTimer2?.cancel();
-    _checkpointTimer2 = null;
+    _isFinishingOrFailingGeneration = true;
+    try {
+      _generationTimer?.cancel();
+      _generationTimer = null;
+      _checkpointTimer1?.cancel();
+      _checkpointTimer1 = null;
+      _checkpointTimer2?.cancel();
+      _checkpointTimer2 = null;
 
-    final controller = _currentStreamController;
-    _currentStreamController = null;
-    _accumulator.reset();
-    _navigationReloadCount = 0;
-    _currentRequestId = null;
-    _pendingRequest = null;
-    _lastChunkSource = null;
-    _lockedSource = null;
-    _lockedSourceLastChunkAt = null;
-    _lockedSourceMaxLength = 0;
-    _hasActiveSseStream = false;
+      final controller = _currentStreamController;
+      _currentStreamController = null;
+      _accumulator.reset();
+      _navigationReloadCount = 0;
+      _currentRequestId = null;
+      _pendingRequest = null;
+      _lastChunkSource = null;
+      _lockedSource = null;
+      _lockedSourceLastChunkAt = null;
+      _lockedSourceMaxLength = 0;
+      _hasActiveSseStream = false;
 
-    _setStatus(ChatGptBridgeStatus.ready);
-    if (controller != null && !controller.isClosed) {
-      final WebBridgeException err;
-      if (errorOrMessageFa is WebBridgeException) {
-        err = errorOrMessageFa;
-      } else if (errorOrMessageFa is String) {
-        err = WebBridgeException.unknown(messageFa: errorOrMessageFa);
-      } else {
-        err = WebBridgeException.unknown(
-          messageFa: errorOrMessageFa.toString(),
-          originalError: errorOrMessageFa,
-        );
+      _setStatus(ChatGptBridgeStatus.ready);
+      if (controller != null && !controller.isClosed) {
+        final WebBridgeException err;
+        if (errorOrMessageFa is WebBridgeException) {
+          err = errorOrMessageFa;
+        } else if (errorOrMessageFa is String) {
+          err = WebBridgeException.unknown(messageFa: errorOrMessageFa);
+        } else {
+          err = WebBridgeException.unknown(
+            messageFa: errorOrMessageFa.toString(),
+            originalError: errorOrMessageFa,
+          );
+        }
+        controller.addError(err);
+        controller.close();
       }
-      controller.addError(err);
-      controller.close();
+      _resetInactivityTimer();
+    } finally {
+      _isFinishingOrFailingGeneration = false;
     }
-    _resetInactivityTimer();
   }
 
   /// Cancels the current stream if active and stops generation in the WebView (A-26)

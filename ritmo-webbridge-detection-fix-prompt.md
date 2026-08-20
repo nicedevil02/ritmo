@@ -1047,8 +1047,8 @@ dart format --set-exit-if-changed lib test
 | DET-11 | حمل isWarm در ready | C | DONE | pending | انجام شد |
 | DET-12 | گارد generating در هندلر ready | C | DONE | 6090ca4b | انجام شد |
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | DONE | fdac94be | انجام شد |
-| DET-14 | شرط تحویل برداشت دستی | C | DONE | pending | انجام شد |
-| DET-15 | گارد مرکزی خروج از وضعیت | C | TODO | | |
+| DET-14 | شرط تحویل برداشت دستی | C | DONE | ce85dd6c | انجام شد |
+| DET-15 | گارد مرکزی خروج از وضعیت | C | DONE | pending | انجام شد |
 | DET-16 | اصلاح تطبیق endpoint | D | TODO | | |
 | DET-17 | پوشش fetch با شیء Request | D | TODO | | |
 | DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | TODO | | |

@@ -283,6 +283,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = null;
     _cancelResumeDebounce();
+    _navigationReloadCount = 0;
+    _coldNavigationCount = 0;
     _setStatus(ChatGptBridgeStatus.idle, force: true);
     _currentRequestId = null;
     _pendingRequest = null;
@@ -506,6 +508,10 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   @visibleForTesting
   int get navigationReloadCount => _navigationReloadCount;
 
+  int _coldNavigationCount = 0;
+  @visibleForTesting
+  int get coldNavigationCount => _coldNavigationCount;
+
   bool get hasPendingRequest =>
       _currentStreamController != null && !_currentStreamController!.isClosed;
 
@@ -522,6 +528,13 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
     if (hasPendingRequest || _status == ChatGptBridgeStatus.generating) {
       _navigationReloadCount++;
       RitmoLog.debug('ChatGptWebBridge', 'Navigation finished with pending request (count: $_navigationReloadCount)');
+      BridgeTraceLog.instance.addEntry(
+        type: 'in_flight_navigation_finished',
+        source: BridgeSource.dart.name,
+        requestId: _pendingRequest?.requestId ?? _currentRequestId,
+        note: 'url=$url reloadCount=$_navigationReloadCount',
+        level: BridgeTraceLevel.info,
+      );
       if (_navigationReloadCount > maxNavigationReloads) {
         RitmoLog.error('ChatGptWebBridge', 'Navigation reload loop detected (> $maxNavigationReloads times). Aborting stream.');
         final harvested = await _harvestForSalvage(reason: 'navigation_loop');
@@ -536,6 +549,15 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       }
 
       _attemptResumePendingRequest(controller);
+    } else {
+      _coldNavigationCount++;
+      RitmoLog.debug('ChatGptWebBridge', 'Cold navigation finished (count: $_coldNavigationCount)');
+      BridgeTraceLog.instance.addEntry(
+        type: 'cold_navigation_finished',
+        source: BridgeSource.dart.name,
+        note: 'url=$url coldCount=$_coldNavigationCount',
+        level: BridgeTraceLevel.info,
+      );
     }
   }
 
@@ -1515,6 +1537,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       _currentStreamController = null;
       _accumulator.reset();
       _navigationReloadCount = 0;
+      _coldNavigationCount = 0;
       _currentRequestId = null;
       _pendingRequest = null;
       _lastChunkSource = null;
@@ -1544,6 +1567,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       _currentStreamController = null;
       _accumulator.reset();
       _navigationReloadCount = 0;
+      _coldNavigationCount = 0;
       _currentRequestId = null;
       _pendingRequest = null;
       _lastChunkSource = null;
@@ -1597,6 +1621,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _lockedSourceMaxLength = 0;
     _accumulator.reset();
     _navigationReloadCount = 0;
+    _coldNavigationCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
     _lastChunkSource = null;
@@ -1653,6 +1678,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     _resetInactivityTimer();
     _navigationReloadCount = 0;
+    _coldNavigationCount = 0;
     _lastChunkSource = null;
     _lockedSource = null;
     _lockedSourceLastChunkAt = null;
@@ -1980,6 +2006,7 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     _lockedSourceLastChunkAt = null;
     _lockedSourceMaxLength = 0;
     _navigationReloadCount = 0;
+    _coldNavigationCount = 0;
     _currentRequestId = null;
     _pendingRequest = null;
     _lastChunkSource = null;

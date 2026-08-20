@@ -95,5 +95,19 @@ void main() {
         }
       }
     });
+
+    test('invariant 7 all persona command ids are registered', () {
+      final personas = PersonaRegistry.instance.allPersonas;
+      final registered = RitmoCommandBus.instance.registeredCommandIds;
+
+      for (final p in personas) {
+        final unregistered = p.commandIds.difference(registered);
+        expect(
+          unregistered,
+          isEmpty,
+          reason: 'Persona "${p.id}" contains unregistered command IDs: $unregistered (expected green in PSN-44)',
+        );
+      }
+    });
   });
 }

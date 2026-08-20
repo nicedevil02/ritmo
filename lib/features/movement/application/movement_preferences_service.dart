@@ -119,6 +119,9 @@ class MovementPreferencesService {
   /// اعتبارسنجی سطح واقعی کاربر بر اساس جلسات ثبت‌شده
   Future<MovementTier> resolveTier() async {
     final savedTier = await getTier();
+    if (savedTier == MovementTier.three) {
+      return MovementTier.three;
+    }
     if (savedTier == MovementTier.one) {
       return MovementTier.one;
     }

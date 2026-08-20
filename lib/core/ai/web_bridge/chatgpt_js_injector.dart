@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'chatgpt_bridge_timeouts.dart';
 
 /// Utilities and JavaScript scripts for injecting into ChatGPT Web (chatgpt.com)
 class ChatGptJsInjector {
@@ -420,7 +421,7 @@ $userPrompt
   console.log('[Ritmo] Initializing ChatGPT Web Bridge version ' + requiredVersion + '...');
 $_bridgeScriptBody''';
 
-  static const String _bridgeScriptBody = r'''
+  static String get _bridgeScriptBody => '''
   function isConversationEndpoint(url) {
     if (typeof url !== 'string') return false;
     return /[\/\.-]backend-(?:api|anon)\/(?:conversation|lat\/r|f\/r|synthesize)/i.test(url)

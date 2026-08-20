@@ -12,11 +12,11 @@ void main() {
       expect(script.contains('isButtonEnabled(sendBtn)'), isTrue);
     });
 
-    test('setupBridgeScript polls send button at 100ms intervals', () {
+    test('setupBridgeScript polls send button using fastPollMs', () {
       final script = ChatGptJsInjector.setupBridgeScript;
 
       expect(script.contains('sendInterval = setInterval('), isTrue);
-      expect(script.contains('}, 100);'), isTrue);
+      expect(script.contains('}, RITMO_TIMEOUTS.fastPollMs);'), isTrue);
     });
   });
 }

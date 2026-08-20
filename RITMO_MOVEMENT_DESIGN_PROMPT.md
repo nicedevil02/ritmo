@@ -397,9 +397,9 @@ presentation/session/widgets/timer_display.dart
 فایل `strength_program_service.dart` (که در `D-12` حذف شد) **جایگزین نمی‌شود**. منطق ساده مستقیم در `MovementPlanningService` قرار می‌گیرد.
 
 **دروازهٔ پذیرش فاز ۷**
-- [ ] کلید تیر ۳ کار می‌کند.
-- [ ] جلسهٔ قدرتی بدون خطای analyze اجرا می‌شود.
-- [ ] هیچ import از کد حذف‌شده ندارد.
+- [x] کلید تیر ۳ کار می‌کند.
+- [x] جلسهٔ قدرتی بدون خطای analyze اجرا می‌شود.
+- [x] هیچ import از کد حذف‌شده ندارد.
 
 ---
 

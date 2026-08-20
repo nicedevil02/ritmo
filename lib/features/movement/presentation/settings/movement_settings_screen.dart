@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/movement/application/movement_preferences_service.dart';
+import 'package:ritmo/features/movement/domain/models/movement_tier.dart';
 import 'package:ritmo/features/movement/presentation/common/confirm_dialog.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_screen_shell.dart';
 import 'package:ritmo/features/movement/presentation/settings/widgets/settings_danger_row.dart';
 import 'package:ritmo/features/movement/presentation/settings/widgets/settings_group.dart';
 
-/// صفحهٔ تنظیمات حرکت (MovementSettingsScreen) — حداکثر ۲۰۰ خط طبق D-39
+/// صفحهٔ تنظیمات حرکت (MovementSettingsScreen) — حداکثر ۲۰۰ خط طبق D-39 و P-18
 class MovementSettingsScreen extends StatefulWidget {
   const MovementSettingsScreen({super.key, this.preferencesService});
 
@@ -24,6 +25,7 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
   int _weeklyGoalSessions = 3;
   List<int> _preferredDays = [0, 2, 4];
   int? _reminderHour = 8;
+  MovementTier _currentTier = MovementTier.one;
 
   @override
   void initState() {
@@ -36,12 +38,14 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
     final goal = await _service.getWeeklyGoalSessions();
     final days = await _service.getPreferredDays();
     final hour = await _service.getReminderHour();
+    final tier = await _service.resolveTier();
 
     if (mounted) {
       setState(() {
         _weeklyGoalSessions = goal;
         _preferredDays = days;
         _reminderHour = hour;
+        _currentTier = tier;
         _isLoading = false;
       });
     }
@@ -72,6 +76,26 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
     if (picked != null) {
       setState(() => _reminderHour = picked.hour);
       await _service.setReminderHour(picked.hour);
+    }
+  }
+
+  Future<void> _onToggleStrengthTier(bool enable) async {
+    if (enable) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => const MovementConfirmDialog(
+          title: 'فعال‌سازی تمرین قدرتی',
+          message: 'بخش قدرتی امکانات بیشتری داره — مثل برنامهٔ وزنه و RIR. مطمئنی؟',
+          confirmLabel: 'فعال‌سازی',
+        ),
+      );
+      if (confirmed == true && mounted) {
+        await _service.setTier(MovementTier.three);
+        setState(() => _currentTier = MovementTier.three);
+      }
+    } else {
+      await _service.setTier(MovementTier.two);
+      setState(() => _currentTier = MovementTier.two);
     }
   }
 
@@ -112,7 +136,27 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ۱. هدف هفتگی
+                  // ۱. سطح تمرین و بخش پیشرفته
+                  SettingsGroup(
+                    title: 'امکانات پیشرفته',
+                    children: [
+                      SwitchListTile(
+                        title: Text(
+                          'تمرین قدرتی (پیشرفته)',
+                          style: RitmoTextStyles.body(colors.textPrimary),
+                        ),
+                        subtitle: Text(
+                          'برنامهٔ وزنه، ثبت ست و RIR',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                        value: _currentTier == MovementTier.three,
+                        onChanged: _onToggleStrengthTier,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: RitmoSpacing.lg),
+
+                  // ۲. هدف هفتگی
                   SettingsGroup(
                     title: 'هدف هفتگی',
                     children: [
@@ -151,7 +195,7 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.lg),
 
-                  // ۲. روزهای ترجیحی
+                  // ۳. روزهای ترجیحی
                   SettingsGroup(
                     title: 'روزهای ترجیحی تمرین',
                     children: [
@@ -179,7 +223,7 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.lg),
 
-                  // ۳. یادآور روزانه
+                  // ۴. یادآور روزانه
                   SettingsGroup(
                     title: 'یادآور روزانه',
                     children: [
@@ -204,7 +248,7 @@ class _MovementSettingsScreenState extends State<MovementSettingsScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.xl),
 
-                  // ۴. منطقهٔ خطر: حذف تمام داده‌ها
+                  // ۵. منطقهٔ خطر: حذف تمام داده‌ها
                   SettingsDangerRow(
                     title: 'حذف تمام داده‌های حرکت',
                     explanation:

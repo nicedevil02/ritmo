@@ -120,10 +120,9 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   /// Sentinel prefix emitted when response accumulator detects a non-prefix rewrite (A-12).
   static const String rewriteSentinel = '\u0000RITMO_REWRITE\u0000';
 
-  /// فلگ موقت کنترل استریمینگ برای انتقال پیام‌ها از ChatGPT به صفحه چت دستیار.
-  /// در صورت false بودن، پیام‌ها به صورت یکپارچه پس از اتمام یا بررسی موفق منتقل می‌شوند.
-  /// برای فعال‌سازی مجدد استریمینگ، این مقدار را به true تغییر دهید.
-  static const bool enableWebBridgeStreaming = false;
+  /// فلگ کنترل استریمینگ برای انتقال پیام‌ها از ChatGPT به صفحه چت دستیار.
+  /// به صورت پیش‌فرض فعال است تا تکه‌های متن به شکل زنده در UI استریم شوند (DET-34).
+  static bool enableWebBridgeStreaming = true;
 
   static const String targetUrl = 'https://chatgpt.com/';
   static const Duration inactivityTimeout = ChatGptBridgeTimeouts.inactivityTimeout;

@@ -684,7 +684,7 @@ if (typeof window.__ritmo_resume === 'function') {
       }
 
       switch (event) {
-        case BridgeReadyEvent(:final isAuthed):
+        case BridgeReadyEvent(:final isAuthed, :final isWarm, :final currentPath, :final hasComposer, :final version):
           _isAuthenticated = isAuthed;
           if (_status != ChatGptBridgeStatus.ready) {
             _setStatus(ChatGptBridgeStatus.ready);
@@ -695,6 +695,7 @@ if (typeof window.__ritmo_resume === 'function') {
           BridgeTraceLog.instance.addEntry(
             type: 'ready',
             source: source,
+            note: 'warm=$isWarm path=${currentPath ?? ""} composer=$hasComposer v=$version authed=$isAuthed',
             level: BridgeTraceLevel.info,
           );
 

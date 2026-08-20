@@ -83,6 +83,9 @@ sealed class WebBridgeEvent {
             email: readString('email'),
             version: readInt('version') ?? 0,
             payload: payload,
+            isWarm: readBool('isWarm') ?? false,
+            currentPath: readString('currentPath') ?? readString('path'),
+            hasComposer: readBool('hasComposer'),
           );
         case 'network_conversation_started':
           return BridgeNetworkConversationStartedEvent(
@@ -240,12 +243,18 @@ class BridgeReadyEvent extends WebBridgeEvent {
     this.email,
     required this.version,
     required this.payload,
+    this.isWarm = false,
+    this.currentPath,
+    this.hasComposer,
   });
 
   final bool isAuthed;
   final String? email;
   final int version;
   final Map<String, dynamic> payload;
+  final bool isWarm;
+  final String? currentPath;
+  final bool? hasComposer;
 }
 
 class BridgeChunkEvent extends WebBridgeEvent {

@@ -15,6 +15,9 @@ class PregnancyOnboardingController extends ChangeNotifier {
   int currentStep = 0;
   DateTime? lmpDate;
   DateTime? dueDate;
+  DateTime? scanDate;
+  int scanWeeks = 8;
+  int scanDays = 0;
   PregnancyEddSource eddSource = PregnancyEddSource.lmp;
   PregnancyTone tone = PregnancyTone.warm;
   PregnancyAgeUnit ageUnit = PregnancyAgeUnit.weeks;
@@ -215,18 +218,50 @@ class PregnancyOnboardingController extends ChangeNotifier {
       // 3. Set pregnancy active
       await PregnancySettings.setPregnancyActive(true, db: txn);
 
+      // Read existing consents before suspending
+      final existingConsentRows = await txn.query(
+        'app_settings',
+        where: 'key IN (?, ?, ?)',
+        whereArgs: [
+          'cycle_consent_reminders',
+          'cycle_consent_worship',
+          'cycle_consent_dashboard',
+        ],
+      );
+      final existingConsentMap = {
+        for (final r in existingConsentRows) r['key'] as String: r['value']?.toString()
+      };
+
       // 4. Pause cycle predictions consent
       if (data.pauseCyclePredictions) {
+        final prev = existingConsentMap['cycle_consent_reminders'] ?? 'true';
+        await PregnancySettings.saveSetting(
+          PregnancySettings.keyPrevConsentReminders,
+          prev,
+          txn,
+        );
         await PregnancySettings.saveSetting('cycle_consent_reminders', 'false', txn);
       }
 
       // 5. Suspend worship consent
       if (data.suspendWorship) {
+        final prev = existingConsentMap['cycle_consent_worship'] ?? 'true';
+        await PregnancySettings.saveSetting(
+          PregnancySettings.keyPrevConsentWorship,
+          prev,
+          txn,
+        );
         await PregnancySettings.saveSetting('cycle_consent_worship', 'false', txn);
       }
 
       // 6. Hide from dashboard consent
       if (data.hideFromDashboard) {
+        final prev = existingConsentMap['cycle_consent_dashboard'] ?? 'true';
+        await PregnancySettings.saveSetting(
+          PregnancySettings.keyPrevConsentDashboard,
+          prev,
+          txn,
+        );
         await PregnancySettings.saveSetting('cycle_consent_dashboard', 'false', txn);
       }
 

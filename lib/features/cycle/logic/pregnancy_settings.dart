@@ -134,6 +134,11 @@ class PregnancySettings {
           }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       }
+
+      if (!active) {
+        await restoreCycleConsents(db: executor);
+      }
+
       CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(
@@ -142,6 +147,62 @@ class PregnancySettings {
         stack: st,
       );
       rethrow;
+    }
+  }
+
+  /// Restores cycle consents (reminders, worship, dashboard) when exiting pregnancy mode.
+  /// Uses backup values if present, or defaults to true (active).
+  static Future<void> restoreCycleConsents({DatabaseExecutor? db}) async {
+    try {
+      final executor = db ?? await DatabaseHelper.instance.database;
+      final rows = await executor.query(
+        'app_settings',
+        where: 'key IN (?, ?, ?)',
+        whereArgs: [
+          keyPrevConsentReminders,
+          keyPrevConsentWorship,
+          keyPrevConsentDashboard,
+        ],
+      );
+      final map = {
+        for (final r in rows) r['key'] as String: r['value']?.toString()
+      };
+
+      final restoreReminders = map[keyPrevConsentReminders] ?? 'true';
+      final restoreWorship = map[keyPrevConsentWorship] ?? 'true';
+      final restoreDashboard = map[keyPrevConsentDashboard] ?? 'true';
+
+      await saveSetting('cycle_consent_reminders', restoreReminders, executor);
+      await saveSetting('cycle_consent_worship', restoreWorship, executor);
+      await saveSetting('cycle_consent_dashboard', restoreDashboard, executor);
+
+      // Remove backup keys after restoration
+      if (executor is Database) {
+        await executor.delete(
+          'app_settings',
+          where: 'key IN (?, ?, ?)',
+          whereArgs: [
+            keyPrevConsentReminders,
+            keyPrevConsentWorship,
+            keyPrevConsentDashboard,
+          ],
+        );
+      } else {
+        await executor.rawDelete(
+          'DELETE FROM app_settings WHERE key IN (?, ?, ?)',
+          [
+            keyPrevConsentReminders,
+            keyPrevConsentWorship,
+            keyPrevConsentDashboard,
+          ],
+        );
+      }
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[PregnancySettings] error restoring cycle consents: $e',
+        error: e,
+        stack: st,
+      );
     }
   }
 

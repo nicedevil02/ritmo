@@ -555,22 +555,25 @@ class PersonaSkillRegistry {
   ];
 
   static bool _sleepConsistencyRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is SleepBrief) {
       final score = brief.consistencyScore;
-      if (score == null) return true; // PSN-15: missing data treated as unknown
+      if (score == null) return true;
       return score < 60;
     }
     return true;
   }
 
   static bool _sleepDebtRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is SleepBrief) {
       return brief.sleepDebtMinutes > 60;
     }
-    return true; // PSN-15: missing brief is relevant by default
+    return true;
   }
 
   static bool _wellbeingStressRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is WellbeingBrief) {
       final stress = brief.stressLevel;
       if (stress == null) return true;
@@ -580,6 +583,7 @@ class PersonaSkillRegistry {
   }
 
   static bool _goalsActiveRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is GoalsBrief) {
       return brief.activeGoalsCount > 0;
     }
@@ -587,6 +591,7 @@ class PersonaSkillRegistry {
   }
 
   static bool _goalsOverdueRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is GoalsBrief) {
       return brief.overdueStepsCount > 0;
     }
@@ -594,6 +599,7 @@ class PersonaSkillRegistry {
   }
 
   static bool _worshipDebtsRelevant(DomainBrief? brief) {
+    if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is WorshipBrief) {
       return brief.totalDebtsCount > 0;
     }

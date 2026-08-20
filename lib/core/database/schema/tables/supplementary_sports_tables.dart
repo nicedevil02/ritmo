@@ -63,6 +63,7 @@ class SupplementarySportsTables {
       CREATE TABLE IF NOT EXISTS ss_workout_plan (
         id TEXT PRIMARY KEY,
         dayOfWeek INTEGER NOT NULL,
+        week INTEGER DEFAULT 1,
         muscleGroups TEXT NOT NULL,
         estimatedMinutes INTEGER DEFAULT 45,
         createdAt INTEGER NOT NULL,

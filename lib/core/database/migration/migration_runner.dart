@@ -53,6 +53,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v111_medicati
 import 'package:ritmo/core/database/migration/migrations/migration_v112_medication_profiles.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v113_cycle_confirmations.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v114_cycle_fertility_cleanup.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v115_my_day.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -169,6 +170,7 @@ class MigrationRunner {
     MigrationV112MedicationProfiles(), // Medication Profiles (Phase 1)
     MigrationV113CycleConfirmations(), // Cycle Confirmations and settings (Lifecycle & Privacy)
     MigrationV114CycleFertilityCleanup(), // Cycle Fertility setting cleanup
+    MigrationV115MyDay(), // Simple Tasks: addedToMyDayAt column
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

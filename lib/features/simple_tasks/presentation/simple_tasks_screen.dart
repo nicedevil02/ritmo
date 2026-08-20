@@ -23,7 +23,11 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
+import 'package:ritmo/features/simple_tasks/logic/my_day_service.dart';
+import 'package:ritmo/features/simple_tasks/logic/my_day_suggestions.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
+import 'package:ritmo/features/simple_tasks/presentation/task_strings.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/my_day_section.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_bucket_section.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 
@@ -41,10 +45,12 @@ class SimpleTasksScreen extends StatefulWidget {
   State<SimpleTasksScreen> createState() => _SimpleTasksScreenState();
 }
 
-class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
+class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindingObserver {
   final TextEditingController _addController = TextEditingController();
   final FocusNode _addFocusNode = FocusNode();
 
+  List<SimpleTask> _myDayTasks = [];
+  List<MyDaySuggestion> _myDaySuggestions = [];
   Map<TaskBucket, List<SimpleTask>> _buckets = {};
   Map<String, (int done, int total)> _stepCounts = {};
   Map<String, int> _attachmentCounts = {};
@@ -57,12 +63,20 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadPreferencesAndTasks();
     widget.focusTrigger?.addListener(_onFocusTrigger);
     if (widget.focusAddField) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _addFocusNode.requestFocus();
       });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadTasks();
     }
   }
 
@@ -74,6 +88,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.focusTrigger?.removeListener(_onFocusTrigger);
     _addController.dispose();
     _addFocusNode.dispose();
@@ -92,17 +107,26 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
+      await MyDayService.instance.resetIfNewDay();
+
+      final myDayList = await MyDayService.instance.myDayTasks();
+      final suggestionsList = await buildSuggestions(now: DateTime.now());
       final buckets = await SimpleTaskRepository.instance.buckets(_todayIso);
 
       final allTaskIds = <String>[];
+      allTaskIds.addAll(myDayList.map((t) => t.id));
+      allTaskIds.addAll(suggestionsList.map((s) => s.task.id));
       for (final list in buckets.values) {
         allTaskIds.addAll(list.map((t) => t.id));
       }
+
       final stepCounts = await TaskStepRepository.instance.countsFor(allTaskIds);
       final attachmentCounts = await TaskAttachmentRepository.instance.countsFor(allTaskIds);
 
       if (mounted) {
         setState(() {
+          _myDayTasks = myDayList;
+          _myDaySuggestions = suggestionsList;
           _buckets = buckets;
           _stepCounts = stepCounts;
           _attachmentCounts = attachmentCounts;
@@ -322,6 +346,32 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
     );
   }
 
+  Future<void> _handleAddToMyDay(SimpleTask task) async {
+    await MyDayService.instance.addToMyDay(task.id);
+    if (!mounted) return;
+    await _loadTasks();
+    if (!mounted) return;
+    RitmoToast.show(context, TaskStrings.addedToMyDay);
+  }
+
+  Future<void> _handleRemoveFromMyDay(SimpleTask task) async {
+    await MyDayService.instance.removeFromMyDay(task.id);
+    if (!mounted) return;
+    await _loadTasks();
+    if (!mounted) return;
+    RitmoToast.show(
+      context,
+      TaskStrings.removedFromMyDay,
+      actionLabel: TaskStrings.undo,
+      onAction: () async {
+        await MyDayService.instance.addToMyDay(task.id);
+        if (mounted) {
+          unawaited(_loadTasks());
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -405,17 +455,16 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
 
             const SizedBox(height: 10),
 
-            // Main List View of Buckets
+            // Main List View of Buckets & My Day
             Expanded(
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: colors.primary))
-                  : totalTasks == 0
+                  : (totalTasks == 0 && _myDayTasks.isEmpty && _myDaySuggestions.isEmpty)
                       ? Center(
                           child: Text(
                             'هیچ کاری ثبت نشده است.\nیک کار جدید اضافه کنید!',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              
                               color: colors.textSecondary,
                               fontSize: 13,
                               height: 1.5,
@@ -424,6 +473,21 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
                         )
                       : CustomScrollView(
                           slivers: [
+                            SliverToBoxAdapter(
+                              child: MyDaySection(
+                                tasks: _myDayTasks,
+                                suggestions: _myDaySuggestions,
+                                onToggleDone: _toggleDone,
+                                onTaskTap: _openTaskDetails,
+                                onAddToMyDay: _handleAddToMyDay,
+                                onRemoveFromMyDay: _handleRemoveFromMyDay,
+                                onNewTask: () {
+                                  _addFocusNode.requestFocus();
+                                },
+                                stepCounts: _stepCounts,
+                                attachmentCounts: _attachmentCounts,
+                              ),
+                            ),
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                               sliver: SliverMainAxisGroup(

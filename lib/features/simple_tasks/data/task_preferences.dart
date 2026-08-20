@@ -103,4 +103,14 @@ class TaskPreferences {
   static Future<void> setHideCompleted(bool hide) async {
     await _setSetting(keyHideCompleted, hide ? '1' : '0');
   }
+
+  static const String keyMyDayLastReset = 'tasks_my_day_last_reset';
+
+  static Future<String?> getMyDayLastReset() async {
+    return await _getSetting(keyMyDayLastReset);
+  }
+
+  static Future<void> setMyDayLastReset(String dateIso) async {
+    await _setSetting(keyMyDayLastReset, dateIso);
+  }
 }

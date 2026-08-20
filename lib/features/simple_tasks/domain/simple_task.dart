@@ -18,6 +18,7 @@ class SimpleTask {
   final String origin; // 'SIMPLE' or 'PROMOTED'
   final bool isImportant;
   final DateTime? importantAt;
+  final DateTime? addedToMyDayAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -36,6 +37,7 @@ class SimpleTask {
     this.origin = 'SIMPLE',
     this.isImportant = false,
     this.importantAt,
+    this.addedToMyDayAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -43,6 +45,7 @@ class SimpleTask {
   static String generateId() => RitmoIdFactory.task();
 
   bool get isSomeday => dueDate == null;
+  bool get isInMyDay => addedToMyDayAt != null;
 
   factory SimpleTask.fromMap(Map<String, dynamic> m) {
     return SimpleTask(
@@ -60,6 +63,7 @@ class SimpleTask {
       origin: m['origin'] as String? ?? 'SIMPLE',
       isImportant: (m['isImportant'] as int? ?? 0) == 1,
       importantAt: m['importantAt'] != null ? DateTime.fromMillisecondsSinceEpoch(m['importantAt'] as int) : null,
+      addedToMyDayAt: m['addedToMyDayAt'] != null ? DateTime.fromMillisecondsSinceEpoch(m['addedToMyDayAt'] as int) : null,
       createdAt: DateTime.fromMillisecondsSinceEpoch(m['createdAt'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(m['updatedAt'] as int),
     );
@@ -82,6 +86,7 @@ class SimpleTask {
       'origin': origin,
       'isImportant': isImportant ? 1 : 0,
       'importantAt': importantAt?.millisecondsSinceEpoch,
+      'addedToMyDayAt': addedToMyDayAt?.millisecondsSinceEpoch,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
     };
@@ -103,6 +108,8 @@ class SimpleTask {
     bool? isImportant,
     bool clearImportantAt = false,
     Object? importantAt = _unset,
+    bool clearAddedToMyDayAt = false,
+    Object? addedToMyDayAt = _unset,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -123,6 +130,9 @@ class SimpleTask {
       importantAt: clearImportantAt
           ? null
           : (identical(importantAt, _unset) ? this.importantAt : importantAt as DateTime?),
+      addedToMyDayAt: clearAddedToMyDayAt
+          ? null
+          : (identical(addedToMyDayAt, _unset) ? this.addedToMyDayAt : addedToMyDayAt as DateTime?),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

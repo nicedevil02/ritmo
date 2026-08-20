@@ -16,6 +16,7 @@ import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_end_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_header.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_progress_tab.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_settings_sheet.dart';
@@ -309,77 +310,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
 
   // UX-11 Respectful 3-Path End of Pregnancy
   void _showEndPregnancySheet() {
-    final colors = context.colors;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'پایان دوره بارداری',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(14),
-                ),
-                icon: const Icon(CupertinoIcons.heart_fill),
-                label: const Text(
-                  'تولد نوزاد 🎉',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  Navigator.of(sheetCtx).pop();
-                  _handleBirthPath();
-                },
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.surface,
-                  foregroundColor: colors.textPrimary,
-                  padding: const EdgeInsets.all(14),
-                ),
-                icon: const Icon(CupertinoIcons.heart),
-                label: const Text('پایان بارداری', style: TextStyle()),
-                onPressed: () {
-                  Navigator.of(sheetCtx).pop();
-                  _handleLossPath();
-                },
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.of(sheetCtx).pop();
-                  _handleMistakePath();
-                },
-                child: Text(
-                  'اشتباه ثبت شده بود',
-                  style: TextStyle(color: colors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    PregnancyEndSheet.show(
+      context,
+      onBirth: _handleBirthPath,
+      onLoss: _handleLossPath,
+      onMistake: _handleMistakePath,
     );
   }
 
@@ -396,14 +331,16 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('تبریک! این سفر به زیباترین مقصد رسید. 🌸'),
-            content: const Text('می‌خواهید ردیابی چرخه دوباره فعال شود؟'),
+            content: const Text(
+              'امیدواریم قدم نو رسیده مبارک و پر از برکت باشد. مایلید ردیابی چرخه قاعدگی را چگونه ادامه دهید؟',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
                   widget.onDeactivated();
                 },
-                child: const Text('بلافاصله'),
+                child: const Text('بازگشت فوری به چرخه'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -419,7 +356,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
                   );
                   widget.onDeactivated();
                 },
-                child: const Text('بعداً یادآوری کن (۴۰ روز بعد)'),
+                child: const Text('یادآوری ۴۰ روز بعد (دوره نفاس/پس از زایمان)'),
               ),
             ],
           ),
@@ -434,9 +371,9 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('متأسفیم که این سفر به این شکل به پایان رسید.'),
+          title: const Text('از صمیم قلب در کنارتان هستیم 🤍'),
           content: const Text(
-            'هر وقت آماده بودید، این بخش دوباره در کنار شماست.',
+            'می‌دانیم این دوران چقدر می‌تواند حساس و دشوار باشد. داده‌های شما با احترام کامل حفظ می‌شوند و تمام اعلان‌های مرتبط با بارداری فوراً متوقف خواهند شد. هر زمان که آماده بودید، در کنارتان هستیم.',
           ),
           actions: [
             TextButton(
@@ -450,7 +387,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
                 );
                 widget.onDeactivated();
               },
-              child: const Text('پنهان کردن کامل این بخش'),
+              child: const Text('پنهان‌سازی بخش بارداری و بازگشت به چرخه'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: colors.error),
@@ -471,8 +408,30 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
   }
 
   Future<void> _handleMistakePath() async {
-    await _purgeAllPregnancyTables();
-    widget.onDeactivated();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('خروج از حالت بارداری'),
+        content: const Text(
+          'حالت بارداری غیرفعال شده و به چرخهٔ عادی بازمی‌گردید. تاریخچه و داده‌های دوره‌های پیشین بدون تغییر باقی می‌مانند.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('انصراف'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('بازگشت به چرخه'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await _purgeAllPregnancyTables();
+      widget.onDeactivated();
+    }
   }
 
   Future<void> _purgeAllPregnancyTables() async {

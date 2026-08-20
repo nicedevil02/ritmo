@@ -1149,6 +1149,7 @@ $_bridgeScriptBody''';
             injectAndTriggerSend(textarea, promptText, reqId);
           } else if (waitCount > 20) {
             clearInterval(pageWaitInterval);
+            notifyFlutter('composer_not_found', { requestId: reqId, source: 'dom' });
             notifyFlutter('error', { message: 'فیلد ورودی متن ChatGPT هنوز لود نشده است.', requestId: reqId, source: 'dom' });
           }
         }, 500);
@@ -1199,6 +1200,8 @@ $_bridgeScriptBody''';
           editor.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
+        notifyFlutter('prompt_typed', { length: text.length, requestId: currentReqId, source: 'dom' });
+
         var sendCheckAttempts = 0;
         var sendClicked = false;
         var sendInterval = setInterval(function() {
@@ -1214,6 +1217,14 @@ $_bridgeScriptBody''';
             sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
             sendBtn.click();
             console.log('[Ritmo] Send button clicked successfully!');
+            var matchedSel = RITMO_SELECTORS.sendButton;
+            var candidateNodes = queryAllSafe(RITMO_SELECTORS.sendButton);
+            notifyFlutter('send_clicked', {
+              requestId: currentReqId,
+              matchedSelector: matchedSel,
+              candidateCount: candidateNodes.length,
+              source: 'dom'
+            });
             window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
@@ -1229,6 +1240,7 @@ $_bridgeScriptBody''';
               });
               editor.dispatchEvent(enterDown);
               console.log('[Ritmo] Fallback Enter key dispatched (no send button found after 8 attempts)');
+              notifyFlutter('send_fallback_enter', { requestId: currentReqId, source: 'dom' });
               window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
             }
           }

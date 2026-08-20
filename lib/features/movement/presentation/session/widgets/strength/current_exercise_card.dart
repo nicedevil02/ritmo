@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/movement/domain/models/movement_strength_exercise.dart';
+import 'package:ritmo/features/movement/domain/models/movement_exercise.dart';
 
-/// کارت نمایش حرکت جاری تمرین قدرتی با نکات فرم و دکمهٔ جایگزینی
+/// کارت نمایش حرکت جاری تمرین قدرتی
 class CurrentExerciseCard extends StatelessWidget {
   const CurrentExerciseCard({
     super.key,
     required this.exercise,
-    required this.onSwapPressed,
+    this.onSwapPressed,
   });
 
-  final MovementStrengthExercise exercise;
-  final VoidCallback onSwapPressed;
+  final MovementExercise exercise;
+  final VoidCallback? onSwapPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -58,54 +58,34 @@ class CurrentExerciseCard extends StatelessWidget {
                         colors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${exercise.muscleGroup} • ${toPersianDigits(exercise.sets)} ست × ${toPersianDigits(exercise.repsDisplay)} تکرار',
-                      style: RitmoTextStyles.caption(
-                        sportsColor,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
+                    if (exercise.muscleGroup != null && exercise.muscleGroup!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        exercise.muscleGroup!,
+                        style: RitmoTextStyles.caption(
+                          sportsColor,
+                        ).copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              // دکمه جایگزینی حرکت
-              OutlinedButton.icon(
-                onPressed: onSwapPressed,
-                icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                label: const Text('تعویض'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(64, 36),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  side: BorderSide(color: colors.border),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
+              if (onSwapPressed != null)
+                OutlinedButton.icon(
+                  onPressed: onSwapPressed,
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
+                  label: const Text('تعویض'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(64, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    side: BorderSide(color: colors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
-          if (exercise.formTips.isNotEmpty) ...[
-            const SizedBox(height: RitmoSpacing.sm),
-            const Divider(height: 1),
-            const SizedBox(height: RitmoSpacing.sm),
-            ...exercise.formTips.take(3).map((tip) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: RitmoTextStyles.caption(sportsColor)),
-                    Expanded(
-                      child: Text(
-                        tip,
-                        style: RitmoTextStyles.caption(colors.textSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
         ],
       ),
     );

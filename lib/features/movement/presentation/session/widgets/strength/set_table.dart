@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/movement/domain/models/movement_exercise.dart';
 import 'package:ritmo/features/movement/domain/models/movement_set_log.dart';
-import 'package:ritmo/features/movement/domain/models/movement_strength_exercise.dart';
-import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
-import 'package:ritmo/features/movement/presentation/strength/widgets/set_row.dart';
+import 'package:ritmo/features/movement/presentation/session/widgets/strength/set_row.dart';
 
 /// جدول ثبت ست‌های تمرینی برای حرکت جاری
 class SetTable extends StatelessWidget {
@@ -18,7 +17,7 @@ class SetTable extends StatelessWidget {
     required this.onAddSet,
   });
 
-  final MovementStrengthExercise exercise;
+  final MovementExercise exercise;
   final List<MovementSetLog> setLogs;
   final List<MovementSetLog> hintLogs;
   final void Function(int setIndex, double? weight) onSetWeightChanged;
@@ -31,9 +30,7 @@ class SetTable extends StatelessWidget {
     final colors = context.colors;
     final sportsColor = context.modules.sports;
 
-    final targetSetsCount = exercise.sets > setLogs.length
-        ? exercise.sets
-        : setLogs.length;
+    final targetSetsCount = setLogs.isEmpty ? 3 : setLogs.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,16 +55,7 @@ class SetTable extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: Text(
-                  'هدف/قبل',
-                  textAlign: TextAlign.center,
-                  style: RitmoTextStyles.caption(colors.textSecondary),
-                ),
-              ),
-              const SizedBox(width: RitmoSpacing.xs),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'وزن (kg)',
+                  'وزن (کیلوگرم)',
                   textAlign: TextAlign.center,
                   style: RitmoTextStyles.caption(colors.textSecondary),
                 ),
@@ -114,7 +102,7 @@ class SetTable extends StatelessWidget {
           return SetRow(
             key: ValueKey('set_${exercise.id}_$setNum'),
             setIndex: setNum,
-            targetReps: exercise.repsDisplay,
+            targetReps: '۱۰',
             log: log.id.isNotEmpty ? log : null,
             hintLog: hint,
             onWeightChanged: (w) => onSetWeightChanged(setNum, w),
@@ -130,7 +118,7 @@ class SetTable extends StatelessWidget {
           onPressed: onAddSet,
           icon: Icon(Icons.add_rounded, size: 18, color: sportsColor),
           label: Text(
-            MovementStrings.strengthAddSet,
+            'افزودن ست',
             style: RitmoTextStyles.label(sportsColor),
           ),
         ),

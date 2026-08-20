@@ -712,6 +712,40 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.info,
           );
 
+        case BridgePromptTypedEvent(:final length, :final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'prompt_typed',
+            source: source,
+            requestId: requestId,
+            textLength: length,
+            level: BridgeTraceLevel.info,
+          );
+
+        case BridgeSendClickedEvent(:final matchedSelector, :final candidateCount, :final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'send_clicked',
+            source: source,
+            requestId: requestId,
+            note: 'selector=$matchedSelector candidates=$candidateCount',
+            level: BridgeTraceLevel.info,
+          );
+
+        case BridgeSendFallbackEnterEvent(:final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'send_fallback_enter',
+            source: source,
+            requestId: requestId,
+            level: BridgeTraceLevel.warn,
+          );
+
+        case BridgeComposerNotFoundEvent(:final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'composer_not_found',
+            source: source,
+            requestId: requestId,
+            level: BridgeTraceLevel.error,
+          );
+
         case BridgeAuthRequiredEvent(:final url):
           _isAuthenticated = false;
           RitmoLog.warning(

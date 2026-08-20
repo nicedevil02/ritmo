@@ -153,6 +153,30 @@ sealed class WebBridgeEvent {
             issue: readString('issue'),
             bridgeVersion: readInt('bridgeVersion'),
           );
+        case 'prompt_typed':
+          return BridgePromptTypedEvent(
+            source: src,
+            requestId: readString('requestId'),
+            length: readInt('length') ?? 0,
+          );
+        case 'send_clicked':
+          return BridgeSendClickedEvent(
+            source: src,
+            requestId: readString('requestId'),
+            matchedSelector: readString('matchedSelector'),
+            candidateCount: readInt('candidateCount') ?? 0,
+            ariaLabel: readString('ariaLabel'),
+          );
+        case 'send_fallback_enter':
+          return BridgeSendFallbackEnterEvent(
+            source: src,
+            requestId: readString('requestId'),
+          );
+        case 'composer_not_found':
+          return BridgeComposerNotFoundEvent(
+            source: src,
+            requestId: readString('requestId'),
+          );
         case 'auto_dismiss':
           return BridgeAutoDismissEvent(
             source: src,
@@ -339,6 +363,50 @@ class BridgeNetworkConversationStartedEvent extends WebBridgeEvent {
 
   final String? requestId;
   final String? url;
+}
+
+class BridgePromptTypedEvent extends WebBridgeEvent {
+  const BridgePromptTypedEvent({
+    required super.source,
+    this.requestId,
+    this.length = 0,
+  });
+
+  final String? requestId;
+  final int length;
+}
+
+class BridgeSendClickedEvent extends WebBridgeEvent {
+  const BridgeSendClickedEvent({
+    required super.source,
+    this.requestId,
+    this.matchedSelector,
+    this.candidateCount = 0,
+    this.ariaLabel,
+  });
+
+  final String? requestId;
+  final String? matchedSelector;
+  final int candidateCount;
+  final String? ariaLabel;
+}
+
+class BridgeSendFallbackEnterEvent extends WebBridgeEvent {
+  const BridgeSendFallbackEnterEvent({
+    required super.source,
+    this.requestId,
+  });
+
+  final String? requestId;
+}
+
+class BridgeComposerNotFoundEvent extends WebBridgeEvent {
+  const BridgeComposerNotFoundEvent({
+    required super.source,
+    this.requestId,
+  });
+
+  final String? requestId;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

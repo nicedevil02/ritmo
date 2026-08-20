@@ -134,7 +134,7 @@ class _RestTimerBarState extends State<RestTimerBar> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                MovementStrings.strengthRestTimer,
+                'استراحت',
                 style: RitmoTextStyles.caption(colors.textSecondary),
               ),
               Text(
@@ -157,7 +157,7 @@ class _RestTimerBarState extends State<RestTimerBar> {
               minimumSize: const Size(48, 36),
             ),
             child: Text(
-              MovementStrings.restAddFifteen,
+              '+۱۵ ثانیه',
               style: RitmoTextStyles.caption(
                 sportsColor,
               ).copyWith(fontWeight: FontWeight.bold),
@@ -175,7 +175,7 @@ class _RestTimerBarState extends State<RestTimerBar> {
               minimumSize: const Size(48, 36),
             ),
             child: Text(
-              MovementStrings.strengthRestSkip,
+              'رد کردن',
               style: RitmoTextStyles.caption(colors.textSecondary),
             ),
           ),

@@ -9,8 +9,8 @@
 
 | ID | عنوان | فاز | وضعیت | commit | یادداشت |
 |----|------|-----|-------|--------|---------|
-| DET-01 | دفترچه و کلید source روی همهٔ پیلودها | A | DONE | pending | ساخت لاگ‌بوک و تضمین وجود source در تمام رویدادها |
-| DET-02 | رویدادهای مسیر ارسال | A | TODO | | |
+| DET-01 | دفترچه و کلید source روی همهٔ پیلودها | A | DONE | f85ac419 | ساخت لاگ‌بوک و تضمین وجود source در تمام رویدادها |
+| DET-02 | رویدادهای مسیر ارسال | A | DONE | pending | رویدادهای prompt_typed، send_clicked، send_fallback_enter و composer_not_found اضافه شدند |
 | DET-03 | تیک دوره‌ای واچر | A | TODO | | |
 | DET-04 | فازبندی selector_health | A | TODO | | |
 | DET-05 | افزایش نسخهٔ بریج به ۹ | A | TODO | | |

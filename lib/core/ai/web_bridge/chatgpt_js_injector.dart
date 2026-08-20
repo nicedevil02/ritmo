@@ -1180,14 +1180,32 @@ $_bridgeScriptBody''';
     window.__ritmo_active_req_id = null;
   };
 
-  window.__ritmo_startStreamingWatcher = function(previousBaselineText, reqId) {
+  window.__ritmo_startStreamingWatcher = function(baselineOrText, reqId) {
     window.__ritmo_watcher_running = true;
     lastLength = 0;
     lastText = '';
     lastChangeTimestamp = Date.now();
     streamStartTime = Date.now();
     tickCount = 0;
-    previousBaselineText = (previousBaselineText || '').trim();
+
+    var baseline = {
+      text: '',
+      length: 0,
+      turnCount: 0,
+      assistantNodes: 0
+    };
+
+    if (baselineOrText && typeof baselineOrText === 'object') {
+      baseline.text = (baselineOrText.text || '').trim();
+      baseline.length = baselineOrText.length || baseline.text.length;
+      baseline.turnCount = baselineOrText.turnCount || 0;
+      baseline.assistantNodes = baselineOrText.assistantNodes || 0;
+    } else if (typeof baselineOrText === 'string') {
+      baseline.text = baselineOrText.trim();
+      baseline.length = baseline.text.length;
+    }
+
+    var previousBaselineText = baseline.text;
 
     if (streamCheckTimer) clearInterval(streamCheckTimer);
     stopDomObserver();
@@ -1195,7 +1213,13 @@ $_bridgeScriptBody''';
     // Emits delta when extending previous text, and fullText on periodic sync or rewrite (A-37)
     function checkAndEmitChunk(forceFull) {
       var currentText = findLatestAssistantText();
-      if (!currentText || currentText === previousBaselineText) return;
+      var currentAssistantNodes = queryAllSafe(RITMO_SELECTORS.assistantMessage).length;
+      var currentTurnCount = queryAllSafe(RITMO_SELECTORS.conversationTurns).length;
+
+      var hasNewNode = (baseline.assistantNodes > 0 && currentAssistantNodes > baseline.assistantNodes) ||
+                       (baseline.turnCount > 0 && currentTurnCount > baseline.turnCount);
+
+      if (!currentText || (currentText === previousBaselineText && !hasNewNode)) return;
 
       tickCount++;
       var isPeriodicSync = (tickCount % 10 === 0) || forceFull === true;
@@ -1281,8 +1305,12 @@ $_bridgeScriptBody''';
 
       var totalDuration = Date.now() - streamStartTime;
       var currentText = findLatestAssistantText();
+      var currentAssistantNodes = queryAllSafe(RITMO_SELECTORS.assistantMessage).length;
+      var currentTurnCount = queryAllSafe(RITMO_SELECTORS.conversationTurns).length;
+      var hasNewNode = (baseline.assistantNodes > 0 && currentAssistantNodes > baseline.assistantNodes) ||
+                       (baseline.turnCount > 0 && currentTurnCount > baseline.turnCount);
 
-      if (!currentText || currentText === previousBaselineText) {
+      if (!currentText || (currentText === previousBaselineText && !hasNewNode)) {
         if (totalDuration > 170000) {
           window.__ritmo_watcher_running = false;
           clearInterval(streamCheckTimer);
@@ -1432,8 +1460,15 @@ $_bridgeScriptBody''';
           el.setAttribute('data-ritmo-seen', 'true');
         });
 
-        var previousBaselineText = findLatestAssistantText();
-        window.__ritmo_turn_baseline = previousBaselineText || '';
+        var latestAssistant = findLatestAssistantText() || '';
+        var baseline = {
+          text: latestAssistant,
+          length: latestAssistant.length,
+          turnCount: queryAllSafe(RITMO_SELECTORS.conversationTurns).length,
+          assistantNodes: queryAllSafe(RITMO_SELECTORS.assistantMessage).length
+        };
+        window.__ritmo_turn_baseline = baseline.text;
+        window.__ritmo_turn_baseline_obj = baseline;
 
         editor.focus();
 
@@ -1538,7 +1573,7 @@ $_bridgeScriptBody''';
               candidateCount: candidateNodes.length,
               source: 'dom'
             });
-            window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+            window.__ritmo_startStreamingWatcher(baseline, currentReqId);
             verifySubmissionAndRetry(false);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
@@ -1555,7 +1590,7 @@ $_bridgeScriptBody''';
               editor.dispatchEvent(enterDown);
               console.log('[Ritmo] Fallback Enter key dispatched (no active send button found after 8 attempts)');
               notifyFlutter('send_fallback_enter', { requestId: currentReqId, source: 'dom' });
-              window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+              window.__ritmo_startStreamingWatcher(baseline, currentReqId);
               verifySubmissionAndRetry(true);
             }
           }
@@ -1604,7 +1639,7 @@ $_bridgeScriptBody''';
         notifyFlutter('resumed', { stage: 'streaming', requestId: reqId, recoveredLength: 0, source: 'dom' });
       }
 
-      window.__ritmo_startStreamingWatcher(window.__ritmo_turn_baseline || '', reqId);
+      window.__ritmo_startStreamingWatcher(window.__ritmo_turn_baseline_obj || window.__ritmo_turn_baseline || '', reqId);
     } catch (e) {
       window.__ritmo_watcher_running = false;
       console.error('[Ritmo] Error in __ritmo_resume: ' + e);

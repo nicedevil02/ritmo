@@ -4,6 +4,7 @@ import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
 import 'package:ritmo/core/ai/personas/persona_skill.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
+import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,24 @@ void main() {
           isNotEmpty,
           reason: 'Persona "${p.id}" has empty skills list',
         );
+      }
+    });
+
+    test('invariant 6 command touches must be within persona reads', () {
+      final exemptCommandIds = {'assistant.handoff', 'app.openPage', 'setting.update'};
+      final personas = PersonaRegistry.instance.allPersonas;
+
+      for (final p in personas) {
+        final availableCommands = RitmoCommandBus.instance.availableFor(p.id);
+        for (final cmd in availableCommands) {
+          if (exemptCommandIds.contains(cmd.id)) continue;
+          final illegalDomains = cmd.touches.difference(p.reads);
+          expect(
+            illegalDomains,
+            isEmpty,
+            reason: 'Persona "${p.id}" has command "${cmd.id}" touching domains $illegalDomains not in reads ${p.reads} (expected green in PSN-33)',
+          );
+        }
       }
     });
   });

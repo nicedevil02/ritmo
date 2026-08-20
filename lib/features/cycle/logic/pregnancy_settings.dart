@@ -2,6 +2,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:ritmo/features/cycle/models/pregnancy_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -79,6 +81,23 @@ class PregnancySettings {
 
   static bool isSetupDone(Map<String, dynamic> settings) {
     return settings[keySetupDone]?.toString().toLowerCase() == 'true';
+  }
+
+  static bool hasValidDates(Map<String, dynamic> settings) {
+    final startStr = settings[keyStartDate]?.toString();
+    final dueStr = settings[keyDueDate]?.toString();
+    if (startStr == null || dueStr == null) return false;
+
+    final start = CycleDateContract.parseDayKey(startStr);
+    final due = CycleDateContract.parseDayKey(dueStr);
+    if (start == null || due == null) return false;
+
+    final diff = CycleDateContract.daysBetween(start, due);
+    return diff >= 200 && diff <= 320;
+  }
+
+  static bool isPregnancyUsable(Map<String, dynamic> settings) {
+    return CycleSettings.isPregnancyMode(settings) && hasValidDates(settings);
   }
 
   static Future<void> setPregnancyActive(

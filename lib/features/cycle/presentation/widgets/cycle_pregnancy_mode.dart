@@ -14,6 +14,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
+import 'package:ritmo/features/cycle/logic/pregnancy_reminder_scheduler.dart';
 import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_end_sheet.dart';
@@ -324,6 +325,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
     if (trackerId.isNotEmpty) {
       await PregnancyRepository.instance.deactivateTracker(trackerId);
     }
+    await PregnancyReminderScheduler.cancelAll();
 
     if (mounted) {
       unawaited(
@@ -345,14 +347,9 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
               ElevatedButton(
                 onPressed: () async {
                   Navigator.of(ctx).pop();
-                  final db = await DatabaseHelper.instance.database;
-                  final remindMs = CycleClock.now
-                      .add(const Duration(days: 40))
-                      .millisecondsSinceEpoch;
-                  await PregnancySettings.saveSetting(
-                    PregnancySettings.keyCycleResumeReminder,
-                    remindMs.toString(),
-                    db,
+                  final remindDate = CycleClock.now.add(const Duration(days: 40));
+                  await PregnancyReminderScheduler.scheduleCycleResume(
+                    reminderDate: remindDate,
                   );
                   widget.onDeactivated();
                 },
@@ -367,6 +364,10 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
 
   Future<void> _handleLossPath() async {
     final colors = context.colors;
+    await PregnancyReminderScheduler.cancelAll();
+
+    if (!mounted) return;
+
     unawaited(
       showDialog(
         context: context,
@@ -429,6 +430,7 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
     );
 
     if (confirmed == true && mounted) {
+      await PregnancyReminderScheduler.cancelAll();
       await _purgeAllPregnancyTables();
       widget.onDeactivated();
     }

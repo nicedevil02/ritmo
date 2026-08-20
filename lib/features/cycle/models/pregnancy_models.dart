@@ -267,3 +267,43 @@ class PregnancyProfile {
         reminderHour,
       );
 }
+
+@immutable
+class GestationalAge {
+  final int weeks;
+  final int days;
+  final int totalDays;
+
+  const GestationalAge({
+    required this.weeks,
+    required this.days,
+    required this.totalDays,
+  });
+
+  factory GestationalAge.fromDays(int totalDays) {
+    final clamped = totalDays < 0 ? 0 : totalDays;
+    final w = clamped ~/ 7;
+    final d = clamped % 7;
+    return GestationalAge(
+      weeks: w,
+      days: d,
+      totalDays: clamped,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GestationalAge &&
+          runtimeType == other.runtimeType &&
+          weeks == other.weeks &&
+          days == other.days &&
+          totalDays == other.totalDays;
+
+  @override
+  int get hashCode => Object.hash(weeks, days, totalDays);
+
+  @override
+  String toString() => 'GestationalAge(weeks: $weeks, days: $days, totalDays: $totalDays)';
+}
+

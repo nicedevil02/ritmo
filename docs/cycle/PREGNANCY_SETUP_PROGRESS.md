@@ -7,8 +7,8 @@
 | PRG-03 | فاساد PregnancySettings | A | DONE | 0ff18cfb | بحرانی - تکمیل شد |
 | PRG-04 | setPregnancyActive سه‌پرچمی | A | DONE | 1cedc5e6 | تکمیل شد |
 | PRG-05 | hasValidDates و isPregnancyUsable | A | DONE | bc8d509a | بحرانی - تکمیل شد |
-| PRG-06 | حذف نوشتن خام در cycle_screen | A | DONE | pending | تکمیل شد |
-| PRG-07 | موتور تاریخ بارداری | B | TODO | | |
+| PRG-06 | حذف نوشتن خام در cycle_screen | A | DONE | a50e6d18 | تکمیل شد |
+| PRG-07 | موتور تاریخ بارداری | B | DONE | pending | تکمیل شد |
 | PRG-08 | اعتبارسنجی تاریخ | B | TODO | | |
 | PRG-09 | قالب‌بندی فارسی سن | B | TODO | | |
 | PRG-10 | dayShiftBetween | B | TODO | | |

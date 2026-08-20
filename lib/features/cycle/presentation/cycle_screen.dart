@@ -499,6 +499,24 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     await _loadData();
   }
 
+  void _openPregnancyOnboarding() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CycleOnboardingShell(
+        onCompleted: () {
+          Navigator.pop(ctx);
+          _loadData();
+        },
+        onNavigateToPregnancy: () {
+          Navigator.pop(ctx);
+          _loadData();
+        },
+      ),
+    );
+  }
+
   void _openSettingsSheet() {
     showModalBottomSheet(
       context: context,
@@ -538,7 +556,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       );
     }
 
-    final isPregnancyActive = _settings['cycle_pregnancy_mode'] == 'true';
+    final isPregnancyActive = CycleSettings.isPregnancyMode(_settings);
+    final hasValidPregnancyDates = PregnancySettings.hasValidDates(_settings);
 
     if (_periods.isEmpty && !isPregnancyActive) {
       return Scaffold(
@@ -597,7 +616,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ),
                   actions: [
                     IconButton(
-                      icon: Icon(
+                       icon: Icon(
                         CupertinoIcons.sparkles,
                         color: colors.primary,
                         size: 20,
@@ -616,24 +635,81 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 ),
               ],
               body: isPregnancyActive
-                  ? CyclePregnancyModeView(
-                      pregnancyStartDate:
-                          _settings['preg_start_date'] ??
-                          CycleDateContract.toDayKey(CycleClock.now),
-                      pregnancyDueDate:
-                          _settings['preg_due_date'] ??
-                          CycleDateContract.toDayKey(
-                            CycleClock.now.add(const Duration(days: 280)),
+                  ? (hasValidPregnancyDates
+                      ? CyclePregnancyModeView(
+                          pregnancyStartDate: _settings['preg_start_date']!,
+                          pregnancyDueDate: _settings['preg_due_date']!,
+                          onDeactivated: () async {
+                            final db = await DatabaseHelper.instance.database;
+                            await PregnancySettings.setPregnancyActive(false, db: db);
+                            await _loadData();
+                          },
+                          settings: _settings,
+                          dayLogs: _dayLogs,
+                          engineOutput: _engineOutput,
+                        )
+                      : Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: RitmoSheetGlassCard(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.exclamationmark_triangle_fill,
+                                        size: 48,
+                                        color: colors.warning,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'اطلاعات بارداری ناقص است',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: colors.textPrimary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'برای محاسبه دقیق سن بارداری و دسترسی به امکانات، لطفاً اطلاعات راه‌اندازی را تکمیل کنید.',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: colors.textSecondary,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: colors.primary,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                        ),
+                                        icon: const Icon(CupertinoIcons.pencil),
+                                        label: const Text(
+                                          'تکمیل راه‌اندازی بارداری',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        onPressed: _openPregnancyOnboarding,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                      onDeactivated: () async {
-                        final db = await DatabaseHelper.instance.database;
-                        await PregnancySettings.setPregnancyActive(false, db: db);
-                        await _loadData();
-                      },
-                      settings: _settings,
-                      dayLogs: _dayLogs,
-                      engineOutput: _engineOutput,
-                    )
+                        ))
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(

@@ -451,11 +451,196 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     );
   }
 
+  Future<void> _openLeadDaysPicker() async {
+    final colors = context.colors;
+    int selected = _profile.visitReminderLeadDays;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'فاصلهٔ یادآوری ویزیت مامایی',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.minus_circle_fill),
+                      iconSize: 32,
+                      color: selected > 1 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected > 1
+                          ? () => setModalState(() => selected--)
+                          : null,
+                    ),
+                    const SizedBox(width: 24),
+                    Text(
+                      '${PersianDigits.toFa(selected.toString())} روز قبل',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.plus_circle_fill),
+                      iconSize: 32,
+                      color: selected < 7 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected < 7
+                          ? () => setModalState(() => selected++)
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(visitReminderLeadDays: selected);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openReminderHourPicker() async {
+    final colors = context.colors;
+    int selected = _profile.reminderHour;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) => RitmoSheetGlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'ساعت ارسال یادآوری‌های بارداری',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.minus_circle_fill),
+                      iconSize: 32,
+                      color: selected > 6 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected > 6
+                          ? () => setModalState(() => selected--)
+                          : null,
+                    ),
+                    const SizedBox(width: 24),
+                    Text(
+                      'ساعت ${PersianDigits.toFa(selected.toString())}:۰۰',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(CupertinoIcons.plus_circle_fill),
+                      iconSize: 32,
+                      color: selected < 22 ? colors.primary : colors.textSecondary.withValues(alpha: 0.3),
+                      onPressed: selected < 22
+                          ? () => setModalState(() => selected++)
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    Navigator.of(sheetCtx).pop();
+                    final updated = _profile.copyWith(reminderHour: selected);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  },
+                  child: const Text('تأیید و ذخیره', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildToggleRow(
     BuildContext context, {
     required String title,
+    String? subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    ValueChanged<bool>? onChanged,
   }) {
     final colors = context.colors;
     return Padding(
@@ -464,9 +649,27 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              title,
-              style: TextStyle(fontSize: 14, color: colors.textPrimary),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: onChanged != null ? colors.textPrimary : colors.textSecondary,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.textSecondary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           CupertinoSwitch(
@@ -680,6 +883,43 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
 
           // Section 3: مراقبت‌ها و یادآوری‌ها
           _buildSectionHeader(context, 'مراقبت‌ها و یادآوری‌ها'),
+          _buildParameterRow(
+            context,
+            title: 'یادآوری ویزیت مامایی',
+            value: '${PersianDigits.toFa(_profile.visitReminderLeadDays.toString())} روز قبل',
+            onTap: _openLeadDaysPicker,
+          ),
+          _buildParameterRow(
+            context,
+            title: 'ساعت یادآوری‌های بارداری',
+            value: 'ساعت ${PersianDigits.toFa(_profile.reminderHour.toString())}:۰۰',
+            onTap: _openReminderHourPicker,
+          ),
+          _buildToggleRow(
+            context,
+            title: 'یادآوری مکمل‌ها و ویتامین‌ها',
+            value: _profile.supplementReminder,
+            onChanged: (val) async {
+              final updated = _profile.copyWith(supplementReminder: val);
+              await PregnancySettings.saveProfile(updated);
+              if (mounted) setState(() => _profile = updated);
+              widget.onDataReloadNeeded?.call();
+            },
+          ),
+          _buildToggleRow(
+            context,
+            title: 'یادآوری لگدشماری از هفتهٔ ۲۸',
+            subtitle: age.weeks < 28 ? 'از هفتهٔ ۲۸ به بعد فعال می‌شود.' : null,
+            value: age.weeks >= 28 ? _profile.kickReminder : false,
+            onChanged: age.weeks >= 28
+                ? (val) async {
+                    final updated = _profile.copyWith(kickReminder: val);
+                    await PregnancySettings.saveProfile(updated);
+                    if (mounted) setState(() => _profile = updated);
+                    widget.onDataReloadNeeded?.call();
+                  }
+                : null,
+          ),
           const SizedBox(height: 8),
           Divider(height: 16, color: colors.border),
 

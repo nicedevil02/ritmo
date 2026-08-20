@@ -113,6 +113,8 @@ class PregnancyProfile {
   final int visitReminderLeadDays;
   final int reminderHour;
   final bool showCountdown;
+  final bool supplementReminder;
+  final bool kickReminder;
 
   const PregnancyProfile({
     required this.lmpDate,
@@ -132,6 +134,8 @@ class PregnancyProfile {
     this.visitReminderLeadDays = defaultVisitReminderLeadDays,
     this.reminderHour = defaultReminderHour,
     this.showCountdown = true,
+    this.supplementReminder = false,
+    this.kickReminder = false,
   });
 
   PregnancyProfile copyWith({
@@ -152,6 +156,8 @@ class PregnancyProfile {
     int? visitReminderLeadDays,
     int? reminderHour,
     bool? showCountdown,
+    bool? supplementReminder,
+    bool? kickReminder,
   }) {
     return PregnancyProfile(
       lmpDate: lmpDate ?? this.lmpDate,
@@ -173,6 +179,8 @@ class PregnancyProfile {
           visitReminderLeadDays ?? this.visitReminderLeadDays,
       reminderHour: reminderHour ?? this.reminderHour,
       showCountdown: showCountdown ?? this.showCountdown,
+      supplementReminder: supplementReminder ?? this.supplementReminder,
+      kickReminder: kickReminder ?? this.kickReminder,
     );
   }
 
@@ -195,6 +203,8 @@ class PregnancyProfile {
       'preg_visit_reminder_lead_days': visitReminderLeadDays.toString(),
       'preg_reminder_hour': reminderHour.toString(),
       'preg_show_countdown': showCountdown.toString(),
+      'preg_supplement_reminder': supplementReminder.toString(),
+      'preg_kick_reminder': kickReminder.toString(),
     };
   }
 
@@ -229,6 +239,8 @@ class PregnancyProfile {
       reminderHour: int.tryParse(map['preg_reminder_hour']?.toString() ?? '') ??
           defaultReminderHour,
       showCountdown: map['preg_show_countdown']?.toString() != 'false',
+      supplementReminder: map['preg_supplement_reminder']?.toString() == 'true',
+      kickReminder: map['preg_kick_reminder']?.toString() == 'true',
     );
   }
 

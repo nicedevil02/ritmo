@@ -53,7 +53,7 @@ void main() {
     });
 
     testWidgets(
-      'CycleScreen hides pregnancy mode when preg_section_hidden is true',
+      'CycleScreen preserves pregnancy view even when preg_section_hidden is true',
       (tester) async {
         tester.view.physicalSize = const Size(800, 2000);
         tester.view.devicePixelRatio = 1.0;
@@ -84,28 +84,15 @@ void main() {
             'value': 'true',
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-          // Also add a dummy period so normal cycle screen renders instead of empty state
-          await db.insert('cycle_periods', {
-            'id': 'p1',
-            'startDate': '2026-01-01',
-            'endDate': '2026-01-06',
-            'flowIntensity': 'MEDIUM',
-            'isPredicted': 0,
-            'createdAt': now.millisecondsSinceEpoch,
-            'updatedAt': now.millisecondsSinceEpoch,
-          });
-
           await tester.pumpWidget(_buildTestApp(const CycleScreen()));
           await tester.pump();
-          await Future.delayed(const Duration(milliseconds: 200));
-          await tester.pump(const Duration(milliseconds: 300));
-          await Future.delayed(const Duration(milliseconds: 200));
-          await tester.pump(const Duration(milliseconds: 300));
+          await Future.delayed(const Duration(milliseconds: 100));
+          await tester.pump(const Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 100));
+          await tester.pump(const Duration(milliseconds: 100));
 
-          // CyclePregnancyModeView should NOT be present
-          expect(find.byType(CyclePregnancyModeView), findsNothing);
-          // Header or empty state should not show pregnancy mode
-          expect(find.byType(CycleScreen), findsOneWidget);
+          // CyclePregnancyModeView SHOULD be present inside Cycle module
+          expect(find.byType(CyclePregnancyModeView), findsOneWidget);
         });
       },
     );

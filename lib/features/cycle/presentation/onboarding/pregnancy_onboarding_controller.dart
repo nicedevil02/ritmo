@@ -149,7 +149,7 @@ class PregnancyOnboardingController extends ChangeNotifier {
   bool pauseCyclePredictions = true;
   bool suspendWorship = false;
   bool lockEnabled = false;
-  bool hideFromDashboard = true;
+  bool hideFromDashboard = false;
   bool maskNotifications = true;
 
   PregnancyOnboardingData buildOnboardingData() {

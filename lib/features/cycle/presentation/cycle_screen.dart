@@ -745,9 +745,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       );
     }
 
-    final isSectionHidden = _settings['preg_section_hidden'] == 'true';
-    final isPregnancyActive =
-        CycleSettings.isPregnancyMode(_settings) && !isSectionHidden;
+    final isPregnancyActive = CycleSettings.isPregnancyMode(_settings);
     final hasValidPregnancyDates = PregnancySettings.hasValidDates(_settings);
 
     if (_periods.isEmpty && !isPregnancyActive) {

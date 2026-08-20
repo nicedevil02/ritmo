@@ -88,8 +88,8 @@ class MovementWeekStats {
 - هیچ fallback دروغینی مثل `0.85` یا `1.0` نداری.
 
 **دروازهٔ پذیرش فاز ۱**
-- [ ] `flutter analyze` سبز.
-- [ ] `flutter test test/movement/movement_week_stats_test.dart` سبز (تست را خودت بساز: حداقل ۵ سناریو شامل هفتهٔ خالی، هفتهٔ کامل، و `sampleSize < 4`).
+- [x] `flutter analyze` سبز.
+- [x] `flutter test test/movement/movement_week_stats_test.dart` سبز (تست را خودت بساز: حداقل ۵ سناریو شامل هفتهٔ خالی، هفتهٔ کامل، و `sampleSize < 4`).
 
 ---
 

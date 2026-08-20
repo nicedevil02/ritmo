@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
+import 'package:ritmo/features/movement/domain/models/movement_tier.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// سرویس مدیریت ترجیحات و تنظیمات ماژول حرکت — دقیقاً ۳ تنظیم طبق D-38
+/// سرویس مدیریت ترجیحات و تنظیمات ماژول حرکت (P-02)
 class MovementPreferencesService {
   MovementPreferencesService({this.db});
 
@@ -15,6 +16,7 @@ class MovementPreferencesService {
   static const String keyWeeklyGoalSessions = 'weekly_goal_sessions';
   static const String keyPreferredDays = 'preferred_days';
   static const String keyReminderHour = 'reminder_hour';
+  static const String keyMovementTier = 'movement_tier';
 
   final Map<String, String> _memoryCache = {};
 
@@ -102,6 +104,37 @@ class MovementPreferencesService {
     } else {
       await setInt(keyReminderHour, hour.clamp(0, 23));
     }
+  }
+
+  // ۴. سطح (Tier) ماژول حرکت (P-02)
+  Future<MovementTier> getTier() async {
+    final val = await getInt(keyMovementTier, defaultValue: 1);
+    return MovementTierX.fromValue(val);
+  }
+
+  Future<void> setTier(MovementTier tier) async {
+    await setInt(keyMovementTier, tier.value);
+  }
+
+  /// اعتبارسنجی سطح واقعی کاربر بر اساس جلسات ثبت‌شده
+  Future<MovementTier> resolveTier() async {
+    final savedTier = await getTier();
+    if (savedTier == MovementTier.one) {
+      return MovementTier.one;
+    }
+
+    final dbExec = await _database;
+    final countResult = await dbExec.rawQuery(
+      'SELECT COUNT(*) as c FROM ${MovementTables.tableWorkoutLogs}',
+    );
+    final count = Sqflite.firstIntValue(countResult) ?? 0;
+
+    if (count < kTierTwoUnlockSessions) {
+      // کاربر هنوز حداقل ۶ جلسه را ثبت نکرده است
+      return MovementTier.one;
+    }
+
+    return savedTier;
   }
 
   /// حذف کامل و بدون بازگشت تمام داده‌های ماژول حرکت در یک تراکنش امن

@@ -3,6 +3,7 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/movement_tables.dart';
 import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
+import 'package:ritmo/features/movement/domain/models/movement_week_stats.dart';
 import 'package:ritmo/features/movement/domain/models/movement_week_summary.dart';
 import 'package:ritmo/features/movement/domain/models/movement_workout_log.dart';
 import 'package:sqflite/sqflite.dart';
@@ -228,6 +229,52 @@ class MovementOccurrenceService {
       plannedCount: planned,
       activeMinutes: activeMinutes,
       recoveryDaysCount: recoveryDays,
+    );
+  }
+
+  /// محاسبه آمار هفتگی کاربر بر اساس شنبه تا جمعه (P-04)
+  Future<MovementWeekStats> weekStats(DateTime anchor) async {
+    final sat = DateTime(anchor.year, anchor.month, anchor.day)
+        .subtract(Duration(days: (anchor.weekday % 7 + 1) % 7));
+    final fri = sat.add(const Duration(days: 6));
+    final startIso = sat.toIso8601String().split('T').first;
+    final endIso = fri.toIso8601String().split('T').first;
+
+    final occs = await getOccurrencesForRange(startIso, endIso);
+    final dbExec = await _database;
+    final logRows = await dbExec.query(
+      MovementTables.tableWorkoutLogs,
+      where: 'dateIso >= ? AND dateIso <= ?',
+      whereArgs: [startIso, endIso],
+    );
+
+    final planned = occs.length;
+    final doneOccCount = occs.where((o) => o.isCompleted).length;
+    final retroCount = logRows.where((l) => l['occurrenceId'] == null).length;
+    final done = doneOccCount + retroCount;
+
+    final totalSec = logRows.fold<int>(0, (sum, r) => sum + ((r['durationSec'] as int?) ?? 0));
+    final totalMinutes = (totalSec / 60).round();
+
+    final activeDays = logRows.map((r) => r['dateIso'] as String).toSet().length;
+
+    MovementMetric<double> adherence;
+    if (planned >= 4) {
+      final val = (done / planned).clamp(0.0, 1.0);
+      adherence = MovementMetric(value: val, sampleSize: planned, reason: MovementMetricReason.ok);
+    } else if (planned > 0) {
+      adherence = MovementMetric(value: null, sampleSize: planned, reason: MovementMetricReason.partialData);
+    } else {
+      adherence = const MovementMetric.noData();
+    }
+
+    return MovementWeekStats(
+      plannedCount: planned,
+      doneCount: done,
+      activeStreakDays: activeDays,
+      totalMinutes: totalMinutes,
+      adherence: adherence,
+      hasAnyData: planned > 0 || done > 0,
     );
   }
 

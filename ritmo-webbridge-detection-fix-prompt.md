@@ -1054,7 +1054,7 @@ dart format --set-exit-if-changed lib test
 | DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | DONE | adc4014f | انجام شد |
 | DET-19 | ترجیح SSE بر DOM | D | DONE | 9479d606 | انجام شد |
 | DET-20 | حالت پایدار واچر | E | DONE | e1678ede | انجام شد |
-| DET-21 | resume ایدمپوتنت | E | DONE | pending | انجام شد |
+| DET-21 | resume ایدمپوتنت | E | DONE | 2662545d | انجام شد |
 | DET-22 | دباونس resume | E | TODO | | |
 | DET-23 | شمارش بارگذاری سرد | E | TODO | | |
 | DET-24 | پذیرش شناسهٔ خالی | E | TODO | | |

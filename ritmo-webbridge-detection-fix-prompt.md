@@ -1065,7 +1065,7 @@ dart format --set-exit-if-changed lib test
 | DET-29 | حذف src=unknown | G | DONE | 2ad906ca | انجام شد |
 | DET-30 | چک‌پوینت سوم | H | DONE | 95d0653f | انجام شد |
 | DET-31 | شکست سریع | H | DONE | 595bc98c | انجام شد |
-| DET-32 | حذف اعداد خام از JS | H | TODO | | |
+| DET-32 | حذف اعداد خام از JS | H | DONE | pending | انجام شد |
 | DET-33 | پنجرهٔ سکوت پایان | H | TODO | | |
 | DET-34 | روشن‌کردن استریم زنده | I | TODO | | |
 | DET-35 | حذف لودینگ بی‌پایان | I | TODO | | |

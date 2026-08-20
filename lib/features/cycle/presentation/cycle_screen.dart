@@ -48,6 +48,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_confidence_card.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_prediction_detail_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_pregnancy_mode.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_lock_gate.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_segmented_tabs.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_settings_panel.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_sos_section.dart';
@@ -762,17 +763,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               ],
               body: isPregnancyActive
                   ? (hasValidPregnancyDates
-                      ? CyclePregnancyModeView(
-                          pregnancyStartDate: _settings['preg_start_date']!,
-                          pregnancyDueDate: _settings['preg_due_date']!,
-                          onDeactivated: () async {
-                            final db = await DatabaseHelper.instance.database;
-                            await PregnancySettings.setPregnancyActive(false, db: db);
-                            await _loadData();
-                          },
+                      ? PregnancyLockGate(
                           settings: _settings,
-                          dayLogs: _dayLogs,
-                          engineOutput: _engineOutput,
+                          child: CyclePregnancyModeView(
+                            pregnancyStartDate: _settings['preg_start_date']!,
+                            pregnancyDueDate: _settings['preg_due_date']!,
+                            onDeactivated: () async {
+                              final db = await DatabaseHelper.instance.database;
+                              await PregnancySettings.setPregnancyActive(false, db: db);
+                              await _loadData();
+                            },
+                            settings: _settings,
+                            dayLogs: _dayLogs,
+                            engineOutput: _engineOutput,
+                          ),
                         )
                       : Directionality(
                           textDirection: TextDirection.rtl,

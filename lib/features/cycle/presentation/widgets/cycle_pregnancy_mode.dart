@@ -18,6 +18,7 @@ import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/kick_session_tracker.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_header.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_progress_tab.dart';
+import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_settings_sheet.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/pregnancy/pregnancy_tabs.dart';
 import 'package:ritmo/features/health/data/pregnancy_repository.dart';
 
@@ -524,7 +525,11 @@ class _CyclePregnancyModeViewState extends State<CyclePregnancyModeView>
           eddSource: _eddSource,
           startDate: _startDate,
           onShowPrivacy: _showPrivacyBadgeSheet,
-          onShowSettings: _showEndPregnancySheet,
+          onShowSettings: () => PregnancySettingsSheet.show(
+            context,
+            onDataReloadNeeded: _loadSettingsAndSession,
+            onEndPregnancy: _showEndPregnancySheet,
+          ),
         ),
 
         // 5 Main Tabs

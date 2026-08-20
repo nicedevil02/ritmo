@@ -184,12 +184,16 @@ class PregStep5Confirm extends StatelessWidget {
             color: colors.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
-            color: isHighlighted ? colors.primary : colors.textPrimary,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+              color: isHighlighted ? colors.primary : colors.textPrimary,
+            ),
           ),
         ),
       ],

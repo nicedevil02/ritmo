@@ -364,12 +364,15 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                       icon: Icon(CupertinoIcons.xmark, size: 20, color: colors.textSecondary),
                       onPressed: () => Navigator.pop(context, false),
                     ),
-                    Text(
-                      _getTitle(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+                    Expanded(
+                      child: Text(
+                        _getTitle(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 40), // Balance close button

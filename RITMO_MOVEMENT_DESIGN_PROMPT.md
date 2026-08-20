@@ -307,8 +307,8 @@ enum AbsenceStatus { none, shortAbsence, longAbsence }
 - هر دو دکمه مستقیم به `quick_log_sheet` می‌روند.
 
 **دروازهٔ پذیرش فاز ۵**
-- [ ] `flutter test test/movement/absence_detection_test.dart` — سه سناریو: بدون جلسه، ۱۰ روز، ۲۵ روز.
-- [ ] در widget test هیچ متنی حاوی واژه‌های «شکست/missed/failed/دیر» نیست.
+- [x] `flutter test test/movement/absence_return_test.dart` — سه سناریو: بدون جلسه، ۱۰ روز، ۲۵ روز.
+- [x] در widget test هیچ متنی حاوی واژه‌های «شکست/missed/failed/دیر» نیست.
 
 ---
 

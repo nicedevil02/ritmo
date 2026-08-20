@@ -8,8 +8,8 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
-import 'package:ritmo/features/cycle/logic/pregnancy_settings.dart';
 import 'package:ritmo/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart';
+import 'package:ritmo/features/cycle/presentation/onboarding/pregnancy_onboarding_shell.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_passcode_sheet.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:sqflite/sqflite.dart';
@@ -382,52 +382,124 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             onChanged: (v) => _updateSetting('show_cycle_in_calendar', v.toString()),
           ),
           Divider(height: 16, color: colors.border),
-          InkWell(
-            onTap: () {
-              final isCurrentlyPregnant = _localSettings['cycle_pregnancy_mode'] == 'true';
-              if (!isCurrentlyPregnant && !PregnancySettings.isSetupDone(_localSettings) && widget.onOpenPregnancyOnboarding != null) {
-                widget.onOpenPregnancyOnboarding!();
-              } else {
-                widget.onTogglePregnancyMode();
-              }
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _localSettings['cycle_pregnancy_mode'] == 'true'
-                            ? '🔄'
-                            : '🤰',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _localSettings['cycle_pregnancy_mode'] == 'true'
-                            ? 'بازگشت به حالت عادی چرخه قاعدگی'
-                            : 'فعالسازی حالت بارداری',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: _localSettings['cycle_pregnancy_mode'] == 'true'
-                              ? colors.primary
-                              : colors.textSecondary,
+          if (_localSettings['cycle_pregnancy_mode'] == 'true') ...[
+            InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                PregnancyOnboardingShell.show(
+                  context,
+                  isEditMode: true,
+                  onCompleted: () {
+                    Navigator.pop(context);
+                    widget.onDataReloadNeeded();
+                  },
+                );
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🤰', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'ویرایش و بازبینی راه‌اندازی بارداری',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Icon(
-                    CupertinoIcons.chevron_left,
-                    color: colors.textSecondary,
-                    size: 14,
-                  ),
-                ],
+                      ],
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      color: colors.textSecondary,
+                      size: 14,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+            Divider(height: 16, color: colors.border),
+            InkWell(
+              onTap: widget.onTogglePregnancyMode,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🔄', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'پایان دوره بارداری و بازگشت به چرخه',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      color: colors.textSecondary,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            InkWell(
+              onTap: () {
+                if (widget.onOpenPregnancyOnboarding != null) {
+                  widget.onOpenPregnancyOnboarding!();
+                } else {
+                  Navigator.pop(context);
+                  PregnancyOnboardingShell.show(
+                    context,
+                    onCompleted: () {
+                      Navigator.pop(context);
+                      widget.onDataReloadNeeded();
+                    },
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('🤰', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'فعالسازی حالت بارداری',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      color: colors.textSecondary,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           Divider(height: 24, color: colors.border),
           Text(
             'تنظیمات طول چرخه بدنی',

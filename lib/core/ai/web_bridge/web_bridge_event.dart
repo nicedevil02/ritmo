@@ -222,6 +222,11 @@ sealed class WebBridgeEvent {
             source: src,
             requestId: readString('requestId'),
           );
+        case 'send_retry_triggered':
+          return BridgeSendRetryTriggeredEvent(
+            source: src,
+            requestId: readString('requestId'),
+          );
         case 'fetch_matched':
           return BridgeFetchMatchedEvent(
             source: src,
@@ -539,6 +544,15 @@ class BridgeWatcherSteadyDoneEvent extends WebBridgeEvent {
 
 class BridgeResumeSkippedDuplicateEvent extends WebBridgeEvent {
   const BridgeResumeSkippedDuplicateEvent({
+    required super.source,
+    this.requestId,
+  });
+
+  final String? requestId;
+}
+
+class BridgeSendRetryTriggeredEvent extends WebBridgeEvent {
+  const BridgeSendRetryTriggeredEvent({
     required super.source,
     this.requestId,
   });

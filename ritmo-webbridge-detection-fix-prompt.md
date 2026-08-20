@@ -1058,8 +1058,8 @@ dart format --set-exit-if-changed lib test
 | DET-22 | دباونس resume | E | DONE | 5d5cdb6a | انجام شد |
 | DET-23 | شمارش بارگذاری سرد | E | DONE | d83b32e2 | انجام شد |
 | DET-24 | پذیرش شناسهٔ خالی | E | DONE | 49ed38f5 | انجام شد |
-| DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | DONE | pending | انجام شد |
-| DET-26 | تأیید واقعی ارسال | F | TODO | | |
+| DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | DONE | d0b2d4b5 | انجام شد |
+| DET-26 | تأیید واقعی ارسال | F | DONE | pending | انجام شد |
 | DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | TODO | | |
 | DET-28 | تشخیص نشست مهمان | G | TODO | | |
 | DET-29 | حذف src=unknown | G | TODO | | |

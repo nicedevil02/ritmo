@@ -1472,6 +1472,49 @@ $_bridgeScriptBody''';
           return true;
         }
 
+        function verifySubmissionAndRetry(isEnter) {
+          var verifyAttempts = 0;
+          var verifyInterval = setInterval(function() {
+            verifyAttempts++;
+            var stopBtn = querySafe(RITMO_SELECTORS.stopButton);
+            var isGenerating = !!stopBtn;
+            var currentEditorText = (editor.value || editor.innerText || '').trim();
+            var editorCleared = currentEditorText === '' || currentEditorText !== text.trim();
+
+            if (isGenerating || editorCleared) {
+              clearInterval(verifyInterval);
+              return;
+            }
+
+            if (verifyAttempts >= 3) {
+              clearInterval(verifyInterval);
+              console.log('[Ritmo] Prompt submission unconfirmed after 1s, triggering send retry...');
+              notifyFlutter('send_retry_triggered', { requestId: currentReqId, source: 'dom' });
+              if (!isEnter) {
+                var retryBtn = findSendButton();
+                if (retryBtn && isButtonEnabled(retryBtn)) {
+                  retryBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                  retryBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                  retryBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                  retryBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                  retryBtn.click();
+                  return;
+                }
+              }
+              editor.focus();
+              var enterRetry = new KeyboardEvent('keydown', {
+                bubbles: true,
+                cancelable: true,
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13
+              });
+              editor.dispatchEvent(enterRetry);
+            }
+          }, 300);
+        }
+
         var sendCheckAttempts = 0;
         var sendClicked = false;
         var sendInterval = setInterval(function() {
@@ -1496,6 +1539,7 @@ $_bridgeScriptBody''';
               source: 'dom'
             });
             window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+            verifySubmissionAndRetry(false);
           } else if (sendCheckAttempts >= 8) {
             clearInterval(sendInterval);
             if (!sendClicked) {
@@ -1512,6 +1556,7 @@ $_bridgeScriptBody''';
               console.log('[Ritmo] Fallback Enter key dispatched (no active send button found after 8 attempts)');
               notifyFlutter('send_fallback_enter', { requestId: currentReqId, source: 'dom' });
               window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
+              verifySubmissionAndRetry(true);
             }
           }
         }, 100);

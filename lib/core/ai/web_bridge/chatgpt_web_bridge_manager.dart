@@ -852,6 +852,15 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.warn,
           );
 
+        case BridgeSendRetryTriggeredEvent(:final requestId):
+          BridgeTraceLog.instance.addEntry(
+            type: 'send_retry_triggered',
+            source: source,
+            requestId: requestId,
+            note: 'editor_not_cleared_after_1s',
+            level: BridgeTraceLevel.warn,
+          );
+
         case BridgeComposerNotFoundEvent(:final requestId):
           BridgeTraceLog.instance.addEntry(
             type: 'composer_not_found',

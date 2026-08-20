@@ -27,39 +27,64 @@ void main() {
   });
 
   group('WEB-04: Re-attach and Resume Watcher After Navigation', () {
-    test('handlePageFinished without pending request injects script without incrementing reload count', () async {
-      manager.setTestState(status: ChatGptBridgeStatus.ready);
+    test(
+      'handlePageFinished without pending request injects script without incrementing reload count',
+      () async {
+        manager.setTestState(status: ChatGptBridgeStatus.ready);
 
-      await manager.handlePageFinished('https://chatgpt.com/', controller);
+        await manager.handlePageFinished('https://chatgpt.com/', controller);
 
-      expect(controller.executedScripts, isNotEmpty);
-      expect(manager.navigationReloadCount, equals(0));
-    });
+        expect(controller.executedScripts, isNotEmpty);
+        expect(manager.navigationReloadCount, equals(0));
+      },
+    );
 
-    test('handlePageFinished with pending request re-injects script and triggers resume hook', () async {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
+    test(
+      'handlePageFinished with pending request re-injects script and triggers resume hook',
+      () async {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
 
-      await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
+        await manager.handlePageFinished(
+          'https://chatgpt.com/c/123',
+          controller,
+        );
 
-      expect(manager.navigationReloadCount, equals(1));
-      expect(controller.executedScripts.length, greaterThanOrEqualTo(2));
-      expect(controller.executedScripts.any((s) => s.contains('__ritmo_resume')), isTrue);
-    });
+        expect(manager.navigationReloadCount, equals(1));
+        expect(controller.executedScripts.length, greaterThanOrEqualTo(2));
+        expect(
+          controller.executedScripts.any((s) => s.contains('__ritmo_resume')),
+          isTrue,
+        );
+      },
+    );
 
-    test('handlePageFinished aborts stream if reload count exceeds maxNavigationReloads (infinite reload loop guard)', () async {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
+    test(
+      'handlePageFinished aborts stream if reload count exceeds maxNavigationReloads (infinite reload loop guard)',
+      () async {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
 
-      for (var i = 1; i <= ChatGptWebBridgeManager.maxNavigationReloads; i++) {
-        await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
-        expect(manager.navigationReloadCount, equals(i));
-      }
+        for (
+          var i = 1;
+          i <= ChatGptWebBridgeManager.maxNavigationReloads;
+          i++
+        ) {
+          await manager.handlePageFinished(
+            'https://chatgpt.com/c/123',
+            controller,
+          );
+          expect(manager.navigationReloadCount, equals(i));
+        }
 
-      // Reload exceeding threshold
-      await manager.handlePageFinished('https://chatgpt.com/c/123', controller);
+        // Reload exceeding threshold
+        await manager.handlePageFinished(
+          'https://chatgpt.com/c/123',
+          controller,
+        );
 
-      // Status transitioned to ready (failGeneration called) and count reset
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-      expect(manager.navigationReloadCount, equals(0));
-    });
+        // Status transitioned to ready (failGeneration called) and count reset
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+        expect(manager.navigationReloadCount, equals(0));
+      },
+    );
   });
 }

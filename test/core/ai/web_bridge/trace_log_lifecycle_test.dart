@@ -48,7 +48,12 @@ void main() {
 
       final exported = log.exportAsText();
       expect(exported, contains('=== RITMO CHATGPT WEB BRIDGE TRACE LOG ==='));
-      expect(exported, contains('[INFO] type=send_prompt src=dart req=req_test_1 note="Prompt dispatched"'));
+      expect(
+        exported,
+        contains(
+          '[INFO] type=send_prompt src=dart req=req_test_1 note="Prompt dispatched"',
+        ),
+      );
       expect(exported, contains('TTFT received'));
     });
   });

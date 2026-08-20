@@ -20,41 +20,53 @@ void main() {
     manager.disposeWebView();
   });
 
-  group('WEB-06: Protection of In-Flight Generation Against Inactivity & Lifecycle Disposals', () {
-    test('didChangeAppLifecycleState(paused) does NOT dispose controller while generating', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        controller: fakeController,
+  group(
+    'WEB-06: Protection of In-Flight Generation Against Inactivity & Lifecycle Disposals',
+    () {
+      test(
+        'didChangeAppLifecycleState(paused) does NOT dispose controller while generating',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.generating,
+            controller: fakeController,
+          );
+
+          manager.didChangeAppLifecycleState(AppLifecycleState.paused);
+
+          expect(manager.controller, equals(fakeController));
+          expect(manager.status, equals(ChatGptBridgeStatus.generating));
+        },
       );
 
-      manager.didChangeAppLifecycleState(AppLifecycleState.paused);
+      test(
+        'didChangeAppLifecycleState(detached) does NOT dispose controller while generating',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.generating,
+            controller: fakeController,
+          );
 
-      expect(manager.controller, equals(fakeController));
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-    });
+          manager.didChangeAppLifecycleState(AppLifecycleState.detached);
 
-    test('didChangeAppLifecycleState(detached) does NOT dispose controller while generating', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        controller: fakeController,
+          expect(manager.controller, equals(fakeController));
+          expect(manager.status, equals(ChatGptBridgeStatus.generating));
+        },
       );
 
-      manager.didChangeAppLifecycleState(AppLifecycleState.detached);
+      test(
+        'didChangeAppLifecycleState(paused) disposes controller when in ready status',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.ready,
+            controller: fakeController,
+          );
 
-      expect(manager.controller, equals(fakeController));
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-    });
+          manager.didChangeAppLifecycleState(AppLifecycleState.paused);
 
-    test('didChangeAppLifecycleState(paused) disposes controller when in ready status', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.ready,
-        controller: fakeController,
+          expect(manager.controller, isNull);
+          expect(manager.status, equals(ChatGptBridgeStatus.idle));
+        },
       );
-
-      manager.didChangeAppLifecycleState(AppLifecycleState.paused);
-
-      expect(manager.controller, isNull);
-      expect(manager.status, equals(ChatGptBridgeStatus.idle));
-    });
-  });
+    },
+  );
 }

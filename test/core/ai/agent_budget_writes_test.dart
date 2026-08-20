@@ -5,17 +5,21 @@ import 'package:ritmo/core/ai/agent/agent_tool.dart';
 
 class _DummyWriteTool extends AgentTool {
   const _DummyWriteTool()
-      : super(
-          name: 'dummy_write',
-          categoryFa: 'تست',
-          titleFa: 'ابزار تست نوشتن',
-          descriptionFa: 'ابزار آزمایشی تغییردهنده',
-          policy: ToolPolicy.actionDirect,
-        );
+    : super(
+        name: 'dummy_write',
+        categoryFa: 'تست',
+        titleFa: 'ابزار تست نوشتن',
+        descriptionFa: 'ابزار آزمایشی تغییردهنده',
+        policy: ToolPolicy.actionDirect,
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.success(toolName: name, data: args, summaryFa: 'موفق');
+    return AgentToolResult.success(
+      toolName: name,
+      data: args,
+      summaryFa: 'موفق',
+    );
   }
 }
 

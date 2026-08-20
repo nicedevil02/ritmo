@@ -17,7 +17,12 @@ class _FakeJournalDb implements Database {
   Future<void> execute(String sql, [List<Object?>? arguments]) async {}
 
   @override
-  Future<int> insert(String table, Map<String, Object?> values, {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) async {
+  Future<int> insert(
+    String table,
+    Map<String, Object?> values, {
+    String? nullColumnHack,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async {
     journalRows.add(Map<String, Object?>.from(values));
     return journalRows.length;
   }
@@ -36,12 +41,22 @@ class _FakeJournalDb implements Database {
     int? offset,
   }) async {
     var result = List<Map<String, Object?>>.from(journalRows);
-    if (where != null && where.contains('id = ?') && whereArgs != null && whereArgs.isNotEmpty) {
+    if (where != null &&
+        where.contains('id = ?') &&
+        whereArgs != null &&
+        whereArgs.isNotEmpty) {
       final targetId = whereArgs.first.toString();
       result = result.where((r) => r['id'] == targetId).toList();
     }
     if (where != null && where.contains('isSuccess = 1 AND undoneAt IS NULL')) {
-      result = result.where((r) => r['isSuccess'] == 1 && r['undoneAt'] == null && r['undoKind'] != null).toList();
+      result = result
+          .where(
+            (r) =>
+                r['isSuccess'] == 1 &&
+                r['undoneAt'] == null &&
+                r['undoKind'] != null,
+          )
+          .toList();
     }
     if (limit != null && result.length > limit) {
       result = result.take(limit).toList();
@@ -50,9 +65,18 @@ class _FakeJournalDb implements Database {
   }
 
   @override
-  Future<int> update(String table, Map<String, Object?> values, {String? where, List<Object?>? whereArgs, ConflictAlgorithm? conflictAlgorithm}) async {
+  Future<int> update(
+    String table,
+    Map<String, Object?> values, {
+    String? where,
+    List<Object?>? whereArgs,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async {
     var count = 0;
-    if (where != null && where.contains('id = ?') && whereArgs != null && whereArgs.isNotEmpty) {
+    if (where != null &&
+        where.contains('id = ?') &&
+        whereArgs != null &&
+        whereArgs.isNotEmpty) {
       final targetId = whereArgs.first.toString();
       for (var row in journalRows) {
         if (row['id'] == targetId) {
@@ -70,33 +94,41 @@ class _FakeJournalDb implements Database {
 
 class _DummyWriteTool extends AgentTool {
   const _DummyWriteTool()
-      : super(
-          name: 'dummy_write',
-          categoryFa: 'تست',
-          titleFa: 'ابزار تغییر آزمایشی',
-          descriptionFa: 'برای ژورنال',
-          policy: ToolPolicy.actionDirect,
-        );
+    : super(
+        name: 'dummy_write',
+        categoryFa: 'تست',
+        titleFa: 'ابزار تغییر آزمایشی',
+        descriptionFa: 'برای ژورنال',
+        policy: ToolPolicy.actionDirect,
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.success(toolName: name, data: {}, summaryFa: 'انجام شد');
+    return AgentToolResult.success(
+      toolName: name,
+      data: {},
+      summaryFa: 'انجام شد',
+    );
   }
 }
 
 class _DummyReadTool extends AgentTool {
   const _DummyReadTool()
-      : super(
-          name: 'dummy_read',
-          categoryFa: 'تست',
-          titleFa: 'ابزار خواندنی',
-          descriptionFa: 'برای ژورنال',
-          policy: ToolPolicy.readOnly,
-        );
+    : super(
+        name: 'dummy_read',
+        categoryFa: 'تست',
+        titleFa: 'ابزار خواندنی',
+        descriptionFa: 'برای ژورنال',
+        policy: ToolPolicy.readOnly,
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.success(toolName: name, data: {}, summaryFa: 'خوانده شد');
+    return AgentToolResult.success(
+      toolName: name,
+      data: {},
+      summaryFa: 'خوانده شد',
+    );
   }
 }
 
@@ -119,7 +151,11 @@ void main() {
         sessionId: 's1',
         tool: readTool,
         args: {},
-        result: AgentToolResult.success(toolName: readTool.name, data: {}, summaryFa: 'خوانده شد'),
+        result: AgentToolResult.success(
+          toolName: readTool.name,
+          data: {},
+          summaryFa: 'خوانده شد',
+        ),
       );
       expect(id, isNull);
       expect(fakeDb.journalRows, isEmpty);

@@ -18,12 +18,15 @@ void main() {
   });
 
   group('WEB-16: HTTP Status Code Mapping to Typed Persian Errors', () {
-    test('setupBridgeScript contains http_error notification on non-200 responses', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains http_error notification on non-200 responses',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('response.status !== 200'), isTrue);
-      expect(script.contains("notifyFlutter('http_error'"), isTrue);
-    });
+        expect(script.contains('response.status !== 200'), isTrue);
+        expect(script.contains("notifyFlutter('http_error'"), isTrue);
+      },
+    );
 
     test('http_error with 429 rate limit closes stream and resets status', () {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
@@ -52,59 +55,68 @@ void main() {
       expect(manager.pendingRequest, isNull);
     });
 
-    test('http_error with 401 unauthorized closes stream with Persian auth message', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_401');
+    test(
+      'http_error with 401 unauthorized closes stream with Persian auth message',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_401');
 
-      final msg = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'http_error',
-          'statusCode': 401,
-          'requestId': 'req_401',
-          'source': 'fetch',
-        }),
-      );
+        final msg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'http_error',
+            'statusCode': 401,
+            'requestId': 'req_401',
+            'source': 'fetch',
+          }),
+        );
 
-      manager.handleJsMessageForTest(msg);
+        manager.handleJsMessageForTest(msg);
 
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-    });
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+      },
+    );
 
-    test('http_error with 503 service unavailable closes stream with Persian server message', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_503');
+    test(
+      'http_error with 503 service unavailable closes stream with Persian server message',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_503');
 
-      final msg = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'http_error',
-          'statusCode': 503,
-          'requestId': 'req_503',
-          'source': 'fetch',
-        }),
-      );
+        final msg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'http_error',
+            'statusCode': 503,
+            'requestId': 'req_503',
+            'source': 'fetch',
+          }),
+        );
 
-      manager.handleJsMessageForTest(msg);
+        manager.handleJsMessageForTest(msg);
 
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-    });
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+      },
+    );
 
-    test('stale http_error for old requestId is dropped without aborting active stream', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_current_active');
+    test(
+      'stale http_error for old requestId is dropped without aborting active stream',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_current_active');
 
-      final staleMsg = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'http_error',
-          'statusCode': 500,
-          'requestId': 'req_stale_old',
-          'source': 'fetch',
-        }),
-      );
+        final staleMsg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'http_error',
+            'statusCode': 500,
+            'requestId': 'req_stale_old',
+            'source': 'fetch',
+          }),
+        );
 
-      manager.handleJsMessageForTest(staleMsg);
+        manager.handleJsMessageForTest(staleMsg);
 
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-      expect(manager.currentRequestId, equals('req_current_active'));
-    });
+        expect(manager.status, equals(ChatGptBridgeStatus.generating));
+        expect(manager.currentRequestId, equals('req_current_active'));
+      },
+    );
   });
 }

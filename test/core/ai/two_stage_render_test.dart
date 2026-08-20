@@ -5,34 +5,38 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('WEB-32: Two-Stage Rendering with Suppression Buffer', () {
-    test('cleanText is not emitted while hasOpenTag is true (partial tool tag)', () {
-      final tokens = [
-        'بررسی می‌کنم: ',
-        '<tool_call>',
-        '{"name": "get_data',
-        '", "parameters": {',
-      ];
+    test(
+      'cleanText is not emitted while hasOpenTag is true (partial tool tag)',
+      () {
+        final tokens = [
+          'بررسی می‌کنم: ',
+          '<tool_call>',
+          '{"name": "get_data',
+          '", "parameters": {',
+        ];
 
-      var lastDisplayed = '';
-      var suppressedCount = 0;
+        var lastDisplayed = '';
+        var suppressedCount = 0;
 
-      for (final token in tokens) {
-        lastDisplayed += token;
-        final scan = AgentToolCallParser.scan(lastDisplayed);
-        if (scan.hasOpenTag) {
-          suppressedCount++;
+        for (final token in tokens) {
+          lastDisplayed += token;
+          final scan = AgentToolCallParser.scan(lastDisplayed);
+          if (scan.hasOpenTag) {
+            suppressedCount++;
+          }
         }
-      }
 
-      expect(suppressedCount, greaterThan(0));
+        expect(suppressedCount, greaterThan(0));
 
-      final finalScan = AgentToolCallParser.scan(lastDisplayed);
-      expect(finalScan.hasOpenTag, isTrue);
-      expect(finalScan.hasCalls, isFalse);
-    });
+        final finalScan = AgentToolCallParser.scan(lastDisplayed);
+        expect(finalScan.hasOpenTag, isTrue);
+        expect(finalScan.hasCalls, isFalse);
+      },
+    );
 
     test('cleanText is emitted after tool block is closed', () {
-      const fullText = 'خوب: <tool_call>{"name": "create_task", "parameters": {"title": "مطالعه"}}</tool_call> کامل شد.';
+      const fullText =
+          'خوب: <tool_call>{"name": "create_task", "parameters": {"title": "مطالعه"}}</tool_call> کامل شد.';
       final scan = AgentToolCallParser.scan(fullText);
 
       // وقتی tool_call بسته است باید hasCalls=true باشد
@@ -62,7 +66,8 @@ void main() {
     });
 
     test('Suppression: bracket-style partial [TOOL_CALL] is suppressed', () {
-      const partialBracket = 'در حال پردازش: [TOOL_CALL]{"tool_name": "analyze_data"';
+      const partialBracket =
+          'در حال پردازش: [TOOL_CALL]{"tool_name": "analyze_data"';
       final scan = AgentToolCallParser.scan(partialBracket);
 
       expect(scan.hasOpenTag, isTrue);

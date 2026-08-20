@@ -25,22 +25,28 @@ void main() {
       expect(repeat, isNull);
     });
 
-    test('Case 3: Initial non-empty input on empty accumulator produces full delta', () {
-      expect(accumulator.isEmpty, isTrue);
-      expect(accumulator.length, equals(0));
+    test(
+      'Case 3: Initial non-empty input on empty accumulator produces full delta',
+      () {
+        expect(accumulator.isEmpty, isTrue);
+        expect(accumulator.length, equals(0));
 
-      final res = accumulator.applyFull('پاسخ اولیه', source: 'dom');
-      expect(res, isNotNull);
-      expect(res!.delta, equals('پاسخ اولیه'));
-      expect(res.fullText, equals('پاسخ اولیه'));
-      expect(res.isRewrite, isFalse);
-      expect(accumulator.text, equals('پاسخ اولیه'));
-      expect(accumulator.length, equals('پاسخ اولیه'.length));
-    });
+        final res = accumulator.applyFull('پاسخ اولیه', source: 'dom');
+        expect(res, isNotNull);
+        expect(res!.delta, equals('پاسخ اولیه'));
+        expect(res.fullText, equals('پاسخ اولیه'));
+        expect(res.isRewrite, isFalse);
+        expect(accumulator.text, equals('پاسخ اولیه'));
+        expect(accumulator.length, equals('پاسخ اولیه'.length));
+      },
+    );
 
     test('Case 4: Progressive prefix growth computes exact suffix delta', () {
       accumulator.applyFull('سلام', source: 'dom');
-      final res = accumulator.applyFull('سلام کاربر عزیز، حالت چطوره؟', source: 'dom');
+      final res = accumulator.applyFull(
+        'سلام کاربر عزیز، حالت چطوره؟',
+        source: 'dom',
+      );
 
       expect(res, isNotNull);
       expect(res!.delta, equals(' کاربر عزیز، حالت چطوره؟'));
@@ -49,25 +55,42 @@ void main() {
       expect(accumulator.text, equals('سلام کاربر عزیز، حالت چطوره؟'));
     });
 
-    test('Case 5: Divergent non-prefix rewrite yields isRewrite = true and fullText', () {
-      accumulator.applyFull('سلام من دستیار هستم', source: 'dom');
-      final res = accumulator.applyFull('درود بر شما! من دستیار هوشمند شما هستم.', source: 'dom');
+    test(
+      'Case 5: Divergent non-prefix rewrite yields isRewrite = true and fullText',
+      () {
+        accumulator.applyFull('سلام من دستیار هستم', source: 'dom');
+        final res = accumulator.applyFull(
+          'درود بر شما! من دستیار هوشمند شما هستم.',
+          source: 'dom',
+        );
 
-      expect(res, isNotNull);
-      expect(res!.isRewrite, isTrue);
-      expect(res.delta, equals('درود بر شما! من دستیار هوشمند شما هستم.'));
-      expect(res.fullText, equals('درود بر شما! من دستیار هوشمند شما هستم.'));
-      expect(accumulator.text, equals('درود بر شما! من دستیار هوشمند شما هستم.'));
-    });
+        expect(res, isNotNull);
+        expect(res!.isRewrite, isTrue);
+        expect(res.delta, equals('درود بر شما! من دستیار هوشمند شما هستم.'));
+        expect(res.fullText, equals('درود بر شما! من دستیار هوشمند شما هستم.'));
+        expect(
+          accumulator.text,
+          equals('درود بر شما! من دستیار هوشمند شما هستم.'),
+        );
+      },
+    );
 
     test('Case 6: Transient DOM retreat is ignored and returns null', () {
-      accumulator.applyFull('یک متن طولانی و کامل برای آزمایش عقب‌گرد', source: 'dom');
+      accumulator.applyFull(
+        'یک متن طولانی و کامل برای آزمایش عقب‌گرد',
+        source: 'dom',
+      );
       final retreat = accumulator.applyFull('یک متن طولانی', source: 'dom');
 
       expect(retreat, isNull);
-      expect(accumulator.text, equals('یک متن طولانی و کامل برای آزمایش عقب‌گرد'));
       expect(
-        BridgeTraceLog.instance.entries.any((e) => e.type == 'accumulator_retreat'),
+        accumulator.text,
+        equals('یک متن طولانی و کامل برای آزمایش عقب‌گرد'),
+      );
+      expect(
+        BridgeTraceLog.instance.entries.any(
+          (e) => e.type == 'accumulator_retreat',
+        ),
         isTrue,
       );
     });
@@ -86,7 +109,10 @@ void main() {
     });
 
     test('Case 8: Strips ChatGPT said: noise prefix', () {
-      final res = accumulator.applyFull('ChatGPT said:\nاین یک پاسخ واقعی است.', source: 'dom');
+      final res = accumulator.applyFull(
+        'ChatGPT said:\nاین یک پاسخ واقعی است.',
+        source: 'dom',
+      );
       expect(res, isNotNull);
       expect(res!.fullText, equals('این یک پاسخ واقعی است.'));
     });

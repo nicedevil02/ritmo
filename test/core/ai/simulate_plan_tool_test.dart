@@ -18,8 +18,8 @@ void main() {
     test('fails when steps contain no valid commandId', () async {
       final res = await tool.execute({
         'steps': [
-          {'invalid': 'data'}
-        ]
+          {'invalid': 'data'},
+        ],
       });
       expect(res.isSuccess, isFalse);
       expect(res.errorMessage, contains('commandId'));

@@ -33,29 +33,32 @@ void main() {
       expect(AgentConfirmationBroker.instance.hasPending, isFalse);
     });
 
-    test('AgentConfirmationBroker cancels cleanly with cancelAll without leaking', () async {
-      const req = AgentConfirmationRequest(
-        id: 'conf_2',
-        toolName: 'create_new_routine',
-        titleFa: 'ایجاد روتین',
-        previewFa: 'ساخت روتین جدید',
-        parameters: {'title': 'ورزش'},
-      );
+    test(
+      'AgentConfirmationBroker cancels cleanly with cancelAll without leaking',
+      () async {
+        const req = AgentConfirmationRequest(
+          id: 'conf_2',
+          toolName: 'create_new_routine',
+          titleFa: 'ایجاد روتین',
+          previewFa: 'ساخت روتین جدید',
+          parameters: {'title': 'ورزش'},
+        );
 
-      final future = AgentConfirmationBroker.instance.ask(
-        req,
-        timeout: const Duration(seconds: 10),
-      );
+        final future = AgentConfirmationBroker.instance.ask(
+          req,
+          timeout: const Duration(seconds: 10),
+        );
 
-      expect(AgentConfirmationBroker.instance.hasPending, isTrue);
+        expect(AgentConfirmationBroker.instance.hasPending, isTrue);
 
-      AgentConfirmationBroker.instance.cancelAll(reasonFa: 'بسته شدن شیت');
+        AgentConfirmationBroker.instance.cancelAll(reasonFa: 'بسته شدن شیت');
 
-      final response = await future;
-      expect(response.approved, isFalse);
-      expect(response.reasonFa, 'بسته شدن شیت');
-      expect(AgentConfirmationBroker.instance.hasPending, isFalse);
-    });
+        final response = await future;
+        expect(response.approved, isFalse);
+        expect(response.reasonFa, 'بسته شدن شیت');
+        expect(AgentConfirmationBroker.instance.hasPending, isFalse);
+      },
+    );
 
     test('AgentQuestionBroker resolves upon user respond', () async {
       const req = AgentQuestionRequest(
@@ -82,26 +85,29 @@ void main() {
       expect(AgentQuestionBroker.instance.hasPending, isFalse);
     });
 
-    test('AgentQuestionBroker cancels cleanly with cancelAll without leaking', () async {
-      const req = AgentQuestionRequest(
-        id: 'q_2',
-        sessionId: 'session_1',
-        question: 'عنوان درس چیست؟',
-      );
+    test(
+      'AgentQuestionBroker cancels cleanly with cancelAll without leaking',
+      () async {
+        const req = AgentQuestionRequest(
+          id: 'q_2',
+          sessionId: 'session_1',
+          question: 'عنوان درس چیست؟',
+        );
 
-      final future = AgentQuestionBroker.instance.ask(
-        req,
-        timeout: const Duration(seconds: 10),
-      );
+        final future = AgentQuestionBroker.instance.ask(
+          req,
+          timeout: const Duration(seconds: 10),
+        );
 
-      expect(AgentQuestionBroker.instance.hasPending, isTrue);
+        expect(AgentQuestionBroker.instance.hasPending, isTrue);
 
-      AgentQuestionBroker.instance.cancelAll(reasonFa: 'پایان گفتگو');
+        AgentQuestionBroker.instance.cancelAll(reasonFa: 'پایان گفتگو');
 
-      final response = await future;
-      expect(response.answered, isFalse);
-      expect(response.reasonFa, 'پایان گفتگو');
-      expect(AgentQuestionBroker.instance.hasPending, isFalse);
-    });
+        final response = await future;
+        expect(response.answered, isFalse);
+        expect(response.reasonFa, 'پایان گفتگو');
+        expect(AgentQuestionBroker.instance.hasPending, isFalse);
+      },
+    );
   });
 }

@@ -22,7 +22,9 @@ void main() {
 
     test('strips You said: and Assistant said: prefixes', () {
       expect(
-        AgentToolCallParser.stripNoisePrefix('Assistant said: پاسخ شما آماده است.'),
+        AgentToolCallParser.stripNoisePrefix(
+          'Assistant said: پاسخ شما آماده است.',
+        ),
         equals('پاسخ شما آماده است.'),
       );
       expect(
@@ -39,10 +41,13 @@ void main() {
       );
     });
 
-    test('extractFirstJsonObject extracts json object cleanly from surrounded text', () {
-      const sample = 'متن قبل {"key": "value", "nested": {"a": 1}} متن بعد';
-      final extracted = AgentToolCallParser.extractFirstJsonObject(sample);
-      expect(extracted, equals('{"key": "value", "nested": {"a": 1}}'));
-    });
+    test(
+      'extractFirstJsonObject extracts json object cleanly from surrounded text',
+      () {
+        const sample = 'متن قبل {"key": "value", "nested": {"a": 1}} متن بعد';
+        final extracted = AgentToolCallParser.extractFirstJsonObject(sample);
+        expect(extracted, equals('{"key": "value", "nested": {"a": 1}}'));
+      },
+    );
   });
 }

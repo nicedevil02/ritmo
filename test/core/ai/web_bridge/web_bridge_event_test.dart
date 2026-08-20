@@ -4,7 +4,8 @@ import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
 void main() {
   group('A-02: WebBridgeEvent.parse', () {
     test('parses ready event', () {
-      const json = '{"type": "ready", "source": "dom", "payload": {"isAuthed": true, "email": "user@example.com", "version": 8}}';
+      const json =
+          '{"type": "ready", "source": "dom", "payload": {"isAuthed": true, "email": "user@example.com", "version": 8}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeReadyEvent>());
       final ready = event as BridgeReadyEvent;
@@ -15,7 +16,8 @@ void main() {
     });
 
     test('parses chunk event', () {
-      const json = '{"type": "chunk", "source": "sse", "payload": {"delta": "سلام", "fullText": "سلام", "requestId": "req_1"}}';
+      const json =
+          '{"type": "chunk", "source": "sse", "payload": {"delta": "سلام", "fullText": "سلام", "requestId": "req_1"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeChunkEvent>());
       final chunk = event as BridgeChunkEvent;
@@ -26,7 +28,8 @@ void main() {
     });
 
     test('parses done event', () {
-      const json = '{"type": "done", "source": "dom", "payload": {"fullText": "پاسخ نهایی", "requestId": "req_2"}}';
+      const json =
+          '{"type": "done", "source": "dom", "payload": {"fullText": "پاسخ نهایی", "requestId": "req_2"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeDoneEvent>());
       final done = event as BridgeDoneEvent;
@@ -35,7 +38,8 @@ void main() {
     });
 
     test('parses first_token event', () {
-      const json = '{"type": "first_token", "source": "dom", "payload": {"requestId": "req_3"}}';
+      const json =
+          '{"type": "first_token", "source": "dom", "payload": {"requestId": "req_3"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeFirstTokenEvent>());
       final ft = event as BridgeFirstTokenEvent;
@@ -43,7 +47,8 @@ void main() {
     });
 
     test('parses resumed event', () {
-      const json = '{"type": "resumed", "source": "dom", "payload": {"stage": "streaming", "requestId": "req_4", "recoveredLength": 150}}';
+      const json =
+          '{"type": "resumed", "source": "dom", "payload": {"stage": "streaming", "requestId": "req_4", "recoveredLength": 150}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeResumedEvent>());
       final resumed = event as BridgeResumedEvent;
@@ -53,7 +58,8 @@ void main() {
     });
 
     test('parses http_error event', () {
-      const json = '{"type": "http_error", "source": "fetch", "payload": {"statusCode": 429, "message": "Rate limit reached", "requestId": "req_5"}}';
+      const json =
+          '{"type": "http_error", "source": "fetch", "payload": {"statusCode": 429, "message": "Rate limit reached", "requestId": "req_5"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeHttpErrorEvent>());
       final err = event as BridgeHttpErrorEvent;
@@ -62,7 +68,8 @@ void main() {
     });
 
     test('parses auth_required event', () {
-      const json = '{"type": "auth_required", "source": "lifecycle", "payload": {"url": "https://chatgpt.com/auth/login", "isLoginModal": true, "isExpired": true}}';
+      const json =
+          '{"type": "auth_required", "source": "lifecycle", "payload": {"url": "https://chatgpt.com/auth/login", "isLoginModal": true, "isExpired": true}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeAuthRequiredEvent>());
       final auth = event as BridgeAuthRequiredEvent;
@@ -72,7 +79,8 @@ void main() {
     });
 
     test('parses cloudflare_challenge event', () {
-      const json = '{"type": "cloudflare_challenge", "source": "lifecycle", "payload": {"reason": "Turnstile challenge required"}}';
+      const json =
+          '{"type": "cloudflare_challenge", "source": "lifecycle", "payload": {"reason": "Turnstile challenge required"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeCloudflareEvent>());
       final cf = event as BridgeCloudflareEvent;
@@ -80,7 +88,8 @@ void main() {
     });
 
     test('parses selector_health event', () {
-      const json = '{"type": "selector_health", "source": "lifecycle", "payload": {"issue": "no_generating_signal_observed", "bridgeVersion": 8, "report": {"composer": 1, "sendButton": 1}}}';
+      const json =
+          '{"type": "selector_health", "source": "lifecycle", "payload": {"issue": "no_generating_signal_observed", "bridgeVersion": 8, "report": {"composer": 1, "sendButton": 1}}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeSelectorHealthEvent>());
       final sh = event as BridgeSelectorHealthEvent;
@@ -90,7 +99,8 @@ void main() {
     });
 
     test('parses auto_dismiss event', () {
-      const json = '{"type": "auto_dismiss", "source": "lifecycle", "payload": {"label": "Accept cookies"}}';
+      const json =
+          '{"type": "auto_dismiss", "source": "lifecycle", "payload": {"label": "Accept cookies"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeAutoDismissEvent>());
       final ad = event as BridgeAutoDismissEvent;
@@ -98,7 +108,8 @@ void main() {
     });
 
     test('parses harvest_result event', () {
-      const json = '{"type": "harvest_result", "source": "dom", "payload": {"fullText": "متن برداشت‌شده دستی", "requestId": "req_6", "strategy": "manual"}}';
+      const json =
+          '{"type": "harvest_result", "source": "dom", "payload": {"fullText": "متن برداشت‌شده دستی", "requestId": "req_6", "strategy": "manual"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeHarvestResultEvent>());
       final hr = event as BridgeHarvestResultEvent;
@@ -108,7 +119,8 @@ void main() {
     });
 
     test('handles unknown event types gracefully', () {
-      const json = '{"type": "custom_future_event", "source": "dom", "payload": {"foo": "bar"}}';
+      const json =
+          '{"type": "custom_future_event", "source": "dom", "payload": {"foo": "bar"}}';
       final event = WebBridgeEvent.parse(json);
       expect(event, isA<BridgeUnknownEvent>());
       final unk = event as BridgeUnknownEvent;
@@ -133,18 +145,21 @@ void main() {
       expect(parseBridgeSource('other'), equals(BridgeSource.dart));
     });
 
-    test('BridgeSourceX correctly identifies streaming sources and bypasses', () {
-      expect(BridgeSource.sse.isStreamingSource, isTrue);
-      expect(BridgeSource.dom.isStreamingSource, isTrue);
-      expect(BridgeSource.fetch.isStreamingSource, isTrue);
-      expect(BridgeSource.harvest.isStreamingSource, isFalse);
-      expect(BridgeSource.lifecycle.isStreamingSource, isFalse);
-      expect(BridgeSource.dart.isStreamingSource, isFalse);
+    test(
+      'BridgeSourceX correctly identifies streaming sources and bypasses',
+      () {
+        expect(BridgeSource.sse.isStreamingSource, isTrue);
+        expect(BridgeSource.dom.isStreamingSource, isTrue);
+        expect(BridgeSource.fetch.isStreamingSource, isTrue);
+        expect(BridgeSource.harvest.isStreamingSource, isFalse);
+        expect(BridgeSource.lifecycle.isStreamingSource, isFalse);
+        expect(BridgeSource.dart.isStreamingSource, isFalse);
 
-      expect(BridgeSource.harvest.bypassesSourceLock, isTrue);
-      expect(BridgeSource.sse.bypassesSourceLock, isFalse);
-      expect(BridgeSource.dom.bypassesSourceLock, isFalse);
-      expect(BridgeSource.fetch.bypassesSourceLock, isFalse);
-    });
+        expect(BridgeSource.harvest.bypassesSourceLock, isTrue);
+        expect(BridgeSource.sse.bypassesSourceLock, isFalse);
+        expect(BridgeSource.dom.bypassesSourceLock, isFalse);
+        expect(BridgeSource.fetch.bypassesSourceLock, isFalse);
+      },
+    );
   });
 }

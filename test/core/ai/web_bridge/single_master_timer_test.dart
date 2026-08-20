@@ -17,31 +17,41 @@ void main() {
   });
 
   group('WEB-27: Single Master Timer Architecture', () {
-    test('setupBridgeScript removes aggressive 35000ms premature failure check', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript removes aggressive 35000ms premature failure check',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('totalDuration > 35000'), isFalse);
-    });
+        expect(script.contains('totalDuration > 35000'), isFalse);
+      },
+    );
 
-    test('ChatGptWebBridgeManager master timer uses ChatGptBridgeTimeouts.generationTimeout (180s)', () {
-      expect(
-        ChatGptWebBridgeManager.generationTimeout,
-        equals(ChatGptBridgeTimeouts.generationTimeout),
-      );
-      expect(ChatGptWebBridgeManager.generationTimeout.inSeconds, equals(180));
-    });
+    test(
+      'ChatGptWebBridgeManager master timer uses ChatGptBridgeTimeouts.generationTimeout (180s)',
+      () {
+        expect(
+          ChatGptWebBridgeManager.generationTimeout,
+          equals(ChatGptBridgeTimeouts.generationTimeout),
+        );
+        expect(
+          ChatGptWebBridgeManager.generationTimeout.inSeconds,
+          equals(180),
+        );
+      },
+    );
 
-    test('cancelCurrentStream immediately resets active generation and timer states', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-      );
-      manager.setTestRequestId('req_cancel_1');
+    test(
+      'cancelCurrentStream immediately resets active generation and timer states',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_cancel_1');
 
-      manager.cancelCurrentStream();
+        manager.cancelCurrentStream();
 
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-      expect(manager.currentRequestId, isNull);
-      expect(manager.pendingRequest, isNull);
-    });
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+        expect(manager.currentRequestId, isNull);
+        expect(manager.pendingRequest, isNull);
+      },
+    );
   });
 }

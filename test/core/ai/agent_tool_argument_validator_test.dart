@@ -4,44 +4,44 @@ import 'package:ritmo/core/ai/agent/agent_tool_argument_validator.dart';
 
 class _ValidationTestTool extends AgentTool {
   const _ValidationTestTool()
-      : super(
-          name: 'val_tool',
-          categoryFa: 'تست',
-          titleFa: 'ابزار تست اعتبارسنجی',
-          descriptionFa: 'توضیحات',
-          parameters: const [
-            ToolParameter(
-              name: 'title',
-              descriptionFa: 'عنوان',
-              type: 'string',
-              isRequired: true,
-            ),
-            ToolParameter(
-              name: 'days',
-              descriptionFa: 'تعداد روز',
-              type: 'int',
-              defaultValue: 7,
-            ),
-            ToolParameter(
-              name: 'rating',
-              descriptionFa: 'امتیاز',
-              type: 'double',
-            ),
-            ToolParameter(
-              name: 'active',
-              descriptionFa: 'فعال بودن',
-              type: 'bool',
-              defaultValue: false,
-            ),
-            ToolParameter(
-              name: 'priority',
-              descriptionFa: 'اولویت',
-              type: 'string',
-              allowedValues: ['LOW', 'MEDIUM', 'HIGH'],
-              defaultValue: 'MEDIUM',
-            ),
-          ],
-        );
+    : super(
+        name: 'val_tool',
+        categoryFa: 'تست',
+        titleFa: 'ابزار تست اعتبارسنجی',
+        descriptionFa: 'توضیحات',
+        parameters: const [
+          ToolParameter(
+            name: 'title',
+            descriptionFa: 'عنوان',
+            type: 'string',
+            isRequired: true,
+          ),
+          ToolParameter(
+            name: 'days',
+            descriptionFa: 'تعداد روز',
+            type: 'int',
+            defaultValue: 7,
+          ),
+          ToolParameter(
+            name: 'rating',
+            descriptionFa: 'امتیاز',
+            type: 'double',
+          ),
+          ToolParameter(
+            name: 'active',
+            descriptionFa: 'فعال بودن',
+            type: 'bool',
+            defaultValue: false,
+          ),
+          ToolParameter(
+            name: 'priority',
+            descriptionFa: 'اولویت',
+            type: 'string',
+            allowedValues: ['LOW', 'MEDIUM', 'HIGH'],
+            defaultValue: 'MEDIUM',
+          ),
+        ],
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
@@ -83,18 +83,14 @@ void main() {
     });
 
     test('rejects when required parameter is missing', () {
-      final res = AgentToolArgumentValidator.validate(tool, {
-        'days': 5,
-      });
+      final res = AgentToolArgumentValidator.validate(tool, {'days': 5});
 
       expect(res.isValid, isFalse);
       expect(res.errorMessageFa, contains('title'));
     });
 
     test('rejects when required string parameter is empty', () {
-      final res = AgentToolArgumentValidator.validate(tool, {
-        'title': '   ',
-      });
+      final res = AgentToolArgumentValidator.validate(tool, {'title': '   '});
 
       expect(res.isValid, isFalse);
       expect(res.errorMessageFa, contains('نمی‌تواند متن خالی باشد'));

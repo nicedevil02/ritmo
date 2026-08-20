@@ -8,10 +8,13 @@ void main() {
       expect(script.contains('hadCloudflareChallenge = false;'), isTrue);
     });
 
-    test('JS bridge script only emits cloudflare_resolved if hadCloudflareChallenge was true', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
-      expect(script.contains('else if (hadCloudflareChallenge)'), isTrue);
-      expect(script.contains("notifyFlutter('cloudflare_resolved'"), isTrue);
-    });
+    test(
+      'JS bridge script only emits cloudflare_resolved if hadCloudflareChallenge was true',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
+        expect(script.contains('else if (hadCloudflareChallenge)'), isTrue);
+        expect(script.contains("notifyFlutter('cloudflare_resolved'"), isTrue);
+      },
+    );
   });
 }

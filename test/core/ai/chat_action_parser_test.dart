@@ -15,7 +15,12 @@ void main() {
 }
 ''';
       final clean = ChatActionParser.extractCleanReplyText(raw);
-      expect(clean, equals('سلام. وقتت بخیر. هنوز داده‌ای از چرخه یا علائم ثبت نکرده‌ای، برای همین نمی‌توانم تحلیل یا پیشنهادی بدهم.'));
+      expect(
+        clean,
+        equals(
+          'سلام. وقتت بخیر. هنوز داده‌ای از چرخه یا علائم ثبت نکرده‌ای، برای همین نمی‌توانم تحلیل یا پیشنهادی بدهم.',
+        ),
+      );
     });
 
     test('Extracts reply from markdown code-blocked JSON', () {
@@ -66,7 +71,8 @@ void main() {
     });
 
     test('Handles legacy <actions> tags correctly', () {
-      const raw = 'این پیام است.<actions>[{"type": "openPage", "label": "مشاهده"}]</actions>';
+      const raw =
+          'این پیام است.<actions>[{"type": "openPage", "label": "مشاهده"}]</actions>';
       final parsed = ChatActionParser.parse(raw);
       expect(parsed.cleanText, equals('این پیام است.'));
       expect(parsed.actions.length, equals(1));

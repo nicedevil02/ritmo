@@ -23,27 +23,32 @@ void main() {
         expect(
           AssistantCharters.charters.containsKey(p.systemPromptKey),
           isTrue,
-          reason: 'Persona "${p.id}" refers to missing charter key "${p.systemPromptKey}"',
+          reason:
+              'Persona "${p.id}" refers to missing charter key "${p.systemPromptKey}"',
         );
 
         final charterText = AssistantCharters.charters[p.systemPromptKey] ?? '';
         expect(
           charterText.length,
           greaterThan(200),
-          reason: 'Charter for persona "${p.id}" with key "${p.systemPromptKey}" is too short (${charterText.length} chars)',
+          reason:
+              'Charter for persona "${p.id}" with key "${p.systemPromptKey}" is too short (${charterText.length} chars)',
         );
       }
     });
 
     test('invariant 2 no orphan charter', () {
       final declaredKeys = AssistantCharters.charters.keys.toSet();
-      final consumedKeys = PersonaRegistry.instance.allPersonas.map((p) => p.systemPromptKey).toSet();
+      final consumedKeys = PersonaRegistry.instance.allPersonas
+          .map((p) => p.systemPromptKey)
+          .toSet();
       final orphanKeys = declaredKeys.difference(consumedKeys);
 
       expect(
         orphanKeys,
         isEmpty,
-        reason: 'Found orphan charter keys without consuming persona: $orphanKeys',
+        reason:
+            'Found orphan charter keys without consuming persona: $orphanKeys',
       );
     });
 
@@ -53,7 +58,8 @@ void main() {
         expect(
           PersonaInferenceProfile.hasExplicitProfile(p.id),
           isTrue,
-          reason: 'Persona "${p.id}" does not have an explicit inference profile case',
+          reason:
+              'Persona "${p.id}" does not have an explicit inference profile case',
         );
       }
     });
@@ -78,7 +84,11 @@ void main() {
     });
 
     test('invariant 6 command touches must be within persona reads', () {
-      final exemptCommandIds = {'assistant.handoff', 'app.openPage', 'setting.update'};
+      final exemptCommandIds = {
+        'assistant.handoff',
+        'app.openPage',
+        'setting.update',
+      };
       final personas = PersonaRegistry.instance.allPersonas;
 
       for (final p in personas) {
@@ -89,7 +99,8 @@ void main() {
           expect(
             illegalDomains,
             isEmpty,
-            reason: 'Persona "${p.id}" has command "${cmd.id}" touching domains $illegalDomains not in reads ${p.reads} (expected green in PSN-33)',
+            reason:
+                'Persona "${p.id}" has command "${cmd.id}" touching domains $illegalDomains not in reads ${p.reads} (expected green in PSN-33)',
           );
         }
       }
@@ -104,7 +115,8 @@ void main() {
         expect(
           unregistered,
           isEmpty,
-          reason: 'Persona "${p.id}" contains unregistered command IDs: $unregistered',
+          reason:
+              'Persona "${p.id}" contains unregistered command IDs: $unregistered',
         );
       }
     });

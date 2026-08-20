@@ -5,9 +5,16 @@ void main() {
   group('A-54: No Silent Catch Blocks in Web Bridge Codebase', () {
     test('verifies zero empty catch blocks in lib/core/ai/web_bridge/', () {
       final dir = Directory('lib/core/ai/web_bridge');
-      expect(dir.existsSync(), isTrue, reason: 'web_bridge directory must exist');
+      expect(
+        dir.existsSync(),
+        isTrue,
+        reason: 'web_bridge directory must exist',
+      );
 
-      final dartFiles = dir.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'));
+      final dartFiles = dir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'));
       expect(dartFiles, isNotEmpty);
 
       final emptyCatchPattern = RegExp(r'catch\s*\([^)]*\)\s*\{\s*\}');
@@ -21,7 +28,8 @@ void main() {
         expect(
           matches.isEmpty,
           isTrue,
-          reason: 'File ${file.path} contains empty Dart catch block at: ${matches.map((m) => m.group(0)).toList()}',
+          reason:
+              'File ${file.path} contains empty Dart catch block at: ${matches.map((m) => m.group(0)).toList()}',
         );
       }
     });

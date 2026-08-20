@@ -4,12 +4,12 @@ import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
 
 class _DummyEchoTool extends AgentTool {
   const _DummyEchoTool()
-      : super(
-          name: 'dummy_echo',
-          categoryFa: 'تست',
-          titleFa: 'ابزار آزمایشی',
-          descriptionFa: 'ابزار آزمایشی برای بررسی تلمتری',
-        );
+    : super(
+        name: 'dummy_echo',
+        categoryFa: 'تست',
+        titleFa: 'ابزار آزمایشی',
+        descriptionFa: 'ابزار آزمایشی برای بررسی تلمتری',
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
@@ -35,7 +35,9 @@ void main() {
     });
 
     test('records call count, success count and duration correctly', () async {
-      final res1 = await AgentToolRegistry.instance.executeTool('dummy_echo', {'key': 'val'});
+      final res1 = await AgentToolRegistry.instance.executeTool('dummy_echo', {
+        'key': 'val',
+      });
       expect(res1.isSuccess, isTrue);
 
       final metricAfter1 = AgentToolRegistry.instance.getMetrics('dummy_echo');
@@ -43,7 +45,9 @@ void main() {
       expect(metricAfter1.successCount, 1);
       expect(metricAfter1.failureCount, 0);
 
-      final res2 = await AgentToolRegistry.instance.executeTool('dummy_echo', {'fail': true});
+      final res2 = await AgentToolRegistry.instance.executeTool('dummy_echo', {
+        'fail': true,
+      });
       expect(res2.isSuccess, isFalse);
 
       final metricAfter2 = AgentToolRegistry.instance.getMetrics('dummy_echo');

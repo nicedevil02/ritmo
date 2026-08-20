@@ -18,26 +18,29 @@ void main() {
   });
 
   group('WEB-07: Global Request ID Correlation & Stale Event Dropping', () {
-    test('stale done event from older requestId is dropped without closing generation', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_active_123');
+    test(
+      'stale done event from older requestId is dropped without closing generation',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_active_123');
 
-      // Stale done event for past request
-      final staleDone = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'done',
-          'fullText': 'پاسخ قدیمی که نباید بیاید',
-          'requestId': 'req_stale_000',
-          'source': 'dom',
-        }),
-      );
+        // Stale done event for past request
+        final staleDone = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'done',
+            'fullText': 'پاسخ قدیمی که نباید بیاید',
+            'requestId': 'req_stale_000',
+            'source': 'dom',
+          }),
+        );
 
-      manager.handleJsMessageForTest(staleDone);
+        manager.handleJsMessageForTest(staleDone);
 
-      // Should remain generating because stale event was dropped!
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-      expect(manager.currentRequestId, equals('req_active_123'));
-    });
+        // Should remain generating because stale event was dropped!
+        expect(manager.status, equals(ChatGptBridgeStatus.generating));
+        expect(manager.currentRequestId, equals('req_active_123'));
+      },
+    );
 
     test('matching done event for active requestId is processed normally', () {
       manager.setTestState(status: ChatGptBridgeStatus.generating);
@@ -60,21 +63,20 @@ void main() {
       expect(manager.currentRequestId, isNull);
     });
 
-    test('request-independent events (ready, cloudflare) are processed regardless of requestId', () {
-      manager.setTestState(status: ChatGptBridgeStatus.idle);
+    test(
+      'request-independent events (ready, cloudflare) are processed regardless of requestId',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.idle);
 
-      final readyEvent = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'ready',
-          'version': 7,
-          'isWarm': true,
-        }),
-      );
+        final readyEvent = JavaScriptMessage(
+          message: jsonEncode({'type': 'ready', 'version': 7, 'isWarm': true}),
+        );
 
-      manager.handleJsMessageForTest(readyEvent);
+        manager.handleJsMessageForTest(readyEvent);
 
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-    });
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+      },
+    );
 
     test('buildSendPromptScript injects prompt and requestId into JS call', () {
       final script = ChatGptJsInjector.buildSendPromptScript(

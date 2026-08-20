@@ -43,62 +43,76 @@ void main() {
   });
 
   group('WEB-30: Safe WebViewController Disposal & Android Lifecycle Protection', () {
-    test('disposeWebView safely tears down channel and loads blank page', () async {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.ready,
-        controller: mockController,
-      );
+    test(
+      'disposeWebView safely tears down channel and loads blank page',
+      () async {
+        manager.setTestState(
+          status: ChatGptBridgeStatus.ready,
+          controller: mockController,
+        );
 
-      expect(manager.controller, equals(mockController));
+        expect(manager.controller, equals(mockController));
 
-      manager.disposeWebView();
+        manager.disposeWebView();
 
-      expect(manager.controller, isNull);
-      expect(manager.status, equals(ChatGptBridgeStatus.idle));
+        expect(manager.controller, isNull);
+        expect(manager.status, equals(ChatGptBridgeStatus.idle));
 
-      // Wait a microtask / tick for unawaited safe disposal to execute
-      await Future.delayed(const Duration(milliseconds: 50));
+        // Wait a microtask / tick for unawaited safe disposal to execute
+        await Future.delayed(const Duration(milliseconds: 50));
 
-      expect(mockController.channelRemoved, isTrue);
-      expect(mockController.blankPageLoaded, isTrue);
-    });
+        expect(mockController.channelRemoved, isTrue);
+        expect(mockController.blankPageLoaded, isTrue);
+      },
+    );
 
-    test('forceReboot safely disposes the old controller before attempting recreation', () async {
-      final oldController = MockDisposalWebViewController();
-      final newController = MockDisposalWebViewController();
+    test(
+      'forceReboot safely disposes the old controller before attempting recreation',
+      () async {
+        final oldController = MockDisposalWebViewController();
+        final newController = MockDisposalWebViewController();
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.ready,
-        controller: oldController,
-      );
+        manager.setTestState(
+          status: ChatGptBridgeStatus.ready,
+          controller: oldController,
+        );
 
-      ChatGptWebBridgeManager.testControllerFactory = () => newController;
+        ChatGptWebBridgeManager.testControllerFactory = () => newController;
 
-      // Start forceReboot
-      final rebootFuture = manager.forceReboot(reasonFa: 'تست بازنشانی ایمن');
+        // Start forceReboot
+        final rebootFuture = manager.forceReboot(reasonFa: 'تست بازنشانی ایمن');
 
-      // Old controller should be immediately disposed with blank page and channel removed
-      await Future.delayed(const Duration(milliseconds: 50));
-      expect(oldController.channelRemoved, isTrue);
-      expect(oldController.blankPageLoaded, isTrue);
+        // Old controller should be immediately disposed with blank page and channel removed
+        await Future.delayed(const Duration(milliseconds: 50));
+        expect(oldController.channelRemoved, isTrue);
+        expect(oldController.blankPageLoaded, isTrue);
 
-      manager.handleJsMessageForTest(const JavaScriptMessage(message: '{"type":"ready"}'));
-      await rebootFuture;
-    });
+        manager.handleJsMessageForTest(
+          const JavaScriptMessage(message: '{"type":"ready"}'),
+        );
+        await rebootFuture;
+      },
+    );
 
-    test('handlePageFinished safely ignores stale controller when manager has different controller', () async {
-      final activeController = MockDisposalWebViewController();
-      final staleController = MockDisposalWebViewController();
+    test(
+      'handlePageFinished safely ignores stale controller when manager has different controller',
+      () async {
+        final activeController = MockDisposalWebViewController();
+        final staleController = MockDisposalWebViewController();
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.ready,
-        controller: activeController,
-      );
+        manager.setTestState(
+          status: ChatGptBridgeStatus.ready,
+          controller: activeController,
+        );
 
-      // Call handlePageFinished with stale controller
-      await manager.handlePageFinished('https://chatgpt.com/', staleController);
+        // Call handlePageFinished with stale controller
+        await manager.handlePageFinished(
+          'https://chatgpt.com/',
+          staleController,
+        );
 
-      expect(manager.navigationReloadCount, equals(0));
-    });
+        expect(manager.navigationReloadCount, equals(0));
+      },
+    );
   });
 }

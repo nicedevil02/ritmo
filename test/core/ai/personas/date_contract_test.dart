@@ -27,41 +27,47 @@ void main() {
       expect(iso, equals('2026-08-10'));
     });
 
-    test('Validator sanitizes Gregorian in reply while leaving ISO date in command payload intact', () {
-      final sleepPersona = PersonaRegistry.instance.getPersona('sleep')!;
-      final validator = PersonaResponseValidator();
-      final brief = SleepBrief(
-        sampleSize: 10,
-        computedAt: DateTime.now(),
-        avgDurationMinutes: 420,
-        avgQuality: 4.0,
-        sleepDebtMinutes: 60,
-        consistencyScore: 80,
-      );
+    test(
+      'Validator sanitizes Gregorian in reply while leaving ISO date in command payload intact',
+      () {
+        final sleepPersona = PersonaRegistry.instance.getPersona('sleep')!;
+        final validator = PersonaResponseValidator();
+        final brief = SleepBrief(
+          sampleSize: 10,
+          computedAt: DateTime.now(),
+          avgDurationMinutes: 420,
+          avgQuality: 4.0,
+          sleepDebtMinutes: 60,
+          consistencyScore: 80,
+        );
 
-      const res = ParsedAssistantResponse(
-        reply: 'در تاریخ 2026-08-10 ثبت شد.',
-        confidence: BriefConfidence.medium,
-        commands: [
-          ParsedCommand(
-            id: 'sleep.log',
-            payload: {'date': '2026-08-10', 'duration': 480},
-            labelFa: 'ثبت خواب',
-          ),
-        ],
-      );
+        const res = ParsedAssistantResponse(
+          reply: 'در تاریخ 2026-08-10 ثبت شد.',
+          confidence: BriefConfidence.medium,
+          commands: [
+            ParsedCommand(
+              id: 'sleep.log',
+              payload: {'date': '2026-08-10', 'duration': 480},
+              labelFa: 'ثبت خواب',
+            ),
+          ],
+        );
 
-      final result = validator.validate(
-        res: res,
-        persona: sleepPersona,
-        brief: brief,
-        manifestCommandIds: ['sleep.log'],
-      );
+        final result = validator.validate(
+          res: res,
+          persona: sleepPersona,
+          brief: brief,
+          manifestCommandIds: ['sleep.log'],
+        );
 
-      expect(result.isValid, isTrue);
-      expect(result.severity, equals(ValidationSeverity.sanitize));
-      expect(result.sanitizedResponse!.reply, isNot(contains('2026-08-10')));
-      expect(result.sanitizedResponse!.commands!.first.payload['date'], equals('2026-08-10'));
-    });
+        expect(result.isValid, isTrue);
+        expect(result.severity, equals(ValidationSeverity.sanitize));
+        expect(result.sanitizedResponse!.reply, isNot(contains('2026-08-10')));
+        expect(
+          result.sanitizedResponse!.commands!.first.payload['date'],
+          equals('2026-08-10'),
+        );
+      },
+    );
   });
 }

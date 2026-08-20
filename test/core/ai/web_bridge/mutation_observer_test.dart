@@ -5,12 +5,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('WEB-19: MutationObserver DOM Watching & Resource Optimization', () {
-    test('setupBridgeScript initializes MutationObserver for DOM observation', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript initializes MutationObserver for DOM observation',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('new MutationObserver'), isTrue);
-      expect(script.contains('domObserver.observe(document.body'), isTrue);
-    });
+        expect(script.contains('new MutationObserver'), isTrue);
+        expect(script.contains('domObserver.observe(document.body'), isTrue);
+      },
+    );
 
     test('setupBridgeScript cleans up MutationObserver via disconnect()', () {
       final script = ChatGptJsInjector.setupBridgeScript;

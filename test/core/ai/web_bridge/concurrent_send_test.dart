@@ -18,24 +18,30 @@ void main() {
   });
 
   group('A-51: Concurrent Send and In-Flight Request Cancellation', () {
-    test('cancelCurrentStream cancels active controller and returns status to ready', () async {
-      manager.setStatusForTest(ChatGptBridgeStatus.generating);
-      manager.setCurrentRequestIdForTest('req_concurrent_1');
+    test(
+      'cancelCurrentStream cancels active controller and returns status to ready',
+      () async {
+        manager.setStatusForTest(ChatGptBridgeStatus.generating);
+        manager.setCurrentRequestIdForTest('req_concurrent_1');
 
-      manager.cancelCurrentStream();
+        manager.cancelCurrentStream();
 
-      expect(manager.status, ChatGptBridgeStatus.ready);
-      expect(manager.currentRequestId, isNull);
-    });
+        expect(manager.status, ChatGptBridgeStatus.ready);
+        expect(manager.currentRequestId, isNull);
+      },
+    );
 
-    test('new request generates distinct requestId and resets accumulator', () async {
-      manager.setStatusForTest(ChatGptBridgeStatus.ready);
-      manager.setTestAccumulator('متن قدیمی درخواست قبلی');
+    test(
+      'new request generates distinct requestId and resets accumulator',
+      () async {
+        manager.setStatusForTest(ChatGptBridgeStatus.ready);
+        manager.setTestAccumulator('متن قدیمی درخواست قبلی');
 
-      expect(manager.accumulator.text, 'متن قدیمی درخواست قبلی');
+        expect(manager.accumulator.text, 'متن قدیمی درخواست قبلی');
 
-      manager.resetStateForTest();
-      expect(manager.accumulator.isEmpty, isTrue);
-    });
+        manager.resetStateForTest();
+        expect(manager.accumulator.isEmpty, isTrue);
+      },
+    );
   });
 }

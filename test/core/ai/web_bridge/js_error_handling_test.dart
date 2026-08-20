@@ -23,46 +23,51 @@ void main() {
       expect(err.source, equals('dom'));
     });
 
-    test('Receiving error event while generating fails the stream with WebBridgeException', () async {
-      final manager = ChatGptWebBridgeManager.instance;
-      final streamController = StreamController<String>();
-      addTearDown(streamController.close);
+    test(
+      'Receiving error event while generating fails the stream with WebBridgeException',
+      () async {
+        final manager = ChatGptWebBridgeManager.instance;
+        final streamController = StreamController<String>();
+        addTearDown(streamController.close);
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        streamController: streamController,
-      );
-      manager.setTestRequestId('req_err_test');
+        manager.setTestState(
+          status: ChatGptBridgeStatus.generating,
+          streamController: streamController,
+        );
+        manager.setTestRequestId('req_err_test');
 
-      final errors = <dynamic>[];
-      final completer = Completer<void>();
+        final errors = <dynamic>[];
+        final completer = Completer<void>();
 
-      final sub = streamController.stream.listen(
-        (_) {},
-        onError: (err) {
-          errors.add(err);
-          if (!completer.isCompleted) completer.complete();
-        },
-      );
+        final sub = streamController.stream.listen(
+          (_) {},
+          onError: (err) {
+            errors.add(err);
+            if (!completer.isCompleted) completer.complete();
+          },
+        );
 
-      manager.handleJsMessageForTest(JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'error',
-          'message': 'فیلد ورودی متن ChatGPT هنوز لود نشده است.',
-          'requestId': 'req_err_test',
-          'source': 'dom',
-        }),
-      ));
+        manager.handleJsMessageForTest(
+          JavaScriptMessage(
+            message: jsonEncode({
+              'type': 'error',
+              'message': 'فیلد ورودی متن ChatGPT هنوز لود نشده است.',
+              'requestId': 'req_err_test',
+              'source': 'dom',
+            }),
+          ),
+        );
 
-      await completer.future.timeout(const Duration(seconds: 1));
-      expect(errors.isNotEmpty, isTrue);
-      expect(errors.first, isA<WebBridgeException>());
-      final webEx = errors.first as WebBridgeException;
-      expect(webEx.messageFa, contains('فیلد ورودی متن ChatGPT'));
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
+        await completer.future.timeout(const Duration(seconds: 1));
+        expect(errors.isNotEmpty, isTrue);
+        expect(errors.first, isA<WebBridgeException>());
+        final webEx = errors.first as WebBridgeException;
+        expect(webEx.messageFa, contains('فیلد ورودی متن ChatGPT'));
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
 
-      await sub.cancel();
-      manager.resetStateForTest();
-    });
+        await sub.cancel();
+        manager.resetStateForTest();
+      },
+    );
   });
 }

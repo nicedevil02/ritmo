@@ -31,46 +31,55 @@ void main() {
   });
 
   group('WEB-10: Safe One-Time Resend With Repetition Protection', () {
-    test('triggers safe one-time resend when 0 tokens received and attempts is 0', () async {
-      final req = PendingWebBridgeRequest(
-        requestId: 'req_resend_1',
-        promptHash: 'h1',
-        promptText: 'پیام مهم کاربر',
-        sentAt: DateTime.now(),
-        stage: PendingRequestStage.awaitingFirstToken,
-        receivedLength: 0,
-        resendAttempts: 0,
-      );
-      manager.setTestPendingRequest(req);
-      manager.setTestRequestId('req_resend_1');
+    test(
+      'triggers safe one-time resend when 0 tokens received and attempts is 0',
+      () async {
+        final req = PendingWebBridgeRequest(
+          requestId: 'req_resend_1',
+          promptHash: 'h1',
+          promptText: 'پیام مهم کاربر',
+          sentAt: DateTime.now(),
+          stage: PendingRequestStage.awaitingFirstToken,
+          receivedLength: 0,
+          resendAttempts: 0,
+        );
+        manager.setTestPendingRequest(req);
+        manager.setTestRequestId('req_resend_1');
 
-      await manager.handleResendRequiredForTest();
+        await manager.handleResendRequiredForTest();
 
-      expect(req.resendAttempts, equals(1));
-      expect(req.stage, equals(PendingRequestStage.sending));
-      expect(controller.executedScripts, isNotEmpty);
-      expect(controller.executedScripts.any((s) => s.contains('req_resend_1')), isTrue);
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-    });
+        expect(req.resendAttempts, equals(1));
+        expect(req.stage, equals(PendingRequestStage.sending));
+        expect(controller.executedScripts, isNotEmpty);
+        expect(
+          controller.executedScripts.any((s) => s.contains('req_resend_1')),
+          isTrue,
+        );
+        expect(manager.status, equals(ChatGptBridgeStatus.generating));
+      },
+    );
 
-    test('refuses resend if tokens were already received (prevents duplicate assistant messages)', () async {
-      final req = PendingWebBridgeRequest(
-        requestId: 'req_resend_2',
-        promptHash: 'h2',
-        promptText: 'پیام کاربر',
-        sentAt: DateTime.now(),
-        stage: PendingRequestStage.streaming,
-        receivedLength: 25,
-        resendAttempts: 0,
-      );
-      manager.setTestPendingRequest(req);
-      manager.setTestRequestId('req_resend_2');
+    test(
+      'refuses resend if tokens were already received (prevents duplicate assistant messages)',
+      () async {
+        final req = PendingWebBridgeRequest(
+          requestId: 'req_resend_2',
+          promptHash: 'h2',
+          promptText: 'پیام کاربر',
+          sentAt: DateTime.now(),
+          stage: PendingRequestStage.streaming,
+          receivedLength: 25,
+          resendAttempts: 0,
+        );
+        manager.setTestPendingRequest(req);
+        manager.setTestRequestId('req_resend_2');
 
-      await manager.handleResendRequiredForTest();
+        await manager.handleResendRequiredForTest();
 
-      expect(controller.executedScripts, isEmpty);
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-    });
+        expect(controller.executedScripts, isEmpty);
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+      },
+    );
 
     test('refuses second resend if already attempted once', () async {
       final req = PendingWebBridgeRequest(

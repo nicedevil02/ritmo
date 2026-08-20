@@ -24,7 +24,10 @@ void main() {
       expect(ChatGptJsInjector.bridgeVersion, equals(9));
       expect(ChatGptWebBridgeManager.requiredBridgeVersion, equals(9));
       expect(ChatGptWebBridgeManager.enableWebBridgeStreaming, isTrue);
-      expect(ChatGptBridgeTimeouts.checkpoint3Delay, equals(const Duration(seconds: 90)));
+      expect(
+        ChatGptBridgeTimeouts.checkpoint3Delay,
+        equals(const Duration(seconds: 90)),
+      );
     });
 
     test('2. Complete taxonomy of bridge events parse cleanly', () {
@@ -48,7 +51,11 @@ void main() {
 
       for (final json in jsonSamples) {
         final ev = WebBridgeEvent.parse(json);
-        expect(ev, isNot(isA<BridgeUnknownEvent>()), reason: 'Failed parsing: ');
+        expect(
+          ev,
+          isNot(isA<BridgeUnknownEvent>()),
+          reason: 'Failed parsing: ',
+        );
         expect(ev.source, isNotEmpty);
       }
     });
@@ -63,11 +70,17 @@ void main() {
       );
       manager.setTestRequestId('req_generating_active');
 
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"ready","version":9,"isWarm":true,"currentPath":"/","hasComposer":true,"source":"lifecycle"}',
-      ));
+      manager.handleJsMessageForTest(
+        const JavaScriptMessage(
+          message:
+              '{"type":"ready","version":9,"isWarm":true,"currentPath":"/","hasComposer":true,"source":"lifecycle"}',
+        ),
+      );
 
-      expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.generating));
+      expect(
+        manager.statusNotifier.value,
+        equals(ChatGptBridgeStatus.generating),
+      );
     });
 
     test('4. SSE streaming locks source and promotes over DOM', () async {
@@ -81,19 +94,26 @@ void main() {
       manager.setTestRequestId('req_sse_test');
 
       // DOM chunk first
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"chunk","delta":"DOM Chunk","source":"dom"}',
-      ));
+      manager.handleJsMessageForTest(
+        const JavaScriptMessage(
+          message: '{"type":"chunk","delta":"DOM Chunk","source":"dom"}',
+        ),
+      );
 
       // SSE chunk arrives -> promotes over DOM
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"chunk","delta":"DOM Chunk + SSE Next","source":"sse"}',
-      ));
+      manager.handleJsMessageForTest(
+        const JavaScriptMessage(
+          message:
+              '{"type":"chunk","delta":"DOM Chunk + SSE Next","source":"sse"}',
+        ),
+      );
 
       // Subsequent DOM chunk is dropped while SSE is active
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"chunk","delta":"Late DOM","source":"dom"}',
-      ));
+      manager.handleJsMessageForTest(
+        const JavaScriptMessage(
+          message: '{"type":"chunk","delta":"Late DOM","source":"dom"}',
+        ),
+      );
 
       final entries = BridgeTraceLog.instance.entries;
       expect(entries.any((e) => e.type == 'source_promoted'), isTrue);
@@ -109,9 +129,12 @@ void main() {
       );
       manager.setTestRequestId('req_fail_fast');
 
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"http_error","statusCode":503,"message":"Service Unavailable","source":"fetch"}',
-      ));
+      manager.handleJsMessageForTest(
+        const JavaScriptMessage(
+          message:
+              '{"type":"http_error","statusCode":503,"message":"Service Unavailable","source":"fetch"}',
+        ),
+      );
 
       await Future.delayed(Duration.zero);
 

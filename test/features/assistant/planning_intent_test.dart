@@ -34,8 +34,10 @@ void main() {
       expect(result.splitSuggestions.first.parts, equals(3));
     });
 
-    test('2. Response with forbidden exact time keys (startTime/hour) is rejected', () {
-      const invalidResponse = '''
+    test(
+      '2. Response with forbidden exact time keys (startTime/hour) is rejected',
+      () {
+        const invalidResponse = '''
       {
         "intent": "PLAN_WEEK",
         "focusTitles": ["ورزش"],
@@ -44,13 +46,16 @@ void main() {
       }
       ''';
 
-      final result = parser.parse(invalidResponse);
-      expect(result.isValid, isFalse);
-      expect(result.validationError, contains('غیرمجاز'));
-    });
+        final result = parser.parse(invalidResponse);
+        expect(result.isValid, isFalse);
+        expect(result.validationError, contains('غیرمجاز'));
+      },
+    );
 
-    test('3. Override with nonexistent title is discarded and mentioned in questions', () {
-      const jsonResponse = '''
+    test(
+      '3. Override with nonexistent title is discarded and mentioned in questions',
+      () {
+        const jsonResponse = '''
       {
         "intent": "PLAN_WEEK",
         "focusTitles": ["تمرین پیانو"],
@@ -60,15 +65,19 @@ void main() {
       }
       ''';
 
-      final result = parser.parse(
-        jsonResponse,
-        existingCommitmentTitles: ['تمرین پیانو', 'ورزش'],
-      );
+        final result = parser.parse(
+          jsonResponse,
+          existingCommitmentTitles: ['تمرین پیانو', 'ورزش'],
+        );
 
-      expect(result.isValid, isTrue);
-      expect(result.budgetOverrides, isEmpty);
-      expect(result.questions.any((q) => q.contains('کلاس نقاشی ناشناخته')), isTrue);
-    });
+        expect(result.isValid, isTrue);
+        expect(result.budgetOverrides, isEmpty);
+        expect(
+          result.questions.any((q) => q.contains('کلاس نقاشی ناشناخته')),
+          isTrue,
+        );
+      },
+    );
 
     test('4. Robust JSON extraction with surrounding free-text / markdown', () {
       const wrappedResponse = '''
@@ -112,13 +121,23 @@ void main() {
       expect(result.isValid, isTrue);
       expect(result.questions.length, greaterThanOrEqualTo(2));
       // Must contain numerical options
-      expect(result.questions.any((q) => q.contains('۶۰') || q.contains('۲۵٪') || q.contains('۶۰۰')), isTrue);
+      expect(
+        result.questions.any(
+          (q) => q.contains('۶۰') || q.contains('۲۵٪') || q.contains('۶۰۰'),
+        ),
+        isTrue,
+      );
     });
 
-    test('6. Architecture boundary: planning_intent_parser does NOT import sqflite', () {
-      final file = File('lib/features/assistant/logic/planning_intent_parser.dart');
-      final content = file.readAsStringSync();
-      expect(content.contains('sqflite'), isFalse);
-    });
+    test(
+      '6. Architecture boundary: planning_intent_parser does NOT import sqflite',
+      () {
+        final file = File(
+          'lib/features/assistant/logic/planning_intent_parser.dart',
+        );
+        final content = file.readAsStringSync();
+        expect(content.contains('sqflite'), isFalse);
+      },
+    );
   });
 }

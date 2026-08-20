@@ -82,27 +82,34 @@ void main() {
       expect(result.reason, equals('privacy_fence_cycle'));
     });
 
-    test('Blocks menstrual keywords in command labelFa in non-cycle persona', () {
-      final globalPersona = PersonaRegistry.instance.getPersona('global')!;
-      const res = ParsedAssistantResponse(
-        reply: 'صفحه را باز می‌کنم.',
-        confidence: BriefConfidence.medium,
-        commands: [
-          ParsedCommand(id: 'app.openPage', payload: {}, labelFa: 'ثبت پریود و علائم'),
-        ],
-      );
+    test(
+      'Blocks menstrual keywords in command labelFa in non-cycle persona',
+      () {
+        final globalPersona = PersonaRegistry.instance.getPersona('global')!;
+        const res = ParsedAssistantResponse(
+          reply: 'صفحه را باز می‌کنم.',
+          confidence: BriefConfidence.medium,
+          commands: [
+            ParsedCommand(
+              id: 'app.openPage',
+              payload: {},
+              labelFa: 'ثبت پریود و علائم',
+            ),
+          ],
+        );
 
-      final result = validator.validate(
-        res: res,
-        persona: globalPersona,
-        brief: brief,
-        manifestCommandIds: ['app.openPage'],
-      );
+        final result = validator.validate(
+          res: res,
+          persona: globalPersona,
+          brief: brief,
+          manifestCommandIds: ['app.openPage'],
+        );
 
-      expect(result.isValid, isFalse);
-      expect(result.severity, equals(ValidationSeverity.block));
-      expect(result.reason, equals('privacy_fence_cycle'));
-    });
+        expect(result.isValid, isFalse);
+        expect(result.severity, equals(ValidationSeverity.block));
+        expect(result.reason, equals('privacy_fence_cycle'));
+      },
+    );
 
     test('Allows menstrual keywords in cycle persona', () {
       final cyclePersona = PersonaRegistry.instance.getPersona('cycle')!;
@@ -124,7 +131,8 @@ void main() {
     test('Allows pregnancy and cycle keywords in pregnancy persona', () {
       final pregPersona = PersonaRegistry.instance.getPersona('pregnancy')!;
       const res = ParsedAssistantResponse(
-        reply: 'در هفته ۱۶ بارداری و تغییرات چرخه هورمونی، استراحت کافی اهمیت دارد.',
+        reply:
+            'در هفته ۱۶ بارداری و تغییرات چرخه هورمونی، استراحت کافی اهمیت دارد.',
         confidence: BriefConfidence.medium,
       );
 

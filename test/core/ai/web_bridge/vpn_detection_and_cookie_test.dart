@@ -63,8 +63,10 @@ void main() {
       ChatGptWebBridgeManager.testControllerFactory = null;
     });
 
-    test('WebBridgeEvent parses vpn_required payload correctly with Ray ID and IP', () {
-      const jsonStr = '''
+    test(
+      'WebBridgeEvent parses vpn_required payload correctly with Ray ID and IP',
+      () {
+        const jsonStr = '''
       {
         "type": "vpn_required",
         "source": "lifecycle",
@@ -74,27 +76,31 @@ void main() {
       }
       ''';
 
-      final event = WebBridgeEvent.parse(jsonStr);
-      expect(event, isA<BridgeVpnRequiredEvent>());
-      final vpnEvent = event as BridgeVpnRequiredEvent;
-      expect(vpnEvent.reason, equals('unable_to_load_site'));
-      expect(vpnEvent.rayId, equals('a2da88954ab84803'));
-      expect(vpnEvent.ip, equals('2a03:ef43:5:f618:2c88:6dff:fe00:5f9f'));
-      expect(vpnEvent.source, equals('lifecycle'));
-    });
+        final event = WebBridgeEvent.parse(jsonStr);
+        expect(event, isA<BridgeVpnRequiredEvent>());
+        final vpnEvent = event as BridgeVpnRequiredEvent;
+        expect(vpnEvent.reason, equals('unable_to_load_site'));
+        expect(vpnEvent.rayId, equals('a2da88954ab84803'));
+        expect(vpnEvent.ip, equals('2a03:ef43:5:f618:2c88:6dff:fe00:5f9f'));
+        expect(vpnEvent.source, equals('lifecycle'));
+      },
+    );
 
-    test('WebBridgeErrorKind.vpnRequired produces helpful Persian action message', () {
-      final exc = WebBridgeException.vpnRequired(
-        rayId: 'a2da88954ab84803',
-        ip: '2a03:ef43:5:f618:2c88:6dff:fe00:5f9f',
-      );
+    test(
+      'WebBridgeErrorKind.vpnRequired produces helpful Persian action message',
+      () {
+        final exc = WebBridgeException.vpnRequired(
+          rayId: 'a2da88954ab84803',
+          ip: '2a03:ef43:5:f618:2c88:6dff:fe00:5f9f',
+        );
 
-      expect(exc.kind, equals(WebBridgeErrorKind.vpnRequired));
-      expect(exc.messageFa, contains('مسدود است'));
-      expect(exc.messageFa, contains('فیلترشکن'));
-      expect(exc.messageFa, contains('Ray ID: a2da88954ab84803'));
-      expect(exc.actionTextFa, equals('فعال‌سازی فیلترشکن / تحریم‌شکن'));
-    });
+        expect(exc.kind, equals(WebBridgeErrorKind.vpnRequired));
+        expect(exc.messageFa, contains('مسدود است'));
+        expect(exc.messageFa, contains('فیلترشکن'));
+        expect(exc.messageFa, contains('Ray ID: a2da88954ab84803'));
+        expect(exc.actionTextFa, equals('فعال‌سازی فیلترشکن / تحریم‌شکن'));
+      },
+    );
 
     test('Manager transitions to vpnRequired on vpn_required JS event', () {
       expect(manager.status, equals(ChatGptBridgeStatus.idle));
@@ -136,27 +142,36 @@ void main() {
   });
 
   group('JS Injector Script Verification for VPN & Cookie Auto-Consent', () {
-    test('setupBridgeScript contains checkVpnAndGeoBlockStatus and security blocker', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
-      expect(script, contains('checkVpnAndGeoBlockStatus'));
-      expect(script, contains('unable to load site'));
-      expect(script, contains('if you are using a vpn'));
-      expect(script, contains('not available in your country'));
-      expect(script, contains('checkSecurityAndBlockStatus'));
-      expect(script, contains('VPN/Geo-block detected at boot; withholding ready.'));
-    });
+    test(
+      'setupBridgeScript contains checkVpnAndGeoBlockStatus and security blocker',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
+        expect(script, contains('checkVpnAndGeoBlockStatus'));
+        expect(script, contains('unable to load site'));
+        expect(script, contains('if you are using a vpn'));
+        expect(script, contains('not available in your country'));
+        expect(script, contains('checkSecurityAndBlockStatus'));
+        expect(
+          script,
+          contains('VPN/Geo-block detected at boot; withholding ready.'),
+        );
+      },
+    );
 
-    test('setupBridgeScript and earlyHookScript contain auto cookie dismissal and OneTrust API', () {
-      final setupScript = ChatGptJsInjector.setupBridgeScript;
-      final earlyScript = ChatGptJsInjector.earlyHookScript;
+    test(
+      'setupBridgeScript and earlyHookScript contain auto cookie dismissal and OneTrust API',
+      () {
+        final setupScript = ChatGptJsInjector.setupBridgeScript;
+        final earlyScript = ChatGptJsInjector.earlyHookScript;
 
-      expect(setupScript, contains('OneTrust.AllowAll'));
-      expect(setupScript, contains('__ritmo_cookie_suppress_css'));
-      expect(setupScript, contains('onetrust-banner-sdk'));
-      expect(setupScript, contains('accept-cookies'));
+        expect(setupScript, contains('OneTrust.AllowAll'));
+        expect(setupScript, contains('__ritmo_cookie_suppress_css'));
+        expect(setupScript, contains('onetrust-banner-sdk'));
+        expect(setupScript, contains('accept-cookies'));
 
-      expect(earlyScript, contains('__ritmo_cookie_suppress_css'));
-      expect(earlyScript, contains('OnetrustActiveGroups'));
-    });
+        expect(earlyScript, contains('__ritmo_cookie_suppress_css'));
+        expect(earlyScript, contains('OnetrustActiveGroups'));
+      },
+    );
   });
 }

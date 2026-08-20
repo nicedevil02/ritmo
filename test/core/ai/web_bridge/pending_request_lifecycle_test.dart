@@ -15,39 +15,47 @@ void main() {
   });
 
   group('WEB-08: Pending Request Model & Lifecycle', () {
-    test('promptPrefix truncates whitespace and limits length to at most 80 characters', () {
-      const longPrompt = '   این یک متن تستی بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار طولانی است که باید کوتاه شود.   ';
-      final req = PendingWebBridgeRequest(
-        requestId: 'req_123',
-        promptHash: 'abc1',
-        promptText: longPrompt,
-        sentAt: DateTime.now(),
-      );
+    test(
+      'promptPrefix truncates whitespace and limits length to at most 80 characters',
+      () {
+        const longPrompt =
+            '   این یک متن تستی بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار بسیار طولانی است که باید کوتاه شود.   ';
+        final req = PendingWebBridgeRequest(
+          requestId: 'req_123',
+          promptHash: 'abc1',
+          promptText: longPrompt,
+          sentAt: DateTime.now(),
+        );
 
-      expect(req.promptPrefix.length, lessThanOrEqualTo(80));
-      expect(req.promptPrefix.startsWith(' '), isFalse);
-    });
+        expect(req.promptPrefix.length, lessThanOrEqualTo(80));
+        expect(req.promptPrefix.startsWith(' '), isFalse);
+      },
+    );
 
-    test('toJson contains promptPrefix instead of full promptText to keep injection payload lightweight', () {
-      const longPrompt = 'یک دو سه چهار پنج شش هفت هشت نه ده یازده دوازده سیزده چهارده پانزده شانزده هفده هجده نوزده بیست';
-      final req = PendingWebBridgeRequest(
-        requestId: 'req_123',
-        promptHash: 'hash_abc',
-        promptText: longPrompt,
-        sentAt: DateTime.parse('2026-08-18T10:00:00.000Z'),
-        stage: PendingRequestStage.streaming,
-        receivedLength: 42,
-      );
+    test(
+      'toJson contains promptPrefix instead of full promptText to keep injection payload lightweight',
+      () {
+        const longPrompt =
+            'یک دو سه چهار پنج شش هفت هشت نه ده یازده دوازده سیزده چهارده پانزده شانزده هفده هجده نوزده بیست';
+        final req = PendingWebBridgeRequest(
+          requestId: 'req_123',
+          promptHash: 'hash_abc',
+          promptText: longPrompt,
+          sentAt: DateTime.parse('2026-08-18T10:00:00.000Z'),
+          stage: PendingRequestStage.streaming,
+          receivedLength: 42,
+        );
 
-      final json = req.toJson();
+        final json = req.toJson();
 
-      expect(json.containsKey('promptText'), isFalse);
-      expect(json['promptPrefix'], equals(req.promptPrefix));
-      expect(json['requestId'], equals('req_123'));
-      expect(json['stage'], equals('streaming'));
-      expect(json['receivedLength'], equals(42));
-      expect(json['promptHash'], equals('hash_abc'));
-    });
+        expect(json.containsKey('promptText'), isFalse);
+        expect(json['promptPrefix'], equals(req.promptPrefix));
+        expect(json['requestId'], equals('req_123'));
+        expect(json['stage'], equals('streaming'));
+        expect(json['receivedLength'], equals(42));
+        expect(json['promptHash'], equals('hash_abc'));
+      },
+    );
 
     test('fromJson deserializes correctly', () {
       final json = {

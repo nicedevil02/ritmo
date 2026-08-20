@@ -18,21 +18,27 @@ void main() {
       expect(acc.length, equals(15));
     });
 
-    test('applyFull ignores transient dom retreat when incoming is shorter prefix', () {
-      final acc = BridgeResponseAccumulator();
-      acc.applyDelta('متن بلندتر آزمایشی', source: 'sse');
-      final originalLength = acc.length;
+    test(
+      'applyFull ignores transient dom retreat when incoming is shorter prefix',
+      () {
+        final acc = BridgeResponseAccumulator();
+        acc.applyDelta('متن بلندتر آزمایشی', source: 'sse');
+        final originalLength = acc.length;
 
-      // Attempt applyFull with shorter prefix text -> transient retreat ignored
-      final delta = acc.applyFull('متن بلندتر', source: 'dom');
-      expect(delta, isNull);
-      expect(acc.length, equals(originalLength));
-      expect(acc.text, equals('متن بلندتر آزمایشی'));
+        // Attempt applyFull with shorter prefix text -> transient retreat ignored
+        final delta = acc.applyFull('متن بلندتر', source: 'dom');
+        expect(delta, isNull);
+        expect(acc.length, equals(originalLength));
+        expect(acc.text, equals('متن بلندتر آزمایشی'));
 
-      // Attempt applyFull with longer text -> accepted
-      final deltaLonger = acc.applyFull('متن بلندتر آزمایشی به همراه توضیحات تکمیلی', source: 'dom');
-      expect(deltaLonger, isNotNull);
-      expect(acc.text, equals('متن بلندتر آزمایشی به همراه توضیحات تکمیلی'));
-    });
+        // Attempt applyFull with longer text -> accepted
+        final deltaLonger = acc.applyFull(
+          'متن بلندتر آزمایشی به همراه توضیحات تکمیلی',
+          source: 'dom',
+        );
+        expect(deltaLonger, isNotNull);
+        expect(acc.text, equals('متن بلندتر آزمایشی به همراه توضیحات تکمیلی'));
+      },
+    );
   });
 }

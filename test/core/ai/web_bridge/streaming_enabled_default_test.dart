@@ -19,27 +19,32 @@ void main() {
       expect(ChatGptWebBridgeManager.enableWebBridgeStreaming, isTrue);
     });
 
-    test('emitting chunk pushes delta immediately to streamController when streaming is enabled', () async {
-      final streamCtrl = StreamController<String>.broadcast();
-      addTearDown(streamCtrl.close);
+    test(
+      'emitting chunk pushes delta immediately to streamController when streaming is enabled',
+      () async {
+        final streamCtrl = StreamController<String>.broadcast();
+        addTearDown(streamCtrl.close);
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        streamController: streamCtrl,
-      );
+        manager.setTestState(
+          status: ChatGptBridgeStatus.generating,
+          streamController: streamCtrl,
+        );
 
-      final receivedChunks = <String>[];
-      streamCtrl.stream.listen((chunk) {
-        receivedChunks.add(chunk);
-      });
+        final receivedChunks = <String>[];
+        streamCtrl.stream.listen((chunk) {
+          receivedChunks.add(chunk);
+        });
 
-      manager.handleJsMessageForTest(const JavaScriptMessage(
-        message: '{"type":"chunk","delta":"سلام دوست عزیز","source":"dom"}',
-      ));
+        manager.handleJsMessageForTest(
+          const JavaScriptMessage(
+            message: '{"type":"chunk","delta":"سلام دوست عزیز","source":"dom"}',
+          ),
+        );
 
-      await Future.delayed(Duration.zero);
+        await Future.delayed(Duration.zero);
 
-      expect(receivedChunks, contains('سلام دوست عزیز'));
-    });
+        expect(receivedChunks, contains('سلام دوست عزیز'));
+      },
+    );
   });
 }

@@ -7,14 +7,26 @@ void main() {
       expect(ChatGptJsInjector.bridgeVersion, equals(9));
     });
 
-    test('setupBridgeScript contains version identifier and matches bridgeVersion', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains version identifier and matches bridgeVersion',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('window.__RITMO_BRIDGE_V'), isTrue);
-      expect(script.contains('var requiredVersion = ${ChatGptJsInjector.bridgeVersion};'), isTrue);
-      expect(script.contains('__RITMO_BRIDGE_INITIALIZED__'), isFalse,
-          reason: 'Legacy unversioned boolean guard should be completely removed');
-    });
+        expect(script.contains('window.__RITMO_BRIDGE_V'), isTrue);
+        expect(
+          script.contains(
+            'var requiredVersion = ${ChatGptJsInjector.bridgeVersion};',
+          ),
+          isTrue,
+        );
+        expect(
+          script.contains('__RITMO_BRIDGE_INITIALIZED__'),
+          isFalse,
+          reason:
+              'Legacy unversioned boolean guard should be completely removed',
+        );
+      },
+    );
 
     test('setupBridgeScript posts ready event on warm document branch', () {
       final script = ChatGptJsInjector.setupBridgeScript;
@@ -25,10 +37,13 @@ void main() {
       expect(script.contains('currentPath: window.location.pathname'), isTrue);
     });
 
-    test('setupBridgeScript defines __ritmo_cleanup for idempotent re-injection', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript defines __ritmo_cleanup for idempotent re-injection',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('window.__ritmo_cleanup'), isTrue);
-    });
+        expect(script.contains('window.__ritmo_cleanup'), isTrue);
+      },
+    );
   });
 }

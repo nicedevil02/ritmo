@@ -15,7 +15,10 @@ class _CapturingMockDatabase implements Database {
   Future<void> close() async {}
 
   @override
-  Future<List<Map<String, Object?>>> rawQuery(String sql, [List<Object?>? arguments]) async {
+  Future<List<Map<String, Object?>>> rawQuery(
+    String sql, [
+    List<Object?>? arguments,
+  ]) async {
     executedSql.add(sql);
     executedArgs.add(arguments);
 
@@ -27,7 +30,7 @@ class _CapturingMockDatabase implements Database {
           'content': 'محتوا',
           'tags': 'ورزش',
           'updatedAt': '2026-08-17',
-        }
+        },
       ];
     }
     if (sql.contains('bedtime_diagnostics')) {
@@ -37,7 +40,7 @@ class _CapturingMockDatabase implements Database {
           'durationMinutes': 480,
           'quality': 'عالی',
           'createdAt': '2026-08-17T08:00:00',
-        }
+        },
       ];
     }
     return [];
@@ -60,33 +63,42 @@ void main() {
       DatabaseHelper.databaseInstance = null;
     });
 
-    test('SearchUserNotesTool executes with parameterized arguments and never injects raw string in SQL', () async {
-      const tool = SearchUserNotesTool();
-      final res = await tool.execute({'query': "test' OR '1'='1"});
-      expect(res.isSuccess, isTrue);
+    test(
+      'SearchUserNotesTool executes with parameterized arguments and never injects raw string in SQL',
+      () async {
+        const tool = SearchUserNotesTool();
+        final res = await tool.execute({'query': "test' OR '1'='1"});
+        expect(res.isSuccess, isTrue);
 
-      expect(mockDb.executedSql.isNotEmpty, isTrue);
-      final lastSql = mockDb.executedSql.last;
-      expect(lastSql, contains('WHERE title LIKE ? OR content LIKE ? OR tags LIKE ?'));
-      expect(lastSql.contains("test' OR '1'='1"), isFalse);
+        expect(mockDb.executedSql.isNotEmpty, isTrue);
+        final lastSql = mockDb.executedSql.last;
+        expect(
+          lastSql,
+          contains('WHERE title LIKE ? OR content LIKE ? OR tags LIKE ?'),
+        );
+        expect(lastSql.contains("test' OR '1'='1"), isFalse);
 
-      final lastArgs = mockDb.executedArgs.last;
-      expect(lastArgs, isNotNull);
-      expect(lastArgs, contains("%test' OR '1'='1%"));
-    });
+        final lastArgs = mockDb.executedArgs.last;
+        expect(lastArgs, isNotNull);
+        expect(lastArgs, contains("%test' OR '1'='1%"));
+      },
+    );
 
-    test('GetSleepDiagnosticsTool binds LIMIT using parameterized placeholder', () async {
-      const tool = GetSleepDiagnosticsTool();
-      final res = await tool.execute({'days': 7});
-      expect(res.isSuccess, isTrue);
+    test(
+      'GetSleepDiagnosticsTool binds LIMIT using parameterized placeholder',
+      () async {
+        const tool = GetSleepDiagnosticsTool();
+        final res = await tool.execute({'days': 7});
+        expect(res.isSuccess, isTrue);
 
-      expect(mockDb.executedSql.isNotEmpty, isTrue);
-      final lastSql = mockDb.executedSql.last;
-      expect(lastSql, contains('LIMIT ?'));
+        expect(mockDb.executedSql.isNotEmpty, isTrue);
+        final lastSql = mockDb.executedSql.last;
+        expect(lastSql, contains('LIMIT ?'));
 
-      final lastArgs = mockDb.executedArgs.last;
-      expect(lastArgs, isNotNull);
-      expect(lastArgs, [7]);
-    });
+        final lastArgs = mockDb.executedArgs.last;
+        expect(lastArgs, isNotNull);
+        expect(lastArgs, [7]);
+      },
+    );
   });
 }

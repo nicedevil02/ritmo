@@ -19,8 +19,8 @@ void main() {
       final res = await tool.execute({
         'title': 'برنامه تست',
         'steps': [
-          {'invalid': 'value'}
-        ]
+          {'invalid': 'value'},
+        ],
       });
       expect(res.isSuccess, isFalse);
       expect(res.errorMessage, contains('معتبری'));

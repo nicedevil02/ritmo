@@ -24,24 +24,24 @@ class _SampleDummyCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'title': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'عنوان آیتم',
-          required: true,
-        ),
-        'duration': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'مدت زمان',
-          required: false,
-          min: 1,
-        ),
-        'type': const ParamSpec(
-          type: ParamType.enumeration,
-          labelFa: 'نوع آیتم',
-          required: false,
-          allowed: ['NORMAL', 'FAST'],
-        ),
-      };
+    'title': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'عنوان آیتم',
+      required: true,
+    ),
+    'duration': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت زمان',
+      required: false,
+      min: 1,
+    ),
+    'type': const ParamSpec(
+      type: ParamType.enumeration,
+      labelFa: 'نوع آیتم',
+      required: false,
+      allowed: ['NORMAL', 'FAST'],
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async =>
@@ -53,40 +53,49 @@ class _SampleDummyCommand extends RitmoCommand {
 
   @override
   Future<CommandResult?> undo(
-          AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
-      null;
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => null;
 }
 
 void main() {
   group('CommandToolBridge Dynamic Tool Generation Tests (T26)', () {
-    test('creates valid AgentTool with mapped parameters from RitmoCommand', () {
-      const cmd = _SampleDummyCommand();
-      final tool = CommandToolBridge.fromCommand(cmd);
+    test(
+      'creates valid AgentTool with mapped parameters from RitmoCommand',
+      () {
+        const cmd = _SampleDummyCommand();
+        final tool = CommandToolBridge.fromCommand(cmd);
 
-      expect(tool.name, 'dummy_createItem');
-      expect(tool.titleFa, 'ایجاد آیتم تستی');
-      expect(tool.descriptionFa, 'یک آیتم آزمایشی می‌سازد');
-      expect(tool.categoryFa, 'روتین‌ها و عادات');
-      expect(tool.parameters.length, 3);
+        expect(tool.name, 'dummy_createItem');
+        expect(tool.titleFa, 'ایجاد آیتم تستی');
+        expect(tool.descriptionFa, 'یک آیتم آزمایشی می‌سازد');
+        expect(tool.categoryFa, 'روتین‌ها و عادات');
+        expect(tool.parameters.length, 3);
 
-      final titleParam = tool.parameters.firstWhere((p) => p.name == 'title');
-      expect(titleParam.type, 'string');
-      expect(titleParam.isRequired, isTrue);
+        final titleParam = tool.parameters.firstWhere((p) => p.name == 'title');
+        expect(titleParam.type, 'string');
+        expect(titleParam.isRequired, isTrue);
 
-      final durationParam = tool.parameters.firstWhere((p) => p.name == 'duration');
-      expect(durationParam.type, 'int');
-      expect(durationParam.isRequired, isFalse);
+        final durationParam = tool.parameters.firstWhere(
+          (p) => p.name == 'duration',
+        );
+        expect(durationParam.type, 'int');
+        expect(durationParam.isRequired, isFalse);
 
-      final typeParam = tool.parameters.firstWhere((p) => p.name == 'type');
-      expect(typeParam.type, 'string');
-      expect(typeParam.allowedValues, ['NORMAL', 'FAST']);
-    });
+        final typeParam = tool.parameters.firstWhere((p) => p.name == 'type');
+        expect(typeParam.type, 'string');
+        expect(typeParam.allowedValues, ['NORMAL', 'FAST']);
+      },
+    );
 
     test('buildSteps generates correct PlanStep payload', () async {
       const cmd = _SampleDummyCommand();
       final tool = CommandToolBridge.fromCommand(cmd);
 
-      final steps = await tool.buildSteps({'title': 'Morning Run', 'duration': 30});
+      final steps = await tool.buildSteps({
+        'title': 'Morning Run',
+        'duration': 30,
+      });
       expect(steps.length, 1);
       expect(steps.first.commandId, 'dummy.createItem');
       expect(steps.first.payload['title'], 'Morning Run');

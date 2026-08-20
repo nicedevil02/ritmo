@@ -25,12 +25,12 @@ class _DummyEchoCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'message': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'پیام',
-          required: true,
-        ),
-      };
+    'message': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'پیام',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async =>
@@ -45,20 +45,23 @@ class _DummyEchoCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
 
 class _DummyEchoKernelTool extends KernelCommandTool {
   const _DummyEchoKernelTool()
-      : super(
-          name: 'test_echo_tool',
-          categoryFa: 'تست',
-          titleFa: 'ابزار تست کرنل',
-          descriptionFa: 'ابزار برای تست اتصال به باس فرمان',
-          commandId: 'test.echo',
-        );
+    : super(
+        name: 'test_echo_tool',
+        categoryFa: 'تست',
+        titleFa: 'ابزار تست کرنل',
+        descriptionFa: 'ابزار برای تست اتصال به باس فرمان',
+        commandId: 'test.echo',
+      );
 
   @override
   Future<List<PlanStep>> buildSteps(Map<String, dynamic> args) async {
@@ -67,15 +70,15 @@ class _DummyEchoKernelTool extends KernelCommandTool {
       throw const ToolArgumentError('پیام الزامی است');
     }
     return [
-      PlanStep(
-        commandId: commandId,
-        payload: {'message': msg},
-      )
+      PlanStep(commandId: commandId, payload: {'message': msg}),
     ];
   }
 
   @override
-  String buildSummaryFa(Map<String, dynamic> args, Map<String, dynamic> output) {
+  String buildSummaryFa(
+    Map<String, dynamic> args,
+    Map<String, dynamic> output,
+  ) {
     return 'نتیجه: ${output['echo']}';
   }
 }
@@ -99,10 +102,13 @@ void main() {
       expect(KernelCommandTool.clampedInt('invalid', 10, 1, 20), 10);
     });
 
-    test('throws ToolArgumentError and returns failure on invalid input', () async {
-      final res = await tool.execute({'message': ''});
-      expect(res.isSuccess, isFalse);
-      expect(res.errorMessage, contains('پیام الزامی است'));
-    });
+    test(
+      'throws ToolArgumentError and returns failure on invalid input',
+      () async {
+        final res = await tool.execute({'message': ''});
+        expect(res.isSuccess, isFalse);
+        expect(res.errorMessage, contains('پیام الزامی است'));
+      },
+    );
   });
 }

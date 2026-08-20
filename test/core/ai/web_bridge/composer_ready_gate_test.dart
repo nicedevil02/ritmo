@@ -34,11 +34,14 @@ void main() {
   });
 
   group('WEB-12: Composer Readiness Gate', () {
-    test('setupBridgeScript contains __ritmo_checkComposerReady implementation', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
-      expect(script.contains('window.__ritmo_checkComposerReady'), isTrue);
-      expect(script.contains('prompt-textarea'), isTrue);
-    });
+    test(
+      'setupBridgeScript contains __ritmo_checkComposerReady implementation',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
+        expect(script.contains('window.__ritmo_checkComposerReady'), isTrue);
+        expect(script.contains('prompt-textarea'), isTrue);
+      },
+    );
 
     test('waitForComposerReady polls until composer becomes ready', () async {
       final controller = PollingWebViewController(readyAfterAttempts: 2);
@@ -52,15 +55,18 @@ void main() {
       expect(controller.pollCount, greaterThanOrEqualTo(2));
     });
 
-    test('waitForComposerReady returns false on timeout if never ready', () async {
-      final controller = PollingWebViewController(readyAfterAttempts: 999);
-      manager.setTestState(controller: controller);
+    test(
+      'waitForComposerReady returns false on timeout if never ready',
+      () async {
+        final controller = PollingWebViewController(readyAfterAttempts: 999);
+        manager.setTestState(controller: controller);
 
-      final isReady = await manager.waitForComposerReady(
-        timeout: const Duration(milliseconds: 500),
-      );
+        final isReady = await manager.waitForComposerReady(
+          timeout: const Duration(milliseconds: 500),
+        );
 
-      expect(isReady, isFalse);
-    });
+        expect(isReady, isFalse);
+      },
+    );
   });
 }

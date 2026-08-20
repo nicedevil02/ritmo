@@ -4,14 +4,17 @@ import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
 
 void main() {
   group('DET-20: 2s Steady State in Watcher', () {
-    test('setupBridgeScript contains 2s steady state logic and watcher_steady_done event', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains 2s steady state logic and watcher_steady_done event',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('idleMs >= 2000'), isTrue);
-      expect(script.contains("notifyFlutter('watcher_steady_done'"), isTrue);
-      expect(script.contains('textLength: lastLength'), isTrue);
-      expect(script.contains('source: \'dom\''), isTrue);
-    });
+        expect(script.contains('idleMs >= 2000'), isTrue);
+        expect(script.contains("notifyFlutter('watcher_steady_done'"), isTrue);
+        expect(script.contains('textLength: lastLength'), isTrue);
+        expect(script.contains('source: \'dom\''), isTrue);
+      },
+    );
 
     test('WebBridgeEvent parses watcher_steady_done correctly', () {
       final event = WebBridgeEvent.parse('''{

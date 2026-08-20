@@ -18,42 +18,48 @@ void main() {
   });
 
   group('WEB-23: Page Auth State Detection', () {
-    test('setupBridgeScript contains checkAuthState and auth_required notification logic', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains checkAuthState and auth_required notification logic',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains('function checkAuthState()'), isTrue);
-      expect(script.contains('window.__ritmo_checkAuthState'), isTrue);
-      expect(script.contains("notifyFlutter('auth_required'"), isTrue);
-      expect(script.contains('RITMO_SELECTORS.loginButton'), isTrue);
-    });
+        expect(script.contains('function checkAuthState()'), isTrue);
+        expect(script.contains('window.__ritmo_checkAuthState'), isTrue);
+        expect(script.contains("notifyFlutter('auth_required'"), isTrue);
+        expect(script.contains('RITMO_SELECTORS.loginButton'), isTrue);
+      },
+    );
 
-    test('auth_required message updates isAuthenticated to false and fails active generation', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_auth_1');
-      manager.setTestPendingRequest(
-        PendingWebBridgeRequest(
-          requestId: 'req_auth_1',
-          promptHash: 'h_auth',
-          promptText: 'سلام',
-          sentAt: DateTime.now(),
-        ),
-      );
+    test(
+      'auth_required message updates isAuthenticated to false and fails active generation',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_auth_1');
+        manager.setTestPendingRequest(
+          PendingWebBridgeRequest(
+            requestId: 'req_auth_1',
+            promptHash: 'h_auth',
+            promptText: 'سلام',
+            sentAt: DateTime.now(),
+          ),
+        );
 
-      final msg = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'auth_required',
-          'hasLoginButton': true,
-          'currentPath': '/auth/login',
-          'source': 'lifecycle',
-        }),
-      );
+        final msg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'auth_required',
+            'hasLoginButton': true,
+            'currentPath': '/auth/login',
+            'source': 'lifecycle',
+          }),
+        );
 
-      manager.handleJsMessageForTest(msg);
+        manager.handleJsMessageForTest(msg);
 
-      expect(manager.isAuthenticated, isFalse);
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-      expect(manager.pendingRequest, isNull);
-    });
+        expect(manager.isAuthenticated, isFalse);
+        expect(manager.status, equals(ChatGptBridgeStatus.ready));
+        expect(manager.pendingRequest, isNull);
+      },
+    );
 
     test('ready event updates isAuthenticated to true', () {
       manager.setTestAuthenticated(false);

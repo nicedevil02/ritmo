@@ -54,7 +54,11 @@ void main() {
         accumulated: 'بررسی تقویم...',
       );
 
-      String applyToken(String current, AgentTokenStreamEvent event, bool suppress) {
+      String applyToken(
+        String current,
+        AgentTokenStreamEvent event,
+        bool suppress,
+      ) {
         if (suppress) return current;
         return event.accumulated;
       }
@@ -69,7 +73,11 @@ void main() {
         accumulated: 'پاسخ نهایی اینجاست.',
       );
 
-      String applyToken(String current, AgentTokenStreamEvent event, bool suppress) {
+      String applyToken(
+        String current,
+        AgentTokenStreamEvent event,
+        bool suppress,
+      ) {
         if (suppress) return current;
         return event.accumulated;
       }

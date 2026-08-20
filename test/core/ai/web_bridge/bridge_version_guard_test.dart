@@ -9,7 +9,8 @@ void main() {
       expect(
         ChatGptJsInjector.bridgeVersion,
         equals(9),
-        reason: 'Bridge version must be bumped to 9 for detection fixes (DET-05)',
+        reason:
+            'Bridge version must be bumped to 9 for detection fixes (DET-05)',
       );
     });
 
@@ -25,7 +26,8 @@ void main() {
       expect(
         digest.isNotEmpty,
         isTrue,
-        reason: 'متن اسکریپت پل تغییر کرده ولی bridgeVersion به‌روز نشده است. مقدار را به N+1 برسان و هش مرجع را در همین تست به‌روز کن.',
+        reason:
+            'متن اسکریپت پل تغییر کرده ولی bridgeVersion به‌روز نشده است. مقدار را به N+1 برسان و هش مرجع را در همین تست به‌روز کن.',
       );
     });
   });

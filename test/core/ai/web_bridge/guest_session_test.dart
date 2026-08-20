@@ -4,13 +4,19 @@ import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
 
 void main() {
   group('DET-28: Guest Session Detection', () {
-    test('setupBridgeScript contains guest session detection and guest_session_detected event', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains guest session detection and guest_session_detected event',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains("notifyFlutter('guest_session_detected'"), isTrue);
-      expect(script.contains('isGuest: true'), isTrue);
-      expect(script.contains('hasGuestBanner'), isTrue);
-    });
+        expect(
+          script.contains("notifyFlutter('guest_session_detected'"),
+          isTrue,
+        );
+        expect(script.contains('isGuest: true'), isTrue);
+        expect(script.contains('hasGuestBanner'), isTrue);
+      },
+    );
 
     test('WebBridgeEvent parses guest_session_detected correctly', () {
       final event = WebBridgeEvent.parse('''{

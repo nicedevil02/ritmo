@@ -38,7 +38,8 @@ void main() {
     manager = ChatGptWebBridgeManager.instance;
     fakeController = FakeWebViewController();
     ChatGptWebBridgeManager.controllerCreationCount = 0;
-    ChatGptWebBridgeManager.testControllerFactory = () => FakeWebViewController();
+    ChatGptWebBridgeManager.testControllerFactory = () =>
+        FakeWebViewController();
   });
 
   tearDown(() {
@@ -46,55 +47,82 @@ void main() {
     ChatGptWebBridgeManager.testControllerFactory = null;
   });
 
-  group('WEB-02: Preview Is Viewer Only (attachViewer does not boot unless idle)', () {
-    test('attachViewer in generating state returns controller and creates no new controller', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        controller: fakeController,
+  group(
+    'WEB-02: Preview Is Viewer Only (attachViewer does not boot unless idle)',
+    () {
+      test(
+        'attachViewer in generating state returns controller and creates no new controller',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.generating,
+            controller: fakeController,
+          );
+
+          final initialCreationCount =
+              ChatGptWebBridgeManager.controllerCreationCount;
+          final controller = manager.attachViewer();
+
+          expect(controller, equals(fakeController));
+          expect(
+            ChatGptWebBridgeManager.controllerCreationCount,
+            equals(initialCreationCount),
+          );
+          expect(manager.status, equals(ChatGptBridgeStatus.generating));
+        },
       );
 
-      final initialCreationCount = ChatGptWebBridgeManager.controllerCreationCount;
-      final controller = manager.attachViewer();
+      test(
+        'attachViewer in ready state returns controller and creates no new controller',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.ready,
+            controller: fakeController,
+          );
 
-      expect(controller, equals(fakeController));
-      expect(ChatGptWebBridgeManager.controllerCreationCount, equals(initialCreationCount));
-      expect(manager.status, equals(ChatGptBridgeStatus.generating));
-    });
+          final initialCreationCount =
+              ChatGptWebBridgeManager.controllerCreationCount;
+          final controller = manager.attachViewer();
 
-    test('attachViewer in ready state returns controller and creates no new controller', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.ready,
-        controller: fakeController,
+          expect(controller, equals(fakeController));
+          expect(
+            ChatGptWebBridgeManager.controllerCreationCount,
+            equals(initialCreationCount),
+          );
+          expect(manager.status, equals(ChatGptBridgeStatus.ready));
+        },
       );
 
-      final initialCreationCount = ChatGptWebBridgeManager.controllerCreationCount;
-      final controller = manager.attachViewer();
+      test(
+        'attachViewer in cloudflareChallenge state returns controller without rebooting',
+        () {
+          manager.setTestState(
+            status: ChatGptBridgeStatus.cloudflareChallenge,
+            controller: fakeController,
+          );
 
-      expect(controller, equals(fakeController));
-      expect(ChatGptWebBridgeManager.controllerCreationCount, equals(initialCreationCount));
-      expect(manager.status, equals(ChatGptBridgeStatus.ready));
-    });
+          final initialCreationCount =
+              ChatGptWebBridgeManager.controllerCreationCount;
+          final controller = manager.attachViewer();
 
-    test('attachViewer in cloudflareChallenge state returns controller without rebooting', () {
-      manager.setTestState(
-        status: ChatGptBridgeStatus.cloudflareChallenge,
-        controller: fakeController,
+          expect(controller, equals(fakeController));
+          expect(
+            ChatGptWebBridgeManager.controllerCreationCount,
+            equals(initialCreationCount),
+          );
+          expect(
+            manager.status,
+            equals(ChatGptBridgeStatus.cloudflareChallenge),
+          );
+        },
       );
 
-      final initialCreationCount = ChatGptWebBridgeManager.controllerCreationCount;
-      final controller = manager.attachViewer();
+      test('attachViewer in idle state initiates lazy ensureBooted', () async {
+        manager.setTestState(status: ChatGptBridgeStatus.idle);
 
-      expect(controller, equals(fakeController));
-      expect(ChatGptWebBridgeManager.controllerCreationCount, equals(initialCreationCount));
-      expect(manager.status, equals(ChatGptBridgeStatus.cloudflareChallenge));
-    });
-
-    test('attachViewer in idle state initiates lazy ensureBooted', () async {
-      manager.setTestState(status: ChatGptBridgeStatus.idle);
-
-      final controller = manager.attachViewer();
-      expect(controller, isNotNull);
-      expect(manager.status, equals(ChatGptBridgeStatus.booting));
-    });
-  });
+        final controller = manager.attachViewer();
+        expect(controller, isNotNull);
+        expect(manager.status, equals(ChatGptBridgeStatus.booting));
+      });
+    },
+  );
 }

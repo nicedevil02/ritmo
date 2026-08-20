@@ -21,8 +21,12 @@ void main() {
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
     DatabaseHelper.instance.overrideDatabaseForTesting(db);
 
-    await db.execute('CREATE TABLE app_settings (key TEXT PRIMARY KEY, value TEXT)');
-    await db.execute('CREATE TABLE routines (id TEXT PRIMARY KEY, title TEXT, isArchived INTEGER DEFAULT 0, durationMinutes INTEGER)');
+    await db.execute(
+      'CREATE TABLE app_settings (key TEXT PRIMARY KEY, value TEXT)',
+    );
+    await db.execute(
+      'CREATE TABLE routines (id TEXT PRIMARY KEY, title TEXT, isArchived INTEGER DEFAULT 0, durationMinutes INTEGER)',
+    );
   });
 
   tearDown(() async {
@@ -30,19 +34,37 @@ void main() {
   });
 
   group('Rhythm Brief Tests (PSN-29)', () {
-    test('Calculates positive daily capacity and allocated minutes from data', () async {
-      await db.insert('app_settings', {'key': 'sleep_target_duration_minutes', 'value': '480'});
-      await db.insert('routines', {'id': 'r1', 'title': 'ورزش صبحگاهی', 'isArchived': 0, 'durationMinutes': 30});
-      await db.insert('routines', {'id': 'r2', 'title': 'مطالعه', 'isArchived': 0, 'durationMinutes': 45});
+    test(
+      'Calculates positive daily capacity and allocated minutes from data',
+      () async {
+        await db.insert('app_settings', {
+          'key': 'sleep_target_duration_minutes',
+          'value': '480',
+        });
+        await db.insert('routines', {
+          'id': 'r1',
+          'title': 'ورزش صبحگاهی',
+          'isArchived': 0,
+          'durationMinutes': 30,
+        });
+        await db.insert('routines', {
+          'id': 'r2',
+          'title': 'مطالعه',
+          'isArchived': 0,
+          'durationMinutes': 45,
+        });
 
-      final globalPersona = PersonaRegistry.instance.getPersona('global')!;
-      final primaryBrief = await PersonaContextProvider.getPrimaryBrief(globalPersona);
+        final globalPersona = PersonaRegistry.instance.getPersona('global')!;
+        final primaryBrief = await PersonaContextProvider.getPrimaryBrief(
+          globalPersona,
+        );
 
-      expect(primaryBrief, isNotNull);
-      expect(primaryBrief!.sampleSize, greaterThan(0));
-      final json = primaryBrief.toPromptJson();
-      expect(json['dailyCapacityMinutes'], equals(1440 - 480 - 120)); // 840
-      expect(json['allocatedMinutes'], equals(75));
-    });
+        expect(primaryBrief, isNotNull);
+        expect(primaryBrief!.sampleSize, greaterThan(0));
+        final json = primaryBrief.toPromptJson();
+        expect(json['dailyCapacityMinutes'], equals(1440 - 480 - 120)); // 840
+        expect(json['allocatedMinutes'], equals(75));
+      },
+    );
   });
 }

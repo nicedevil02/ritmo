@@ -17,43 +17,55 @@ void main() {
   });
 
   group('DET-35: Prevent Infinite Loading on Unhandled Stream Errors', () {
-    test('Bridge fails gracefully on error and resets status to ready without hanging in generating', () async {
-      final streamCtrl = StreamController<String>.broadcast();
-      addTearDown(streamCtrl.close);
+    test(
+      'Bridge fails gracefully on error and resets status to ready without hanging in generating',
+      () async {
+        final streamCtrl = StreamController<String>.broadcast();
+        addTearDown(streamCtrl.close);
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        streamController: streamCtrl,
-      );
-      manager.setTestRequestId('req_error_35');
+        manager.setTestState(
+          status: ChatGptBridgeStatus.generating,
+          streamController: streamCtrl,
+        );
+        manager.setTestRequestId('req_error_35');
 
-      expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.generating));
+        expect(
+          manager.statusNotifier.value,
+          equals(ChatGptBridgeStatus.generating),
+        );
 
-      // Trigger failGeneration with an exception
-      manager.failGenerationForTest(WebBridgeException.timeout());
+        // Trigger failGeneration with an exception
+        manager.failGenerationForTest(WebBridgeException.timeout());
 
-      await Future.delayed(Duration.zero);
+        await Future.delayed(Duration.zero);
 
-      expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.ready));
-      expect(streamCtrl.isClosed, isTrue);
-    });
+        expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.ready));
+        expect(streamCtrl.isClosed, isTrue);
+      },
+    );
 
-    test('cancelCurrentStream cleanly resets generating state and closes current controller', () async {
-      final streamCtrl = StreamController<String>.broadcast();
-      addTearDown(streamCtrl.close);
+    test(
+      'cancelCurrentStream cleanly resets generating state and closes current controller',
+      () async {
+        final streamCtrl = StreamController<String>.broadcast();
+        addTearDown(streamCtrl.close);
 
-      manager.setTestState(
-        status: ChatGptBridgeStatus.generating,
-        streamController: streamCtrl,
-      );
-      manager.setTestRequestId('req_cancel_35');
+        manager.setTestState(
+          status: ChatGptBridgeStatus.generating,
+          streamController: streamCtrl,
+        );
+        manager.setTestRequestId('req_cancel_35');
 
-      expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.generating));
+        expect(
+          manager.statusNotifier.value,
+          equals(ChatGptBridgeStatus.generating),
+        );
 
-      manager.cancelCurrentStream();
+        manager.cancelCurrentStream();
 
-      expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.ready));
-      expect(streamCtrl.isClosed, isTrue);
-    });
+        expect(manager.statusNotifier.value, equals(ChatGptBridgeStatus.ready));
+        expect(streamCtrl.isClosed, isTrue);
+      },
+    );
   });
 }

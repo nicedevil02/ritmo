@@ -18,40 +18,55 @@ void main() {
   });
 
   group('WEB-22: First Token Settle Timing & Stage Transition', () {
-    test('setupBridgeScript contains first_token notification logic in SSE and DOM', () {
-      final script = ChatGptJsInjector.setupBridgeScript;
+    test(
+      'setupBridgeScript contains first_token notification logic in SSE and DOM',
+      () {
+        final script = ChatGptJsInjector.setupBridgeScript;
 
-      expect(script.contains("notifyFlutter('first_token'"), isTrue);
-      expect(script.contains('latencyMs: Date.now() - state.startTime'), isTrue);
-      expect(script.contains('latencyMs: Date.now() - streamStartTime'), isTrue);
-    });
+        expect(script.contains("notifyFlutter('first_token'"), isTrue);
+        expect(
+          script.contains('latencyMs: Date.now() - state.startTime'),
+          isTrue,
+        );
+        expect(
+          script.contains('latencyMs: Date.now() - streamStartTime'),
+          isTrue,
+        );
+      },
+    );
 
-    test('first_token event transitions PendingWebBridgeRequest stage to streaming', () {
-      manager.setTestState(status: ChatGptBridgeStatus.generating);
-      manager.setTestRequestId('req_ttft_1');
-      manager.setTestPendingRequest(
-        PendingWebBridgeRequest(
-          requestId: 'req_ttft_1',
-          promptHash: 'h_ttft',
-          promptText: 'پرامپت زمانبندی',
-          sentAt: DateTime.now(),
-          stage: PendingRequestStage.awaitingFirstToken,
-        ),
-      );
+    test(
+      'first_token event transitions PendingWebBridgeRequest stage to streaming',
+      () {
+        manager.setTestState(status: ChatGptBridgeStatus.generating);
+        manager.setTestRequestId('req_ttft_1');
+        manager.setTestPendingRequest(
+          PendingWebBridgeRequest(
+            requestId: 'req_ttft_1',
+            promptHash: 'h_ttft',
+            promptText: 'پرامپت زمانبندی',
+            sentAt: DateTime.now(),
+            stage: PendingRequestStage.awaitingFirstToken,
+          ),
+        );
 
-      final msg = JavaScriptMessage(
-        message: jsonEncode({
-          'type': 'first_token',
-          'length': 8,
-          'latencyMs': 420,
-          'requestId': 'req_ttft_1',
-          'source': 'sse',
-        }),
-      );
+        final msg = JavaScriptMessage(
+          message: jsonEncode({
+            'type': 'first_token',
+            'length': 8,
+            'latencyMs': 420,
+            'requestId': 'req_ttft_1',
+            'source': 'sse',
+          }),
+        );
 
-      manager.handleJsMessageForTest(msg);
+        manager.handleJsMessageForTest(msg);
 
-      expect(manager.pendingRequest?.stage, equals(PendingRequestStage.streaming));
-    });
+        expect(
+          manager.pendingRequest?.stage,
+          equals(PendingRequestStage.streaming),
+        );
+      },
+    );
   });
 }

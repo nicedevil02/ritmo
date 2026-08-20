@@ -3,36 +3,40 @@ import 'package:ritmo/core/ai/agent/agent_tool.dart';
 
 class _DummyValidatedTool extends AgentTool {
   const _DummyValidatedTool()
-      : super(
-          name: 'dummy_validated',
-          categoryFa: 'تست',
-          titleFa: 'ابزار تست اعتبارسنجی',
-          descriptionFa: 'ابزار برای بررسی اعتبارسنجی پارامترها',
-          parameters: const [
-            ToolParameter(
-              name: 'requiredField',
-              descriptionFa: 'فیلد اجباری',
-              type: 'string',
-              isRequired: true,
-            ),
-            ToolParameter(
-              name: 'withDefault',
-              descriptionFa: 'فیلد با مقدار پیش‌فرض',
-              type: 'int',
-              defaultValue: 42,
-            ),
-            ToolParameter(
-              name: 'withAllowed',
-              descriptionFa: 'فیلد با مقادیر مجاز',
-              type: 'string',
-              allowedValues: ['optionA', 'optionB'],
-            ),
-          ],
-        );
+    : super(
+        name: 'dummy_validated',
+        categoryFa: 'تست',
+        titleFa: 'ابزار تست اعتبارسنجی',
+        descriptionFa: 'ابزار برای بررسی اعتبارسنجی پارامترها',
+        parameters: const [
+          ToolParameter(
+            name: 'requiredField',
+            descriptionFa: 'فیلد اجباری',
+            type: 'string',
+            isRequired: true,
+          ),
+          ToolParameter(
+            name: 'withDefault',
+            descriptionFa: 'فیلد با مقدار پیش‌فرض',
+            type: 'int',
+            defaultValue: 42,
+          ),
+          ToolParameter(
+            name: 'withAllowed',
+            descriptionFa: 'فیلد با مقادیر مجاز',
+            type: 'string',
+            allowedValues: ['optionA', 'optionB'],
+          ),
+        ],
+      );
 
   @override
   Future<AgentToolResult> execute(Map<String, dynamic> args) async {
-    return AgentToolResult.success(toolName: name, data: args, summaryFa: 'موفق');
+    return AgentToolResult.success(
+      toolName: name,
+      data: args,
+      summaryFa: 'موفق',
+    );
   }
 }
 

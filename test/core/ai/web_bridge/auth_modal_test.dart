@@ -11,28 +11,33 @@ void main() {
   });
 
   group('WEB-26: ChatGptAuthModal UI & Manager Integration', () {
-    test('ChatGptWebBridgeManager provides reloadPage and clearSessionCookies methods', () async {
-      final manager = ChatGptWebBridgeManager.instance;
+    test(
+      'ChatGptWebBridgeManager provides reloadPage and clearSessionCookies methods',
+      () async {
+        final manager = ChatGptWebBridgeManager.instance;
 
-      expect(manager.reloadPage, isA<Function>());
-      expect(manager.clearSessionCookies, isA<Function>());
-    });
+        expect(manager.reloadPage, isA<Function>());
+        expect(manager.clearSessionCookies, isA<Function>());
+      },
+    );
 
-    testWidgets('ChatGptAuthModal renders title, description and action buttons', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ChatGptAuthModal(),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
+    testWidgets(
+      'ChatGptAuthModal renders title, description and action buttons',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: ChatGptAuthModal())),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('ورود به حساب کاربری ChatGPT'), findsOneWidget);
-      expect(find.text('پس از ورود، این پنجره به‌طور خودکار بسته خواهد شد.'), findsOneWidget);
-      expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
-    });
+        expect(find.text('ورود به حساب کاربری ChatGPT'), findsOneWidget);
+        expect(
+          find.text('پس از ورود، این پنجره به‌طور خودکار بسته خواهد شد.'),
+          findsOneWidget,
+        );
+        expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      },
+    );
 
     testWidgets('ChatGptAuthModal close button pops the modal', (tester) async {
       bool? authResult;

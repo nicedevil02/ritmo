@@ -117,8 +117,10 @@ class PregnancyOnboardingController extends ChangeNotifier {
   }
 
   bool validateCurrentStep({DateTime? now}) {
-    // Step 0: Method Selection, Step 1: Date Entry, Step 2: HighRisk/Multiple, Step 3: Tone/Unit, Step 4: Reminders, Step 5: Summary
-    if (currentStep == 1 || currentStep == 0) {
+    // Step 0: Method Selection (always valid)
+    // Step 1: Date Entry (validate LMP/EDD range)
+    // Steps 2-4: Options and Settings
+    if (currentStep == 1) {
       if (lmpDate == null || dueDate == null) {
         validationErrorFa = 'لطفاً تاریخ مربوطه را مشخص کنید.';
         notifyListeners();

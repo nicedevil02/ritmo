@@ -13,8 +13,8 @@
 | PRG-09 | قالب‌بندی فارسی سن | B | DONE | ef457909 | تکمیل شد |
 | PRG-10 | dayShiftBetween | B | DONE | c69c1990 | تکمیل شد |
 | PRG-11 | حذف فالبک امروز و حالت خالی | B | DONE | ad623352 | بحرانی - تکمیل شد |
-| PRG-12 | کنترلر آنبوردینگ بارداری | C | DONE | pending | تکمیل شد |
-| PRG-13 | پوستهٔ آنبوردینگ بارداری | C | TODO | | |
+| PRG-12 | کنترلر آنبوردینگ بارداری | C | DONE | 00178723 | تکمیل شد |
+| PRG-13 | پوستهٔ آنبوردینگ بارداری | C | DONE | pending | تکمیل شد |
 | PRG-14 | اتصال onNavigateToPregnancy | C | TODO | | |
 | PRG-15 | پارامتر onOpenPregnancyOnboarding | C | TODO | | |
 | PRG-16 | دکمهٔ باردارم در حالت خالی | C | TODO | | |

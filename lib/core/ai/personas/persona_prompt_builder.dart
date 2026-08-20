@@ -13,9 +13,11 @@ class PersonaPromptBuilder {
     final buffer = StringBuffer();
 
     // لایه ۰
+    final isSpecialized = persona.id != 'global' && persona.id != 'general';
     buffer.writeln(AssistantCorePolicy.build(
       personaDisplayName: persona.displayName,
       todayJalali: todayJalali,
+      isSpecialized: isSpecialized,
     ));
 
     // لایه ۱

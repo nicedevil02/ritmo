@@ -223,6 +223,9 @@ $userPrompt
           }
         }
       }
+      if (typeof data.source === 'undefined' || !data.source) {
+        data.source = 'lifecycle';
+      }
       var jsonStr = JSON.stringify(data);
       if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
         window.RitmoChatBridge.postMessage(jsonStr);
@@ -249,7 +252,8 @@ $userPrompt
       version: requiredVersion,
       isWarm: true,
       currentPath: window.location.pathname || '',
-      hasComposer: checkComposerPresent()
+      hasComposer: checkComposerPresent(),
+      source: 'lifecycle'
     });
     return;
   }
@@ -679,7 +683,8 @@ $_bridgeScriptBody''';
             reason: isUnableToLoad ? 'unable_to_load_site' : (isVpnNotice ? 'vpn_notice' : 'geo_blocked'),
             rayId: rayMatch ? rayMatch[1] : null,
             ip: ipMatch ? ipMatch[1] : null,
-            title: title
+            title: title,
+            source: 'lifecycle'
           });
         }
       }
@@ -699,9 +704,9 @@ $_bridgeScriptBody''';
     if (isChallenged !== lastCfState) {
       lastCfState = isChallenged;
       if (isChallenged) {
-        notifyFlutter('cloudflare_challenge', { detected: true, title: title });
+        notifyFlutter('cloudflare_challenge', { detected: true, title: title, source: 'lifecycle' });
       } else {
-        notifyFlutter('cloudflare_resolved', { detected: false });
+        notifyFlutter('cloudflare_resolved', { detected: false, source: 'lifecycle' });
       }
     }
     return isChallenged;
@@ -1305,7 +1310,7 @@ $_bridgeScriptBody''';
         fullText: text,
         requestId: reqId,
         strategy: 'dom_direct',
-        source: 'dom'
+        source: 'harvest'
       });
       return text;
     } catch (e) {
@@ -1314,7 +1319,7 @@ $_bridgeScriptBody''';
         error: e.toString(),
         requestId: reqId,
         strategy: 'dom_direct_failed',
-        source: 'dom'
+        source: 'harvest'
       });
       return '';
     }
@@ -1370,7 +1375,8 @@ $_bridgeScriptBody''';
       version: requiredVersion,
       isWarm: false,
       currentPath: window.location.pathname || '',
-      hasComposer: checkComposerPresent()
+      hasComposer: checkComposerPresent(),
+      source: 'lifecycle'
     });
   } else {
     if (securityStatus.isVpn) {

@@ -6,17 +6,24 @@ import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
 import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
 import 'package:ritmo/core/ai/brief/domain_brief.dart';
 
+import 'package:ritmo/core/domain/commands/commands_registry.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    registerAllRitmoCommands();
+    PersonaRegistry.instance.initStandardPersonas();
+  });
 
   group('Persona Golden Tests — Prompt 070', () {
     setUp(() {
       PersonaRegistry.instance.initStandardPersonas();
     });
 
-    test('All 11 personas must contain assistant.handoff and app.openPage in commandIds', () {
+    test('All registered personas must contain assistant.handoff and app.openPage in commandIds', () {
       final personas = PersonaRegistry.instance.allPersonas;
-      expect(personas.length, greaterThanOrEqualTo(11));
+      expect(personas.length, equals(12));
 
       for (final persona in personas) {
         expect(
@@ -30,6 +37,12 @@ void main() {
           reason: '${persona.id} missing app.openPage',
         );
       }
+
+      expect(
+        PersonaRegistry.instance.getPersona('global')!.commandIds.length,
+        greaterThan(2),
+        reason: 'global persona must have registered commands',
+      );
     });
 
     test('PersonaPromptBuilder must output all 5 layers correctly', () {
@@ -63,13 +76,8 @@ void main() {
     });
 
     test('PersonaInferenceProfile must return explicit profiles for all personas', () {
-      final personaIds = [
-        'global', 'sleep', 'wellbeing', 'reflection', 'goals',
-        'konkur', 'courses', 'sports', 'worship', 'cycle', 'health'
-      ];
-
-      for (final id in personaIds) {
-        final profile = PersonaInferenceProfile.getProfile(id);
+      for (final persona in PersonaRegistry.instance.allPersonas) {
+        final profile = PersonaInferenceProfile.getProfile(persona.id);
         expect(profile.maxTokens, greaterThan(0));
         expect(profile.temperature, greaterThanOrEqualTo(0.0));
       }

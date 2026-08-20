@@ -3,8 +3,8 @@
 | ID | عنوان | فاز | وضعیت | commit | یادداشت |
 |---|---|---|---|---|---|
 | PRG-01 | دفترچهٔ پیشرفت و پوشهٔ تست | A | DONE | 2f5d7a72 | تکمیل شد |
-| PRG-02 | مدل‌های بارداری | A | DONE | pending | تکمیل شد |
-| PRG-03 | فاساد PregnancySettings | A | TODO | | بحرانی |
+| PRG-02 | مدل‌های بارداری | A | DONE | 319634be | تکمیل شد |
+| PRG-03 | فاساد PregnancySettings | A | DONE | pending | بحرانی - تکمیل شد |
 | PRG-04 | setPregnancyActive سه‌پرچمی | A | TODO | | |
 | PRG-05 | hasValidDates و isPregnancyUsable | A | TODO | | بحرانی |
 | PRG-06 | حذف نوشتن خام در cycle_screen | A | TODO | | |

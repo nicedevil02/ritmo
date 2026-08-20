@@ -152,6 +152,8 @@ sealed class WebBridgeEvent {
                 : (decoded['report'] is Map<String, dynamic> ? decoded['report'] as Map<String, dynamic> : null),
             issue: readString('issue'),
             bridgeVersion: readInt('bridgeVersion'),
+            phase: readString('phase'),
+            requestId: readString('requestId'),
           );
         case 'prompt_typed':
           return BridgePromptTypedEvent(
@@ -336,11 +338,15 @@ class BridgeSelectorHealthEvent extends WebBridgeEvent {
     this.report,
     this.issue,
     this.bridgeVersion,
+    this.phase,
+    this.requestId,
   });
 
   final Map<String, dynamic>? report;
   final String? issue;
   final int? bridgeVersion;
+  final String? phase;
+  final String? requestId;
 }
 
 class BridgeAutoDismissEvent extends WebBridgeEvent {

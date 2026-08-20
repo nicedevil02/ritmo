@@ -1029,6 +1029,17 @@ $_bridgeScriptBody''';
             latencyMs: Date.now() - streamStartTime,
             source: 'dom'
           });
+          setTimeout(function() {
+            try {
+              notifyFlutter('selector_health', {
+                report: runSelectorSelfTest(),
+                bridgeVersion: requiredVersion,
+                phase: 'post_first_text',
+                requestId: reqId,
+                source: 'lifecycle'
+              });
+            } catch (stPostErr) {}
+          }, 3000);
         }
         var delta = '';
         var isPrefix = (currentText.length > lastLength && currentText.indexOf(lastText) === 0);
@@ -1097,6 +1108,15 @@ $_bridgeScriptBody''';
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
           stopDomObserver();
+          try {
+            notifyFlutter('selector_health', {
+              report: runSelectorSelfTest(),
+              bridgeVersion: requiredVersion,
+              phase: 'pre_timeout',
+              requestId: reqId,
+              source: 'lifecycle'
+            });
+          } catch (stPreTimeoutErr) {}
           notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
         return;
@@ -1118,6 +1138,15 @@ $_bridgeScriptBody''';
         if (finalFullText.length > 0) {
           notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         } else {
+          try {
+            notifyFlutter('selector_health', {
+              report: runSelectorSelfTest(),
+              bridgeVersion: requiredVersion,
+              phase: 'pre_timeout',
+              requestId: reqId,
+              source: 'lifecycle'
+            });
+          } catch (stPreTimeoutErr) {}
           notifyFlutter('error', { message: 'زمان انتظار برای پاسخ به پایان رسید.', requestId: reqId, source: 'dom' });
         }
       }
@@ -1152,6 +1181,15 @@ $_bridgeScriptBody''';
   };
 
   // --- 5. Prompt Sender Implementation ---
+  window.__ritmo_cancelGeneration = function() {
+    var stopBtn = querySafe(RITMO_SELECTORS.stopButton);
+    if (stopBtn) {
+      stopBtn.click();
+      console.log('[Ritmo] Stop generation button clicked.');
+    }
+    window.__ritmo_cleanup();
+  };
+
   window.__ritmo_sendPrompt = function(promptText, reqId) {
     try {
       window.__ritmo_active_req_id = reqId || '';
@@ -1187,6 +1225,16 @@ $_bridgeScriptBody''';
       function injectAndTriggerSend(editor, text, currentReqId) {
         autoCloseSidebar();
         autoDismissCookiesAndModals();
+
+        try {
+          notifyFlutter('selector_health', {
+            report: runSelectorSelfTest(),
+            bridgeVersion: requiredVersion,
+            phase: 'pre_send',
+            requestId: currentReqId,
+            source: 'lifecycle'
+          });
+        } catch (stPreErr) {}
 
         window.__ritmo_active_req_id = currentReqId || '';
         window.__ritmo_turn_count_at_send = queryAllSafe(RITMO_SELECTORS.conversationTurns).length;
@@ -1394,12 +1442,13 @@ $_bridgeScriptBody''';
   checkAuthState();
   cfCheckTimer = setInterval(checkSecurityAndBlockStatus, 2000);
 
-  // Self-test report at boot (A-28)
+  // Self-test report at boot (A-28, DET-04)
   try {
     var selfTestReport = runSelectorSelfTest();
     notifyFlutter('selector_health', {
       report: selfTestReport,
       bridgeVersion: requiredVersion,
+      phase: 'boot',
       source: 'lifecycle'
     });
   } catch (stErr) {

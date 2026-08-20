@@ -11,8 +11,8 @@
 |----|------|-----|-------|--------|---------|
 | DET-01 | دفترچه و کلید source روی همهٔ پیلودها | A | DONE | f85ac419 | ساخت لاگ‌بوک و تضمین وجود source در تمام رویدادها |
 | DET-02 | رویدادهای مسیر ارسال | A | DONE | f84ac071 | رویدادهای prompt_typed، send_clicked، send_fallback_enter و composer_not_found اضافه شدند |
-| DET-03 | تیک دوره‌ای واچر | A | DONE | pending | ارسال watcher_tick هر ۵ ثانیه یک‌بار با تمام آمارهای DOM |
-| DET-04 | فازبندی selector_health | A | TODO | | |
+| DET-03 | تیک دوره‌ای واچر | A | DONE | 5547eaf7 | ارسال watcher_tick هر ۵ ثانیه یک‌بار با تمام آمارهای DOM |
+| DET-04 | فازبندی selector_health | A | DONE | pending | ارسال selector_health در ۴ فاز boot، pre_send، post_first_text و pre_timeout |
 | DET-05 | افزایش نسخهٔ بریج به ۹ | A | TODO | | |
 | DET-06 | افزودن case error | B | TODO | | |
 | DET-07 | افزودن case cloudflare_resolved | B | TODO | | |

@@ -906,12 +906,13 @@ if (typeof window.__ritmo_resume === 'function') {
             _failGeneration(WebBridgeException.networkError(statusCode: statusCode));
           }
 
-        case BridgeSelectorHealthEvent(:final issue, :final bridgeVersion, :final report):
+        case BridgeSelectorHealthEvent(:final issue, :final bridgeVersion, :final report, :final phase, :final requestId):
           _lastSelectorHealthReport = report;
           BridgeTraceLog.instance.addEntry(
             type: 'selector_health',
             source: source,
-            note: 'issue="$issue" v=$bridgeVersion report=$report',
+            requestId: requestId,
+            note: 'phase=$phase issue="$issue" v=$bridgeVersion report=$report',
             level: BridgeTraceLevel.info,
           );
           if (report != null) {

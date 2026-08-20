@@ -1,20 +1,20 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/time/ritmo_clock.dart';
-import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
+import 'package:ritmo/core/di/service_locator.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
-import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/time/ritmo_clock.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
-import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
@@ -28,8 +28,10 @@ import 'package:ritmo/features/simple_tasks/logic/my_day_suggestions.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
 import 'package:ritmo/features/simple_tasks/presentation/task_strings.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/my_day_section.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/simple_tasks_app_bar.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_bucket_section.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/task_inline_add_bar.dart';
 
 class SimpleTasksScreen extends StatefulWidget {
   const SimpleTasksScreen({
@@ -120,7 +122,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       final myDayList = await MyDayService.instance.myDayTasks();
       final suggestionsList = await buildSuggestions(now: DateTime.now());
       final buckets = await SimpleTaskRepository.instance.buckets(
-        _todayIso,
+        todayIso: _todayIso,
         sortMode: sortMode,
         hideCompleted: hideCompleted,
       );

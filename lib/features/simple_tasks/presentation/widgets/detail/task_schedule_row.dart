@@ -11,9 +11,6 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
-import 'package:ritmo/features/simple_tasks/logic/task_snooze.dart';
-import 'package:ritmo/features/simple_tasks/presentation/task_strings.dart';
-import 'package:shamsi_date/shamsi_date.dart';
 
 class TaskScheduleRow extends StatelessWidget {
   const TaskScheduleRow({

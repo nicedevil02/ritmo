@@ -8,6 +8,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';

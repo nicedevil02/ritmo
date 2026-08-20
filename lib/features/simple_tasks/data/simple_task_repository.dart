@@ -117,6 +117,7 @@ class SimpleTaskRepository {
   /// Returns all active and done tasks grouped into TaskBucket sections
   Future<Map<TaskBucket, List<SimpleTask>>> buckets({
     DateTime? now,
+    String? todayIso,
     TaskSortMode sortMode = TaskSortMode.smart,
     bool hideCompleted = false,
   }) async {
@@ -124,7 +125,8 @@ class SimpleTaskRepository {
       final db = await _db;
       final rows = await db.query('simple_tasks', orderBy: 'orderIndex ASC, createdAt ASC');
       final all = rows.map((m) => SimpleTask.fromMap(m)).toList();
-      return groupTasks(all, now: now, sortMode: sortMode, hideCompleted: hideCompleted);
+      final effectiveNow = now ?? (todayIso != null ? DateTime.tryParse(todayIso) : null);
+      return groupTasks(all, now: effectiveNow, sortMode: sortMode, hideCompleted: hideCompleted);
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error loading task buckets', e, st);
       return {};

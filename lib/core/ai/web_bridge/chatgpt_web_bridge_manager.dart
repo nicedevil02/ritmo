@@ -1356,6 +1356,19 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     // ت-۸: برداشت هرگز توسط قفل منبع رد نمی‌شود.
     if (!src.bypassesSourceLock) {
+      if (src == BridgeSource.sse && _lockedSource == BridgeSource.dom) {
+        RitmoLog.info('ChatGptWebBridge', 'SSE source promoted over DOM watcher.');
+        BridgeTraceLog.instance.addEntry(
+          type: 'source_promoted',
+          source: BridgeSource.sse.name,
+          requestId: _currentRequestId,
+          note: 'promoted_over_dom',
+          level: BridgeTraceLevel.info,
+        );
+        _lockedSource = BridgeSource.sse;
+        _lockedSourceMaxLength = _accumulator.length;
+      }
+
       if (_shouldRejectForSourceLock(src)) {
         BridgeTraceLog.instance.addEntry(
           type: 'chunk_dropped',

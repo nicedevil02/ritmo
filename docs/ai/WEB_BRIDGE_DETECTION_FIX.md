@@ -26,8 +26,8 @@
 | DET-15 | گارد مرکزی خروج از وضعیت | C | DONE | 68f2485b | ایجاد گارد مرکزی در _setStatus برای جلوگیری از هرگونه خروج غیرمجاز از generating در حین باز بودن استریم |
 | DET-16 | اصلاح تطبیق endpoint | D | DONE | 602add47 | گسترش ریجکس تطبیق endpointهای مکالمه در fetch/XHR/EventSource و افزودن لاگ رویداد fetch_matched |
 | DET-17 | پوشش fetch با شیء Request | D | DONE | 80e6cfd2 | پشتیبانی از ورودی Request Object در هوک fetch و استخراج صحیح URL و متد HTTP |
-| DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | DONE | pending | تعبیهٔ کامل پارسر خطوط SSE و ریدر استریم در earlyHookScript برای عملکرد مستقل از زمان تزریق اسکریپت اصلی |
-| DET-19 | ترجیح SSE بر DOM | D | TODO | | |
+| DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | DONE | adc4014f | تعبیهٔ کامل پارسر خطوط SSE و ریدر استریم در earlyHookScript برای عملکرد مستقل از زمان تزریق اسکریپت اصلی |
+| DET-19 | ترجیح SSE بر DOM | D | DONE | pending | تصاحب قفل منبع توسط SSE در صورت قفل بودن قبلی روی DOM با ثبت لاگ source_promoted و رد چانک‌های بعدی DOM |
 | DET-20 | حالت پایدار واچر | E | TODO | | |
 | DET-21 | resume ایدمپوتنت | E | TODO | | |
 | DET-22 | دباونس resume | E | TODO | | |

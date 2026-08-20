@@ -23,6 +23,7 @@ import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:ritmo/features/simple_tasks/logic/my_day_service.dart';
 import 'package:ritmo/features/simple_tasks/logic/my_day_suggestions.dart';
+import 'package:ritmo/features/simple_tasks/logic/routine_task_bridge.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
 import 'package:ritmo/features/simple_tasks/presentation/task_strings.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/my_day_section.dart';
@@ -112,6 +113,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
     setState(() => _isLoading = true);
     try {
       await MyDayService.instance.resetIfNewDay();
+      await RoutineTaskBridge.materializeTodayRoutineTasks(now: DateTime.now());
 
       final sortModeRaw = await TaskPreferences.getSortMode();
       final sortMode = TaskSortMode.values.firstWhere((e) => e.name == sortModeRaw, orElse: () => TaskSortMode.smart);
@@ -293,67 +295,33 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
       RitmoHaptics.tap();
       unawaited(_playSoundIfEnabled());
     }
-    
+    _updateOptimistic((t) => t.copyWith(isDone: newDoneState, doneAt: newDoneState ? DateTime.now() : null), task.id);
+    unawaited(SimpleTaskRepository.instance.setDone(task.id, done: newDoneState).then((_) { if (mounted) _loadTasks(); }));
+
+    if (mounted) {
+      RitmoToast.show(context, newDoneState ? 'انجام شد' : 'بازگردانی شد', actionLabel: 'برگردان', onAction: () async {
+        _updateOptimistic((t) => t.copyWith(isDone: !newDoneState, doneAt: !newDoneState ? DateTime.now() : null), task.id);
+        unawaited(SimpleTaskRepository.instance.setDone(task.id, done: !newDoneState).then((_) { if (mounted) _loadTasks(); }));
+      });
+    }
+  }
+
+  void _updateOptimistic(SimpleTask Function(SimpleTask) transform, String taskId) {
     setState(() {
       final allTasks = _buckets.values.expand((e) => e).toList();
-      final idx = allTasks.indexWhere((t) => t.id == task.id);
+      final idx = allTasks.indexWhere((t) => t.id == taskId);
       if (idx != -1) {
-        allTasks[idx] = task.copyWith(
-          isDone: newDoneState, 
-          doneAt: newDoneState ? DateTime.now() : null
-        );
+        allTasks[idx] = transform(allTasks[idx]);
         _buckets = groupTasks(allTasks, now: DateTime.now());
       }
     });
-
-    unawaited(SimpleTaskRepository.instance.setDone(task.id, done: newDoneState).then((_) {
-      if (mounted) _loadTasks();
-    }));
-
-    if (mounted) {
-      RitmoToast.show(
-        context,
-        newDoneState ? 'انجام شد' : 'بازگردانی شد',
-        actionLabel: 'برگردان',
-        onAction: () async {
-          setState(() {
-            final allTasks = _buckets.values.expand((e) => e).toList();
-            final idx = allTasks.indexWhere((t) => t.id == task.id);
-            if (idx != -1) {
-              allTasks[idx] = task.copyWith(
-                isDone: !newDoneState, 
-                doneAt: !newDoneState ? DateTime.now() : null
-              );
-              _buckets = groupTasks(allTasks, now: DateTime.now());
-            }
-          });
-          unawaited(SimpleTaskRepository.instance.setDone(task.id, done: !newDoneState).then((_) {
-            if (mounted) _loadTasks();
-          }));
-        },
-      );
-    }
   }
 
   Future<void> _toggleStar(SimpleTask task) async {
     RitmoHaptics.tap();
     final newState = !task.isImportant;
-    
-    setState(() {
-      final allTasks = _buckets.values.expand((e) => e).toList();
-      final idx = allTasks.indexWhere((t) => t.id == task.id);
-      if (idx != -1) {
-        allTasks[idx] = task.copyWith(
-          isImportant: newState,
-          importantAt: newState ? DateTime.now() : null,
-        );
-        _buckets = groupTasks(allTasks, now: DateTime.now());
-      }
-    });
-
-    unawaited(SimpleTaskRepository.instance.setImportant(task.id, important: newState).then((_) {
-      if (mounted) _loadTasks();
-    }));
+    _updateOptimistic((t) => t.copyWith(isImportant: newState, importantAt: newState ? DateTime.now() : null), task.id);
+    unawaited(SimpleTaskRepository.instance.setImportant(task.id, important: newState).then((_) { if (mounted) _loadTasks(); }));
   }
 
   void _openTaskDetails(SimpleTask task) {

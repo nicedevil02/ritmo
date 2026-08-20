@@ -245,66 +245,38 @@ class SimpleTaskRepository {
     if (task != null) await setDone(id, done: !task.isDone);
   }
 
-  /// Set task star / importance status
   Future<void> setImportant(String id, {required bool important}) async {
     final db = await _db;
     final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return;
-
     final current = SimpleTask.fromMap(rows.first);
     final now = DateTime.now();
-
-    await db.update(
-      'simple_tasks',
-      {
-        'isImportant': important ? 1 : 0,
-        'importantAt': important ? (current.importantAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
-        'updatedAt': now.millisecondsSinceEpoch,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'TaskUpdated',
-      timestamp: now,
-      payload: {'date': current.dueDate ?? '', 'taskId': id},
-    ));
+    await db.update('simple_tasks', {
+      'isImportant': important ? 1 : 0,
+      'importantAt': important ? (current.importantAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
+      'updatedAt': now.millisecondsSinceEpoch,
+    }, where: 'id = ?', whereArgs: [id]);
+    RitmoEventBus().fire(RitmoEvent(type: 'TaskUpdated', timestamp: now, payload: {'date': current.dueDate ?? '', 'taskId': id}));
   }
 
-  /// Toggle task star / importance status
   Future<void> toggleImportant(String id) async {
     final task = await getById(id);
     if (task != null) await setImportant(id, important: !task.isImportant);
   }
 
-  /// Set task My Day status
   Future<void> setMyDay(String id, {required bool inMyDay}) async {
     final db = await _db;
     final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return;
-
     final current = SimpleTask.fromMap(rows.first);
     final now = DateTime.now();
-
-    await db.update(
-      'simple_tasks',
-      {
-        'addedToMyDayAt': inMyDay ? (current.addedToMyDayAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
-        'updatedAt': now.millisecondsSinceEpoch,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'TaskUpdated',
-      timestamp: now,
-      payload: {'date': current.dueDate ?? '', 'taskId': id},
-    ));
+    await db.update('simple_tasks', {
+      'addedToMyDayAt': inMyDay ? (current.addedToMyDayAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
+      'updatedAt': now.millisecondsSinceEpoch,
+    }, where: 'id = ?', whereArgs: [id]);
+    RitmoEventBus().fire(RitmoEvent(type: 'TaskUpdated', timestamp: now, payload: {'date': current.dueDate ?? '', 'taskId': id}));
   }
 
-  /// Toggle task inclusion in My Day ("روز من")
   Future<void> toggleMyDay(String id) async {
     final task = await getById(id);
     if (task != null) await setMyDay(id, inMyDay: !task.isInMyDay);

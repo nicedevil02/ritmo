@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -8,6 +9,8 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/foreground_notification_updater.dart';
+import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/features/simple_tasks/logic/task_snooze.dart';
 import 'package:sqflite/sqflite.dart';
 
 @pragma('vm:entry-point')
@@ -155,6 +158,27 @@ class NotificationActionHandler {
         'NOTIF',
         'Processing action $action for reminder $reminderId (routine: $routineId, date: $dateStr)',
       );
+
+      // Check if this reminder belongs to a simple task
+      final payloadJson = reminder['payloadJson'] as String?;
+      String? taskId;
+      if (payloadJson != null && payloadJson.isNotEmpty) {
+        try {
+          final payload = jsonDecode(payloadJson) as Map<String, dynamic>;
+          taskId = payload['taskId'] as String?;
+        } catch (_) {}
+      }
+
+      if (taskId != null && taskId.isNotEmpty && taskId != 'nudge') {
+        if (action == 'DONE') {
+          await SimpleTaskRepository.instance.setDone(taskId, done: true);
+          await db.delete('pending_reminders', where: 'id = ?', whereArgs: [reminderId]);
+          return;
+        } else if (action == 'SNOOZE' || action == 'SNOOZE_1H') {
+          await snoozeTask(taskId, SnoozePreset.oneHour);
+          return;
+        }
+      }
 
       // 2. Perform database actions based on action type
       switch (action) {

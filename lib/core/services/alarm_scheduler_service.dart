@@ -18,6 +18,8 @@ import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/features/simple_tasks/logic/daily_planning_nudge.dart';
+import 'package:ritmo/features/simple_tasks/logic/missed_reminder_recovery.dart';
 import 'package:sqflite/sqflite.dart';
 
 class AlarmSchedulerService {
@@ -434,6 +436,10 @@ class AlarmSchedulerService {
         }
       }
     }
+
+    // Simple Tasks: Daily planning nudge & missed reminder recovery
+    await DailyPlanningNudge.syncNudgeSchedule();
+    await MissedReminderRecovery.recoverMissedReminders();
 
     // Finally, update shared snapshot
     await SnapshotSyncService.syncAll();

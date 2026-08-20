@@ -18,10 +18,19 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - [x] **T-11**: `MyDaySection` widget with 3 clear states (Empty+Suggestions, Has Tasks, All Clear) integrated at the top of `SimpleTasksScreen`. [DONE]
 - [x] **T-12**: Comprehensive unit & integration tests in `test/simple_tasks/my_day_test.dart`. [DONE]
 
+## Phase 2: Reliable Reminder Engine & Actionable Notifications
+- [x] **T-13**: Connected `DailyPlanningNudge.syncNudgeSchedule()` to real `NotificationGateway.schedule` and linked it directly into `AlarmSchedulerService.scheduleNextAlarms()`. [DONE]
+- [x] **T-14**: Fixed notification copy to constant anti-guilt text ("امروز چه کاری داری؟") eliminating stale count artifacts. [DONE]
+- [x] **T-15**: Created `lib/features/simple_tasks/logic/task_snooze.dart` with 4 discrete presets (`tenMinutes`, `oneHour`, `thisEvening`, `tomorrowMorning`), strictly preserving `dueDate`. [DONE]
+- [x] **T-16**: Wired `NotificationActionDispatcher` for simple task actions (`DONE` and `SNOOZE`/`SNOOZE_1H`) through existing background engine & method channels. [DONE]
+- [x] **T-17**: Created `lib/features/simple_tasks/logic/missed_reminder_recovery.dart` with intelligent recovery capped at max 3 instant notifications or 1 consolidated summary. [DONE]
+- [x] **T-18**: Verified exact alarm permissions (`SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`) in `AndroidManifest.xml` and user permission flow. [DONE]
+- [x] **T-19**: Comprehensive reminder engine test suite in `test/simple_tasks/reminder_engine_test.dart` verifying all scheduling, snoozing, and recovery rules. [DONE]
+
 ## Verification Status:
 - `grep -rn "catch (_)" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "debugPrint" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "SharedPreferences" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "Random()" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `flutter analyze lib/features/simple_tasks`: 0 errors / 0 warnings
-- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 28 tests passing
+- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 35 tests passing

@@ -48,6 +48,11 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - [x] **T-33**: Enabled `PROCESS_TEXT` intent-filter with label «افزودن به ریتمو», mapping long text (> 200 chars) to short title and full note. [DONE]
 - [x] **T-34**: Unit test suite in `test/simple_tasks/quick_entry_test.dart` verifying simple text, Persian date/time parsing, > 200 character overflow, and whitespace ignoring. [DONE]
 
+## Phase 6: Routine Bridge & Recurrence Guard
+- [x] **T-35**: Created `RoutineTaskBridge.materializeTodayRoutineTasks()` to materialize up to 5 daily routine tasks for today with `tasks_routine_materialized_date` guard and `origin = 'PROMOTED'`. [DONE]
+- [x] **T-36**: Added architecture guard and comment forbidding recurrence/repeat rules in `SimpleTask` (`test/simple_tasks/no_recurrence_test.dart`). [DONE]
+- [x] **T-37**: Unit test suite in `test/simple_tasks/routine_bridge_test.dart` verifying first run, idempotency on same day, deletion retention, 5-task max limit, and PROMOTED origin. [DONE]
+
 ## Verification Status:
 - `grep -rn "catch (_)" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `grep -rn "debugPrint" lib/features/simple_tasks/`: Clean (0 occurrences)
@@ -55,5 +60,5 @@ Generated following `RITMO_SIMPLE_TASKS_PROMPT.md`.
 - `grep -rn "Random()" lib/features/simple_tasks/`: Clean (0 occurrences)
 - `wc -l lib/features/simple_tasks/presentation/widgets/task_detail_sheet.dart`: 241 lines (<= 250)
 - All files in `lib/features/simple_tasks`: <= 500 lines
-- `flutter analyze lib/features/simple_tasks lib/main.dart`: 0 errors / 0 warnings
-- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 51 tests passing
+- `flutter analyze lib/features/simple_tasks`: 0 errors / 0 warnings
+- `flutter test test/features/simple_tasks test/prompt_063 test/simple_tasks`: All 57 tests passing

@@ -105,6 +105,7 @@ class TaskPreferences {
   }
 
   static const String keyMyDayLastReset = 'tasks_my_day_last_reset';
+  static const String keyRoutineMaterializedDate = 'tasks_routine_materialized_date';
 
   static Future<String?> getMyDayLastReset() async {
     return await _getSetting(keyMyDayLastReset);
@@ -112,5 +113,13 @@ class TaskPreferences {
 
   static Future<void> setMyDayLastReset(String dateIso) async {
     await _setSetting(keyMyDayLastReset, dateIso);
+  }
+
+  static Future<String?> getRoutineMaterializedDate() async {
+    return await _getSetting(keyRoutineMaterializedDate);
+  }
+
+  static Future<void> setRoutineMaterializedDate(String dateIso) async {
+    await _setSetting(keyRoutineMaterializedDate, dateIso);
   }
 }

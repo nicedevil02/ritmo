@@ -333,6 +333,18 @@ class SimpleTaskRepository {
     }
   }
 
+  /// Returns all tasks in the database
+  Future<List<SimpleTask>> getAll() async {
+    try {
+      final db = await _db;
+      final rows = await db.query('simple_tasks', orderBy: 'orderIndex ASC, createdAt ASC');
+      return rows.map((m) => SimpleTask.fromMap(m)).toList();
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error loading all tasks', e, st);
+      return [];
+    }
+  }
+
   /// Save a pending reminder for a task
   Future<void> addPendingReminder({
     required String reminderId,

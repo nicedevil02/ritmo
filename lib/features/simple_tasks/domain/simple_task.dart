@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
-/// SimpleTask represents a lightweight task.
-/// Note: Recurrence belongs to routines; no repeat rules exist in simple tasks.
+/// SimpleTask represents a single, non-recurring action item.
+/// Recurrence strictly belongs to routines; repeat rules (repeatRule) must never be added here.
 class SimpleTask {
   final String id;
   final String title;

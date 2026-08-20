@@ -1,7 +1,10 @@
 class RitmoIdFactory {
+  static int _counter = 0;
+
   static String _stamp() {
+    _counter = (_counter + 1) % 1000000;
     final now = DateTime.now();
-    return '${now.millisecondsSinceEpoch}_${now.microsecondsSinceEpoch % 100000}';
+    return '${now.millisecondsSinceEpoch}_${now.microsecondsSinceEpoch % 100000}_$_counter';
   }
 
   static String uuid() => _stamp();

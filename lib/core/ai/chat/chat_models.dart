@@ -63,6 +63,9 @@ class ChatMessage {   // in-memory only — به DB نمیرود
     this.actions = const [],
     this.isStreaming = false,
     this.isPartial = false,
+    this.briefConfidence,
+    this.usedFields,
+    this.validatorAnnotations = const [],
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> m) {
@@ -97,12 +100,18 @@ class ChatMessage {   // in-memory only — به DB نمیرود
   final List<ChatAction> actions;
   final bool isStreaming;
   final bool isPartial;
+  /// Confidence level from PersonaResponseValidator (PSN-47)
+  final String? briefConfidence;
+  /// Fields used from the domain brief (PSN-47)
+  final List<String>? usedFields;
+  /// Validator annotations e.g. sanitization notices (PSN-47)
+  final List<String> validatorAnnotations;
 
   String get cleanDisplayText => role == ChatRole.user
       ? content
       : ChatActionParser.extractCleanReplyText(content);
 
-  ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, bool? isPartial, int? tokensUsed}) =>
+  ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, bool? isPartial, int? tokensUsed, String? briefConfidence, List<String>? usedFields, List<String>? validatorAnnotations}) =>
     ChatMessage(
       id: id, sessionId: sessionId, role: role,
       content: content ?? this.content,
@@ -111,6 +120,9 @@ class ChatMessage {   // in-memory only — به DB نمیرود
       actions: actions ?? this.actions,
       isStreaming: isStreaming ?? this.isStreaming,
       isPartial: isPartial ?? this.isPartial,
+      briefConfidence: briefConfidence ?? this.briefConfidence,
+      usedFields: usedFields ?? this.usedFields,
+      validatorAnnotations: validatorAnnotations ?? this.validatorAnnotations,
     );
 
   Map<String, dynamic> toMap() => {

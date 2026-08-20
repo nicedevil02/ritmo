@@ -8,6 +8,7 @@ import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/markdown_parser.dart';
+import 'package:ritmo/features/assistant/presentation/widgets/confidence_leaflet.dart';
 import 'package:ritmo/features/chat/presentation/widgets/chat_action_chip.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 
@@ -333,6 +334,17 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
                     ),
                   ),
                 ),
+
+              // Confidence Leaflet (PSN-47)
+              if (!widget.message.isStreaming &&
+                  widget.message.briefConfidence != null) ...[
+                const SizedBox(height: 8),
+                ConfidenceLeaflet(
+                  confidence: widget.message.briefConfidence!,
+                  usedFields: widget.message.usedFields,
+                  annotations: widget.message.validatorAnnotations,
+                ),
+              ],
             ],
           ),
         );

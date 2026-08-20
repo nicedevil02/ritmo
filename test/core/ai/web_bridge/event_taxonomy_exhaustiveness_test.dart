@@ -26,6 +26,7 @@ const Set<String> kAllKnownBridgeEventTypes = {
   'auth_required',
   'fetch_matched',
   'watcher_steady_done',
+  'resume_skipped_duplicate',
 };
 
 void main() {

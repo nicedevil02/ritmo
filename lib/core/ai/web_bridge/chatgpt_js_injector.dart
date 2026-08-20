@@ -1163,6 +1163,7 @@ $_bridgeScriptBody''';
   }
 
   window.__ritmo_cleanup = function() {
+    window.__ritmo_watcher_running = false;
     if (streamCheckTimer) {
       clearInterval(streamCheckTimer);
       streamCheckTimer = null;
@@ -1180,6 +1181,7 @@ $_bridgeScriptBody''';
   };
 
   window.__ritmo_startStreamingWatcher = function(previousBaselineText, reqId) {
+    window.__ritmo_watcher_running = true;
     lastLength = 0;
     lastText = '';
     lastChangeTimestamp = Date.now();
@@ -1282,6 +1284,7 @@ $_bridgeScriptBody''';
 
       if (!currentText || currentText === previousBaselineText) {
         if (totalDuration > 170000) {
+          window.__ritmo_watcher_running = false;
           clearInterval(streamCheckTimer);
           streamCheckTimer = null;
           stopDomObserver();
@@ -1301,6 +1304,7 @@ $_bridgeScriptBody''';
 
       var isFinished = evaluateStreamCompletion();
       if (isFinished) {
+        window.__ritmo_watcher_running = false;
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
@@ -1308,6 +1312,7 @@ $_bridgeScriptBody''';
         notifyFlutter('done', { fullText: finalFullText, requestId: reqId, source: 'dom' });
         console.log('[Ritmo] Stream completed via multi-signal vote with ' + finalFullText.length + ' characters (reqId: ' + reqId + ')');
       } else if (totalDuration > 175000) {
+        window.__ritmo_watcher_running = false;
         var finalFullText = findLatestAssistantText() || currentText;
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;
@@ -1518,6 +1523,18 @@ $_bridgeScriptBody''';
       var stage = payload.stage || 'sending';
       var receivedLength = payload.receivedLength || 0;
 
+      if (window.__ritmo_watcher_running && window.__ritmo_active_req_id === reqId) {
+        console.log('[Ritmo] __ritmo_resume skipped: watcher already running for reqId ' + reqId);
+        notifyFlutter('resume_skipped_duplicate', { requestId: reqId, source: 'dom' });
+        return;
+      }
+
+      if (streamCheckTimer) {
+        clearInterval(streamCheckTimer);
+        streamCheckTimer = null;
+      }
+      stopDomObserver();
+
       window.__ritmo_active_req_id = reqId;
 
       console.log('[Ritmo] __ritmo_resume invoked for reqId: ' + reqId + ' (stage: ' + stage + ', received: ' + receivedLength + ')');
@@ -1533,6 +1550,7 @@ $_bridgeScriptBody''';
 
       window.__ritmo_startStreamingWatcher(window.__ritmo_turn_baseline || '', reqId);
     } catch (e) {
+      window.__ritmo_watcher_running = false;
       console.error('[Ritmo] Error in __ritmo_resume: ' + e);
       notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: payload && payload.requestId, source: 'dom' });
     }
@@ -1541,6 +1559,7 @@ $_bridgeScriptBody''';
   // --- 7. Cancellation Implementation ---
   window.__ritmo_cancelGeneration = function() {
     try {
+      window.__ritmo_watcher_running = false;
       if (streamCheckTimer) {
         clearInterval(streamCheckTimer);
         streamCheckTimer = null;

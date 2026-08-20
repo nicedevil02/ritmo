@@ -128,7 +128,9 @@ class DatabaseHelper {
         } catch (e, st) {
           final errStr = e.toString().toLowerCase();
           final isLocked = e is DatabaseException &&
-              (errStr.contains('locked') || errStr.contains('busy') || errStr.contains('code 5'));
+              (errStr.contains('database is locked') ||
+                  errStr.contains('sqlite_busy') ||
+                  (errStr.contains('code 5') && errStr.contains('busy')));
           if (isLocked && attempts < 5) {
             RitmoLog.warning('DatabaseHelper', 'Database locked on open attempt $attempts (SQLITE_BUSY). Retrying in ${attempts * 400}ms...');
             await Future.delayed(Duration(milliseconds: attempts * 400));
@@ -192,9 +194,11 @@ class DatabaseHelper {
 
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON;');
-    await db.execute('PRAGMA busy_timeout = 10000;');
     await db.rawQuery('PRAGMA journal_mode=WAL;');
     await db.rawQuery('PRAGMA synchronous=NORMAL;');
+    try {
+      await db.rawQuery('PRAGMA busy_timeout = 10000;');
+    } catch (_) {}
   }
 
   Future<void> logNotificationEvent({

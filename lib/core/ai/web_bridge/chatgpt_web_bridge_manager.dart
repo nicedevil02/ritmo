@@ -631,14 +631,14 @@ if (typeof window.__ritmo_resume === 'function') {
   Future<bool> _waitForReady({required Duration timeout}) async {
     final start = DateTime.now();
     while (DateTime.now().difference(start) < timeout) {
-      if (_status == ChatGptBridgeStatus.ready) return true;
+      if (_status == ChatGptBridgeStatus.ready || _status == ChatGptBridgeStatus.generating) return true;
       if (_status == ChatGptBridgeStatus.cloudflareChallenge ||
           _status == ChatGptBridgeStatus.vpnRequired) {
         return false;
       }
       await Future.delayed(const Duration(milliseconds: 300));
     }
-    return _status == ChatGptBridgeStatus.ready;
+    return _status == ChatGptBridgeStatus.ready || _status == ChatGptBridgeStatus.generating;
   }
 
   @visibleForTesting
@@ -686,12 +686,32 @@ if (typeof window.__ritmo_resume === 'function') {
       switch (event) {
         case BridgeReadyEvent(:final isAuthed, :final isWarm, :final currentPath, :final hasComposer, :final version):
           _isAuthenticated = isAuthed;
-          if (_status != ChatGptBridgeStatus.ready) {
-            _setStatus(ChatGptBridgeStatus.ready);
+          if (_bootCompleter != null && !_bootCompleter!.isCompleted) {
+            _bootCompleter!.complete(true);
           }
           if (_cloudflareNotifier.value) {
             _cloudflareNotifier.value = false;
           }
+
+          if (_status == ChatGptBridgeStatus.generating || _pendingRequest != null) {
+            BridgeTraceLog.instance.addEntry(
+              type: 'ready_ignored_during_generation',
+              source: source,
+              requestId: _currentRequestId ?? _pendingRequest?.requestId,
+              note: 'warm=$isWarm path=${currentPath ?? ""} composer=$hasComposer reqId=${_currentRequestId ?? _pendingRequest?.requestId}',
+              level: BridgeTraceLevel.info,
+            );
+            return;
+          }
+
+          if (_status == ChatGptBridgeStatus.idle ||
+              _status == ChatGptBridgeStatus.booting ||
+              _status == ChatGptBridgeStatus.error ||
+              _status == ChatGptBridgeStatus.cloudflareChallenge ||
+              _status == ChatGptBridgeStatus.vpnRequired) {
+            _setStatus(ChatGptBridgeStatus.ready);
+          }
+
           BridgeTraceLog.instance.addEntry(
             type: 'ready',
             source: source,

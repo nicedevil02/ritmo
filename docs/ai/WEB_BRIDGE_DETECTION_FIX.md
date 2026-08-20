@@ -20,7 +20,7 @@
 | DET-09 | تست پوشش تاکسونومی | B | DONE | 6bf64094 | تست تطابق خودکار ۱۰۰٪ تمام رویدادهای JS با پارسر دارت |
 | DET-10 | حذف cloudflare_resolved کاذب | B | DONE | 57f8d1ec | جلوگیری از ارسال کاذب cloudflare_resolved در بوت اولیه و ارسال فقط پس از چالش واقعی |
 | DET-11 | حمل isWarm در ready | C | DONE | pending | پشتیبانی از فیلدهای isWarm، currentPath و hasComposer در BridgeReadyEvent |
-| DET-12 | گارد generating در هندلر ready | C | TODO | | |
+| DET-12 | گارد generating در هندلر ready | C | DONE | pending | جلوگیری کامل از ریست شدن وضعیت generating در اثر رویدادهای ready ناوبری SPA |
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | TODO | | |
 | DET-14 | شرط تحویل برداشت دستی | C | TODO | | |
 | DET-15 | گارد مرکزی خروج از وضعیت | C | TODO | | |

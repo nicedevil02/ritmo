@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/brief/domain_brief.dart';
+import 'package:ritmo/core/ai/personas/policy_rule_ids.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 
 class ParsedCommand {
@@ -80,7 +81,7 @@ class PersonaResponseValidator {
       return const ValidationResult(
         isValid: false,
         reason: 'causal_language',
-        retryMessage: 'قانون ۲ نقض شد. از زبان علّی استفاده کردی. لطفاً پاسخ را با استفاده از کلمات همبستگی (مثل "همراه با") بازنویسی کن.',
+        retryMessage: 'قانون ${PolicyRule.correlationOnly} نقض شد. از زبان علّی استفاده کردی. لطفاً پاسخ را با استفاده از کلمات همبستگی (مثل "همراه با") بازنویسی کن.',
       );
     }
 
@@ -98,7 +99,7 @@ class PersonaResponseValidator {
       return const ValidationResult(
         isValid: false,
         reason: 'gregorian_date',
-        retryMessage: 'قانون ۱ نقض شد. استفاده از تاریخ میلادی ممنوع است. لطفاً به شمسی بازنویسی کن.',
+        retryMessage: 'قانون ${PolicyRule.jalaliInReply} نقض شد. استفاده از تاریخ میلادی ممنوع است. لطفاً به شمسی بازنویسی کن.',
       );
     }
 
@@ -109,7 +110,7 @@ class PersonaResponseValidator {
         return const ValidationResult(
           isValid: false,
           reason: 'privacy_fence_cycle',
-          retryMessage: 'قانون ۱ (لایه صفر) نقض شد. تو مجاز به بحث درباره چرخه نیستی. این پاسخ کاملا مسدود می‌شود.',
+          retryMessage: 'قانون ${PolicyRule.cycleFence} (لایه صفر) نقض شد. تو مجاز به بحث درباره چرخه نیستی. این پاسخ کاملا مسدود می‌شود.',
         );
       }
     }

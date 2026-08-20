@@ -1049,8 +1049,8 @@ dart format --set-exit-if-changed lib test
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | DONE | fdac94be | انجام شد |
 | DET-14 | شرط تحویل برداشت دستی | C | DONE | ce85dd6c | انجام شد |
 | DET-15 | گارد مرکزی خروج از وضعیت | C | DONE | 68f2485b | انجام شد |
-| DET-16 | اصلاح تطبیق endpoint | D | DONE | pending | انجام شد |
-| DET-17 | پوشش fetch با شیء Request | D | TODO | | |
+| DET-16 | اصلاح تطبیق endpoint | D | DONE | 602add47 | انجام شد |
+| DET-17 | پوشش fetch با شیء Request | D | DONE | pending | انجام شد |
 | DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | TODO | | |
 | DET-19 | ترجیح SSE بر DOM | D | TODO | | |
 | DET-20 | حالت پایدار واچر | E | TODO | | |

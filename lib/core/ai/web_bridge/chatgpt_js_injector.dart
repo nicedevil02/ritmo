@@ -59,8 +59,18 @@ $userPrompt
     window.__ritmo_original_fetch = originalFetch;
     window.fetch = function() {
       var args = arguments;
-      var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
-      var options = (args[1] && typeof args[1] === 'object') ? args[1] : (args[0] && typeof args[0] === 'object' && args[0].method) ? args[0] : {};
+      var input = args[0];
+      var init = args[1];
+      var url = '';
+      var method = 'GET';
+
+      if (typeof input === 'string') {
+        url = input;
+        method = (init && init.method) || 'GET';
+      } else if (input && typeof input === 'object') {
+        url = input.url || '';
+        method = (init && init.method) || input.method || 'GET';
+      }
 
       var isConvo = isConversationEndpoint(url);
       var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
@@ -70,7 +80,7 @@ $userPrompt
           window.RitmoChatBridge.postMessage(JSON.stringify({
             type: 'fetch_matched',
             url: (typeof url === 'string') ? url.slice(0, 150) : '',
-            method: (options && options.method) || 'GET',
+            method: method,
             isStream: isConvo,
             requestId: activeReqId,
             source: 'fetch_hook'
@@ -298,15 +308,25 @@ $_bridgeScriptBody''';
     window.__ritmo_original_fetch = originalFetch;
     window.fetch = function() {
       var args = arguments;
-      var url = (args[0] && typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) ? args[0].url : '';
-      var options = (args[1] && typeof args[1] === 'object') ? args[1] : (args[0] && typeof args[0] === 'object' && args[0].method) ? args[0] : {};
+      var input = args[0];
+      var init = args[1];
+      var url = '';
+      var method = 'GET';
+
+      if (typeof input === 'string') {
+        url = input;
+        method = (init && init.method) || 'GET';
+      } else if (input && typeof input === 'object') {
+        url = input.url || '';
+        method = (init && init.method) || input.method || 'GET';
+      }
 
       var isConvo = isConversationEndpoint(url);
       var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
 
       notifyFlutter('fetch_matched', {
         url: (typeof url === 'string') ? url.slice(0, 150) : '',
-        method: (options && options.method) || 'GET',
+        method: method,
         isStream: isConvo,
         requestId: activeReqId,
         source: 'fetch_hook'

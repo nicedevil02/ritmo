@@ -24,8 +24,8 @@
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | DONE | fdac94be | حذف گیت وضعیت از اجرای چک‌پوینت‌ها و محدودسازی صرفاً به یکسانی کنترلر استریم با ثبت دقیق trace |
 | DET-14 | شرط تحویل برداشت دستی | C | DONE | ce85dd6c | تحویل خروجی harvest_result به استریم بر اساس باز بودن کنترلر استریم نه وضعیت، با ثبت دقیق لاگ رد |
 | DET-15 | گارد مرکزی خروج از وضعیت | C | DONE | 68f2485b | ایجاد گارد مرکزی در _setStatus برای جلوگیری از هرگونه خروج غیرمجاز از generating در حین باز بودن استریم |
-| DET-16 | اصلاح تطبیق endpoint | D | DONE | pending | گسترش ریجکس تطبیق endpointهای مکالمه در fetch/XHR/EventSource و افزودن لاگ رویداد fetch_matched |
-| DET-17 | پوشش fetch با شیء Request | D | TODO | | |
+| DET-16 | اصلاح تطبیق endpoint | D | DONE | 602add47 | گسترش ریجکس تطبیق endpointهای مکالمه در fetch/XHR/EventSource و افزودن لاگ رویداد fetch_matched |
+| DET-17 | پوشش fetch با شیء Request | D | DONE | pending | پشتیبانی از ورودی Request Object در هوک fetch و استخراج صحیح URL و متد HTTP |
 | DET-18 | خوانندهٔ SSE در هوک زودهنگام | D | TODO | | |
 | DET-19 | ترجیح SSE بر DOM | D | TODO | | |
 | DET-20 | حالت پایدار واچر | E | TODO | | |

@@ -575,6 +575,29 @@ class PersonaSkillRegistry {
       queryPrompt: 'تجربه‌ها و یادداشت‌های مرتبط من را خلاصه‌سازی کن.',
       priority: 2,
     ),
+
+    // ────────────────────────────────────────────────────────── planning ──
+    PersonaSkillDef(
+      id: 'weekly_schedule',
+      personaId: 'planning',
+      labelFa: 'برنامه‌ریزی متوازن هفته',
+      queryPrompt: 'برنامه این هفته را بر اساس ظرفیت واقعی من بچین.',
+      priority: 10,
+    ),
+    PersonaSkillDef(
+      id: 'workload_balance',
+      personaId: 'planning',
+      labelFa: 'تعادل بار زمانی',
+      queryPrompt: 'بار کارهای هفتگی من چطور متعادل می‌شود؟',
+      priority: 8,
+    ),
+    PersonaSkillDef(
+      id: 'capacity_check',
+      personaId: 'planning',
+      labelFa: 'بررسی ظرفیت واقعی',
+      queryPrompt: 'آیا حجم برنامه‌های من با ظرفیت آزاد روزانه‌ام تناسب دارد؟',
+      priority: 6,
+    ),
   ];
 
   static bool _sleepConsistencyRelevant(DomainBrief? brief) {

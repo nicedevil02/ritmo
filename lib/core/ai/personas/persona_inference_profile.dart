@@ -6,14 +6,18 @@ class PersonaInferenceProfile {
     required this.temperature,
     required this.maxTokens,
     required this.stream,
-    this.timeoutMs = 15000,
-  });
+    int? timeoutMs,
+  }) : _explicitTimeoutMs = timeoutMs;
 
   final AiSlot slot;
   final double temperature;
   final int maxTokens;
   final bool stream;
-  final int timeoutMs;
+  final int? _explicitTimeoutMs;
+
+  int get timeoutMs => _explicitTimeoutMs ?? (maxTokens * 35).clamp(15000, 45000);
+
+  Duration get timeoutDuration => Duration(milliseconds: timeoutMs);
 
   /// Explicitly configured persona IDs.
   /// Keep this set in sync with switch cases below!
@@ -30,6 +34,8 @@ class PersonaInferenceProfile {
     'worship',
     'cycle',
     'health',
+    'notes',
+    'planning',
   };
 
   static bool hasExplicitProfile(String personaId) => explicitPersonaIds.contains(personaId);
@@ -60,6 +66,10 @@ class PersonaInferenceProfile {
         return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.15, maxTokens: 400, stream: false);
       case 'health':
         return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.1, maxTokens: 400, stream: false);
+      case 'notes':
+        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.5, maxTokens: 900, stream: true);
+      case 'planning':
+        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 950, stream: false);
       default:
         // Default to global
         return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.4, maxTokens: 700, stream: true);

@@ -146,6 +146,18 @@ class PersonaRegistry {
         'assistant.handoff',
         'goal.decompose',
         'goal.archive',
+      },
+    ));
+
+    register(AssistantPersona(
+      id: 'planning',
+      displayName: 'دستیار برنامه‌ریزی هوشمند',
+      systemPromptKey: 'system_prompt_planning',
+      reads: {DataDomain.routines, DataDomain.goals, DataDomain.courses, DataDomain.sports, DataDomain.worship, DataDomain.konkur},
+      commandIds: {
+        'app.openPage',
+        'assistant.handoff',
+        'setting.update',
         'planning.applyWeek',
         'planning.createCycle',
         'planning.closeCycle',

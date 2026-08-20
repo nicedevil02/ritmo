@@ -23,7 +23,7 @@ void main() {
 
     test('All registered personas must contain assistant.handoff and app.openPage in commandIds', () {
       final personas = PersonaRegistry.instance.allPersonas;
-      expect(personas.length, equals(13));
+      expect(personas.length, equals(14));
 
       for (final persona in personas) {
         expect(

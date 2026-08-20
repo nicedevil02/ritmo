@@ -43,9 +43,9 @@ void main() {
       expect(
         orphanKeys,
         isEmpty,
-        reason: 'Found orphan charter keys without consuming persona: $orphanKeys (expected green in PSN-38)',
+        reason: 'Found orphan charter keys without consuming persona: $orphanKeys',
       );
-    }, skip: 'در PSN-38 سبز می‌شود');
+    });
 
     test('invariant 3 explicit inference profile for all personas', () {
       final personas = PersonaRegistry.instance.allPersonas;
@@ -53,10 +53,10 @@ void main() {
         expect(
           PersonaInferenceProfile.hasExplicitProfile(p.id),
           isTrue,
-          reason: 'Persona "${p.id}" does not have an explicit inference profile case (expected green in PSN-35)',
+          reason: 'Persona "${p.id}" does not have an explicit inference profile case',
         );
       }
-    }, skip: 'در PSN-35 سبز می‌شود');
+    });
 
     test('invariant 4 skill catalog covers every persona', () {
       final personas = PersonaRegistry.instance.allPersonas;

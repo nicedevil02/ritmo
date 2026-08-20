@@ -738,3 +738,91 @@ class SportsSetRestDayCommand extends RitmoCommand {
   Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
       CommandResult.ok(commandId: id);
 }
+
+class SportsAdjustIntensityCommand extends RitmoCommand {
+  const SportsAdjustIntensityCommand();
+  @override
+  String get id => 'sports.adjustIntensity';
+  @override
+  String get humanTitle => 'تنظیم شدت تمرین';
+  @override
+  String get humanDescriptionFa => 'کاهش یا افزایش شدت بر اساس خستگی و خواب';
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+  @override
+  Map<String, ParamSpec> get params => {};
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.update, entityLabelFa: 'شدت تمرین');
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+}
+
+class SportsLogSessionCommand extends RitmoCommand {
+  const SportsLogSessionCommand();
+  @override
+  String get id => 'sports.logSession';
+  @override
+  String get humanTitle => 'ثبت گزارش تمرین';
+  @override
+  String get humanDescriptionFa => 'ثبت انجام جلسه ورزشی';
+  @override
+  Sensitivity get sensitivity => Sensitivity.safe;
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+  @override
+  Map<String, ParamSpec> get params => {};
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت تمرین');
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+}
+
+class SportsGenerateProgramCommand extends RitmoCommand {
+  const SportsGenerateProgramCommand();
+  @override
+  String get id => 'sports.generateProgram';
+  @override
+  String get humanTitle => 'تولید برنامه تمرینی';
+  @override
+  String get humanDescriptionFa => 'طراحی برنامه ورزشی هفتگی متناسب با کاربر';
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+  @override
+  Map<String, ParamSpec> get params => {};
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.create, entityLabelFa: 'برنامه ورزشی');
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+}
+
+class SportsSetQuietModeCommand extends RitmoCommand {
+  const SportsSetQuietModeCommand();
+  @override
+  String get id => 'sports.setQuietMode';
+  @override
+  String get humanTitle => 'تنظیم تمرین آپارتمانی';
+  @override
+  String get humanDescriptionFa => 'فعال‌سازی تمرین بدون صدا و جهش';
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+  @override
+  Set<DataDomain> get touches => {DataDomain.sports};
+  @override
+  Map<String, ParamSpec> get params => {};
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.update, entityLabelFa: 'تمرین بدون صدا');
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+}

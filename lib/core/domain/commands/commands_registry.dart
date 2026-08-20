@@ -35,6 +35,8 @@ void registerAllRitmoCommands() {
     const GoalCreateCommand(),
     const GoalEditCommand(),
     const GoalCompleteStepCommand(),
+    const GoalDecomposeCommand(),
+    const GoalArchiveCommand(),
 
     // Planning commands (Prompt 072)
     const PlanningApplyWeekCommand(),
@@ -48,19 +50,36 @@ void registerAllRitmoCommands() {
     const PlanningSetDayLightCommand(),
     const PlanningMaterializeDayCommand(),
 
-    // Study commands
+    // Study & Konkur commands
     const CourseCreateCommand(),
+    const CourseSetWeeklyTargetCommand(),
+    const CourseLogSessionCommand(),
+    const CourseResplitSessionsCommand(),
+    const CourseArchiveCommand(),
     const KonkurCreateTopicCommand(),
+    const StudyAddTopicCommand(),
+    const StudySetSubjectPriorityCommand(),
+    const StudyPlanSessionCommand(),
+    const StudyLogSessionCommand(),
+    const StudyLogMockResultCommand(),
+    const StudyGenerateWeeklyPlanCommand(),
+    const StudySetExamDateCommand(),
+    const StudySetDailyBudgetCommand(),
 
     // Worship commands
     const WorshipCreateCommand(),
     const WorshipDeleteCommand(),
 
-    // Wellbeing commands
+    // Wellbeing, Sleep & Health commands
     const SleepLogCommand(),
+    const SleepSetTargetWindowCommand(),
+    const SleepLogDiagnosticCommand(),
     const EnergyLogCommand(),
     const ReflectionLogCommand(),
     const SettingUpdateCommand(),
+    const HealthLogAdherenceCommand(),
+    const HealthLogVitalCommand(),
+    const HealthScheduleTestCommand(),
 
     // Sports & Movement commands
     const SportsMarkDoneCommand(),
@@ -77,6 +96,10 @@ void registerAllRitmoCommands() {
     const SportsSetSessionMinutesCommand(),
     const SportsSetFocusCommand(),
     const SportsSetRestDayCommand(),
+    const SportsAdjustIntensityCommand(),
+    const SportsLogSessionCommand(),
+    const SportsGenerateProgramCommand(),
+    const SportsSetQuietModeCommand(),
 
     // Notes & Experience commands (Prompt 071)
     const NoteCreateCommand(),

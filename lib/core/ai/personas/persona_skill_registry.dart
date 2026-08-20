@@ -3,6 +3,7 @@ import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/goals_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/worship_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/wellbeing_brief.dart';
+import 'package:ritmo/core/ai/personas/persona_thresholds.dart';
 
 /// Single-source definition of a Persona Skill.
 class PersonaSkillDef {
@@ -628,7 +629,7 @@ class PersonaSkillRegistry {
     if (brief is SleepBrief) {
       final score = brief.consistencyScore;
       if (score == null) return true;
-      return score < 60;
+      return score < PersonaThresholds.sleepConsistencyThreshold;
     }
     return true;
   }
@@ -636,7 +637,7 @@ class PersonaSkillRegistry {
   static bool _sleepDebtRelevant(DomainBrief? brief) {
     if (brief == null || brief.confidence == BriefConfidence.none) return true;
     if (brief is SleepBrief) {
-      return brief.sleepDebtMinutes > 60;
+      return brief.sleepDebtMinutes > PersonaThresholds.sleepDebtWarningMinutes;
     }
     return true;
   }

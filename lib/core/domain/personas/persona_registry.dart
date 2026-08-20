@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 import 'package:ritmo/core/domain/commands/commands_registry.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 class PersonaRegistry {
   PersonaRegistry._();
@@ -10,12 +12,24 @@ class PersonaRegistry {
   final Map<String, AssistantPersona> _personas = {};
 
   void register(AssistantPersona persona) {
+    var effectiveReads = persona.reads;
+
     // Privacy Enforcer: Only cycle, health & pregnancy personas read cycle/medical domains
     if (persona.reads.contains(DataDomain.cycle) && persona.id != 'cycle' && persona.id != 'pregnancy') {
-      throw SecurityError('فقط پرسونای سیکل و بارداری مجاز به خواندن DataDomain.cycle هستند.');
+      if (kDebugMode) {
+        throw SecurityError('فقط پرسونای سیکل و بارداری مجاز به خواندن DataDomain.cycle هستند.');
+      } else {
+        RitmoLog.error('PersonaRegistry', 'Security violation: Persona "${persona.id}" attempted to read cycle domain. Stripping domain in production.');
+        effectiveReads = effectiveReads.where((d) => d != DataDomain.cycle).toSet();
+      }
     }
     if (persona.reads.contains(DataDomain.medical) && persona.id != 'health' && persona.id != 'pregnancy') {
-      throw SecurityError('فقط پرسونای سلامت و بارداری مجاز به خواندن DataDomain.medical هستند.');
+      if (kDebugMode) {
+        throw SecurityError('فقط پرسونای سلامت و بارداری مجاز به خواندن DataDomain.medical هستند.');
+      } else {
+        RitmoLog.error('PersonaRegistry', 'Security violation: Persona "${persona.id}" attempted to read medical domain. Stripping domain in production.');
+        effectiveReads = effectiveReads.where((d) => d != DataDomain.medical).toSet();
+      }
     }
 
     const exemptCommands = {'assistant.handoff', 'app.openPage', 'setting.update'};
@@ -122,7 +136,7 @@ class PersonaRegistry {
       displayName: 'مربی هوشمند ورزشی',
       systemPromptKey: 'system_prompt_sports',
       reads: {DataDomain.sports, DataDomain.energy, DataDomain.routines},
-      commandIds: {'app.openPage', 'assistant.handoff', 'sports.setTrainingDays', 'sports.setSessionMinutes', 'sports.setFocus', 'sports.setRestDay', 'sports.lockDay', 'sports.swapExercise', 'sports.adjustIntensity', 'sports.logSession', 'sports.generateProgram', 'sports.setQuietMode'},
+      commandIds: {'app.openPage', 'assistant.handoff', 'sports.set_training_days', 'sports.set_session_minutes', 'sports.set_focus', 'sports.set_rest_day', 'sports.lock_day', 'sports.swap_exercise', 'sports.adjustIntensity', 'sports.logSession', 'sports.generateProgram', 'sports.setQuietMode'},
     ));
 
     register(AssistantPersona(
@@ -232,7 +246,7 @@ class PersonaRegistry {
 
 }
 
-class SecurityError extends Error {
+class SecurityError implements Exception {
   SecurityError(this.message);
   final String message;
 

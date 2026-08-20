@@ -104,9 +104,9 @@ void main() {
         expect(
           unregistered,
           isEmpty,
-          reason: 'Persona "${p.id}" contains unregistered command IDs: $unregistered (expected green in PSN-44)',
+          reason: 'Persona "${p.id}" contains unregistered command IDs: $unregistered',
         );
       }
-    }, skip: 'در PSN-44 سبز می‌شود');
+    });
   });
 }

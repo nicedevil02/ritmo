@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'package:ritmo/core/domain/personas/assistant_persona.dart';
+import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/ai/personas/persona_prompt_builder.dart';
 import 'package:ritmo/core/ai/personas/persona_response_validator.dart';
 import 'package:ritmo/core/ai/personas/persona_inference_profile.dart';
@@ -61,6 +63,8 @@ void main() {
 
         // Layer 1 Expert Charter
         expect(prompt, contains('── تخصص تو ──'));
+        final charter = AssistantCharters.charters[persona.systemPromptKey]!;
+        expect(charter.length, greaterThan(200), reason: '${persona.id} charter too short');
 
         // Skills Manifest
         expect(prompt, contains('── مهارت‌های تو ──'));
@@ -80,6 +84,26 @@ void main() {
         expect(prompt, contains('<memory>'));
         expect(prompt, contains('</memory>'));
       }
+    });
+
+    test('PersonaPromptBuilder throws StateError when charter is missing', () {
+      final badPersona = AssistantPersona(
+        id: 'unknown_dummy',
+        displayName: 'تست ساختگی',
+        systemPromptKey: 'non_existent_key_xyz',
+        reads: const {},
+        commandIds: const {'app.openPage', 'assistant.handoff'},
+      );
+
+      expect(
+        () => PersonaPromptBuilder.buildPrompt(
+          persona: badPersona,
+          todayJalali: '1405/05/19',
+          briefJson: '{}',
+          memoryBlock: '',
+        ),
+        throwsA(isA<StateError>()),
+      );
     });
 
     test('PersonaInferenceProfile must return explicit profiles for all personas', () {

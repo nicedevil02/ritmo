@@ -3,6 +3,7 @@ import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/ai/personas/persona_skill_registry.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 class PersonaPromptBuilder {
   static String buildPrompt({
@@ -22,7 +23,11 @@ class PersonaPromptBuilder {
     ));
 
     // لایه ۱
-    final charter = AssistantCharters.charters[persona.systemPromptKey] ?? '';
+    final charter = AssistantCharters.charters[persona.systemPromptKey];
+    if (charter == null || charter.trim().isEmpty) {
+      RitmoLog.error('PersonaPromptBuilder', 'Missing or empty charter for persona ${persona.id} (key: ${persona.systemPromptKey})');
+      throw StateError('منشور پرسونای "${persona.id}" یافت نشد.');
+    }
     buffer.writeln('\n── تخصص تو ──');
     buffer.writeln(charter);
 

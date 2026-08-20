@@ -238,3 +238,107 @@ class GoalCompleteStepCommand extends RitmoCommand {
     return CommandResult.ok(commandId: id);
   }
 }
+
+class GoalDecomposeCommand extends RitmoCommand {
+  const GoalDecomposeCommand();
+
+  @override
+  String get id => 'goal.decompose';
+
+  @override
+  String get humanTitle => 'تجزیه هدف به گام‌ها';
+
+  @override
+  String get humanDescriptionFa => 'شکستن هدف بزرگ به مراحل کوچک قابل اجرا';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.goals};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'goalId': const ParamSpec(type: ParamType.idRef, labelFa: 'هدف', required: true, refTable: 'goals'),
+    'steps': const ParamSpec(type: ParamType.text, labelFa: 'گام‌ها (جداشده با ویرگول)', required: true, exampleFa: 'مطالعه منابع، آزمون اولیه، مرور نهایی'),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async {
+    final goalId = ctx.payload['goalId']?.toString() ?? '';
+    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'تجزیه هدف $goalId به گام‌ها');
+  }
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final goalId = ctx.payload['goalId']?.toString() ?? '';
+    final stepsRaw = ctx.payload['steps']?.toString() ?? '';
+    final steps = stepsRaw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final createdIds = <String>[];
+    for (var i = 0; i < steps.length; i++) {
+      final stepId = '${goalId}_step_$i';
+      await ctx.txn.insert('goal_steps', {
+        'id': stepId,
+        'goalId': goalId,
+        'title': steps[i],
+        'sortOrder': i,
+        'isCompleted': 0,
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      createdIds.add(stepId);
+    }
+    return CommandResult.ok(commandId: id, outputData: {'stepIds': createdIds}, inverseData: {'goalId': goalId, 'stepIds': createdIds});
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final stepIds = (inverseData['stepIds'] as List?)?.cast<String>() ?? [];
+    for (final sid in stepIds) {
+      await ctx.txn.delete('goal_steps', where: 'id = ?', whereArgs: [sid]);
+    }
+    return CommandResult.ok(commandId: id);
+  }
+}
+
+class GoalArchiveCommand extends RitmoCommand {
+  const GoalArchiveCommand();
+
+  @override
+  String get id => 'goal.archive';
+
+  @override
+  String get humanTitle => 'بایگانی هدف';
+
+  @override
+  String get humanDescriptionFa => 'منتقل کردن هدف به بخش بایگانی';
+
+  @override
+  Sensitivity get sensitivity => Sensitivity.confirm;
+
+  @override
+  Set<DataDomain> get touches => {DataDomain.goals};
+
+  @override
+  Map<String, ParamSpec> get params => {
+    'goalId': const ParamSpec(type: ParamType.idRef, labelFa: 'هدف', required: true, refTable: 'goals'),
+  };
+
+  @override
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.delete, entityLabelFa: 'بایگانی هدف');
+
+  @override
+  Future<CommandResult> run(AgentCommandContext ctx) async {
+    final goalId = ctx.payload['goalId']?.toString() ?? '';
+    await ctx.txn.update('goals', {'isArchived': 1}, where: 'id = ?', whereArgs: [goalId]);
+    return CommandResult.ok(commandId: id, outputData: {'goalId': goalId}, inverseData: {'goalId': goalId});
+  }
+
+  @override
+  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+    final goalId = inverseData['goalId']?.toString();
+    if (goalId == null) return null;
+    await ctx.txn.update('goals', {'isArchived': 0}, where: 'id = ?', whereArgs: [goalId]);
+    return CommandResult.ok(commandId: id);
+  }
+}

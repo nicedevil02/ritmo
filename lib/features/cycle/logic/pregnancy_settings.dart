@@ -106,6 +106,16 @@ class PregnancySettings {
     return CycleSettings.isPregnancyMode(settings) && hasValidDates(settings);
   }
 
+  /// Evaluates whether existing users with active pregnancy mode but missing dates
+  /// should be prompted to complete onboarding (PRG-47).
+  static bool shouldShowMigrationPrompt(Map<String, dynamic> settings) {
+    final isPreg = CycleSettings.isPregnancyMode(settings);
+    final hasDates = hasValidDates(settings);
+    final setupDone = settings[keySetupDone] == 'true';
+    final alreadyPrompted = settings[keyMigrationPromptShown] == 'true';
+    return isPreg && !hasDates && !setupDone && !alreadyPrompted;
+  }
+
   static Future<void> setPregnancyActive(
     bool active, {
     DatabaseExecutor? db,

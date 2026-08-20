@@ -53,5 +53,14 @@ class MigrationV116TagsAndNormalizedFields extends Migration {
         );
       }
     }
+
+    // 6. Clean up obsolete/dead settings keys (T-38)
+    await db.execute('''
+      DELETE FROM app_settings WHERE key IN (
+        'daily_planning_nudge_enabled',
+        'daily_planning_nudge_time',
+        'tasks_confirm_delete'
+      );
+    ''');
   }
 }

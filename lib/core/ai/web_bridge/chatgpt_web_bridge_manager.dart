@@ -1004,8 +1004,21 @@ if (typeof window.__ritmo_resume === 'function') {
           if (_harvestCompleter != null && !_harvestCompleter!.isCompleted) {
             _harvestCompleter!.complete(fullText.isNotEmpty ? fullText : null);
           }
-          if (fullText.isNotEmpty && _status == ChatGptBridgeStatus.generating) {
-            _emitChunk(fullText, null, source: BridgeSource.harvest.name, isHarvest: true);
+          final ctrl = _currentStreamController;
+          if (fullText.isNotEmpty) {
+            if (ctrl != null && !ctrl.isClosed) {
+              _emitChunk(fullText, null, source: BridgeSource.harvest.name, isHarvest: true);
+              _finishGeneration(null, isPartial: false);
+            } else {
+              BridgeTraceLog.instance.addEntry(
+                type: 'harvest_rejected_stream_closed',
+                source: BridgeSource.harvest.name,
+                requestId: requestId,
+                textLength: fullText.length,
+                note: 'stream_controller_closed_or_null',
+                level: BridgeTraceLevel.warn,
+              );
+            }
           }
 
         case BridgeUnknownEvent(:final type, :final error, :final rawPayload):

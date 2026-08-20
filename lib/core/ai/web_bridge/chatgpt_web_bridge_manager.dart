@@ -1068,13 +1068,26 @@ if (typeof window.__ritmo_resume === 'function') {
             break;
           }
           if (statusCode == 429) {
-            _failGeneration(WebBridgeException.rateLimited(statusCode: statusCode));
+            _failGeneration(WebBridgeException.rateLimited(
+              statusCode: statusCode,
+              messageFa: message.isNotEmpty ? message : null,
+            ));
           } else if (statusCode == 401 || statusCode == 403) {
-            _failGeneration(WebBridgeException.authRequired(messageFa: 'نشست کاربری ChatGPT منقضی شده است. لطفاً پنجرهٔ ورود را باز کنید.'));
+            _failGeneration(WebBridgeException.authRequired(
+              messageFa: message.isNotEmpty
+                  ? message
+                  : 'نشست کاربری ChatGPT منقضی شده است. لطفاً پنجرهٔ ورود را باز کنید.',
+            ));
           } else if (statusCode >= 500 && statusCode <= 599) {
-            _failGeneration(WebBridgeException.serverError(statusCode: statusCode));
+            _failGeneration(WebBridgeException.serverError(
+              statusCode: statusCode,
+              messageFa: message.isNotEmpty ? message : null,
+            ));
           } else {
-            _failGeneration(WebBridgeException.networkError(statusCode: statusCode));
+            _failGeneration(WebBridgeException.networkError(
+              statusCode: statusCode,
+              messageFa: message.isNotEmpty ? message : null,
+            ));
           }
 
         case final BridgeErrorEvent errEvent:

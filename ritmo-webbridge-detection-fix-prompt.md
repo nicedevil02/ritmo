@@ -1063,8 +1063,8 @@ dart format --set-exit-if-changed lib test
 | DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | DONE | f0bbf372 | انجام شد |
 | DET-28 | تشخیص نشست مهمان | G | DONE | b0c19751 | انجام شد |
 | DET-29 | حذف src=unknown | G | DONE | 2ad906ca | انجام شد |
-| DET-30 | چک‌پوینت سوم | H | DONE | pending | انجام شد |
-| DET-31 | شکست سریع | H | TODO | | |
+| DET-30 | چک‌پوینت سوم | H | DONE | 95d0653f | انجام شد |
+| DET-31 | شکست سریع | H | DONE | pending | انجام شد |
 | DET-32 | حذف اعداد خام از JS | H | TODO | | |
 | DET-33 | پنجرهٔ سکوت پایان | H | TODO | | |
 | DET-34 | روشن‌کردن استریم زنده | I | TODO | | |

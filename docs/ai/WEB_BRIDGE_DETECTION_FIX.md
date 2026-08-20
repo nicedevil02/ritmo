@@ -17,8 +17,8 @@
 | DET-06 | افزودن case error | B | DONE | a37a60cf | مدیریت صریح رویداد خطا در JS و فیل‌کردن فوری استریم با WebBridgeException |
 | DET-07 | افزودن case cloudflare_resolved | B | DONE | 97bfad7a | مدیریت رویداد حل کلودفلر و بازگردانی خودکار وضعیت به ready |
 | DET-08 | دام ایمنی رویداد ناشناخته | B | DONE | ee5078ff | ثبت رویدادهای ناشناخته با سطح error و متن خام در لاگ و فیل‌کردن استریم در صورت خطا |
-| DET-09 | تست پوشش تاکسونومی | B | DONE | pending | تست تطابق خودکار ۱۰۰٪ تمام رویدادهای JS با پارسر دارت |
-| DET-10 | حذف cloudflare_resolved کاذب | B | TODO | | |
+| DET-09 | تست پوشش تاکسونومی | B | DONE | 6bf64094 | تست تطابق خودکار ۱۰۰٪ تمام رویدادهای JS با پارسر دارت |
+| DET-10 | حذف cloudflare_resolved کاذب | B | DONE | pending | جلوگیری از ارسال کاذب cloudflare_resolved در بوت اولیه و ارسال فقط پس از چالش واقعی |
 | DET-11 | حمل isWarm در ready | C | TODO | | |
 | DET-12 | گارد generating در هندلر ready | C | TODO | | |
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | TODO | | |

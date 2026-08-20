@@ -649,6 +649,7 @@ $_bridgeScriptBody''';
   }
 
   // --- 1. Cloudflare Turnstile, Geo-Block & VPN Watcher ---
+  var hadCloudflareChallenge = false;
   var lastCfState = null;
   var lastVpnState = null;
 
@@ -667,7 +668,9 @@ $_bridgeScriptBody''';
                          lowerText.indexOf('banned your ip') !== -1 ||
                          lowerText.indexOf('banned your country') !== -1 ||
                          lowerText.indexOf('you have been blocked') !== -1 ||
-                         lowerText.indexOf('unable to access chatgpt.com') !== -1;
+                         lowerText.indexOf('unable to access chatgpt.com') !== -1 ||
+                         lowerTitle.indexOf('not available in your country') !== -1 ||
+                         lowerText.indexOf('access denied') !== -1;
       var isRayBlocked = lowerText.indexOf('ray id:') !== -1 && (lowerText.indexOf('access denied') !== -1 || lowerText.indexOf('error') !== -1 || isUnableToLoad || isVpnNotice);
       var isAccessDenied = lowerTitle.indexOf('access denied') !== -1 || (lowerText.indexOf('access denied') !== -1 && lowerText.indexOf('error code') !== -1);
 
@@ -704,8 +707,10 @@ $_bridgeScriptBody''';
     if (isChallenged !== lastCfState) {
       lastCfState = isChallenged;
       if (isChallenged) {
+        hadCloudflareChallenge = true;
         notifyFlutter('cloudflare_challenge', { detected: true, title: title, source: 'lifecycle' });
-      } else {
+      } else if (hadCloudflareChallenge) {
+        hadCloudflareChallenge = false;
         notifyFlutter('cloudflare_resolved', { detected: false, source: 'lifecycle' });
       }
     }

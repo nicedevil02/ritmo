@@ -1042,8 +1042,8 @@ dart format --set-exit-if-changed lib test
 | DET-06 | افزودن case error | B | DONE | a37a60cf | انجام شد |
 | DET-07 | افزودن case cloudflare_resolved | B | DONE | 97bfad7a | انجام شد |
 | DET-08 | دام ایمنی رویداد ناشناخته | B | DONE | ee5078ff | انجام شد |
-| DET-09 | تست پوشش تاکسونومی | B | DONE | pending | انجام شد |
-| DET-10 | حذف cloudflare_resolved کاذب | B | TODO | | |
+| DET-09 | تست پوشش تاکسونومی | B | DONE | 6bf64094 | انجام شد |
+| DET-10 | حذف cloudflare_resolved کاذب | B | DONE | pending | انجام شد |
 | DET-11 | حمل isWarm در ready | C | TODO | | |
 | DET-12 | گارد generating در هندلر ready | C | TODO | | |
 | DET-13 | مستقل‌کردن چک‌پوینت‌ها | C | TODO | | |

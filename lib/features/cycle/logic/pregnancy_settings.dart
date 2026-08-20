@@ -26,6 +26,17 @@ class PregnancySettings {
   static const String keyReminderHour = 'preg_reminder_hour';
   static const String keySetupDone = 'preg_setup_done';
 
+  // Three synchronized pregnancy mode flags
+  static const String keyCyclePregnancyMode = 'cycle_pregnancy_mode';
+  static const String keyPregnancyMode = 'pregnancy_mode';
+  static const String keyCycleIsPregnant = 'cycle_is_pregnant';
+
+  static const List<String> pregnancyFlagKeys = [
+    keyCyclePregnancyMode,
+    keyPregnancyMode,
+    keyCycleIsPregnant,
+  ];
+
   // Extended keys used in later PRG phases
   static const String keyShowCountdown = 'preg_show_countdown';
   static const String keySupplementReminder = 'preg_supplement_reminder';
@@ -68,6 +79,45 @@ class PregnancySettings {
 
   static bool isSetupDone(Map<String, dynamic> settings) {
     return settings[keySetupDone]?.toString().toLowerCase() == 'true';
+  }
+
+  static Future<void> setPregnancyActive(
+    bool active, {
+    DatabaseExecutor? db,
+  }) async {
+    try {
+      final executor = db ?? await DatabaseHelper.instance.database;
+      final now = CycleClock.nowMillisecondsSinceEpoch;
+      final valueStr = active ? 'true' : 'false';
+
+      if (executor is Database) {
+        final batch = executor.batch();
+        for (final key in pregnancyFlagKeys) {
+          batch.insert('app_settings', {
+            'key': key,
+            'value': valueStr,
+            'updatedAt': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+        await batch.commit(noResult: true);
+      } else {
+        for (final key in pregnancyFlagKeys) {
+          await executor.insert('app_settings', {
+            'key': key,
+            'value': valueStr,
+            'updatedAt': now,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+      CycleEngine().invalidate();
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[PregnancySettings] error setting pregnancy active to $active',
+        error: e,
+        stack: st,
+      );
+      rethrow;
+    }
   }
 
   static Future<void> saveProfile(

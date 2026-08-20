@@ -17,8 +17,8 @@
 | PRG-13 | پوستهٔ آنبوردینگ بارداری | C | DONE | 2a101d03 | تکمیل شد |
 | PRG-14 | اتصال onNavigateToPregnancy | C | DONE | c4cd84df | تکمیل شد |
 | PRG-15 | پارامتر onOpenPregnancyOnboarding | C | DONE | 66816f69 | تکمیل شد |
-| PRG-16 | دکمهٔ باردارم در حالت خالی | C | DONE | pending | تکمیل شد |
-| PRG-17 | اتصال دکمهٔ ترمیم | C | TODO | | |
+| PRG-16 | دکمهٔ باردارم در حالت خالی | C | DONE | 3b70710c | تکمیل شد |
+| PRG-17 | اتصال دکمهٔ ترمیم | C | DONE | pending | تکمیل شد |
 | PRG-18 | گام ۱ لحن | D | TODO | | |
 | PRG-19 | گام ۲ تاریخ سه‌مسیره | D | TODO | | بحرانی |
 | PRG-20 | گام ۳ زمینهٔ بارداری | D | TODO | | |

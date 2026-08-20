@@ -907,6 +907,25 @@ if (typeof window.__ritmo_resume === 'function') {
             _failGeneration(WebBridgeException.networkError(statusCode: statusCode));
           }
 
+        case final BridgeErrorEvent errEvent:
+          final message = errEvent.message;
+          final requestId = errEvent.requestId;
+          final msg = message ?? 'Bridge error';
+          BridgeTraceLog.instance.addEntry(
+            type: 'error',
+            source: source,
+            requestId: requestId,
+            note: 'message="$msg"',
+            level: BridgeTraceLevel.error,
+          );
+          if (_status == ChatGptBridgeStatus.generating &&
+              (requestId == null || requestId.isEmpty || requestId == _currentRequestId)) {
+            _failGeneration(WebBridgeException.bridgeError(
+              message: msg,
+              source: source,
+            ));
+          }
+
         case BridgeSelectorHealthEvent(:final issue, :final bridgeVersion, :final report, :final phase, :final requestId):
           _lastSelectorHealthReport = report;
           BridgeTraceLog.instance.addEntry(

@@ -122,6 +122,12 @@ sealed class WebBridgeEvent {
             message: readString('message') ?? readString('error') ?? '',
             requestId: readString('requestId'),
           );
+        case 'error':
+          return BridgeErrorEvent(
+            source: src,
+            message: readString('message') ?? readString('error') ?? '',
+            requestId: readString('requestId'),
+          );
         case 'auth_required':
           return BridgeAuthRequiredEvent(
             source: src,
@@ -451,6 +457,17 @@ class BridgeWatcherTickEvent extends WebBridgeEvent {
   final int markdownBodies;
   final int idleMs;
   final int elapsedMs;
+}
+
+class BridgeErrorEvent extends WebBridgeEvent {
+  const BridgeErrorEvent({
+    required super.source,
+    this.message,
+    this.requestId,
+  });
+
+  final String? message;
+  final String? requestId;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

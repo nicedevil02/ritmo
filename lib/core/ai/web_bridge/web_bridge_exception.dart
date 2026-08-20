@@ -128,6 +128,16 @@ class WebBridgeException implements Exception {
     );
   }
 
+  factory WebBridgeException.bridgeError({required String message, String? source}) {
+    return WebBridgeException(
+      kind: WebBridgeErrorKind.unknown,
+      messageFa: message,
+      actionTextFa: 'تلاش مجدد',
+      messageKey: 'bridgeError',
+      actionKey: 'bridgeErrorAction',
+    );
+  }
+
   factory WebBridgeException.unknown({required String messageFa, Object? originalError}) {
     return WebBridgeException(
       kind: WebBridgeErrorKind.unknown,

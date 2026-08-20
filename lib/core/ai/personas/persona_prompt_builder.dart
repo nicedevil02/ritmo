@@ -1,6 +1,7 @@
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
+import 'package:ritmo/core/ai/personas/persona_skill_registry.dart';
 
 class PersonaPromptBuilder {
   static String buildPrompt({
@@ -21,6 +22,19 @@ class PersonaPromptBuilder {
     final charter = AssistantCharters.charters[persona.systemPromptKey] ?? '';
     buffer.writeln('\n── تخصص تو ──');
     buffer.writeln(charter);
+
+    // بند مهارت‌ها
+    final skills = PersonaSkillRegistry.forPersona(persona.id);
+    if (skills.isNotEmpty) {
+      buffer.writeln('\n── مهارت‌های تو ──');
+      for (final s in skills) {
+        final reqCmds = s.requiredCommandIds.isNotEmpty
+            ? ' (فرمان‌های لازم: ${s.requiredCommandIds.join(', ')})'
+            : '';
+        buffer.writeln('• ${s.id}: ${s.labelFa}$reqCmds');
+      }
+      buffer.writeln('فیلد `skill` در خروجی باید دقیقاً یکی از شناسه‌های بالا یا خالی باشد.');
+    }
 
     // لایه ۲
     buffer.writeln('\n── فرمان‌های مجاز ──');

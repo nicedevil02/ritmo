@@ -62,6 +62,10 @@ void main() {
         // Layer 1 Expert Charter
         expect(prompt, contains('── تخصص تو ──'));
 
+        // Skills Manifest
+        expect(prompt, contains('── مهارت‌های تو ──'));
+        expect(prompt, contains('فیلد `skill` در خروجی'));
+
         // Layer 2 Commands Manifest
         expect(prompt, contains('── فرمان‌های مجاز ──'));
 

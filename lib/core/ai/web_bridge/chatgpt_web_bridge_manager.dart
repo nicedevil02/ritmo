@@ -980,13 +980,18 @@ if (typeof window.__ritmo_resume === 'function') {
           }
 
         case BridgeUnknownEvent(:final type, :final error, :final rawPayload):
-          RitmoLog.debug('ChatGptWebBridge', 'Unhandled JS message: type=$type raw=$rawPayload');
+          RitmoLog.error('ChatGptWebBridge', 'Unhandled JS message: type=$type raw=$rawPayload error=$error');
           BridgeTraceLog.instance.addEntry(
             type: 'unknown_event',
             source: source,
-            note: 'type=$type error=$error',
-            level: BridgeTraceLevel.warn,
+            note: 'type=$type raw=$rawPayload error=$error',
+            level: BridgeTraceLevel.error,
           );
+          if (type == 'error' && _status == ChatGptBridgeStatus.generating) {
+            _failGeneration(WebBridgeException.unknown(
+              messageFa: 'خطای ناشناخته در پل وب ChatGPT: $rawPayload',
+            ));
+          }
       }
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error parsing JS message: $e', e, st);

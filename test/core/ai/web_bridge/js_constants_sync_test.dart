@@ -13,8 +13,10 @@ void main() {
       expect(script.contains('streamPollIntervalMs: ${ChatGptBridgeTimeouts.heartbeatInterval.inMilliseconds}'), isTrue);
       expect(script.contains('fastPollMs: ${ChatGptBridgeTimeouts.pollFastInterval.inMilliseconds}'), isTrue);
 
-      // Verify no legacy magic number 170000 exists
-      expect(script.contains('170000'), isFalse);
+      // Verify usage of RITMO_TIMEOUTS instead of hardcoded numbers in logic
+      expect(script.contains('if (totalDuration > RITMO_TIMEOUTS.watcherTimeoutMs)'), isTrue);
+      expect(script.contains('cfCheckTimer = setInterval(checkSecurityAndBlockStatus, RITMO_TIMEOUTS.cfCheckIntervalMs)'), isTrue);
+      expect(script.contains('}, RITMO_TIMEOUTS.streamPollIntervalMs);'), isTrue);
     });
   });
 }

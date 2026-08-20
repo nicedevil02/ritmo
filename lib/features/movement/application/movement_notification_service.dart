@@ -22,6 +22,17 @@ class MovementNotificationService {
 
   static const String sourceSystem = 'movement';
 
+  /// محدودسازی ساعت اعلان به بازهٔ مجاز [۰۸:۰۰ تا ۲۱:۵۹]
+  static DateTime clampNotificationHour(DateTime scheduled) {
+    if (scheduled.hour < 8) {
+      return DateTime(scheduled.year, scheduled.month, scheduled.day, 8, 0);
+    }
+    if (scheduled.hour >= 22) {
+      return DateTime(scheduled.year, scheduled.month, scheduled.day, 21, 59);
+    }
+    return scheduled;
+  }
+
   /// ۱. یادآوری پیش از جلسه ورزشی
   Future<bool> scheduleSessionReminder({
     required MovementOccurrence occurrence,
@@ -48,7 +59,8 @@ class MovementNotificationService {
     if (y == null || m == null || d == null) return false;
 
     final sessionTime = DateTime(y, m, d, hour, minute);
-    final reminderTime = sessionTime.subtract(Duration(minutes: minutesBefore));
+    final rawReminderTime = sessionTime.subtract(Duration(minutes: minutesBefore));
+    final reminderTime = clampNotificationHour(rawReminderTime);
 
     final activityTitle =
         kind?.nameFa ?? MovementStrings.notificationSessionPreReminder;

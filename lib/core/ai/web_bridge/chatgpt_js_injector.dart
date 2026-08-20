@@ -417,11 +417,21 @@ $userPrompt
     }
   }
 
+  // --- Centralized RITMO Timeout Constants (DET-32) ---
+  var RITMO_TIMEOUTS = {
+    watcherTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 10000},
+    watcherHardTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 5000},
+    heartbeatIntervalMs: 5000,
+    streamPollIntervalMs: ${ChatGptBridgeTimeouts.heartbeatInterval.inMilliseconds},
+    cfCheckIntervalMs: 2000,
+    fastPollMs: ${ChatGptBridgeTimeouts.pollFastInterval.inMilliseconds}
+  };
+
   window.__RITMO_BRIDGE_V = requiredVersion;
   console.log('[Ritmo] Initializing ChatGPT Web Bridge version ' + requiredVersion + '...');
 $_bridgeScriptBody''';
 
-  static String get _bridgeScriptBody => '''
+  static const String _bridgeScriptBody = r'''
   function isConversationEndpoint(url) {
     if (typeof url !== 'string') return false;
     return /[\/\.-]backend-(?:api|anon)\/(?:conversation|lat\/r|f\/r|synthesize)/i.test(url)
@@ -644,16 +654,6 @@ $_bridgeScriptBody''';
     return pump();
   }
   window.__ritmo_readSSEStream = readSSEStream;
-
-  // --- Centralized RITMO Timeout Constants (DET-32) ---
-  var RITMO_TIMEOUTS = {
-    watcherTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 10000},
-    watcherHardTimeoutMs: ${ChatGptBridgeTimeouts.generationTimeout.inMilliseconds - 5000},
-    heartbeatIntervalMs: 5000,
-    streamPollIntervalMs: ${ChatGptBridgeTimeouts.heartbeatInterval.inMilliseconds},
-    cfCheckIntervalMs: 2000,
-    fastPollMs: ${ChatGptBridgeTimeouts.pollFastInterval.inMilliseconds}
-  };
 
   // --- Centralized RITMO Selector Table (A-27) ---
   var RITMO_SELECTORS = {

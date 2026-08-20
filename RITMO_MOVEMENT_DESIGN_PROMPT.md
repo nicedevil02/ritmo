@@ -435,8 +435,8 @@ Future<void> cancelAllMovementNotifications() async { ... }
 - بیشتر از ۴ schedule → پنجمی نادیده گرفته می‌شود.
 
 **دروازهٔ پذیرش فاز ۸**
-- [ ] `flutter test test/movement/movement_notification_test.dart` سبز.
-- [ ] `grep -n "morning_reminder\|pre_session_reminder\|smart_suggestions_enabled" lib/` خالی.
+- [x] `flutter test test/movement/movement_notification_test.dart` سبز.
+- [x] `grep -n "morning_reminder\|pre_session_reminder\|smart_suggestions_enabled" lib/` خالی.
 
 ---
 

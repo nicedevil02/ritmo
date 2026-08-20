@@ -40,14 +40,20 @@ class PregnancyDateEngine {
     return cleanUltrasound.add(Duration(days: remainingGestationDays));
   }
 
+  /// Calculates DST-safe day difference between two calendar dates.
+  static int dayShiftBetween(DateTime a, DateTime b) {
+    final utcA = DateTime.utc(a.year, a.month, a.day);
+    final utcB = DateTime.utc(b.year, b.month, b.day);
+    return utcB.difference(utcA).inDays;
+  }
+
   /// Calculates current gestational age in weeks, days, and total days.
   static GestationalAge calculateCurrentGestation({
     required DateTime lmp,
     DateTime? now,
   }) {
-    final cleanNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
-    final cleanLmp = CycleDateContract.cleanDate(lmp);
-    final totalDays = CycleDateContract.daysBetween(cleanLmp, cleanNow);
+    final currentNow = now ?? CycleClock.now;
+    final totalDays = dayShiftBetween(lmp, currentNow);
     return GestationalAge.fromDays(totalDays);
   }
 
@@ -66,9 +72,8 @@ class PregnancyDateEngine {
     required DateTime edd,
     DateTime? now,
   }) {
-    final cleanNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
-    final cleanEdd = CycleDateContract.cleanDate(edd);
-    final diff = CycleDateContract.daysBetween(cleanNow, cleanEdd);
+    final currentNow = now ?? CycleClock.now;
+    final diff = dayShiftBetween(currentNow, edd);
     return diff < 0 ? 0 : diff;
   }
 
@@ -118,7 +123,8 @@ class PregnancyDateEngine {
     required DateTime edd,
     DateTime? now,
   }) {
-    final cleanNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
+    final currentNow = now ?? CycleClock.now;
+    final cleanNow = CycleDateContract.cleanDate(currentNow);
     final cleanEdd = CycleDateContract.cleanDate(edd);
     return cleanNow.isAfter(cleanEdd);
   }
@@ -129,7 +135,8 @@ class PregnancyDateEngine {
     required DateTime edd,
     DateTime? now,
   }) {
-    final cleanNow = CycleDateContract.cleanDate(now ?? CycleClock.now);
+    final currentNow = now ?? CycleClock.now;
+    final cleanNow = CycleDateContract.cleanDate(currentNow);
     final cleanLmp = CycleDateContract.cleanDate(lmp);
     final cleanEdd = CycleDateContract.cleanDate(edd);
 
@@ -147,7 +154,7 @@ class PregnancyDateEngine {
       );
     }
 
-    final spanDays = CycleDateContract.daysBetween(cleanLmp, cleanEdd);
+    final spanDays = dayShiftBetween(cleanLmp, cleanEdd);
     if (spanDays < 240 || spanDays > 300) {
       return const PregnancyDateValidationResult.invalid(
         errorCode: PregnancyDateErrorCode.invalidGestationSpan,
@@ -155,7 +162,7 @@ class PregnancyDateEngine {
       );
     }
 
-    final currentDays = CycleDateContract.daysBetween(cleanLmp, cleanNow);
+    final currentDays = dayShiftBetween(cleanLmp, cleanNow);
     if (currentDays < 0) {
       return const PregnancyDateValidationResult.invalid(
         errorCode: PregnancyDateErrorCode.negativeGestation,

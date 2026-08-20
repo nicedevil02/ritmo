@@ -553,7 +553,6 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
     _resumeDebounceTimer = Timer(const Duration(milliseconds: 500), () async {
       if (!hasPendingRequest && _status != ChatGptBridgeStatus.generating) return;
-      if (_currentStreamController == null || _currentStreamController!.isClosed) return;
 
       RitmoLog.debug('ChatGptWebBridge', 'Attempting re-attachment / resume after navigation for req: ${_pendingRequest?.requestId}...');
       try {

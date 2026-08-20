@@ -1055,7 +1055,7 @@ dart format --set-exit-if-changed lib test
 | DET-19 | ترجیح SSE بر DOM | D | DONE | 9479d606 | انجام شد |
 | DET-20 | حالت پایدار واچر | E | DONE | e1678ede | انجام شد |
 | DET-21 | resume ایدمپوتنت | E | DONE | 2662545d | انجام شد |
-| DET-22 | دباونس resume | E | TODO | | |
+| DET-22 | دباونس resume | E | DONE | pending | انجام شد |
 | DET-23 | شمارش بارگذاری سرد | E | TODO | | |
 | DET-24 | پذیرش شناسهٔ خالی | E | TODO | | |
 | DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | TODO | | |

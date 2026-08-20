@@ -43,8 +43,8 @@ void main() {
         PendingWebBridgeRequest(
           requestId: 'req_debounce_22',
           promptHash: 'hash_22',
-          promptPrefix: 'Hello',
-          timestamp: DateTime.now(),
+          promptText: 'Hello',
+          sentAt: DateTime.now(),
           stage: PendingRequestStage.streaming,
         ),
       );
@@ -58,7 +58,7 @@ void main() {
 
       // At this point, resumeDebounceTimer should be active, but __ritmo_resume should NOT have run yet
       expect(manager.resumeDebounceTimerForTest != null, isTrue);
-      final resumeCountBefore = controller.executedScripts.where((s) => s.contains('__ritmo_resume')).length;
+      final resumeCountBefore = controller.executedScripts.where((s) => s.contains('window.__ritmo_resume(')).length;
       expect(resumeCountBefore, equals(0));
 
       // Check trace log has recorded resume_debounced
@@ -68,7 +68,7 @@ void main() {
       // Wait for debounce timer to fire (550ms)
       await Future.delayed(const Duration(milliseconds: 550));
 
-      final resumeCountAfter = controller.executedScripts.where((s) => s.contains('__ritmo_resume')).length;
+      final resumeCountAfter = controller.executedScripts.where((s) => s.contains('window.__ritmo_resume(')).length;
       expect(resumeCountAfter, equals(1));
     });
   });

@@ -30,7 +30,7 @@
 | DET-19 | ترجیح SSE بر DOM | D | DONE | 9479d606 | تصاحب قفل منبع توسط SSE در صورت قفل بودن قبلی روی DOM با ثبت لاگ source_promoted و رد چانک‌های بعدی DOM |
 | DET-20 | حالت پایدار واچر | E | DONE | e1678ede | تشخیص حالت پایدار ۲ ثانیه‌ای بدون دکمهٔ توقف و بدون نشانگر استریمینگ با صدور رویداد watcher_steady_done |
 | DET-21 | resume ایدمپوتنت | E | DONE | 2662545d | ایدمپوتنت‌کردن فراخوانی __ritmo_resume و جلوگیری از اجرای واچرهای موازی برای همان requestId با صدور resume_skipped_duplicate |
-| DET-22 | دباونس resume | E | TODO | | |
+| DET-22 | دباونس resume | E | DONE | pending | دی‌باونس فراخوانی‌های __ritmo_resume در سمت دارت به مدت ۵۰۰ میلی‌ثانیه با ثبت لاگ resume_debounced |
 | DET-23 | شمارش بارگذاری سرد | E | TODO | | |
 | DET-24 | پذیرش شناسهٔ خالی | E | TODO | | |
 | DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | TODO | | |

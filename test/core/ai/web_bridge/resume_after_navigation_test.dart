@@ -50,6 +50,7 @@ void main() {
       );
 
       await manager.handlePageFinished('https://chatgpt.com/c/new-convo-id', controller);
+      await Future.delayed(const Duration(milliseconds: 550));
 
       final resumeScript = controller.executedScripts.lastWhere(
         (s) => s.contains('window.__ritmo_resume('),

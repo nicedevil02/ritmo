@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
 class TaskAttachment {
   final String id;
@@ -19,8 +19,7 @@ class TaskAttachment {
     required this.createdAt,
   });
 
-  static String generateId() =>
-      'att_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(9999)}';
+  static String generateId() => RitmoIdFactory.taskAttachment();
 
   factory TaskAttachment.fromMap(Map<String, dynamic> m) {
     return TaskAttachment(

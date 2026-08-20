@@ -1,6 +1,8 @@
-import 'dart:math';
 import 'package:ritmo/core/utils/persian_text.dart';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
+/// SimpleTask represents a lightweight task.
+/// Note: Recurrence belongs to routines; no repeat rules exist in simple tasks.
 class SimpleTask {
   final String id;
   final String title;
@@ -38,9 +40,7 @@ class SimpleTask {
     required this.updatedAt,
   });
 
-  static String generateId() {
-    return 'task_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(9999)}';
-  }
+  static String generateId() => RitmoIdFactory.task();
 
   bool get isSomeday => dueDate == null;
 
@@ -101,6 +101,7 @@ class SimpleTask {
     int? orderIndex,
     String? origin,
     bool? isImportant,
+    bool clearImportantAt = false,
     Object? importantAt = _unset,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -119,7 +120,9 @@ class SimpleTask {
       orderIndex: orderIndex ?? this.orderIndex,
       origin: origin ?? this.origin,
       isImportant: isImportant ?? this.isImportant,
-      importantAt: identical(importantAt, _unset) ? this.importantAt : importantAt as DateTime?,
+      importantAt: clearImportantAt
+          ? null
+          : (identical(importantAt, _unset) ? this.importantAt : importantAt as DateTime?),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

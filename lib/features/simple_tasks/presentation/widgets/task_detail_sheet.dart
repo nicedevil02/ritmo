@@ -18,14 +18,15 @@ import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_step_list.dart';
 import 'package:ritmo/features/notes/logic/promote_to_note.dart';
 
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:shamsi_date/shamsi_date.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ReminderPreset {
@@ -144,14 +145,14 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.warning('TaskDetailSheet', 'Failed to load task details', e, st);
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _playSoundIfEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    final soundEnabled = prefs.getString('tasks_completion_sound_enabled') == 'true';
+    final soundEnabled = await TaskPreferences.isCompletionSoundEnabled();
     if (soundEnabled) {
       await SystemSound.play(SystemSoundType.click);
     }
@@ -227,9 +228,22 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
     }
 
     // 2) لغو یادآور قبلی (idempotent)
-    await sl<AlarmPlatform>().cancelAlarm(reminderId);
+    await NotificationGateway.cancel(reminderId);
 
-    // 3) نوشتن در DB
+    // 3) زمان‌بندی از طریق NotificationGateway
+    await NotificationGateway.schedule(
+      NotificationRequest(
+        id: reminderId,
+        channel: NotificationChannelId.planning,
+        scheduledAt: at,
+        title: 'یادآور کار: ${_task.title}',
+        body: _task.note ?? '',
+        sourceSystem: 'tasks',
+        entityId: _task.id,
+      ),
+    );
+
+    // 4) نوشتن در DB
     final targetMs = at.millisecondsSinceEpoch;
     await SimpleTaskRepository.instance.addPendingReminder(
       reminderId: reminderId,
@@ -297,10 +311,7 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   }
 
   Future<void> _confirmAndDeleteTask() async {
-    final prefs = await SharedPreferences.getInstance();
-    final confirmDelete = prefs.getString('tasks_confirm_delete') ?? 'true';
-
-    if (confirmDelete == 'true' && mounted) {
+    if (mounted) {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (dialogCtx) => AlertDialog(

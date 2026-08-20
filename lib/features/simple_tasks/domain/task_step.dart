@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
 class TaskStep {
   final String id;
@@ -19,8 +19,7 @@ class TaskStep {
     this.completedAt,
   });
 
-  static String generateId() =>
-      'step_${DateTime.now().microsecondsSinceEpoch}_${Random().nextInt(9999)}';
+  static String generateId() => RitmoIdFactory.taskStep();
 
   factory TaskStep.fromMap(Map<String, dynamic> m) {
     return TaskStep(

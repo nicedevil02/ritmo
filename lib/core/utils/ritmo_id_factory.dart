@@ -38,4 +38,9 @@ class RitmoIdFactory {
   static String movementPr() => 'mvpr_${_stamp()}';
   static String movementSession() => 'mvsess_${_stamp()}';
   static String movementSlotOverride() => 'mso_${_stamp()}';
+
+  // Simple Tasks IDs
+  static String task() => 'task_${_stamp()}';
+  static String taskStep() => 'step_${_stamp()}';
+  static String taskAttachment() => 'att_${_stamp()}';
 }

@@ -5,7 +5,7 @@ String normalizeFa(String input) {
       .replaceAll('ك', 'ک')
       .replaceAll('ة', 'ه')
       .replaceAll('ۀ', 'ه')
-      .replaceAll('\u200c', '')
+      .replaceAll('\u200c', ' ')
       .replaceAll(RegExp(r'[\u064B-\u065F\u0670]'), '')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim()

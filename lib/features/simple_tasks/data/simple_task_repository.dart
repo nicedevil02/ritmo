@@ -1,13 +1,11 @@
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
-import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
-import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
@@ -38,7 +36,7 @@ class SimpleTaskRepository {
   }
 
   /// Returns active tasks due today OR overdue past tasks (isDone = 0 AND dueDate <= todayIso)
-  Future<List<SimpleTask>> today(String todayIso) async {
+  Future<List<SimpleTask>> dueTodayOrOverdue(String todayIso) async {
     try {
       final db = await _db;
       final rows = await db.query(
@@ -49,8 +47,41 @@ class SimpleTaskRepository {
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
     } catch (e, st) {
-      RitmoLog.error('SimpleTaskRepository', 'Error loading today tasks', e, st);
+      RitmoLog.error('SimpleTaskRepository', 'Error loading dueTodayOrOverdue tasks', e, st);
       return [];
+    }
+  }
+
+  /// Backward compatible alias for dueTodayOrOverdue
+  Future<List<SimpleTask>> today(String todayIso) => dueTodayOrOverdue(todayIso);
+
+  /// Returns count of active overdue tasks (isDone = 0 AND dueDate < todayIso)
+  Future<int> countOverdue(String todayIso) async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
+        [todayIso],
+      );
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error counting overdue tasks', e, st);
+      return 0;
+    }
+  }
+
+  /// Returns count of active tasks due today (isDone = 0 AND dueDate = todayIso)
+  Future<int> countDueToday(String todayIso) async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate = ?',
+        [todayIso],
+      );
+      return Sqflite.firstIntValue(result) ?? 0;
+    } catch (e, st) {
+      RitmoLog.error('SimpleTaskRepository', 'Error counting dueToday tasks', e, st);
+      return 0;
     }
   }
 
@@ -97,8 +128,8 @@ class SimpleTaskRepository {
 
       final rows = await db.query(
         'simple_tasks',
-        where: 'isDone = 1 AND (dueDate = ? OR (doneAt >= ? AND doneAt < ?))',
-        whereArgs: [todayIso, startOfDayMs, endOfDayMs],
+        where: 'isDone = 1 AND doneAt >= ? AND doneAt < ?',
+        whereArgs: [startOfDayMs, endOfDayMs],
         orderBy: 'doneAt DESC, updatedAt DESC',
       );
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
@@ -130,7 +161,7 @@ class SimpleTaskRepository {
     }
   }
 
-  /// Creates a new SimpleTask
+  /// Creates a new SimpleTask within a database transaction
   Future<SimpleTask> create({
     required String title,
     String? dueDate,
@@ -143,34 +174,37 @@ class SimpleTaskRepository {
     final db = await _db;
     final now = DateTime.now();
 
-    final maxOrderRows = await db.rawQuery('SELECT MAX(orderIndex) as maxOrder FROM simple_tasks');
-    final maxOrder = (maxOrderRows.first['maxOrder'] as int?) ?? 0;
+    return await db.transaction((txn) async {
+      final maxOrderRows = await txn.rawQuery('SELECT MAX(orderIndex) as maxOrder FROM simple_tasks');
+      final maxOrder = (maxOrderRows.first['maxOrder'] as int?) ?? 0;
 
-    final task = SimpleTask(
-      id: SimpleTask.generateId(),
-      title: title.trim(),
-      note: note?.trim(),
-      isDone: false,
-      dueDate: dueDate,
-      dueTime: dueTime,
-      reminderAtMs: reminderAtMs,
-      reminderId: reminderId,
-      orderIndex: maxOrder + 1,
-      origin: 'SIMPLE',
-      isImportant: isImportant,
-      importantAt: isImportant ? now : null,
-      createdAt: now,
-      updatedAt: now,
-    );
+      final task = SimpleTask(
+        id: RitmoIdFactory.task(),
+        title: title.trim(),
+        note: note?.trim(),
+        isDone: false,
+        dueDate: dueDate,
+        dueTime: dueTime,
+        reminderAtMs: reminderAtMs,
+        reminderId: reminderId,
+        orderIndex: maxOrder + 1,
+        origin: 'SIMPLE',
+        isImportant: isImportant,
+        importantAt: isImportant ? now : null,
+        createdAt: now,
+        updatedAt: now,
+      );
 
-    await db.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'TaskCreated',
-      timestamp: DateTime.now(),
-      payload: {'date': task.dueDate ?? '', 'taskId': task.id},
-    ));
-    RitmoEvents.notifyRoutineChanged();
-    return task;
+      await txn.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'TaskCreated',
+        timestamp: DateTime.now(),
+        payload: {'date': task.dueDate ?? '', 'taskId': task.id},
+      ));
+
+      return task;
+    });
   }
 
   /// Toggle task importance star
@@ -187,7 +221,6 @@ class SimpleTaskRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
-    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Toggle task completion status + cancel alarm if completed
@@ -204,7 +237,9 @@ class SimpleTaskRepository {
     if (done && task.reminderId != null && task.reminderId!.isNotEmpty) {
       try {
         await NotificationGateway.cancel(task.reminderId!);
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('SimpleTaskRepository', 'Failed to cancel reminder on setDone', e, st);
+      }
     } else if (!done && task.reminderId != null && task.reminderAtMs != null) {
       if (task.reminderAtMs! > nowMs) {
         try {
@@ -218,7 +253,9 @@ class SimpleTaskRepository {
               entityId: task.id,
             ),
           );
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLog.error('SimpleTaskRepository', 'Failed to reschedule reminder on setDone(false)', e, st);
+        }
       }
     }
 
@@ -237,7 +274,6 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': task.dueDate ?? '', 'taskId': id, 'isDone': done},
     ));
-    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Update full task data
@@ -255,7 +291,6 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': task.dueDate ?? '', 'taskId': task.id},
     ));
-    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Returns a single task by ID, or null if not found.
@@ -324,7 +359,9 @@ class SimpleTaskRepository {
               entityId: snapshot.task.id,
             ),
           );
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLog.error('SimpleTaskRepository', 'Failed to reschedule reminder in restoreTask', e, st);
+        }
       }
     }
     RitmoEventBus().fire(RitmoEvent(
@@ -332,7 +369,6 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': snapshot.task.dueDate ?? '', 'taskId': snapshot.task.id},
     ));
-    RitmoEvents.notifyRoutineChanged();
   }
 
   /// Delete task + steps + attachments + cancel alarm (alias for deleteTask)
@@ -347,11 +383,13 @@ class SimpleTaskRepository {
     final steps = await TaskStepRepository.instance.getForTask(id);
     final attachments = await TaskAttachmentRepository.instance.getForTask(id);
 
-    // Cancel alarm if active
+    // Cancel alarm if active via unified NotificationGateway
     if (task.reminderId != null && task.reminderId!.isNotEmpty) {
       try {
-        await sl<AlarmPlatform>().cancelAlarm(task.reminderId!);
-      } catch (_) {}
+        await NotificationGateway.cancel(task.reminderId!);
+      } catch (e, st) {
+        RitmoLog.warning('SimpleTaskRepository', 'Failed to cancel reminder in deleteTask', e, st);
+      }
     }
 
     await TaskStepRepository.instance.deleteForTask(id);
@@ -363,7 +401,6 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': task.dueDate ?? '', 'taskId': task.id},
     ));
-    RitmoEvents.notifyRoutineChanged();
 
     return TaskSnapshot(
       task: task,

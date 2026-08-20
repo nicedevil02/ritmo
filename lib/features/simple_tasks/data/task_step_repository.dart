@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -36,7 +37,7 @@ class TaskStepRepository {
 
     final now = DateTime.now();
     final step = TaskStep(
-      id: TaskStep.generateId(),
+      id: RitmoIdFactory.taskStep(),
       taskId: taskId,
       title: trimmedTitle,
       isCompleted: false,

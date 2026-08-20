@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -47,7 +49,7 @@ class TaskAttachmentRepository {
       throw Exception('حجم فایل بیشتر از ۱۰ مگابایت است');
     }
 
-    final id = TaskAttachment.generateId();
+    final id = RitmoIdFactory.taskAttachment();
     final relativePath = p.join('task_attachments', taskId, '${id}_$fileName');
     final absolutePath = await resolveAbsolutePath(relativePath);
 
@@ -81,7 +83,9 @@ class TaskAttachmentRepository {
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('TaskAttachmentRepository', 'Failed to delete attachment file: ${attachment.localPath}', e, st);
+      }
       await db.delete('task_attachments', where: 'id = ?', whereArgs: [id]);
     }
   }
@@ -96,7 +100,9 @@ class TaskAttachmentRepository {
         if (await file.exists()) {
           await file.delete();
         }
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('TaskAttachmentRepository', 'Failed to delete attachment file for task: ${att.localPath}', e, st);
+      }
     }
     await db.delete('task_attachments', where: 'taskId = ?', whereArgs: [taskId]);
   }

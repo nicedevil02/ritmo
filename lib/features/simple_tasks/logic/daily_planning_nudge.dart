@@ -1,24 +1,25 @@
-import 'package:flutter/foundation.dart';
-import 'package:ritmo/core/di/service_locator.dart';
-import 'package:ritmo/core/platform/alarm_platform.dart';
-import 'package:ritmo/core/time/ritmo_clock.dart';
-import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/notifications/notification_channel.dart';
+import 'package:ritmo/core/notifications/notification_gateway.dart';
+import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
+import 'package:ritmo/features/simple_tasks/presentation/task_strings.dart';
 
 class DailyPlanningNudge {
   static const String reminderId = 'daily_planning_nudge';
 
   static Future<void> syncNudgeSchedule() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final enabled = prefs.getString('daily_planning_nudge_enabled') == 'true';
-      final timeStr = prefs.getString('daily_planning_nudge_time') ?? '08:30';
+      final enabled = await TaskPreferences.isDailyNudgeEnabled();
+      final timeStr = await TaskPreferences.getDailyNudgeTime();
 
-      // Always cancel existing alarm first
+      // Always cancel existing alarm first via unified NotificationGateway
       try {
-        await sl<AlarmPlatform>().cancelAlarm(reminderId);
-      } catch (_) {}
+        await NotificationGateway.cancel(reminderId);
+      } catch (e, st) {
+        RitmoLog.warning('DailyPlanningNudge', 'Failed to cancel existing nudge alarm', e, st);
+      }
 
       if (!enabled) return;
 
@@ -33,29 +34,33 @@ class DailyPlanningNudge {
         scheduledTime = scheduledTime.add(const Duration(days: 1));
       }
 
-      final todayIso = DayKey.from(now).value;
-      final overdueTasks = await SimpleTaskRepository.instance.today(todayIso);
-      final activeOverdueCount = overdueTasks.where((t) => t.dueDate != null && t.dueDate!.compareTo(todayIso) < 0).length;
-      final activeTodayCount = overdueTasks.where((t) => t.dueDate == todayIso).length;
+      const title = TaskStrings.dailyPlanningNudgeTitle;
+      const message = TaskStrings.dailyPlanningNudgeBody;
 
-      String message;
-      if (activeOverdueCount > 0) {
-        message = '${PersianDigits.toPersian(activeOverdueCount)} کار از روزهای قبل مانده. الان تعیین تکلیفشان کن.';
-      } else if (activeTodayCount > 0) {
-        message = '${PersianDigits.toPersian(activeTodayCount)} کار برای امروز داری.';
-      } else {
-        message = 'امروز چه کاری داری؟';
-      }
+      // 1. Schedule via NotificationGateway
+      await NotificationGateway.schedule(
+        NotificationRequest(
+          id: reminderId,
+          channel: NotificationChannelId.planning,
+          scheduledAt: scheduledTime,
+          title: title,
+          body: message,
+          sourceSystem: 'tasks',
+          entityId: 'nudge',
+        ),
+      );
 
+      // 2. Record pending reminder entry
       await SimpleTaskRepository.instance.addPendingReminder(
         reminderId: reminderId,
-        title: 'برنامه‌ریزی روزانه 📋',
+        title: title,
         body: message,
         scheduledTimeMs: scheduledTime.millisecondsSinceEpoch,
         taskId: 'nudge',
       );
-    } catch (e) {
-      debugPrint('[DailyPlanningNudge] Error syncing schedule: $e');
+    } catch (e, st) {
+      RitmoLog.error('DailyPlanningNudge', 'Error syncing schedule', e, st);
     }
   }
 }
+

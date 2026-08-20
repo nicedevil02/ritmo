@@ -19,10 +19,11 @@ import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_preferences.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
+import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_bucket_section.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 
@@ -108,7 +109,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
         });
       }
     } catch (e, st) {
-      debugPrint('[SimpleTasksScreen] Error loading tasks: $e\n$st');
+      RitmoLog.error('SimpleTasksScreen', 'Error loading tasks', e, st);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -178,8 +179,20 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> {
         await sl<AlarmPlatform>().requestExactAlarmPermission();
       }
 
-      await sl<AlarmPlatform>().cancelAlarm(reminderId);
+      await NotificationGateway.cancel(reminderId);
       
+      await NotificationGateway.schedule(
+        NotificationRequest(
+          id: reminderId,
+          channel: NotificationChannelId.planning,
+          scheduledAt: at,
+          title: 'یادآور کار: ${created.title}',
+          body: created.note ?? '',
+          sourceSystem: 'tasks',
+          entityId: created.id,
+        ),
+      );
+
       await SimpleTaskRepository.instance.addPendingReminder(
         reminderId: reminderId,
         title: 'یادآور کار: ${created.title}',

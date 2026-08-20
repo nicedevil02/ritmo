@@ -14,8 +14,8 @@
 | DET-03 | تیک دوره‌ای واچر | A | DONE | 5547eaf7 | ارسال watcher_tick هر ۵ ثانیه یک‌بار با تمام آمارهای DOM |
 | DET-04 | فازبندی selector_health | A | DONE | dbd9502f | ارسال selector_health در ۴ فاز boot، pre_send، post_first_text و pre_timeout |
 | DET-05 | افزایش نسخهٔ بریج به ۹ | A | DONE | 5f0b3f0f | ارتقای نسخه پروتکل بریج به ۹ در دارت و جاوا اسکریپت |
-| DET-06 | افزودن case error | B | DONE | pending | مدیریت صریح رویداد خطا در JS و فیل‌کردن فوری استریم با WebBridgeException |
-| DET-07 | افزودن case cloudflare_resolved | B | TODO | | |
+| DET-06 | افزودن case error | B | DONE | a37a60cf | مدیریت صریح رویداد خطا در JS و فیل‌کردن فوری استریم با WebBridgeException |
+| DET-07 | افزودن case cloudflare_resolved | B | DONE | pending | مدیریت رویداد حل کلودفلر و بازگردانی خودکار وضعیت به ready |
 | DET-08 | دام ایمنی رویداد ناشناخته | B | TODO | | |
 | DET-09 | تست پوشش تاکسونومی | B | TODO | | |
 | DET-10 | حذف cloudflare_resolved کاذب | B | TODO | | |

@@ -141,6 +141,10 @@ sealed class WebBridgeEvent {
             source: src,
             reason: readString('reason') ?? readString('message'),
           );
+        case 'cloudflare_resolved':
+          return BridgeCloudflareResolvedEvent(
+            source: src,
+          );
         case 'vpn_required':
         case 'geo_blocked':
         case 'ip_blocked':
@@ -323,6 +327,12 @@ class BridgeCloudflareEvent extends WebBridgeEvent {
   });
 
   final String? reason;
+}
+
+class BridgeCloudflareResolvedEvent extends WebBridgeEvent {
+  const BridgeCloudflareResolvedEvent({
+    required super.source,
+  });
 }
 
 class BridgeVpnRequiredEvent extends WebBridgeEvent {

@@ -1039,8 +1039,8 @@ dart format --set-exit-if-changed lib test
 | DET-03 | تیک دوره‌ای واچر | A | DONE | 5547eaf7 | انجام شد |
 | DET-04 | فازبندی selector_health | A | DONE | dbd9502f | انجام شد |
 | DET-05 | افزایش نسخهٔ بریج به ۹ | A | DONE | 5f0b3f0f | انجام شد |
-| DET-06 | افزودن case error | B | DONE | pending | انجام شد |
-| DET-07 | افزودن case cloudflare_resolved | B | TODO | | |
+| DET-06 | افزودن case error | B | DONE | a37a60cf | انجام شد |
+| DET-07 | افزودن case cloudflare_resolved | B | DONE | pending | انجام شد |
 | DET-08 | دام ایمنی رویداد ناشناخته | B | TODO | | |
 | DET-09 | تست پوشش تاکسونومی | B | TODO | | |
 | DET-10 | حذف cloudflare_resolved کاذب | B | TODO | | |

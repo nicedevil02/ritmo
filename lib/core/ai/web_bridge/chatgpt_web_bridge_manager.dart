@@ -786,6 +786,19 @@ if (typeof window.__ritmo_resume === 'function') {
             level: BridgeTraceLevel.warn,
           );
 
+        case BridgeCloudflareResolvedEvent():
+          if (_status == ChatGptBridgeStatus.cloudflareChallenge) {
+            _setStatus(ChatGptBridgeStatus.ready);
+          }
+          _cloudflareNotifier.value = false;
+          RitmoLog.info('ChatGptWebBridge', 'Cloudflare challenge resolved.');
+          BridgeTraceLog.instance.addEntry(
+            type: 'cloudflare_resolved',
+            source: source,
+            note: 'challenge_resolved',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeVpnRequiredEvent(:final reason, :final rayId, :final ip):
           _lastRayId = rayId;
           _lastBlockedIp = ip;

@@ -45,6 +45,15 @@ class PersonaRegistry {
       commandIds: {...allCmdIds, 'assistant.handoff', 'app.openPage'},
     ));
 
+    register(AssistantPersona(
+      id: 'general',
+      displayName: 'دستیار گفتگوی عمومی',
+      systemPromptKey: 'system_prompt_general',
+      reads: const {},
+      commandIds: {'assistant.handoff', 'app.openPage'},
+      handoffHint: 'برای کارهای تخصصی ریتمو، به دستیار تخصصی منتقل شوید.',
+    ));
+
 
     register(AssistantPersona(
       id: 'worship',

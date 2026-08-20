@@ -46,8 +46,31 @@ class PersonaSkillDef {
 class PersonaSkillRegistry {
   PersonaSkillRegistry._();
 
-  /// Master list of all registered skill definitions across all 12 personas.
+  /// Master list of all registered skill definitions across all 13 personas.
   static const List<PersonaSkillDef> all = [
+    // ──────────────────────────────────────────────────────────── general ──
+    PersonaSkillDef(
+      id: 'general_chat',
+      personaId: 'general',
+      labelFa: 'گفتگوی آزاد',
+      queryPrompt: 'می‌خواهم درباره یک موضوع صحبت کنیم.',
+      priority: 10,
+    ),
+    PersonaSkillDef(
+      id: 'brainstorm',
+      personaId: 'general',
+      labelFa: 'ایده‌پردازی و هم‌فکری',
+      queryPrompt: 'برای این موضوع چند ایده جدید می‌خواهم.',
+      priority: 8,
+    ),
+    PersonaSkillDef(
+      id: 'writing_assistant',
+      personaId: 'general',
+      labelFa: 'نگارش و ویرایش متن',
+      queryPrompt: 'این متن را برای من بازنویسی و بهتر کن.',
+      priority: 6,
+    ),
+
     // ───────────────────────────────────────────────────────────── global ──
     PersonaSkillDef(
       id: 'daily_briefing',

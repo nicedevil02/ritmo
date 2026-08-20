@@ -19,6 +19,7 @@ class PersonaInferenceProfile {
   /// Keep this set in sync with switch cases below!
   static const Set<String> explicitPersonaIds = {
     'global',
+    'general',
     'sleep',
     'wellbeing',
     'reflection',
@@ -37,6 +38,8 @@ class PersonaInferenceProfile {
     switch (personaId) {
       case 'global':
         return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.4, maxTokens: 700, stream: true);
+      case 'general':
+        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.7, maxTokens: 800, stream: true);
       case 'sleep':
         return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 600, stream: true);
       case 'wellbeing':

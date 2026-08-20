@@ -62,12 +62,16 @@ class PersonaGate {
       readable.add(DataDomain.sports);
     }
     // Sleep
-    if (isEnabled('module_sleep_enabled', false)) {
+    if (isEnabled('module_sleep_enabled', true)) {
       readable.add(DataDomain.sleep);
     }
     // Energy
-    if (isEnabled('module_energy_enabled', false)) {
+    if (isEnabled('module_energy_enabled', true)) {
       readable.add(DataDomain.energy);
+    }
+    // Notes
+    if (isEnabled('module_notes_enabled', true)) {
+      readable.add(DataDomain.notes);
     }
 
     return readable.intersection(persona?.reads ?? const <DataDomain>{});

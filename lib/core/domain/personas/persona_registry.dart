@@ -1,5 +1,6 @@
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
+import 'package:ritmo/core/domain/commands/commands_registry.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 
 class PersonaRegistry {
@@ -16,7 +17,40 @@ class PersonaRegistry {
     if (persona.reads.contains(DataDomain.medical) && persona.id != 'health') {
       throw SecurityError('فقط پرسونای سلامت مجاز به خواندن DataDomain.medical است.');
     }
-    _personas[persona.id] = persona;
+
+    const exemptCommands = {'assistant.handoff', 'app.openPage', 'setting.update'};
+    final safeCommandIds = <String>{};
+
+    for (final cmdId in persona.commandIds) {
+      if (exemptCommands.contains(cmdId)) {
+        safeCommandIds.add(cmdId);
+        continue;
+      }
+      final cmd = RitmoCommandBus.instance.getCommand(cmdId);
+      if (cmd != null) {
+        // Medical / Cycle protection
+        if (cmd.touches.contains(DataDomain.medical) && persona.id != 'health') {
+          continue;
+        }
+        if (cmd.touches.contains(DataDomain.cycle) && persona.id != 'cycle') {
+          continue;
+        }
+        // General domain touch check
+        if (!cmd.touches.every(persona.reads.contains)) {
+          continue;
+        }
+      }
+      safeCommandIds.add(cmdId);
+    }
+
+    _personas[persona.id] = AssistantPersona(
+      id: persona.id,
+      displayName: persona.displayName,
+      systemPromptKey: persona.systemPromptKey,
+      reads: persona.reads,
+      commandIds: safeCommandIds,
+      handoffHint: persona.handoffHint,
+    );
   }
 
   AssistantPersona? getPersona(String id) => _personas[id];
@@ -24,6 +58,9 @@ class PersonaRegistry {
   List<AssistantPersona> get allPersonas => _personas.values.toList();
 
   void initStandardPersonas() {
+    if (RitmoCommandBus.instance.registeredCommandIds.isEmpty) {
+      registerAllRitmoCommands();
+    }
     final allCmdIds = RitmoCommandBus.instance.registeredCommandIds;
 
     register(AssistantPersona(

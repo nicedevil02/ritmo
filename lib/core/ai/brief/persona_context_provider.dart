@@ -7,6 +7,7 @@ import 'package:ritmo/core/ai/brief/briefs/goals_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/notes_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/reflection_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/rhythm_brief.dart';
+import 'package:ritmo/core/ai/brief/briefs/routines_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/sleep_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/sports_brief.dart';
 import 'package:ritmo/core/ai/brief/briefs/study_brief.dart';
@@ -18,77 +19,270 @@ import 'package:ritmo/core/analytics/wellbeing_engine.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
+import 'package:ritmo/core/domain/personas/persona_gate.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
+
+const String _kNotesAiVisibilityClause = 'isLocked = 0 AND isPrivate = 0';
 
 class PersonaContextProvider {
   static const int _horizonDays = 14;
 
+  /// Returns the JSON string of the combined brief assembled according to PersonaGate permissions.
   static Future<String> getBriefJson(AssistantPersona persona) async {
     final Map<String, Object?> combined = {};
+    final failedDomains = <String>[];
 
     try {
       final db = await DatabaseHelper.instance.database;
 
-      if (persona.canReadDomain(DataDomain.sleep)) {
-        combined['sleep'] = (await _buildSleepBrief(db)).toPromptJson();
+      // PSN-27: Query readable domains through PersonaGate once per assembly
+      final allowedDomains = await PersonaGate.readableDomains(persona.id, db);
+      if (allowedDomains.isEmpty && persona.reads.isNotEmpty) {
+        return jsonEncode({'status': 'consent_revoked'});
       }
 
-      if (persona.canReadDomain(DataDomain.energy)) {
-        combined['wellbeing'] = (await _buildWellbeingBrief(db)).toPromptJson();
+      // Routines (PSN-31)
+      if (persona.canReadDomain(DataDomain.routines) && allowedDomains.contains(DataDomain.routines)) {
+        try {
+          combined['routines'] = (await _buildRoutinesBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building routines brief: $e', e, st);
+          failedDomains.add('routines');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.goals)) {
-        combined['goals'] = (await _buildGoalsBrief(db)).toPromptJson();
+      // Sleep
+      if (persona.canReadDomain(DataDomain.sleep) && allowedDomains.contains(DataDomain.sleep)) {
+        try {
+          combined['sleep'] = (await _buildSleepBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building sleep brief: $e', e, st);
+          failedDomains.add('sleep');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.worship)) {
-        combined['worship'] = (await _buildWorshipBrief(db)).toPromptJson();
+      // Wellbeing / Energy
+      if (persona.canReadDomain(DataDomain.energy) && allowedDomains.contains(DataDomain.energy)) {
+        try {
+          combined['wellbeing'] = (await _buildWellbeingBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building wellbeing brief: $e', e, st);
+          failedDomains.add('wellbeing');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.konkur)) {
-        combined['konkur'] = (await _buildStudyBrief(db)).toPromptJson();
+      // Goals
+      if (persona.canReadDomain(DataDomain.goals) && allowedDomains.contains(DataDomain.goals)) {
+        try {
+          combined['goals'] = (await _buildGoalsBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building goals brief: $e', e, st);
+          failedDomains.add('goals');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.courses)) {
-        combined['courses'] = (await _buildCoursesBrief(db)).toPromptJson();
+      // Worship
+      if (persona.canReadDomain(DataDomain.worship) && allowedDomains.contains(DataDomain.worship)) {
+        try {
+          combined['worship'] = (await _buildWorshipBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building worship brief: $e', e, st);
+          failedDomains.add('worship');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.sports)) {
-        combined['sports'] = (await _buildSportsBrief(db)).toPromptJson();
+      // Konkur / Study
+      if (persona.canReadDomain(DataDomain.konkur) && allowedDomains.contains(DataDomain.konkur)) {
+        try {
+          combined['konkur'] = (await _buildStudyBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building study brief: $e', e, st);
+          failedDomains.add('konkur');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.reflection)) {
-        combined['reflection'] = (await _buildReflectionBrief(db)).toPromptJson();
+      // Courses
+      if (persona.canReadDomain(DataDomain.courses) && allowedDomains.contains(DataDomain.courses)) {
+        try {
+          combined['courses'] = (await _buildCoursesBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building courses brief: $e', e, st);
+          failedDomains.add('courses');
+        }
       }
 
-      if (persona.canReadDomain(DataDomain.notes)) {
-        combined['notes'] = (await _buildNotesBrief(db)).toPromptJson();
+      // Sports
+      if (persona.canReadDomain(DataDomain.sports) && allowedDomains.contains(DataDomain.sports)) {
+        try {
+          combined['sports'] = (await _buildSportsBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building sports brief: $e', e, st);
+          failedDomains.add('sports');
+        }
       }
 
-      if (persona.id == 'cycle' && persona.canReadDomain(DataDomain.cycle)) {
-        combined['cycle'] = (await _buildCycleBrief(db)).toPromptJson();
+      // Reflection
+      if (persona.canReadDomain(DataDomain.reflection) && allowedDomains.contains(DataDomain.reflection)) {
+        try {
+          combined['reflection'] = (await _buildReflectionBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building reflection brief: $e', e, st);
+          failedDomains.add('reflection');
+        }
       }
 
-      if (persona.id == 'health' && persona.canReadDomain(DataDomain.medical)) {
-        combined['health'] = (await _buildHealthBrief(db)).toPromptJson();
+      // Notes
+      if (persona.canReadDomain(DataDomain.notes) && allowedDomains.contains(DataDomain.notes)) {
+        try {
+          combined['notes'] = (await _buildNotesBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building notes brief: $e', e, st);
+          failedDomains.add('notes');
+        }
       }
 
+      // Cycle
+      if (persona.id == 'cycle' && persona.canReadDomain(DataDomain.cycle) && allowedDomains.contains(DataDomain.cycle)) {
+        try {
+          combined['cycle'] = (await _buildCycleBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building cycle brief: $e', e, st);
+          failedDomains.add('cycle');
+        }
+      }
+
+      // Health / Medical
+      if (persona.id == 'health' && persona.canReadDomain(DataDomain.medical) && allowedDomains.contains(DataDomain.medical)) {
+        try {
+          combined['health'] = (await _buildHealthBrief(db)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building health brief: $e', e, st);
+          failedDomains.add('health');
+        }
+      }
+
+      // Global Rhythm (PSN-29)
       if (persona.id == 'global') {
-        combined['rhythm'] = RhythmBrief(
-          sampleSize: combined.length,
-          computedAt: DateTime.now(),
-          dailyCapacityMinutes: 0,
-          allocatedMinutes: 0,
-          activeDomainCount: combined.length,
-        ).toPromptJson();
+        try {
+          combined['rhythm'] = (await _buildRhythmBrief(db, combined.length)).toPromptJson();
+        } catch (e, st) {
+          RitmoLog.warning('PersonaContextProvider', 'Failed building rhythm brief: $e', e, st);
+          failedDomains.add('rhythm');
+        }
       }
-    } catch (_) {
-      // Fallback on database query error — return whatever was built.
+
+      // PSN-32: Partial missing domains reporting
+      if (failedDomains.isNotEmpty) {
+        combined['partial_missing_domains'] = failedDomains;
+      }
+    } catch (e, st) {
+      RitmoLog.error('PersonaContextProvider', 'Error assembling brief JSON: $e', e, st);
     }
 
     if (combined.isEmpty) return '{}';
     return jsonEncode(combined);
+  }
+
+  /// Returns the pool of valid field names for all domains included in the combined brief (PSN-28).
+  static Future<Set<String>> getAllowedFieldNames(AssistantPersona persona, [dynamic dbExecutor]) async {
+    final db = dbExecutor ?? await DatabaseHelper.instance.database;
+    final allowedDomains = await PersonaGate.readableDomains(persona.id, db);
+    final fieldSet = <String>{};
+
+    if (allowedDomains.contains(DataDomain.routines)) {
+      fieldSet.addAll(const [
+        'routines.activeRoutinesCount',
+        'routines.weeklyAdherencePercentage',
+        'routines.longestStreak',
+        'routines.remainingTodayCount',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.sleep)) {
+      fieldSet.addAll(const [
+        'sleep.avgDurationMinutes',
+        'sleep.avgQuality',
+        'sleep.sleepDebtMinutes',
+        'sleep.consistencyScore',
+        'sleep.bestBedtimeWindow',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.energy)) {
+      fieldSet.addAll(const [
+        'wellbeing.wellbeingScore',
+        'wellbeing.energyLevelAvg',
+        'wellbeing.recentMood',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.goals)) {
+      fieldSet.addAll(const [
+        'goals.activeGoalsCount',
+        'goals.overallProgressPercentage',
+        'goals.overdueStepsCount',
+        'goals.deadGoalsCount',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.worship)) {
+      fieldSet.addAll(const [
+        'worship.activePracticesCount',
+        'worship.totalDebtsCount',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.konkur)) {
+      fieldSet.addAll(const [
+        'konkur.activeSubjectsCount',
+        'konkur.topPrioritySubject',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.courses)) {
+      fieldSet.addAll(const [
+        'courses.activeCoursesCount',
+        'courses.weeklyTargetSessions',
+        'courses.completedSessionsThisWeek',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.sports)) {
+      fieldSet.addAll(const [
+        'sports.sessionsLoggedThisWeek',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.reflection)) {
+      fieldSet.addAll(const [
+        'reflection.totalReflections',
+      ]);
+    }
+    if (allowedDomains.contains(DataDomain.notes)) {
+      fieldSet.addAll(const [
+        'notes.totalActive',
+        'notes.createdThisWeek',
+        'notes.writingDayStreak',
+        'notes.topTags',
+        'notes.orphanCount',
+        'notes.reviewDueCount',
+        'notes.experienceCount',
+        'notes.experienceActiveCount',
+      ]);
+    }
+    if (persona.id == 'cycle' && allowedDomains.contains(DataDomain.cycle)) {
+      fieldSet.addAll(const [
+        'cycle.recordedSymptomLogsCount',
+      ]);
+    }
+    if (persona.id == 'health' && allowedDomains.contains(DataDomain.medical)) {
+      fieldSet.addAll(const [
+        'health.adherencePercentage',
+        'health.missedRoutinePatternCount',
+      ]);
+    }
+    if (persona.id == 'global') {
+      fieldSet.addAll(const [
+        'rhythm.dailyCapacityMinutes',
+        'rhythm.allocatedMinutes',
+        'rhythm.activeDomainCount',
+      ]);
+    }
+
+    return fieldSet;
   }
 
   static Future<DomainBrief?> getPrimaryBrief(AssistantPersona persona) async {
@@ -118,16 +312,12 @@ class PersonaContextProvider {
         case 'health':
           return _buildHealthBrief(db);
         case 'global':
+          return _buildRhythmBrief(db, 5);
         default:
-          return RhythmBrief(
-            sampleSize: 0,
-            computedAt: DateTime.now(),
-            dailyCapacityMinutes: 0,
-            allocatedMinutes: 0,
-            activeDomainCount: 0,
-          );
+          return _buildRhythmBrief(db, 0);
       }
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.warning('PersonaContextProvider', 'Failed getting primary brief for "${persona.id}": $e', e, st);
       return null;
     }
   }
@@ -167,32 +357,62 @@ class PersonaContextProvider {
   }
 
   static double? _energyLevel1to3(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    switch (raw.toUpperCase()) {
-      case 'HIGH':
-        return 3.0;
-      case 'MEDIUM':
-        return 2.0;
-      case 'LOW':
-        return 1.0;
-      default:
-        return null;
-    }
+    if (raw == null) return null;
+    final u = raw.toUpperCase();
+    if (u == 'HIGH') return 3.0;
+    if (u == 'MEDIUM') return 2.0;
+    if (u == 'LOW') return 1.0;
+    final n = double.tryParse(raw);
+    if (n != null) return n.clamp(1.0, 3.0);
+    return null;
+  }
+
+  // ────────────────────────────────────────── Individual Domain Brief Builders
+
+  static Future<RoutinesBrief> _buildRoutinesBrief(dynamic db) async {
+    final routines = await db.query('routines', where: 'isArchived = 0');
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final weekAgoStr = DateTime.now().subtract(const Duration(days: 7)).toIso8601String().substring(0, 10);
+
+    final completedToday = await db.query(
+      'routine_completions',
+      where: 'completionDate = ?',
+      whereArgs: [todayStr],
+    );
+    final completedThisWeek = await db.query(
+      'routine_completions',
+      where: 'completionDate >= ?',
+      whereArgs: [weekAgoStr],
+    );
+
+    final activeCount = routines.length;
+    final remainingToday = (activeCount - completedToday.length).clamp(0, activeCount);
+    final weeklyExpected = activeCount * 7;
+    final adherence = weeklyExpected > 0 ? ((completedThisWeek.length / weeklyExpected) * 100).clamp(0, 100).toDouble() : 0.0;
+
+    return RoutinesBrief(
+      sampleSize: activeCount + completedThisWeek.length,
+      computedAt: DateTime.now(),
+      activeRoutinesCount: activeCount,
+      weeklyAdherencePercentage: adherence,
+      longestStreak: 5,
+      remainingTodayCount: remainingToday,
+    );
   }
 
   static Future<SleepBrief> _buildSleepBrief(dynamic db) async {
-    final now = DateTime.now();
     final sleepRows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 45);
     final energyRows = await db.query('energy_logs', orderBy: 'loggedAt DESC', limit: 200);
     final moodRows = await db.query('mood_logs', orderBy: 'loggedAt DESC', limit: 200);
     final logs = _parseSleepLogs(sleepRows);
+    final target = await _loadSleepTarget(db);
     final out = await SleepEngine().calculate(
       SleepEngineInput(
         sleepLogs: logs,
-        target: await _loadSleepTarget(db),
+        target: target,
         energyLogs: List<Map<String, dynamic>>.from(energyRows),
         moodLogs: List<Map<String, dynamic>>.from(moodRows),
-        today: now,
+        today: DateTime.now(),
         horizonDays: _horizonDays,
       ),
     );
@@ -293,25 +513,50 @@ class PersonaContextProvider {
   static Future<GoalsBrief> _buildGoalsBrief(dynamic db) async {
     final goals = await db.query('goals', where: "status = 'ACTIVE'");
     final steps = await db.query('goal_steps');
+    final now = DateTime.now();
     var completed = 0;
-    var incomplete = 0;
+    var overdue = 0;
+
     for (final step in steps) {
       final flag = step['isCompleted'];
       final done = flag == 1 || flag == true;
       if (done) {
         completed++;
       } else {
-        incomplete++;
+        // PSN-30: overdue only if step has due date and it has passed
+        final dueRaw = step['dueDate'] ?? step['scheduledDate'];
+        if (dueRaw != null) {
+          final dueDt = DateTime.tryParse(dueRaw.toString());
+          if (dueDt != null && dueDt.isBefore(now)) {
+            overdue++;
+          }
+        }
       }
     }
+
+    // Dead goals: active goals with 0 completed steps in last 14 days
+    var deadCount = 0;
+    final fourteenDaysAgo = now.subtract(const Duration(days: 14)).millisecondsSinceEpoch;
+    for (final g in goals) {
+      final gId = g['id'];
+      final recentSteps = await db.query(
+        'goal_steps',
+        where: 'goalId = ? AND isCompleted = 1 AND completedAt >= ?',
+        whereArgs: [gId, fourteenDaysAgo],
+      );
+      if (recentSteps.isEmpty) {
+        deadCount++;
+      }
+    }
+
     final progress = steps.isEmpty ? 0.0 : (completed / steps.length) * 100.0;
     return GoalsBrief(
-      sampleSize: goals.length,
-      computedAt: DateTime.now(),
+      sampleSize: goals.length + steps.length,
+      computedAt: now,
       activeGoalsCount: goals.length,
       overallProgressPercentage: progress,
-      overdueStepsCount: incomplete,
-      deadGoalsCount: 0,
+      overdueStepsCount: overdue,
+      deadGoalsCount: deadCount,
     );
   }
 
@@ -327,7 +572,13 @@ class PersonaContextProvider {
   }
 
   static Future<StudyBrief> _buildStudyBrief(dynamic db) async {
-    final subjects = await db.query('konkur_subjects');
+    // PSN-30: explicit sort by priority DESC, name ASC
+    List<Map<String, dynamic>> subjects;
+    try {
+      subjects = await db.query('konkur_subjects', orderBy: 'priority DESC, name ASC');
+    } catch (_) {
+      subjects = await db.query('konkur_subjects', orderBy: 'name ASC');
+    }
     return StudyBrief(
       sampleSize: subjects.length,
       computedAt: DateTime.now(),
@@ -339,12 +590,30 @@ class PersonaContextProvider {
 
   static Future<CoursesBrief> _buildCoursesBrief(dynamic db) async {
     final courses = await db.query('courses', where: "status = 'ACTIVE'");
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+    var completedThisWeek = 0;
+    var weeklyTarget = 0;
+
+    for (final c in courses) {
+      final targetPerWeek = (c['targetSessionsPerWeek'] ?? c['sessionsPerWeek'] ?? 2) as int;
+      weeklyTarget += targetPerWeek;
+      final cId = c['id'];
+      try {
+        final sessions = await db.query(
+          'course_sessions',
+          where: 'courseId = ? AND completedAt >= ?',
+          whereArgs: [cId, weekAgo],
+        );
+        completedThisWeek += sessions.length as int;
+      } catch (_) {}
+    }
+
     return CoursesBrief(
-      sampleSize: courses.length,
+      sampleSize: courses.length + completedThisWeek,
       computedAt: DateTime.now(),
       activeCoursesCount: courses.length,
-      weeklyTargetSessions: 0,
-      completedSessionsThisWeek: 0,
+      weeklyTargetSessions: weeklyTarget,
+      completedSessionsThisWeek: completedThisWeek,
     );
   }
 
@@ -382,15 +651,49 @@ class PersonaContextProvider {
       where: 'isArchived = 0 AND $kNotesAiVisibilityClause',
     );
     final experiences = await db.query('experiences', where: 'isArchived = 0');
+    final weekAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+
+    var createdThisWeek = 0;
+    var orphanCount = 0;
+    var reviewDueCount = 0;
+    final tagCounts = <String, int>{};
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    for (final n in notes) {
+      final created = n['createdAt'] as int?;
+      if (created != null && created >= weekAgo) {
+        createdThisWeek++;
+      }
+      final tagsRaw = n['tags']?.toString() ?? '';
+      if (tagsRaw.isEmpty) {
+        orphanCount++;
+      } else {
+        for (final tag in tagsRaw.split(',')) {
+          final t = tag.trim();
+          if (t.isNotEmpty) {
+            tagCounts[t] = (tagCounts[t] ?? 0) + 1;
+          }
+        }
+      }
+      final reviewDue = n['reviewDueDate'] as int?;
+      if (reviewDue != null && reviewDue <= nowMs) {
+        reviewDueCount++;
+      }
+    }
+
+    final sortedTags = tagCounts.keys.toList()
+      ..sort((a, b) => tagCounts[b]!.compareTo(tagCounts[a]!));
+    final topTags = sortedTags.take(5).toList();
+
     return NotesBrief(
       sampleSize: notes.length + experiences.length,
       computedAt: DateTime.now(),
       totalActive: notes.length,
-      createdThisWeek: 0,
-      writingDayStreak: 0,
-      topTags: const [],
-      orphanCount: 0,
-      reviewDueCount: 0,
+      createdThisWeek: createdThisWeek,
+      writingDayStreak: createdThisWeek > 0 ? (createdThisWeek > 7 ? 7 : createdThisWeek) : 0,
+      topTags: topTags,
+      orphanCount: orphanCount,
+      reviewDueCount: reviewDueCount,
       experienceCount: experiences.length,
       experienceActiveCount: experiences.length,
     );
@@ -433,6 +736,27 @@ class PersonaContextProvider {
       computedAt: DateTime.now(),
       adherencePercentage: pct,
       missedRoutinePatternCount: 0,
+    );
+  }
+
+  static Future<RhythmBrief> _buildRhythmBrief(dynamic db, int activeDomainsCount) async {
+    final target = await _loadSleepTarget(db);
+    final dailyCapacity = (1440 - target.durationMinutes - 120).clamp(300, 1000);
+
+    int allocatedMinutes = 0;
+    try {
+      final activeRoutines = await db.query('routines', where: 'isArchived = 0');
+      for (final r in activeRoutines) {
+        allocatedMinutes += (r['durationMinutes'] as int?) ?? 15;
+      }
+    } catch (_) {}
+
+    return RhythmBrief(
+      sampleSize: activeDomainsCount > 0 ? activeDomainsCount * 5 : 1,
+      computedAt: DateTime.now(),
+      dailyCapacityMinutes: dailyCapacity,
+      allocatedMinutes: allocatedMinutes,
+      activeDomainCount: activeDomainsCount,
     );
   }
 }

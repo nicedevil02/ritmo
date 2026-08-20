@@ -1691,6 +1691,9 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   }
 
   @visibleForTesting
+  void failGenerationForTest(dynamic error) => _failGeneration(error);
+
+  @visibleForTesting
   void cancelTimersForTesting() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
@@ -1918,7 +1921,14 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
       await _runCheckpointCheck(3, streamController, reqId);
     });
 
-    yield* streamController.stream;
+    try {
+      yield* streamController.stream;
+    } finally {
+      if (_status == ChatGptBridgeStatus.generating &&
+          identical(_currentStreamController, streamController)) {
+        _finishGeneration(null, isPartial: true);
+      }
+    }
   }
 
   @visibleForTesting

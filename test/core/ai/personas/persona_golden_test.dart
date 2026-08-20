@@ -69,6 +69,9 @@ void main() {
         // Layer 2 Commands Manifest
         expect(prompt, contains('── فرمان‌های مجاز ──'));
 
+        // Handoff Directory
+        expect(prompt, contains('── راهنمای واگذاری (handoff) ──'));
+
         // Layer 3 Brief
         expect(prompt, contains('<brief>'));
         expect(prompt, contains('</brief>'));

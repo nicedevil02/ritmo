@@ -1,4 +1,5 @@
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/ai/personas/assistant_charters.dart';
 import 'package:ritmo/core/ai/personas/persona_skill_registry.dart';
@@ -41,6 +42,19 @@ class PersonaPromptBuilder {
     // لایه ۲
     buffer.writeln('\n── فرمان‌های مجاز ──');
     buffer.writeln(CommandManifest.asPromptBlock(personaId: persona.id));
+
+    // راهنمای واگذاری
+    final otherPersonas = PersonaRegistry.instance.allPersonas
+        .where((p) => p.id != persona.id)
+        .toList();
+    if (otherPersonas.isNotEmpty) {
+      buffer.writeln('\n── راهنمای واگذاری (handoff) ──');
+      buffer.writeln('اگر موضوع خارج از تخصص توست، با دستور `assistant.handoff` به یکی از این دستیاران ارجاع بده:');
+      for (final other in otherPersonas) {
+        final hint = other.handoffHint?.isNotEmpty == true ? ' (${other.handoffHint})' : '';
+        buffer.writeln('• ${other.id}: ${other.displayName}$hint');
+      }
+    }
 
     // لایه ۳
     buffer.writeln('\n<brief>');

@@ -56,7 +56,9 @@ class PregnancyReminderScheduler {
       final effectiveNow = now ?? CycleClock.now;
       final cleanToday = CycleDateContract.cleanDate(effectiveNow);
 
-      final isMasked = settings['preg_mask_notifications'] == 'true';
+      final isMasked = settings['preg_mask_notifications'] == 'true' ||
+          settings['preg_lock_enabled'] == 'true' ||
+          settings['cycle_inbox_mask_enabled'] == 'true';
       final leadDays = int.tryParse(settings['preg_visit_reminder_lead_days'] ?? '3') ?? 3;
       final reminderHour = int.tryParse(settings['preg_reminder_hour'] ?? '9') ?? 9;
       final supplementEnabled = settings['preg_supplement_reminder'] == 'true';

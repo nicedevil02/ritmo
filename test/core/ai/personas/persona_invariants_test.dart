@@ -31,5 +31,17 @@ void main() {
         );
       }
     });
+
+    test('invariant 2 no orphan charter', () {
+      final allPersonaKeys = PersonaRegistry.instance.allPersonas.map((p) => p.systemPromptKey).toSet();
+      final allCharterKeys = AssistantCharters.charters.keys.toSet();
+      final orphanKeys = allCharterKeys.difference(allPersonaKeys);
+
+      expect(
+        orphanKeys,
+        isEmpty,
+        reason: 'Found orphan charter keys without consuming persona: $orphanKeys (expected green in PSN-38)',
+      );
+    });
   });
 }

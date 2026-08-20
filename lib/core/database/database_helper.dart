@@ -113,28 +113,10 @@ class DatabaseHelper {
     } else {
       final path = await LegacyDatabaseRecovery.getSafeDatabasePath();
 
-      try {
-        return await openDatabase(
-          path,
-          version: _dbVersion,
-          onCreate: _createDB,
-          onConfigure: _onConfigure,
-          onUpgrade: onUpgrade,
-          onDowngrade: _onDowngrade,
-        );
-      } catch (e, st) {
-        final errStr = e.toString().toLowerCase();
-        final isCorrupt = e is DatabaseException &&
-            (errStr.contains('malformed') ||
-                errStr.contains('not a database') ||
-                errStr.contains('encrypted'));
-
-        if (isCorrupt) {
-          RitmoLog.error('DatabaseHelper', 'Database corruption detected ($e). Quarantining file and creating fresh database', e, st);
-          final dbFile = File(path);
-          if (await dbFile.exists()) {
-            await LegacyDatabaseRecovery.quarantineCorruptFile(dbFile, 'open_failed_corrupt');
-          }
+      int attempts = 0;
+      while (true) {
+        attempts++;
+        try {
           return await openDatabase(
             path,
             version: _dbVersion,
@@ -143,9 +125,39 @@ class DatabaseHelper {
             onUpgrade: onUpgrade,
             onDowngrade: _onDowngrade,
           );
-        } else {
-          RitmoLog.error('DatabaseHelper', 'Database open error non-fatal rethrow', e, st);
-          rethrow;
+        } catch (e, st) {
+          final errStr = e.toString().toLowerCase();
+          final isLocked = e is DatabaseException &&
+              (errStr.contains('locked') || errStr.contains('busy') || errStr.contains('code 5'));
+          if (isLocked && attempts < 5) {
+            RitmoLog.warning('DatabaseHelper', 'Database locked on open attempt $attempts (SQLITE_BUSY). Retrying in ${attempts * 400}ms...');
+            await Future.delayed(Duration(milliseconds: attempts * 400));
+            continue;
+          }
+
+          final isCorrupt = e is DatabaseException &&
+              (errStr.contains('malformed') ||
+                  errStr.contains('not a database') ||
+                  errStr.contains('encrypted'));
+
+          if (isCorrupt) {
+            RitmoLog.error('DatabaseHelper', 'Database corruption detected ($e). Quarantining file and creating fresh database', e, st);
+            final dbFile = File(path);
+            if (await dbFile.exists()) {
+              await LegacyDatabaseRecovery.quarantineCorruptFile(dbFile, 'open_failed_corrupt');
+            }
+            return await openDatabase(
+              path,
+              version: _dbVersion,
+              onCreate: _createDB,
+              onConfigure: _onConfigure,
+              onUpgrade: onUpgrade,
+              onDowngrade: _onDowngrade,
+            );
+          } else {
+            RitmoLog.error('DatabaseHelper', 'Database open error non-fatal rethrow', e, st);
+            rethrow;
+          }
         }
       }
     }
@@ -180,6 +192,7 @@ class DatabaseHelper {
 
   Future<void> _onConfigure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON;');
+    await db.execute('PRAGMA busy_timeout = 10000;');
     await db.rawQuery('PRAGMA journal_mode=WAL;');
     await db.rawQuery('PRAGMA synchronous=NORMAL;');
   }

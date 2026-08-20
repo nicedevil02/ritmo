@@ -263,6 +263,14 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
 
   @visibleForTesting
   void resetStateForTest() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = null;
+    _generationTimer?.cancel();
+    _generationTimer = null;
+    _checkpointTimer1?.cancel();
+    _checkpointTimer1 = null;
+    _checkpointTimer2?.cancel();
+    _checkpointTimer2 = null;
     _status = ChatGptBridgeStatus.idle;
     _currentRequestId = null;
     _pendingRequest = null;
@@ -1658,18 +1666,44 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     _checkpointTimer1?.cancel();
     _checkpointTimer1 = Timer(ChatGptBridgeTimeouts.checkpoint1Delay, () async {
-      if (!identical(_currentStreamController, streamController)) return;
+      if (!identical(_currentStreamController, streamController)) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_skipped',
+          source: BridgeSource.dart.name,
+          requestId: reqId,
+          note: 'timer1_controller_mismatch',
+          level: BridgeTraceLevel.info,
+        );
+        return;
+      }
       await _runCheckpointCheck(1, streamController, reqId);
     });
 
     _checkpointTimer2?.cancel();
     _checkpointTimer2 = Timer(ChatGptBridgeTimeouts.checkpoint2Delay, () async {
-      if (!identical(_currentStreamController, streamController)) return;
+      if (!identical(_currentStreamController, streamController)) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_skipped',
+          source: BridgeSource.dart.name,
+          requestId: reqId,
+          note: 'timer2_controller_mismatch',
+          level: BridgeTraceLevel.info,
+        );
+        return;
+      }
       await _runCheckpointCheck(2, streamController, reqId);
     });
 
     yield* streamController.stream;
   }
+
+  @visibleForTesting
+  Future<void> runCheckpointCheckForTesting(
+    int checkpointNumber,
+    StreamController<String> streamController,
+    String reqId,
+  ) =>
+      _runCheckpointCheck(checkpointNumber, streamController, reqId);
 
   /// Checks WebView DOM at intermediate checkpoints before timeout to see if ChatGPT has answered.
   Future<void> _runCheckpointCheck(
@@ -1677,8 +1711,24 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     StreamController<String> streamController,
     String reqId,
   ) async {
-    if (!identical(_currentStreamController, streamController) ||
-        _status != ChatGptBridgeStatus.generating) {
+    if (!identical(_currentStreamController, streamController)) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'checkpoint_skipped',
+        source: BridgeSource.dart.name,
+        requestId: reqId,
+        note: 'checkpoint_${checkpointNumber}_skipped_controller_mismatch',
+        level: BridgeTraceLevel.info,
+      );
+      return;
+    }
+    if (streamController.isClosed) {
+      BridgeTraceLog.instance.addEntry(
+        type: 'checkpoint_skipped',
+        source: BridgeSource.dart.name,
+        requestId: reqId,
+        note: 'checkpoint_${checkpointNumber}_skipped_controller_closed',
+        level: BridgeTraceLevel.info,
+      );
       return;
     }
 
@@ -1693,8 +1743,24 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
 
     try {
       final harvested = await harvestVisibleAnswer();
-      if (!identical(_currentStreamController, streamController) ||
-          _status != ChatGptBridgeStatus.generating) {
+      if (!identical(_currentStreamController, streamController)) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_skipped',
+          source: BridgeSource.dart.name,
+          requestId: reqId,
+          note: 'checkpoint_${checkpointNumber}_post_harvest_controller_mismatch',
+          level: BridgeTraceLevel.info,
+        );
+        return;
+      }
+      if (streamController.isClosed) {
+        BridgeTraceLog.instance.addEntry(
+          type: 'checkpoint_skipped',
+          source: BridgeSource.dart.name,
+          requestId: reqId,
+          note: 'checkpoint_${checkpointNumber}_post_harvest_controller_closed',
+          level: BridgeTraceLevel.info,
+        );
         return;
       }
 

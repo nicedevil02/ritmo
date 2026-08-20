@@ -1056,8 +1056,8 @@ dart format --set-exit-if-changed lib test
 | DET-20 | حالت پایدار واچر | E | DONE | e1678ede | انجام شد |
 | DET-21 | resume ایدمپوتنت | E | DONE | 2662545d | انجام شد |
 | DET-22 | دباونس resume | E | DONE | 5d5cdb6a | انجام شد |
-| DET-23 | شمارش بارگذاری سرد | E | DONE | pending | انجام شد |
-| DET-24 | پذیرش شناسهٔ خالی | E | TODO | | |
+| DET-23 | شمارش بارگذاری سرد | E | DONE | d83b32e2 | انجام شد |
+| DET-24 | پذیرش شناسهٔ خالی | E | DONE | pending | انجام شد |
 | DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | TODO | | |
 | DET-26 | تأیید واقعی ارسال | F | TODO | | |
 | DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | TODO | | |

@@ -1518,12 +1518,15 @@ $_bridgeScriptBody''';
   window.__ritmo_resume = function(payload) {
     try {
       payload = payload || {};
-      var reqId = payload.requestId || '';
+      var reqId = (payload && typeof payload.requestId === 'string') ? payload.requestId : '';
+      if (!reqId && window.__ritmo_active_req_id) {
+        reqId = window.__ritmo_active_req_id;
+      }
       var promptPrefix = payload.promptPrefix || '';
       var stage = payload.stage || 'sending';
       var receivedLength = payload.receivedLength || 0;
 
-      if (window.__ritmo_watcher_running && window.__ritmo_active_req_id === reqId) {
+      if (window.__ritmo_watcher_running && window.__ritmo_active_req_id === reqId && reqId) {
         console.log('[Ritmo] __ritmo_resume skipped: watcher already running for reqId ' + reqId);
         notifyFlutter('resume_skipped_duplicate', { requestId: reqId, source: 'dom' });
         return;
@@ -1552,7 +1555,7 @@ $_bridgeScriptBody''';
     } catch (e) {
       window.__ritmo_watcher_running = false;
       console.error('[Ritmo] Error in __ritmo_resume: ' + e);
-      notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: payload && payload.requestId, source: 'dom' });
+      notifyFlutter('error', { message: 'خطا در بازیابی پاسخ پس از جابجایی صفحه: ' + e.toString(), requestId: reqId || (payload && payload.requestId), source: 'dom' });
     }
   };
 

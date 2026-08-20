@@ -1707,17 +1707,33 @@ $_bridgeScriptBody''';
   // --- 9. Page Auth State Detection ---
   function checkAuthState() {
     try {
-      var isExplicitLoginPage = (window.location.pathname || '').indexOf('/auth/login') !== -1 || (window.location.pathname || '').indexOf('/login') === 0;
+      var pathname = window.location.pathname || '';
+      var isExplicitLoginPage = pathname.indexOf('/auth/login') !== -1 || pathname.indexOf('/login') === 0;
       var hasLoginModal = !!querySafe('#login-modal, [data-testid="login-modal"]');
       var hasComposer = !!querySafe(RITMO_SELECTORS.composer);
       var hasLoginBtn = !!querySafe(RITMO_SELECTORS.loginButton);
+      var hasUserProfile = !!querySafe(RITMO_SELECTORS.userProfile);
+      var hasGuestBanner = !!querySafe('div[data-testid="guest-mode-banner"], div[data-testid*="guest" i]');
+      var isGuestUrl = pathname.indexOf('/g/') !== -1;
+
+      // Guest session: not explicitly blocked, composer present, but login button present / guest indicators
+      if (hasComposer && !hasUserProfile && (hasLoginBtn || hasGuestBanner || isGuestUrl)) {
+        notifyFlutter('guest_session_detected', {
+          hasComposer: true,
+          hasLoginButton: hasLoginBtn,
+          currentPath: pathname,
+          isGuest: true,
+          source: 'lifecycle'
+        });
+        return true;
+      }
 
       var isAuth = !isExplicitLoginPage && !hasLoginModal;
 
       if ((isExplicitLoginPage || hasLoginModal) && !hasComposer) {
         notifyFlutter('auth_required', {
           hasLoginButton: hasLoginBtn,
-          currentPath: window.location.pathname || '',
+          currentPath: pathname,
           source: 'lifecycle'
         });
       }

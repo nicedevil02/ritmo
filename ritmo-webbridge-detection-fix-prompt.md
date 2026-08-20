@@ -1060,8 +1060,8 @@ dart format --set-exit-if-changed lib test
 | DET-24 | پذیرش شناسهٔ خالی | E | DONE | 49ed38f5 | انجام شد |
 | DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | DONE | d0b2d4b5 | انجام شد |
 | DET-26 | تأیید واقعی ارسال | F | DONE | 93819449 | انجام شد |
-| DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | DONE | pending | انجام شد |
-| DET-28 | تشخیص نشست مهمان | G | TODO | | |
+| DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | DONE | f0bbf372 | انجام شد |
+| DET-28 | تشخیص نشست مهمان | G | DONE | pending | انجام شد |
 | DET-29 | حذف src=unknown | G | TODO | | |
 | DET-30 | چک‌پوینت سوم | H | TODO | | |
 | DET-31 | شکست سریع | H | TODO | | |

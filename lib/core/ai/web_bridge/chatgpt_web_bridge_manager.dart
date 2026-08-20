@@ -905,6 +905,19 @@ if (typeof window.__ritmo_resume === 'function') {
             _failGeneration(WebBridgeException.authRequired());
           }
 
+        case BridgeGuestSessionDetectedEvent(:final hasComposer, :final hasLoginButton, :final currentPath):
+          _isAuthenticated = true; // Guest session allows chat without login
+          RitmoLog.info(
+            'ChatGptWebBridge',
+            'Guest session detected: composer=$hasComposer, loginBtn=$hasLoginButton, path=$currentPath',
+          );
+          BridgeTraceLog.instance.addEntry(
+            type: 'guest_session_detected',
+            source: source,
+            note: 'isGuest=true composer=$hasComposer path=$currentPath',
+            level: BridgeTraceLevel.info,
+          );
+
         case BridgeCloudflareEvent(:final reason):
           if (_status != ChatGptBridgeStatus.cloudflareChallenge) {
             _setStatus(ChatGptBridgeStatus.cloudflareChallenge);

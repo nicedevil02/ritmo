@@ -227,6 +227,14 @@ sealed class WebBridgeEvent {
             source: src,
             requestId: readString('requestId'),
           );
+        case 'guest_session_detected':
+          return BridgeGuestSessionDetectedEvent(
+            source: src,
+            hasComposer: payload['hasComposer'] == true || decoded['hasComposer'] == true,
+            hasLoginButton: payload['hasLoginButton'] == true || decoded['hasLoginButton'] == true,
+            currentPath: readString('currentPath') ?? '',
+            isGuest: payload['isGuest'] != false,
+          );
         case 'fetch_matched':
           return BridgeFetchMatchedEvent(
             source: src,
@@ -558,6 +566,21 @@ class BridgeSendRetryTriggeredEvent extends WebBridgeEvent {
   });
 
   final String? requestId;
+}
+
+class BridgeGuestSessionDetectedEvent extends WebBridgeEvent {
+  const BridgeGuestSessionDetectedEvent({
+    required super.source,
+    required this.hasComposer,
+    required this.hasLoginButton,
+    required this.currentPath,
+    required this.isGuest,
+  });
+
+  final bool hasComposer;
+  final bool hasLoginButton;
+  final String currentPath;
+  final bool isGuest;
 }
 
 class BridgeUnknownEvent extends WebBridgeEvent {

@@ -28,6 +28,7 @@ const Set<String> kAllKnownBridgeEventTypes = {
   'watcher_steady_done',
   'resume_skipped_duplicate',
   'send_retry_triggered',
+  'guest_session_detected',
 };
 
 void main() {

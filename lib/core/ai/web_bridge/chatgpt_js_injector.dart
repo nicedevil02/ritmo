@@ -1464,13 +1464,21 @@ $_bridgeScriptBody''';
 
         notifyFlutter('prompt_typed', { length: text.length, requestId: currentReqId, source: 'dom' });
 
+        function isButtonEnabled(btn) {
+          if (!btn) return false;
+          if (btn.disabled) return false;
+          if (btn.getAttribute('aria-disabled') === 'true') return false;
+          if (btn.classList && btn.classList.contains('disabled')) return false;
+          return true;
+        }
+
         var sendCheckAttempts = 0;
         var sendClicked = false;
         var sendInterval = setInterval(function() {
           sendCheckAttempts++;
           var sendBtn = findSendButton();
 
-          if (sendBtn && !sendBtn.disabled) {
+          if (sendBtn && isButtonEnabled(sendBtn)) {
             clearInterval(sendInterval);
             sendClicked = true;
             sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
@@ -1501,12 +1509,12 @@ $_bridgeScriptBody''';
                 which: 13
               });
               editor.dispatchEvent(enterDown);
-              console.log('[Ritmo] Fallback Enter key dispatched (no send button found after 8 attempts)');
+              console.log('[Ritmo] Fallback Enter key dispatched (no active send button found after 8 attempts)');
               notifyFlutter('send_fallback_enter', { requestId: currentReqId, source: 'dom' });
               window.__ritmo_startStreamingWatcher(previousBaselineText, currentReqId);
             }
           }
-        }, 250);
+        }, 100);
       }
 
     } catch (e) {

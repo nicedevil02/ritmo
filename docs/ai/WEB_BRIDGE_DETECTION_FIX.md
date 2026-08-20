@@ -32,8 +32,8 @@
 | DET-21 | resume ایدمپوتنت | E | DONE | 2662545d | ایدمپوتنت‌کردن فراخوانی __ritmo_resume و جلوگیری از اجرای واچرهای موازی برای همان requestId با صدور resume_skipped_duplicate |
 | DET-22 | دباونس resume | E | DONE | 5d5cdb6a | دی‌باونس فراخوانی‌های __ritmo_resume در سمت دارت به مدت ۵۰۰ میلی‌ثانیه با ثبت لاگ resume_debounced |
 | DET-23 | شمارش بارگذاری سرد | E | DONE | d83b32e2 | تفکیک شمارش بارگذاری‌های سرد از ریدایرکت‌های حین جنریشن با ثبت رویدادهای trace مجزا |
-| DET-24 | پذیرش شناسهٔ خالی | E | DONE | pending | اعتبارسنجی منعطف requestId در __ritmo_resume و fallback به آخرین شناسه فعال window.__ritmo_active_req_id |
-| DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | TODO | | |
+| DET-24 | پذیرش شناسهٔ خالی | E | DONE | 49ed38f5 | اعتبارسنجی منعطف requestId در __ritmo_resume و fallback به آخرین شناسه فعال window.__ritmo_active_req_id |
+| DET-25 | انتخاب هوشمند دکمهٔ ارسال | F | DONE | pending | پولینگ فعال شدن دکمهٔ ارسال با اینتروال ۱۰۰ میلی‌ثانیه‌ای و بررسی aria-disabled قبل از فال‌بک به اینتر |
 | DET-26 | تأیید واقعی ارسال | F | TODO | | |
 | DET-27 | خط مبنای غنی‌تر پیش از ارسال | F | TODO | | |
 | DET-28 | تشخیص نشست مهمان | G | TODO | | |

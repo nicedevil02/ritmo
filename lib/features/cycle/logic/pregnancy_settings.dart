@@ -81,6 +81,10 @@ class PregnancySettings {
     return PregnancyProfile.fromMap(settings);
   }
 
+  static Map<String, String> toMap(PregnancyProfile profile) {
+    return profile.toMap();
+  }
+
   static bool isSetupDone(Map<String, dynamic> settings) {
     return settings[keySetupDone]?.toString().toLowerCase() == 'true';
   }

@@ -58,10 +58,17 @@ Map<TaskBucket, List<SimpleTask>> groupTasks(
 }) {
   final effectiveNow = now ?? DateTime.now();
   final result = <TaskBucket, List<SimpleTask>>{};
-
   final filteredTasks = hideCompleted ? tasks.where((t) => !t.isDone).toList() : tasks;
 
   for (final task in filteredTasks) {
+    if (task.isDone && task.doneAt != null) {
+      final doneDt = task.doneAt!;
+      final todayDt = DateTime(effectiveNow.year, effectiveNow.month, effectiveNow.day);
+      final isDoneToday = doneDt.year == todayDt.year &&
+          doneDt.month == todayDt.month &&
+          doneDt.day == todayDt.day;
+      if (!isDoneToday) continue;
+    }
     final b = bucketOf(task, now: effectiveNow);
     if (hideCompleted && b == TaskBucket.doneToday) continue;
     result.putIfAbsent(b, () => []).add(task);

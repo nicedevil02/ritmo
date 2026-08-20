@@ -12,42 +12,25 @@ import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/domain/task_bucket.dart';
+import 'package:ritmo/features/simple_tasks/domain/task_snapshot.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_bucketing.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:ritmo/features/simple_tasks/domain/task_step.dart';
-import 'package:ritmo/features/simple_tasks/domain/task_attachment.dart';
 import 'package:ritmo/features/simple_tasks/logic/task_tag_parser.dart';
-
-class TaskSnapshot {
-  final SimpleTask task;
-  final List<TaskStep> steps;
-  final List<TaskAttachment> attachments;
-  
-  TaskSnapshot({
-    required this.task,
-    required this.steps,
-    required this.attachments,
-  });
-}
+import 'package:sqflite/sqflite.dart';
 
 class SimpleTaskRepository {
   SimpleTaskRepository._();
   static final SimpleTaskRepository instance = SimpleTaskRepository._();
 
-  Future<Database> get _db async {
-    return await DatabaseHelper.instance.database;
-  }
+  Future<Database> get _db async => await DatabaseHelper.instance.database;
 
-  /// Returns active tasks due today OR overdue past tasks (isDone = 0 AND dueDate <= todayIso)
+  /// Returns active tasks due today OR overdue past tasks
   Future<List<SimpleTask>> dueTodayOrOverdue(String todayIso) async {
     try {
       final db = await _db;
-      final rows = await db.query(
-        'simple_tasks',
-        where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate <= ?',
-        whereArgs: [todayIso],
-        orderBy: 'orderIndex ASC, createdAt ASC',
-      );
+      final rows = await db.query('simple_tasks',
+          where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate <= ?',
+          whereArgs: [todayIso],
+          orderBy: 'orderIndex ASC, createdAt ASC');
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error loading dueTodayOrOverdue tasks', e, st);
@@ -58,14 +41,13 @@ class SimpleTaskRepository {
   /// Backward compatible alias for dueTodayOrOverdue
   Future<List<SimpleTask>> today(String todayIso) => dueTodayOrOverdue(todayIso);
 
-  /// Returns count of active overdue tasks (isDone = 0 AND dueDate < todayIso)
+  /// Returns count of active overdue tasks
   Future<int> countOverdue(String todayIso) async {
     try {
       final db = await _db;
       final result = await db.rawQuery(
-        'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
-        [todayIso],
-      );
+          'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
+          [todayIso]);
       return Sqflite.firstIntValue(result) ?? 0;
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error counting overdue tasks', e, st);
@@ -73,14 +55,12 @@ class SimpleTaskRepository {
     }
   }
 
-  /// Returns count of active tasks due today (isDone = 0 AND dueDate = todayIso)
+  /// Returns count of active tasks due today
   Future<int> countDueToday(String todayIso) async {
     try {
       final db = await _db;
       final result = await db.rawQuery(
-        'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate = ?',
-        [todayIso],
-      );
+          'SELECT COUNT(*) as total FROM simple_tasks WHERE isDone = 0 AND dueDate = ?', [todayIso]);
       return Sqflite.firstIntValue(result) ?? 0;
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error counting dueToday tasks', e, st);
@@ -88,16 +68,14 @@ class SimpleTaskRepository {
     }
   }
 
-  /// Returns upcoming tasks (isDone = 0 AND dueDate > todayIso)
+  /// Returns upcoming tasks (dueDate > todayIso)
   Future<List<SimpleTask>> upcoming(String todayIso) async {
     try {
       final db = await _db;
-      final rows = await db.query(
-        'simple_tasks',
-        where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate > ?',
-        whereArgs: [todayIso],
-        orderBy: 'dueDate ASC, orderIndex ASC',
-      );
+      final rows = await db.query('simple_tasks',
+          where: 'isDone = 0 AND dueDate IS NOT NULL AND dueDate > ?',
+          whereArgs: [todayIso],
+          orderBy: 'dueDate ASC, orderIndex ASC');
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error loading upcoming tasks', e, st);
@@ -105,15 +83,12 @@ class SimpleTaskRepository {
     }
   }
 
-  /// Returns someday tasks with no dueDate (isDone = 0 AND dueDate IS NULL)
+  /// Returns someday tasks with no dueDate
   Future<List<SimpleTask>> someday() async {
     try {
       final db = await _db;
-      final rows = await db.query(
-        'simple_tasks',
-        where: 'isDone = 0 AND dueDate IS NULL',
-        orderBy: 'orderIndex ASC, createdAt ASC',
-      );
+      final rows = await db.query('simple_tasks',
+          where: 'isDone = 0 AND dueDate IS NULL', orderBy: 'orderIndex ASC, createdAt ASC');
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error loading someday tasks', e, st);
@@ -128,13 +103,10 @@ class SimpleTaskRepository {
       final dt = DateTime.tryParse(todayIso) ?? DateTime.now();
       final startOfDayMs = DateTime(dt.year, dt.month, dt.day).millisecondsSinceEpoch;
       final endOfDayMs = DateTime(dt.year, dt.month, dt.day + 1).millisecondsSinceEpoch;
-
-      final rows = await db.query(
-        'simple_tasks',
-        where: 'isDone = 1 AND doneAt >= ? AND doneAt < ?',
-        whereArgs: [startOfDayMs, endOfDayMs],
-        orderBy: 'doneAt DESC, updatedAt DESC',
-      );
+      final rows = await db.query('simple_tasks',
+          where: 'isDone = 1 AND doneAt >= ? AND doneAt < ?',
+          whereArgs: [startOfDayMs, endOfDayMs],
+          orderBy: 'doneAt DESC, updatedAt DESC');
       return rows.map((m) => SimpleTask.fromMap(m)).toList();
     } catch (e, st) {
       RitmoLog.error('SimpleTaskRepository', 'Error loading doneToday tasks', e, st);
@@ -143,160 +115,200 @@ class SimpleTaskRepository {
   }
 
   /// Returns all active and done tasks grouped into TaskBucket sections
-  Future<Map<TaskBucket, List<SimpleTask>>> buckets(
-    String todayIso, {
+  Future<Map<TaskBucket, List<SimpleTask>>> buckets({
+    DateTime? now,
     TaskSortMode sortMode = TaskSortMode.smart,
     bool hideCompleted = false,
   }) async {
     try {
       final db = await _db;
-      final dt = DateTime.tryParse(todayIso) ?? DateTime.now();
-      final startOfDayMs = DateTime(dt.year, dt.month, dt.day).millisecondsSinceEpoch;
-      final endOfDayMs = DateTime(dt.year, dt.month, dt.day + 1).millisecondsSinceEpoch;
-
-      final rows = await db.query(
-        'simple_tasks',
-        where: hideCompleted
-            ? 'isDone = 0'
-            : 'isDone = 0 OR (isDone = 1 AND doneAt >= ? AND doneAt < ?)',
-        whereArgs: hideCompleted ? null : [startOfDayMs, endOfDayMs],
-      );
-
-      final tasks = rows.map((m) => SimpleTask.fromMap(m)).toList();
-      return groupTasks(
-        tasks,
-        now: dt,
-        sortMode: sortMode,
-        hideCompleted: hideCompleted,
-      );
+      final rows = await db.query('simple_tasks', orderBy: 'orderIndex ASC, createdAt ASC');
+      final all = rows.map((m) => SimpleTask.fromMap(m)).toList();
+      return groupTasks(all, now: now, sortMode: sortMode, hideCompleted: hideCompleted);
     } catch (e, st) {
-      RitmoLog.error('SimpleTaskRepository', 'Error loading buckets', e, st);
+      RitmoLog.error('SimpleTaskRepository', 'Error loading task buckets', e, st);
       return {};
     }
   }
 
-  /// Creates a new SimpleTask within a database transaction
+  /// Creates a new SimpleTask in the database
   Future<SimpleTask> create({
     required String title,
+    String? note,
+    List<String> tags = const [],
     String? dueDate,
     String? dueTime,
-    String? note,
-    List<String>? tags,
     int? reminderAtMs,
-    String? reminderId,
+    String? linkedRoutineId,
+    String origin = 'SIMPLE',
     bool isImportant = false,
   }) async {
     final db = await _db;
     final now = DateTime.now();
-
     final parsed = parseTags(title);
     final finalTitle = parsed.cleanTitle.isNotEmpty ? parsed.cleanTitle : title.trim();
-    final finalTags = (tags != null && tags.isNotEmpty) ? tags : parsed.tags;
+    final finalTags = tags.isNotEmpty ? tags : parsed.tags;
 
     return await db.transaction((txn) async {
-      final maxOrderRows = await txn.rawQuery('SELECT MAX(orderIndex) as maxOrder FROM simple_tasks');
-      final maxOrder = (maxOrderRows.first['maxOrder'] as int?) ?? 0;
+      final orderRows = await txn.rawQuery(
+        'SELECT COALESCE(MAX(orderIndex), -1) + 1 as nextOrder FROM simple_tasks WHERE dueDate IS ?',
+        [dueDate],
+      );
+      final nextOrder = Sqflite.firstIntValue(orderRows) ?? 0;
 
       final task = SimpleTask(
         id: RitmoIdFactory.task(),
         title: finalTitle,
-        note: note?.trim(),
+        note: note,
         tags: finalTags,
         isDone: false,
         dueDate: dueDate,
         dueTime: dueTime,
         reminderAtMs: reminderAtMs,
-        reminderId: reminderId,
-        orderIndex: maxOrder + 1,
-        origin: 'SIMPLE',
+        linkedRoutineId: linkedRoutineId,
+        orderIndex: nextOrder,
+        origin: origin,
         isImportant: isImportant,
         importantAt: isImportant ? now : null,
         createdAt: now,
         updatedAt: now,
       );
 
-      await txn.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      await txn.insert('simple_tasks', task.toMap());
 
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'TaskCreated',
-        timestamp: DateTime.now(),
-        payload: {'date': task.dueDate ?? '', 'taskId': task.id},
-      ));
+      if (reminderAtMs != null && reminderAtMs > now.millisecondsSinceEpoch) {
+        final reminderId = RitmoIdFactory.task();
+        final updatedTask = task.copyWith(reminderId: reminderId);
+        await txn.update('simple_tasks', {'reminderId': reminderId}, where: 'id = ?', whereArgs: [task.id]);
 
+        unawaited(
+          NotificationGateway.schedule(
+            NotificationRequest(
+              id: reminderId,
+              channel: NotificationChannelId.planning,
+              scheduledAt: DateTime.fromMillisecondsSinceEpoch(reminderAtMs),
+              title: finalTitle,
+              sourceSystem: 'tasks',
+              entityId: task.id,
+            ),
+          ).catchError((Object e, StackTrace st) {
+            RitmoLog.error('SimpleTaskRepository', 'Error scheduling reminder', e, st);
+            return false;
+          }),
+        );
+        return updatedTask;
+      }
       return task;
     });
   }
 
-  /// Toggle task importance star
-  Future<void> setImportant(String id, {required bool important}) async {
-    final db = await _db;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.update(
-      'simple_tasks',
-      {
-        'isImportant': important ? 1 : 0,
-        'importantAt': important ? nowMs : null,
-        'updatedAt': nowMs,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  /// Toggle task completion status + cancel alarm if completed
+  /// Set task completion status explicitly
   Future<void> setDone(String id, {required bool done}) async {
     final db = await _db;
-    final now = DateTime.now();
-    final nowMs = now.millisecondsSinceEpoch;
-
-    final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return;
 
-    final task = SimpleTask.fromMap(rows.first);
-
-    if (done && task.reminderId != null && task.reminderId!.isNotEmpty) {
-      try {
-        await NotificationGateway.cancel(task.reminderId!);
-      } catch (e, st) {
-        RitmoLog.warning('SimpleTaskRepository', 'Failed to cancel reminder on setDone', e, st);
-      }
-    } else if (!done && task.reminderId != null && task.reminderAtMs != null) {
-      if (task.reminderAtMs! > nowMs) {
-        try {
-          await NotificationGateway.schedule(
-            NotificationRequest(
-              id: task.reminderId!,
-              channel: NotificationChannelId.planning,
-              scheduledAt: DateTime.fromMillisecondsSinceEpoch(task.reminderAtMs!),
-              title: task.title,
-              sourceSystem: 'tasks',
-              entityId: task.id,
-            ),
-          );
-        } catch (e, st) {
-          RitmoLog.error('SimpleTaskRepository', 'Failed to reschedule reminder on setDone(false)', e, st);
-        }
-      }
-    }
+    final current = SimpleTask.fromMap(rows.first);
+    final now = DateTime.now();
 
     await db.update(
       'simple_tasks',
       {
         'isDone': done ? 1 : 0,
-        'doneAt': done ? nowMs : null,
-        'updatedAt': nowMs,
+        'doneAt': done ? (current.doneAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
+        'updatedAt': now.millisecondsSinceEpoch,
       },
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    if (done && current.reminderId != null) {
+      try {
+        await NotificationGateway.cancel(current.reminderId!);
+      } catch (e, st) {
+        RitmoLog.warning('SimpleTaskRepository', 'Failed to cancel reminder on setDone', e, st);
+      }
+    }
+
     RitmoEventBus().fire(RitmoEvent(
-      type: 'TaskToggled',
-      timestamp: DateTime.now(),
-      payload: {'date': task.dueDate ?? '', 'taskId': id, 'isDone': done},
+      type: 'TaskUpdated',
+      timestamp: now,
+      payload: {'date': current.dueDate ?? '', 'taskId': id},
     ));
   }
 
-  /// Update full task data
+  /// Toggle task completion status
+  Future<void> toggleDone(String id) async {
+    final task = await getById(id);
+    if (task != null) await setDone(id, done: !task.isDone);
+  }
+
+  /// Set task star / importance status
+  Future<void> setImportant(String id, {required bool important}) async {
+    final db = await _db;
+    final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return;
+
+    final current = SimpleTask.fromMap(rows.first);
+    final now = DateTime.now();
+
+    await db.update(
+      'simple_tasks',
+      {
+        'isImportant': important ? 1 : 0,
+        'importantAt': important ? (current.importantAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
+        'updatedAt': now.millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskUpdated',
+      timestamp: now,
+      payload: {'date': current.dueDate ?? '', 'taskId': id},
+    ));
+  }
+
+  /// Toggle task star / importance status
+  Future<void> toggleImportant(String id) async {
+    final task = await getById(id);
+    if (task != null) await setImportant(id, important: !task.isImportant);
+  }
+
+  /// Set task My Day status
+  Future<void> setMyDay(String id, {required bool inMyDay}) async {
+    final db = await _db;
+    final rows = await db.query('simple_tasks', where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return;
+
+    final current = SimpleTask.fromMap(rows.first);
+    final now = DateTime.now();
+
+    await db.update(
+      'simple_tasks',
+      {
+        'addedToMyDayAt': inMyDay ? (current.addedToMyDayAt?.millisecondsSinceEpoch ?? now.millisecondsSinceEpoch) : null,
+        'updatedAt': now.millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'TaskUpdated',
+      timestamp: now,
+      payload: {'date': current.dueDate ?? '', 'taskId': id},
+    ));
+  }
+
+  /// Toggle task inclusion in My Day ("روز من")
+  Future<void> toggleMyDay(String id) async {
+    final task = await getById(id);
+    if (task != null) await setMyDay(id, inMyDay: !task.isInMyDay);
+  }
+
+  /// Update task metadata
   Future<void> updateTask(SimpleTask task) async {
     final db = await _db;
     final parsed = parseTags(task.title);
@@ -307,12 +319,7 @@ class SimpleTaskRepository {
       tags: finalTags,
       updatedAt: DateTime.now(),
     );
-    await db.update(
-      'simple_tasks',
-      updated.toMap(),
-      where: 'id = ?',
-      whereArgs: [task.id],
-    );
+    await db.update('simple_tasks', updated.toMap(), where: 'id = ?', whereArgs: [task.id]);
     RitmoEventBus().fire(RitmoEvent(
       type: 'TaskUpdated',
       timestamp: DateTime.now(),
@@ -320,7 +327,7 @@ class SimpleTaskRepository {
     ));
   }
 
-  /// Returns a single task by ID, or null if not found.
+  /// Returns a single task by ID
   Future<SimpleTask?> getById(String id) async {
     try {
       final db = await _db;
@@ -354,50 +361,37 @@ class SimpleTaskRepository {
     required String taskId,
   }) async {
     final db = await _db;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.insert(
-      'pending_reminders',
-      {
-        'id': reminderId,
-        'title': title,
-        'body': body,
-        'scheduledTime': scheduledTimeMs,
-        'payloadJson': '{"taskId":"$taskId"}',
-        'createdAt': nowMs,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('pending_reminders', {
+      'id': reminderId,
+      'title': title,
+      'body': body,
+      'scheduledTime': scheduledTimeMs,
+      'payloadJson': '{"taskId":"$taskId"}',
+      'createdAt': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Restore a deleted task (for undo)
   Future<void> restoreTask(TaskSnapshot snapshot) async {
     final db = await _db;
     await db.insert('simple_tasks', snapshot.task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-    
-    // Restore steps
     for (final step in snapshot.steps) {
       await db.insert('task_steps', step.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     }
-    
-    // Restore attachments
     for (final att in snapshot.attachments) {
       await db.insert('task_attachments', att.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
     }
-    
-    // Reschedule alarm if needed
     if (!snapshot.task.isDone && snapshot.task.reminderId != null && snapshot.task.reminderAtMs != null) {
       if (snapshot.task.reminderAtMs! > DateTime.now().millisecondsSinceEpoch) {
         try {
-          await NotificationGateway.schedule(
-            NotificationRequest(
-              id: snapshot.task.reminderId!,
-              channel: NotificationChannelId.planning,
-              scheduledAt: DateTime.fromMillisecondsSinceEpoch(snapshot.task.reminderAtMs!),
-              title: snapshot.task.title,
-              sourceSystem: 'tasks',
-              entityId: snapshot.task.id,
-            ),
-          );
+          await NotificationGateway.schedule(NotificationRequest(
+            id: snapshot.task.reminderId!,
+            channel: NotificationChannelId.planning,
+            scheduledAt: DateTime.fromMillisecondsSinceEpoch(snapshot.task.reminderAtMs!),
+            title: snapshot.task.title,
+            sourceSystem: 'tasks',
+            entityId: snapshot.task.id,
+          ));
         } catch (e, st) {
           RitmoLog.error('SimpleTaskRepository', 'Failed to reschedule reminder in restoreTask', e, st);
         }
@@ -410,10 +404,10 @@ class SimpleTaskRepository {
     ));
   }
 
-  /// Delete task + steps + attachments + cancel alarm (alias for deleteTask)
+  /// Delete task + steps + attachments + cancel alarm
   Future<TaskSnapshot?> delete(String id) => deleteTask(id);
 
-  /// Delete task and related steps + attachments (returns snapshot for undo)
+  /// Delete task and related steps + attachments
   Future<TaskSnapshot?> deleteTask(String id) async {
     final db = await _db;
     final task = await getById(id);
@@ -422,7 +416,6 @@ class SimpleTaskRepository {
     final steps = await TaskStepRepository.instance.getForTask(id);
     final attachments = await TaskAttachmentRepository.instance.getForTask(id);
 
-    // Cancel alarm if active via unified NotificationGateway
     if (task.reminderId != null && task.reminderId!.isNotEmpty) {
       try {
         await NotificationGateway.cancel(task.reminderId!);
@@ -441,11 +434,7 @@ class SimpleTaskRepository {
       payload: {'date': task.dueDate ?? '', 'taskId': task.id},
     ));
 
-    return TaskSnapshot(
-      task: task,
-      steps: steps,
-      attachments: attachments,
-    );
+    return TaskSnapshot(task: task, steps: steps, attachments: attachments);
   }
 
   /// Reorder tasks by ordered list of IDs
@@ -453,14 +442,9 @@ class SimpleTaskRepository {
     final db = await _db;
     final batch = db.batch();
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-
     for (var i = 0; i < orderedIds.length; i++) {
-      batch.update(
-        'simple_tasks',
-        {'orderIndex': i, 'updatedAt': nowMs},
-        where: 'id = ?',
-        whereArgs: [orderedIds[i]],
-      );
+      batch.update('simple_tasks', {'orderIndex': i, 'updatedAt': nowMs},
+          where: 'id = ?', whereArgs: [orderedIds[i]]);
     }
     await batch.commit(noResult: true);
   }
@@ -468,16 +452,11 @@ class SimpleTaskRepository {
   /// Mark task as promoted to routine
   Future<void> promoteToRoutine(String id, String routineId) async {
     final db = await _db;
-    await db.update(
-      'simple_tasks',
-      {
-        'linkedRoutineId': routineId,
-        'origin': 'PROMOTED',
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.update('simple_tasks', {
+      'linkedRoutineId': routineId,
+      'origin': 'PROMOTED',
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, where: 'id = ?', whereArgs: [id]);
   }
 
   /// Search tasks by title, note, sub-step title, or tags
@@ -496,15 +475,13 @@ class SimpleTaskRepository {
     return rows.map((m) => SimpleTask.fromMap(m)).toList();
   }
 
-  /// Returns top tags with at least one active (isDone = 0) task, ordered by count DESC (max 8)
+  /// Returns top tags with at least one active task, ordered by count DESC (max 8)
   Future<List<String>> getActiveTags({int limit = 8}) async {
     try {
       final db = await _db;
-      final rows = await db.query(
-        'simple_tasks',
-        columns: ['tagsJson'],
-        where: "isDone = 0 AND tagsJson IS NOT NULL AND tagsJson != ''",
-      );
+      final rows = await db.query('simple_tasks',
+          columns: ['tagsJson'],
+          where: "isDone = 0 AND tagsJson IS NOT NULL AND tagsJson != ''");
       final tagCounts = <String, int>{};
       for (final r in rows) {
         final raw = r['tagsJson'] as String?;
@@ -519,7 +496,9 @@ class SimpleTaskRepository {
                 }
               }
             }
-          } catch (_) {}
+          } catch (e, st) {
+            RitmoLog.warning('SimpleTaskRepository', 'Error decoding tagsJson: $raw', e, st);
+          }
         }
       }
       final sortedTags = tagCounts.keys.toList()

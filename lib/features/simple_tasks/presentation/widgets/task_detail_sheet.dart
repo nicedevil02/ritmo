@@ -42,11 +42,7 @@ class TaskDetailSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => TaskDetailSheet(
-        task: task,
-        onTaskUpdated: onTaskUpdated,
-        onTaskDeleted: onTaskDeleted,
-      ),
+      builder: (ctx) => TaskDetailSheet(task: task, onTaskUpdated: onTaskUpdated, onTaskDeleted: onTaskDeleted),
     );
   }
 
@@ -110,15 +106,15 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
       final soundEnabled = await TaskPreferences.isCompletionSoundEnabled();
       if (soundEnabled) await SystemSound.play(SystemSoundType.click);
     }
-    await SimpleTaskRepository.instance.setDone(_task.id, done: newDone);
+    await SimpleTaskRepository.instance.toggleDone(_task.id);
     setState(() => _task = _task.copyWith(isDone: newDone, doneAt: newDone ? DateTime.now() : null));
     widget.onTaskUpdated();
   }
 
   Future<void> _toggleStar() async {
     RitmoHaptics.tap();
+    await SimpleTaskRepository.instance.toggleImportant(_task.id);
     final newStar = !_task.isImportant;
-    await SimpleTaskRepository.instance.setImportant(_task.id, important: newStar);
     setState(() => _task = _task.copyWith(isImportant: newStar, importantAt: newStar ? DateTime.now() : null));
     widget.onTaskUpdated();
   }
@@ -165,7 +161,6 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.45,

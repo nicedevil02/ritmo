@@ -132,16 +132,18 @@ void main() {
       final done = await SimpleTaskRepository.instance.create(title: 'Done Task');
       await SimpleTaskRepository.instance.setDone(done.id, done: true);
 
+      final testNow = DateTime.now();
+
       // Without hideCompleted
       final visibleBuckets = await SimpleTaskRepository.instance.buckets(
-        '2026-08-20',
+        now: testNow,
         hideCompleted: false,
       );
       expect(visibleBuckets.containsKey(TaskBucket.doneToday), isTrue);
 
       // With hideCompleted = true
       final hiddenBuckets = await SimpleTaskRepository.instance.buckets(
-        '2026-08-20',
+        now: testNow,
         hideCompleted: true,
       );
       expect(hiddenBuckets.containsKey(TaskBucket.doneToday), isFalse);
@@ -170,7 +172,7 @@ void main() {
         'updatedAt': twoWeeksAgo,
       });
 
-      final buckets = await SimpleTaskRepository.instance.buckets('2026-08-20');
+      final buckets = await SimpleTaskRepository.instance.buckets(now: DateTime(2026, 8, 20));
       final doneTasks = buckets[TaskBucket.doneToday] ?? [];
       expect(doneTasks.any((t) => t.id == 'old_done_task'), isFalse);
     });

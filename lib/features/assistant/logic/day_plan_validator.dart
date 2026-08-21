@@ -12,14 +12,19 @@ class DayPlanValidator {
     required DayPlanDraft draft,
   }) async {
     final date = DateTime.tryParse(draft.planDate) ?? DateTime.now();
-    
+
     // 1. Fetch settings and prayer times
     final db = await DatabaseHelper.instance.database;
     final settings = await db.query('app_settings');
-    final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
+    final settingsMap = {
+      for (final s in settings) s['key']! as String: s['value']! as String,
+    };
 
-    final cityId = settingsMap['prayer_city_id'] ?? settingsMap['home_city_id'] ?? 'TEHRAN_TEHRAN';
-    
+    final cityId =
+        settingsMap['prayer_city_id'] ??
+        settingsMap['home_city_id'] ??
+        'TEHRAN_TEHRAN';
+
     Map<String, String>? prayerTimes;
     try {
       prayerTimes = await PrayerTimeProvider.instance.getPrayerTimesForDate(
@@ -78,7 +83,10 @@ class DayPlanValidator {
           startTime = lastEndTime.add(Duration(minutes: item.bufferMin));
         } else {
           // If first item is chain, default to wakeup target
-          startTime = _parseTimeOfDay(date, sleepTargetWake).add(Duration(minutes: item.bufferMin));
+          startTime = _parseTimeOfDay(
+            date,
+            sleepTargetWake,
+          ).add(Duration(minutes: item.bufferMin));
         }
       }
 
@@ -90,7 +98,8 @@ class DayPlanValidator {
       enrichedItems.add(item);
 
       // Save end time for next chain
-      final duration = item.durationMin ?? 30; // default duration to 30 mins if null
+      final duration =
+          item.durationMin ?? 30; // default duration to 30 mins if null
       lastEndTime = startTime.add(Duration(minutes: duration));
     }
 
@@ -108,7 +117,7 @@ class DayPlanValidator {
       // A. Overlaps with existing agenda items
       for (final existing in existingItems) {
         if (existing.timeOfDay == null) continue;
-        
+
         final exStart = _parseTimeOfDay(date, existing.timeOfDay!);
         // Assume default 30 min duration for existing items if not specified
         final exDuration = existing.durationMinutes ?? 30;
@@ -160,22 +169,28 @@ class DayPlanValidator {
       ),
     );
 
-    if (wakeUpItem.resolvedTime != null && wakeUpItem.resolvedTime!.isNotEmpty) {
+    if (wakeUpItem.resolvedTime != null &&
+        wakeUpItem.resolvedTime!.isNotEmpty) {
       final wakeTime = _parseTimeOfDay(date, wakeUpItem.resolvedTime!);
       final targetWakeTime = _parseTimeOfDay(date, sleepTargetWake);
 
       if (wakeTime.isBefore(targetWakeTime)) {
         // Suggested sleep duration is ~7.5 hours
-        final recommendedBedtime = wakeTime.subtract(const Duration(hours: 7, minutes: 30));
+        final recommendedBedtime = wakeTime.subtract(
+          const Duration(hours: 7, minutes: 30),
+        );
         final formattedBedtime = _formatTime(recommendedBedtime);
-        
+
         final hasSuggestion = suggestions.any((s) => s.action == 'setBedtime');
         if (!hasSuggestion) {
-          suggestions.add(DayPlanSuggestion(
-            text: 'برای بیداری ساعت ${wakeUpItem.resolvedTime}، بهتر است امشب ساعت $formattedBedtime بخوابی تا چرخه خواب تکمیل شود.',
-            action: 'setBedtime',
-            payload: {'time': formattedBedtime},
-          ));
+          suggestions.add(
+            DayPlanSuggestion(
+              text:
+                  'برای بیداری ساعت ${wakeUpItem.resolvedTime}، بهتر است امشب ساعت $formattedBedtime بخوابی تا چرخه خواب تکمیل شود.',
+              action: 'setBedtime',
+              payload: {'time': formattedBedtime},
+            ),
+          );
         }
       }
     }
@@ -188,10 +203,13 @@ class DayPlanValidator {
 
     // Awake budget is usually ~16-17 hours (960-1020 mins)
     if (totalMinutes > 1020) {
-      suggestions.add(DayPlanSuggestion(
-        text: '⚠️ مجموع برنامه روز شما (${(totalMinutes / 60).toStringAsFixed(1)} ساعت) بیشتر از محدوده بیداری استاندارد است. پیشنهاد می‌شود کارها را کوتاه‌تر یا جابجا کنید.',
-        action: 'alert_busy',
-      ));
+      suggestions.add(
+        DayPlanSuggestion(
+          text:
+              '⚠️ مجموع برنامه روز شما (${(totalMinutes / 60).toStringAsFixed(1)} ساعت) بیشتر از محدوده بیداری استاندارد است. پیشنهاد می‌شود کارها را کوتاه‌تر یا جابجا کنید.',
+          action: 'alert_busy',
+        ),
+      );
     }
 
     return DayPlanDraft(
@@ -213,7 +231,9 @@ class DayPlanValidator {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
-  static List<DayPlanItemDraft> _consolidatePrayers(List<DayPlanItemDraft> rawItems) {
+  static List<DayPlanItemDraft> _consolidatePrayers(
+    List<DayPlanItemDraft> rawItems,
+  ) {
     final result = <DayPlanItemDraft>[];
     DayPlanItemDraft? dhuhrItem;
     DayPlanItemDraft? asrItem;
@@ -222,12 +242,27 @@ class DayPlanValidator {
 
     for (final item in rawItems) {
       final t = item.title.trim();
-      final isWorship = item.targetModule == 'worship' || item.category == 'worship';
+      final isWorship =
+          item.targetModule == 'worship' || item.category == 'worship';
 
-      final isDhuhrOnly = isWorship && (t == 'نماز ظهر' || item.anchorEvent?.toUpperCase() == 'DHUHR') && !t.contains('عصر');
-      final isAsrOnly = isWorship && (t == 'نماز عصر' || item.anchorEvent?.toUpperCase() == 'ASR') && !t.contains('ظهر');
-      final isMaghribOnly = isWorship && (t == 'نماز مغرب' || item.anchorEvent?.toUpperCase() == 'MAGHRIB') && !t.contains('عشا');
-      final isIshaOnly = isWorship && (t == 'نماز عشا' || t == 'نماز عشاء' || item.anchorEvent?.toUpperCase() == 'ISHA') && !t.contains('مغرب');
+      final isDhuhrOnly =
+          isWorship &&
+          (t == 'نماز ظهر' || item.anchorEvent?.toUpperCase() == 'DHUHR') &&
+          !t.contains('عصر');
+      final isAsrOnly =
+          isWorship &&
+          (t == 'نماز عصر' || item.anchorEvent?.toUpperCase() == 'ASR') &&
+          !t.contains('ظهر');
+      final isMaghribOnly =
+          isWorship &&
+          (t == 'نماز مغرب' || item.anchorEvent?.toUpperCase() == 'MAGHRIB') &&
+          !t.contains('عشا');
+      final isIshaOnly =
+          isWorship &&
+          (t == 'نماز عشا' ||
+              t == 'نماز عشاء' ||
+              item.anchorEvent?.toUpperCase() == 'ISHA') &&
+          !t.contains('مغرب');
 
       if (isDhuhrOnly) {
         dhuhrItem = item;
@@ -244,44 +279,50 @@ class DayPlanValidator {
 
     if (dhuhrItem != null || asrItem != null) {
       final base = dhuhrItem ?? asrItem!;
-      final totalDuration = (dhuhrItem?.durationMin ?? 15) + (asrItem?.durationMin ?? 10);
-      result.add(DayPlanItemDraft(
-        title: 'نماز ظهر و عصر',
-        targetModule: 'worship',
-        startKind: 'anchor',
-        startTime: base.startTime,
-        anchorEvent: 'DHUHR',
-        offsetMin: base.offsetMin,
-        bufferMin: base.bufferMin,
-        durationMin: totalDuration > 0 ? totalDuration : 20,
-        durationSource: base.durationSource,
-        recurrence: base.recurrence,
-        daysOfWeek: base.daysOfWeek,
-        category: 'worship',
-        confidence: base.confidence,
-        note: base.note,
-      ));
+      final totalDuration =
+          (dhuhrItem?.durationMin ?? 15) + (asrItem?.durationMin ?? 10);
+      result.add(
+        DayPlanItemDraft(
+          title: 'نماز ظهر و عصر',
+          targetModule: 'worship',
+          startKind: 'anchor',
+          startTime: base.startTime,
+          anchorEvent: 'DHUHR',
+          offsetMin: base.offsetMin,
+          bufferMin: base.bufferMin,
+          durationMin: totalDuration > 0 ? totalDuration : 20,
+          durationSource: base.durationSource,
+          recurrence: base.recurrence,
+          daysOfWeek: base.daysOfWeek,
+          category: 'worship',
+          confidence: base.confidence,
+          note: base.note,
+        ),
+      );
     }
 
     if (maghribItem != null || ishaItem != null) {
       final base = maghribItem ?? ishaItem!;
-      final totalDuration = (maghribItem?.durationMin ?? 15) + (ishaItem?.durationMin ?? 10);
-      result.add(DayPlanItemDraft(
-        title: 'نماز مغرب و عشاء',
-        targetModule: 'worship',
-        startKind: 'anchor',
-        startTime: base.startTime,
-        anchorEvent: 'MAGHRIB',
-        offsetMin: base.offsetMin,
-        bufferMin: base.bufferMin,
-        durationMin: totalDuration > 0 ? totalDuration : 20,
-        durationSource: base.durationSource,
-        recurrence: base.recurrence,
-        daysOfWeek: base.daysOfWeek,
-        category: 'worship',
-        confidence: base.confidence,
-        note: base.note,
-      ));
+      final totalDuration =
+          (maghribItem?.durationMin ?? 15) + (ishaItem?.durationMin ?? 10);
+      result.add(
+        DayPlanItemDraft(
+          title: 'نماز مغرب و عشاء',
+          targetModule: 'worship',
+          startKind: 'anchor',
+          startTime: base.startTime,
+          anchorEvent: 'MAGHRIB',
+          offsetMin: base.offsetMin,
+          bufferMin: base.bufferMin,
+          durationMin: totalDuration > 0 ? totalDuration : 20,
+          durationSource: base.durationSource,
+          recurrence: base.recurrence,
+          daysOfWeek: base.daysOfWeek,
+          category: 'worship',
+          confidence: base.confidence,
+          note: base.note,
+        ),
+      );
     }
 
     return result;

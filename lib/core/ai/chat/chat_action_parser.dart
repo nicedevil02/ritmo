@@ -12,7 +12,10 @@ class ParsedResponse {
 
 class ChatActionParser {
   static final _re = RegExp(r'<actions>([\s\S]*?)</actions>', multiLine: true);
-  static final _memOpsRe = RegExp(r'<memory_ops>([\s\S]*?)</memory_ops>', multiLine: true);
+  static final _memOpsRe = RegExp(
+    r'<memory_ops>([\s\S]*?)</memory_ops>',
+    multiLine: true,
+  );
   static final _memRe = RegExp(r'<memory>([\s\S]*?)</memory>', multiLine: true);
 
   /// Extracts only the human-readable Farsi text from raw model outputs,
@@ -47,20 +50,29 @@ class ChatActionParser {
     if (clean.isEmpty) return '';
 
     // 3. Attempt full JSON decode to extract "reply"
-    if ((clean.startsWith('{') && clean.endsWith('}')) || (clean.startsWith('{') && clean.contains('"reply"'))) {
+    if ((clean.startsWith('{') && clean.endsWith('}')) ||
+        (clean.startsWith('{') && clean.contains('"reply"'))) {
       try {
         final decoded = jsonDecode(clean);
-        if (decoded is Map && decoded.containsKey('reply') && decoded['reply'] != null) {
+        if (decoded is Map &&
+            decoded.containsKey('reply') &&
+            decoded['reply'] != null) {
           final replyVal = decoded['reply'].toString().trim();
           if (replyVal.isNotEmpty) return replyVal;
         }
       } catch (e) {
-        RitmoLog.debug('ChatActionParser', 'Could not parse clean JSON reply: $e');
+        RitmoLog.debug(
+          'ChatActionParser',
+          'Could not parse clean JSON reply: $e',
+        );
       }
     }
 
     // 4. Attempt regex extraction for streaming / unclosed / partial JSON: "reply": "..."
-    final replyRegex = RegExp(r'"reply"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)', dotAll: true);
+    final replyRegex = RegExp(
+      r'"reply"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)',
+      dotAll: true,
+    );
     final match = replyRegex.firstMatch(clean);
     if (match != null && match.groupCount >= 1) {
       var extracted = match.group(1) ?? '';
@@ -110,7 +122,8 @@ class ChatActionParser {
       if (jsonStr.startsWith('```')) {
         final lines = jsonStr.split('\n');
         if (lines.first.startsWith('```')) lines.removeAt(0);
-        if (lines.isNotEmpty && lines.last.startsWith('```')) lines.removeLast();
+        if (lines.isNotEmpty && lines.last.startsWith('```'))
+          lines.removeLast();
         jsonStr = lines.join('\n').trim();
       }
       if (jsonStr.startsWith('{') && jsonStr.endsWith('}')) {
@@ -120,16 +133,24 @@ class ChatActionParser {
           if (rawCmds is List) {
             for (final item in rawCmds) {
               if (item is Map) {
-                final id = item['id']?.toString() ?? item['type']?.toString() ?? '';
-                final label = item['labelFa']?.toString() ?? item['label']?.toString() ?? item['title']?.toString() ?? id;
-                final payload = (item['payload'] as Map?)?.cast<String, dynamic>() ?? {};
+                final id =
+                    item['id']?.toString() ?? item['type']?.toString() ?? '';
+                final label =
+                    item['labelFa']?.toString() ??
+                    item['label']?.toString() ??
+                    item['title']?.toString() ??
+                    id;
+                final payload =
+                    (item['payload'] as Map?)?.cast<String, dynamic>() ?? {};
                 if (id.isNotEmpty) {
-                  actions.add(ChatAction(
-                    type: id,
-                    label: label,
-                    payload: payload,
-                    targetRoute: item['targetRoute']?.toString(),
-                  ));
+                  actions.add(
+                    ChatAction(
+                      type: id,
+                      label: label,
+                      payload: payload,
+                      targetRoute: item['targetRoute']?.toString(),
+                    ),
+                  );
                 }
               }
             }
@@ -137,7 +158,10 @@ class ChatActionParser {
         }
       }
     } catch (e) {
-      RitmoLog.debug('ChatActionParser', 'Could not parse actions from JSON: $e');
+      RitmoLog.debug(
+        'ChatActionParser',
+        'Could not parse actions from JSON: $e',
+      );
     }
 
     // Fallback: Legacy <actions> tag if no JSON actions found
@@ -156,7 +180,10 @@ class ChatActionParser {
             }
           }
         } catch (e) {
-          RitmoLog.debug('ChatActionParser', 'Could not parse fallback actions tag: $e');
+          RitmoLog.debug(
+            'ChatActionParser',
+            'Could not parse fallback actions tag: $e',
+          );
         }
       }
     }

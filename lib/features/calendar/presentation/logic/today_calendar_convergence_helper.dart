@@ -63,12 +63,14 @@ class TodayCalendarConvergenceHelper {
     ));
   }
 
-  /// Navigates to the main Today Dashboard screen tab.
+  /// Navigates to the main Today Dashboard / Simple Tasks screen tab.
   void openTodayDashboard(BuildContext context) {
+    final mode = AppModeService.instance.current;
+    final homeIndex = RitmoShellMetrics.homeTabIndexFor(mode);
     _eventBus.fire(RitmoEvent(
       type: 'navigate_tab',
       timestamp: DateTime.now(),
-      payload: {'index': 2}, // Home Today Dashboard Tab Index
+      payload: {'index': homeIndex},
     ));
   }
 

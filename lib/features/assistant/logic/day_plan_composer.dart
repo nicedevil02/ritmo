@@ -12,7 +12,6 @@ import 'package:shamsi_date/shamsi_date.dart';
 
 /// Result of a compose call. Can be a single-day draft, multi-day plans, or a template apply request.
 class DayPlanComposeResult {
-
   DayPlanComposeResult({
     this.singleDraft,
     this.multiDayDrafts,
@@ -51,7 +50,9 @@ class DayPlanComposer {
       final memoryContext = AiMemoryService.instance.buildPromptBlock(memories);
 
       // 2. Load template names for LLM context (only names — no content per Rule 0.5)
-      onProgress?.call('🕌 در حال محاسبه اوقات شرعی و برنامه‌های موجود هفته...');
+      onProgress?.call(
+        '🕌 در حال محاسبه اوقات شرعی و برنامه‌های موجود هفته...',
+      );
       final templates = await DayPlanTemplateService.instance.getTemplates();
       final templateNamesBlock = templates.isNotEmpty
           ? '''
@@ -69,9 +70,12 @@ ${templates.map((t) => '- ${t.name}').join('\n')}
           : '';
 
       // 3. Token Protection: build weekly agenda summaries
-      final agendaSummaryContext = await _buildAgendaSummaryContext(targetDateStr);
+      final agendaSummaryContext = await _buildAgendaSummaryContext(
+        targetDateStr,
+      );
 
-      final systemPrompt = '''
+      final systemPrompt =
+          '''
 شما یک مدیر برنامه و دستیار هوشمند ارشد به نام Ritmo هستید. وظیفه شما تبدیل روایت زبان طبیعی کاربر فارسی‌زبان درباره روزش به یک ساختار JSON خام و معتبر برای چیدن برنامه روزانه است.
 
 تاریخ برنامه مورد نظر کاربر: $targetDateStr
@@ -150,7 +154,9 @@ $memoryContext
       final userPrompt = 'روایت کاربر:\n"$query"';
 
       // 4. Query AI Gateway
-      onProgress?.call('✨ در حال مدل‌سازی و چیدمان هوشمند برنامه با Ritmo AI...');
+      onProgress?.call(
+        '✨ در حال مدل‌سازی و چیدمان هوشمند برنامه با Ritmo AI...',
+      );
       final responseContent = await AIGateway.instance.sendRawCompletion(
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
@@ -188,16 +194,31 @@ $memoryContext
       // 6b. Check for multi-day plans
       if (decoded.containsKey('plans')) {
         final rawPlans = decoded['plans'] as List? ?? [];
-        final drafts = rawPlans.map((e) => DayPlanDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+        final drafts = rawPlans
+            .map(
+              (e) => DayPlanDraft.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
+            .toList();
         // Attach shared questions/suggestions to first draft
         if (drafts.isNotEmpty) {
           final questions = (decoded['questions'] as List? ?? [])
-              .map((e) => DayPlanQuestion.fromJson(Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => DayPlanQuestion.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
           final suggestions = (decoded['suggestions'] as List? ?? [])
-              .map((e) => DayPlanSuggestion.fromJson(Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => DayPlanSuggestion.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
-          drafts[0] = drafts[0].copyWith(questions: questions, suggestions: suggestions);
+          drafts[0] = drafts[0].copyWith(
+            questions: questions,
+            suggestions: suggestions,
+          );
         }
         return DayPlanComposeResult(multiDayDrafts: drafts);
       }
@@ -212,29 +233,40 @@ $memoryContext
 
   static Future<String> _buildAgendaSummaryContext(String startDateStr) async {
     final start = DateTime.tryParse(startDateStr) ?? DateTime.now();
-    final summary = StringBuffer('### خلاصه برنامه‌های موجود در هفته پیش‌رو (جهت جلوگیری از تداخل):\n');
+    final summary = StringBuffer(
+      '### خلاصه برنامه‌های موجود در هفته پیش‌رو (جهت جلوگیری از تداخل):\n',
+    );
 
     for (var i = 0; i < 7; i++) {
       final date = start.add(Duration(days: i));
       final j = Jalali.fromDateTime(date);
       final dayName = _getDayName(j.weekDay);
-      
+
       try {
         final agenda = await DayAgendaService.instance.agendaForDate(date);
         final items = agenda.items;
         if (items.isEmpty) {
-          summary.writeln('- $dayName (${j.day} ${j.formatter.mN}): هیچ برنامه‌ای ثبت نشده است.');
+          summary.writeln(
+            '- $dayName (${j.day} ${j.formatter.mN}): هیچ برنامه‌ای ثبت نشده است.',
+          );
         } else {
           final busySlots = <String>[];
           for (final item in items) {
             if (item.timeOfDay != null) {
               final startStr = item.timeOfDay!;
               final duration = item.durationMinutes ?? 30;
-              final endStr = _formatTime(_parseTimeOfDay(date, startStr).add(Duration(minutes: duration)));
+              final endStr = _formatTime(
+                _parseTimeOfDay(
+                  date,
+                  startStr,
+                ).add(Duration(minutes: duration)),
+              );
               busySlots.add('$startStr تا $endStr');
             }
           }
-          summary.writeln('- $dayName (${j.day} ${j.formatter.mN}): ${items.length} فعالیت (بازه‌های اشغال‌شده: ${busySlots.join('، ')})');
+          summary.writeln(
+            '- $dayName (${j.day} ${j.formatter.mN}): ${items.length} فعالیت (بازه‌های اشغال‌شده: ${busySlots.join('، ')})',
+          );
         }
       } catch (e) {
         debugPrint('[DayPlanComposer] Failed to fetch agenda for summary: $e');
@@ -245,14 +277,22 @@ $memoryContext
 
   static String _getDayName(int weekDay) {
     switch (weekDay) {
-      case 1: return 'شنبه';
-      case 2: return 'یکشنبه';
-      case 3: return 'دوشنبه';
-      case 4: return 'سه‌شنبه';
-      case 5: return 'چهارشنبه';
-      case 6: return 'پنجشنبه';
-      case 7: return 'جمعه';
-      default: return '';
+      case 1:
+        return 'شنبه';
+      case 2:
+        return 'یکشنبه';
+      case 3:
+        return 'دوشنبه';
+      case 4:
+        return 'سه‌شنبه';
+      case 5:
+        return 'چهارشنبه';
+      case 6:
+        return 'پنجشنبه';
+      case 7:
+        return 'جمعه';
+      default:
+        return '';
     }
   }
 

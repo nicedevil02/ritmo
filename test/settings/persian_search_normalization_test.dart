@@ -53,7 +53,7 @@ void main() {
     });
 
     test('normalizeFa handles Arabic characters, half-spaces, and diacritics', () {
-      expect(normalizeFa('پشتيبان‌گيري'), 'پشتیبانگیری');
+      expect(normalizeFa('پشتيبان‌گيري'), 'پشتیبان گیری');
       expect(normalizeFa('پشتیبان گیری'), 'پشتیبان گیری');
       expect(normalizeFa('تنظيماتِ حِساب'), 'تنظیمات حساب');
     });

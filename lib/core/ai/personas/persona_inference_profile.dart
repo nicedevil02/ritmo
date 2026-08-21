@@ -15,7 +15,8 @@ class PersonaInferenceProfile {
   final bool stream;
   final int? _explicitTimeoutMs;
 
-  int get timeoutMs => _explicitTimeoutMs ?? (maxTokens * 35).clamp(15000, 45000);
+  int get timeoutMs =>
+      _explicitTimeoutMs ?? (maxTokens * 35).clamp(15000, 45000);
 
   Duration get timeoutDuration => Duration(milliseconds: timeoutMs);
 
@@ -39,43 +40,124 @@ class PersonaInferenceProfile {
     'pregnancy',
   };
 
-  static bool hasExplicitProfile(String personaId) => explicitPersonaIds.contains(personaId);
+  static bool hasExplicitProfile(String personaId) =>
+      explicitPersonaIds.contains(personaId);
 
   static PersonaInferenceProfile getProfile(String personaId) {
     switch (personaId) {
       case 'global':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.4, maxTokens: 700, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.4,
+          maxTokens: 700,
+          stream: true,
+        );
       case 'general':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.7, maxTokens: 800, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.7,
+          maxTokens: 800,
+          stream: true,
+        );
       case 'sleep':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 600, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.3,
+          maxTokens: 600,
+          stream: true,
+        );
       case 'wellbeing':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.5, maxTokens: 600, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.5,
+          maxTokens: 600,
+          stream: true,
+        );
       case 'reflection':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.75, maxTokens: 500, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.75,
+          maxTokens: 500,
+          stream: true,
+        );
       case 'goals':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.4, maxTokens: 900, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.4,
+          maxTokens: 900,
+          stream: false,
+        );
       case 'konkur':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.2, maxTokens: 900, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.2,
+          maxTokens: 900,
+          stream: false,
+        );
       case 'courses':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 700, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.3,
+          maxTokens: 700,
+          stream: false,
+        );
       case 'sports':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.5, maxTokens: 700, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.5,
+          maxTokens: 700,
+          stream: true,
+        );
       case 'worship':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.45, maxTokens: 600, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.45,
+          maxTokens: 600,
+          stream: true,
+        );
       case 'cycle':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.15, maxTokens: 400, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.15,
+          maxTokens: 400,
+          stream: false,
+        );
       case 'health':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.1, maxTokens: 400, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.1,
+          maxTokens: 400,
+          stream: false,
+        );
       case 'notes':
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.5, maxTokens: 900, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.5,
+          maxTokens: 900,
+          stream: true,
+        );
       case 'planning':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.3, maxTokens: 950, stream: false);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.3,
+          maxTokens: 950,
+          stream: false,
+        );
       case 'pregnancy':
-        return const PersonaInferenceProfile(slot: AiSlot.features, temperature: 0.15, maxTokens: 500, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.features,
+          temperature: 0.15,
+          maxTokens: 500,
+          stream: true,
+        );
       default:
         // Default to global
-        return const PersonaInferenceProfile(slot: AiSlot.assistant, temperature: 0.4, maxTokens: 700, stream: true);
+        return const PersonaInferenceProfile(
+          slot: AiSlot.assistant,
+          temperature: 0.4,
+          maxTokens: 700,
+          stream: true,
+        );
     }
   }
 }

@@ -16,7 +16,6 @@ import 'package:shamsi_date/shamsi_date.dart';
 enum DayPlannerMode { standaloneCommit, draftOnly }
 
 class AiDayPlannerPreviewSheet extends StatefulWidget {
-
   const AiDayPlannerPreviewSheet({
     super.key,
     required this.initialDraft,
@@ -64,7 +63,8 @@ class AiDayPlannerPreviewSheet extends StatefulWidget {
   }
 
   @override
-  State<AiDayPlannerPreviewSheet> createState() => _AiDayPlannerPreviewSheetState();
+  State<AiDayPlannerPreviewSheet> createState() =>
+      _AiDayPlannerPreviewSheetState();
 }
 
 class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
@@ -80,7 +80,9 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
   }
 
   Future<void> _reValidate() async {
-    final enriched = await DayPlanValidator.validateAndEnrich(draft: _currentDraft);
+    final enriched = await DayPlanValidator.validateAndEnrich(
+      draft: _currentDraft,
+    );
     if (mounted) {
       setState(() {
         _currentDraft = enriched;
@@ -144,93 +146,108 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
           ),
-        decoration: BoxDecoration(
-          color: colors.bg.withValues(alpha: 0.85),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(32),
-            topRight: Radius.circular(32),
+          decoration: BoxDecoration(
+            color: colors.bg.withValues(alpha: 0.85),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+            border: Border.all(
+              color: colors.border.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
           ),
-          border: Border.all(
-            color: colors.border.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(32),
-            topRight: Radius.circular(32),
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Scaffold(
-              backgroundColor: Colors.transparent,
-              appBar: AppBar(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(32),
+              topRight: Radius.circular(32),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Scaffold(
                 backgroundColor: Colors.transparent,
-                elevation: 0,
-                centerTitle: true,
-                automaticallyImplyLeading: false,
-                title: Column(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: colors.border.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(10),
+                appBar: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  centerTitle: true,
+                  automaticallyImplyLeading: false,
+                  title: Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: colors.border.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+                      Text(
+                        'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
                       ),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        CupertinoIcons.xmark,
+                        color: colors.textSecondary,
+                      ),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                actions: [
-                  IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              body: Column(
-                children: [
-                  Expanded(
-                    child: _currentDraft.items.isEmpty
-                        ? Center(
-                            child: Text(
-                              'هیچ فعالیتی در برنامه وجود ندارد.',
-                              style: TextStyle(
-                                color: colors.textSecondary,
+                body: Column(
+                  children: [
+                    Expanded(
+                      child: _currentDraft.items.isEmpty
+                          ? Center(
+                              child: Text(
+                                'هیچ فعالیتی در برنامه وجود ندارد.',
+                                style: TextStyle(color: colors.textSecondary),
                               ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              itemCount: _currentDraft.items.length,
+                              itemBuilder: (context, index) {
+                                final item = _currentDraft.items[index];
+                                return _buildTimelineItem(
+                                  context,
+                                  item,
+                                  index,
+                                  colors,
+                                );
+                              },
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            itemCount: _currentDraft.items.length,
-                            itemBuilder: (context, index) {
-                              final item = _currentDraft.items[index];
-                              return _buildTimelineItem(context, item, index, colors);
-                            },
-                          ),
-                  ),
-                  if (_currentDraft.suggestions.isNotEmpty) _buildSuggestionsBlock(colors),
-                  _buildFooter(colors),
-                ],
+                    ),
+                    if (_currentDraft.suggestions.isNotEmpty)
+                      _buildSuggestionsBlock(colors),
+                    _buildFooter(colors),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 
-  Widget _buildTimelineItem(BuildContext context, DayPlanItemDraft item, int index, RitmoColors colors) {
+  Widget _buildTimelineItem(
+    BuildContext context,
+    DayPlanItemDraft item,
+    int index,
+    RitmoColors colors,
+  ) {
     final categoryColor = _getCategoryColor(item.category, colors);
     final hasConflict = item.note?.contains('⚠️') ?? false;
 
@@ -302,7 +319,11 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(CupertinoIcons.trash, size: 18, color: Colors.red),
+                          icon: const Icon(
+                            CupertinoIcons.trash,
+                            size: 18,
+                            color: Colors.red,
+                          ),
                           onPressed: () {
                             setState(() {
                               _currentDraft.items.removeAt(index);
@@ -315,7 +336,11 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(CupertinoIcons.clock, size: 14, color: colors.textSecondary),
+                        Icon(
+                          CupertinoIcons.clock,
+                          size: 14,
+                          color: colors.textSecondary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           item.resolvedTime ?? 'نامشخص',
@@ -326,19 +351,29 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Icon(CupertinoIcons.hourglass, size: 14, color: colors.textSecondary),
+                        Icon(
+                          CupertinoIcons.hourglass,
+                          size: 14,
+                          color: colors.textSecondary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          item.durationMin != null ? '${item.durationMin} دقیقه' : 'تخمین زده نشده',
+                          item.durationMin != null
+                              ? '${item.durationMin} دقیقه'
+                              : 'تخمین زده نشده',
                           style: TextStyle(
                             fontSize: 13,
                             color: colors.textSecondary,
                           ),
                         ),
-                        if (item.durationSource != 'none' && item.durationSource != 'user') ...[
+                        if (item.durationSource != 'none' &&
+                            item.durationSource != 'user') ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -360,7 +395,9 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                         item.note!,
                         style: TextStyle(
                           fontSize: 12,
-                          color: hasConflict ? Colors.amber[800] : colors.textSecondary,
+                          color: hasConflict
+                              ? Colors.amber[800]
+                              : colors.textSecondary,
                         ),
                       ),
                     ],
@@ -407,10 +444,7 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 '• ${s.text}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 12, color: colors.textPrimary),
               ),
             );
           }),
@@ -486,10 +520,7 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   'انصراف',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
                 ),
               ),
             ),
@@ -506,10 +537,7 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
                 onPressed: _saveAsTemplateDialog,
                 child: Text(
                   'قالب روز',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colors.goldAccent,
-                  ),
+                  style: TextStyle(fontSize: 14, color: colors.goldAccent),
                 ),
               ),
             ),
@@ -548,7 +576,9 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
 
   void _editItemDialog(DayPlanItemDraft item, int index) {
     final titleController = TextEditingController(text: item.title);
-    final durationController = TextEditingController(text: item.durationMin?.toString() ?? '30');
+    final durationController = TextEditingController(
+      text: item.durationMin?.toString() ?? '30',
+    );
 
     showDialog(
       context: context,
@@ -582,7 +612,8 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
             ElevatedButton(
               onPressed: () {
                 final newTitle = titleController.text.trim();
-                final newDuration = int.tryParse(durationController.text) ?? item.durationMin;
+                final newDuration =
+                    int.tryParse(durationController.text) ?? item.durationMin;
                 if (newTitle.isNotEmpty) {
                   setState(() {
                     _currentDraft.items[index] = item.copyWith(
@@ -618,16 +649,12 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
         payload: _currentDraft.toJson(),
       );
 
-      await AssistantActionRegistry.executeAction(
-        context,
-        action,
-        () {
-          if (mounted) {
-            Navigator.pop(context);
-            widget.onSaved();
-          }
-        },
-      );
+      await AssistantActionRegistry.executeAction(context, action, () {
+        if (mounted) {
+          Navigator.pop(context);
+          widget.onSaved();
+        }
+      });
     } catch (e) {
       debugPrint('[AiDayPlannerPreviewSheet] Save day plan failed: $e');
       if (mounted) {

@@ -29,17 +29,45 @@ class NoteCreateCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'title': const ParamSpec(type: ParamType.text, labelFa: 'عنوان', required: false),
-    'body': const ParamSpec(type: ParamType.text, labelFa: 'متن یادداشت', required: true),
-    'kind': const ParamSpec(type: ParamType.enumeration, labelFa: 'نوع', required: false, allowed: ['NOTE', 'DAILY', 'EXPERIENCE', 'IDEA', 'DECISION']),
-    'tags': const ParamSpec(type: ParamType.list, itemType: ParamType.text, labelFa: 'برچسب‌ها', required: false),
-    'linkModule': const ParamSpec(type: ParamType.text, labelFa: 'ماژول مرتبط', required: false),
-    'linkEntityId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه موجودیت مرتبط', required: false),
+    'title': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'عنوان',
+      required: false,
+    ),
+    'body': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'متن یادداشت',
+      required: true,
+    ),
+    'kind': const ParamSpec(
+      type: ParamType.enumeration,
+      labelFa: 'نوع',
+      required: false,
+      allowed: ['NOTE', 'DAILY', 'EXPERIENCE', 'IDEA', 'DECISION'],
+    ),
+    'tags': const ParamSpec(
+      type: ParamType.list,
+      itemType: ParamType.text,
+      labelFa: 'برچسب‌ها',
+      required: false,
+    ),
+    'linkModule': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'ماژول مرتبط',
+      required: false,
+    ),
+    'linkEntityId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه موجودیت مرتبط',
+      required: false,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    final title = ctx.payload['title']?.toString() ?? (ctx.payload['body']?.toString().split('\n').first ?? 'یادداشت جدید');
+    final title =
+        ctx.payload['title']?.toString() ??
+        (ctx.payload['body']?.toString().split('\n').first ?? 'یادداشت جدید');
     return PlanDiff(kind: DiffKind.create, entityLabelFa: 'یادداشت: $title');
   }
 
@@ -47,12 +75,17 @@ class NoteCreateCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['id']?.toString() ?? _genNoteId();
     final body = ctx.payload['body']?.toString().trim() ?? '';
-    final title = ctx.payload['title']?.toString().trim() ?? (body.length > 40 ? '${body.substring(0, 40)}...' : body);
+    final title =
+        ctx.payload['title']?.toString().trim() ??
+        (body.length > 40 ? '${body.substring(0, 40)}...' : body);
     final kind = ctx.payload['kind']?.toString() ?? 'NOTE';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final dayKey = SystemClock().today().value;
 
-    final wordCount = body.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final wordCount = body
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
 
     await ctx.txn.insert('notes', {
       'id': noteId,
@@ -102,11 +135,18 @@ class NoteCreateCommand extends RitmoCommand {
       }
     }
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
     await ctx.txn.delete('notes', where: 'id = ?', whereArgs: [noteId]);
@@ -135,21 +175,41 @@ class NoteAppendCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'text': const ParamSpec(type: ParamType.text, labelFa: 'متن الحاقی', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'text': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'متن الحاقی',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'افزودن متن به یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'افزودن متن به یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final text = ctx.payload['text']?.toString() ?? '';
-    final rows = await ctx.txn.query('notes', where: 'id = ?', whereArgs: [noteId]);
-    if (rows.isEmpty) return CommandResult.failure(commandId: id, errorMessage: 'یادداشت یافت نشد');
+    final rows = await ctx.txn.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    if (rows.isEmpty)
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'یادداشت یافت نشد',
+      );
 
     final existingBody = (rows.first['body'] as String?) ?? '';
     final updatedBody = existingBody.isEmpty ? text : '$existingBody\n\n$text';
@@ -166,15 +226,27 @@ class NoteAppendCommand extends RitmoCommand {
       whereArgs: [noteId],
     );
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId, 'previousBody': existingBody});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId, 'previousBody': existingBody},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final prev = inverseData['previousBody']?.toString();
     if (noteId == null || prev == null) return null;
-    await ctx.txn.update('notes', {'body': prev, 'bodyNormalized': prev.toLowerCase()}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'body': prev, 'bodyNormalized': prev.toLowerCase()},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -190,7 +262,8 @@ class NoteEditCommand extends RitmoCommand {
   String get humanTitle => 'ویرایش متن یادداشت';
 
   @override
-  String get humanDescriptionFa => 'تغییر محتوای یادداشت با نگهداری تاریخچه نسخه';
+  String get humanDescriptionFa =>
+      'تغییر محتوای یادداشت با نگهداری تاریخچه نسخه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -200,21 +273,41 @@ class NoteEditCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'newBody': const ParamSpec(type: ParamType.text, labelFa: 'متن جدید', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'newBody': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'متن جدید',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'ویرایش یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'ویرایش یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final newBody = ctx.payload['newBody']?.toString() ?? '';
-    final rows = await ctx.txn.query('notes', where: 'id = ?', whereArgs: [noteId]);
-    if (rows.isEmpty) return CommandResult.failure(commandId: id, errorMessage: 'یادداشت یافت نشد');
+    final rows = await ctx.txn.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    if (rows.isEmpty)
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'یادداشت یافت نشد',
+      );
 
     final existingBody = (rows.first['body'] as String?) ?? '';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -224,7 +317,10 @@ class NoteEditCommand extends RitmoCommand {
       'id': _genRevId(),
       'noteId': noteId,
       'body': existingBody,
-      'wordCount': existingBody.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length,
+      'wordCount': existingBody
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .length,
       'reason': 'AI_EDIT',
       'createdAt': nowMs,
     });
@@ -234,22 +330,37 @@ class NoteEditCommand extends RitmoCommand {
       {
         'body': newBody,
         'bodyNormalized': newBody.toLowerCase(),
-        'wordCount': newBody.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length,
+        'wordCount': newBody
+            .split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty)
+            .length,
         'updatedAt': nowMs,
       },
       where: 'id = ?',
       whereArgs: [noteId],
     );
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId, 'previousBody': existingBody});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId, 'previousBody': existingBody},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final prev = inverseData['previousBody']?.toString();
     if (noteId == null || prev == null) return null;
-    await ctx.txn.update('notes', {'body': prev, 'bodyNormalized': prev.toLowerCase()}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'body': prev, 'bodyNormalized': prev.toLowerCase()},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -275,40 +386,76 @@ class NoteRetitleCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'title': const ParamSpec(type: ParamType.text, labelFa: 'عنوان جدید', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'title': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'عنوان جدید',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final title = ctx.payload['title']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'عنوان یادداشت: $title');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'عنوان یادداشت: $title',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final title = ctx.payload['title']?.toString().trim() ?? '';
-    final rows = await ctx.txn.query('notes', where: 'id = ?', whereArgs: [noteId]);
-    if (rows.isEmpty) return CommandResult.failure(commandId: id, errorMessage: 'یادداشت یافت نشد');
+    final rows = await ctx.txn.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    if (rows.isEmpty)
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'یادداشت یافت نشد',
+      );
 
     final prevTitle = rows.first['title'] as String?;
     await ctx.txn.update(
       'notes',
-      {'title': title, 'titleNormalized': title.toLowerCase(), 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+      {
+        'title': title,
+        'titleNormalized': title.toLowerCase(),
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
       where: 'id = ?',
       whereArgs: [noteId],
     );
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId, 'previousTitle': prevTitle});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId, 'previousTitle': prevTitle},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final prevTitle = inverseData['previousTitle'] as String?;
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'title': prevTitle, 'titleNormalized': prevTitle?.toLowerCase() ?? ''}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'title': prevTitle, 'titleNormalized': prevTitle?.toLowerCase() ?? ''},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -334,8 +481,17 @@ class NoteTagCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'tag': const ParamSpec(type: ParamType.text, labelFa: 'برچسب', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'tag': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'برچسب',
+      required: true,
+    ),
   };
 
   @override
@@ -348,7 +504,11 @@ class NoteTagCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final tag = ctx.payload['tag']?.toString().replaceAll('#', '').trim() ?? '';
-    if (tag.isEmpty) return CommandResult.failure(commandId: id, errorMessage: 'برچسب نامعتبر');
+    if (tag.isEmpty)
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'برچسب نامعتبر',
+      );
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     await ctx.txn.insert('note_tags', {
@@ -359,15 +519,26 @@ class NoteTagCommand extends RitmoCommand {
       'createdAt': nowMs,
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'tag': tag}, inverseData: {'noteId': noteId, 'tag': tag});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'tag': tag},
+      inverseData: {'noteId': noteId, 'tag': tag},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final tag = inverseData['tag']?.toString();
     if (noteId == null || tag == null) return null;
-    await ctx.txn.delete('note_tags', where: 'noteId = ? AND tagNormalized = ?', whereArgs: [noteId, tag.toLowerCase()]);
+    await ctx.txn.delete(
+      'note_tags',
+      where: 'noteId = ? AND tagNormalized = ?',
+      whereArgs: [noteId, tag.toLowerCase()],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -393,8 +564,17 @@ class NoteUntagCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'tag': const ParamSpec(type: ParamType.text, labelFa: 'برچسب', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'tag': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'برچسب',
+      required: true,
+    ),
   };
 
   @override
@@ -407,12 +587,23 @@ class NoteUntagCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final tag = ctx.payload['tag']?.toString().replaceAll('#', '').trim() ?? '';
-    await ctx.txn.delete('note_tags', where: 'noteId = ? AND tagNormalized = ?', whereArgs: [noteId, tag.toLowerCase()]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'tag': tag}, inverseData: {'noteId': noteId, 'tag': tag});
+    await ctx.txn.delete(
+      'note_tags',
+      where: 'noteId = ? AND tagNormalized = ?',
+      whereArgs: [noteId, tag.toLowerCase()],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'tag': tag},
+      inverseData: {'noteId': noteId, 'tag': tag},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final tag = inverseData['tag']?.toString();
     if (noteId == null || tag == null) return null;
@@ -438,7 +629,8 @@ class NoteLinkCommand extends RitmoCommand {
   String get humanTitle => 'پیوند یادداشت';
 
   @override
-  String get humanDescriptionFa => 'ایجاد پیوند بین یادداشت و یک موجودیت در برنامه';
+  String get humanDescriptionFa =>
+      'ایجاد پیوند بین یادداشت و یک موجودیت در برنامه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -448,15 +640,36 @@ class NoteLinkCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'linkModule': const ParamSpec(type: ParamType.text, labelFa: 'ماژول', required: true),
-    'linkEntityId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه موجودیت', required: true),
-    'relation': const ParamSpec(type: ParamType.enumeration, labelFa: 'نوع رابطه', required: false, allowed: ['MENTIONS', 'ABOUT', 'SPAWNED']),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'linkModule': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'ماژول',
+      required: true,
+    ),
+    'linkEntityId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه موجودیت',
+      required: true,
+    ),
+    'relation': const ParamSpec(
+      type: ParamType.enumeration,
+      labelFa: 'نوع رابطه',
+      required: false,
+      allowed: ['MENTIONS', 'ABOUT', 'SPAWNED'],
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'ایجاد پیوند یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'ایجاد پیوند یادداشت',
+    );
   }
 
   @override
@@ -477,11 +690,18 @@ class NoteLinkCommand extends RitmoCommand {
       'createdAt': nowMs,
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
-    return CommandResult.ok(commandId: id, outputData: {'linkId': linkId}, inverseData: {'linkId': linkId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'linkId': linkId},
+      inverseData: {'linkId': linkId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final linkId = inverseData['linkId']?.toString();
     if (linkId == null) return null;
     await ctx.txn.delete('note_links', where: 'id = ?', whereArgs: [linkId]);
@@ -510,14 +730,30 @@ class NoteUnlinkCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'linkModule': const ParamSpec(type: ParamType.text, labelFa: 'ماژول', required: true),
-    'linkEntityId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه موجودیت', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'linkModule': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'ماژول',
+      required: true,
+    ),
+    'linkEntityId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه موجودیت',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'حذف پیوند یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'حذف پیوند یادداشت',
+    );
   }
 
   @override
@@ -532,15 +768,26 @@ class NoteUnlinkCommand extends RitmoCommand {
       whereArgs: [noteId, linkModule, linkEntityId],
     );
 
-    return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId, 'linkModule': linkModule, 'linkEntityId': linkEntityId});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {
+        'noteId': noteId,
+        'linkModule': linkModule,
+        'linkEntityId': linkEntityId,
+      },
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final linkModule = inverseData['linkModule']?.toString();
     final linkEntityId = inverseData['linkEntityId']?.toString();
-    if (noteId == null || linkModule == null || linkEntityId == null) return null;
+    if (noteId == null || linkModule == null || linkEntityId == null)
+      return null;
     await ctx.txn.insert('note_links', {
       'id': _genLinkId(),
       'noteId': noteId,
@@ -574,26 +821,50 @@ class NotePinCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'سنجاق کردن یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'سنجاق کردن یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    await ctx.txn.update('notes', {'isPinned': 1, 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId, 'wasPinned': 0});
+    await ctx.txn.update(
+      'notes',
+      {'isPinned': 1, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'noteId': noteId, 'wasPinned': 0},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'isPinned': 0}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'isPinned': 0},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -619,26 +890,47 @@ class NoteUnpinCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'برداشتن سنجاق یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'برداشتن سنجاق یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    await ctx.txn.update('notes', {'isPinned': 0, 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'isPinned': 0, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id, inverseData: {'noteId': noteId});
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'isPinned': 1}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'isPinned': 1},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -664,26 +956,54 @@ class NoteArchiveCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'بایگانی یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'بایگانی یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    await ctx.txn.update('notes', {'status': 'ARCHIVED', 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isArchived': true}, inverseData: {'noteId': noteId});
+    await ctx.txn.update(
+      'notes',
+      {
+        'status': 'ARCHIVED',
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'isArchived': true},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'status': 'ACTIVE'}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'status': 'ACTIVE'},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -699,7 +1019,8 @@ class NoteRestoreCommand extends RitmoCommand {
   String get humanTitle => 'بازیابی یادداشت';
 
   @override
-  String get humanDescriptionFa => 'بازگردانی یادداشت از بایگانی یا سطل زباله به حالت فعال';
+  String get humanDescriptionFa =>
+      'بازگردانی یادداشت از بایگانی یا سطل زباله به حالت فعال';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -709,26 +1030,55 @@ class NoteRestoreCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'بازیابی یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'بازیابی یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    await ctx.txn.update('notes', {'status': 'ACTIVE', 'trashedAt': null, 'updatedAt': DateTime.now().millisecondsSinceEpoch}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isRestored': true}, inverseData: {'noteId': noteId});
+    await ctx.txn.update(
+      'notes',
+      {
+        'status': 'ACTIVE',
+        'trashedAt': null,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'isRestored': true},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'status': 'ARCHIVED'}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'status': 'ARCHIVED'},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -754,27 +1104,52 @@ class NoteDeleteCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.delete, entityLabelFa: 'انتقال یادداشت به زباله‌دان');
+    return const PlanDiff(
+      kind: DiffKind.delete,
+      entityLabelFa: 'انتقال یادداشت به زباله‌دان',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await ctx.txn.update('notes', {'status': 'TRASHED', 'trashedAt': nowMs, 'updatedAt': nowMs}, where: 'id = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isDeleted': true}, inverseData: {'noteId': noteId});
+    await ctx.txn.update(
+      'notes',
+      {'status': 'TRASHED', 'trashedAt': nowMs, 'updatedAt': nowMs},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'isDeleted': true},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'status': 'ACTIVE', 'trashedAt': null}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'status': 'ACTIVE', 'trashedAt': null},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -790,7 +1165,8 @@ class NoteScheduleReviewCommand extends RitmoCommand {
   String get humanTitle => 'تنظیم مرور فاصله‌دار';
 
   @override
-  String get humanDescriptionFa => 'قرار دادن یادداشت در صف مرور فاصله‌دار یادگیری';
+  String get humanDescriptionFa =>
+      'قرار دادن یادداشت در صف مرور فاصله‌دار یادگیری';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -800,13 +1176,25 @@ class NoteScheduleReviewCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
-    'stage': const ParamSpec(type: ParamType.integer, labelFa: 'مرحله مرور', required: false),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
+    'stage': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مرحله مرور',
+      required: false,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'تنظیم مرور فاصله‌دار');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تنظیم مرور فاصله‌دار',
+    );
   }
 
   @override
@@ -818,20 +1206,33 @@ class NoteScheduleReviewCommand extends RitmoCommand {
     final days = stage <= ladderDays.length ? ladderDays[stage - 1] : 120;
     final nextReviewMs = nowMs + (days * 24 * 60 * 60 * 1000);
 
-    await ctx.txn.update('notes', {
-      'reviewStage': stage,
-      'reviewAt': nextReviewMs,
-      'updatedAt': nowMs,
-    }, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'reviewStage': stage, 'reviewAt': nextReviewMs, 'updatedAt': nowMs},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'nextReviewMs': nextReviewMs}, inverseData: {'noteId': noteId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'nextReviewMs': nextReviewMs},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.update('notes', {'reviewStage': 0, 'reviewAt': null}, where: 'id = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'notes',
+      {'reviewStage': 0, 'reviewAt': null},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -847,7 +1248,8 @@ class NoteExtractActionsCommand extends RitmoCommand {
   String get humanTitle => 'استخراج اقدامات و کارهای یادداشت';
 
   @override
-  String get humanDescriptionFa => 'شناسایی و تبدیل موارد عملیاتی داخل یادداشت به کار';
+  String get humanDescriptionFa =>
+      'شناسایی و تبدیل موارد عملیاتی داخل یادداشت به کار';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -857,19 +1259,35 @@ class NoteExtractActionsCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'یادداشت', required: true, refTable: 'notes'),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'یادداشت',
+      required: true,
+      refTable: 'notes',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.create, entityLabelFa: 'استخراج کارهای عملیاتی از یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'استخراج کارهای عملیاتی از یادداشت',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    final rows = await ctx.txn.query('notes', where: 'id = ?', whereArgs: [noteId]);
-    if (rows.isEmpty) return CommandResult.failure(commandId: id, errorMessage: 'یادداشت یافت نشد');
+    final rows = await ctx.txn.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
+    if (rows.isEmpty)
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'یادداشت یافت نشد',
+      );
 
     final body = (rows.first['body'] as String?) ?? '';
     final lines = body.split('\n');
@@ -880,7 +1298,9 @@ class NoteExtractActionsCommand extends RitmoCommand {
       if (trimmed.startsWith('- [ ]')) {
         extractedTasks.add(trimmed.substring(5).trim());
       } else if (trimmed.startsWith('TODO:') || trimmed.startsWith('کار:')) {
-        extractedTasks.add(trimmed.replaceFirst(RegExp(r'^(TODO:|کار:)'), '').trim());
+        extractedTasks.add(
+          trimmed.replaceFirst(RegExp(r'^(TODO:|کار:)'), '').trim(),
+        );
       }
     }
 
@@ -895,7 +1315,10 @@ class NoteExtractActionsCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -911,7 +1334,8 @@ class NoteSummarizeCommand extends RitmoCommand {
   String get humanTitle => 'خلاصه‌سازی یادداشت‌ها';
 
   @override
-  String get humanDescriptionFa => 'جمع‌بندی موضوعی یا هفتگی یادداشت‌های ثبت شده';
+  String get humanDescriptionFa =>
+      'جمع‌بندی موضوعی یا هفتگی یادداشت‌های ثبت شده';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -921,13 +1345,25 @@ class NoteSummarizeCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'scope': const ParamSpec(type: ParamType.enumeration, labelFa: 'بازه یا دامنه', required: true, allowed: ['note', 'week', 'tag']),
-    'value': const ParamSpec(type: ParamType.text, labelFa: 'شناسه یا مقدار', required: false),
+    'scope': const ParamSpec(
+      type: ParamType.enumeration,
+      labelFa: 'بازه یا دامنه',
+      required: true,
+      allowed: ['note', 'week', 'tag'],
+    ),
+    'value': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه یا مقدار',
+      required: false,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'خلاصه‌سازی یادداشت');
+    return const PlanDiff(
+      kind: DiffKind.noop,
+      entityLabelFa: 'خلاصه‌سازی یادداشت',
+    );
   }
 
   @override
@@ -936,19 +1372,32 @@ class NoteSummarizeCommand extends RitmoCommand {
     final value = ctx.payload['value']?.toString();
 
     if (scope == 'note' && value != null) {
-      final rows = await ctx.txn.query('notes', where: 'id = ? AND isPrivate = 0', whereArgs: [value]);
+      final rows = await ctx.txn.query(
+        'notes',
+        where: 'id = ? AND isPrivate = 0',
+        whereArgs: [value],
+      );
       if (rows.isNotEmpty) {
         final title = rows.first['title'] as String?;
         final wordCount = rows.first['wordCount'] as int? ?? 0;
-        return CommandResult.ok(commandId: id, outputData: {'title': title, 'wordCount': wordCount});
+        return CommandResult.ok(
+          commandId: id,
+          outputData: {'title': title, 'wordCount': wordCount},
+        );
       }
     }
 
-    return CommandResult.ok(commandId: id, outputData: {'status': 'summarized'});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'status': 'summarized'},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -974,8 +1423,16 @@ class NotesSearchCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'query': const ParamSpec(type: ParamType.text, labelFa: 'عبارت جستجو', required: true),
-    'limit': const ParamSpec(type: ParamType.integer, labelFa: 'حداکثر نتایج', required: false),
+    'query': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'عبارت جستجو',
+      required: true,
+    ),
+    'limit': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'حداکثر نتایج',
+      required: false,
+    ),
   };
 
   @override
@@ -991,23 +1448,31 @@ class NotesSearchCommand extends RitmoCommand {
 
     final results = await ctx.txn.query(
       'notes',
-      where: "status = 'ACTIVE' AND isPrivate = 0 AND (sourceModule IS NULL OR sourceModule != 'cycle') AND (titleNormalized LIKE ? OR bodyNormalized LIKE ?)",
+      where:
+          "status = 'ACTIVE' AND isPrivate = 0 AND (sourceModule IS NULL OR sourceModule != 'cycle') AND (titleNormalized LIKE ? OR bodyNormalized LIKE ?)",
       whereArgs: ['%$query%', '%$query%'],
       limit: limit,
     );
 
-    final hits = results.map((r) => {
-      'id': r['id'],
-      'title': r['title'],
-      'dayKey': r['dayKey'],
-      'wordCount': r['wordCount'],
-    }).toList();
+    final hits = results
+        .map(
+          (r) => {
+            'id': r['id'],
+            'title': r['title'],
+            'dayKey': r['dayKey'],
+            'wordCount': r['wordCount'],
+          },
+        )
+        .toList();
 
     return CommandResult.ok(commandId: id, outputData: {'hits': hits});
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -1033,21 +1498,36 @@ class NotesDailyNoteCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'dayKey': const ParamSpec(type: ParamType.text, labelFa: 'کلید روز', required: false),
+    'dayKey': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'کلید روز',
+      required: false,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.create, entityLabelFa: 'یادداشت روزانه');
+    return const PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'یادداشت روزانه',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final dayKey = ctx.payload['dayKey']?.toString() ?? SystemClock().today().value;
-    final existing = await ctx.txn.query('notes', where: "kind = 'DAILY' AND dayKey = ?", whereArgs: [dayKey]);
+    final dayKey =
+        ctx.payload['dayKey']?.toString() ?? SystemClock().today().value;
+    final existing = await ctx.txn.query(
+      'notes',
+      where: "kind = 'DAILY' AND dayKey = ?",
+      whereArgs: [dayKey],
+    );
 
     if (existing.isNotEmpty) {
-      return CommandResult.ok(commandId: id, outputData: {'noteId': existing.first['id'], 'existing': true});
+      return CommandResult.ok(
+        commandId: id,
+        outputData: {'noteId': existing.first['id'], 'existing': true},
+      );
     }
 
     final noteId = _genNoteId();
@@ -1070,11 +1550,18 @@ class NotesDailyNoteCommand extends RitmoCommand {
       'updatedAt': nowMs,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
     await ctx.txn.delete('notes', where: 'id = ?', whereArgs: [noteId]);
@@ -1103,10 +1590,36 @@ class ExperienceCreateCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'lesson': const ParamSpec(type: ParamType.text, labelFa: 'درس تجربه', required: true),
-    'contextText': const ParamSpec(type: ParamType.text, labelFa: 'رویداد و اتفاق', required: false),
-    'category': const ParamSpec(type: ParamType.enumeration, labelFa: 'دسته‌بندی', required: false, allowed: ['GENERAL', 'WORK', 'STUDY', 'HEALTH', 'RELATION', 'MONEY', 'FAITH', 'SELF']),
-    'importance': const ParamSpec(type: ParamType.integer, labelFa: 'اهمیت (۱ تا ۵)', required: false),
+    'lesson': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'درس تجربه',
+      required: true,
+    ),
+    'contextText': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'رویداد و اتفاق',
+      required: false,
+    ),
+    'category': const ParamSpec(
+      type: ParamType.enumeration,
+      labelFa: 'دسته‌بندی',
+      required: false,
+      allowed: [
+        'GENERAL',
+        'WORK',
+        'STUDY',
+        'HEALTH',
+        'RELATION',
+        'MONEY',
+        'FAITH',
+        'SELF',
+      ],
+    ),
+    'importance': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'اهمیت (۱ تا ۵)',
+      required: false,
+    ),
   };
 
   @override
@@ -1130,7 +1643,9 @@ class ExperienceCreateCommand extends RitmoCommand {
       'title': lesson.length > 50 ? '${lesson.substring(0, 50)}...' : lesson,
       'body': contextText.isNotEmpty ? '$lesson\n\n$contextText' : lesson,
       'titleNormalized': lesson.toLowerCase(),
-      'bodyNormalized': (contextText.isNotEmpty ? '$lesson $contextText' : lesson).toLowerCase(),
+      'bodyNormalized':
+          (contextText.isNotEmpty ? '$lesson $contextText' : lesson)
+              .toLowerCase(),
       'kind': 'EXPERIENCE',
       'status': 'ACTIVE',
       'isPrivate': 0,
@@ -1152,14 +1667,25 @@ class ExperienceCreateCommand extends RitmoCommand {
       'acknowledgedCount': 0,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId}, inverseData: {'noteId': noteId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId},
+      inverseData: {'noteId': noteId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     if (noteId == null) return null;
-    await ctx.txn.delete('note_experience_meta', where: 'noteId = ?', whereArgs: [noteId]);
+    await ctx.txn.delete(
+      'note_experience_meta',
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+    );
     await ctx.txn.delete('notes', where: 'id = ?', whereArgs: [noteId]);
     return CommandResult.ok(commandId: id);
   }
@@ -1186,10 +1712,27 @@ class ExperienceEditCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'تجربه', required: true, refTable: 'notes'),
-    'lesson': const ParamSpec(type: ParamType.text, labelFa: 'درس جدید', required: false),
-    'category': const ParamSpec(type: ParamType.text, labelFa: 'دسته جدید', required: false),
-    'importance': const ParamSpec(type: ParamType.integer, labelFa: 'اهمیت', required: false),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'تجربه',
+      required: true,
+      refTable: 'notes',
+    ),
+    'lesson': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'درس جدید',
+      required: false,
+    ),
+    'category': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'دسته جدید',
+      required: false,
+    ),
+    'importance': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'اهمیت',
+      required: false,
+    ),
   };
 
   @override
@@ -1201,19 +1744,30 @@ class ExperienceEditCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
     final metaUpdate = <String, dynamic>{};
-    if (ctx.payload['lesson'] != null) metaUpdate['lesson'] = ctx.payload['lesson'];
-    if (ctx.payload['category'] != null) metaUpdate['category'] = ctx.payload['category'];
-    if (ctx.payload['importance'] != null) metaUpdate['importance'] = ctx.payload['importance'];
+    if (ctx.payload['lesson'] != null)
+      metaUpdate['lesson'] = ctx.payload['lesson'];
+    if (ctx.payload['category'] != null)
+      metaUpdate['category'] = ctx.payload['category'];
+    if (ctx.payload['importance'] != null)
+      metaUpdate['importance'] = ctx.payload['importance'];
 
     if (metaUpdate.isNotEmpty) {
-      await ctx.txn.update('note_experience_meta', metaUpdate, where: 'noteId = ?', whereArgs: [noteId]);
+      await ctx.txn.update(
+        'note_experience_meta',
+        metaUpdate,
+        where: 'noteId = ?',
+        whereArgs: [noteId],
+      );
     }
 
     return CommandResult.ok(commandId: id, outputData: {'noteId': noteId});
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -1229,7 +1783,8 @@ class ExperienceSetActiveCommand extends RitmoCommand {
   String get humanTitle => 'تغییر وضعیت چرخش تجربه';
 
   @override
-  String get humanDescriptionFa => 'فعال یا غیرفعال کردن نمایش تجربه در چرخش روزانه';
+  String get humanDescriptionFa =>
+      'فعال یا غیرفعال کردن نمایش تجربه در چرخش روزانه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -1239,31 +1794,64 @@ class ExperienceSetActiveCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'تجربه', required: true, refTable: 'notes'),
-    'isActive': const ParamSpec(type: ParamType.boolean, labelFa: 'فعال در چرخش', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'تجربه',
+      required: true,
+      refTable: 'notes',
+    ),
+    'isActive': const ParamSpec(
+      type: ParamType.boolean,
+      labelFa: 'فعال در چرخش',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    final isActive = ctx.payload['isActive'] == true || ctx.payload['isActive'] == 1;
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: isActive ? 'فعال‌سازی در چرخش' : 'خروج از چرخش');
+    final isActive =
+        ctx.payload['isActive'] == true || ctx.payload['isActive'] == 1;
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: isActive ? 'فعال‌سازی در چرخش' : 'خروج از چرخش',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    final isActive = (ctx.payload['isActive'] == true || ctx.payload['isActive'] == 1) ? 1 : 0;
+    final isActive =
+        (ctx.payload['isActive'] == true || ctx.payload['isActive'] == 1)
+        ? 1
+        : 0;
 
-    await ctx.txn.update('note_experience_meta', {'isActive': isActive}, where: 'noteId = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'isActive': isActive}, inverseData: {'noteId': noteId, 'previousActive': 1 - isActive});
+    await ctx.txn.update(
+      'note_experience_meta',
+      {'isActive': isActive},
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'isActive': isActive},
+      inverseData: {'noteId': noteId, 'previousActive': 1 - isActive},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final noteId = inverseData['noteId']?.toString();
     final prev = (inverseData['previousActive'] as num?)?.toInt() ?? 1;
     if (noteId == null) return null;
-    await ctx.txn.update('note_experience_meta', {'isActive': prev}, where: 'noteId = ?', whereArgs: [noteId]);
+    await ctx.txn.update(
+      'note_experience_meta',
+      {'isActive': prev},
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -1289,27 +1877,51 @@ class ExperienceSetImportanceCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'noteId': const ParamSpec(type: ParamType.idRef, labelFa: 'تجربه', required: true, refTable: 'notes'),
-    'importance': const ParamSpec(type: ParamType.integer, labelFa: 'اهمیت (۱ تا ۵)', required: true),
+    'noteId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'تجربه',
+      required: true,
+      refTable: 'notes',
+    ),
+    'importance': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'اهمیت (۱ تا ۵)',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final imp = ctx.payload['importance']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تنظیم اهمیت تجربه روی $imp');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تنظیم اهمیت تجربه روی $imp',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final noteId = ctx.payload['noteId']?.toString() ?? '';
-    final importance = (ctx.payload['importance'] as num?)?.toInt().clamp(1, 5) ?? 3;
+    final importance =
+        (ctx.payload['importance'] as num?)?.toInt().clamp(1, 5) ?? 3;
 
-    await ctx.txn.update('note_experience_meta', {'importance': importance}, where: 'noteId = ?', whereArgs: [noteId]);
-    return CommandResult.ok(commandId: id, outputData: {'noteId': noteId, 'importance': importance});
+    await ctx.txn.update(
+      'note_experience_meta',
+      {'importance': importance},
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'noteId': noteId, 'importance': importance},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }

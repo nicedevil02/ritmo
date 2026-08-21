@@ -3,12 +3,7 @@ import 'package:ritmo/core/domain/engines/engine_invalidation_tag.dart';
 import 'package:ritmo/core/domain/commands/param_spec.dart';
 import 'package:ritmo/core/domain/commands/command_plan.dart';
 
-enum Sensitivity {
-  safe,
-  confirm,
-  sensitive,
-  forbidden,
-}
+enum Sensitivity { safe, confirm, sensitive, forbidden }
 
 enum DataDomain {
   routines,
@@ -25,13 +20,7 @@ enum DataDomain {
   notes,
 }
 
-
-enum CommandSource {
-  user,
-  assistant,
-  system,
-  undo,
-}
+enum CommandSource { user, assistant, system, undo }
 
 class AgentCommandContext {
   const AgentCommandContext({
@@ -109,7 +98,10 @@ abstract class RitmoCommand {
 
   Future<CommandResult> run(AgentCommandContext ctx);
 
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  );
 
   Set<EngineInvalidationTag> get invalidates => const {};
 }

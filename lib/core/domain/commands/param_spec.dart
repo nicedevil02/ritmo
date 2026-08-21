@@ -37,7 +37,8 @@ class ParamSpec {
   final String? exampleFa;
 
   Future<String?> validate(Object? value, DatabaseExecutor txn) async {
-    if (required && (value == null || (value is String && value.trim().isEmpty))) {
+    if (required &&
+        (value == null || (value is String && value.trim().isEmpty))) {
       return '$labelFa را مشخص کنید';
     }
 
@@ -56,8 +57,10 @@ class ParamSpec {
           intVal = int.tryParse(value);
         }
         if (intVal == null) return '$labelFa باید یک عدد صحیح باشد';
-        if (min != null && intVal < min!) return '$labelFa باید حداقل $min باشد';
-        if (max != null && intVal > max!) return '$labelFa باید حداکثر $max باشد';
+        if (min != null && intVal < min!)
+          return '$labelFa باید حداقل $min باشد';
+        if (max != null && intVal > max!)
+          return '$labelFa باید حداکثر $max باشد';
         break;
 
       case ParamType.decimal:
@@ -70,8 +73,10 @@ class ParamSpec {
           doubleVal = double.tryParse(value);
         }
         if (doubleVal == null) return '$labelFa باید یک عدد اعشاری باشد';
-        if (min != null && doubleVal < min!) return '$labelFa باید حداقل $min باشد';
-        if (max != null && doubleVal > max!) return '$labelFa باید حداکثر $max باشد';
+        if (min != null && doubleVal < min!)
+          return '$labelFa باید حداقل $min باشد';
+        if (max != null && doubleVal > max!)
+          return '$labelFa باید حداکثر $max باشد';
         break;
 
       case ParamType.boolean:
@@ -97,7 +102,9 @@ class ParamSpec {
 
       case ParamType.timeOfDay:
         if (value is! String) return 'فرمت ساعت $labelFa معتبر نیست';
-        final match = RegExp(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$').hasMatch(value);
+        final match = RegExp(
+          r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+        ).hasMatch(value);
         if (!match) return 'ساعت $labelFa معتبر نیست (باید به فرمت HH:mm باشد)';
         break;
 

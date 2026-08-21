@@ -43,8 +43,12 @@ class MidDayReplanService {
     if (slipped.isEmpty) return false;
 
     // Check thresholds: slipped items count or total minutes
-    final totalSlippedMins = slipped.fold<int>(0, (sum, item) => sum + (item.durationMinutes ?? 30));
-    if (slipped.length >= minSlippedItems || totalSlippedMins >= minSlippedMinutes) {
+    final totalSlippedMins = slipped.fold<int>(
+      0,
+      (sum, item) => sum + (item.durationMinutes ?? 30),
+    );
+    if (slipped.length >= minSlippedItems ||
+        totalSlippedMins >= minSlippedMinutes) {
       return true;
     }
 
@@ -63,7 +67,10 @@ class MidDayReplanService {
   /// Records user rejection to trigger cooldown.
   Future<void> recordUserRejected() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('replan_last_reject_ts', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(
+      'replan_last_reject_ts',
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   /// Computes the replanned schedule using a local deterministic greedy packing algorithm.
@@ -73,10 +80,11 @@ class MidDayReplanService {
 
     // Fetch today's agenda
     final agenda = await DayAgendaService.instance.agendaForDate(now);
-    
+
     // Identify uncompleted items (both already slipped and upcoming today)
     final remainingItems = agenda.items.where((item) {
-      return item.completion == AgendaCompletion.pending && item.timeOfDay != null;
+      return item.completion == AgendaCompletion.pending &&
+          item.timeOfDay != null;
     }).toList();
 
     if (remainingItems.isEmpty) return null;
@@ -92,7 +100,13 @@ class MidDayReplanService {
     });
 
     // Determine current time boundary to start packing (round to nearest 15 mins ahead)
-    var packStart = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    var packStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+    );
     final minuteMod = packStart.minute % 15;
     if (minuteMod != 0) {
       packStart = packStart.add(Duration(minutes: 15 - minuteMod));
@@ -100,12 +114,25 @@ class MidDayReplanService {
 
     // Get bedtime setting
     final db = await DatabaseHelper.instance.database;
-    final settings = await db.query('app_settings', where: 'key = ?', whereArgs: ['sleep_target_bedtime'], limit: 1);
-    final bedtimeStr = settings.isNotEmpty ? settings.first['value']! as String : '23:30';
+    final settings = await db.query(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['sleep_target_bedtime'],
+      limit: 1,
+    );
+    final bedtimeStr = settings.isNotEmpty
+        ? settings.first['value']! as String
+        : '23:30';
     final parts = bedtimeStr.split(':');
     final bedtimeHour = int.tryParse(parts[0]) ?? 23;
     final bedtimeMin = parts.length > 1 ? (int.tryParse(parts[1]) ?? 30) : 30;
-    final bedtime = DateTime(now.year, now.month, now.day, bedtimeHour, bedtimeMin);
+    final bedtime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      bedtimeHour,
+      bedtimeMin,
+    );
 
     final replannedDraftItems = <DayPlanItemDraft>[];
     var currentPointer = packStart;
@@ -116,35 +143,43 @@ class MidDayReplanService {
 
       if (currentPointer.add(Duration(minutes: duration)).isAfter(bedtime)) {
         // Doesn't fit today anymore. Flag to move to tomorrow
-        final note = originalTime != null ? 'تغییر زمان از $originalTime (انتقال به فردا به دلیل کمبود وقت)' : 'انتقال به فردا';
-        replannedDraftItems.add(DayPlanItemDraft(
-          title: item.title,
-          targetModule: _mapDomainToModule(item.domain),
-          startKind: 'clock',
-          startTime: '09:00', // default tomorrow start time
-          durationMin: duration,
-          durationSource: 'llm',
-          recurrence: 'oneOff',
-          category: item.category.name,
-          note: note,
-        ));
+        final note = originalTime != null
+            ? 'تغییر زمان از $originalTime (انتقال به فردا به دلیل کمبود وقت)'
+            : 'انتقال به فردا';
+        replannedDraftItems.add(
+          DayPlanItemDraft(
+            title: item.title,
+            targetModule: _mapDomainToModule(item.domain),
+            startKind: 'clock',
+            startTime: '09:00', // default tomorrow start time
+            durationMin: duration,
+            durationSource: 'llm',
+            recurrence: 'oneOff',
+            category: item.category.name,
+            note: note,
+          ),
+        );
       } else {
         // Fits today. Calculate new start time
         final newStartStr = _formatTime(currentPointer);
-        final note = originalTime != null && originalTime != newStartStr ? 'جابه‌جا شد از $originalTime' : null;
+        final note = originalTime != null && originalTime != newStartStr
+            ? 'جابه‌جا شد از $originalTime'
+            : null;
 
-        replannedDraftItems.add(DayPlanItemDraft(
-          title: item.title,
-          targetModule: _mapDomainToModule(item.domain),
-          startKind: 'clock',
-          startTime: newStartStr,
-          durationMin: duration,
-          durationSource: 'llm',
-          recurrence: 'oneOff',
-          category: item.category.name,
-          note: note,
-          resolvedTime: newStartStr,
-        ));
+        replannedDraftItems.add(
+          DayPlanItemDraft(
+            title: item.title,
+            targetModule: _mapDomainToModule(item.domain),
+            startKind: 'clock',
+            startTime: newStartStr,
+            durationMin: duration,
+            durationSource: 'llm',
+            recurrence: 'oneOff',
+            category: item.category.name,
+            note: note,
+            resolvedTime: newStartStr,
+          ),
+        );
 
         currentPointer = currentPointer.add(Duration(minutes: duration));
       }
@@ -156,7 +191,8 @@ class MidDayReplanService {
       questions: [],
       suggestions: [
         DayPlanSuggestion(
-          text: 'برنامه باقی‌مانده روز شما بر اساس اولویت کارها مجدداً چیده شد.',
+          text:
+              'برنامه باقی‌مانده روز شما بر اساس اولویت کارها مجدداً چیده شد.',
           action: 'applyReplan',
         ),
       ],
@@ -174,14 +210,17 @@ class MidDayReplanService {
 
   List<AgendaItem> _getSlippedItems(List<AgendaItem> items, DateTime now) {
     return items.where((item) {
-      if (item.timeOfDay == null || item.completion != AgendaCompletion.pending) {
+      if (item.timeOfDay == null ||
+          item.completion != AgendaCompletion.pending) {
         return false;
       }
       final parts = item.timeOfDay!.split(':');
       final hour = int.tryParse(parts[0]) ?? 0;
       final min = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
       final startTime = DateTime(now.year, now.month, now.day, hour, min);
-      final endTime = startTime.add(Duration(minutes: item.durationMinutes ?? 30));
+      final endTime = startTime.add(
+        Duration(minutes: item.durationMinutes ?? 30),
+      );
 
       return endTime.isBefore(now);
     }).toList();
@@ -189,10 +228,14 @@ class MidDayReplanService {
 
   String _mapDomainToModule(AgendaDomain domain) {
     switch (domain) {
-      case AgendaDomain.routine: return 'routine';
-      case AgendaDomain.prayer: return 'worship';
-      case AgendaDomain.mustahab: return 'worship';
-      default: return 'task';
+      case AgendaDomain.routine:
+        return 'routine';
+      case AgendaDomain.prayer:
+        return 'worship';
+      case AgendaDomain.mustahab:
+        return 'worship';
+      default:
+        return 'task';
     }
   }
 

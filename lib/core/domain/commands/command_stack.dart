@@ -19,8 +19,10 @@ class CommandStack {
   bool get canUndo => _undoStack.isNotEmpty;
   bool get canRedo => _redoStack.isNotEmpty;
   int get length => _undoStack.length;
-  String? get lastUndoDescription => _undoStack.isNotEmpty ? _undoStack.last.description : null;
-  String? get lastRedoDescription => _redoStack.isNotEmpty ? _redoStack.last.description : null;
+  String? get lastUndoDescription =>
+      _undoStack.isNotEmpty ? _undoStack.last.description : null;
+  String? get lastRedoDescription =>
+      _redoStack.isNotEmpty ? _redoStack.last.description : null;
 
   void push(UndoableCommand command) {
     _undoStack.add(command);
@@ -41,7 +43,12 @@ class CommandStack {
       }
       return true;
     } catch (e, st) {
-      RitmoLog.error('CommandStack', 'Error undoing command "${command.description}"', e, st);
+      RitmoLog.error(
+        'CommandStack',
+        'Error undoing command "${command.description}"',
+        e,
+        st,
+      );
       return false;
     }
   }
@@ -57,7 +64,12 @@ class CommandStack {
       }
       return true;
     } catch (e, st) {
-      RitmoLog.error('CommandStack', 'Error redoing command "${command.description}"', e, st);
+      RitmoLog.error(
+        'CommandStack',
+        'Error redoing command "${command.description}"',
+        e,
+        st,
+      );
       return false;
     }
   }

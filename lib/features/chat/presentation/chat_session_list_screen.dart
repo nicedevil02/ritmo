@@ -8,7 +8,6 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
-
 class ChatSessionListScreen extends StatefulWidget {
   const ChatSessionListScreen({super.key});
 
@@ -137,84 +136,99 @@ class _ChatSessionListScreenState extends State<ChatSessionListScreen> {
             centerTitle: true,
           ),
           body: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Color(0xff5B8AF5)))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xff5B8AF5)),
+                )
               : _sessions.isEmpty
-                  ? Center(
-                      child: Text(
-                        'هنوز هیچ گفتگویی ایجاد نشده است.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textSecondary,
+              ? Center(
+                  child: Text(
+                    'هنوز هیچ گفتگویی ایجاد نشده است.',
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _sessions.length,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  itemBuilder: (context, index) {
+                    final session = _sessions[index];
+                    return Dismissible(
+                      key: ValueKey(session.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (_) => _dismissSession(session),
+                      background: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        alignment: Alignment.centerLeft,
+                        decoration: BoxDecoration(
+                          color: Colors.redAccent,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.trash,
+                          color: Colors.white,
+                          size: 20,
                         ),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: _sessions.length,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      itemBuilder: (context, index) {
-                        final session = _sessions[index];
-                        return Dismissible(
-                          key: ValueKey(session.id),
-                          direction: DismissDirection.endToStart,
-                          onDismissed: (_) => _dismissSession(session),
-                          background: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            alignment: Alignment.centerLeft,
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 20),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.05),
                           ),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                        ),
+                        child: Material(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : Colors.black.withValues(alpha: 0.03),
+                          borderRadius: BorderRadius.circular(16),
+                          clipBehavior: Clip.antiAlias,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            title: Text(
+                              session.summary ?? 'گفتگوی بدون عنوان',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: colors.textPrimary,
                               ),
                             ),
-                            child: Material(
-                              color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
-                              borderRadius: BorderRadius.circular(16),
-                              clipBehavior: Clip.antiAlias,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                title: Text(
-                                  session.summary ?? 'گفتگوی بدون عنوان',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: colors.textPrimary,
-                                  ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                '${session.messageCount} پیام · ${_formatRelativeTime(session.lastMessageAt)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colors.textSecondary,
                                 ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Text(
-                                    '${session.messageCount} پیام · ${_formatRelativeTime(session.lastMessageAt)}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                                trailing: Icon(
-                                  CupertinoIcons.chevron_left,
-                                  color: colors.textSecondary.withValues(alpha: 0.5),
-                                  size: 16,
-                                ),
-                                onTap: () {
-                                  Navigator.pop(context, session.id);
-                                },
                               ),
                             ),
+                            trailing: Icon(
+                              CupertinoIcons.chevron_left,
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.5,
+                              ),
+                              size: 16,
+                            ),
+                            onTap: () {
+                              Navigator.pop(context, session.id);
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
           floatingActionButton: FloatingActionButton(
             backgroundColor: const Color(0xff5B8AF5),
             foregroundColor: Colors.white,

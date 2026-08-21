@@ -10,10 +10,12 @@ class DayPlanTemplateManagementScreen extends StatefulWidget {
   const DayPlanTemplateManagementScreen({super.key});
 
   @override
-  State<DayPlanTemplateManagementScreen> createState() => _DayPlanTemplateManagementScreenState();
+  State<DayPlanTemplateManagementScreen> createState() =>
+      _DayPlanTemplateManagementScreenState();
 }
 
-class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagementScreen> {
+class _DayPlanTemplateManagementScreenState
+    extends State<DayPlanTemplateManagementScreen> {
   List<DayPlanTemplate> _templates = [];
   bool _isLoading = true;
 
@@ -55,9 +57,7 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
           content: TextField(
             controller: controller,
             textAlign: TextAlign.right,
-            decoration: const InputDecoration(
-              hintText: 'نام جدید قالب',
-            ),
+            decoration: const InputDecoration(hintText: 'نام جدید قالب'),
           ),
           actions: [
             TextButton(
@@ -69,7 +69,10 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                 final newName = controller.text.trim();
                 if (newName.isEmpty) return;
                 try {
-                  await DayPlanTemplateService.instance.renameTemplate(template.id, newName);
+                  await DayPlanTemplateService.instance.renameTemplate(
+                    template.id,
+                    newName,
+                  );
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
                   }
@@ -111,17 +114,24 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
               child: const Text('انصراف'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
               onPressed: () async {
                 try {
-                  await DayPlanTemplateService.instance.deleteTemplate(template.id);
+                  await DayPlanTemplateService.instance.deleteTemplate(
+                    template.id,
+                  );
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
                   }
                   if (mounted) {
                     await _loadTemplates();
                     if (mounted) {
-                      RitmoSnackbar.success(context, 'قالب با موفقیت حذف شد 🗑️');
+                      RitmoSnackbar.success(
+                        context,
+                        'قالب با موفقیت حذف شد 🗑️',
+                      );
                     }
                   }
                 } catch (e) {
@@ -183,8 +193,8 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                               item.targetModule == 'worship'
                                   ? CupertinoIcons.moon_stars
                                   : item.targetModule == 'sleep'
-                                      ? CupertinoIcons.bed_double
-                                      : CupertinoIcons.check_mark_circled,
+                                  ? CupertinoIcons.bed_double
+                                  : CupertinoIcons.check_mark_circled,
                               color: colors.goldAccent,
                             ),
                             title: Text(
@@ -195,7 +205,11 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
                               ),
                             ),
                             subtitle: Text(
-                              'زمان: ${item.startKind == 'clock' ? (item.startTime ?? '') : item.startKind == 'anchor' ? 'لنگر ${item.anchorEvent}' : 'بعد از فعالیت قبلی'} • مدت: ${item.durationMin ?? 30} دقیقه',
+                              'زمان: ${item.startKind == 'clock'
+                                  ? (item.startTime ?? '')
+                                  : item.startKind == 'anchor'
+                                  ? 'لنگر ${item.anchorEvent}'
+                                  : 'بعد از فعالیت قبلی'} • مدت: ${item.durationMin ?? 30} دقیقه',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: colors.textSecondary,
@@ -244,71 +258,88 @@ class _DayPlanTemplateManagementScreenState extends State<DayPlanTemplateManagem
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _templates.isEmpty
-                ? Center(
-                    child: Text(
-                      'هیچ قالبی ذخیره نشده است. 💾',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.textSecondary,
+            ? Center(
+                child: Text(
+                  'هیچ قالبی ذخیره نشده است. 💾',
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                itemCount: _templates.length,
+                itemBuilder: (context, index) {
+                  final template = _templates[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : colors.border.withValues(alpha: 0.3),
                       ),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    itemCount: _templates.length,
-                    itemBuilder: (context, index) {
-                      final template = _templates[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : colors.border.withValues(alpha: 0.3),
+                    child: Material(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        title: Text(
+                          template.name,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
                           ),
                         ),
-                        child: Material(
-                          color: colors.card,
-                          borderRadius: BorderRadius.circular(16),
-                          clipBehavior: Clip.antiAlias,
-                          child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          title: Text(
-                            template.name,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
+                        subtitle: Text(
+                          'شامل ${template.items.length} فعالیت • تعداد استفاده: ${template.useCount}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.visibility_outlined,
+                                color: colors.textSecondary,
+                                size: 20,
+                              ),
+                              onPressed: () => _viewTemplateItems(template),
                             ),
-                          ),
-                          subtitle: Text(
-                            'شامل ${template.items.length} فعالیت • تعداد استفاده: ${template.useCount}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textSecondary,
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                color: colors.textSecondary,
+                                size: 20,
+                              ),
+                              onPressed: () => _renameTemplate(template),
                             ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.visibility_outlined, color: colors.textSecondary, size: 20),
-                                onPressed: () => _viewTemplateItems(template),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 20,
                               ),
-                              IconButton(
-                                icon: Icon(Icons.edit_outlined, color: colors.textSecondary, size: 20),
-                                onPressed: () => _renameTemplate(template),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                                onPressed: () => _deleteTemplate(template),
-                              ),
-                            ],
-                          ),
+                              onPressed: () => _deleteTemplate(template),
+                            ),
+                          ],
                         ),
-                        ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }

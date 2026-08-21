@@ -64,14 +64,18 @@ class AssistantActionRegistry {
     final db = await DatabaseHelper.instance.database;
 
     // Rule 0.5 Check: Medical payload safety guard
-    final isMedicalPayload = action.payload['category']?.toString().toLowerCase() == 'medical' ||
-        action.payload.values.any((val) => val.toString().contains('medicine') ||
-            val.toString().contains('medical') ||
-            val.toString().contains('دارو') ||
-            val.toString().contains('دوز') ||
-            val.toString().contains('قرص') ||
-            val.toString().contains('نسخه'));
-            
+    final isMedicalPayload =
+        action.payload['category']?.toString().toLowerCase() == 'medical' ||
+        action.payload.values.any(
+          (val) =>
+              val.toString().contains('medicine') ||
+              val.toString().contains('medical') ||
+              val.toString().contains('دارو') ||
+              val.toString().contains('دوز') ||
+              val.toString().contains('قرص') ||
+              val.toString().contains('نسخه'),
+        );
+
     if (isMedicalPayload) {
       if (context.mounted) {
         _showMedicalBlockDialog(context);
@@ -85,7 +89,11 @@ class AssistantActionRegistry {
         action.type == AssistantActionType.deleteRoutine) {
       final routineId = action.payload['routineId']?.toString();
       if (routineId != null && routineId.isNotEmpty) {
-        final routinesList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routinesList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routinesList.isNotEmpty) {
           final category = routinesList.first['category']?.toString();
           if (category == 'medical') {
@@ -117,16 +125,22 @@ class AssistantActionRegistry {
         }
 
         final titleStr = action.payload['title']?.toString() ?? '';
-        final rawTime = action.payload['time'] ??
+        final rawTime =
+            action.payload['time'] ??
             action.payload['timeOfDay'] ??
             action.payload['scheduledTime'] ??
             action.payload['time_of_day'];
         final resolvedTimeStr = normalizeTimeStr(rawTime);
         final timeParts = resolvedTimeStr.split(':');
-        final prefilledHour = timeParts.isNotEmpty ? (int.tryParse(timeParts[0]) ?? 9) : 9;
-        final prefilledMin = timeParts.length > 1 ? (int.tryParse(timeParts[1]) ?? 0) : 0;
+        final prefilledHour = timeParts.isNotEmpty
+            ? (int.tryParse(timeParts[0]) ?? 9)
+            : 9;
+        final prefilledMin = timeParts.length > 1
+            ? (int.tryParse(timeParts[1]) ?? 0)
+            : 0;
 
-        final isWorshipItem = titleStr.contains('قرآن') ||
+        final isWorshipItem =
+            titleStr.contains('قرآن') ||
             titleStr.contains('نماز') ||
             titleStr.contains('زیارت') ||
             titleStr.contains('دعا') ||
@@ -138,48 +152,61 @@ class AssistantActionRegistry {
           'health': 'health',
           'study': 'study',
           'personal': 'personal',
-          'worship': 'worship'
+          'worship': 'worship',
         };
         final categoryStr = isWorshipItem
             ? 'worship'
-            : (categoryMap[action.payload['category']?.toString().toLowerCase()] ?? 'personal');
-        
+            : (categoryMap[action.payload['category']
+                      ?.toString()
+                      .toLowerCase()] ??
+                  'personal');
+
         final tempRoutine = {
           'id': '',
           'title': titleStr,
           'description': action.payload['description']?.toString() ?? '',
           'category': categoryStr,
-          'routineType': isWorshipItem ? 'timeBased' : (action.payload['routineType']?.toString() ?? 'ROUTINE'),
+          'routineType': isWorshipItem
+              ? 'timeBased'
+              : (action.payload['routineType']?.toString() ?? 'ROUTINE'),
           'timeOfDay': resolvedTimeStr,
           'scheduledTime': resolvedTimeStr,
           'time': resolvedTimeStr,
-          'recurrenceType': action.payload['recurrenceType']?.toString() ?? 'EVERY_DAY',
+          'recurrenceType':
+              action.payload['recurrenceType']?.toString() ?? 'EVERY_DAY',
           'intervalDays': action.payload['intervalDays'],
           'intervalHours': action.payload['intervalHours'],
           'weekdays': action.payload['weekdays'],
           'targetDurationMinutes': action.payload['durationMinutes'] ?? 15,
           if (isWorshipItem) ...{
             'worshipType': titleStr.contains('قرآن') ? 'QURAN' : 'MUSTAHAB',
-            'worshipDailyTarget': action.payload['dailyTarget'] ?? (titleStr.contains('قرآن') ? 4 : 1),
+            'worshipDailyTarget':
+                action.payload['dailyTarget'] ??
+                (titleStr.contains('قرآن') ? 4 : 1),
           },
         };
 
         if (context.mounted) {
-          unawaited(Navigator.push(
-            context,
-            PageRouteBuilder(
-              opaque: false,
-              barrierDismissible: true,
-              pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                routineToEdit: tempRoutine,
-                prefilledTime: TimeOfDay(hour: prefilledHour, minute: prefilledMin),
-                prefilledTitle: titleStr.isNotEmpty ? titleStr : null,
-                onSaved: () {
-                  onComplete();
-                },
+          unawaited(
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (context, _, _) => UniversalPlannerSheet(
+                  routineToEdit: tempRoutine,
+                  prefilledTime: TimeOfDay(
+                    hour: prefilledHour,
+                    minute: prefilledMin,
+                  ),
+                  prefilledTitle: titleStr.isNotEmpty ? titleStr : null,
+                  onSaved: () {
+                    onComplete();
+                  },
+                ),
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.createGoal:
@@ -187,7 +214,8 @@ class AssistantActionRegistry {
         final activeGoals = goalsMap.map(Goal.fromMap).toList();
         final routines = await db.query('routines', where: 'isArchived = 0');
 
-        final typeStr = action.payload['goalType']?.toString().toUpperCase() ?? 'DAILY';
+        final typeStr =
+            action.payload['goalType']?.toString().toUpperCase() ?? 'DAILY';
         final goalLevel = GoalLevel.fromString(typeStr);
 
         final tempGoal = Goal(
@@ -200,103 +228,125 @@ class AssistantActionRegistry {
         );
 
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => CreateGoalSheet(
-              activeGoals: activeGoals,
-              routines: routines.map((r) => RoutineRef.fromMap(r)).toList(),
-              goalToEdit: tempGoal,
-              onSaved: () {
-                Navigator.pop(context);
-                onComplete();
-              },
+          unawaited(
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (context) => CreateGoalSheet(
+                activeGoals: activeGoals,
+                routines: routines.map((r) => RoutineRef.fromMap(r)).toList(),
+                goalToEdit: tempGoal,
+                onSaved: () {
+                  Navigator.pop(context);
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.logSleep:
         final settings = await db.query('app_settings');
-        final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
+        final settingsMap = {
+          for (final s in settings) s['key']! as String: s['value']! as String,
+        };
         final target = SleepTarget(
           bedtime: settingsMap['sleep_target_bedtime'] ?? '23:30',
           wake: settingsMap['sleep_target_wake'] ?? '07:00',
-          durationMinutes: int.tryParse(settingsMap['sleep_target_duration_minutes'] ?? '450') ?? 450,
+          durationMinutes:
+              int.tryParse(
+                settingsMap['sleep_target_duration_minutes'] ?? '450',
+              ) ??
+              450,
         );
 
         if (context.mounted) {
-          unawaited(RitmoSheetScaffold.present(
-            context: context,
-            title: 'ثبت خواب دیشب',
-            builder: (ctx) => SleepLogSheet(
-              target: target,
-              onSaved: () {
-                onComplete();
-              },
+          unawaited(
+            RitmoSheetScaffold.present(
+              context: context,
+              title: 'ثبت خواب دیشب',
+              builder: (ctx) => SleepLogSheet(
+                target: target,
+                onSaved: () {
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.logEnergyMood:
         if (context.mounted) {
-          unawaited(RitmoSheetScaffold.present(
-            context: context,
-            title: 'الان چطورم؟',
-            builder: (ctx) => QuickLogSheet(
-              onSaved: () {
-                onComplete();
-              },
+          unawaited(
+            RitmoSheetScaffold.present(
+              context: context,
+              title: 'الان چطورم؟',
+              builder: (ctx) => QuickLogSheet(
+                onSaved: () {
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.addKonkurItem:
-        final subjectsMap = await db.query('konkur_subjects', where: 'isArchived = 0');
+        final subjectsMap = await db.query(
+          'konkur_subjects',
+          where: 'isArchived = 0',
+        );
         final subjects = subjectsMap.map(KonkurSubject.fromMap).toList();
 
         final topicsMap = await db.query('konkur_topics');
         final topics = topicsMap.map(KonkurTopic.fromMap).toList();
 
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => KonkurStudySheet(
-              subjects: subjects,
-              topics: topics,
-              onSaved: () {
-                Navigator.pop(context);
-                onComplete();
-              },
+          unawaited(
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (context) => KonkurStudySheet(
+                subjects: subjects,
+                topics: topics,
+                onSaved: () {
+                  Navigator.pop(context);
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.createCourse:
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => CreateCourseSheet(
-              initialValues: action.payload,
-              onCourseCreated: () {
-                Navigator.pop(context);
-                onComplete();
-              },
+          unawaited(
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (context) => CreateCourseSheet(
+                initialValues: action.payload,
+                onCourseCreated: () {
+                  Navigator.pop(context);
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.openPage:
-        var route = action.targetRoute ?? action.payload['targetRoute']?.toString();
+        var route =
+            action.targetRoute ?? action.payload['targetRoute']?.toString();
 
         // Fallback for cycle & period actions if route is missing
         final titleLower = action.title.toLowerCase();
         if (route == null || route.isEmpty) {
-          if (titleLower.contains('پریود') || titleLower.contains('چرخه') || titleLower.contains('قاعدگی')) {
+          if (titleLower.contains('پریود') ||
+              titleLower.contains('چرخه') ||
+              titleLower.contains('قاعدگی')) {
             route = '/cycle';
           }
         }
@@ -311,11 +361,15 @@ class AssistantActionRegistry {
         if (!context.mounted) return;
 
         // Fallback برای مسیرهای ناشناخته (رفتار قبلی)
-        if (titleLower.contains('پریود') || titleLower.contains('چرخه') || titleLower.contains('قاعدگی')) {
-          unawaited(Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CycleScreen()),
-          ).then((_) => onComplete()));
+        if (titleLower.contains('پریود') ||
+            titleLower.contains('چرخه') ||
+            titleLower.contains('قاعدگی')) {
+          unawaited(
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CycleScreen()),
+            ).then((_) => onComplete()),
+          );
         } else {
           Navigator.of(context).popUntil((route) => route.isFirst);
           onComplete();
@@ -324,24 +378,35 @@ class AssistantActionRegistry {
       case AssistantActionType.updateSetting:
         final key = action.payload['key']?.toString() ?? '';
         final value = action.payload['value']?.toString() ?? '';
-        final humanLabel = action.payload['humanLabel']?.toString() ?? kAiSettingsAllowlist[key]?.humanLabel ?? key;
+        final humanLabel =
+            action.payload['humanLabel']?.toString() ??
+            kAiSettingsAllowlist[key]?.humanLabel ??
+            key;
 
         if (!isSettingChangeAllowed(key)) {
           if (context.mounted) {
-            unawaited(showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('محدودیت دسترسی', textAlign: TextAlign.right),
-                content: const Text(
-                  'تغییر این تنظیمات به دلایل امنیتی از طریق دستیار هوشمند امکان‌پذیر نیست.',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(),
+            unawaited(
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text(
+                    'محدودیت دسترسی',
+                    textAlign: TextAlign.right,
+                  ),
+                  content: const Text(
+                    'تغییر این تنظیمات به دلایل امنیتی از طریق دستیار هوشمند امکان‌پذیر نیست.',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('تایید'),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('تایید')),
-                ],
               ),
-            ));
+            );
           }
           return;
         }
@@ -349,154 +414,223 @@ class AssistantActionRegistry {
         final normalized = validateAndNormalize(key, value);
         if (normalized == null) {
           if (context.mounted) {
-            unawaited(showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('مقدار نامعتبر', textAlign: TextAlign.right),
-                content: const Text(
-                  'مقدار پیشنهادی برای تنظیمات معتبر نیست.',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(),
+            unawaited(
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text(
+                    'مقدار نامعتبر',
+                    textAlign: TextAlign.right,
+                  ),
+                  content: const Text(
+                    'مقدار پیشنهادی برای تنظیمات معتبر نیست.',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('تایید'),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('تایید')),
-                ],
               ),
-            ));
+            );
           }
           return;
         }
 
-        final existing = await db.query('app_settings', where: 'key = ?', whereArgs: [key]);
-        final oldValue = existing.isNotEmpty ? existing.first['value']! as String : 'ثبت نشده';
+        final existing = await db.query(
+          'app_settings',
+          where: 'key = ?',
+          whereArgs: [key],
+        );
+        final oldValue = existing.isNotEmpty
+            ? existing.first['value']! as String
+            : 'ثبت نشده';
 
         if (context.mounted) {
-          unawaited(showDialog(
-            context: context,
-            builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('تایید تغییر تنظیمات', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'آیا مایلید تنظیم «$humanLabel» را از «$oldValue» به «$normalized» تغییر دهید؟',
-                  style: const TextStyle(fontSize: 13),
+          unawaited(
+            showDialog(
+              context: context,
+              builder: (context) => Directionality(
+                textDirection: TextDirection.rtl,
+                child: AlertDialog(
+                  title: const Text(
+                    'تایید تغییر تنظیمات',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: Text(
+                    'آیا مایلید تنظیم «$humanLabel» را از «$oldValue» به «$normalized» تغییر دهید؟',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'لغو',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final success = await applySettingChange(
+                          key,
+                          normalized,
+                        );
+                        if (success) {
+                          onComplete();
+                        }
+                      },
+                      child: const Text(
+                        'تایید',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final success = await applySettingChange(key, normalized);
-                      if (success) {
-                        onComplete();
-                      }
-                    },
-                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.completeRoutine:
         final routineId = action.payload['routineId']?.toString();
         if (routineId == null || routineId.isEmpty) return;
 
-        final routinesList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routinesList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routinesList.isEmpty) return;
 
         final title = routinesList.first['title']?.toString() ?? '';
 
         if (context.mounted) {
-          unawaited(showDialog(
-            context: context,
-            builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('تایید انجام روتین', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'آیا روتین «$title» را امروز انجام داده‌اید؟',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
+          unawaited(
+            showDialog(
+              context: context,
+              builder: (context) => Directionality(
+                textDirection: TextDirection.rtl,
+                child: AlertDialog(
+                  title: const Text(
+                    'تایید انجام روتین',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-                      
-                      await CompletionGateway.instance.submit(
-                        RoutineCompletion(routineId: routineId, dateStr: todayStr),
-                      );
+                  content: Text(
+                    'آیا روتین «$title» را امروز انجام داده‌اید؟',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'لغو',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final todayStr = DateTime.now()
+                            .toIso8601String()
+                            .substring(0, 10);
 
-                      RitmoEvents.notifyRoutineChanged();
-                      onComplete();
-                    },
-                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                        await CompletionGateway.instance.submit(
+                          RoutineCompletion(
+                            routineId: routineId,
+                            dateStr: todayStr,
+                          ),
+                        );
+
+                        RitmoEvents.notifyRoutineChanged();
+                        onComplete();
+                      },
+                      child: const Text(
+                        'تایید',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.skipRoutine:
         final routineId = action.payload['routineId']?.toString();
         if (routineId == null || routineId.isEmpty) return;
 
-        final routinesList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routinesList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routinesList.isEmpty) return;
 
         final title = routinesList.first['title']?.toString() ?? '';
 
         if (context.mounted) {
-          unawaited(showDialog(
-            context: context,
-            builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('تایید رد کردن روتین', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'آیا روتین «$title» را برای امروز رد می‌کنید؟',
-                  style: const TextStyle(fontSize: 13),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
+          unawaited(
+            showDialog(
+              context: context,
+              builder: (context) => Directionality(
+                textDirection: TextDirection.rtl,
+                child: AlertDialog(
+                  title: const Text(
+                    'تایید رد کردن روتین',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-                      
-                      await CompletionGateway.instance.submit(
-                        RoutineSkip(routineId: routineId, dateStr: todayStr),
-                      );
+                  content: Text(
+                    'آیا روتین «$title» را برای امروز رد می‌کنید؟',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'لغو',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final todayStr = DateTime.now()
+                            .toIso8601String()
+                            .substring(0, 10);
 
-                      RitmoEvents.notifyRoutineChanged();
-                      onComplete();
-                    },
-                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                        await CompletionGateway.instance.submit(
+                          RoutineSkip(routineId: routineId, dateStr: todayStr),
+                        );
+
+                        RitmoEvents.notifyRoutineChanged();
+                        onComplete();
+                      },
+                      child: const Text(
+                        'تایید',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.editRoutine:
         final routineId = action.payload['routineId']?.toString();
         if (routineId == null || routineId.isEmpty) return;
 
-        final routinesList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routinesList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routinesList.isEmpty) return;
 
         final routineData = Map<String, dynamic>.from(routinesList.first);
@@ -510,104 +644,136 @@ class AssistantActionRegistry {
           routineData['timeOfDay'] = action.payload['timeOfDay'];
         }
         if (action.payload['durationMinutes'] != null) {
-          routineData['targetDurationMinutes'] = (action.payload['durationMinutes'] as num).toInt();
+          routineData['targetDurationMinutes'] =
+              (action.payload['durationMinutes'] as num).toInt();
         }
 
         if (context.mounted) {
-          unawaited(Navigator.push(
-            context,
-            PageRouteBuilder(
-              opaque: false,
-              barrierDismissible: true,
-              pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                routineToEdit: routineData,
-                onSaved: () async {
-                  final auditId = '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                  await db.insert('assistant_audit_log', {
-                    'id': auditId,
-                    'actionType': 'editRoutine',
-                    'targetKey': routineId,
-                    'newValue': 'EDITED',
-                    'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                  });
-                  
-                  RitmoEvents.notifyRoutineChanged();
-                  onComplete();
-                },
+          unawaited(
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                opaque: false,
+                barrierDismissible: true,
+                pageBuilder: (context, _, _) => UniversalPlannerSheet(
+                  routineToEdit: routineData,
+                  onSaved: () async {
+                    final auditId =
+                        '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                    await db.insert('assistant_audit_log', {
+                      'id': auditId,
+                      'actionType': 'editRoutine',
+                      'targetKey': routineId,
+                      'newValue': 'EDITED',
+                      'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                    });
+
+                    RitmoEvents.notifyRoutineChanged();
+                    onComplete();
+                  },
+                ),
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.deleteRoutine:
         final routineId = action.payload['routineId']?.toString();
         if (routineId == null || routineId.isEmpty) return;
 
-        final routinesList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routinesList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routinesList.isEmpty) return;
 
         final title = routinesList.first['title']?.toString() ?? '';
 
         if (context.mounted) {
-          unawaited(showDialog(
-            context: context,
-            builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('تایید حذف روتین', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'آیا از حذف روتین «$title» اطمینان دارید؟ این عمل قابل بازگشت نیست.',
-                  style: const TextStyle(fontSize: 13),
+          unawaited(
+            showDialog(
+              context: context,
+              builder: (context) => Directionality(
+                textDirection: TextDirection.rtl,
+                child: AlertDialog(
+                  title: const Text(
+                    'تایید حذف روتین',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: Text(
+                    'آیا از حذف روتین «$title» اطمینان دارید؟ این عمل قابل بازگشت نیست.',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'لغو',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await db.update(
+                          'routines',
+                          {'isArchived': 1},
+                          where: 'id = ?',
+                          whereArgs: [routineId],
+                        );
+
+                        // Save to audit
+                        final auditId =
+                            '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                        await db.insert('assistant_audit_log', {
+                          'id': auditId,
+                          'actionType': 'deleteRoutine',
+                          'targetKey': routineId,
+                          'newValue': 'ARCHIVED',
+                          'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                        });
+
+                        RitmoEvents.notifyRoutineChanged();
+                        onComplete();
+                      },
+                      child: const Text(
+                        'تایید حذف',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await db.update(
-                        'routines',
-                        {'isArchived': 1},
-                        where: 'id = ?',
-                        whereArgs: [routineId],
-                      );
-
-                      // Save to audit
-                      final auditId = '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                      await db.insert('assistant_audit_log', {
-                        'id': auditId,
-                        'actionType': 'deleteRoutine',
-                        'targetKey': routineId,
-                        'newValue': 'ARCHIVED',
-                        'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                      });
-
-                      RitmoEvents.notifyRoutineChanged();
-                      onComplete();
-                    },
-                    child: const Text('تایید حذف', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.editGoal:
         final goalId = action.payload['goalId']?.toString();
         if (goalId == null || goalId.isEmpty) return;
 
-        final goalsList = await db.query('goals', where: 'id = ?', whereArgs: [goalId]);
+        final goalsList = await db.query(
+          'goals',
+          where: 'id = ?',
+          whereArgs: [goalId],
+        );
         if (goalsList.isEmpty) return;
 
         final goalData = Goal.fromMap(goalsList.first);
         final newTitle = action.payload['title']?.toString() ?? goalData.title;
-        final newDesc = action.payload['description']?.toString() ?? goalData.description ?? '';
+        final newDesc =
+            action.payload['description']?.toString() ??
+            goalData.description ??
+            '';
         var newLevel = goalData.goalType;
         if (action.payload['goalType'] != null) {
-          newLevel = GoalLevel.fromString(action.payload['goalType'].toString().toUpperCase());
+          newLevel = GoalLevel.fromString(
+            action.payload['goalType'].toString().toUpperCase(),
+          );
         }
 
         final updatedGoal = Goal(
@@ -624,133 +790,169 @@ class AssistantActionRegistry {
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         );
 
-        final activeGoalsList = await db.query('goals', where: "status = 'ACTIVE'");
+        final activeGoalsList = await db.query(
+          'goals',
+          where: "status = 'ACTIVE'",
+        );
         final activeGoals = activeGoalsList.map(Goal.fromMap).toList();
-        final routinesListForGoals = await db.query('routines', where: 'isArchived = 0');
+        final routinesListForGoals = await db.query(
+          'routines',
+          where: 'isArchived = 0',
+        );
 
         if (context.mounted) {
-          unawaited(showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            isScrollControlled: true,
-            builder: (context) => CreateGoalSheet(
-              activeGoals: activeGoals,
-              routines: routinesListForGoals.map((r) => RoutineRef.fromMap(r)).toList(),
-              goalToEdit: updatedGoal,
-              onSaved: () async {
-                Navigator.pop(context);
-                final auditId = '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                await db.insert('assistant_audit_log', {
-                  'id': auditId,
-                  'actionType': 'editGoal',
-                  'targetKey': goalId,
-                  'newValue': 'EDITED',
-                  'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                });
-                onComplete();
-              },
+          unawaited(
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.transparent,
+              isScrollControlled: true,
+              builder: (context) => CreateGoalSheet(
+                activeGoals: activeGoals,
+                routines: routinesListForGoals
+                    .map((r) => RoutineRef.fromMap(r))
+                    .toList(),
+                goalToEdit: updatedGoal,
+                onSaved: () async {
+                  Navigator.pop(context);
+                  final auditId =
+                      '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                  await db.insert('assistant_audit_log', {
+                    'id': auditId,
+                    'actionType': 'editGoal',
+                    'targetKey': goalId,
+                    'newValue': 'EDITED',
+                    'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                  });
+                  onComplete();
+                },
+              ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.completeGoalStep:
         final stepId = action.payload['stepId']?.toString();
         if (stepId == null || stepId.isEmpty) return;
 
-        final stepList = await db.query('goal_steps', where: 'id = ?', whereArgs: [stepId]);
+        final stepList = await db.query(
+          'goal_steps',
+          where: 'id = ?',
+          whereArgs: [stepId],
+        );
         if (stepList.isEmpty) return;
 
         final title = stepList.first['title']?.toString() ?? '';
 
         if (context.mounted) {
-          unawaited(showDialog(
-            context: context,
-            builder: (context) => Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('تایید تکمیل گام هدف', style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'آیا گام «$title» را تکمیل کرده‌اید؟',
-                  style: const TextStyle(fontSize: 13),
+          unawaited(
+            showDialog(
+              context: context,
+              builder: (context) => Directionality(
+                textDirection: TextDirection.rtl,
+                child: AlertDialog(
+                  title: const Text(
+                    'تایید تکمیل گام هدف',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  content: Text(
+                    'آیا گام «$title» را تکمیل کرده‌اید؟',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'لغو',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await db.update(
+                          'goal_steps',
+                          {'isCompleted': 1},
+                          where: 'id = ?',
+                          whereArgs: [stepId],
+                        );
+
+                        // Save to audit
+                        final auditId =
+                            '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+                        await db.insert('assistant_audit_log', {
+                          'id': auditId,
+                          'actionType': 'completeGoalStep',
+                          'targetKey': stepId,
+                          'newValue': 'COMPLETED',
+                          'appliedAt': DateTime.now().millisecondsSinceEpoch,
+                        });
+
+                        onComplete();
+                      },
+                      child: const Text(
+                        'تایید',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('لغو', style: TextStyle(color: Colors.grey)),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await db.update(
-                        'goal_steps',
-                        {'isCompleted': 1},
-                        where: 'id = ?',
-                        whereArgs: [stepId],
-                      );
-
-                      // Save to audit
-                      final auditId = '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-                      await db.insert('assistant_audit_log', {
-                        'id': auditId,
-                        'actionType': 'completeGoalStep',
-                        'targetKey': stepId,
-                        'newValue': 'COMPLETED',
-                        'appliedAt': DateTime.now().millisecondsSinceEpoch,
-                      });
-
-                      onComplete();
-                    },
-                    child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
               ),
             ),
-          ));
+          );
         }
 
       case AssistantActionType.createWorshipItem:
         final id = action.payload['id']?.toString();
         if (id != null && id.isNotEmpty) {
           final title = action.payload['title']?.toString() ?? 'عبادت جدید';
-          final practiceType = action.payload['practiceType']?.toString() ?? 'MUSTAHAB';
+          final practiceType =
+              action.payload['practiceType']?.toString() ?? 'MUSTAHAB';
           final subType = action.payload['subType']?.toString() ?? 'CUSTOM';
-          final isActive = action.payload['isActive'] == null ? 1 : (int.tryParse(action.payload['isActive'].toString()) ?? 1);
-          
-          final reminderEnabled = action.payload['reminderEnabled'] == null ? 0 : (int.tryParse(action.payload['reminderEnabled'].toString()) ?? 0);
-          final reminderTime = action.payload['reminderTime']?.toString() ?? '09:00';
-          final reminderFrequency = action.payload['reminderFrequency']?.toString() ?? 'DAILY';
-          final reminderDaysOfWeek = action.payload['reminderDaysOfWeek']?.toString();
-          
+          final isActive = action.payload['isActive'] == null
+              ? 1
+              : (int.tryParse(action.payload['isActive'].toString()) ?? 1);
+
+          final reminderEnabled = action.payload['reminderEnabled'] == null
+              ? 0
+              : (int.tryParse(action.payload['reminderEnabled'].toString()) ??
+                    0);
+          final reminderTime =
+              action.payload['reminderTime']?.toString() ?? '09:00';
+          final reminderFrequency =
+              action.payload['reminderFrequency']?.toString() ?? 'DAILY';
+          final reminderDaysOfWeek = action.payload['reminderDaysOfWeek']
+              ?.toString();
+
           final nowMs = DateTime.now().millisecondsSinceEpoch;
           final todayStr = DateTime.now().toIso8601String().substring(0, 10);
 
-          final existing = await db.query('worship_practices', where: 'id = ?', whereArgs: [id]);
-          
+          final existing = await db.query(
+            'worship_practices',
+            where: 'id = ?',
+            whereArgs: [id],
+          );
+
           if (existing.isEmpty) {
-            await db.insert(
-              'worship_practices',
-              {
-                'id': id,
-                'practiceType': practiceType,
-                'subType': subType,
-                'title': title,
-                'dailyTarget': 1,
-                'dailyDone': 0,
-                'reminderEnabled': reminderEnabled,
-                'reminderTime': reminderTime,
-                'reminderFrequency': reminderFrequency,
-                'reminderAnchor': 'NONE',
-                'reminderOffsetMinutes': 0,
-                'reminderDaysOfWeek': reminderDaysOfWeek,
-                'reminderTimes': jsonEncode([reminderTime]),
-                'isActive': isActive,
-                'notes': action.payload['notes']?.toString() ?? '',
-                'dailyDoneDate': todayStr,
-                'createdAt': nowMs,
-                'updatedAt': nowMs,
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            await db.insert('worship_practices', {
+              'id': id,
+              'practiceType': practiceType,
+              'subType': subType,
+              'title': title,
+              'dailyTarget': 1,
+              'dailyDone': 0,
+              'reminderEnabled': reminderEnabled,
+              'reminderTime': reminderTime,
+              'reminderFrequency': reminderFrequency,
+              'reminderAnchor': 'NONE',
+              'reminderOffsetMinutes': 0,
+              'reminderDaysOfWeek': reminderDaysOfWeek,
+              'reminderTimes': jsonEncode([reminderTime]),
+              'isActive': isActive,
+              'notes': action.payload['notes']?.toString() ?? '',
+              'dailyDoneDate': todayStr,
+              'createdAt': nowMs,
+              'updatedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           } else {
             await db.update(
               'worship_practices',
@@ -775,15 +977,17 @@ class AssistantActionRegistry {
               'برنامه عبادی "$title" با موفقیت تنظیم شد ✨',
             );
           }
-          
+
           // Notify app components of the change
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'worship_updated',
-            timestamp: DateTime.now(),
-            payload: {'practiceId': id},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'worship_updated',
+              timestamp: DateTime.now(),
+              payload: {'practiceId': id},
+            ),
+          );
           RitmoEvents.notifyRoutineChanged();
-          
+
           onComplete();
         }
 
@@ -791,10 +995,15 @@ class AssistantActionRegistry {
         final id = action.payload['id']?.toString();
         if (id == null || id.isEmpty) return;
 
-        final practices = await db.query('worship_practices', where: 'id = ?', whereArgs: [id]);
+        final practices = await db.query(
+          'worship_practices',
+          where: 'id = ?',
+          whereArgs: [id],
+        );
         if (practices.isNotEmpty) {
           final practice = practices.first;
-          final practiceType = practice['practiceType']?.toString() ?? 'MUSTAHAB';
+          final practiceType =
+              practice['practiceType']?.toString() ?? 'MUSTAHAB';
           final title = practice['title']?.toString() ?? 'برنامه عبادی';
 
           if (practiceType == 'MUSTAHAB') {
@@ -816,14 +1025,19 @@ class AssistantActionRegistry {
           }
 
           if (context.mounted) {
-            RitmoToast.show(context, 'برنامه عبادی "$title" با موفقیت حذف شد 🗑️');
+            RitmoToast.show(
+              context,
+              'برنامه عبادی "$title" با موفقیت حذف شد 🗑️',
+            );
           }
 
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'worship_updated',
-            timestamp: DateTime.now(),
-            payload: {'practiceId': id},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'worship_updated',
+              timestamp: DateTime.now(),
+              payload: {'practiceId': id},
+            ),
+          );
           RitmoEvents.notifyRoutineChanged();
           onComplete();
         } else {
@@ -832,12 +1046,14 @@ class AssistantActionRegistry {
 
       case AssistantActionType.logReflection:
         if (context.mounted) {
-          unawaited(DailyReflectionSheet.show(
-            context: context,
-            onSaved: () {
-              onComplete();
-            },
-          ));
+          unawaited(
+            DailyReflectionSheet.show(
+              context: context,
+              onSaved: () {
+                onComplete();
+              },
+            ),
+          );
         }
 
       case AssistantActionType.rescheduleReminder:
@@ -846,13 +1062,18 @@ class AssistantActionRegistry {
       case AssistantActionType.swapExercise:
         final oldExId = action.payload['oldExerciseId']?.toString();
         final newExId = action.payload['newExerciseId']?.toString();
-        if (oldExId == null || newExId == null || oldExId.isEmpty || newExId.isEmpty) {
+        if (oldExId == null ||
+            newExId == null ||
+            oldExId.isEmpty ||
+            newExId.isEmpty) {
           onComplete();
           return;
         }
 
         // Get today's latest workout log (within 12 hours)
-        final twelveHoursAgo = DateTime.now().subtract(const Duration(hours: 12)).millisecondsSinceEpoch;
+        final twelveHoursAgo = DateTime.now()
+            .subtract(const Duration(hours: 12))
+            .millisecondsSinceEpoch;
         final logs = await db.query(
           'workout_logs',
           where: 'loggedAt >= ?',
@@ -887,12 +1108,21 @@ class AssistantActionRegistry {
           // If we updated supplementary sports, log version history
           if (ssRowsAffected > 0) {
             // Retrieve new exercise name
-            final newExRows = await db.query('ss_exercise', where: 'id = ?', whereArgs: [newExId], limit: 1);
-            final newName = newExRows.isNotEmpty ? newExRows.first['name']! as String : 'حرکت جدید';
+            final newExRows = await db.query(
+              'ss_exercise',
+              where: 'id = ?',
+              whereArgs: [newExId],
+              limit: 1,
+            );
+            final newName = newExRows.isNotEmpty
+                ? newExRows.first['name']! as String
+                : 'حرکت جدید';
 
             final now = DateTime.now().millisecondsSinceEpoch;
             final currentPlans = await db.query('ss_workout_plan');
-            final currentCrossRefs = await db.query('ss_workout_exercise_crossref');
+            final currentCrossRefs = await db.query(
+              'ss_workout_exercise_crossref',
+            );
             final serializedData = {
               'plans': currentPlans,
               'crossrefs': currentCrossRefs,
@@ -900,27 +1130,43 @@ class AssistantActionRegistry {
             await db.insert('ss_plan_version_history', {
               'id': 'snap_$now',
               'serializedPlan': jsonEncode(serializedData),
-              'changeReason': 'جایگزینی حرکت به $newName از طریق دستیار صوتی/متنی',
+              'changeReason':
+                  'جایگزینی حرکت به $newName از طریق دستیار صوتی/متنی',
               'createdAt': now,
             });
 
             if (context.mounted) {
-              RitmoToast.show(context, 'حرکت ورزشی با موفقیت به "$newName" تعویض شد 🔄');
+              RitmoToast.show(
+                context,
+                'حرکت ورزشی با موفقیت به "$newName" تعویض شد 🔄',
+              );
             }
           } else {
             // Updated legacy sports
-            final newExRows = await db.query('exercises_library', where: 'id = ?', whereArgs: [newExId], limit: 1);
-            final newName = newExRows.isNotEmpty ? newExRows.first['name']! as String : 'حرکت جدید';
+            final newExRows = await db.query(
+              'exercises_library',
+              where: 'id = ?',
+              whereArgs: [newExId],
+              limit: 1,
+            );
+            final newName = newExRows.isNotEmpty
+                ? newExRows.first['name']! as String
+                : 'حرکت جدید';
             if (context.mounted) {
-              RitmoToast.show(context, 'حرکت ورزشی با موفقیت به "$newName" تعویض شد 🔄');
+              RitmoToast.show(
+                context,
+                'حرکت ورزشی با موفقیت به "$newName" تعویض شد 🔄',
+              );
             }
           }
 
-          RitmoEventBus().fire(RitmoEvent(
-            type: 'sports_updated',
-            timestamp: DateTime.now(),
-            payload: {'action': 'swap', 'newExerciseId': newExId},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: 'sports_updated',
+              timestamp: DateTime.now(),
+              payload: {'action': 'swap', 'newExerciseId': newExId},
+            ),
+          );
         } else {
           // 0 rows affected -> toast false success warning honestly
           if (context.mounted) {
@@ -934,9 +1180,15 @@ class AssistantActionRegistry {
         final intensity = action.payload['intensity']?.toString();
         final crossRefId = action.payload['crossRefId']?.toString();
         final exerciseId = action.payload['exerciseId']?.toString();
-        final newWeight = action.payload['newWeight'] != null ? double.tryParse(action.payload['newWeight'].toString()) : null;
-        final newReps = action.payload['newReps'] != null ? int.tryParse(action.payload['newReps'].toString()) : null;
-        final newSets = action.payload['newSets'] != null ? int.tryParse(action.payload['newSets'].toString()) : null;
+        final newWeight = action.payload['newWeight'] != null
+            ? double.tryParse(action.payload['newWeight'].toString())
+            : null;
+        final newReps = action.payload['newReps'] != null
+            ? int.tryParse(action.payload['newReps'].toString())
+            : null;
+        final newSets = action.payload['newSets'] != null
+            ? int.tryParse(action.payload['newSets'].toString())
+            : null;
         final nowMs = DateTime.now().millisecondsSinceEpoch;
 
         var ssRowsAffected = 0;
@@ -980,9 +1232,11 @@ class AssistantActionRegistry {
               updateValues['goal'] = 'strength';
             } else if (intensity.toLowerCase().contains('muscle')) {
               updateValues['goal'] = 'muscleGain';
-            } else if (intensity.toLowerCase().contains('fat') || intensity.toLowerCase().contains('cardio')) {
+            } else if (intensity.toLowerCase().contains('fat') ||
+                intensity.toLowerCase().contains('cardio')) {
               updateValues['goal'] = 'fatLoss';
-            } else if (intensity.toLowerCase().contains('recomp') || intensity.toLowerCase().contains('body')) {
+            } else if (intensity.toLowerCase().contains('recomp') ||
+                intensity.toLowerCase().contains('body')) {
               updateValues['goal'] = 'bodyRecomposition';
             } else if (intensity == 'HARD') {
               updateValues['experienceLevel'] = 'advanced';
@@ -1012,7 +1266,9 @@ class AssistantActionRegistry {
             'updatedAt': nowMs,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-          final twelveHoursAgo = DateTime.now().subtract(const Duration(hours: 12)).millisecondsSinceEpoch;
+          final twelveHoursAgo = DateTime.now()
+              .subtract(const Duration(hours: 12))
+              .millisecondsSinceEpoch;
           final logs = await db.query(
             'workout_logs',
             where: 'loggedAt >= ?',
@@ -1042,7 +1298,9 @@ class AssistantActionRegistry {
         if (ssRowsAffected > 0) {
           // Log version history
           final currentPlans = await db.query('ss_workout_plan');
-          final currentCrossRefs = await db.query('ss_workout_exercise_crossref');
+          final currentCrossRefs = await db.query(
+            'ss_workout_exercise_crossref',
+          );
           final serializedData = {
             'plans': currentPlans,
             'crossrefs': currentCrossRefs,
@@ -1050,27 +1308,38 @@ class AssistantActionRegistry {
           await db.insert('ss_plan_version_history', {
             'id': 'snap_$nowMs',
             'serializedPlan': jsonEncode(serializedData),
-            'changeReason': 'تغییر تنظیمات شدت/مدت جلسه تمرینی از طریق دستیار صوتی/متنی',
+            'changeReason':
+                'تغییر تنظیمات شدت/مدت جلسه تمرینی از طریق دستیار صوتی/متنی',
             'createdAt': nowMs,
           });
 
           if (context.mounted) {
-            RitmoToast.show(context, 'تنظیمات تمرین با موفقیت به‌روزرسانی شد ⚙️');
+            RitmoToast.show(
+              context,
+              'تنظیمات تمرین با موفقیت به‌روزرسانی شد ⚙️',
+            );
           }
         } else {
           if (context.mounted) {
-            RitmoToast.show(context, 'تنظیمات شدت و زمان تمرین با موفقیت به روز شد 🔋');
+            RitmoToast.show(
+              context,
+              'تنظیمات شدت و زمان تمرین با موفقیت به روز شد 🔋',
+            );
           }
         }
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'sports_updated',
-          timestamp: DateTime.now(),
-          payload: {'action': 'adjust_intensity'},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'sports_updated',
+            timestamp: DateTime.now(),
+            payload: {'action': 'adjust_intensity'},
+          ),
+        );
         onComplete();
 
       case AssistantActionType.setQuietMode:
-        final onVal = action.payload['on'] == true || action.payload['on']?.toString() == 'true';
+        final onVal =
+            action.payload['on'] == true ||
+            action.payload['on']?.toString() == 'true';
         await db.update(
           'ss_user_profile',
           {'neighborFriendly': onVal ? 1 : 0},
@@ -1078,21 +1347,33 @@ class AssistantActionRegistry {
           whereArgs: ['default'],
         );
         if (context.mounted) {
-          RitmoToast.show(context, onVal ? 'حالت بی‌صدا (آپارتمانی) فعال شد 🔇' : 'حالت بی‌صدا غیرفعال شد 🔊');
+          RitmoToast.show(
+            context,
+            onVal
+                ? 'حالت بی‌صدا (آپارتمانی) فعال شد 🔇'
+                : 'حالت بی‌صدا غیرفعال شد 🔊',
+          );
         }
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'sports_updated',
-          timestamp: DateTime.now(),
-          payload: {'action': 'set_quiet_mode', 'enabled': onVal},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'sports_updated',
+            timestamp: DateTime.now(),
+            payload: {'action': 'set_quiet_mode', 'enabled': onVal},
+          ),
+        );
         onComplete();
 
       case AssistantActionType.changeSetProgram:
         final code = action.payload['set_code']?.toString() ?? '';
         final updateValues = <String, dynamic>{};
-        if (code.toLowerCase() == 'beginner' || code.toLowerCase() == 'intermediate' || code.toLowerCase() == 'advanced') {
+        if (code.toLowerCase() == 'beginner' ||
+            code.toLowerCase() == 'intermediate' ||
+            code.toLowerCase() == 'advanced') {
           updateValues['experienceLevel'] = code;
-        } else if (code.toLowerCase() == 'musclegain' || code.toLowerCase() == 'fatloss' || code.toLowerCase() == 'bodyrecomposition' || code.toLowerCase() == 'strength') {
+        } else if (code.toLowerCase() == 'musclegain' ||
+            code.toLowerCase() == 'fatloss' ||
+            code.toLowerCase() == 'bodyrecomposition' ||
+            code.toLowerCase() == 'strength') {
           updateValues['goal'] = code;
         }
         if (updateValues.isNotEmpty) {
@@ -1103,47 +1384,79 @@ class AssistantActionRegistry {
             whereArgs: ['default'],
           );
           if (context.mounted) {
-            RitmoToast.show(context, 'برنامه تمرینی شما با موفقیت تغییر یافت 🔋');
+            RitmoToast.show(
+              context,
+              'برنامه تمرینی شما با موفقیت تغییر یافت 🔋',
+            );
           }
         }
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'sports_updated',
-          timestamp: DateTime.now(),
-          payload: {'action': 'change_set_program', 'code': code},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'sports_updated',
+            timestamp: DateTime.now(),
+            payload: {'action': 'change_set_program', 'code': code},
+          ),
+        );
         onComplete();
 
       case AssistantActionType.rescheduleDay:
         final fromDay = int.tryParse(action.payload['from']?.toString() ?? '');
         final toDay = int.tryParse(action.payload['to']?.toString() ?? '');
         if (fromDay != null && toDay != null) {
-          final fromPlan = await db.query('ss_workout_plan', where: 'dayNumber = ?', whereArgs: [fromDay]);
-          final toPlan = await db.query('ss_workout_plan', where: 'dayNumber = ?', whereArgs: [toDay]);
+          final fromPlan = await db.query(
+            'ss_workout_plan',
+            where: 'dayNumber = ?',
+            whereArgs: [fromDay],
+          );
+          final toPlan = await db.query(
+            'ss_workout_plan',
+            where: 'dayNumber = ?',
+            whereArgs: [toDay],
+          );
           if (fromPlan.isNotEmpty && toPlan.isNotEmpty) {
             final fromRest = fromPlan.first['isRestDay']! as int;
             final toRest = toPlan.first['isRestDay']! as int;
-            
-            await db.update('ss_workout_plan', {'isRestDay': toRest}, where: 'dayNumber = ?', whereArgs: [fromDay]);
-            await db.update('ss_workout_plan', {'isRestDay': fromRest}, where: 'dayNumber = ?', whereArgs: [toDay]);
-            
+
+            await db.update(
+              'ss_workout_plan',
+              {'isRestDay': toRest},
+              where: 'dayNumber = ?',
+              whereArgs: [fromDay],
+            );
+            await db.update(
+              'ss_workout_plan',
+              {'isRestDay': fromRest},
+              where: 'dayNumber = ?',
+              whereArgs: [toDay],
+            );
+
             if (context.mounted) {
-              RitmoToast.show(context, 'برنامه روز $fromDay و روز $toDay با موفقیت جابجا شد 🗓');
+              RitmoToast.show(
+                context,
+                'برنامه روز $fromDay و روز $toDay با موفقیت جابجا شد 🗓',
+              );
             }
           }
         }
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'sports_updated',
-          timestamp: DateTime.now(),
-          payload: {'action': 'reschedule_day', 'from': fromDay, 'to': toDay},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'sports_updated',
+            timestamp: DateTime.now(),
+            payload: {'action': 'reschedule_day', 'from': fromDay, 'to': toDay},
+          ),
+        );
         onComplete();
 
       case AssistantActionType.applyDayPlan:
         final items = action.payload['items'] as List? ?? [];
-        final groupId = action.payload['groupId']?.toString() ?? 'day_plan_${DateTime.now().millisecondsSinceEpoch}';
+        final groupId =
+            action.payload['groupId']?.toString() ??
+            'day_plan_${DateTime.now().millisecondsSinceEpoch}';
 
         try {
-          final draft = DayPlanDraft.fromJson(Map<String, dynamic>.from(action.payload));
+          final draft = DayPlanDraft.fromJson(
+            Map<String, dynamic>.from(action.payload),
+          );
           await db.transaction((txn) async {
             await DayPlanApplyExecutor.applyWithTxn(
               txn: txn,
@@ -1174,7 +1487,9 @@ class AssistantActionRegistry {
             );
           }
         } catch (e) {
-          debugPrint('[AssistantActionRegistry] applyDayPlan transaction failed: $e');
+          debugPrint(
+            '[AssistantActionRegistry] applyDayPlan transaction failed: $e',
+          );
           if (context.mounted) {
             RitmoToast.show(context, 'خطا در ثبت برنامه روزانه ❌');
           }
@@ -1183,8 +1498,15 @@ class AssistantActionRegistry {
     }
   }
 
-  static void _showSaveTemplateDialog(BuildContext context, List<dynamic> rawItems) {
-    final items = rawItems.map((e) => DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+  static void _showSaveTemplateDialog(
+    BuildContext context,
+    List<dynamic> rawItems,
+  ) {
+    final items = rawItems
+        .map(
+          (e) => DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
     final nameController = TextEditingController();
     showDialog(
       context: context,
@@ -1247,7 +1569,10 @@ class AssistantActionRegistry {
 
     if (lastCommits.isEmpty) {
       if (context.mounted) {
-        RitmoToast.show(context, 'برنامه قابل‌بازگردانی یافت نشد یا زمان آن گذشته است ⏳');
+        RitmoToast.show(
+          context,
+          'برنامه قابل‌بازگردانی یافت نشد یا زمان آن گذشته است ⏳',
+        );
       }
       return;
     }
@@ -1273,7 +1598,9 @@ class AssistantActionRegistry {
 
     for (final c in commitsToUndo) {
       commitIdsToDelete.add(c['id'] as String);
-      final createdItemIds = jsonDecode(c['createdItemIds'] as String? ?? '{}') as Map<String, dynamic>;
+      final createdItemIds =
+          jsonDecode(c['createdItemIds'] as String? ?? '{}')
+              as Map<String, dynamic>;
       routines.addAll(List<String>.from(createdItemIds['routines'] ?? []));
       worship.addAll(List<String>.from(createdItemIds['worship'] ?? []));
     }
@@ -1286,19 +1613,29 @@ class AssistantActionRegistry {
       }
       await db.transaction((txn) async {
         for (final id in worship) {
-          await txn.delete('worship_practices', where: 'id = ?', whereArgs: [id]);
+          await txn.delete(
+            'worship_practices',
+            where: 'id = ?',
+            whereArgs: [id],
+          );
         }
         for (final cid in commitIdsToDelete) {
-          await txn.delete('day_plan_commits', where: 'id = ?', whereArgs: [cid]);
+          await txn.delete(
+            'day_plan_commits',
+            where: 'id = ?',
+            whereArgs: [cid],
+          );
         }
       });
 
       for (final id in routines) {
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'RoutineDeleted',
-          timestamp: DateTime.now(),
-          payload: {'routineId': id},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'RoutineDeleted',
+            timestamp: DateTime.now(),
+            payload: {'routineId': id},
+          ),
+        );
       }
 
       RitmoEvents.notifyRoutineChanged();
@@ -1346,14 +1683,16 @@ class DayPlanApplyExecutor {
       final recurrence = item.recurrence.toLowerCase();
 
       if (targetModule == 'worship') {
-        final existing = await txn.query('worship_practices', 
-          where: 'title = ? AND isActive = 1', 
-          whereArgs: [title]);
+        final existing = await txn.query(
+          'worship_practices',
+          where: 'title = ? AND isActive = 1',
+          whereArgs: [title],
+        );
 
         if (existing.isEmpty) {
           final id = 'worship_${nowMs}_${math.Random().nextInt(99999)}';
-          final practiceType = item.category.toUpperCase() == 'DHIKR' 
-              ? 'DHIKR' 
+          final practiceType = item.category.toUpperCase() == 'DHIKR'
+              ? 'DHIKR'
               : (item.category.toUpperCase() == 'QURAN' ? 'QURAN' : 'MUSTAHAB');
           await txn.insert('worship_practices', {
             'id': id,
@@ -1365,7 +1704,9 @@ class DayPlanApplyExecutor {
             'reminderEnabled': 1,
             'reminderTime': item.resolvedTime ?? '09:00',
             'reminderFrequency': 'DAILY',
-            'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
+            'reminderAnchor': item.startKind == 'anchor'
+                ? item.anchorEvent
+                : 'NONE',
             'reminderOffsetMinutes': item.offsetMin,
             'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
             'isActive': 1,
@@ -1378,13 +1719,20 @@ class DayPlanApplyExecutor {
           undoTokens.add('worship:$id');
         } else {
           final existingId = existing.first['id']! as String;
-          await txn.update('worship_practices', {
-            'reminderTime': item.resolvedTime ?? '09:00',
-            'reminderAnchor': item.startKind == 'anchor' ? item.anchorEvent : 'NONE',
-            'reminderOffsetMinutes': item.offsetMin,
-            'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
-            'updatedAt': nowMs,
-          }, where: 'id = ?', whereArgs: [existingId]);
+          await txn.update(
+            'worship_practices',
+            {
+              'reminderTime': item.resolvedTime ?? '09:00',
+              'reminderAnchor': item.startKind == 'anchor'
+                  ? item.anchorEvent
+                  : 'NONE',
+              'reminderOffsetMinutes': item.offsetMin,
+              'reminderTimes': jsonEncode([item.resolvedTime ?? '09:00']),
+              'updatedAt': nowMs,
+            },
+            where: 'id = ?',
+            whereArgs: [existingId],
+          );
           updatedWorshipIds.add(existingId);
         }
       } else if (targetModule == 'sleep' || title.contains('بیدار')) {
@@ -1420,9 +1768,10 @@ class DayPlanApplyExecutor {
           'health': 'health',
           'study': 'study',
           'personal': 'personal',
-          'worship': 'worship'
+          'worship': 'worship',
         };
-        final categoryStr = categoryMap[item.category.toLowerCase()] ?? 'personal';
+        final categoryStr =
+            categoryMap[item.category.toLowerCase()] ?? 'personal';
 
         final routineData = {
           'id': routineId,
@@ -1469,7 +1818,11 @@ class DayPlanApplyExecutor {
           'startDate': DateTime.tryParse(planDate) ?? DateTime.now(),
           'reminderTimes': [item.resolvedTime ?? '08:00'],
         });
-        await RoutineOccurrenceGenerator.generateFutureOccurrences(txn, routineId, rule);
+        await RoutineOccurrenceGenerator.generateFutureOccurrences(
+          txn,
+          routineId,
+          rule,
+        );
         createdRoutineIds.add(routineId);
         undoTokens.add('routine:$routineId');
       }
@@ -1496,10 +1849,7 @@ class DayPlanApplyExecutor {
     };
     await txn.insert('day_plan_commits', commitData);
 
-    return DayPlanApplyOutcome(
-      commitIds: [commitId],
-      undoTokens: undoTokens,
-    );
+    return DayPlanApplyOutcome(commitIds: [commitId], undoTokens: undoTokens);
   }
 }
 
@@ -1507,7 +1857,9 @@ class AssistantUndoBridge {
   static Future<void> undoDayPlanGroup(dynamic ctxOrDb, String groupId) async {
     final DatabaseExecutor txn = (ctxOrDb is AgentCommandContext)
         ? ctxOrDb.txn
-        : (ctxOrDb is DatabaseExecutor ? ctxOrDb : await DatabaseHelper.instance.database);
+        : (ctxOrDb is DatabaseExecutor
+              ? ctxOrDb
+              : await DatabaseHelper.instance.database);
 
     final commits = await txn.query(
       'day_plan_commits',
@@ -1521,7 +1873,9 @@ class AssistantUndoBridge {
 
     for (final c in commits) {
       commitIdsToDelete.add(c['id'] as String);
-      final createdItemIds = jsonDecode(c['createdItemIds'] as String? ?? '{}') as Map<String, dynamic>;
+      final createdItemIds =
+          jsonDecode(c['createdItemIds'] as String? ?? '{}')
+              as Map<String, dynamic>;
       routines.addAll(List<String>.from(createdItemIds['routines'] ?? []));
       worship.addAll(List<String>.from(createdItemIds['worship'] ?? []));
       tasks.addAll(List<String>.from(createdItemIds['tasks'] ?? []));
@@ -1543,11 +1897,13 @@ class AssistantUndoBridge {
     }
 
     for (final id in routines) {
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'RoutineDeleted',
-        timestamp: DateTime.now(),
-        payload: {'routineId': id},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'RoutineDeleted',
+          timestamp: DateTime.now(),
+          payload: {'routineId': id},
+        ),
+      );
     }
     RitmoEvents.notifyRoutineChanged();
   }

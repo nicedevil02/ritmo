@@ -4,10 +4,15 @@ import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PersonaGate {
-  static Future<Set<DataDomain>> readableDomains(String personaId, [DatabaseExecutor? executor]) async {
+  static Future<Set<DataDomain>> readableDomains(
+    String personaId, [
+    DatabaseExecutor? executor,
+  ]) async {
     final db = executor ?? await DatabaseHelper.instance.database;
     final settings = await db.query('app_settings');
-    final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
+    final settingsMap = {
+      for (final s in settings) s['key']! as String: s['value']! as String,
+    };
 
     bool isEnabled(String key, bool defaultValue) {
       final val = settingsMap[key];
@@ -21,11 +26,15 @@ class PersonaGate {
     final readable = <DataDomain>{};
 
     // cycles
-    if (personaId == 'cycle' && isEnabled('module_cycle_enabled', false) && isEnabled('ai_domain_cycle_read', false)) {
+    if (personaId == 'cycle' &&
+        isEnabled('module_cycle_enabled', false) &&
+        isEnabled('ai_domain_cycle_read', false)) {
       readable.add(DataDomain.cycle);
     }
     // medical
-    if (personaId == 'health' && isEnabled('module_medicine_enabled', false) && isEnabled('ai_domain_medical_read', false)) {
+    if (personaId == 'health' &&
+        isEnabled('module_medicine_enabled', false) &&
+        isEnabled('ai_domain_medical_read', false)) {
       readable.add(DataDomain.medical);
     }
     // reflection
@@ -38,7 +47,8 @@ class PersonaGate {
 
     // General domains allowed for appropriate personas
     // Routines
-    if (isEnabled('module_today_routines', true) || isEnabled('module_progressive_habits_enabled', false)) {
+    if (isEnabled('module_today_routines', true) ||
+        isEnabled('module_progressive_habits_enabled', false)) {
       readable.add(DataDomain.routines);
     }
     // Goals
@@ -77,10 +87,16 @@ class PersonaGate {
     return readable.intersection(persona?.reads ?? const <DataDomain>{});
   }
 
-  static Future<bool> canWriteDomain(String personaId, Set<DataDomain> touches, [DatabaseExecutor? executor]) async {
+  static Future<bool> canWriteDomain(
+    String personaId,
+    Set<DataDomain> touches, [
+    DatabaseExecutor? executor,
+  ]) async {
     final db = executor ?? await DatabaseHelper.instance.database;
     final settings = await db.query('app_settings');
-    final settingsMap = {for (final s in settings) s['key']! as String: s['value']! as String};
+    final settingsMap = {
+      for (final s in settings) s['key']! as String: s['value']! as String,
+    };
 
     bool isEnabled(String key, bool defaultValue) {
       final val = settingsMap[key];
@@ -94,19 +110,36 @@ class PersonaGate {
         return false;
       }
       if (domain == DataDomain.cycle) {
-        if (!isEnabled('module_cycle_enabled', false) || !isEnabled('ai_domain_cycle_write', false)) {
+        if (!isEnabled('module_cycle_enabled', false) ||
+            !isEnabled('ai_domain_cycle_write', false)) {
           return false;
         }
       }
       // Other domains check if their modules are enabled
-      if (domain == DataDomain.routines && !isEnabled('module_today_routines', true)) return false;
-      if (domain == DataDomain.goals && !isEnabled('module_goals_enabled', false)) return false;
-      if (domain == DataDomain.worship && !isEnabled('module_religion_enabled', false)) return false;
-      if (domain == DataDomain.konkur && !isEnabled('module_study_enabled', false)) return false;
-      if (domain == DataDomain.courses && !isEnabled('module_courses_enabled', false)) return false;
-      if (domain == DataDomain.sports && !isEnabled('module_sports_enabled', false)) return false;
-      if (domain == DataDomain.sleep && !isEnabled('module_sleep_enabled', false)) return false;
-      if (domain == DataDomain.energy && !isEnabled('module_energy_enabled', false)) return false;
+      if (domain == DataDomain.routines &&
+          !isEnabled('module_today_routines', true))
+        return false;
+      if (domain == DataDomain.goals &&
+          !isEnabled('module_goals_enabled', false))
+        return false;
+      if (domain == DataDomain.worship &&
+          !isEnabled('module_religion_enabled', false))
+        return false;
+      if (domain == DataDomain.konkur &&
+          !isEnabled('module_study_enabled', false))
+        return false;
+      if (domain == DataDomain.courses &&
+          !isEnabled('module_courses_enabled', false))
+        return false;
+      if (domain == DataDomain.sports &&
+          !isEnabled('module_sports_enabled', false))
+        return false;
+      if (domain == DataDomain.sleep &&
+          !isEnabled('module_sleep_enabled', false))
+        return false;
+      if (domain == DataDomain.energy &&
+          !isEnabled('module_energy_enabled', false))
+        return false;
     }
     return true;
   }

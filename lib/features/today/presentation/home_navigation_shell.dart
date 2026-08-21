@@ -276,7 +276,7 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
                       child: IndexedStack(
                         index: _currentIndex < maxTabs ? _currentIndex : defaultTab,
                         children: List.generate(maxTabs, (index) {
-                          return _screens[index] ?? const SizedBox.shrink();
+                          return (index < _screens.length ? _screens[index] : null) ?? const SizedBox.shrink();
                         }),
                       ),
                     ),

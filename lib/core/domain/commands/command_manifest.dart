@@ -1,9 +1,7 @@
 import 'package:ritmo/core/domain/commands/ritmo_command_bus.dart';
 
 class CommandManifest {
-  static List<Map<String, dynamic>> buildFor({
-    required String personaId,
-  }) {
+  static List<Map<String, dynamic>> buildFor({required String personaId}) {
     final bus = RitmoCommandBus.instance;
     final allowedCmds = bus.availableFor(personaId);
     final list = <Map<String, dynamic>>[];
@@ -18,7 +16,10 @@ class CommandManifest {
         'description': cmd.humanDescriptionFa,
         'sensitivity': cmd.sensitivity.name,
         'parameters': parameters,
-        'requiredParameters': cmd.params.entries.where((e) => e.value.required).map((e) => e.key).toList(),
+        'requiredParameters': cmd.params.entries
+            .where((e) => e.value.required)
+            .map((e) => e.key)
+            .toList(),
       });
     }
     return list;
@@ -36,8 +37,12 @@ class CommandManifest {
         buffer.writeln('  پارامترها:');
         params.forEach((name, specMap) {
           final spec = specMap as Map<String, dynamic>;
-          final requiredStr = (t['requiredParameters'] as List).contains(name) ? 'اجباری' : 'اختیاری';
-          buffer.writeln('    * $name ($requiredStr): ${spec['description']} (نوع: ${spec['type']})');
+          final requiredStr = (t['requiredParameters'] as List).contains(name)
+              ? 'اجباری'
+              : 'اختیاری';
+          buffer.writeln(
+            '    * $name ($requiredStr): ${spec['description']} (نوع: ${spec['type']})',
+          );
         });
       }
     }
@@ -52,7 +57,9 @@ class CommandManifest {
         if (params.isNotEmpty) {
           params.forEach((name, specMap) {
             final spec = specMap as Map<String, dynamic>;
-            final req = (t['requiredParameters'] as List).contains(name) ? '*' : '';
+            final req = (t['requiredParameters'] as List).contains(name)
+                ? '*'
+                : '';
             compactBuffer.writeln('  $name$req: ${spec['type']}');
           });
         }

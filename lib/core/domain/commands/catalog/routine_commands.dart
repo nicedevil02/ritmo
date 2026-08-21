@@ -19,7 +19,8 @@ class RoutineCreateCommand extends RitmoCommand {
   String get humanTitle => 'ایجاد روتین جدید';
 
   @override
-  String get humanDescriptionFa => 'تعریف یک روتین یا عادت جدید روزانه یا هفتگی';
+  String get humanDescriptionFa =>
+      'تعریف یک روتین یا عادت جدید روزانه یا هفتگی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -74,7 +75,8 @@ class RoutineCreateCommand extends RitmoCommand {
     final routineId = ctx.payload['id']?.toString() ?? _genId();
     final scheduleType = ctx.payload['scheduleType']?.toString() ?? 'daily';
     final scheduledTime = ctx.payload['scheduledTime']?.toString() ?? '09:00';
-    final targetDurationMinutes = ctx.payload['targetDurationMinutes'] as int? ?? 30;
+    final targetDurationMinutes =
+        ctx.payload['targetDurationMinutes'] as int? ?? 30;
 
     final routineData = <String, dynamic>{
       'id': routineId,
@@ -110,7 +112,10 @@ class RoutineCreateCommand extends RitmoCommand {
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
     await RitmoExecutionKernel.instance.execute(
-      CreateRoutineCommand(routineData: routineData, scheduleData: scheduleData),
+      CreateRoutineCommand(
+        routineData: routineData,
+        scheduleData: scheduleData,
+      ),
       txn: txn,
     );
 
@@ -122,7 +127,10 @@ class RoutineCreateCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     if (routineId == null) return null;
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -144,7 +152,8 @@ class RoutineCreateFromPhraseCommand extends RitmoCommand {
   String get humanTitle => 'ایجاد روتین با متن آزاد';
 
   @override
-  String get humanDescriptionFa => 'تحلیل و تعریف روتین جدید از روی یک جمله فارسی آزاد';
+  String get humanDescriptionFa =>
+      'تحلیل و تعریف روتین جدید از روی یک جمله فارسی آزاد';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -166,14 +175,17 @@ class RoutineCreateFromPhraseCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final phrase = ctx.payload['phrase']?.toString() ?? '';
     final parsed = QuickAddParser.parse(phrase);
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'روتین (متنی): ${parsed.title}');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'روتین (متنی): ${parsed.title}',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final phrase = ctx.payload['phrase']?.toString() ?? '';
     final parsed = QuickAddParser.parse(phrase);
-    
+
     final routineId = ctx.payload['id']?.toString() ?? _genId();
     final routineData = {
       'id': routineId,
@@ -190,13 +202,15 @@ class RoutineCreateFromPhraseCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };
-    
+
     final scheduleData = {
       'id': 'sched_$routineId',
       'routineId': routineId,
-      'scheduleType': parsed.recurrenceType == 'WORKDAYS' ? 'WORKDAYS' : 'DAILY',
-      'timeOfDay': parsed.timeOfDay != null 
-          ? '${parsed.timeOfDay!.hour.toString().padLeft(2, '0')}:${parsed.timeOfDay!.minute.toString().padLeft(2, '0')}' 
+      'scheduleType': parsed.recurrenceType == 'WORKDAYS'
+          ? 'WORKDAYS'
+          : 'DAILY',
+      'timeOfDay': parsed.timeOfDay != null
+          ? '${parsed.timeOfDay!.hour.toString().padLeft(2, '0')}:${parsed.timeOfDay!.minute.toString().padLeft(2, '0')}'
           : '09:00',
       'daysOfWeek': parsed.weekdays?.join(','),
       'createdAt': DateTime.now().millisecondsSinceEpoch,
@@ -205,15 +219,25 @@ class RoutineCreateFromPhraseCommand extends RitmoCommand {
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
     await RitmoExecutionKernel.instance.execute(
-      CreateRoutineCommand(routineData: routineData, scheduleData: scheduleData),
+      CreateRoutineCommand(
+        routineData: routineData,
+        scheduleData: scheduleData,
+      ),
       txn: txn,
     );
 
-    return CommandResult.ok(commandId: id, outputData: {'routineId': routineId}, inverseData: {'routineId': routineId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'routineId': routineId},
+      inverseData: {'routineId': routineId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     if (routineId == null) return null;
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -235,7 +259,8 @@ class RoutineEditCommand extends RitmoCommand {
   String get humanTitle => 'ویرایش روتین';
 
   @override
-  String get humanDescriptionFa => 'تغییر عنوان یا تنظیمات زمان‌بندی یک روتین موجود';
+  String get humanDescriptionFa =>
+      'تغییر عنوان یا تنظیمات زمان‌بندی یک روتین موجود';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -266,8 +291,15 @@ class RoutineEditCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final oldTitle = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final oldTitle = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
     final newTitle = ctx.payload['title']?.toString() ?? oldTitle;
     return PlanDiff(
       kind: DiffKind.update,
@@ -280,21 +312,34 @@ class RoutineEditCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    
+
     // Save old state for inverse
-    final oldRoutines = await ctx.txn.query('routines', where: 'id = ?', whereArgs: [routineId]);
-    final oldSchedules = await ctx.txn.query('routine_schedules', where: 'routineId = ?', whereArgs: [routineId]);
-    
+    final oldRoutines = await ctx.txn.query(
+      'routines',
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final oldSchedules = await ctx.txn.query(
+      'routine_schedules',
+      where: 'routineId = ?',
+      whereArgs: [routineId],
+    );
+
     if (oldRoutines.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'روتین یافت نشد.',
+      );
     }
 
     final routineMap = <String, dynamic>{};
-    if (ctx.payload['title'] != null) routineMap['title'] = ctx.payload['title'];
+    if (ctx.payload['title'] != null)
+      routineMap['title'] = ctx.payload['title'];
     routineMap['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
 
     final scheduleMap = <String, dynamic>{};
-    if (ctx.payload['scheduledTime'] != null) scheduleMap['timeOfDay'] = ctx.payload['scheduledTime'];
+    if (ctx.payload['scheduledTime'] != null)
+      scheduleMap['timeOfDay'] = ctx.payload['scheduledTime'];
     scheduleMap['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -318,7 +363,10 @@ class RoutineEditCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     final oldRoutine = inverseData['oldRoutine'] as Map<String, dynamic>?;
     final oldSchedule = inverseData['oldSchedule'] as Map<String, dynamic>?;
@@ -329,7 +377,9 @@ class RoutineEditCommand extends RitmoCommand {
       EditRoutineCommand(
         routineId: routineId,
         routineData: Map<String, dynamic>.from(oldRoutine),
-        scheduleData: oldSchedule != null ? Map<String, dynamic>.from(oldSchedule) : null,
+        scheduleData: oldSchedule != null
+            ? Map<String, dynamic>.from(oldSchedule)
+            : null,
       ),
       txn: txn,
     );
@@ -347,7 +397,8 @@ class RoutineArchiveCommand extends RitmoCommand {
   String get humanTitle => 'آرشیو روتین';
 
   @override
-  String get humanDescriptionFa => 'بایگانی کردن یک روتین تا موقتاً غیرفعال شود';
+  String get humanDescriptionFa =>
+      'بایگانی کردن یک روتین تا موقتاً غیرفعال شود';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -368,9 +419,19 @@ class RoutineArchiveCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
-    return PlanDiff(kind: DiffKind.delete, entityLabelFa: 'آرشیو روتین: $title');
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
+    return PlanDiff(
+      kind: DiffKind.delete,
+      entityLabelFa: 'آرشیو روتین: $title',
+    );
   }
 
   @override
@@ -381,11 +442,17 @@ class RoutineArchiveCommand extends RitmoCommand {
       ArchiveRoutineCommand(routineId: routineId),
       txn: txn,
     );
-    return CommandResult.ok(commandId: id, inverseData: {'routineId': routineId});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'routineId': routineId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     if (routineId == null) return null;
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -407,7 +474,8 @@ class RoutineDeleteCommand extends RitmoCommand {
   String get humanTitle => 'حذف روتین';
 
   @override
-  String get humanDescriptionFa => 'حذف کامل روتین به همراه زمان‌بندی‌های آن از برنامه';
+  String get humanDescriptionFa =>
+      'حذف کامل روتین به همراه زمان‌بندی‌های آن از برنامه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.sensitive;
@@ -428,21 +496,42 @@ class RoutineDeleteCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
-    return PlanDiff(kind: DiffKind.delete, entityLabelFa: 'حذف کامل روتین: $title');
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
+    return PlanDiff(
+      kind: DiffKind.delete,
+      entityLabelFa: 'حذف کامل روتین: $title',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    
+
     // Save state for undo
-    final oldRoutines = await ctx.txn.query('routines', where: 'id = ?', whereArgs: [routineId]);
-    final oldSchedules = await ctx.txn.query('routine_schedules', where: 'routineId = ?', whereArgs: [routineId]);
-    
+    final oldRoutines = await ctx.txn.query(
+      'routines',
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final oldSchedules = await ctx.txn.query(
+      'routine_schedules',
+      where: 'routineId = ?',
+      whereArgs: [routineId],
+    );
+
     if (oldRoutines.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'روتین یافت نشد.',
+      );
     }
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -462,7 +551,10 @@ class RoutineDeleteCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     final oldRoutine = inverseData['oldRoutine'] as Map<String, dynamic>?;
     final oldSchedule = inverseData['oldSchedule'] as Map<String, dynamic>?;
@@ -472,7 +564,9 @@ class RoutineDeleteCommand extends RitmoCommand {
     await RitmoExecutionKernel.instance.execute(
       CreateRoutineCommand(
         routineData: Map<String, dynamic>.from(oldRoutine),
-        scheduleData: oldSchedule != null ? Map<String, dynamic>.from(oldSchedule) : null,
+        scheduleData: oldSchedule != null
+            ? Map<String, dynamic>.from(oldSchedule)
+            : null,
       ),
       txn: txn,
     );
@@ -490,7 +584,8 @@ class RoutineCompleteCommand extends RitmoCommand {
   String get humanTitle => 'انجام روتین';
 
   @override
-  String get humanDescriptionFa => 'تیک زدن و ثبت موفق روتین برای امروز یا یک روز خاص';
+  String get humanDescriptionFa =>
+      'تیک زدن و ثبت موفق روتین برای امروز یا یک روز خاص';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -517,16 +612,30 @@ class RoutineCompleteCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'انجام روتین: $title');
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'انجام روتین: $title',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final dateStr = ctx.payload['dateStr']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
-    final resultSource = ctx.source == CommandSource.assistant ? 'ASSISTANT' : 'USER';
+    final dateStr =
+        ctx.payload['dateStr']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
+    final resultSource = ctx.source == CommandSource.assistant
+        ? 'ASSISTANT'
+        : 'USER';
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
     await RitmoExecutionKernel.instance.execute(
@@ -541,11 +650,17 @@ class RoutineCompleteCommand extends RitmoCommand {
     );
 
     final undoToken = 'routine:$routineId|$dateStr';
-    return CommandResult.ok(commandId: id, inverseData: {'undoToken': undoToken});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'undoToken': undoToken},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final undoToken = inverseData['undoToken']?.toString();
     if (undoToken == null) return null;
     final parts = undoToken.split(':');
@@ -555,13 +670,24 @@ class RoutineCompleteCommand extends RitmoCommand {
     final rId = rParts[0];
     final dateStr = rParts.length >= 2 ? rParts[1] : '';
 
-    await ctx.txn.delete('routine_completions', where: 'routineId = ? AND completionDate = ?', whereArgs: [rId, dateStr]);
-    await ctx.txn.delete('skip_reasons', where: 'itemId = ? AND dateStr = ?', whereArgs: [rId, dateStr]);
-    await ctx.txn.rawUpdate('''
+    await ctx.txn.delete(
+      'routine_completions',
+      where: 'routineId = ? AND completionDate = ?',
+      whereArgs: [rId, dateStr],
+    );
+    await ctx.txn.delete(
+      'skip_reasons',
+      where: 'itemId = ? AND dateStr = ?',
+      whereArgs: [rId, dateStr],
+    );
+    await ctx.txn.rawUpdate(
+      '''
       UPDATE routine_occurrences 
       SET status = 'pending'
       WHERE routine_id = ? AND date = ?
-    ''', [rId, dateStr]);
+    ''',
+      [rId, dateStr],
+    );
 
     return CommandResult.ok(commandId: id);
   }
@@ -577,7 +703,8 @@ class RoutineSkipCommand extends RitmoCommand {
   String get humanTitle => 'رد کردن روتین';
 
   @override
-  String get humanDescriptionFa => 'رد کردن موقت انجام روتین برای امروز به همراه دلیل';
+  String get humanDescriptionFa =>
+      'رد کردن موقت انجام روتین برای امروز به همراه دلیل';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -608,15 +735,27 @@ class RoutineSkipCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'رد کردن روتین: $title');
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'رد کردن روتین: $title',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final dateStr = ctx.payload['dateStr']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final dateStr =
+        ctx.payload['dateStr']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final reason = ctx.payload['reason']?.toString();
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -630,11 +769,17 @@ class RoutineSkipCommand extends RitmoCommand {
     );
 
     final undoToken = 'routine:$routineId|$dateStr';
-    return CommandResult.ok(commandId: id, inverseData: {'undoToken': undoToken});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'undoToken': undoToken},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final undoToken = inverseData['undoToken']?.toString();
     if (undoToken == null) return null;
     final parts = undoToken.split(':');
@@ -644,13 +789,24 @@ class RoutineSkipCommand extends RitmoCommand {
     final rId = rParts[0];
     final dateStr = rParts.length >= 2 ? rParts[1] : '';
 
-    await ctx.txn.delete('routine_completions', where: 'routineId = ? AND completionDate = ?', whereArgs: [rId, dateStr]);
-    await ctx.txn.delete('skip_reasons', where: 'itemId = ? AND dateStr = ?', whereArgs: [rId, dateStr]);
-    await ctx.txn.rawUpdate('''
+    await ctx.txn.delete(
+      'routine_completions',
+      where: 'routineId = ? AND completionDate = ?',
+      whereArgs: [rId, dateStr],
+    );
+    await ctx.txn.delete(
+      'skip_reasons',
+      where: 'itemId = ? AND dateStr = ?',
+      whereArgs: [rId, dateStr],
+    );
+    await ctx.txn.rawUpdate(
+      '''
       UPDATE routine_occurrences 
       SET status = 'pending'
       WHERE routine_id = ? AND date = ?
-    ''', [rId, dateStr]);
+    ''',
+      [rId, dateStr],
+    );
 
     return CommandResult.ok(commandId: id);
   }
@@ -666,7 +822,8 @@ class RoutineSnoozeCommand extends RitmoCommand {
   String get humanTitle => 'تعویق یادآوری روتین';
 
   @override
-  String get humanDescriptionFa => 'عقب انداختن ساعت اعلان یک روتین بر اساس محدودیت‌های خواب و شخصی';
+  String get humanDescriptionFa =>
+      'عقب انداختن ساعت اعلان یک روتین بر اساس محدودیت‌های خواب و شخصی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -698,12 +855,23 @@ class RoutineSnoozeCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final dateStr = ctx.payload['dateStr']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final dateStr =
+        ctx.payload['dateStr']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final snoozeMinutes = ctx.payload['snoozeMinutes'] as int? ?? 15;
 
-    final routineRows = await ctx.txn.query('routines', where: 'id = ?', whereArgs: [routineId], limit: 1);
+    final routineRows = await ctx.txn.query(
+      'routines',
+      where: 'id = ?',
+      whereArgs: [routineId],
+      limit: 1,
+    );
     if (routineRows.isEmpty) {
-      return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'تعویق روتین', warningFa: 'روتین یافت نشد.');
+      return const PlanDiff(
+        kind: DiffKind.noop,
+        entityLabelFa: 'تعویق روتین',
+        warningFa: 'روتین یافت نشد.',
+      );
     }
     final rMap = routineRows.first;
     final category = rMap['category']?.toString();
@@ -711,26 +879,49 @@ class RoutineSnoozeCommand extends RitmoCommand {
 
     // Get current deferCount
     final selectedDateMidnight = DateTime.tryParse(dateStr) ?? DateTime.now();
-    final startOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day).millisecondsSinceEpoch;
-    final endOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day, 23, 59, 59).millisecondsSinceEpoch;
+    final startOfDay = DateTime(
+      selectedDateMidnight.year,
+      selectedDateMidnight.month,
+      selectedDateMidnight.day,
+    ).millisecondsSinceEpoch;
+    final endOfDay = DateTime(
+      selectedDateMidnight.year,
+      selectedDateMidnight.month,
+      selectedDateMidnight.day,
+      23,
+      59,
+      59,
+    ).millisecondsSinceEpoch;
 
     final reminders = await ctx.txn.query(
       'pending_reminders',
       where: 'routineId = ? AND scheduledTime >= ? AND scheduledTime <= ?',
       whereArgs: [routineId, startOfDay, endOfDay],
     );
-    final currentDeferCount = reminders.isNotEmpty ? (reminders.first['deferCount'] as int? ?? 0) : 0;
+    final currentDeferCount = reminders.isNotEmpty
+        ? (reminders.first['deferCount'] as int? ?? 0)
+        : 0;
 
     // configured max
     var configuredMax = 3;
-    final rows = await ctx.txn.query('app_settings', where: 'key = ?', whereArgs: ['snooze_max_quota'], limit: 1);
+    final rows = await ctx.txn.query(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['snooze_max_quota'],
+      limit: 1,
+    );
     if (rows.isNotEmpty) {
       configuredMax = int.tryParse(rows.first['value']?.toString() ?? '') ?? 3;
     }
 
     // recurrence rule type
     String? ruleType;
-    final schedRows = await ctx.txn.query('routine_schedules', where: 'routineId = ?', whereArgs: [routineId], limit: 1);
+    final schedRows = await ctx.txn.query(
+      'routine_schedules',
+      where: 'routineId = ?',
+      whereArgs: [routineId],
+      limit: 1,
+    );
     if (schedRows.isNotEmpty) {
       ruleType = schedRows.first['scheduleType']?.toString();
     }
@@ -763,13 +954,26 @@ class RoutineSnoozeCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final dateStr = ctx.payload['dateStr']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final dateStr =
+        ctx.payload['dateStr']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final snoozeMinutes = ctx.payload['snoozeMinutes'] as int? ?? 15;
 
     // Get current defer count and find reminder row
     final selectedDateMidnight = DateTime.tryParse(dateStr) ?? DateTime.now();
-    final startOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day).millisecondsSinceEpoch;
-    final endOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day, 23, 59, 59).millisecondsSinceEpoch;
+    final startOfDay = DateTime(
+      selectedDateMidnight.year,
+      selectedDateMidnight.month,
+      selectedDateMidnight.day,
+    ).millisecondsSinceEpoch;
+    final endOfDay = DateTime(
+      selectedDateMidnight.year,
+      selectedDateMidnight.month,
+      selectedDateMidnight.day,
+      23,
+      59,
+      59,
+    ).millisecondsSinceEpoch;
 
     final reminders = await ctx.txn.query(
       'pending_reminders',
@@ -778,26 +982,44 @@ class RoutineSnoozeCommand extends RitmoCommand {
     );
 
     if (reminders.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'یادآوری فعالی برای این روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'یادآوری فعالی برای این روتین یافت نشد.',
+      );
     }
 
     final reminderRow = reminders.first;
     final reminderId = reminderRow['id'] as String;
     final currentDeferCount = (reminderRow['deferCount'] as int?) ?? 0;
 
-    final routineRows = await ctx.txn.query('routines', where: 'id = ?', whereArgs: [routineId], limit: 1);
+    final routineRows = await ctx.txn.query(
+      'routines',
+      where: 'id = ?',
+      whereArgs: [routineId],
+      limit: 1,
+    );
     final rMap = routineRows.isNotEmpty ? routineRows.first : const {};
     final category = rMap['category']?.toString();
     final isEssential = rMap['isEssential'] as int? ?? 0;
 
     var configuredMax = 3;
-    final rows = await ctx.txn.query('app_settings', where: 'key = ?', whereArgs: ['snooze_max_quota'], limit: 1);
+    final rows = await ctx.txn.query(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['snooze_max_quota'],
+      limit: 1,
+    );
     if (rows.isNotEmpty) {
       configuredMax = int.tryParse(rows.first['value']?.toString() ?? '') ?? 3;
     }
 
     String? ruleType;
-    final schedRows = await ctx.txn.query('routine_schedules', where: 'routineId = ?', whereArgs: [routineId], limit: 1);
+    final schedRows = await ctx.txn.query(
+      'routine_schedules',
+      where: 'routineId = ?',
+      whereArgs: [routineId],
+      limit: 1,
+    );
     if (schedRows.isNotEmpty) {
       ruleType = schedRows.first['scheduleType']?.toString();
     }
@@ -814,10 +1036,16 @@ class RoutineSnoozeCommand extends RitmoCommand {
     );
 
     if (decision.verdict == SnoozeVerdict.blockedMidnight) {
-      return CommandResult.failure(commandId: id, errorMessage: 'زمان جدید از نیمه‌شب می‌گذرد. امکان تعویق وجود ندارد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'زمان جدید از نیمه‌شب می‌گذرد. امکان تعویق وجود ندارد.',
+      );
     }
     if (decision.verdict == SnoozeVerdict.exhausted) {
-      return CommandResult.failure(commandId: id, errorMessage: 'سقف تعویق این آیتم پر شده است.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'سقف تعویق این آیتم پر شده است.',
+      );
     }
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -844,7 +1072,10 @@ class RoutineSnoozeCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final reminderId = inverseData['reminderId']?.toString();
     final oldScheduledTime = inverseData['oldScheduledTime'];
     final oldSqueezeUntil = inverseData['oldSqueezeUntil'];
@@ -852,7 +1083,11 @@ class RoutineSnoozeCommand extends RitmoCommand {
     final routineId = inverseData['routineId']?.toString();
     final dateStr = inverseData['dateStr']?.toString();
 
-    if (reminderId == null || oldDeferCount == null || routineId == null || dateStr == null) return null;
+    if (reminderId == null ||
+        oldDeferCount == null ||
+        routineId == null ||
+        dateStr == null)
+      return null;
 
     // Restore reminder columns
     await ctx.txn.update(
@@ -888,7 +1123,8 @@ class RoutineRescheduleCommand extends RitmoCommand {
   String get humanTitle => 'انتقال روتین به روز دیگر';
 
   @override
-  String get humanDescriptionFa => 'جابجایی تاریخ انجام روتین از امروز به یک روز مشخص دیگر';
+  String get humanDescriptionFa =>
+      'جابجایی تاریخ انجام روتین از امروز به یک روز مشخص دیگر';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -920,15 +1156,27 @@ class RoutineRescheduleCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final targetDate = ctx.payload['targetDate']?.toString() ?? '';
-    final rows = await ctx.txn.query('routines', columns: ['title'], where: 'id = ?', whereArgs: [routineId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'روتین نامشخص';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'انتقال روتین $title به تاریخ $targetDate');
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'روتین نامشخص';
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'انتقال روتین $title به تاریخ $targetDate',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
-    final fromDateStr = ctx.payload['fromDate']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final fromDateStr =
+        ctx.payload['fromDate']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final toDateStr = ctx.payload['targetDate']?.toString() ?? fromDateStr;
 
     final txn = ctx.txn is Transaction ? ctx.txn as Transaction : null;
@@ -942,11 +1190,17 @@ class RoutineRescheduleCommand extends RitmoCommand {
     );
 
     final undoToken = 'reschedule:$routineId|$fromDateStr|$toDateStr';
-    return CommandResult.ok(commandId: id, inverseData: {'undoToken': undoToken});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'undoToken': undoToken},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final undoToken = inverseData['undoToken']?.toString();
     if (undoToken == null) return null;
     final parts = undoToken.split(':');
@@ -958,13 +1212,24 @@ class RoutineRescheduleCommand extends RitmoCommand {
     final fromDateStr = resParts[1];
     final toDateStr = resParts.length >= 3 ? resParts[2] : null;
 
-    await ctx.txn.delete('routine_completions', where: 'routineId = ? AND completionDate = ? AND resultType = ?', whereArgs: [rId, fromDateStr, 'RESCHEDULED']);
-    await ctx.txn.delete('skip_reasons', where: 'itemId = ? AND dateStr = ?', whereArgs: [rId, fromDateStr]);
-    await ctx.txn.rawUpdate('''
+    await ctx.txn.delete(
+      'routine_completions',
+      where: 'routineId = ? AND completionDate = ? AND resultType = ?',
+      whereArgs: [rId, fromDateStr, 'RESCHEDULED'],
+    );
+    await ctx.txn.delete(
+      'skip_reasons',
+      where: 'itemId = ? AND dateStr = ?',
+      whereArgs: [rId, fromDateStr],
+    );
+    await ctx.txn.rawUpdate(
+      '''
       UPDATE routine_occurrences 
       SET status = 'pending'
       WHERE routine_id = ? AND date = ?
-    ''', [rId, fromDateStr]);
+    ''',
+      [rId, fromDateStr],
+    );
 
     if (toDateStr != null) {
       await ctx.txn.delete(
@@ -988,7 +1253,8 @@ class RoutineSetReminderOffsetCommand extends RitmoCommand {
   String get humanTitle => 'تغییر فاصله یادآوری روتین';
 
   @override
-  String get humanDescriptionFa => 'تنظیم چند دقیقه فاصله یادآوری اعلان قبل از زمان شروع روتین';
+  String get humanDescriptionFa =>
+      'تنظیم چند دقیقه فاصله یادآوری اعلان قبل از زمان شروع روتین';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -1016,9 +1282,18 @@ class RoutineSetReminderOffsetCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final offset = ctx.payload['offsetMinutes'] as int? ?? 0;
-    final rows = await ctx.txn.query('routines', columns: ['title', 'reminderOffsetMinutes'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title', 'reminderOffsetMinutes'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'یادآوری روتین', warningFa: 'روتین یافت نشد.');
+      return const PlanDiff(
+        kind: DiffKind.noop,
+        entityLabelFa: 'یادآوری روتین',
+        warningFa: 'روتین یافت نشد.',
+      );
     }
     final title = rows.first['title']?.toString();
     final oldOffset = rows.first['reminderOffsetMinutes'] as int? ?? 0;
@@ -1035,9 +1310,17 @@ class RoutineSetReminderOffsetCommand extends RitmoCommand {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final offset = ctx.payload['offsetMinutes'] as int? ?? 0;
 
-    final rows = await ctx.txn.query('routines', columns: ['reminderOffsetMinutes'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['reminderOffsetMinutes'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'روتین یافت نشد.',
+      );
     }
     final oldOffset = rows.first['reminderOffsetMinutes'] as int? ?? 0;
 
@@ -1050,11 +1333,17 @@ class RoutineSetReminderOffsetCommand extends RitmoCommand {
       txn: txn,
     );
 
-    return CommandResult.ok(commandId: id, inverseData: {'routineId': routineId, 'oldOffset': oldOffset});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'routineId': routineId, 'oldOffset': oldOffset},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     final oldOffset = inverseData['oldOffset'] as int?;
     if (routineId == null || oldOffset == null) return null;
@@ -1081,7 +1370,8 @@ class RoutineSetEssentialCommand extends RitmoCommand {
   String get humanTitle => 'حیاتی اعلام کردن روتین';
 
   @override
-  String get humanDescriptionFa => 'تغییر وضعیت روتین به حیاتی/معمولی جهت فعال‌سازی قوانین سفت‌وسخت خواب و تعویق';
+  String get humanDescriptionFa =>
+      'تغییر وضعیت روتین به حیاتی/معمولی جهت فعال‌سازی قوانین سفت‌وسخت خواب و تعویق';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -1108,9 +1398,18 @@ class RoutineSetEssentialCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final isEssential = ctx.payload['isEssential'] as bool? ?? false;
-    final rows = await ctx.txn.query('routines', columns: ['title', 'isEssential'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title', 'isEssential'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'وضعیت حیاتی روتین', warningFa: 'روتین یافت نشد.');
+      return const PlanDiff(
+        kind: DiffKind.noop,
+        entityLabelFa: 'وضعیت حیاتی روتین',
+        warningFa: 'روتین یافت نشد.',
+      );
     }
     final title = rows.first['title']?.toString();
     final oldEssential = rows.first['isEssential'] == 1;
@@ -1127,9 +1426,17 @@ class RoutineSetEssentialCommand extends RitmoCommand {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final isEssential = ctx.payload['isEssential'] as bool? ?? false;
 
-    final rows = await ctx.txn.query('routines', columns: ['isEssential'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['isEssential'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'روتین یافت نشد.',
+      );
     }
     final oldEssential = rows.first['isEssential'] == 1;
 
@@ -1142,11 +1449,17 @@ class RoutineSetEssentialCommand extends RitmoCommand {
       txn: txn,
     );
 
-    return CommandResult.ok(commandId: id, inverseData: {'routineId': routineId, 'oldEssential': oldEssential});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'routineId': routineId, 'oldEssential': oldEssential},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     final oldEssential = inverseData['oldEssential'] as bool?;
     if (routineId == null || oldEssential == null) return null;
@@ -1173,7 +1486,8 @@ class RoutineSetPrivateCommand extends RitmoCommand {
   String get humanTitle => 'خصوصی کردن روتین';
 
   @override
-  String get humanDescriptionFa => 'تغییر وضعیت روتین به خصوصی جهت پنهان‌سازی اطلاعات آن در خروجی‌های اشتراکی';
+  String get humanDescriptionFa =>
+      'تغییر وضعیت روتین به خصوصی جهت پنهان‌سازی اطلاعات آن در خروجی‌های اشتراکی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -1200,9 +1514,18 @@ class RoutineSetPrivateCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final isPrivate = ctx.payload['isPrivate'] as bool? ?? false;
-    final rows = await ctx.txn.query('routines', columns: ['title', 'isPrivate'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['title', 'isPrivate'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'وضعیت خصوصی روتین', warningFa: 'روتین یافت نشد.');
+      return const PlanDiff(
+        kind: DiffKind.noop,
+        entityLabelFa: 'وضعیت خصوصی روتین',
+        warningFa: 'روتین یافت نشد.',
+      );
     }
     final title = rows.first['title']?.toString();
     final oldPrivate = rows.first['isPrivate'] == 1;
@@ -1219,9 +1542,17 @@ class RoutineSetPrivateCommand extends RitmoCommand {
     final routineId = ctx.payload['routineId']?.toString() ?? '';
     final isPrivate = ctx.payload['isPrivate'] as bool? ?? false;
 
-    final rows = await ctx.txn.query('routines', columns: ['isPrivate'], where: 'id = ?', whereArgs: [routineId]);
+    final rows = await ctx.txn.query(
+      'routines',
+      columns: ['isPrivate'],
+      where: 'id = ?',
+      whereArgs: [routineId],
+    );
     if (rows.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'روتین یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'روتین یافت نشد.',
+      );
     }
     final oldPrivate = rows.first['isPrivate'] == 1;
 
@@ -1234,11 +1565,17 @@ class RoutineSetPrivateCommand extends RitmoCommand {
       txn: txn,
     );
 
-    return CommandResult.ok(commandId: id, inverseData: {'routineId': routineId, 'oldPrivate': oldPrivate});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'routineId': routineId, 'oldPrivate': oldPrivate},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final routineId = inverseData['routineId']?.toString();
     final oldPrivate = inverseData['oldPrivate'] as bool?;
     if (routineId == null || oldPrivate == null) return null;
@@ -1265,7 +1602,8 @@ class RoutineBulkRescheduleCommand extends RitmoCommand {
   String get humanTitle => 'انتقال گروهی روتین‌ها';
 
   @override
-  String get humanDescriptionFa => 'جابجایی همزمان تاریخ انجام چندین روتین با هم به یک روز دیگر';
+  String get humanDescriptionFa =>
+      'جابجایی همزمان تاریخ انجام چندین روتین با هم به یک روز دیگر';
 
   @override
   Sensitivity get sensitivity => Sensitivity.sensitive;
@@ -1297,18 +1635,30 @@ class RoutineBulkRescheduleCommand extends RitmoCommand {
     final idsStr = ctx.payload['routineIds']?.toString() ?? '';
     final targetDate = ctx.payload['targetDate']?.toString() ?? '';
     final count = idsStr.split(',').where((s) => s.trim().isNotEmpty).length;
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'انتقال گروهی $count روتین به تاریخ $targetDate');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'انتقال گروهی $count روتین به تاریخ $targetDate',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final idsStr = ctx.payload['routineIds']?.toString() ?? '';
-    final fromDateStr = ctx.payload['fromDate']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final fromDateStr =
+        ctx.payload['fromDate']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final toDateStr = ctx.payload['targetDate']?.toString() ?? fromDateStr;
 
-    final ids = idsStr.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final ids = idsStr
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
     if (ids.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'هیچ روتینی مشخص نشده است.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'هیچ روتینی مشخص نشده است.',
+      );
     }
 
     final tokens = <String>[];
@@ -1330,8 +1680,13 @@ class RoutineBulkRescheduleCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    final tokens = (inverseData['undoTokens'] as List?)?.map((t) => t.toString()).toList();
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
+    final tokens = (inverseData['undoTokens'] as List?)
+        ?.map((t) => t.toString())
+        .toList();
     if (tokens == null || tokens.isEmpty) return null;
 
     for (final undoToken in tokens) {
@@ -1344,13 +1699,24 @@ class RoutineBulkRescheduleCommand extends RitmoCommand {
       final fromDateStr = resParts[1];
       final toDateStr = resParts.length >= 3 ? resParts[2] : null;
 
-      await ctx.txn.delete('routine_completions', where: 'routineId = ? AND completionDate = ? AND resultType = ?', whereArgs: [rId, fromDateStr, 'RESCHEDULED']);
-      await ctx.txn.delete('skip_reasons', where: 'itemId = ? AND dateStr = ?', whereArgs: [rId, fromDateStr]);
-      await ctx.txn.rawUpdate('''
+      await ctx.txn.delete(
+        'routine_completions',
+        where: 'routineId = ? AND completionDate = ? AND resultType = ?',
+        whereArgs: [rId, fromDateStr, 'RESCHEDULED'],
+      );
+      await ctx.txn.delete(
+        'skip_reasons',
+        where: 'itemId = ? AND dateStr = ?',
+        whereArgs: [rId, fromDateStr],
+      );
+      await ctx.txn.rawUpdate(
+        '''
         UPDATE routine_occurrences 
         SET status = 'pending'
         WHERE routine_id = ? AND date = ?
-      ''', [rId, fromDateStr]);
+      ''',
+        [rId, fromDateStr],
+      );
 
       if (toDateStr != null) {
         await ctx.txn.delete(

@@ -15,7 +15,8 @@ class SleepLogCommand extends RitmoCommand {
   String get humanTitle => 'ثبت وضعیت خواب';
 
   @override
-  String get humanDescriptionFa => 'ثبت زمان و کیفیت خواب شب گذشته جهت تحلیل خستگی';
+  String get humanDescriptionFa =>
+      'ثبت زمان و کیفیت خواب شب گذشته جهت تحلیل خستگی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -53,7 +54,9 @@ class SleepLogCommand extends RitmoCommand {
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final date = ctx.payload['dateStr']?.toString() ?? DateTime.now().toIso8601String().split('T').first;
+    final date =
+        ctx.payload['dateStr']?.toString() ??
+        DateTime.now().toIso8601String().split('T').first;
     final durationMinutes = ctx.payload['durationMinutes'] as int? ?? 480;
     final quality = ctx.payload['quality'] as int? ?? 3;
 
@@ -64,14 +67,25 @@ class SleepLogCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'date': date}, inverseData: {'date': date});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'date': date},
+      inverseData: {'date': date},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final date = inverseData['date']?.toString();
     if (date == null) return null;
-    await ctx.txn.delete('bedtime_diagnostics', where: 'date = ?', whereArgs: [date]);
+    await ctx.txn.delete(
+      'bedtime_diagnostics',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -86,7 +100,8 @@ class EnergyLogCommand extends RitmoCommand {
   String get humanTitle => 'ثبت سطح انرژی';
 
   @override
-  String get humanDescriptionFa => 'ثبت میزان شارژ و انرژی بدنی جهت شخصی‌سازی روتین‌ها';
+  String get humanDescriptionFa =>
+      'ثبت میزان شارژ و انرژی بدنی جهت شخصی‌سازی روتین‌ها';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -112,8 +127,13 @@ class EnergyLogCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final level = ctx.payload['energyLevel']?.toString() ?? 'MEDIUM';
-    final levelFa = level == 'HIGH' ? 'بالا' : (level == 'LOW' ? 'پایین' : 'متوسط');
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت انرژی: $levelFa');
+    final levelFa = level == 'HIGH'
+        ? 'بالا'
+        : (level == 'LOW' ? 'پایین' : 'متوسط');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'ثبت انرژی: $levelFa',
+    );
   }
 
   @override
@@ -130,11 +150,18 @@ class EnergyLogCommand extends RitmoCommand {
       'loggedAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'logId': logId}, inverseData: {'logId': logId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'logId': logId},
+      inverseData: {'logId': logId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final logId = inverseData['logId']?.toString();
     if (logId == null) return null;
     await ctx.txn.delete('energy_logs', where: 'id = ?', whereArgs: [logId]);
@@ -180,7 +207,10 @@ class ReflectionLogCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final note = ctx.payload['note']?.toString() ?? '';
     final summary = note.length > 30 ? '${note.substring(0, 30)}...' : note;
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'خودارزیابی: $summary');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'خودارزیابی: $summary',
+    );
   }
 
   @override
@@ -197,11 +227,18 @@ class ReflectionLogCommand extends RitmoCommand {
       'loggedAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'logId': idVal}, inverseData: {'logId': idVal});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'logId': idVal},
+      inverseData: {'logId': idVal},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final logId = inverseData['logId']?.toString();
     if (logId == null) return null;
     await ctx.txn.delete('mood_logs', where: 'id = ?', whereArgs: [logId]);
@@ -219,7 +256,8 @@ class SettingUpdateCommand extends RitmoCommand {
   String get humanTitle => 'تغییر تنظیمات برنامه';
 
   @override
-  String get humanDescriptionFa => 'ویرایش و تغییر یکی از مقادیر تنظیمات کلیدی ریتمو';
+  String get humanDescriptionFa =>
+      'ویرایش و تغییر یکی از مقادیر تنظیمات کلیدی ریتمو';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -247,7 +285,11 @@ class SettingUpdateCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final key = ctx.payload['key']?.toString() ?? '';
     final value = ctx.payload['value']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تنظیم $key', afterFa: value);
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تنظیم $key',
+      afterFa: value,
+    );
   }
 
   @override
@@ -255,17 +297,25 @@ class SettingUpdateCommand extends RitmoCommand {
     final key = ctx.payload['key']?.toString();
     final value = ctx.payload['value']?.toString();
     if (key == null || value == null) {
-      return CommandResult.failure(commandId: id, errorMessage: 'کلید یا مقدار تنظیمات نامعتبر است');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'کلید یا مقدار تنظیمات نامعتبر است',
+      );
     }
 
-    final existing = await ctx.txn.query('app_settings', where: 'key = ?', whereArgs: [key]);
-    final oldValue = existing.isNotEmpty ? existing.first['value']?.toString() : null;
-
-    await ctx.txn.insert(
+    final existing = await ctx.txn.query(
       'app_settings',
-      {'key': key, 'value': value},
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'key = ?',
+      whereArgs: [key],
     );
+    final oldValue = existing.isNotEmpty
+        ? existing.first['value']?.toString()
+        : null;
+
+    await ctx.txn.insert('app_settings', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     return CommandResult.ok(
       commandId: id,
@@ -275,17 +325,19 @@ class SettingUpdateCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final key = inverseData['key']?.toString();
     final oldValue = inverseData['oldValue']?.toString();
     if (key == null) return null;
 
     if (oldValue != null) {
-      await ctx.txn.insert(
-        'app_settings',
-        {'key': key, 'value': oldValue},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await ctx.txn.insert('app_settings', {
+        'key': key,
+        'value': oldValue,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     } else {
       await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: [key]);
     }
@@ -313,28 +365,55 @@ class SleepSetTargetWindowCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'bedtime': const ParamSpec(type: ParamType.text, labelFa: 'ساعت خواب (HH:MM)', required: true, exampleFa: '23:00'),
-    'wakeTime': const ParamSpec(type: ParamType.text, labelFa: 'ساعت بیداری (HH:MM)', required: true, exampleFa: '07:00'),
+    'bedtime': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'ساعت خواب (HH:MM)',
+      required: true,
+      exampleFa: '23:00',
+    ),
+    'wakeTime': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'ساعت بیداری (HH:MM)',
+      required: true,
+      exampleFa: '07:00',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final bedtime = ctx.payload['bedtime'] ?? '23:00';
     final wakeTime = ctx.payload['wakeTime'] ?? '07:00';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'پنجره خواب هدف: $bedtime تا $wakeTime');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'پنجره خواب هدف: $bedtime تا $wakeTime',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final bedtime = ctx.payload['bedtime']?.toString() ?? '23:00';
     final wakeTime = ctx.payload['wakeTime']?.toString() ?? '07:00';
-    await ctx.txn.insert('app_settings', {'key': 'sleep_target_window', 'value': '$bedtime-$wakeTime'}, conflictAlgorithm: ConflictAlgorithm.replace);
-    return CommandResult.ok(commandId: id, outputData: {'window': '$bedtime-$wakeTime'}, inverseData: {'key': 'sleep_target_window'});
+    await ctx.txn.insert('app_settings', {
+      'key': 'sleep_target_window',
+      'value': '$bedtime-$wakeTime',
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'window': '$bedtime-$wakeTime'},
+      inverseData: {'key': 'sleep_target_window'},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['sleep_target_window']);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['sleep_target_window'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -359,17 +438,26 @@ class SleepLogDiagnosticCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'note': const ParamSpec(type: ParamType.text, labelFa: 'توضیحات وضعیت خواب', required: true),
+    'note': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'توضیحات وضعیت خواب',
+      required: true,
+    ),
   };
 
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت وضعیت خواب');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت وضعیت خواب');
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class HealthLogAdherenceCommand extends RitmoCommand {
@@ -382,7 +470,8 @@ class HealthLogAdherenceCommand extends RitmoCommand {
   String get humanTitle => 'ثبت پایبندی دارویی';
 
   @override
-  String get humanDescriptionFa => 'ثبت انجام یا فراموشی مصرف یادآورهای مراقبتی';
+  String get humanDescriptionFa =>
+      'ثبت انجام یا فراموشی مصرف یادآورهای مراقبتی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -392,18 +481,31 @@ class HealthLogAdherenceCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'reminderId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه یادآور', required: true),
-    'taken': const ParamSpec(type: ParamType.boolean, labelFa: 'مصرف شد؟', required: true),
+    'reminderId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه یادآور',
+      required: true,
+    ),
+    'taken': const ParamSpec(
+      type: ParamType.boolean,
+      labelFa: 'مصرف شد؟',
+      required: true,
+    ),
   };
 
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.update, entityLabelFa: 'ثبت پایبندی');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.update, entityLabelFa: 'ثبت پایبندی');
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class HealthLogVitalCommand extends RitmoCommand {
@@ -426,8 +528,18 @@ class HealthLogVitalCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'vitalType': const ParamSpec(type: ParamType.text, labelFa: 'نوع علامت', required: true, exampleFa: 'blood_pressure'),
-    'value': const ParamSpec(type: ParamType.text, labelFa: 'مقدار عددی', required: true, exampleFa: '120/80'),
+    'vitalType': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نوع علامت',
+      required: true,
+      exampleFa: 'blood_pressure',
+    ),
+    'value': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'مقدار عددی',
+      required: true,
+      exampleFa: '120/80',
+    ),
   };
 
   @override
@@ -438,10 +550,14 @@ class HealthLogVitalCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class HealthScheduleTestCommand extends RitmoCommand {
@@ -454,7 +570,8 @@ class HealthScheduleTestCommand extends RitmoCommand {
   String get humanTitle => 'زمان‌بندی یادآور آزمایش';
 
   @override
-  String get humanDescriptionFa => 'تنظیم یادآور برای تاریخ موعد چکاپ یا آزمایش';
+  String get humanDescriptionFa =>
+      'تنظیم یادآور برای تاریخ موعد چکاپ یا آزمایش';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -464,19 +581,36 @@ class HealthScheduleTestCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'testName': const ParamSpec(type: ParamType.text, labelFa: 'نام آزمایش', required: true, exampleFa: 'آزمایش خون دوره‌ای'),
-    'dueDate': const ParamSpec(type: ParamType.isoDate, labelFa: 'تاریخ موعد', required: true, exampleFa: '2026-08-01'),
+    'testName': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نام آزمایش',
+      required: true,
+      exampleFa: 'آزمایش خون دوره‌ای',
+    ),
+    'dueDate': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ موعد',
+      required: true,
+      exampleFa: '2026-08-01',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final name = ctx.payload['testName'] ?? 'آزمایش';
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'یادآور آزمایش: $name');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'یادآور آزمایش: $name',
+    );
   }
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }

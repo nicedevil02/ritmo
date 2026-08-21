@@ -32,7 +32,10 @@ class StreamingChatService {
     required ConsentProfile consent,
   }) async* {
     // 1) Retrieve RAG & Privacy check
-    final rag = await ConversationRAG().retrieve(query: userText, consent: consent);
+    final rag = await ConversationRAG().retrieve(
+      query: userText,
+      consent: consent,
+    );
 
     // 2) Save user message
     final userMsg = ChatMessage(
@@ -55,7 +58,7 @@ class StreamingChatService {
         timestamp: DateTime.now(),
       );
       await ChatRepository.instance.addMessage(assistantMsg);
-      
+
       final dbMsgs = await ChatRepository.instance.getMessages(sessionId);
       if (dbMsgs.isNotEmpty) {
         final summary = ChatSessionSummarizer.summarize(
@@ -64,7 +67,7 @@ class StreamingChatService {
         );
         await ChatRepository.instance.updateSessionSummary(sessionId, summary);
       }
-      
+
       yield ChatComplete(assistantMsg.id, assistantMsg.content, const []);
       return;
     }
@@ -77,12 +80,14 @@ class StreamingChatService {
     );
 
     final messages = ctx.toMessages(
-      AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction(),
+      AIPromptEngine.buildChatSystemPrompt() +
+          AiMemoryService.memoryInstruction(),
       userText,
     );
 
     // 5) Start streaming
-    final assistantId = 'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}';
+    final assistantId =
+        'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}';
     yield AssistantStarted(assistantId);
 
     var accumulated = '';
@@ -91,8 +96,12 @@ class StreamingChatService {
     var hasError = false;
     var errorCode = '';
 
-    final config = await AiConnectionRepository.instance.load(slot: AiSlot.assistant);
-    final isChatGptWeb = config.providerPresetId == 'chatgpt_web' || config.baseUrl.contains('chatgpt.com');
+    final config = await AiConnectionRepository.instance.load(
+      slot: AiSlot.assistant,
+    );
+    final isChatGptWeb =
+        config.providerPresetId == 'chatgpt_web' ||
+        config.baseUrl.contains('chatgpt.com');
 
     // P0-4: مسیر ایجنت برای تمام ارائه‌دهنده‌ها فعال است.
     try {
@@ -103,7 +112,9 @@ class StreamingChatService {
         });
       }
 
-      final nonSystem = messages.where((msg) => msg['role'] != 'system').toList();
+      final nonSystem = messages
+          .where((msg) => msg['role'] != 'system')
+          .toList();
       if (nonSystem.isNotEmpty &&
           nonSystem.last['role'] == 'user' &&
           (nonSystem.last['content'] ?? '') == userText) {
@@ -118,12 +129,16 @@ class StreamingChatService {
         recentHistory.add('$roleLabel: $content');
       }
 
-      final systemPrompt = AIPromptEngine.buildChatSystemPrompt() + AiMemoryService.memoryInstruction();
+      final systemPrompt =
+          AIPromptEngine.buildChatSystemPrompt() +
+          AiMemoryService.memoryInstruction();
       final agentStream = AgentLoopRunner.instance.runAgent(
         prompt: userText,
         personaId: 'global',
         personaSystemPrompt: systemPrompt,
-        contextSummary: contextLines.isNotEmpty ? contextLines.join('\n') : null,
+        contextSummary: contextLines.isNotEmpty
+            ? contextLines.join('\n')
+            : null,
         recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
         slot: AiSlot.assistant,
       );
@@ -132,11 +147,16 @@ class StreamingChatService {
         if (event is AgentTokenStreamEvent) {
           accumulated = event.accumulated;
           if (accumulated.characters.length > maxAssistantResponseChars) {
-            accumulated = accumulated.characters.take(maxAssistantResponseChars).toString();
+            accumulated = accumulated.characters
+                .take(maxAssistantResponseChars)
+                .toString();
             if (isChatGptWeb) {
               ChatGptWebBridgeManager.instance.cancelCurrentStream();
             }
-            yield ChatChunk('\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]', accumulated);
+            yield ChatChunk(
+              '\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]',
+              accumulated,
+            );
             break;
           }
           yield ChatChunk(event.delta, accumulated);
@@ -144,8 +164,11 @@ class StreamingChatService {
           rawAnswer = event.rawAnswer;
           final finalText = event.finalAnswer;
           if (finalText.isNotEmpty) {
-            final capped = finalText.characters.length > maxAssistantResponseChars
-                ? finalText.characters.take(maxAssistantResponseChars).toString()
+            final capped =
+                finalText.characters.length > maxAssistantResponseChars
+                ? finalText.characters
+                      .take(maxAssistantResponseChars)
+                      .toString()
                 : finalText;
             if (capped != accumulated) {
               accumulated = capped;
@@ -168,12 +191,20 @@ class StreamingChatService {
     } catch (e, st) {
       hasError = true;
       errorCode = e.toString();
-      RitmoLog.error('StreamingChatService', 'Error in agent execution stream: $e', e, st);
+      RitmoLog.error(
+        'StreamingChatService',
+        'Error in agent execution stream: $e',
+        e,
+        st,
+      );
     }
 
     // Fallback: فقط وقتی ایجنت خطا داد و هیچ متنی تولید نشد و ارائه‌دهنده پل وب نیست، مسیر مستقیم گیت‌وی.
     if (hasError && accumulated.isEmpty && !isChatGptWeb) {
-      RitmoLog.warning('StreamingChatService', 'Falling back to plain gateway stream. Reason: $errorCode');
+      RitmoLog.warning(
+        'StreamingChatService',
+        'Falling back to plain gateway stream. Reason: $errorCode',
+      );
       hasError = false;
       errorCode = '';
       try {
@@ -188,8 +219,13 @@ class StreamingChatService {
           }
           accumulated += chunk;
           if (accumulated.characters.length > maxAssistantResponseChars) {
-            accumulated = accumulated.characters.take(maxAssistantResponseChars).toString();
-            yield ChatChunk('\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]', accumulated);
+            accumulated = accumulated.characters
+                .take(maxAssistantResponseChars)
+                .toString();
+            yield ChatChunk(
+              '\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]',
+              accumulated,
+            );
             break;
           }
           yield ChatChunk(chunk, accumulated);
@@ -197,7 +233,12 @@ class StreamingChatService {
       } catch (e, st) {
         hasError = true;
         errorCode = e.toString();
-        RitmoLog.error('StreamingChatService', 'Error in gateway fallback stream: $e', e, st);
+        RitmoLog.error(
+          'StreamingChatService',
+          'Error in gateway fallback stream: $e',
+          e,
+          st,
+        );
       }
     }
 
@@ -208,8 +249,12 @@ class StreamingChatService {
 
     // A-22: علت تشخیصی در صورت خالی بودن پاسخ
     if (accumulated.trim().isEmpty) {
-      final reason = ChatGptWebBridgeManager.instance.describeEmptyResponseReason();
-      RitmoLog.error('StreamingChatService', 'empty response: ${reason.technicalDetail}');
+      final reason = ChatGptWebBridgeManager.instance
+          .describeEmptyResponseReason();
+      RitmoLog.error(
+        'StreamingChatService',
+        'empty response: ${reason.technicalDetail}',
+      );
       yield ChatErrorEvent(reason.messageFa, reason.technicalDetail);
       return;
     }
@@ -235,14 +280,22 @@ class StreamingChatService {
           }
         }
       } catch (e, st) {
-        RitmoLog.error('StreamingChatService', 'Error processing assistant memory_ops JSON: $e', e, st);
+        RitmoLog.error(
+          'StreamingChatService',
+          'Error processing assistant memory_ops JSON: $e',
+          e,
+          st,
+        );
       }
     }
 
-    var finalText =
-        parsed.cleanText.trim().isNotEmpty ? parsed.cleanText : accumulated;
+    var finalText = parsed.cleanText.trim().isNotEmpty
+        ? parsed.cleanText
+        : accumulated;
     if (finalText.characters.length > maxAssistantResponseChars) {
-      finalText = finalText.characters.take(maxAssistantResponseChars).toString();
+      finalText = finalText.characters
+          .take(maxAssistantResponseChars)
+          .toString();
     }
 
     // Run explicit remember safety net
@@ -276,7 +329,13 @@ class StreamingChatService {
     // Trigger memory consolidation for this session (fire-and-forget)
     unawaited(MemoryConsolidator.consolidateSession(sessionId, 'core'));
 
-    final isPartial = isChatGptWeb && ChatGptWebBridgeManager.instance.lastAnswerWasPartial;
-    yield ChatComplete(assistantId, finalText, parsed.actions, isPartial: isPartial);
+    final isPartial =
+        isChatGptWeb && ChatGptWebBridgeManager.instance.lastAnswerWasPartial;
+    yield ChatComplete(
+      assistantId,
+      finalText,
+      parsed.actions,
+      isPartial: isPartial,
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 
 enum AppMode { simple, full }
 
@@ -55,6 +56,12 @@ class AppModeService {
           updatedAt = excluded.updatedAt;
       ''');
     } catch (_) {}
+
+    if (mode == AppMode.simple) {
+      try {
+        await SettingsService.instance.set('show_advanced_settings', false);
+      } catch (_) {}
+    }
 
     RitmoEventBus().fire(RitmoEvent(
       type: 'app_mode_changed',

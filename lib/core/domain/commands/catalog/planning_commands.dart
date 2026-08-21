@@ -17,8 +17,7 @@ class PlanningApplyWeekCommand extends RitmoCommand {
   String get humanTitle => 'ثبت برنامهٔ هفتگی';
 
   @override
-  String get humanDescriptionFa =>
-      'ثبت اتمیک برنامهٔ هفته در یک تراکنش واحد';
+  String get humanDescriptionFa => 'ثبت اتمیک برنامهٔ هفته در یک تراکنش واحد';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -31,9 +30,13 @@ class PlanningApplyWeekCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    final rawDrafts = (ctx.payload['drafts'] as List?) ?? drafts.map((d) => d.toJson()).toList();
+    final rawDrafts =
+        (ctx.payload['drafts'] as List?) ??
+        drafts.map((d) => d.toJson()).toList();
     final itemCount = rawDrafts.fold<int>(0, (a, d) {
-      final items = (d is Map ? d['items'] as List? : (d as DayPlanDraft).items);
+      final items = (d is Map
+          ? d['items'] as List?
+          : (d as DayPlanDraft).items);
       return a + (items?.length ?? 0);
     });
 
@@ -44,7 +47,18 @@ class PlanningApplyWeekCommand extends RitmoCommand {
       );
     }
 
-    final dates = rawDrafts.map((d) => (d is Map ? d['planDate'] as String? : (d as DayPlanDraft).planDate) ?? '').where((s) => s.isNotEmpty).toList()..sort();
+    final dates =
+        rawDrafts
+            .map(
+              (d) =>
+                  (d is Map
+                      ? d['planDate'] as String?
+                      : (d as DayPlanDraft).planDate) ??
+                  '',
+            )
+            .where((s) => s.isNotEmpty)
+            .toList()
+          ..sort();
     final first = dates.isNotEmpty ? dates.first : '';
     final last = dates.isNotEmpty ? dates.last : '';
 
@@ -59,7 +73,12 @@ class PlanningApplyWeekCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final rawDrafts = ctx.payload['drafts'] as List?;
     final targetDrafts = rawDrafts != null
-        ? rawDrafts.map((e) => DayPlanDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList()
+        ? rawDrafts
+              .map(
+                (e) =>
+                    DayPlanDraft.fromJson(Map<String, dynamic>.from(e as Map)),
+              )
+              .toList()
         : drafts;
 
     if (targetDrafts.isEmpty) {
@@ -112,7 +131,10 @@ class PlanningApplyWeekCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final groupId = inverseData['groupId'] as String?;
     if (groupId == null || groupId.isEmpty) return null;
     await AssistantUndoBridge.undoDayPlanGroup(ctx, groupId);
@@ -138,12 +160,17 @@ class PlanningCreateCycleCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ایجاد چرخه برنامه‌ریزی');
+    return const PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'ایجاد چرخه برنامه‌ریزی',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final cycleId = ctx.payload['id']?.toString() ?? 'cycle_${ctx.now.millisecondsSinceEpoch}';
+    final cycleId =
+        ctx.payload['id']?.toString() ??
+        'cycle_${ctx.now.millisecondsSinceEpoch}';
     final horizon = ctx.payload['horizon']?.toString() ?? 'WEEK';
     final startDayKey = ctx.payload['startDayKey']?.toString() ?? '';
     final endDayKey = ctx.payload['endDayKey']?.toString() ?? '';
@@ -166,7 +193,10 @@ class PlanningCreateCycleCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -189,7 +219,10 @@ class PlanningCloseCycleCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.update, entityLabelFa: 'بستن چرخه برنامه‌ریزی');
+    return const PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'بستن چرخه برنامه‌ریزی',
+    );
   }
 
   @override
@@ -205,7 +238,10 @@ class PlanningCloseCycleCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -228,12 +264,17 @@ class PlanningAddCommitmentCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'افزودن تعهد: ${ctx.payload['title']}');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'افزودن تعهد: ${ctx.payload['title']}',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final commitmentId = ctx.payload['id']?.toString() ?? 'commit_${ctx.now.millisecondsSinceEpoch}';
+    final commitmentId =
+        ctx.payload['id']?.toString() ??
+        'commit_${ctx.now.millisecondsSinceEpoch}';
     await ctx.txn.insert('planning_commitments', {
       'id': commitmentId,
       'cycleId': ctx.payload['cycleId']?.toString() ?? '',
@@ -249,17 +290,27 @@ class PlanningAddCommitmentCommand extends RitmoCommand {
       'latestDayKey': ctx.payload['latestDayKey']?.toString(),
       'preferredDayPartsJson': ctx.payload['preferredDayPartsJson']?.toString(),
       'status': ctx.payload['status']?.toString() ?? 'PROPOSED',
-      'isUserLocked': (ctx.payload['isUserLocked'] == true || ctx.payload['isUserLocked'] == 1) ? 1 : 0,
+      'isUserLocked':
+          (ctx.payload['isUserLocked'] == true ||
+              ctx.payload['isUserLocked'] == 1)
+          ? 1
+          : 0,
       'origin': ctx.payload['origin']?.toString() ?? 'USER',
       'planningReason': ctx.payload['planningReason']?.toString(),
       'createdAt': ctx.now.millisecondsSinceEpoch,
       'updatedAt': ctx.now.millisecondsSinceEpoch,
     });
-    return CommandResult.ok(commandId: id, outputData: {'commitmentId': commitmentId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'commitmentId': commitmentId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -303,7 +354,10 @@ class PlanningDropCommitmentCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -326,7 +380,10 @@ class PlanningMoveAllocationCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'انتقال به روز ${ctx.payload['newDayKey']}');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'انتقال به روز ${ctx.payload['newDayKey']}',
+    );
   }
 
   @override
@@ -371,7 +428,10 @@ class PlanningMoveAllocationCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -453,7 +513,10 @@ class PlanningSplitCommitmentCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -466,7 +529,8 @@ class PlanningLockAllocationCommand extends RitmoCommand {
   @override
   String get humanTitle => 'قفل تعهد در روز مشخص';
   @override
-  String get humanDescriptionFa => 'جلوگیری از تغییر یا جابه‌جایی تعهد توسط سیستم';
+  String get humanDescriptionFa =>
+      'جلوگیری از تغییر یا جابه‌جایی تعهد توسط سیستم';
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
   @override
@@ -492,7 +556,10 @@ class PlanningLockAllocationCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -505,7 +572,8 @@ class PlanningSetDayLightCommand extends RitmoCommand {
   @override
   String get humanTitle => 'علامت‌گذاری روز سبک';
   @override
-  String get humanDescriptionFa => 'تعیین یک روز به‌عنوان روز استراحت یا فعالیت سبک';
+  String get humanDescriptionFa =>
+      'تعیین یک روز به‌عنوان روز استراحت یا فعالیت سبک';
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
   @override
@@ -515,7 +583,10 @@ class PlanningSetDayLightCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'سبک‌سازی روز ${ctx.payload['dayKey']}');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'سبک‌سازی روز ${ctx.payload['dayKey']}',
+    );
   }
 
   @override
@@ -524,7 +595,10 @@ class PlanningSetDayLightCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -537,7 +611,8 @@ class PlanningMaterializeDayCommand extends RitmoCommand {
   @override
   String get humanTitle => 'مادی‌سازی برنامهٔ امروز';
   @override
-  String get humanDescriptionFa => 'تبدیل تخصیص‌های تعهد امروز به کارهای واقعی یا روتین';
+  String get humanDescriptionFa =>
+      'تبدیل تخصیص‌های تعهد امروز به کارهای واقعی یا روتین';
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
   @override
@@ -547,12 +622,17 @@ class PlanningMaterializeDayCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.create, entityLabelFa: 'مادی‌سازی برنامه‌های امروز');
+    return const PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'مادی‌سازی برنامه‌های امروز',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final dayKey = ctx.payload['dayKey']?.toString() ?? ctx.now.toIso8601String().substring(0, 10);
+    final dayKey =
+        ctx.payload['dayKey']?.toString() ??
+        ctx.now.toIso8601String().substring(0, 10);
     final allocations = await ctx.txn.query(
       'planning_allocations',
       where: 'dayKey = ? AND status = ?',
@@ -571,7 +651,8 @@ class PlanningMaterializeDayCommand extends RitmoCommand {
       if (comms.isEmpty) continue;
       final comm = comms.first;
 
-      final taskId = 'task_${ctx.now.millisecondsSinceEpoch}_${allocId.hashCode}';
+      final taskId =
+          'task_${ctx.now.millisecondsSinceEpoch}_${allocId.hashCode}';
       await ctx.txn.insert('simple_tasks', {
         'id': taskId,
         'title': comm['title'],
@@ -595,11 +676,17 @@ class PlanningMaterializeDayCommand extends RitmoCommand {
       );
     }
 
-    return CommandResult.ok(commandId: id, outputData: {'count': allocations.length});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'count': allocations.length},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }

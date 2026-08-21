@@ -2,7 +2,6 @@
 import 'dart:convert';
 
 class DayPlanDraft {
-
   DayPlanDraft({
     required this.planDate,
     required this.items,
@@ -17,9 +16,24 @@ class DayPlanDraft {
 
     return DayPlanDraft(
       planDate: json['planDate']?.toString() ?? '',
-      items: rawItems.map((e) => DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
-      questions: rawQuestions.map((e) => DayPlanQuestion.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
-      suggestions: rawSuggestions.map((e) => DayPlanSuggestion.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      items: rawItems
+          .map(
+            (e) =>
+                DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
+      questions: rawQuestions
+          .map(
+            (e) =>
+                DayPlanQuestion.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
+      suggestions: rawSuggestions
+          .map(
+            (e) =>
+                DayPlanSuggestion.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
     );
   }
   final String planDate;
@@ -52,7 +66,6 @@ class DayPlanDraft {
 }
 
 class DayPlanItemDraft {
-
   DayPlanItemDraft({
     required this.title,
     required this.targetModule,
@@ -74,7 +87,7 @@ class DayPlanItemDraft {
   factory DayPlanItemDraft.fromJson(Map<String, dynamic> json) {
     final startMap = json['start'] as Map? ?? {};
     final kind = startMap['kind']?.toString() ?? 'clock';
-    
+
     return DayPlanItemDraft(
       title: json['title']?.toString() ?? '',
       targetModule: json['targetModule']?.toString() ?? 'routine',
@@ -83,10 +96,14 @@ class DayPlanItemDraft {
       anchorEvent: startMap['anchorEvent']?.toString(),
       offsetMin: int.tryParse(startMap['offsetMin']?.toString() ?? '') ?? 0,
       bufferMin: int.tryParse(startMap['bufferMin']?.toString() ?? '') ?? 0,
-      durationMin: json['durationMin'] != null ? int.tryParse(json['durationMin'].toString()) : null,
+      durationMin: json['durationMin'] != null
+          ? int.tryParse(json['durationMin'].toString())
+          : null,
       durationSource: json['durationSource']?.toString() ?? 'none',
       recurrence: json['recurrence']?.toString() ?? 'oneOff',
-      daysOfWeek: json['daysOfWeek'] != null ? List<int>.from(json['daysOfWeek'] as List) : null,
+      daysOfWeek: json['daysOfWeek'] != null
+          ? List<int>.from(json['daysOfWeek'] as List)
+          : null,
       category: json['category']?.toString() ?? 'personal',
       confidence: double.tryParse(json['confidence']?.toString() ?? '') ?? 1.0,
       note: json['note']?.toString(),
@@ -96,7 +113,8 @@ class DayPlanItemDraft {
   String targetModule; // sleep | worship | routine | task | event | reminder
   String startKind; // clock | anchor | after_previous
   String? startTime; // "HH:mm" (for clock startKind)
-  String? anchorEvent; // "FAJR" | "SUNRISE" | "DHUHR" | "ASR" | "MAGHRIB" | "ISHA"
+  String?
+  anchorEvent; // "FAJR" | "SUNRISE" | "DHUHR" | "ASR" | "MAGHRIB" | "ISHA"
   int offsetMin; // offset from anchor
   int bufferMin; // buffer after previous
   int? durationMin;
@@ -106,7 +124,7 @@ class DayPlanItemDraft {
   String category;
   double confidence;
   String? note;
-  
+
   // Resolved absolute time after resolving validator, formatted as "HH:mm"
   String? resolvedTime;
 
@@ -169,7 +187,6 @@ class DayPlanItemDraft {
 }
 
 class DayPlanQuestion {
-
   DayPlanQuestion({
     required this.id,
     this.itemRef,
@@ -180,7 +197,9 @@ class DayPlanQuestion {
   factory DayPlanQuestion.fromJson(Map<String, dynamic> json) {
     return DayPlanQuestion(
       id: json['id']?.toString() ?? '',
-      itemRef: json['itemRef'] != null ? int.tryParse(json['itemRef'].toString()) : null,
+      itemRef: json['itemRef'] != null
+          ? int.tryParse(json['itemRef'].toString())
+          : null,
       text: json['text']?.toString() ?? '',
       quickReplies: List<String>.from(json['quickReplies'] as List? ?? []),
     );
@@ -201,18 +220,15 @@ class DayPlanQuestion {
 }
 
 class DayPlanSuggestion {
-
-  DayPlanSuggestion({
-    required this.text,
-    required this.action,
-    this.payload,
-  });
+  DayPlanSuggestion({required this.text, required this.action, this.payload});
 
   factory DayPlanSuggestion.fromJson(Map<String, dynamic> json) {
     return DayPlanSuggestion(
       text: json['text']?.toString() ?? '',
       action: json['action']?.toString() ?? '',
-      payload: json['payload'] != null ? Map<String, dynamic>.from(json['payload'] as Map) : null,
+      payload: json['payload'] != null
+          ? Map<String, dynamic>.from(json['payload'] as Map)
+          : null,
     );
   }
   final String text;
@@ -229,7 +245,6 @@ class DayPlanSuggestion {
 }
 
 class DayPlanTemplate {
-
   DayPlanTemplate({
     required this.id,
     required this.name,
@@ -242,19 +257,44 @@ class DayPlanTemplate {
   });
 
   factory DayPlanTemplate.fromMap(Map<String, dynamic> map) {
-    final nameVal = (map['name'] as String?)?.trim() ?? (map['title'] as String?)?.trim() ?? '';
-    final rawItemsJson = (map['itemsJson'] as String?)?.trim() ?? (map['plan_json'] as String?)?.trim() ?? '[]';
-    final List<dynamic> itemsList = jsonDecode(rawItemsJson.isNotEmpty ? rawItemsJson : '[]');
-    final created = (map['createdAt'] as num?)?.toInt() ?? (map['created_at'] as num?)?.toInt() ?? 0;
-    final updated = (map['updatedAt'] as num?)?.toInt() ?? (map['updated_at'] as num?)?.toInt() ?? 0;
-    final lastUsed = (map['lastUsedAt'] as num?)?.toInt() ?? (map['last_used_at'] as num?)?.toInt() ?? 0;
-    final uses = (map['useCount'] as num?)?.toInt() ?? (map['use_count'] as num?)?.toInt() ?? 0;
+    final nameVal =
+        (map['name'] as String?)?.trim() ??
+        (map['title'] as String?)?.trim() ??
+        '';
+    final rawItemsJson =
+        (map['itemsJson'] as String?)?.trim() ??
+        (map['plan_json'] as String?)?.trim() ??
+        '[]';
+    final List<dynamic> itemsList = jsonDecode(
+      rawItemsJson.isNotEmpty ? rawItemsJson : '[]',
+    );
+    final created =
+        (map['createdAt'] as num?)?.toInt() ??
+        (map['created_at'] as num?)?.toInt() ??
+        0;
+    final updated =
+        (map['updatedAt'] as num?)?.toInt() ??
+        (map['updated_at'] as num?)?.toInt() ??
+        0;
+    final lastUsed =
+        (map['lastUsedAt'] as num?)?.toInt() ??
+        (map['last_used_at'] as num?)?.toInt() ??
+        0;
+    final uses =
+        (map['useCount'] as num?)?.toInt() ??
+        (map['use_count'] as num?)?.toInt() ??
+        0;
 
     return DayPlanTemplate(
       id: map['id']?.toString() ?? '',
       name: nameVal,
       icon: map['icon'] as String?,
-      items: itemsList.map((e) => DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map))).toList(),
+      items: itemsList
+          .map(
+            (e) =>
+                DayPlanItemDraft.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList(),
       createdAt: created,
       updatedAt: updated,
       lastUsedAt: lastUsed,

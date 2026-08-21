@@ -9,7 +9,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 
 /// Context model representing a conversation turn and background memory.
 class ConversationContext {
-
   /// Constructs a [ConversationContext].
   ConversationContext({
     required this.recentTurns,
@@ -18,6 +17,7 @@ class ConversationContext {
     required this.userProfile,
     required this.retrievedMemories,
   });
+
   /// Recent turns (up to 10 messages).
   final List<ChatMessage> recentTurns;
 
@@ -34,10 +34,7 @@ class ConversationContext {
   final List<MemoryEntry> retrievedMemories;
 
   /// Formats the context into a list of system/user message maps for the API.
-  List<Map<String, String>> toMessages(
-    String systemPrompt,
-    String userText,
-  ) {
+  List<Map<String, String>> toMessages(String systemPrompt, String userText) {
     String truncate(String text) {
       return text.length > 400 ? '${text.substring(0, 400)}…' : text;
     }
@@ -63,10 +60,7 @@ class ConversationContext {
     }
 
     final messages = <Map<String, String>>[
-      {
-        'role': 'system',
-        'content': systemParts.join('\n'),
-      },
+      {'role': 'system', 'content': systemParts.join('\n')},
     ];
 
     for (final turn in recentTurns) {
@@ -83,16 +77,14 @@ class ConversationContext {
       final window = retrievedData['window'];
       if (window is Map && window['labelFa'] is String) {
         userContentParts.add(
-            '\n\n[توجه: اعداد بلوک <retrieved> فقط برای بازهٔ «${window['labelFa']}» محاسبه شده‌اند؛ دربارهٔ بازه‌های دیگر عدد نساز.]');
+          '\n\n[توجه: اعداد بلوک <retrieved> فقط برای بازهٔ «${window['labelFa']}» محاسبه شده‌اند؛ دربارهٔ بازه‌های دیگر عدد نساز.]',
+        );
       }
       final encodedData = jsonEncode(retrievedData);
       userContentParts.add('\n\n<retrieved>$encodedData</retrieved>');
     }
 
-    messages.add({
-      'role': 'user',
-      'content': userContentParts.join('\n'),
-    });
+    messages.add({'role': 'user', 'content': userContentParts.join('\n')});
 
     return messages;
   }
@@ -111,8 +103,7 @@ class ConversationContextBuilder {
     String memoryDomain = 'core',
   }) async {
     // 1) Fetch recent turns (limit: 10)
-    final recentTurns =
-        await ChatRepository.instance.getRecentTurns(sessionId);
+    final recentTurns = await ChatRepository.instance.getRecentTurns(sessionId);
 
     // 2) Fetch prior summaries (limit: 4, skip current, select up to 3 non-null)
     final allSessions = await ChatRepository.instance.listSessions(limit: 4);
@@ -141,7 +132,10 @@ class ConversationContextBuilder {
         userProfile[key] = value;
       }
     } catch (e) {
-      RitmoLog.warning('ConversationContextBuilder', 'Could not query user profile settings: $e');
+      RitmoLog.warning(
+        'ConversationContextBuilder',
+        'Could not query user profile settings: $e',
+      );
     }
 
     // 4) Retrieve relevant memories from AiMemoryService

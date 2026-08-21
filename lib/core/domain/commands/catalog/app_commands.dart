@@ -44,7 +44,10 @@ class AppOpenPageCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => null;
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => null;
 }
 
 class AssistantHandoffCommand extends RitmoCommand {
@@ -57,7 +60,8 @@ class AssistantHandoffCommand extends RitmoCommand {
   String get humanTitle => 'ارجاع به دستیار دیگر';
 
   @override
-  String get humanDescriptionFa => 'واگذاری گفتگو به دستیاری که تخصص بیشتری در موضوع دارد';
+  String get humanDescriptionFa =>
+      'واگذاری گفتگو به دستیاری که تخصص بیشتری در موضوع دارد';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -71,7 +75,19 @@ class AssistantHandoffCommand extends RitmoCommand {
       type: ParamType.enumeration,
       labelFa: 'دستیار مقصد',
       required: true,
-      allowed: ['global', 'worship', 'konkur', 'courses', 'sports', 'wellbeing', 'goals', 'sleep', 'reflection', 'cycle', 'health'],
+      allowed: [
+        'global',
+        'worship',
+        'konkur',
+        'courses',
+        'sports',
+        'wellbeing',
+        'goals',
+        'sleep',
+        'reflection',
+        'cycle',
+        'health',
+      ],
     ),
     'reasonFa': const ParamSpec(
       type: ParamType.text,
@@ -88,7 +104,10 @@ class AssistantHandoffCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final target = ctx.payload['personaId']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.noop, entityLabelFa: 'ارجاع به دستیار: $target');
+    return PlanDiff(
+      kind: DiffKind.noop,
+      entityLabelFa: 'ارجاع به دستیار: $target',
+    );
   }
 
   @override
@@ -98,14 +117,17 @@ class AssistantHandoffCommand extends RitmoCommand {
     if (ctx.personaId == 'cycle' || target == 'cycle') {
       carry = false;
     }
-    return CommandResult.ok(commandId: id, outputData: {
-      'personaId': target,
-      'carryHistory': carry,
-    });
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'personaId': target, 'carryHistory': carry},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => null;
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => null;
 }
 
 class AssistantUndoLastCommand extends RitmoCommand {
@@ -118,7 +140,8 @@ class AssistantUndoLastCommand extends RitmoCommand {
   String get humanTitle => 'بازگردانی آخرین اقدام';
 
   @override
-  String get humanDescriptionFa => 'لغو آخرین برنامه یا تغییری که توسط دستیار اعمال شده است';
+  String get humanDescriptionFa =>
+      'لغو آخرین برنامه یا تغییری که توسط دستیار اعمال شده است';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -131,22 +154,34 @@ class AssistantUndoLastCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return const PlanDiff(kind: DiffKind.noop, entityLabelFa: 'بازگردانی آخرین اقدام دستیار');
+    return const PlanDiff(
+      kind: DiffKind.noop,
+      entityLabelFa: 'بازگردانی آخرین اقدام دستیار',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final plans = await CommandAuditRepository.getRecentPlans(limit: 1);
     if (plans.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'هیچ برنامه قابل بازگردانی پیدا نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'هیچ برنامه قابل بازگردانی پیدا نشد.',
+      );
     }
     final lastPlan = plans.first;
     if (lastPlan.status != 'applied') {
-      return CommandResult.failure(commandId: id, errorMessage: 'آخرین برنامه قبلاً بازگردانده شده است.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'آخرین برنامه قبلاً بازگردانده شده است.',
+      );
     }
     return CommandResult.ok(commandId: id, outputData: {'planId': lastPlan.id});
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => null;
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => null;
 }

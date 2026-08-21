@@ -147,7 +147,8 @@ class ValidatorLexicon {
         for (int i = 0; i <= textTokens.length - pLen; i++) {
           bool matched = true;
           for (int j = 0; j < pLen; j++) {
-            if (textTokens[i + j].toLowerCase() != phraseTokens[j].toLowerCase()) {
+            if (textTokens[i + j].toLowerCase() !=
+                phraseTokens[j].toLowerCase()) {
               matched = false;
               break;
             }

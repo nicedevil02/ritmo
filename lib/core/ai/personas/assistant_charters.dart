@@ -41,8 +41,12 @@ class AssistantCorePolicy {
     final r10 = PersianDigits.toFa(PolicyRule.stayInScope.toString());
     final r11 = PersianDigits.toFa(PolicyRule.noFakeActions.toString());
     final r12 = PersianDigits.toFa(PolicyRule.jsonSchema.toString());
-    final r13 = PersianDigits.toFa(PolicyRule.commandsFromManifestOnly.toString());
-    final r14 = PersianDigits.toFa(PolicyRule.emptyCommandsWhenUnsure.toString());
+    final r13 = PersianDigits.toFa(
+      PolicyRule.commandsFromManifestOnly.toString(),
+    );
+    final r14 = PersianDigits.toFa(
+      PolicyRule.emptyCommandsWhenUnsure.toString(),
+    );
     final r15 = PersianDigits.toFa(PolicyRule.jalaliInReply.toString());
     final r16 = PersianDigits.toFa(PolicyRule.cycleFence.toString());
 

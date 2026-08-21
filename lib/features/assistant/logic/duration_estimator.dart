@@ -48,8 +48,17 @@ class DurationEstimator {
     // 1. Explicit user statement in query (e.g. "تا ۱ اونجام" -> handled by LLM duration)
     // We detect if LLM successfully parsed a duration and the query contains explicit time constraints.
     if (llmDuration != null && llmDuration > 0) {
-      final explicitKeywords = ['دقیقه', 'ساعت', 'تا ساعت', 'تا ساعت', 'مدت', 'طول بکشد'];
-      final hasExplicitMention = explicitKeywords.any((kw) => userQuery.contains(kw));
+      final explicitKeywords = [
+        'دقیقه',
+        'ساعت',
+        'تا ساعت',
+        'تا ساعت',
+        'مدت',
+        'طول بکشد',
+      ];
+      final hasExplicitMention = explicitKeywords.any(
+        (kw) => userQuery.contains(kw),
+      );
       if (hasExplicitMention) {
         return (duration: llmDuration, source: 'user');
       }
@@ -57,7 +66,10 @@ class DurationEstimator {
 
     // 2. User history: Median completed duration for routines/tasks with similar title/category
     try {
-      final historyDuration = await _getMedianDurationFromHistory(title, category);
+      final historyDuration = await _getMedianDurationFromHistory(
+        title,
+        category,
+      );
       if (historyDuration != null) {
         return (duration: historyDuration, source: 'history');
       }
@@ -67,7 +79,9 @@ class DurationEstimator {
 
     // 3. Cognitive memory (facts like "رفت‌وآمد تا سرکار ۳۰ دقیقه است")
     try {
-      final memories = preloadedMemories ?? await AiMemoryService.instance.retrieve(domain: 'core', query: title);
+      final memories =
+          preloadedMemories ??
+          await AiMemoryService.instance.retrieve(domain: 'core', query: title);
       final memoryDuration = _getDurationFromMemories(title, memories);
       if (memoryDuration != null) {
         return (duration: memoryDuration, source: 'memory');
@@ -92,20 +106,27 @@ class DurationEstimator {
   }
 
   /// Calculates the median completion duration from sqlite history.
-  static Future<int?> _getMedianDurationFromHistory(String title, String category) async {
+  static Future<int?> _getMedianDurationFromHistory(
+    String title,
+    String category,
+  ) async {
     final db = await DatabaseHelper.instance.database;
 
     // Retrieve all completion times for routines with matching titles or same category
-    final List<Map<String, dynamic>> results = await db.rawQuery('''
+    final List<Map<String, dynamic>> results = await db.rawQuery(
+      '''
       SELECT rc.durationMinutes 
       FROM routine_completions rc
       JOIN routines r ON rc.routineId = r.id
       WHERE (r.title LIKE ? OR r.category = ?) AND rc.durationMinutes IS NOT NULL AND rc.durationMinutes > 0
-    ''', ['%$title%', category]);
+    ''',
+      ['%$title%', category],
+    );
 
     if (results.isEmpty) return null;
 
-    final durations = results.map((r) => r['durationMinutes'] as int).toList()..sort();
+    final durations = results.map((r) => r['durationMinutes'] as int).toList()
+      ..sort();
     final middle = durations.length ~/ 2;
     if (durations.length % 2 == 1) {
       return durations[middle];
@@ -115,7 +136,10 @@ class DurationEstimator {
   }
 
   /// Extracts duration from cognitive memory statement (e.g. "۳۰ دقیقه" or "۲ ساعت").
-  static int? _getDurationFromMemories(String title, List<MemoryEntry> memories) {
+  static int? _getDurationFromMemories(
+    String title,
+    List<MemoryEntry> memories,
+  ) {
     final cleanTitle = title.trim();
     if (cleanTitle.isEmpty) return null;
 
@@ -149,5 +173,6 @@ class DurationEstimator {
   }
 
   /// Public accessor for Iranian default durations (for testing).
-  static int? getIranianDefaultMinutes(String title) => _getIranianDefaultDuration(title);
+  static int? getIranianDefaultMinutes(String title) =>
+      _getIranianDefaultDuration(title);
 }

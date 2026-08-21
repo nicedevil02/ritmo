@@ -32,7 +32,10 @@ class DayPlanTemplateService {
 
   Future<List<DayPlanTemplate>> getTemplates() async {
     final db = await DatabaseHelper.instance.database;
-    final maps = await db.query('day_plan_templates', orderBy: 'lastUsedAt DESC');
+    final maps = await db.query(
+      'day_plan_templates',
+      orderBy: 'lastUsedAt DESC',
+    );
     return maps.map(DayPlanTemplate.fromMap).toList();
   }
 
@@ -58,10 +61,7 @@ class DayPlanTemplateService {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'day_plan_templates',
-      {
-        'name': newName,
-        'updatedAt': now,
-      },
+      {'name': newName, 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -70,15 +70,17 @@ class DayPlanTemplateService {
   Future<void> recordTemplateUsage(String id) async {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
-    final list = await db.query('day_plan_templates', where: 'id = ?', whereArgs: [id], limit: 1);
+    final list = await db.query(
+      'day_plan_templates',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (list.isNotEmpty) {
       final currentUseCount = list.first['useCount'] as int? ?? 0;
       await db.update(
         'day_plan_templates',
-        {
-          'lastUsedAt': now,
-          'useCount': currentUseCount + 1,
-        },
+        {'lastUsedAt': now, 'useCount': currentUseCount + 1},
         where: 'id = ?',
         whereArgs: [id],
       );

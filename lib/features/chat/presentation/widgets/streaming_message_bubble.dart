@@ -90,7 +90,8 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxBubbleWidth = constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor;
+        final maxBubbleWidth =
+            constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor;
 
         // Build Copy Button with animated icon transition
         final copyButton = GestureDetector(
@@ -116,7 +117,8 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
           ),
         );
 
-        final showCopy = !widget.message.isStreaming && displayContent.isNotEmpty;
+        final showCopy =
+            !widget.message.isStreaming && displayContent.isNotEmpty;
 
         if (isUser) {
           // --- 2026 User Message Bubble ---
@@ -260,12 +262,16 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
                 )
               else if (widget.message.isStreaming)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
                   child: _TypingIndicator(color: colors.primary),
                 ),
 
               // Action Chips Row (Quick Executable Buttons)
-              if (!widget.message.isStreaming && widget.message.actions.isNotEmpty) ...[
+              if (!widget.message.isStreaming &&
+                  widget.message.actions.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Directionality(
                   textDirection: TextDirection.rtl,
@@ -273,10 +279,12 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
                     spacing: 8,
                     runSpacing: 8,
                     children: widget.message.actions
-                        .map((act) => ChatActionChip(
-                              action: act,
-                              onTap: () => widget.onAction(act),
-                            ))
+                        .map(
+                          (act) => ChatActionChip(
+                            action: act,
+                            onTap: () => widget.onAction(act),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -286,7 +294,10 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
               if (!widget.message.isStreaming && widget.message.isPartial) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.warning.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
@@ -306,12 +317,11 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          AppLocalizations.of(context)?.bridgePartialAnswerWarning ??
+                          AppLocalizations.of(
+                                context,
+                              )?.bridgePartialAnswerWarning ??
                               'این پاسخ کامل دریافت نشد.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.warning,
-                          ),
+                          style: TextStyle(fontSize: 11, color: colors.warning),
                         ),
                       ),
                     ],
@@ -377,7 +387,8 @@ class _BlinkingCursor extends StatefulWidget {
   State<_BlinkingCursor> createState() => _BlinkingCursorState();
 }
 
-class _BlinkingCursorState extends State<_BlinkingCursor> with SingleTickerProviderStateMixin {
+class _BlinkingCursorState extends State<_BlinkingCursor>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -424,7 +435,8 @@ class _TypingIndicator extends StatefulWidget {
   State<_TypingIndicator> createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerProviderStateMixin {
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -475,4 +487,3 @@ class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerPro
     );
   }
 }
-

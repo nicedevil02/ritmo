@@ -44,7 +44,10 @@ class PersonaSkill {
   /// Selects up to [maxSkillsPerPersona] deterministic skills for the given persona,
   /// filtering out skills requiring commands unavailable to the persona,
   /// prioritizing relevant skills followed by non-relevant ones by priority.
-  static List<PersonaSkill> getSkillsForPersona(String personaId, DomainBrief? brief) {
+  static List<PersonaSkill> getSkillsForPersona(
+    String personaId,
+    DomainBrief? brief,
+  ) {
     final defs = PersonaSkillRegistry.forPersona(personaId);
     if (defs.isEmpty) return const [];
 

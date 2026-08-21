@@ -14,7 +14,8 @@ class GoalCreateCommand extends RitmoCommand {
   String get humanTitle => 'تعریف هدف جدید';
 
   @override
-  String get humanDescriptionFa => 'ایجاد یک هدف جدید شخصی، تحصیلی یا ورزشی در برنامه';
+  String get humanDescriptionFa =>
+      'ایجاد یک هدف جدید شخصی، تحصیلی یا ورزشی در برنامه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -61,11 +62,18 @@ class GoalCreateCommand extends RitmoCommand {
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'goalId': goalId}, inverseData: {'goalId': goalId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'goalId': goalId},
+      inverseData: {'goalId': goalId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final goalId = inverseData['goalId']?.toString();
     if (goalId == null) return null;
     await ctx.txn.delete('goals', where: 'id = ?', whereArgs: [goalId]);
@@ -114,8 +122,15 @@ class GoalEditCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
-    final rows = await ctx.txn.query('goals', columns: ['title'], where: 'id = ?', whereArgs: [goalId]);
-    final oldTitle = rows.isNotEmpty ? rows.first['title']?.toString() : 'هدف نامشخص';
+    final rows = await ctx.txn.query(
+      'goals',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
+    final oldTitle = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'هدف نامشخص';
     final newTitle = ctx.payload['title']?.toString() ?? oldTitle;
     return PlanDiff(
       kind: DiffKind.update,
@@ -128,27 +143,46 @@ class GoalEditCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
-    final rows = await ctx.txn.query('goals', where: 'id = ?', whereArgs: [goalId]);
+    final rows = await ctx.txn.query(
+      'goals',
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
     if (rows.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'هدف یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'هدف یافت نشد.',
+      );
     }
 
     final data = <String, dynamic>{};
     if (ctx.payload['title'] != null) data['title'] = ctx.payload['title'];
-    if (ctx.payload['goalType'] != null) data['goalType'] = ctx.payload['goalType'];
+    if (ctx.payload['goalType'] != null)
+      data['goalType'] = ctx.payload['goalType'];
     data['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
 
     await ctx.txn.update('goals', data, where: 'id = ?', whereArgs: [goalId]);
 
-    return CommandResult.ok(commandId: id, inverseData: {'goalId': goalId, 'oldState': rows.first});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'goalId': goalId, 'oldState': rows.first},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final goalId = inverseData['goalId']?.toString();
     final oldState = inverseData['oldState'] as Map<String, dynamic>?;
     if (goalId == null || oldState == null) return null;
-    await ctx.txn.update('goals', Map<String, dynamic>.from(oldState), where: 'id = ?', whereArgs: [goalId]);
+    await ctx.txn.update(
+      'goals',
+      Map<String, dynamic>.from(oldState),
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -163,7 +197,8 @@ class GoalCompleteStepCommand extends RitmoCommand {
   String get humanTitle => 'تکمیل گام هدف';
 
   @override
-  String get humanDescriptionFa => 'تیک زدن و ثبت تکمیل یکی از مراحل یا گام‌های هدف';
+  String get humanDescriptionFa =>
+      'تیک زدن و ثبت تکمیل یکی از مراحل یا گام‌های هدف';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -191,9 +226,19 @@ class GoalCompleteStepCommand extends RitmoCommand {
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
     final stepId = ctx.payload['stepId']?.toString() ?? '';
-    final rows = await ctx.txn.query('goal_steps', columns: ['title'], where: 'id = ? AND goalId = ?', whereArgs: [stepId, goalId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'مرحله هدف';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تکمیل مرحله: $title');
+    final rows = await ctx.txn.query(
+      'goal_steps',
+      columns: ['title'],
+      where: 'id = ? AND goalId = ?',
+      whereArgs: [stepId, goalId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'مرحله هدف';
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تکمیل مرحله: $title',
+    );
   }
 
   @override
@@ -201,36 +246,43 @@ class GoalCompleteStepCommand extends RitmoCommand {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
     final stepId = ctx.payload['stepId']?.toString() ?? '';
 
-    final rows = await ctx.txn.query('goal_steps', where: 'id = ? AND goalId = ?', whereArgs: [stepId, goalId]);
+    final rows = await ctx.txn.query(
+      'goal_steps',
+      where: 'id = ? AND goalId = ?',
+      whereArgs: [stepId, goalId],
+    );
     if (rows.isEmpty) {
-      return CommandResult.failure(commandId: id, errorMessage: 'گام هدف یافت نشد.');
+      return CommandResult.failure(
+        commandId: id,
+        errorMessage: 'گام هدف یافت نشد.',
+      );
     }
 
     await ctx.txn.update(
       'goal_steps',
-      {
-        'isCompleted': 1,
-        'completedAt': DateTime.now().millisecondsSinceEpoch,
-      },
+      {'isCompleted': 1, 'completedAt': DateTime.now().millisecondsSinceEpoch},
       where: 'id = ? AND goalId = ?',
       whereArgs: [stepId, goalId],
     );
 
-    return CommandResult.ok(commandId: id, inverseData: {'goalId': goalId, 'stepId': stepId});
+    return CommandResult.ok(
+      commandId: id,
+      inverseData: {'goalId': goalId, 'stepId': stepId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final goalId = inverseData['goalId']?.toString();
     final stepId = inverseData['stepId']?.toString();
     if (goalId == null || stepId == null) return null;
 
     await ctx.txn.update(
       'goal_steps',
-      {
-        'isCompleted': 0,
-        'completedAt': null,
-      },
+      {'isCompleted': 0, 'completedAt': null},
       where: 'id = ? AND goalId = ?',
       whereArgs: [stepId, goalId],
     );
@@ -259,21 +311,38 @@ class GoalDecomposeCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'goalId': const ParamSpec(type: ParamType.idRef, labelFa: 'هدف', required: true, refTable: 'goals'),
-    'steps': const ParamSpec(type: ParamType.text, labelFa: 'گام‌ها (جداشده با ویرگول)', required: true, exampleFa: 'مطالعه منابع، آزمون اولیه، مرور نهایی'),
+    'goalId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'هدف',
+      required: true,
+      refTable: 'goals',
+    ),
+    'steps': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'گام‌ها (جداشده با ویرگول)',
+      required: true,
+      exampleFa: 'مطالعه منابع، آزمون اولیه، مرور نهایی',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'تجزیه هدف $goalId به گام‌ها');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'تجزیه هدف $goalId به گام‌ها',
+    );
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
     final stepsRaw = ctx.payload['steps']?.toString() ?? '';
-    final steps = stepsRaw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    final steps = stepsRaw
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
     final createdIds = <String>[];
     for (var i = 0; i < steps.length; i++) {
       final stepId = '${goalId}_step_$i';
@@ -287,11 +356,18 @@ class GoalDecomposeCommand extends RitmoCommand {
       });
       createdIds.add(stepId);
     }
-    return CommandResult.ok(commandId: id, outputData: {'stepIds': createdIds}, inverseData: {'goalId': goalId, 'stepIds': createdIds});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'stepIds': createdIds},
+      inverseData: {'goalId': goalId, 'stepIds': createdIds},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final stepIds = (inverseData['stepIds'] as List?)?.cast<String>() ?? [];
     for (final sid in stepIds) {
       await ctx.txn.delete('goal_steps', where: 'id = ?', whereArgs: [sid]);
@@ -320,7 +396,12 @@ class GoalArchiveCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'goalId': const ParamSpec(type: ParamType.idRef, labelFa: 'هدف', required: true, refTable: 'goals'),
+    'goalId': const ParamSpec(
+      type: ParamType.idRef,
+      labelFa: 'هدف',
+      required: true,
+      refTable: 'goals',
+    ),
   };
 
   @override
@@ -330,15 +411,32 @@ class GoalArchiveCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final goalId = ctx.payload['goalId']?.toString() ?? '';
-    await ctx.txn.update('goals', {'isArchived': 1}, where: 'id = ?', whereArgs: [goalId]);
-    return CommandResult.ok(commandId: id, outputData: {'goalId': goalId}, inverseData: {'goalId': goalId});
+    await ctx.txn.update(
+      'goals',
+      {'isArchived': 1},
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'goalId': goalId},
+      inverseData: {'goalId': goalId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final goalId = inverseData['goalId']?.toString();
     if (goalId == null) return null;
-    await ctx.txn.update('goals', {'isArchived': 0}, where: 'id = ?', whereArgs: [goalId]);
+    await ctx.txn.update(
+      'goals',
+      {'isArchived': 0},
+      where: 'id = ?',
+      whereArgs: [goalId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }

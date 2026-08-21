@@ -13,8 +13,12 @@ ChatRole chatRoleFromString(String s) => switch (s) {
 };
 
 class ChatAction {
-
-  ChatAction({required this.type, required this.label, this.payload = const {}, this.targetRoute});
+  ChatAction({
+    required this.type,
+    required this.label,
+    this.payload = const {},
+    this.targetRoute,
+  });
 
   factory ChatAction.fromJson(Map<String, dynamic> j) => ChatAction(
     type: j['type'] as String? ?? '',
@@ -22,19 +26,25 @@ class ChatAction {
     payload: (j['payload'] as Map?)?.cast<String, dynamic>() ?? {},
     targetRoute: j['targetRoute'] as String?,
   );
-  final String type;            // باید یکی از AssistantActionType.name باشد
-  final String label;           // متن فارسی دکمه
+  final String type; // باید یکی از AssistantActionType.name باشد
+  final String label; // متن فارسی دکمه
   final Map<String, dynamic> payload;
   final String? targetRoute;
 
-  Map<String, dynamic> toJson() =>
-    {'type': type, 'label': label, 'payload': payload, 'targetRoute': targetRoute};
+  Map<String, dynamic> toJson() => {
+    'type': type,
+    'label': label,
+    'payload': payload,
+    'targetRoute': targetRoute,
+  };
 
   AssistantAction toAssistantAction() {
     var resolvedRoute = targetRoute ?? (payload['targetRoute']?.toString());
     final labelLower = label.toLowerCase();
     if (resolvedRoute == null || resolvedRoute.isEmpty) {
-      if (labelLower.contains('پریود') || labelLower.contains('چرخه') || labelLower.contains('قاعدگی')) {
+      if (labelLower.contains('پریود') ||
+          labelLower.contains('چرخه') ||
+          labelLower.contains('قاعدگی')) {
         resolvedRoute = '/cycle';
       }
     }
@@ -51,7 +61,8 @@ class ChatAction {
   }
 }
 
-class ChatMessage {   // in-memory only — به DB نمیرود
+class ChatMessage {
+  // in-memory only — به DB نمیرود
 
   ChatMessage({
     required this.id,
@@ -74,8 +85,8 @@ class ChatMessage {   // in-memory only — به DB نمیرود
     if (raw != null && raw.isNotEmpty) {
       try {
         acts = (jsonDecode(raw) as List)
-          .map((e) => ChatAction.fromJson((e as Map).cast<String, dynamic>()))
-          .toList();
+            .map((e) => ChatAction.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
       } catch (e) {
         RitmoLog.warning('ChatMessage', 'Could not decode actions json: $e');
       }
@@ -85,7 +96,9 @@ class ChatMessage {   // in-memory only — به DB نمیرود
       sessionId: m['session_id'] as String,
       role: chatRoleFromString(m['role'] as String? ?? 'assistant'),
       content: m['content'] as String? ?? '',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(m['timestamp'] as int? ?? 0),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(
+        m['timestamp'] as int? ?? 0,
+      ),
       tokensUsed: m['tokens_used'] as int?,
       actions: acts,
       isPartial: m['is_partial'] == 1 || m['is_partial'] == true,
@@ -100,10 +113,13 @@ class ChatMessage {   // in-memory only — به DB نمیرود
   final List<ChatAction> actions;
   final bool isStreaming;
   final bool isPartial;
+
   /// Confidence level from PersonaResponseValidator (PSN-47)
   final String? briefConfidence;
+
   /// Fields used from the domain brief (PSN-47)
   final List<String>? usedFields;
+
   /// Validator annotations e.g. sanitization notices (PSN-47)
   final List<String> validatorAnnotations;
 
@@ -111,19 +127,29 @@ class ChatMessage {   // in-memory only — به DB نمیرود
       ? content
       : ChatActionParser.extractCleanReplyText(content);
 
-  ChatMessage copyWith({String? content, List<ChatAction>? actions, bool? isStreaming, bool? isPartial, int? tokensUsed, String? briefConfidence, List<String>? usedFields, List<String>? validatorAnnotations}) =>
-    ChatMessage(
-      id: id, sessionId: sessionId, role: role,
-      content: content ?? this.content,
-      timestamp: timestamp,
-      tokensUsed: tokensUsed ?? this.tokensUsed,
-      actions: actions ?? this.actions,
-      isStreaming: isStreaming ?? this.isStreaming,
-      isPartial: isPartial ?? this.isPartial,
-      briefConfidence: briefConfidence ?? this.briefConfidence,
-      usedFields: usedFields ?? this.usedFields,
-      validatorAnnotations: validatorAnnotations ?? this.validatorAnnotations,
-    );
+  ChatMessage copyWith({
+    String? content,
+    List<ChatAction>? actions,
+    bool? isStreaming,
+    bool? isPartial,
+    int? tokensUsed,
+    String? briefConfidence,
+    List<String>? usedFields,
+    List<String>? validatorAnnotations,
+  }) => ChatMessage(
+    id: id,
+    sessionId: sessionId,
+    role: role,
+    content: content ?? this.content,
+    timestamp: timestamp,
+    tokensUsed: tokensUsed ?? this.tokensUsed,
+    actions: actions ?? this.actions,
+    isStreaming: isStreaming ?? this.isStreaming,
+    isPartial: isPartial ?? this.isPartial,
+    briefConfidence: briefConfidence ?? this.briefConfidence,
+    usedFields: usedFields ?? this.usedFields,
+    validatorAnnotations: validatorAnnotations ?? this.validatorAnnotations,
+  );
 
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -137,7 +163,6 @@ class ChatMessage {   // in-memory only — به DB نمیرود
 }
 
 class ChatSession {
-
   ChatSession({
     required this.id,
     this.title = '',
@@ -151,8 +176,12 @@ class ChatSession {
   factory ChatSession.fromMap(Map<String, dynamic> m) => ChatSession(
     id: m['id'] as String,
     title: m['title'] as String? ?? '',
-    createdAt: DateTime.fromMillisecondsSinceEpoch(m['created_at'] as int? ?? 0),
-    lastMessageAt: DateTime.fromMillisecondsSinceEpoch(m['last_message_at'] as int? ?? 0),
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      m['created_at'] as int? ?? 0,
+    ),
+    lastMessageAt: DateTime.fromMillisecondsSinceEpoch(
+      m['last_message_at'] as int? ?? 0,
+    ),
     summary: m['summary'] as String?,
     messageCount: m['message_count'] as int? ?? 0,
     chatType: m['chat_type'] as String? ?? 'assistant',
@@ -168,16 +197,49 @@ class ChatSession {
 
 /// رویدادهای stream برای UI
 sealed class StreamingChatEvent {}
-class UserMessageSaved extends StreamingChatEvent { UserMessageSaved(this.message); final ChatMessage message; }
-class AssistantStarted extends StreamingChatEvent { AssistantStarted(this.messageId); final String messageId; }
-class ChatChunk extends StreamingChatEvent { ChatChunk(this.delta, this.accumulated); final String delta; final String accumulated; }
+
+class UserMessageSaved extends StreamingChatEvent {
+  UserMessageSaved(this.message);
+  final ChatMessage message;
+}
+
+class AssistantStarted extends StreamingChatEvent {
+  AssistantStarted(this.messageId);
+  final String messageId;
+}
+
+class ChatChunk extends StreamingChatEvent {
+  ChatChunk(this.delta, this.accumulated);
+  final String delta;
+  final String accumulated;
+}
+
 class ChatComplete extends StreamingChatEvent {
-  ChatComplete(this.messageId, this.content, this.actions, {this.isPartial = false});
+  ChatComplete(
+    this.messageId,
+    this.content,
+    this.actions, {
+    this.isPartial = false,
+  });
   final String messageId;
   final String content;
   final List<ChatAction> actions;
   final bool isPartial;
 }
-class ChatCancelled extends StreamingChatEvent { ChatCancelled(this.messageId, this.content); final String messageId; final String content; }
-class ChatErrorEvent extends StreamingChatEvent { ChatErrorEvent(this.code, this.message); final String code; final String message; }
-class AgentStreamEvent extends StreamingChatEvent { AgentStreamEvent(this.agentEvent); final AgentEvent agentEvent; }
+
+class ChatCancelled extends StreamingChatEvent {
+  ChatCancelled(this.messageId, this.content);
+  final String messageId;
+  final String content;
+}
+
+class ChatErrorEvent extends StreamingChatEvent {
+  ChatErrorEvent(this.code, this.message);
+  final String code;
+  final String message;
+}
+
+class AgentStreamEvent extends StreamingChatEvent {
+  AgentStreamEvent(this.agentEvent);
+  final AgentEvent agentEvent;
+}

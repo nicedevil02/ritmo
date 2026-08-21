@@ -1,11 +1,7 @@
 import 'package:ritmo/core/domain/commands/ritmo_command.dart';
 
 class PlanStep {
-  const PlanStep({
-    required this.commandId,
-    required this.payload,
-    this.note,
-  });
+  const PlanStep({required this.commandId, required this.payload, this.note});
 
   final String commandId;
   final Map<String, dynamic> payload;
@@ -13,18 +9,16 @@ class PlanStep {
 
   factory PlanStep.fromJson(Map<String, dynamic> json) {
     return PlanStep(
-      commandId: json['commandId'] as String? ?? json['command'] as String? ?? '',
-      payload: (json['payload'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      commandId:
+          json['commandId'] as String? ?? json['command'] as String? ?? '',
+      payload:
+          (json['payload'] as Map<String, dynamic>?) ?? <String, dynamic>{},
       note: json['note'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'commandId': commandId,
-      'payload': payload,
-      'note': note,
-    };
+    return {'commandId': commandId, 'payload': payload, 'note': note};
   }
 }
 
@@ -43,8 +37,13 @@ class CommandPlan {
     final rawSteps = json['steps'] as List? ?? [];
     return CommandPlan(
       id: json['id'] as String? ?? '',
-      titleFa: json['titleFa'] as String? ?? json['title'] as String? ?? 'برنامه دستیار',
-      steps: rawSteps.map((s) => PlanStep.fromJson(s as Map<String, dynamic>)).toList(),
+      titleFa:
+          json['titleFa'] as String? ??
+          json['title'] as String? ??
+          'برنامه دستیار',
+      steps: rawSteps
+          .map((s) => PlanStep.fromJson(s as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -57,13 +56,7 @@ class CommandPlan {
   }
 }
 
-enum DiffKind {
-  create,
-  update,
-  delete,
-  navigate,
-  noop,
-}
+enum DiffKind { create, update, delete, navigate, noop }
 
 class PlanDiff {
   const PlanDiff({

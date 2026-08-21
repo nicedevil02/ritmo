@@ -5,8 +5,12 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 class DateContract {
   DateContract._();
 
-  static final RegExp _gregorianRegex = RegExp(r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b');
-  static final RegExp _jalaliRegex = RegExp(r'\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b');
+  static final RegExp _gregorianRegex = RegExp(
+    r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b',
+  );
+  static final RegExp _jalaliRegex = RegExp(
+    r'\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b',
+  );
 
   /// Checks if [text] contains an ISO Gregorian date like '2026-08-10'.
   static bool hasGregorianDate(String text) {
@@ -24,7 +28,12 @@ class DateContract {
 
       if (year != null && month != null && day != null) {
         // Sanity check: Gregorian years are typically > 1900
-        if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        if (year >= 1900 &&
+            year <= 2100 &&
+            month >= 1 &&
+            month <= 12 &&
+            day >= 1 &&
+            day <= 31) {
           try {
             final dt = DateTime(year, month, day);
             final j = Jalali.fromDateTime(dt);

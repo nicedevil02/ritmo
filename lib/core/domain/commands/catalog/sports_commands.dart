@@ -28,22 +28,23 @@ class SportsMarkDoneCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'dateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ تمرین (پیش‌فرض امروز)',
-          required: false,
-        ),
-        'durationMinutes': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'مدت زمان تمرین به دقیقه',
-          required: false,
-          exampleFa: '45',
-        ),
-      };
+    'dateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ تمرین (پیش‌فرض امروز)',
+      required: false,
+    ),
+    'durationMinutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت زمان تمرین به دقیقه',
+      required: false,
+      exampleFa: '45',
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    final date = ctx.payload['dateStr']?.toString() ??
+    final date =
+        ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
     final mins = ctx.payload['durationMinutes'] as int? ?? 45;
     return PlanDiff(
@@ -56,7 +57,8 @@ class SportsMarkDoneCommand extends RitmoCommand {
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final date = ctx.payload['dateStr']?.toString() ??
+    final date =
+        ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
     final mins = ctx.payload['durationMinutes'] as int? ?? 45;
 
@@ -84,7 +86,10 @@ class SportsMarkDoneCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -110,16 +115,17 @@ class SportsSkipSessionCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'dateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ تمرین (پیش‌فرض امروز)',
-          required: false,
-        ),
-      };
+    'dateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ تمرین (پیش‌فرض امروز)',
+      required: false,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    final date = ctx.payload['dateStr']?.toString() ??
+    final date =
+        ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
     return PlanDiff(
       kind: DiffKind.update,
@@ -131,18 +137,24 @@ class SportsSkipSessionCommand extends RitmoCommand {
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
-    final date = ctx.payload['dateStr']?.toString() ??
+    final date =
+        ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
     final occService = MovementOccurrenceService();
     final occs = await occService.getOccurrencesForRange(date, date);
     if (occs.isNotEmpty) {
-      await MovementPlanningService().skipOccurrence(occurrenceId: occs.first.id);
+      await MovementPlanningService().skipOccurrence(
+        occurrenceId: occs.first.id,
+      );
     }
     return CommandResult.ok(commandId: id);
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -158,7 +170,8 @@ class SportsMoveSessionCommand extends RitmoCommand {
   String get humanTitle => 'انتقال تمرین به روز دیگر';
 
   @override
-  String get humanDescriptionFa => 'جلسهٔ تمرینی را به تاریخ جدید منتقل می‌کند.';
+  String get humanDescriptionFa =>
+      'جلسهٔ تمرینی را به تاریخ جدید منتقل می‌کند.';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -168,17 +181,17 @@ class SportsMoveSessionCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'fromDateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ مبدا',
-          required: true,
-        ),
-        'toDateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ مقصد',
-          required: true,
-        ),
-      };
+    'fromDateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ مبدا',
+      required: true,
+    ),
+    'toDateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ مقصد',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
@@ -205,7 +218,10 @@ class SportsMoveSessionCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -231,22 +247,22 @@ class SportsLogCustomMovementCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'activityKindId': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'شناسه نوع فعالیت (مثلاً kind_walking)',
-          required: true,
-        ),
-        'durationMinutes': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'مدت زمان به دقیقه',
-          required: true,
-        ),
-        'dateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ فعالیت',
-          required: false,
-        ),
-      };
+    'activityKindId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه نوع فعالیت (مثلاً kind_walking)',
+      required: true,
+    ),
+    'durationMinutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت زمان به دقیقه',
+      required: true,
+    ),
+    'dateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ فعالیت',
+      required: false,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
@@ -264,7 +280,8 @@ class SportsLogCustomMovementCommand extends RitmoCommand {
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final kindId = ctx.payload['activityKindId']?.toString() ?? 'kind_walking';
     final mins = ctx.payload['durationMinutes'] as int? ?? 30;
-    final date = ctx.payload['dateStr']?.toString() ??
+    final date =
+        ctx.payload['dateStr']?.toString() ??
         DateTime.now().toIso8601String().split('T').first;
 
     final logService = MovementLogService();
@@ -277,7 +294,10 @@ class SportsLogCustomMovementCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -303,12 +323,12 @@ class SportsSetDaysPerWeekCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'daysPerWeek': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'تعداد روز در هفته (۱ تا ۷)',
-          required: true,
-        ),
-      };
+    'daysPerWeek': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'تعداد روز در هفته (۱ تا ۷)',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
@@ -330,7 +350,10 @@ class SportsSetDaysPerWeekCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -356,12 +379,12 @@ class SportsSetTrainingDaysCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'days': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'روزهای تمرین با کاما (مثلاً 0,2,4)',
-          required: true,
-        ),
-      };
+    'days': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'روزهای تمرین با کاما (مثلاً 0,2,4)',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
@@ -388,7 +411,10 @@ class SportsSetTrainingDaysCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -414,12 +440,12 @@ class SportsSetSessionMinutesCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'minutes': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'مدت به دقیقه',
-          required: true,
-        ),
-      };
+    'minutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت به دقیقه',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
@@ -438,7 +464,10 @@ class SportsSetSessionMinutesCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -464,27 +493,30 @@ class SportsLockDayCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'dayOfWeek': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'روز هفته (۰ تا ۶)',
-          required: true,
-        ),
-      };
+    'dayOfWeek': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'روز هفته (۰ تا ۶)',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'روز تمرین',
-        beforeFa: 'تغییرپذیر',
-        afterFa: 'ثابت',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'روز تمرین',
+    beforeFa: 'تغییرپذیر',
+    afterFa: 'ثابت',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Unlock day command
@@ -508,27 +540,30 @@ class SportsUnlockDayCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'dayOfWeek': const ParamSpec(
-          type: ParamType.integer,
-          labelFa: 'روز هفته (۰ تا ۶)',
-          required: true,
-        ),
-      };
+    'dayOfWeek': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'روز هفته (۰ تا ۶)',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'روز تمرین',
-        beforeFa: 'ثابت',
-        afterFa: 'تغییرپذیر',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'روز تمرین',
+    beforeFa: 'ثابت',
+    afterFa: 'تغییرپذیر',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Apply deload command
@@ -555,18 +590,21 @@ class SportsApplyDeloadCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'هفتهٔ ریکاوری',
-        beforeFa: 'عادی',
-        afterFa: 'ریکاوری',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'هفتهٔ ریکاوری',
+    beforeFa: 'عادی',
+    afterFa: 'ریکاوری',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Regenerate week command
@@ -593,18 +631,21 @@ class SportsRegenerateWeekCommand extends RitmoCommand {
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'برنامهٔ هفتگی',
-        beforeFa: 'برنامه قبلی',
-        afterFa: 'برنامه جدید',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'برنامهٔ هفتگی',
+    beforeFa: 'برنامه قبلی',
+    afterFa: 'برنامه جدید',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Swap exercise command
@@ -628,27 +669,30 @@ class SportsSwapExerciseCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'exerciseId': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'شناسه حرکت جدید',
-          required: true,
-        ),
-      };
+    'exerciseId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه حرکت جدید',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'حرکت ورزشی',
-        beforeFa: 'حرکت قبلی',
-        afterFa: 'حرکت جدید',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'حرکت ورزشی',
+    beforeFa: 'حرکت قبلی',
+    afterFa: 'حرکت جدید',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Set focus command
@@ -672,27 +716,30 @@ class SportsSetFocusCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'focus': const ParamSpec(
-          type: ParamType.text,
-          labelFa: 'تمرکز',
-          required: true,
-        ),
-      };
+    'focus': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'تمرکز',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'تمرکز ورزشی',
-        beforeFa: 'نامشخص',
-        afterFa: 'تنظیم شد',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'تمرکز ورزشی',
+    beforeFa: 'نامشخص',
+    afterFa: 'تنظیم شد',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 /// Set rest day command
@@ -716,27 +763,30 @@ class SportsSetRestDayCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-        'dateStr': const ParamSpec(
-          type: ParamType.isoDate,
-          labelFa: 'تاریخ استراحت',
-          required: true,
-        ),
-      };
+    'dateStr': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ استراحت',
+      required: true,
+    ),
+  };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(
-        kind: DiffKind.update,
-        entityLabelFa: 'روز استراحت',
-        beforeFa: 'عادی',
-        afterFa: 'استراحت',
-      );
+    kind: DiffKind.update,
+    entityLabelFa: 'روز استراحت',
+    beforeFa: 'عادی',
+    afterFa: 'استراحت',
+  );
 
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
-
-  @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async =>
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
       CommandResult.ok(commandId: id);
+
+  @override
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class SportsAdjustIntensityCommand extends RitmoCommand {
@@ -754,11 +804,16 @@ class SportsAdjustIntensityCommand extends RitmoCommand {
   @override
   Map<String, ParamSpec> get params => {};
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.update, entityLabelFa: 'شدت تمرین');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.update, entityLabelFa: 'شدت تمرین');
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class SportsLogSessionCommand extends RitmoCommand {
@@ -776,11 +831,16 @@ class SportsLogSessionCommand extends RitmoCommand {
   @override
   Map<String, ParamSpec> get params => {};
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت تمرین');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.create, entityLabelFa: 'ثبت تمرین');
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class SportsGenerateProgramCommand extends RitmoCommand {
@@ -798,11 +858,16 @@ class SportsGenerateProgramCommand extends RitmoCommand {
   @override
   Map<String, ParamSpec> get params => {};
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.create, entityLabelFa: 'برنامه ورزشی');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.create, entityLabelFa: 'برنامه ورزشی');
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }
 
 class SportsSetQuietModeCommand extends RitmoCommand {
@@ -820,9 +885,14 @@ class SportsSetQuietModeCommand extends RitmoCommand {
   @override
   Map<String, ParamSpec> get params => {};
   @override
-  Future<PlanDiff> preview(AgentCommandContext ctx) async => const PlanDiff(kind: DiffKind.update, entityLabelFa: 'تمرین بدون صدا');
+  Future<PlanDiff> preview(AgentCommandContext ctx) async =>
+      const PlanDiff(kind: DiffKind.update, entityLabelFa: 'تمرین بدون صدا');
   @override
-  Future<CommandResult> run(AgentCommandContext ctx) async => CommandResult.ok(commandId: id);
+  Future<CommandResult> run(AgentCommandContext ctx) async =>
+      CommandResult.ok(commandId: id);
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async => CommandResult.ok(commandId: id);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async => CommandResult.ok(commandId: id);
 }

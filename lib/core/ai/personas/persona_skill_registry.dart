@@ -207,7 +207,8 @@ class PersonaSkillRegistry {
       id: 'pattern_mirror',
       personaId: 'reflection',
       labelFa: 'آینه الگوهای فکری',
-      queryPrompt: 'چه الگوها یا مفاهیم تکرارشونده‌ای در یادداشت‌هایم وجود دارد؟',
+      queryPrompt:
+          'چه الگوها یا مفاهیم تکرارشونده‌ای در یادداشت‌هایم وجود دارد؟',
       priority: 7,
       requiredCommandIds: {'assistant.handoff', 'app.openPage'},
     ),
@@ -347,7 +348,8 @@ class PersonaSkillRegistry {
       id: 'session_adapt',
       personaId: 'sports',
       labelFa: 'تطبیق شدت جلسه تمرین',
-      queryPrompt: 'با توجه به خواب و انرژی، شدت تمرین امروز را چطور تنظیم کنم؟',
+      queryPrompt:
+          'با توجه به خواب و انرژی، شدت تمرین امروز را چطور تنظیم کنم؟',
       priority: 10,
     ),
     PersonaSkillDef(
@@ -416,7 +418,8 @@ class PersonaSkillRegistry {
       id: 'gentle_restart',
       personaId: 'worship',
       labelFa: 'شروع آرام پس از وقفه',
-      queryPrompt: 'چطور بعد از چند روز وقفه، دوباره روتین معنوی را از سر بگیرم؟',
+      queryPrompt:
+          'چطور بعد از چند روز وقفه، دوباره روتین معنوی را از سر بگیرم؟',
       priority: 7,
     ),
     PersonaSkillDef(
@@ -440,7 +443,8 @@ class PersonaSkillRegistry {
       id: 'comfort_tips',
       personaId: 'cycle',
       labelFa: 'توصیه‌های بهداشت و راحتی',
-      queryPrompt: 'برای کاهش ناراحتی و علائم امروز چه نکات خودمراقبتی مناسب است؟',
+      queryPrompt:
+          'برای کاهش ناراحتی و علائم امروز چه نکات خودمراقبتی مناسب است؟',
       priority: 10,
     ),
     PersonaSkillDef(
@@ -478,7 +482,8 @@ class PersonaSkillRegistry {
       id: 'adherence_report',
       personaId: 'health',
       labelFa: 'گزارش نرخ پایبندی',
-      queryPrompt: 'نرخ پایبندی من به ثبت یادآورها در روزهای اخیر چقدر بوده است؟',
+      queryPrompt:
+          'نرخ پایبندی من به ثبت یادآورها در روزهای اخیر چقدر بوده است؟',
       priority: 10,
     ),
     PersonaSkillDef(
@@ -506,7 +511,8 @@ class PersonaSkillRegistry {
       id: 'reminder_redesign',
       personaId: 'health',
       labelFa: 'بازطراحی ساختار یادآورها',
-      queryPrompt: 'چطور زمان‌بندی یادآورها را متناسب با برنامه روزانه اصلاح کنم؟',
+      queryPrompt:
+          'چطور زمان‌بندی یادآورها را متناسب با برنامه روزانه اصلاح کنم؟',
       priority: 6,
       requiredCommandIds: {'setting.update'},
     ),
@@ -559,7 +565,8 @@ class PersonaSkillRegistry {
       id: 'tidy',
       personaId: 'notes',
       labelFa: 'مرتب‌سازی و پیشنهاد تگ',
-      queryPrompt: 'برای دسته‌بندی بهتر یادداشت‌ها چه تگ‌ها یا عناوینی پیشنهاد می‌کنی؟',
+      queryPrompt:
+          'برای دسته‌بندی بهتر یادداشت‌ها چه تگ‌ها یا عناوینی پیشنهاد می‌کنی؟',
       priority: 4,
     ),
     PersonaSkillDef(

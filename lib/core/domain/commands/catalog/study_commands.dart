@@ -15,7 +15,8 @@ class CourseCreateCommand extends RitmoCommand {
   String get humanTitle => 'ثبت دوره جدید';
 
   @override
-  String get humanDescriptionFa => 'افزودن دوره آموزشی جدید جهت پیگیری جلسات مطالعه';
+  String get humanDescriptionFa =>
+      'افزودن دوره آموزشی جدید جهت پیگیری جلسات مطالعه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -65,11 +66,18 @@ class CourseCreateCommand extends RitmoCommand {
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'courseId': courseId}, inverseData: {'courseId': courseId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'courseId': courseId},
+      inverseData: {'courseId': courseId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final courseId = inverseData['courseId']?.toString();
     if (courseId == null) return null;
     await ctx.txn.delete('courses', where: 'id = ?', whereArgs: [courseId]);
@@ -97,14 +105,26 @@ class CourseSetWeeklyTargetCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'courseId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه دوره', required: true),
-    'weeklyTarget': const ParamSpec(type: ParamType.integer, labelFa: 'تعداد جلسات در هفته', required: true, exampleFa: '3'),
+    'courseId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه دوره',
+      required: true,
+    ),
+    'weeklyTarget': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'تعداد جلسات در هفته',
+      required: true,
+      exampleFa: '3',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final target = ctx.payload['weeklyTarget'] ?? 3;
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'هدف هفتگی دوره ($target جلسه)');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'هدف هفتگی دوره ($target جلسه)',
+    );
   }
 
   @override
@@ -112,12 +132,21 @@ class CourseSetWeeklyTargetCommand extends RitmoCommand {
     final courseId = ctx.payload['courseId']?.toString() ?? '';
     final target = ctx.payload['weeklyTarget'] as int? ?? 3;
 
-    final existing = await ctx.txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
-    final oldTarget = existing.isNotEmpty ? existing.first['weeklyTargetSessions'] : 3;
+    final existing = await ctx.txn.query(
+      'courses',
+      where: 'id = ?',
+      whereArgs: [courseId],
+    );
+    final oldTarget = existing.isNotEmpty
+        ? existing.first['weeklyTargetSessions']
+        : 3;
 
     await ctx.txn.update(
       'courses',
-      {'weeklyTargetSessions': target, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+      {
+        'weeklyTargetSessions': target,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      },
       where: 'id = ?',
       whereArgs: [courseId],
     );
@@ -130,11 +159,19 @@ class CourseSetWeeklyTargetCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final courseId = inverseData['courseId']?.toString();
     final target = inverseData['target'];
     if (courseId == null) return null;
-    await ctx.txn.update('courses', {'weeklyTargetSessions': target}, where: 'id = ?', whereArgs: [courseId]);
+    await ctx.txn.update(
+      'courses',
+      {'weeklyTargetSessions': target},
+      where: 'id = ?',
+      whereArgs: [courseId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -159,8 +196,17 @@ class CourseLogSessionCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'courseId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه دوره', required: true),
-    'sessionNumber': const ParamSpec(type: ParamType.integer, labelFa: 'شماره جلسه', required: false, exampleFa: '1'),
+    'courseId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه دوره',
+      required: true,
+    ),
+    'sessionNumber': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'شماره جلسه',
+      required: false,
+      exampleFa: '1',
+    ),
   };
 
   @override
@@ -179,14 +225,25 @@ class CourseLogSessionCommand extends RitmoCommand {
       'completedAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'sessionId': sessionId}, inverseData: {'sessionId': sessionId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'sessionId': sessionId},
+      inverseData: {'sessionId': sessionId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final sessionId = inverseData['sessionId']?.toString();
     if (sessionId == null) return null;
-    await ctx.txn.delete('course_sessions', where: 'id = ?', whereArgs: [sessionId]);
+    await ctx.txn.delete(
+      'course_sessions',
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -201,7 +258,8 @@ class CourseResplitSessionsCommand extends RitmoCommand {
   String get humanTitle => 'تقسیم مجدد جلسات دوره';
 
   @override
-  String get humanDescriptionFa => 'توزیع مجدد جلسات باقیمانده دوره بر اساس ریتم واقعی';
+  String get humanDescriptionFa =>
+      'توزیع مجدد جلسات باقیمانده دوره بر اساس ریتم واقعی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -211,12 +269,19 @@ class CourseResplitSessionsCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'courseId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه دوره', required: true),
+    'courseId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه دوره',
+      required: true,
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تقسیم مجدد جلسات دوره');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تقسیم مجدد جلسات دوره',
+    );
   }
 
   @override
@@ -226,7 +291,10 @@ class CourseResplitSessionsCommand extends RitmoCommand {
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     return CommandResult.ok(commandId: id);
   }
 }
@@ -251,7 +319,11 @@ class CourseArchiveCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'courseId': const ParamSpec(type: ParamType.text, labelFa: 'شناسه دوره', required: true),
+    'courseId': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'شناسه دوره',
+      required: true,
+    ),
   };
 
   @override
@@ -262,15 +334,32 @@ class CourseArchiveCommand extends RitmoCommand {
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final courseId = ctx.payload['courseId']?.toString() ?? '';
-    await ctx.txn.update('courses', {'isArchived': 1}, where: 'id = ?', whereArgs: [courseId]);
-    return CommandResult.ok(commandId: id, outputData: {'courseId': courseId}, inverseData: {'courseId': courseId});
+    await ctx.txn.update(
+      'courses',
+      {'isArchived': 1},
+      where: 'id = ?',
+      whereArgs: [courseId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'courseId': courseId},
+      inverseData: {'courseId': courseId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final courseId = inverseData['courseId']?.toString();
     if (courseId == null) return null;
-    await ctx.txn.update('courses', {'isArchived': 0}, where: 'id = ?', whereArgs: [courseId]);
+    await ctx.txn.update(
+      'courses',
+      {'isArchived': 0},
+      where: 'id = ?',
+      whereArgs: [courseId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -285,7 +374,8 @@ class KonkurCreateTopicCommand extends RitmoCommand {
   String get humanTitle => 'افزودن برنامه مطالعه کنکور';
 
   @override
-  String get humanDescriptionFa => 'افزودن مبحث یا سرفصل جدید به برنامه‌ریزی مطالعه کنکور';
+  String get humanDescriptionFa =>
+      'افزودن مبحث یا سرفصل جدید به برنامه‌ریزی مطالعه کنکور';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -312,7 +402,10 @@ class KonkurCreateTopicCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final topicName = ctx.payload['topicName']?.toString() ?? 'مبحث جدید';
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'برنامه کنکور: $topicName');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'برنامه کنکور: $topicName',
+    );
   }
 
   @override
@@ -328,11 +421,18 @@ class KonkurCreateTopicCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'planId': planId}, inverseData: {'planId': planId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'planId': planId},
+      inverseData: {'planId': planId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final planId = inverseData['planId']?.toString();
     if (planId == null) return null;
     await ctx.txn.delete('konkur_plans', where: 'id = ?', whereArgs: [planId]);
@@ -350,7 +450,8 @@ class StudyAddTopicCommand extends RitmoCommand {
   String get humanTitle => 'افزودن مبحث درسی';
 
   @override
-  String get humanDescriptionFa => 'افزودن مبحث جدید به سرفصل‌های مطالعه و کنکور';
+  String get humanDescriptionFa =>
+      'افزودن مبحث جدید به سرفصل‌های مطالعه و کنکور';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -360,8 +461,18 @@ class StudyAddTopicCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'subject': const ParamSpec(type: ParamType.text, labelFa: 'نام درس', required: true, exampleFa: 'ریاضی'),
-    'topic': const ParamSpec(type: ParamType.text, labelFa: 'عنوان مبحث', required: true, exampleFa: 'مثلثات'),
+    'subject': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نام درس',
+      required: true,
+      exampleFa: 'ریاضی',
+    ),
+    'topic': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'عنوان مبحث',
+      required: true,
+      exampleFa: 'مثلثات',
+    ),
   };
 
   @override
@@ -383,11 +494,18 @@ class StudyAddTopicCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'topicId': topicId}, inverseData: {'topicId': topicId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'topicId': topicId},
+      inverseData: {'topicId': topicId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final topicId = inverseData['topicId']?.toString();
     if (topicId == null) return null;
     await ctx.txn.delete('konkur_plans', where: 'id = ?', whereArgs: [topicId]);
@@ -415,14 +533,27 @@ class StudySetSubjectPriorityCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'subject': const ParamSpec(type: ParamType.text, labelFa: 'نام درس', required: true, exampleFa: 'فیزیک'),
-    'priority': const ParamSpec(type: ParamType.integer, labelFa: 'اولویت (۱ تا ۵)', required: true, exampleFa: '4'),
+    'subject': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نام درس',
+      required: true,
+      exampleFa: 'فیزیک',
+    ),
+    'priority': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'اولویت (۱ تا ۵)',
+      required: true,
+      exampleFa: '4',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final subject = ctx.payload['subject']?.toString() ?? 'درس';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'اولویت درس $subject');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'اولویت درس $subject',
+    );
   }
 
   @override
@@ -434,14 +565,25 @@ class StudySetSubjectPriorityCommand extends RitmoCommand {
       'value': priority.toString(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'subject': subject, 'priority': priority}, inverseData: {'subject': subject});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'subject': subject, 'priority': priority},
+      inverseData: {'subject': subject},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final subject = inverseData['subject']?.toString();
     if (subject == null) return null;
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['konkur_priority_$subject']);
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['konkur_priority_$subject'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -466,16 +608,34 @@ class StudyPlanSessionCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'topic': const ParamSpec(type: ParamType.text, labelFa: 'مبحث مطالعه', required: true, exampleFa: 'شیمی آلی'),
-    'minutes': const ParamSpec(type: ParamType.integer, labelFa: 'مدت مطالعه (دقیقه)', required: true, exampleFa: '75'),
-    'sessionType': const ParamSpec(type: ParamType.text, labelFa: 'نوع جلسه (یادگیری، مرور، تست)', required: false, exampleFa: 'تست'),
+    'topic': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'مبحث مطالعه',
+      required: true,
+      exampleFa: 'شیمی آلی',
+    ),
+    'minutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت مطالعه (دقیقه)',
+      required: true,
+      exampleFa: '75',
+    ),
+    'sessionType': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نوع جلسه (یادگیری، مرور، تست)',
+      required: false,
+      exampleFa: 'تست',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final topic = ctx.payload['topic']?.toString() ?? 'مبحث';
     final minutes = ctx.payload['minutes'] ?? 60;
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'جلسه مطالعه: $topic ($minutes دقیقه)');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'جلسه مطالعه: $topic ($minutes دقیقه)',
+    );
   }
 
   @override
@@ -491,11 +651,18 @@ class StudyPlanSessionCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'planId': planId}, inverseData: {'planId': planId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'planId': planId},
+      inverseData: {'planId': planId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final planId = inverseData['planId']?.toString();
     if (planId == null) return null;
     await ctx.txn.delete('konkur_plans', where: 'id = ?', whereArgs: [planId]);
@@ -513,7 +680,8 @@ class StudyLogSessionCommand extends RitmoCommand {
   String get humanTitle => 'ثبت گزارش مطالعه';
 
   @override
-  String get humanDescriptionFa => 'ثبت میزان مطالعه و تعداد تست حل‌شده در یک جلسه';
+  String get humanDescriptionFa =>
+      'ثبت میزان مطالعه و تعداد تست حل‌شده در یک جلسه';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -523,15 +691,33 @@ class StudyLogSessionCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'topic': const ParamSpec(type: ParamType.text, labelFa: 'مبحث مطالعه', required: true, exampleFa: 'عربی ترجمه'),
-    'durationMinutes': const ParamSpec(type: ParamType.integer, labelFa: 'مدت واقعی (دقیقه)', required: true, exampleFa: '60'),
-    'testsCount': const ParamSpec(type: ParamType.integer, labelFa: 'تعداد تست', required: false, exampleFa: '25'),
+    'topic': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'مبحث مطالعه',
+      required: true,
+      exampleFa: 'عربی ترجمه',
+    ),
+    'durationMinutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مدت واقعی (دقیقه)',
+      required: true,
+      exampleFa: '60',
+    ),
+    'testsCount': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'تعداد تست',
+      required: false,
+      exampleFa: '25',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final topic = ctx.payload['topic']?.toString() ?? 'مبحث';
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'گزارش مطالعه: $topic');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'گزارش مطالعه: $topic',
+    );
   }
 
   @override
@@ -547,11 +733,18 @@ class StudyLogSessionCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     });
 
-    return CommandResult.ok(commandId: id, outputData: {'logId': logId}, inverseData: {'logId': logId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'logId': logId},
+      inverseData: {'logId': logId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final logId = inverseData['logId']?.toString();
     if (logId == null) return null;
     await ctx.txn.delete('konkur_plans', where: 'id = ?', whereArgs: [logId]);
@@ -569,7 +762,8 @@ class StudyLogMockResultCommand extends RitmoCommand {
   String get humanTitle => 'ثبت نتیجه آزمون آزمایشی';
 
   @override
-  String get humanDescriptionFa => 'ثبت تراز و درصد درس‌ها در آزمون جامع آزمایشی';
+  String get humanDescriptionFa =>
+      'ثبت تراز و درصد درس‌ها در آزمون جامع آزمایشی';
 
   @override
   Sensitivity get sensitivity => Sensitivity.safe;
@@ -579,14 +773,27 @@ class StudyLogMockResultCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'examName': const ParamSpec(type: ParamType.text, labelFa: 'نام آزمون', required: true, exampleFa: 'سنجش مرحله ۱'),
-    'score': const ParamSpec(type: ParamType.integer, labelFa: 'تراز کل', required: false, exampleFa: '6800'),
+    'examName': const ParamSpec(
+      type: ParamType.text,
+      labelFa: 'نام آزمون',
+      required: true,
+      exampleFa: 'سنجش مرحله ۱',
+    ),
+    'score': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'تراز کل',
+      required: false,
+      exampleFa: '6800',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final examName = ctx.payload['examName']?.toString() ?? 'آزمون';
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'نتیجه آزمون: $examName');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'نتیجه آزمون: $examName',
+    );
   }
 
   @override
@@ -600,14 +807,25 @@ class StudyLogMockResultCommand extends RitmoCommand {
       'value': '$examName:$score',
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'mockId': idVal}, inverseData: {'mockId': idVal});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'mockId': idVal},
+      inverseData: {'mockId': idVal},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final mockId = inverseData['mockId']?.toString();
     if (mockId == null) return null;
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['konkur_mock_$mockId']);
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['konkur_mock_$mockId'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -622,7 +840,8 @@ class StudyGenerateWeeklyPlanCommand extends RitmoCommand {
   String get humanTitle => 'تولید برنامه هفتگی مطالعه';
 
   @override
-  String get humanDescriptionFa => 'تولید چیدمان هفتگی پارت‌های درسی بر اساس ضرایب و مرور فاصله‌دار';
+  String get humanDescriptionFa =>
+      'تولید چیدمان هفتگی پارت‌های درسی بر اساس ضرایب و مرور فاصله‌دار';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -632,13 +851,21 @@ class StudyGenerateWeeklyPlanCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'totalHours': const ParamSpec(type: ParamType.integer, labelFa: 'مجموع ساعت هفتگی', required: true, exampleFa: '30'),
+    'totalHours': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'مجموع ساعت هفتگی',
+      required: true,
+      exampleFa: '30',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final hours = ctx.payload['totalHours'] ?? 30;
-    return PlanDiff(kind: DiffKind.create, entityLabelFa: 'برنامه هفتگی مطالعه ($hours ساعت)');
+    return PlanDiff(
+      kind: DiffKind.create,
+      entityLabelFa: 'برنامه هفتگی مطالعه ($hours ساعت)',
+    );
   }
 
   @override
@@ -651,14 +878,25 @@ class StudyGenerateWeeklyPlanCommand extends RitmoCommand {
       'value': hours.toString(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'planId': planId}, inverseData: {'planId': planId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'planId': planId},
+      inverseData: {'planId': planId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final planId = inverseData['planId']?.toString();
     if (planId == null) return null;
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['konkur_weekly_hours_$planId']);
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['konkur_weekly_hours_$planId'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -673,7 +911,8 @@ class StudySetExamDateCommand extends RitmoCommand {
   String get humanTitle => 'تنظیم تاریخ آزمون هدف';
 
   @override
-  String get humanDescriptionFa => 'تنظیم موعد آزمون اصلی یا کنکور جهت شمارش معکوس';
+  String get humanDescriptionFa =>
+      'تنظیم موعد آزمون اصلی یا کنکور جهت شمارش معکوس';
 
   @override
   Sensitivity get sensitivity => Sensitivity.confirm;
@@ -683,13 +922,21 @@ class StudySetExamDateCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'examDate': const ParamSpec(type: ParamType.isoDate, labelFa: 'تاریخ آزمون (YYYY-MM-DD)', required: true, exampleFa: '2026-07-01'),
+    'examDate': const ParamSpec(
+      type: ParamType.isoDate,
+      labelFa: 'تاریخ آزمون (YYYY-MM-DD)',
+      required: true,
+      exampleFa: '2026-07-01',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final examDate = ctx.payload['examDate']?.toString() ?? '';
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'تاریخ آزمون کنکور: $examDate');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'تاریخ آزمون کنکور: $examDate',
+    );
   }
 
   @override
@@ -700,12 +947,23 @@ class StudySetExamDateCommand extends RitmoCommand {
       'value': examDate,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'examDate': examDate}, inverseData: {'key': 'konkur_exam_date'});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'examDate': examDate},
+      inverseData: {'key': 'konkur_exam_date'},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['konkur_exam_date']);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['konkur_exam_date'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -730,13 +988,21 @@ class StudySetDailyBudgetCommand extends RitmoCommand {
 
   @override
   Map<String, ParamSpec> get params => {
-    'minutes': const ParamSpec(type: ParamType.integer, labelFa: 'دقیقه مطالعه در روز', required: true, exampleFa: '240'),
+    'minutes': const ParamSpec(
+      type: ParamType.integer,
+      labelFa: 'دقیقه مطالعه در روز',
+      required: true,
+      exampleFa: '240',
+    ),
   };
 
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final minutes = ctx.payload['minutes'] ?? 240;
-    return PlanDiff(kind: DiffKind.update, entityLabelFa: 'بودجه روزانه مطالعه: $minutes دقیقه');
+    return PlanDiff(
+      kind: DiffKind.update,
+      entityLabelFa: 'بودجه روزانه مطالعه: $minutes دقیقه',
+    );
   }
 
   @override
@@ -747,12 +1013,23 @@ class StudySetDailyBudgetCommand extends RitmoCommand {
       'value': minutes.toString(),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'minutes': minutes}, inverseData: {'key': 'konkur_daily_budget'});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'minutes': minutes},
+      inverseData: {'key': 'konkur_daily_budget'},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
-    await ctx.txn.delete('app_settings', where: 'key = ?', whereArgs: ['konkur_daily_budget']);
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
+    await ctx.txn.delete(
+      'app_settings',
+      where: 'key = ?',
+      whereArgs: ['konkur_daily_budget'],
+    );
     return CommandResult.ok(commandId: id);
   }
 }

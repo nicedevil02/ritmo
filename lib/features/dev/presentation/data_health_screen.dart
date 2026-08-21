@@ -35,7 +35,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
       GROUP BY routineId, completionDate
       HAVING c > 1;
     ''');
-    results.add({'title': '۱. رکوردهای تکراری ثبت انجام', 'rows': q1, 'count': q1.length});
+    results.add({
+      'title': '۱. رکوردهای تکراری ثبت انجام',
+      'rows': q1,
+      'count': q1.length,
+    });
 
     // Query 2: Completion without done occurrence
     final q2 = await db.rawQuery('''
@@ -46,7 +50,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
       WHERE c.resultType NOT IN ('SKIPPED', 'RESCHEDULED')
         AND (o.status IS NULL OR o.status != 'done');
     ''');
-    results.add({'title': '۲. ثبت انجام بدون رخداد done', 'rows': q2, 'count': q2.length});
+    results.add({
+      'title': '۲. ثبت انجام بدون رخداد done',
+      'rows': q2,
+      'count': q2.length,
+    });
 
     // Query 3: done occurrence without completion record
     final q3 = await db.rawQuery('''
@@ -56,7 +64,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
         ON c.routineId = o.routine_id AND c.completionDate = o.date
       WHERE o.status = 'done' AND c.id IS NULL;
     ''');
-    results.add({'title': '۳. رخداد done بدون رکورد انجام', 'rows': q3, 'count': q3.length});
+    results.add({
+      'title': '۳. رخداد done بدون رکورد انجام',
+      'rows': q3,
+      'count': q3.length,
+    });
 
     // Query 4: Open reminders for completed items
     final q4 = await db.rawQuery('''
@@ -65,7 +77,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
       JOIN routine_occurrences o ON o.routine_id = pr.routineId
       WHERE o.status = 'done' AND pr.state IN ('unknown', 'delayed');
     ''');
-    results.add({'title': '۴. یادآورهای باز برای کارهای انجام‌شده', 'rows': q4, 'count': q4.length});
+    results.add({
+      'title': '۴. یادآورهای باز برای کارهای انجام‌شده',
+      'rows': q4,
+      'count': q4.length,
+    });
 
     // Query 5: Result source breakdown
     final q5 = await db.rawQuery('''
@@ -73,7 +89,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
       FROM routine_completions
       GROUP BY resultSource;
     ''');
-    results.add({'title': '۵. سهم مسیرهای ثبت انجام', 'rows': q5, 'count': q5.length});
+    results.add({
+      'title': '۵. سهم مسیرهای ثبت انجام',
+      'rows': q5,
+      'count': q5.length,
+    });
 
     // Query 6: Duplicate occurrences on same date
     final q6 = await db.rawQuery('''
@@ -82,7 +102,11 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
       GROUP BY routine_id, date
       HAVING c > 1;
     ''');
-    results.add({'title': '۶. رخداد تکراری در یک روز', 'rows': q6, 'count': q6.length});
+    results.add({
+      'title': '۶. رخداد تکراری در یک روز',
+      'rows': q6,
+      'count': q6.length,
+    });
 
     setState(() {
       _queryResults = results;
@@ -96,7 +120,10 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('پایش سلامت داده‌ها (توسعه‌دهنده)', style: TextStyle()),
+        title: const Text(
+          'پایش سلامت داده‌ها (توسعه‌دهنده)',
+          style: TextStyle(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -115,7 +142,8 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
                 final count = item['count'] as int;
                 final rows = item['rows'] as List<Map<String, dynamic>>;
 
-                final hasIssue = count > 0 && index != 4; // Query 5 is breakdown
+                final hasIssue =
+                    count > 0 && index != 4; // Query 5 is breakdown
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -135,7 +163,10 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: hasIssue
                                     ? colors.error.withValues(alpha: 0.15)
@@ -147,7 +178,9 @@ class _DataHealthScreenState extends State<DataHealthScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: hasIssue ? colors.error : colors.success,
+                                  color: hasIssue
+                                      ? colors.error
+                                      : colors.success,
                                 ),
                               ),
                             ),

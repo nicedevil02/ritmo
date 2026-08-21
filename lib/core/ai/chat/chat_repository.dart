@@ -22,7 +22,10 @@ class ChatRepository {
           "ALTER TABLE chat_sessions ADD COLUMN chat_type TEXT DEFAULT 'assistant';",
         );
       } catch (e) {
-        RitmoLog.debug('ChatRepository', 'chat_type column might already exist: $e');
+        RitmoLog.debug(
+          'ChatRepository',
+          'chat_type column might already exist: $e',
+        );
       }
       _migrated = true;
     }
@@ -103,11 +106,7 @@ class ChatRepository {
         where: 'session_id = ?',
         whereArgs: [id],
       );
-      await txn.delete(
-        'chat_sessions',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await txn.delete('chat_sessions', where: 'id = ?', whereArgs: [id]);
     });
   }
 
@@ -141,10 +140,7 @@ class ChatRepository {
     final db = await _getDb();
     await db.update(
       'chat_messages',
-      {
-        'content': m.content,
-        'actions': m.toMap()['actions'],
-      },
+      {'content': m.content, 'actions': m.toMap()['actions']},
       where: 'id = ?',
       whereArgs: [m.id],
     );
@@ -181,10 +177,6 @@ class ChatRepository {
   /// Deletes a specific message by its [id].
   Future<void> deleteMessage(String id) async {
     final db = await _getDb();
-    await db.delete(
-      'chat_messages',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('chat_messages', where: 'id = ?', whereArgs: [id]);
   }
 }

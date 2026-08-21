@@ -31,7 +31,7 @@ class TaskBucketSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (tasks.isEmpty) return const SizedBox.shrink();
+    if (tasks.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
 
     final colors = context.colors;
     final isOverdue = bucket == TaskBucket.overdue;

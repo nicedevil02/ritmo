@@ -6,7 +6,6 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SettingSchema {
-
   const SettingSchema({
     required this.type,
     this.min,
@@ -39,10 +38,7 @@ const Map<String, SettingSchema> kAiSettingsAllowlist = {
     max: 120,
     humanLabel: 'زمان تعویق یادآوری',
   ),
-  'digest_mode': SettingSchema(
-    type: 'bool',
-    humanLabel: 'حالت تجمیع اعلان‌ها',
-  ),
+  'digest_mode': SettingSchema(type: 'bool', humanLabel: 'حالت تجمیع اعلان‌ها'),
   'coalescing_window_minutes': SettingSchema(
     type: 'int',
     min: 1,
@@ -62,7 +58,13 @@ const Map<String, SettingSchema> kAiSettingsAllowlist = {
   ),
   'theme_palette': SettingSchema(
     type: 'enum',
-    allowed: ['jade_noir', 'copper_dusk', 'rosewood', 'olive_sand', 'graphite_champagne'],
+    allowed: [
+      'jade_noir',
+      'copper_dusk',
+      'rosewood',
+      'olive_sand',
+      'graphite_champagne',
+    ],
     humanLabel: 'پالت رنگی',
   ),
   'max_defer_count': SettingSchema(
@@ -109,7 +111,7 @@ const Map<String, SettingSchema> kAiSettingsAllowlist = {
       'EgyptianGeneralAuthorityOfSurvey',
       'UmmAlQuraUniversity',
       'Karachi',
-      'Kuwait'
+      'Kuwait',
     ],
     humanLabel: 'فرمول محاسباتی اوقات شرعی',
   ),
@@ -124,7 +126,7 @@ const Map<String, SettingSchema> kAiSettingsAllowlist = {
 // Security denylist & pattern checks
 bool isSettingChangeAllowed(String key) {
   if (!kAiSettingsAllowlist.containsKey(key)) return false;
-  
+
   // Explicit forbidden keys check
   final denylist = [
     'app_lock_mode',
@@ -138,7 +140,12 @@ bool isSettingChangeAllowed(String key) {
   ];
   if (denylist.contains(key)) return false;
   if (key.startsWith('cycle_')) return false;
-  if (key.contains('medical') || key.contains('medicine') || key.contains('health') || key.contains('drug') || key.contains('dose')) return false;
+  if (key.contains('medical') ||
+      key.contains('medicine') ||
+      key.contains('health') ||
+      key.contains('drug') ||
+      key.contains('dose'))
+    return false;
 
   return true;
 }
@@ -187,7 +194,7 @@ Future<bool> applySettingChange(String key, String value) async {
 
   try {
     final db = await DatabaseHelper.instance.database;
-    
+
     // Get old value
     final existing = await db.query(
       'app_settings',
@@ -200,25 +207,22 @@ Future<bool> applySettingChange(String key, String value) async {
     }
 
     // Update app_settings
-    await db.insert(
-      'app_settings',
-      {'key': key, 'value': normalized},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_settings', {
+      'key': key,
+      'value': normalized,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     // Save to audit log
-    final auditId = '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
-    await db.insert(
-      'assistant_audit_log',
-      {
-        'id': auditId,
-        'actionType': 'updateSetting',
-        'targetKey': key,
-        'oldValue': oldValue,
-        'newValue': normalized,
-        'appliedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-    );
+    final auditId =
+        '${DateTime.now().microsecondsSinceEpoch}_${math.Random().nextInt(10000)}';
+    await db.insert('assistant_audit_log', {
+      'id': auditId,
+      'actionType': 'updateSetting',
+      'targetKey': key,
+      'oldValue': oldValue,
+      'newValue': normalized,
+      'appliedAt': DateTime.now().millisecondsSinceEpoch,
+    });
 
     // Fire event bus notification
     RitmoEventBus().fire(

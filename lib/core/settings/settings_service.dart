@@ -131,6 +131,10 @@ class SettingsService {
         }
       }
 
+      if (_cache['app_mode'] == 'simple' || _cache['app_mode'] == 'SIMPLE') {
+        _cache['show_advanced_settings'] = false;
+      }
+
       _initialized = true;
       revision.value++;
 
@@ -458,6 +462,10 @@ class SettingsService {
         } catch (e, st) {
           RitmoLog.error('Settings', 'به‌روزرسانی اسنپ‌شات اعلان ناموفق بود', e, st);
         }
+      }
+
+      if (key == 'app_mode' && normalized.toString().toLowerCase() == 'simple') {
+        await setChecked('show_advanced_settings', false, origin: origin);
       }
 
       return const SettingWriteOk();

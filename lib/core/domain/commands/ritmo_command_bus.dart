@@ -21,7 +21,9 @@ class RitmoCommandBus {
 
   void register(RitmoCommand command) {
     if (_registry.containsKey(command.id)) {
-      throw StateError('Duplicate command registration ID: "${command.id}". Each command ID must be unique.');
+      throw StateError(
+        'Duplicate command registration ID: "${command.id}". Each command ID must be unique.',
+      );
     }
     _registry[command.id] = command;
   }
@@ -41,22 +43,32 @@ class RitmoCommandBus {
   List<RitmoCommand> availableFor(String personaId) {
     final persona = PersonaRegistry.instance.getPersona(personaId);
     if (persona == null) return [];
-    return _registry.values.where((c) => persona.commandIds.contains(c.id)).toList();
+    return _registry.values
+        .where((c) => persona.commandIds.contains(c.id))
+        .toList();
   }
 
-  Future<PlanPreview> preview(CommandPlan plan, {required String personaId, DatabaseExecutor? executor}) async {
+  Future<PlanPreview> preview(
+    CommandPlan plan, {
+    required String personaId,
+    DatabaseExecutor? executor,
+  }) async {
     final exec = executor ?? await DatabaseHelper.instance.database;
     final persona = PersonaRegistry.instance.getPersona(personaId);
-    
+
     if (persona == null) {
-      return const PlanPreview(diffs: [], blockers: ['دستیار مورد نظر یافت نشد'], needsBiometric: false);
+      return const PlanPreview(
+        diffs: [],
+        blockers: ['دستیار مورد نظر یافت نشد'],
+        needsBiometric: false,
+      );
     }
-    
+
     final diffs = <PlanDiff>[];
     final blockers = <String>[];
     bool needsBiometric = false;
     final now = DateTime.now();
-    
+
     // Validate each step in the plan using the Database instance (readonly)
     for (final step in plan.steps) {
       final cmd = getCommand(step.commandId);
@@ -68,12 +80,18 @@ class RitmoCommandBus {
         blockers.add('دستیار اجازهٔ انجام این کار را ندارد: ${cmd.humanTitle}');
         continue;
       }
-      final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches, exec);
+      final allowedWrite = await PersonaGate.canWriteDomain(
+        personaId,
+        cmd.touches,
+        exec,
+      );
       if (!allowedWrite) {
-        blockers.add('دستیار اجازهٔ دسترسی به این بخش اطلاعات را ندارد: ${cmd.humanTitle}');
+        blockers.add(
+          'دستیار اجازهٔ دسترسی به این بخش اطلاعات را ندارد: ${cmd.humanTitle}',
+        );
         continue;
       }
-      
+
       // Parameter validation
       for (final entry in cmd.params.entries) {
         final val = step.payload[entry.key];
@@ -82,14 +100,14 @@ class RitmoCommandBus {
           blockers.add(error);
         }
       }
-      
+
       // Sensitivity
       if (cmd.sensitivity == Sensitivity.forbidden) {
         blockers.add('اجرای این کار ممنوع است: ${cmd.humanTitle}');
       } else if (cmd.sensitivity == Sensitivity.sensitive) {
         needsBiometric = true;
       }
-      
+
       if (blockers.isEmpty) {
         final ctx = AgentCommandContext(
           payload: step.payload,
@@ -106,20 +124,35 @@ class RitmoCommandBus {
         }
       }
     }
-    
-    return PlanPreview(diffs: diffs, blockers: blockers, needsBiometric: needsBiometric);
+
+    return PlanPreview(
+      diffs: diffs,
+      blockers: blockers,
+      needsBiometric: needsBiometric,
+    );
   }
 
-  Future<PlanResult> execute(CommandPlan plan, {required String personaId, required CommandSource source}) async {
+  Future<PlanResult> execute(
+    CommandPlan plan, {
+    required String personaId,
+    required CommandSource source,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final persona = PersonaRegistry.instance.getPersona(personaId);
     if (persona == null) {
-      return PlanResult(success: false, planId: plan.id, results: [], errorMessage: 'پرسونا یافت نشد');
+      return PlanResult(
+        success: false,
+        planId: plan.id,
+        results: [],
+        errorMessage: 'پرسونا یافت نشد',
+      );
     }
-    
+
     final now = DateTime.now();
-    final planId = plan.id.isEmpty ? DateTime.now().microsecondsSinceEpoch.toString() : plan.id;
-    
+    final planId = plan.id.isEmpty
+        ? DateTime.now().microsecondsSinceEpoch.toString()
+        : plan.id;
+
     try {
       final planResult = await db.transaction((txn) async {
         // Validate all steps first inside the transaction
@@ -129,13 +162,21 @@ class RitmoCommandBus {
             throw Exception('فرمان یافت نشد: ${step.commandId}');
           }
           if (!persona.commandIds.contains(cmd.id)) {
-            throw Exception('این دستیار اجازهٔ این کار را ندارد: ${cmd.humanTitle}');
+            throw Exception(
+              'این دستیار اجازهٔ این کار را ندارد: ${cmd.humanTitle}',
+            );
           }
-          final allowedWrite = await PersonaGate.canWriteDomain(personaId, cmd.touches, txn);
+          final allowedWrite = await PersonaGate.canWriteDomain(
+            personaId,
+            cmd.touches,
+            txn,
+          );
           if (!allowedWrite) {
-            throw Exception('دستیار اجازهٔ دسترسی و ویرایش این بخش از اطلاعات را ندارد.');
+            throw Exception(
+              'دستیار اجازهٔ دسترسی و ویرایش این بخش از اطلاعات را ندارد.',
+            );
           }
-          
+
           // Parameter validation
           for (final entry in cmd.params.entries) {
             final val = step.payload[entry.key];
@@ -144,13 +185,13 @@ class RitmoCommandBus {
               throw Exception(error);
             }
           }
-          
+
           // Sensitivity check
           if (cmd.sensitivity == Sensitivity.forbidden) {
             throw Exception('اجرای فرمان ${cmd.humanTitle} ممنوع است.');
           }
         }
-        
+
         // Execute steps
         final stepResults = <CommandResult>[];
         for (final step in plan.steps) {
@@ -163,46 +204,58 @@ class RitmoCommandBus {
             txn: txn,
             planId: planId,
           );
-          
+
           final res = await cmd.run(ctx);
           if (!res.success) {
-            throw Exception(res.errorMessage ?? 'خطا در اجرای فرمان ${cmd.humanTitle}');
+            throw Exception(
+              res.errorMessage ?? 'خطا در اجرای فرمان ${cmd.humanTitle}',
+            );
           }
           stepResults.add(res);
-          
+
           // Record Audit Log
           final auditId = DateTime.now().microsecondsSinceEpoch.toString();
-          await CommandAuditRepository.saveStep(txn, StepAuditRecord(
-            id: auditId,
-            actionType: cmd.id,
-            targetKey: res.inverseData != null ? jsonEncode(res.inverseData) : null,
-            oldValue: null,
-            newValue: step.payload.toString(),
-            appliedAt: now.millisecondsSinceEpoch,
-            assistantId: 'GLOBAL',
-            personaId: personaId,
-            planId: planId,
-            commandId: cmd.id,
-            payloadJson: jsonEncode(step.payload),
-            inverseJson: res.inverseData != null ? jsonEncode(res.inverseData) : null,
-            status: 'applied',
-          ));
+          await CommandAuditRepository.saveStep(
+            txn,
+            StepAuditRecord(
+              id: auditId,
+              actionType: cmd.id,
+              targetKey: res.inverseData != null
+                  ? jsonEncode(res.inverseData)
+                  : null,
+              oldValue: null,
+              newValue: step.payload.toString(),
+              appliedAt: now.millisecondsSinceEpoch,
+              assistantId: 'GLOBAL',
+              personaId: personaId,
+              planId: planId,
+              commandId: cmd.id,
+              payloadJson: jsonEncode(step.payload),
+              inverseJson: res.inverseData != null
+                  ? jsonEncode(res.inverseData)
+                  : null,
+              status: 'applied',
+            ),
+          );
         }
-        
+
         // Save Plan
-        await CommandAuditRepository.savePlan(txn, PlanAuditRecord(
-          id: planId,
-          titleFa: plan.titleFa,
-          personaId: personaId,
-          stepCount: plan.steps.length,
-          status: 'applied',
-          createdAt: now.millisecondsSinceEpoch,
-          appliedAt: now.millisecondsSinceEpoch,
-        ));
-        
+        await CommandAuditRepository.savePlan(
+          txn,
+          PlanAuditRecord(
+            id: planId,
+            titleFa: plan.titleFa,
+            personaId: personaId,
+            stepCount: plan.steps.length,
+            status: 'applied',
+            createdAt: now.millisecondsSinceEpoch,
+            appliedAt: now.millisecondsSinceEpoch,
+          ),
+        );
+
         return stepResults;
       });
-      
+
       // Post-commit triggers
       final allInvalidates = <EngineInvalidationTag>{};
       bool touchesRoutines = false;
@@ -213,19 +266,21 @@ class RitmoCommandBus {
           touchesRoutines = true;
         }
       }
-      
+
       // Fire events on RitmoEventBus for tags
       for (final tag in allInvalidates) {
         final eventType = _mapTagToEventType(tag);
         if (eventType != null) {
-          RitmoEventBus().fire(RitmoEvent(
-            type: eventType.code,
-            timestamp: DateTime.now(),
-            payload: const {},
-          ));
+          RitmoEventBus().fire(
+            RitmoEvent(
+              type: eventType.code,
+              timestamp: DateTime.now(),
+              payload: const {},
+            ),
+          );
         }
       }
-      
+
       // Sync routines snapshot if needed
       if (touchesRoutines) {
         await SnapshotSyncService.syncAll();
@@ -233,17 +288,25 @@ class RitmoCommandBus {
 
       // Sync Notes FTS for affected notes (AFTER transaction commits)
       for (final res in planResult) {
-        final noteId = res.outputData?['noteId'] as String? ?? res.inverseData?['noteId'] as String?;
+        final noteId =
+            res.outputData?['noteId'] as String? ??
+            res.inverseData?['noteId'] as String?;
         if (noteId != null && noteId.startsWith('note_')) {
-          final isDeleted = res.outputData?['isDeleted'] == true || res.outputData?['isArchived'] == true;
+          final isDeleted =
+              res.outputData?['isDeleted'] == true ||
+              res.outputData?['isArchived'] == true;
           await _syncNoteFts(noteId, isDeleted: isDeleted);
         }
       }
-      
+
       return PlanResult(success: true, planId: planId, results: planResult);
-      
     } catch (e) {
-      return PlanResult(success: false, planId: planId, results: [], errorMessage: e.toString().replaceFirst('Exception: ', ''));
+      return PlanResult(
+        success: false,
+        planId: planId,
+        results: [],
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
     }
   }
 
@@ -265,26 +328,44 @@ class RitmoCommandBus {
   Future<CommandResult> undoAudit(String auditId) async {
     final db = await DatabaseHelper.instance.database;
     String? noteIdToSync;
-    
+
     final result = await db.transaction((txn) async {
-      final rows = await txn.query('assistant_audit_log', where: 'id = ?', whereArgs: [auditId], limit: 1);
+      final rows = await txn.query(
+        'assistant_audit_log',
+        where: 'id = ?',
+        whereArgs: [auditId],
+        limit: 1,
+      );
       if (rows.isEmpty) {
-        return CommandResult.failure(commandId: '', errorMessage: 'ممیزی پیدا نشد.');
+        return CommandResult.failure(
+          commandId: '',
+          errorMessage: 'ممیزی پیدا نشد.',
+        );
       }
-      
+
       final record = StepAuditRecord.fromMap(rows.first);
       if (record.status == 'undone') {
-        return CommandResult.failure(commandId: record.commandId ?? '', errorMessage: 'این عملیات قبلاً بازگردانده شده است.');
+        return CommandResult.failure(
+          commandId: record.commandId ?? '',
+          errorMessage: 'این عملیات قبلاً بازگردانده شده است.',
+        );
       }
-      
+
       final cmd = getCommand(record.commandId ?? '');
       if (cmd == null) {
-        return CommandResult.failure(commandId: record.commandId ?? '', errorMessage: 'فرمان ${record.commandId} یافت نشد.');
+        return CommandResult.failure(
+          commandId: record.commandId ?? '',
+          errorMessage: 'فرمان ${record.commandId} یافت نشد.',
+        );
       }
-      
-      final inverseData = record.inverseJson != null ? jsonDecode(record.inverseJson!) as Map<String, dynamic> : <String, dynamic>{};
-      final payload = record.payloadJson != null ? jsonDecode(record.payloadJson!) as Map<String, dynamic> : <String, dynamic>{};
-      
+
+      final inverseData = record.inverseJson != null
+          ? jsonDecode(record.inverseJson!) as Map<String, dynamic>
+          : <String, dynamic>{};
+      final payload = record.payloadJson != null
+          ? jsonDecode(record.payloadJson!) as Map<String, dynamic>
+          : <String, dynamic>{};
+
       final ctx = AgentCommandContext(
         payload: payload,
         source: CommandSource.undo,
@@ -293,34 +374,38 @@ class RitmoCommandBus {
         txn: txn,
         planId: record.planId,
       );
-      
+
       final undoResult = await cmd.undo(ctx, inverseData);
       if (undoResult == null || !undoResult.success) {
         return CommandResult.failure(
           commandId: cmd.id,
-          errorMessage: undoResult?.errorMessage ?? 'امکان بازگردانی این فرمان وجود ندارد یا با خطا مواجه شد.',
+          errorMessage:
+              undoResult?.errorMessage ??
+              'امکان بازگردانی این فرمان وجود ندارد یا با خطا مواجه شد.',
         );
       }
-      
+
       // Update step status
       await txn.update(
         'assistant_audit_log',
-        {
-          'status': 'undone',
-          'undoneAt': DateTime.now().millisecondsSinceEpoch,
-        },
+        {'status': 'undone', 'undoneAt': DateTime.now().millisecondsSinceEpoch},
         where: 'id = ?',
         whereArgs: [auditId],
       );
 
       if (cmd.touches.contains(DataDomain.notes)) {
-        noteIdToSync = inverseData['noteId'] as String? ?? payload['id'] as String? ?? payload['noteId'] as String?;
+        noteIdToSync =
+            inverseData['noteId'] as String? ??
+            payload['id'] as String? ??
+            payload['noteId'] as String?;
       }
-      
+
       return CommandResult.ok(commandId: cmd.id);
     });
 
-    if (result.success && noteIdToSync != null && noteIdToSync!.startsWith('note_')) {
+    if (result.success &&
+        noteIdToSync != null &&
+        noteIdToSync!.startsWith('note_')) {
       await _syncNoteFts(noteIdToSync!);
     }
 
@@ -330,10 +415,15 @@ class RitmoCommandBus {
   Future<PlanResult> undoPlan(String planId) async {
     final db = await DatabaseHelper.instance.database;
     final noteIdsToSync = <String>{};
-    
+
     try {
       final results = await db.transaction((txn) async {
-        final planRows = await txn.query('assistant_plans', where: 'id = ?', whereArgs: [planId], limit: 1);
+        final planRows = await txn.query(
+          'assistant_plans',
+          where: 'id = ?',
+          whereArgs: [planId],
+          limit: 1,
+        );
         if (planRows.isEmpty) {
           throw Exception('برنامه یافت نشد.');
         }
@@ -341,14 +431,14 @@ class RitmoCommandBus {
         if (planRecord.status == 'undone') {
           throw Exception('این برنامه قبلاً بازگردانده شده است.');
         }
-        
+
         final stepRows = await txn.query(
           'assistant_audit_log',
           where: 'planId = ? AND status = "applied"',
           whereArgs: [planId],
           orderBy: 'appliedAt DESC', // reverse order
         );
-        
+
         final stepResults = <CommandResult>[];
         for (final row in stepRows) {
           final record = StepAuditRecord.fromMap(row);
@@ -356,9 +446,13 @@ class RitmoCommandBus {
           if (cmd == null) {
             throw Exception('فرمان یافت نشد: ${record.commandId}');
           }
-          final inverseData = record.inverseJson != null ? jsonDecode(record.inverseJson!) as Map<String, dynamic> : <String, dynamic>{};
-          final payload = record.payloadJson != null ? jsonDecode(record.payloadJson!) as Map<String, dynamic> : <String, dynamic>{};
-          
+          final inverseData = record.inverseJson != null
+              ? jsonDecode(record.inverseJson!) as Map<String, dynamic>
+              : <String, dynamic>{};
+          final payload = record.payloadJson != null
+              ? jsonDecode(record.payloadJson!) as Map<String, dynamic>
+              : <String, dynamic>{};
+
           final ctx = AgentCommandContext(
             payload: payload,
             source: CommandSource.undo,
@@ -367,13 +461,16 @@ class RitmoCommandBus {
             txn: txn,
             planId: planId,
           );
-          
+
           final res = await cmd.undo(ctx, inverseData);
           if (res == null || !res.success) {
-            throw Exception(res?.errorMessage ?? 'بازگردانی عملیات ${cmd.humanTitle} شکست خورد.');
+            throw Exception(
+              res?.errorMessage ??
+                  'بازگردانی عملیات ${cmd.humanTitle} شکست خورد.',
+            );
           }
           stepResults.add(res);
-          
+
           // Update status in db
           await txn.update(
             'assistant_audit_log',
@@ -386,13 +483,16 @@ class RitmoCommandBus {
           );
 
           if (cmd.touches.contains(DataDomain.notes)) {
-            final nId = inverseData['noteId'] as String? ?? payload['id'] as String? ?? payload['noteId'] as String?;
+            final nId =
+                inverseData['noteId'] as String? ??
+                payload['id'] as String? ??
+                payload['noteId'] as String?;
             if (nId != null && nId.startsWith('note_')) {
               noteIdsToSync.add(nId);
             }
           }
         }
-        
+
         // Update plan status
         await txn.update(
           'assistant_plans',
@@ -403,7 +503,7 @@ class RitmoCommandBus {
           where: 'id = ?',
           whereArgs: [planId],
         );
-        
+
         return stepResults;
       });
 
@@ -411,10 +511,15 @@ class RitmoCommandBus {
       for (final nId in noteIdsToSync) {
         await _syncNoteFts(nId);
       }
-      
+
       return PlanResult(success: true, planId: planId, results: results);
     } catch (e) {
-      return PlanResult(success: false, planId: planId, results: [], errorMessage: e.toString().replaceFirst('Exception: ', ''));
+      return PlanResult(
+        success: false,
+        planId: planId,
+        results: [],
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
     }
   }
 
@@ -449,4 +554,3 @@ class RitmoCommandBus {
     }
   }
 }
-

@@ -32,10 +32,9 @@ class RagResult {
 class ConversationRAG {
   static final RegExp _splitter = RegExp(r'[^\p{L}\p{N}]+', unicode: true);
 
-  static List<String> _tokenize(String input) => RitmoDateParser.normalize(input)
-      .split(_splitter)
-      .where((t) => t.isNotEmpty)
-      .toList();
+  static List<String> _tokenize(String input) => RitmoDateParser.normalize(
+    input,
+  ).split(_splitter).where((t) => t.isNotEmpty).toList();
 
   /// تطبیق نیت: برابری توکن یا پیشوند بودن (برای پسوندهای فارسی)
   static bool _hasIntent(
@@ -97,7 +96,7 @@ class ConversationRAG {
       'menstrual',
       'period',
       'pregnancy',
-      'contraceptive'
+      'contraceptive',
     ];
     final medicalKeywords = [
       'دارو',
@@ -115,11 +114,15 @@ class ConversationRAG {
       'medical',
       'dose',
       'dosage',
-      'prescription'
+      'prescription',
     ];
 
     final hasCycleKeyword = _hasSensitive(normalized, spaced, cycleKeywords);
-    final hasMedicalKeyword = _hasSensitive(normalized, spaced, medicalKeywords);
+    final hasMedicalKeyword = _hasSensitive(
+      normalized,
+      spaced,
+      medicalKeywords,
+    );
 
     if (hasCycleKeyword &&
         !consent.readableDomains.contains(DataDomain.cycle)) {
@@ -161,8 +164,9 @@ class ConversationRAG {
     final fromIso = RitmoDateParser.iso(windowStart);
     final toIso = RitmoDateParser.iso(windowEnd);
     final fromMs = windowStart.millisecondsSinceEpoch;
-    final toMsExclusive =
-        windowEnd.add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final toMsExclusive = windowEnd
+        .add(const Duration(days: 1))
+        .millisecondsSinceEpoch;
 
     final retrievedData = <String, dynamic>{};
 
@@ -225,8 +229,11 @@ class ConversationRAG {
     ]);
 
     if (hasFitness && consent.readableDomains.contains(DataDomain.sports)) {
-      retrievedData['fitness'] =
-          await _fetchRoutineStats('fitness', fromIso, toIso);
+      retrievedData['fitness'] = await _fetchRoutineStats(
+        'fitness',
+        fromIso,
+        toIso,
+      );
     }
     if (hasStudy &&
         (consent.readableDomains.contains(DataDomain.courses) ||
@@ -247,8 +254,10 @@ class ConversationRAG {
     }
     if (hasReflection &&
         consent.readableDomains.contains(DataDomain.reflection)) {
-      retrievedData['reflection'] =
-          await _fetchReflectionStats(fromMs, toMsExclusive);
+      retrievedData['reflection'] = await _fetchReflectionStats(
+        fromMs,
+        toMsExclusive,
+      );
     }
 
     if (retrievedData.isEmpty) return const RagResult();
@@ -272,7 +281,8 @@ class ConversationRAG {
   ) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT 
           SUM(CASE WHEN rc.resultType = 'COMPLETE' THEN 1 ELSE 0 END) as completed,
           SUM(CASE WHEN rc.resultType = 'SNOOZE' THEN 1 ELSE 0 END) as skipped,
@@ -280,7 +290,9 @@ class ConversationRAG {
         FROM routine_completions rc
         JOIN routines r ON rc.routineId = r.id
         WHERE r.category = ? AND rc.completionDate >= ? AND rc.completionDate <= ?
-      ''', [category, fromIso, toIso]);
+      ''',
+        [category, fromIso, toIso],
+      );
       if (result.isEmpty) return {'completed': 0, 'skipped': 0, 'total': 0};
       return {
         'completed': result.first['completed'] ?? 0,
@@ -299,19 +311,25 @@ class ConversationRAG {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      final konkurResult = await db.rawQuery('''
+      final konkurResult = await db.rawQuery(
+        '''
         SELECT SUM(durationMinutes) as minutes, COUNT(*) as count 
         FROM konkur_study_sessions 
         WHERE dateIso >= ? AND dateIso <= ?
-      ''', [fromIso, toIso]);
+      ''',
+        [fromIso, toIso],
+      );
       final konkurMins = (konkurResult.first['minutes'] as num?)?.toInt() ?? 0;
       final konkurCount = (konkurResult.first['count'] as num?)?.toInt() ?? 0;
 
-      final courseResult = await db.rawQuery('''
+      final courseResult = await db.rawQuery(
+        '''
         SELECT SUM(actualDurationMinutes) as minutes, COUNT(*) as count 
         FROM course_sessions 
         WHERE plannedDate >= ? AND plannedDate <= ? AND completionStatus = 'COMPLETED'
-      ''', [fromIso, toIso]);
+      ''',
+        [fromIso, toIso],
+      );
       final courseMins = (courseResult.first['minutes'] as num?)?.toInt() ?? 0;
       final courseCount = (courseResult.first['count'] as num?)?.toInt() ?? 0;
 
@@ -329,18 +347,17 @@ class ConversationRAG {
       final db = await DatabaseHelper.instance.database;
 
       final practicesResult = await db.rawQuery(
-          'SELECT COUNT(*) as count FROM worship_practices WHERE isActive = 1');
+        'SELECT COUNT(*) as count FROM worship_practices WHERE isActive = 1',
+      );
       final practicesCount =
           (practicesResult.first['count'] as num?)?.toInt() ?? 0;
 
-      final debtsResult = await db
-          .rawQuery('SELECT SUM(debtCount) as count FROM worship_debts');
+      final debtsResult = await db.rawQuery(
+        'SELECT SUM(debtCount) as count FROM worship_debts',
+      );
       final debtsCount = (debtsResult.first['count'] as num?)?.toInt() ?? 0;
 
-      return {
-        'practices_count': practicesCount,
-        'debts_count': debtsCount,
-      };
+      return {'practices_count': practicesCount, 'debts_count': debtsCount};
     } catch (_) {
       return {'practices_count': 0, 'debts_count': 0};
     }
@@ -352,11 +369,14 @@ class ConversationRAG {
   ) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT AVG(quality) as avg_quality, COUNT(*) as count 
         FROM bedtime_diagnostics 
         WHERE createdAt >= ? AND createdAt < ?
-      ''', [fromMs, toMsExclusive]);
+      ''',
+        [fromMs, toMsExclusive],
+      );
       if (result.isEmpty) return {'avg_quality': 0.0, 'entries': 0};
       return {
         'avg_quality': (result.first['avg_quality'] as num?)?.toDouble() ?? 0.0,
@@ -373,15 +393,19 @@ class ConversationRAG {
   ) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT 
           COUNT(*) as entries,
           SUM(CASE WHEN energyLevel = 'LOW' THEN 1 ELSE 0 END) as low_count,
           SUM(CASE WHEN energyLevel = 'HIGH' THEN 1 ELSE 0 END) as high_count
         FROM energy_logs 
         WHERE loggedAt >= ? AND loggedAt < ?
-      ''', [fromMs, toMsExclusive]);
-      if (result.isEmpty) return {'entries': 0, 'low_count': 0, 'high_count': 0};
+      ''',
+        [fromMs, toMsExclusive],
+      );
+      if (result.isEmpty)
+        return {'entries': 0, 'low_count': 0, 'high_count': 0};
       return {
         'entries': (result.first['entries'] as num?)?.toInt() ?? 0,
         'low_count': (result.first['low_count'] as num?)?.toInt() ?? 0,
@@ -397,7 +421,8 @@ class ConversationRAG {
       final db = await DatabaseHelper.instance.database;
 
       final activeGoalsResult = await db.rawQuery(
-          "SELECT COUNT(*) as count FROM goals WHERE status = 'ACTIVE'");
+        "SELECT COUNT(*) as count FROM goals WHERE status = 'ACTIVE'",
+      );
       final activeCount =
           (activeGoalsResult.first['count'] as num?)?.toInt() ?? 0;
 
@@ -414,8 +439,7 @@ class ConversationRAG {
         'active': activeCount,
         'completed_steps':
             (stepsResult.first['completed_steps'] as num?)?.toInt() ?? 0,
-        'total_steps':
-            (stepsResult.first['total_steps'] as num?)?.toInt() ?? 0,
+        'total_steps': (stepsResult.first['total_steps'] as num?)?.toInt() ?? 0,
       };
     } catch (_) {
       return {'active': 0, 'completed_steps': 0, 'total_steps': 0};
@@ -428,11 +452,14 @@ class ConversationRAG {
   ) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT AVG(mood_score) as avg_mood, COUNT(*) as count 
         FROM daily_reflections 
         WHERE createdAt >= ? AND createdAt < ? AND isPrivate = 0
-      ''', [fromMs, toMsExclusive]);
+      ''',
+        [fromMs, toMsExclusive],
+      );
       if (result.isEmpty) return {'count': 0, 'avg_mood': 0.0};
       return {
         'count': (result.first['count'] as num?)?.toInt() ?? 0,

@@ -433,22 +433,10 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
             Expanded(
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: colors.primary))
-                  : (totalTasks == 0 && _myDayTasks.isEmpty && _myDaySuggestions.isEmpty)
-                      ? Center(
-                          child: Text(
-                            'هیچ کاری ثبت نشده است.\nیک کار جدید اضافه کنید!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontSize: 13,
-                              height: 1.5,
-                            ),
-                          ),
-                        )
-                      : CustomScrollView(
-                          slivers: [
-                            SliverToBoxAdapter(
-                              child: MyDaySection(
+                  : CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: MyDaySection(
                                 tasks: _myDayTasks,
                                 suggestions: _myDaySuggestions,
                                 onToggleDone: _toggleDone,
@@ -465,7 +453,9 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                               sliver: SliverMainAxisGroup(
-                                slivers: TaskBucket.values.map((bucket) {
+                                slivers: TaskBucket.values
+                                    .where((bucket) => (_buckets[bucket] ?? []).isNotEmpty)
+                                    .map((bucket) {
                                   final tasks = _buckets[bucket] ?? [];
                                   final isExpanded = _bucketExpandedState[bucket] ?? true;
 

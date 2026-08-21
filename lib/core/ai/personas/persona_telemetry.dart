@@ -45,7 +45,8 @@ class PersonaTelemetryRecord {
 /// جمع‌کنندهٔ درون‌حافظه تله‌متری پرسونا با بافر حلقوی ۲۰۰ رکورد (PSN-48)
 class PersonaTelemetryCollector {
   PersonaTelemetryCollector._();
-  static final PersonaTelemetryCollector instance = PersonaTelemetryCollector._();
+  static final PersonaTelemetryCollector instance =
+      PersonaTelemetryCollector._();
 
   static const int maxCapacity = 200;
   final List<PersonaTelemetryRecord> _records = [];

@@ -57,14 +57,25 @@ class WorshipCreateCommand extends RitmoCommand {
       'createdAt': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-    return CommandResult.ok(commandId: id, outputData: {'itemId': itemId}, inverseData: {'itemId': itemId});
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'itemId': itemId},
+      inverseData: {'itemId': itemId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final itemId = inverseData['itemId']?.toString();
     if (itemId == null) return null;
-    await ctx.txn.delete('worship_practices', where: 'id = ?', whereArgs: [itemId]);
+    await ctx.txn.delete(
+      'worship_practices',
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }
@@ -79,7 +90,8 @@ class WorshipDeleteCommand extends RitmoCommand {
   String get humanTitle => 'حذف عبادت';
 
   @override
-  String get humanDescriptionFa => 'غیرفعال‌سازی یا حذف یکی از برنامه‌های عبادی تعریف شده';
+  String get humanDescriptionFa =>
+      'غیرفعال‌سازی یا حذف یکی از برنامه‌های عبادی تعریف شده';
 
   @override
   Sensitivity get sensitivity => Sensitivity.sensitive;
@@ -100,23 +112,47 @@ class WorshipDeleteCommand extends RitmoCommand {
   @override
   Future<PlanDiff> preview(AgentCommandContext ctx) async {
     final itemId = ctx.payload['id']?.toString() ?? '';
-    final rows = await ctx.txn.query('worship_practices', columns: ['title'], where: 'id = ?', whereArgs: [itemId]);
-    final title = rows.isNotEmpty ? rows.first['title']?.toString() : 'برنامه عبادی';
+    final rows = await ctx.txn.query(
+      'worship_practices',
+      columns: ['title'],
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+    final title = rows.isNotEmpty
+        ? rows.first['title']?.toString()
+        : 'برنامه عبادی';
     return PlanDiff(kind: DiffKind.delete, entityLabelFa: 'حذف عبادت: $title');
   }
 
   @override
   Future<CommandResult> run(AgentCommandContext ctx) async {
     final itemId = ctx.payload['id']?.toString() ?? '';
-    await ctx.txn.update('worship_practices', {'isActive': 0}, where: 'id = ?', whereArgs: [itemId]);
-    return CommandResult.ok(commandId: id, outputData: {'itemId': itemId}, inverseData: {'itemId': itemId});
+    await ctx.txn.update(
+      'worship_practices',
+      {'isActive': 0},
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+    return CommandResult.ok(
+      commandId: id,
+      outputData: {'itemId': itemId},
+      inverseData: {'itemId': itemId},
+    );
   }
 
   @override
-  Future<CommandResult?> undo(AgentCommandContext ctx, Map<String, dynamic> inverseData) async {
+  Future<CommandResult?> undo(
+    AgentCommandContext ctx,
+    Map<String, dynamic> inverseData,
+  ) async {
     final itemId = inverseData['itemId']?.toString();
     if (itemId == null) return null;
-    await ctx.txn.update('worship_practices', {'isActive': 1}, where: 'id = ?', whereArgs: [itemId]);
+    await ctx.txn.update(
+      'worship_practices',
+      {'isActive': 1},
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
     return CommandResult.ok(commandId: id);
   }
 }

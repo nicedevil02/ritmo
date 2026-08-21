@@ -39,7 +39,6 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:sqflite/sqflite.dart';
 
 class AiChatScreen extends StatefulWidget {
-
   const AiChatScreen({super.key, this.sessionId, this.isTab = false});
   final String? sessionId;
   final bool isTab;
@@ -53,10 +52,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   String? _sessionId;
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  
+
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   StreamSubscription<StreamingChatEvent>? _sub;
   String? _streamingId;
   final List<AgentStep> _agentSteps = [];
@@ -86,7 +85,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _checkLastCommit();
     unawaited(_runLearningLoop());
     _initSpeech();
-    ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(_handleCloudflarePrompt);
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.addListener(
+      _handleCloudflarePrompt,
+    );
   }
 
   void _handleCloudflarePrompt() {
@@ -145,22 +146,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
       }
     } else {
       if (mounted) {
-        unawaited(showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('دسترسی میکروفون', textAlign: TextAlign.right),
-            content: const Text(
-              'تشخیص گفتار فعال نیست یا دسترسی میکروفون داده نشده است. لطفاً در تنظیمات دستگاه دسترسی را بررسی کنید.',
-              textAlign: TextAlign.right,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('فهمیدم'),
+        unawaited(
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('دسترسی میکروفون', textAlign: TextAlign.right),
+              content: const Text(
+                'تشخیص گفتار فعال نیست یا دسترسی میکروفون داده نشده است. لطفاً در تنظیمات دستگاه دسترسی را بررسی کنید.',
+                textAlign: TextAlign.right,
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('فهمیدم'),
+                ),
+              ],
+            ),
           ),
-        ));
+        );
       }
     }
   }
@@ -172,7 +175,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _isListening = false;
       });
       unawaited(HapticFeedback.lightImpact());
-      
+
       final text = _textController.text.trim();
       if (text.isNotEmpty) {
         unawaited(_send(text));
@@ -182,13 +185,36 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   bool _isDayPlanQuery(String text) {
     final clean = text.trim().toLowerCase();
-    if (clean.contains('روزم رو بچین') || clean.contains('برنامه روز') || clean.contains('بچین روزم را')) {
+    if (clean.contains('روزم رو بچین') ||
+        clean.contains('برنامه روز') ||
+        clean.contains('بچین روزم را')) {
       return true;
     }
 
     final planningKeywords = [
-      'بیدار', 'خواب', 'نماز', 'صبحونه', 'صبحانه', 'ناهار', 'شام', 'کار', 'سرکار', 'بانک', 'درس', 'کتاب',
-      'ورزش', 'باشگاه', 'پیاده', 'دعا', 'قرآن', 'دوش', 'حمام', 'خرید', 'کافه', 'ملاقات', 'جلسه'
+      'بیدار',
+      'خواب',
+      'نماز',
+      'صبحونه',
+      'صبحانه',
+      'ناهار',
+      'شام',
+      'کار',
+      'سرکار',
+      'بانک',
+      'درس',
+      'کتاب',
+      'ورزش',
+      'باشگاه',
+      'پیاده',
+      'دعا',
+      'قرآن',
+      'دوش',
+      'حمام',
+      'خرید',
+      'کافه',
+      'ملاقات',
+      'جلسه',
     ];
     var count = 0;
     for (final kw in planningKeywords) {
@@ -201,13 +227,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Future<void> _saveSystemConfirmationMessage(String text) async {
     if (_sessionId != null) {
-      await ChatRepository.instance.addMessage(ChatMessage(
-        id: 'dp_sys_${DateTime.now().millisecondsSinceEpoch}',
-        sessionId: _sessionId!,
-        role: ChatRole.assistant,
-        content: text,
-        timestamp: DateTime.now(),
-      ));
+      await ChatRepository.instance.addMessage(
+        ChatMessage(
+          id: 'dp_sys_${DateTime.now().millisecondsSinceEpoch}',
+          sessionId: _sessionId!,
+          role: ChatRole.assistant,
+          content: text,
+          timestamp: DateTime.now(),
+        ),
+      );
       await _loadMessages();
     }
   }
@@ -239,12 +267,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
       final now = DateTime.now().millisecondsSinceEpoch;
       final sevenDaysAgo = now - (7 * 24 * 3600 * 1000);
 
-      final completions = await db.rawQuery('''
+      final completions = await db.rawQuery(
+        '''
         SELECT r.title, r.category, r.targetDurationMinutes, rc.durationMinutes
         FROM routine_completions rc
         JOIN routines r ON rc.routineId = r.id
         WHERE rc.createdAt >= ? AND rc.durationMinutes IS NOT NULL AND r.targetDurationMinutes IS NOT NULL
-      ''', [sevenDaysAgo]);
+      ''',
+        [sevenDaysAgo],
+      );
 
       if (completions.isEmpty) return;
 
@@ -276,8 +307,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
           final cleanTitle = title.trim();
           final fact = 'کار "$cleanTitle" معمولاً $avgActual دقیقه طول می‌کشد';
 
-          final existing = await AiMemoryService.instance.retrieve(domain: 'core', query: cleanTitle);
-          final hasFact = existing.any((m) => m.content.contains(cleanTitle) && m.content.contains('دقیقه'));
+          final existing = await AiMemoryService.instance.retrieve(
+            domain: 'core',
+            query: cleanTitle,
+          );
+          final hasFact = existing.any(
+            (m) =>
+                m.content.contains(cleanTitle) && m.content.contains('دقیقه'),
+          );
 
           if (!hasFact) {
             await AiMemoryService.instance.applyOperations([
@@ -288,7 +325,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 domain: 'core',
                 importance: 5,
                 sensitive: false,
-              )
+              ),
             ]);
             debugPrint('[AI Learning Loop] Learned new fact: $fact');
           }
@@ -309,7 +346,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return FutureBuilder<List<Map<String, dynamic>>>(
-              future: DatabaseHelper.instance.database.then((db) => db.query('assistant_audit_log', orderBy: 'appliedAt DESC', limit: 20)),
+              future: DatabaseHelper.instance.database.then(
+                (db) => db.query(
+                  'assistant_audit_log',
+                  orderBy: 'appliedAt DESC',
+                  limit: 20,
+                ),
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return RitmoTheme.glassCardLight(
@@ -319,9 +362,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     ),
                   );
                 }
-                
+
                 final logs = snapshot.data ?? [];
-                
+
                 return Directionality(
                   textDirection: TextDirection.rtl,
                   child: Padding(
@@ -331,7 +374,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     child: RitmoTheme.glassCardLight(
                       child: Container(
                         constraints: BoxConstraints(
-                          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+                          maxHeight: RitmoBreakpoints.sheetMaxHeight(
+                            context,
+                            factor: 0.85,
+                          ),
                         ),
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -342,10 +388,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
                               children: [
                                 Text(
                                   'دفتر ممیزی و تغییرات دستیار',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.textPrimary),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: colors.textPrimary,
+                                  ),
                                 ),
                                 IconButton(
-                                  icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary),
+                                  icon: Icon(
+                                    CupertinoIcons.xmark,
+                                    color: colors.textSecondary,
+                                  ),
                                   onPressed: () => Navigator.pop(context),
                                 ),
                               ],
@@ -356,7 +409,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                                 child: Center(
                                   child: Text(
                                     'هیچ تغییری توسط دستیار ثبت نشده است.',
-                                    style: TextStyle(color: colors.textSecondary),
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
+                                    ),
                                   ),
                                 ),
                               )
@@ -366,48 +421,86 @@ class _AiChatScreenState extends State<AiChatScreen> {
                                   itemCount: logs.length,
                                   itemBuilder: (context, index) {
                                     final log = logs[index];
-                                    final type = log['actionType']?.toString() ?? '';
-                                    final key = log['targetKey']?.toString() ?? '';
-                                    final oldValue = log['oldValue']?.toString() ?? '';
-                                    final newValue = log['newValue']?.toString() ?? '';
+                                    final type =
+                                        log['actionType']?.toString() ?? '';
+                                    final key =
+                                        log['targetKey']?.toString() ?? '';
+                                    final oldValue =
+                                        log['oldValue']?.toString() ?? '';
+                                    final newValue =
+                                        log['newValue']?.toString() ?? '';
                                     final appliedAt = log['appliedAt'] as int;
-                                    
-                                    final date = DateTime.fromMillisecondsSinceEpoch(appliedAt);
-                                    final timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                                    
+
+                                    final date =
+                                        DateTime.fromMillisecondsSinceEpoch(
+                                          appliedAt,
+                                        );
+                                    final timeStr =
+                                        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+
                                     var actionLabel = type;
-                                    if (type == 'updateSetting') actionLabel = 'تغییر تنظیمات';
-                                    if (type == 'completeRoutine') actionLabel = 'انجام روتین';
-                                    if (type == 'skipRoutine') actionLabel = 'تعویق روتین';
-                                    if (type == 'editRoutine') actionLabel = 'ویرایش روتین';
-                                    if (type == 'deleteRoutine') actionLabel = 'حذف روتین';
-                                    if (type == 'editGoal') actionLabel = 'ویرایش هدف';
-                                    if (type == 'completeGoalStep') actionLabel = 'تکمیل گام هدف';
-                                    
+                                    if (type == 'updateSetting')
+                                      actionLabel = 'تغییر تنظیمات';
+                                    if (type == 'completeRoutine')
+                                      actionLabel = 'انجام روتین';
+                                    if (type == 'skipRoutine')
+                                      actionLabel = 'تعویق روتین';
+                                    if (type == 'editRoutine')
+                                      actionLabel = 'ویرایش روتین';
+                                    if (type == 'deleteRoutine')
+                                      actionLabel = 'حذف روتین';
+                                    if (type == 'editGoal')
+                                      actionLabel = 'ویرایش هدف';
+                                    if (type == 'completeGoalStep')
+                                      actionLabel = 'تکمیل گام هدف';
+
                                     return Card(
                                       color: colors.card,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 6,
+                                      ),
                                       child: ListTile(
                                         title: Text(
                                           '$actionLabel - $key',
-                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: colors.textPrimary,
+                                          ),
                                         ),
                                         subtitle: Text(
                                           type == 'updateSetting'
                                               ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue\nساعت: $timeStr'
                                               : 'تغییر: $newValue\nساعت: $timeStr',
-                                          style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: colors.textSecondary,
+                                          ),
                                         ),
-                                        trailing: type == 'updateSetting' && oldValue.isNotEmpty && oldValue != 'null'
+                                        trailing:
+                                            type == 'updateSetting' &&
+                                                oldValue.isNotEmpty &&
+                                                oldValue != 'null'
                                             ? TextButton(
                                                 onPressed: () async {
-                                                  final success = await applySettingChange(key, oldValue);
+                                                  final success =
+                                                      await applySettingChange(
+                                                        key,
+                                                        oldValue,
+                                                      );
                                                   if (success) {
                                                     setModalState(() {});
                                                   }
                                                 },
-                                                child: const Text('بازگردانی', style: TextStyle(color: Color(0xff06B6D4))),
+                                                child: const Text(
+                                                  'بازگردانی',
+                                                  style: TextStyle(
+                                                    color: Color(0xff06B6D4),
+                                                  ),
+                                                ),
                                               )
                                             : null,
                                       ),
@@ -442,7 +535,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _cancelStreamSilent();
     AgentConfirmationBroker.instance.cancelAll();
     AgentQuestionBroker.instance.cancelAll();
-    ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(_handleCloudflarePrompt);
+    ChatGptWebBridgeManager.instance.cloudflareNotifier.removeListener(
+      _handleCloudflarePrompt,
+    );
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -472,7 +567,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       where: 'key = ?',
       whereArgs: ['assistant_cloud_consent'],
     );
-    
+
     if (consentCheck.isNotEmpty && consentCheck.first['value'] == 'true') {
       return true;
     }
@@ -482,22 +577,25 @@ class _AiChatScreenState extends State<AiChatScreen> {
       where: 'key = ?',
       whereArgs: ['user_gender'],
     );
-    final gender = (genderCheck.isNotEmpty ? genderCheck.first['value'] : 'UNSET').toString().toUpperCase();
+    final gender =
+        (genderCheck.isNotEmpty ? genderCheck.first['value'] : 'UNSET')
+            .toString()
+            .toUpperCase();
     final isMale = gender == 'MALE';
 
     final contentText = isMale
         ? 'دستیار هوشمند برای ارائه راهکارها و پاسخ‌های دقیق‌تر، نیاز دارد اطلاعات برنامه‌ریزی، روتین‌ها، اهداف، آمار خواب و انرژی و برخی تنظیمات رفتاری شما را به سرورهای ابری ارسال کند.\n\n'
-            '🚨 توجه مهم:\n'
-            '۱. اطلاعات پزشکی، داروها، دوز مصرفی و یادآورهای درمانی کاملاً ممنوع بوده و هرگز ارسال نمی‌شوند.\n'
-            '۲. هر آیتمی که توسط شما به صورت «خصوصی» علامت‌گذاری شود، از دید دستیار پنهان خواهد ماند.\n\n'
-            'آیا با ارسال این اطلاعات موافقید؟'
+              '🚨 توجه مهم:\n'
+              '۱. اطلاعات پزشکی، داروها، دوز مصرفی و یادآورهای درمانی کاملاً ممنوع بوده و هرگز ارسال نمی‌شوند.\n'
+              '۲. هر آیتمی که توسط شما به صورت «خصوصی» علامت‌گذاری شود، از دید دستیار پنهان خواهد ماند.\n\n'
+              'آیا با ارسال این اطلاعات موافقید؟'
         : 'دستیار هوشمند برای ارائه راهکارها و پاسخ‌های دقیق‌تر، نیاز دارد اطلاعات برنامه‌ریزی، روتین‌ها، اهداف، آمار خواب و انرژی و برخی تنظیمات رفتاری شما را به سرورهای ابری ارسال کند.\n\n'
-            '🚨 توجه مهم:\n'
-            '۱. اطلاعات چرخه قاعدگی و هورمونی به هیچ وجه ارسال نمی‌شوند.\n'
-            '۲. اطلاعات پزشکی، داروها، دوز مصرفی و یادآورهای درمانی کاملاً ممنوع بوده و هرگز ارسال نمی‌شوند.\n'
-            '۳. هر آیتمی که توسط شما به صورت «خصوصی» علامت‌گذاری شود، از دید دستیار پنهان خواهد ماند.\n\n'
-            'آیا با ارسال این اطلاعات موافقید؟';
-    
+              '🚨 توجه مهم:\n'
+              '۱. اطلاعات چرخه قاعدگی و هورمونی به هیچ وجه ارسال نمی‌شوند.\n'
+              '۲. اطلاعات پزشکی، داروها، دوز مصرفی و یادآورهای درمانی کاملاً ممنوع بوده و هرگز ارسال نمی‌شوند.\n'
+              '۳. هر آیتمی که توسط شما به صورت «خصوصی» علامت‌گذاری شود، از دید دستیار پنهان خواهد ماند.\n\n'
+              'آیا با ارسال این اطلاعات موافقید؟';
+
     if (!mounted) return false;
 
     final accepted = await showDialog<bool>(
@@ -556,7 +654,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff06B6D4),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: const Text(
                             'موافقت و پذیرش',
@@ -573,17 +673,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
         );
       },
     );
-    
+
     if (accepted ?? false) {
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'assistant_cloud_consent',
-          'value': 'true',
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('app_settings', {
+        'key': 'assistant_cloud_consent',
+        'value': 'true',
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       return true;
     }
     return false;
@@ -591,7 +687,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Future<void> _send(String text) async {
     if (text.trim().isEmpty || _isStreaming) return;
-    
+
     final consentGranted = await _ensureCloudConsent();
     if (!consentGranted) return;
 
@@ -607,13 +703,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _dayPlanningStepMessage = '🧠 در حال تحلیل و آغاز چیدمان برنامه...';
       });
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-      final tomorrowStr = DateTime.now().add(const Duration(days: 1)).toIso8601String().substring(0, 10);
+      final tomorrowStr = DateTime.now()
+          .add(const Duration(days: 1))
+          .toIso8601String()
+          .substring(0, 10);
       final targetDateStr = text.contains('فردا') ? tomorrowStr : todayStr;
 
       try {
         var queryToCompose = text;
         if (_pendingDayPlanDraft != null) {
-          queryToCompose = 'بر اساس سوال قبل که پاسخش این است: "$text"، کل برنامه روز را کامل کن و سوال دیگری نپرس.';
+          queryToCompose =
+              'بر اساس سوال قبل که پاسخش این است: "$text"، کل برنامه روز را کامل کن و سوال دیگری نپرس.';
         }
 
         final result = await DayPlanComposer.compose(
@@ -631,7 +731,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
           if (result.isTemplateApply) {
             final templateName = result.applyTemplateName!;
             final templateDate = result.applyTemplateDate!;
-            final template = await DayPlanTemplateService.instance.getTemplateByName(templateName);
+            final template = await DayPlanTemplateService.instance
+                .getTemplateByName(templateName);
             if (template != null) {
               final draft = DayPlanDraft(
                 planDate: templateDate,
@@ -639,23 +740,31 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 questions: [],
                 suggestions: [],
               );
-              final enriched = await DayPlanValidator.validateAndEnrich(draft: draft);
-              await DayPlanTemplateService.instance.recordTemplateUsage(template.id);
+              final enriched = await DayPlanValidator.validateAndEnrich(
+                draft: draft,
+              );
+              await DayPlanTemplateService.instance.recordTemplateUsage(
+                template.id,
+              );
               if (mounted) {
                 AiDayPlannerPreviewSheet.show(
                   context,
                   initialDraft: enriched,
                   onSaved: () {
                     _checkLastCommit();
-                    _saveSystemConfirmationMessage('برنامه روز شما با موفقیت ثبت شد ⚡');
+                    _saveSystemConfirmationMessage(
+                      'برنامه روز شما با موفقیت ثبت شد ⚡',
+                    );
                     _showTopToast(
                       'برنامه روز با موفقیت چیده شد 🗓',
                       CupertinoIcons.checkmark_circle,
                       context.colors.primary,
                       onUndo: () async {
-                        await AssistantActionRegistry.undoLastDayPlanCommit(context);
+                        await AssistantActionRegistry.undoLastDayPlanCommit(
+                          context,
+                        );
                         unawaited(_checkLastCommit());
-                      }
+                      },
                     );
                   },
                 );
@@ -683,13 +792,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
             });
 
             // Save user query to session
-            await ChatRepository.instance.addMessage(ChatMessage(
-              id: 'dp_usr_multi_${DateTime.now().millisecondsSinceEpoch}',
-              sessionId: _sessionId!,
-              role: ChatRole.user,
-              content: text,
-              timestamp: DateTime.now(),
-            ));
+            await ChatRepository.instance.addMessage(
+              ChatMessage(
+                id: 'dp_usr_multi_${DateTime.now().millisecondsSinceEpoch}',
+                sessionId: _sessionId!,
+                role: ChatRole.user,
+                content: text,
+                timestamp: DateTime.now(),
+              ),
+            );
             await _loadMessages();
 
             if (mounted) {
@@ -698,15 +809,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 initialDrafts: result.multiDayDrafts!,
                 onSaved: () {
                   _checkLastCommit();
-                  _saveSystemConfirmationMessage('برنامه هفتگی شما با موفقیت ثبت شد ⚡');
+                  _saveSystemConfirmationMessage(
+                    'برنامه هفتگی شما با موفقیت ثبت شد ⚡',
+                  );
                   _showTopToast(
                     'برنامه هفتگی با موفقیت ثبت شد 🗓',
                     CupertinoIcons.checkmark_circle,
                     context.colors.primary,
                     onUndo: () async {
-                      await AssistantActionRegistry.undoLastDayPlanCommit(context);
+                      await AssistantActionRegistry.undoLastDayPlanCommit(
+                        context,
+                      );
                       unawaited(_checkLastCommit());
-                    }
+                    },
                   );
                 },
               );
@@ -718,21 +833,25 @@ class _AiChatScreenState extends State<AiChatScreen> {
           if (draft != null) {
             if (draft.questions.isNotEmpty && _pendingDayPlanDraft == null) {
               // Save query and response to session first
-              await ChatRepository.instance.addMessage(ChatMessage(
-                id: 'dp_usr_${DateTime.now().millisecondsSinceEpoch}',
-                sessionId: _sessionId!,
-                role: ChatRole.user,
-                content: text,
-                timestamp: DateTime.now(),
-              ));
+              await ChatRepository.instance.addMessage(
+                ChatMessage(
+                  id: 'dp_usr_${DateTime.now().millisecondsSinceEpoch}',
+                  sessionId: _sessionId!,
+                  role: ChatRole.user,
+                  content: text,
+                  timestamp: DateTime.now(),
+                ),
+              );
               final question = draft.questions.first;
-              await ChatRepository.instance.addMessage(ChatMessage(
-                id: 'dp_ast_${DateTime.now().millisecondsSinceEpoch}',
-                sessionId: _sessionId!,
-                role: ChatRole.assistant,
-                content: question.text,
-                timestamp: DateTime.now(),
-              ));
+              await ChatRepository.instance.addMessage(
+                ChatMessage(
+                  id: 'dp_ast_${DateTime.now().millisecondsSinceEpoch}',
+                  sessionId: _sessionId!,
+                  role: ChatRole.assistant,
+                  content: question.text,
+                  timestamp: DateTime.now(),
+                ),
+              );
               await _loadMessages();
 
               setState(() {
@@ -753,13 +872,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
               });
 
               // Save user query to session
-              await ChatRepository.instance.addMessage(ChatMessage(
-                id: 'dp_usr2_${DateTime.now().millisecondsSinceEpoch}',
-                sessionId: _sessionId!,
-                role: ChatRole.user,
-                content: text,
-                timestamp: DateTime.now(),
-              ));
+              await ChatRepository.instance.addMessage(
+                ChatMessage(
+                  id: 'dp_usr2_${DateTime.now().millisecondsSinceEpoch}',
+                  sessionId: _sessionId!,
+                  role: ChatRole.user,
+                  content: text,
+                  timestamp: DateTime.now(),
+                ),
+              );
               await _loadMessages();
 
               if (mounted) {
@@ -768,15 +889,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   initialDraft: draft,
                   onSaved: () {
                     _checkLastCommit();
-                    _saveSystemConfirmationMessage('برنامه روز شما با موفقیت ثبت شد ⚡');
+                    _saveSystemConfirmationMessage(
+                      'برنامه روز شما با موفقیت ثبت شد ⚡',
+                    );
                     _showTopToast(
                       'برنامه روز با موفقیت چیده شد 🗓',
                       CupertinoIcons.checkmark_circle,
                       context.colors.primary,
                       onUndo: () async {
-                        await AssistantActionRegistry.undoLastDayPlanCommit(context);
+                        await AssistantActionRegistry.undoLastDayPlanCommit(
+                          context,
+                        );
                         unawaited(_checkLastCommit());
-                      }
+                      },
                     );
                   },
                 );
@@ -814,19 +939,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _isAgentWorking = true;
     });
 
-    _sub = StreamingChatService().send(
-      sessionId: _sessionId!,
-      userText: text,
-      consent: consent,
-    ).listen(_onEvent, onError: (err) {
-      _onError(err.toString());
-    }, onDone: () {
-      setState(() {
-        _sub = null;
-        _streamingId = null;
-        _isAgentWorking = false;
-      });
-    });
+    _sub = StreamingChatService()
+        .send(sessionId: _sessionId!, userText: text, consent: consent)
+        .listen(
+          _onEvent,
+          onError: (err) {
+            _onError(err.toString());
+          },
+          onDone: () {
+            setState(() {
+              _sub = null;
+              _streamingId = null;
+              _isAgentWorking = false;
+            });
+          },
+        );
 
     setState(() {});
   }
@@ -840,14 +967,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
     } else if (e is AssistantStarted) {
       setState(() {
         _streamingId = e.messageId;
-        _messages.add(ChatMessage(
-          id: e.messageId,
-          sessionId: _sessionId!,
-          role: ChatRole.assistant,
-          content: '',
-          timestamp: DateTime.now(),
-          isStreaming: true,
-        ));
+        _messages.add(
+          ChatMessage(
+            id: e.messageId,
+            sessionId: _sessionId!,
+            role: ChatRole.assistant,
+            content: '',
+            timestamp: DateTime.now(),
+            isStreaming: true,
+          ),
+        );
       });
       _scrollToBottom();
     } else if (e is ChatChunk) {
@@ -903,7 +1032,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
       setState(() {
         _isAgentWorking = false;
       });
-      final errText = e.code.isNotEmpty ? e.code : (e.message.isNotEmpty ? e.message : 'خطایی در ارتباط با دستیار رخ داد.');
+      final errText = e.code.isNotEmpty
+          ? e.code
+          : (e.message.isNotEmpty
+                ? e.message
+                : 'خطایی در ارتباط با دستیار رخ داد.');
       _onError(errText);
     } else if (e is ChatCancelled) {
       setState(() {
@@ -929,27 +1062,37 @@ class _AiChatScreenState extends State<AiChatScreen> {
             errorText.contains('Unable to load site') ||
             errorText.contains('تحریم یا فیلترینگ') ||
             errorText.contains('مسدود است')) {
-          friendlySummary = 'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ 🛡️).\nبرای ادامه کار، لازم است فیلترشکن (VPN) یا تحریم‌شکن (مثل شکن / الکترون) خود را فعال کنید.';
+          friendlySummary =
+              'دسترسی به چت‌جی‌پی‌تی از این IP مسدود است (تحریم یا فیلترینگ 🛡️).\nبرای ادامه کار، لازم است فیلترشکن (VPN) یا تحریم‌شکن (مثل شکن / الکترون) خود را فعال کنید.';
           suggestedSteps = '''
 💡 **راهکار حل مشکل تحریم و فیلترینگ ChatGPT:**
 ۱. فیلترشکن (VPN) خود را روشن کرده و سرور اروپا (مانند هلند یا آلمان) را انتخاب کنید.
 ۲. یا در تنظیمات وای‌فای/شبکه گوشی، DNS ضدتحریم (شکن: 178.22.122.100 و 185.51.200.2) را تنظیم کنید.
 ۳. روی چیپ وضعیت بالای صفحه ضربه زده و گزینه «تلاش مجدد و بارگذاری دوباره» را بزنید.''';
-        } else if (errorText.contains('no_api_key') || errorText.contains('401') || errorText.contains('quota_exhausted')) {
-          friendlySummary = 'کلید دسترسی (API Key) یا سهمیه هوش مصنوعی فعال نیست 🔌\nلطفاً وارد تنظیمات پروفایل (چرخ‌دنده بالای صفحه) -> «تنظیمات هوش مصنوعی (AI)» شوید و ارائه‌دهنده یا API Key خود را بررسی کنید.';
+        } else if (errorText.contains('no_api_key') ||
+            errorText.contains('401') ||
+            errorText.contains('quota_exhausted')) {
+          friendlySummary =
+              'کلید دسترسی (API Key) یا سهمیه هوش مصنوعی فعال نیست 🔌\nلطفاً وارد تنظیمات پروفایل (چرخ‌دنده بالای صفحه) -> «تنظیمات هوش مصنوعی (AI)» شوید و ارائه‌دهنده یا API Key خود را بررسی کنید.';
         } else if (errorText.contains('authRequired')) {
-          friendlySummary = 'نشست ورود به حساب کاربری منقضی شده است یا نیاز به ورود به چت‌جی‌پی‌تی دارید 🔑.';
+          friendlySummary =
+              'نشست ورود به حساب کاربری منقضی شده است یا نیاز به ورود به چت‌جی‌پی‌تی دارید 🔑.';
         } else if (errorText.contains('cloudflareChallenge')) {
           friendlySummary = 'تأیید هویت امنیتی کلودفلر ضروری است 🛡️.';
         } else if (errorText.contains('429')) {
-          friendlySummary = 'سقف تعداد درخواست‌های لحظه‌ای پر شده است (Rate Limit). لطفاً چند لحظه دیگر دوباره تلاش کنید.';
+          friendlySummary =
+              'سقف تعداد درخواست‌های لحظه‌ای پر شده است (Rate Limit). لطفاً چند لحظه دیگر دوباره تلاش کنید.';
         } else if (errorText.toLowerCase().contains('timeout')) {
-          friendlySummary = 'زمان انتظار برای پاسخ سرور هوش مصنوعی به پایان رسید (Timeout ⏱️). سرور در مهلت مقرر ۱۲۰ ثانیه پاسخ نداد.';
+          friendlySummary =
+              'زمان انتظار برای پاسخ سرور هوش مصنوعی به پایان رسید (Timeout ⏱️). سرور در مهلت مقرر ۱۲۰ ثانیه پاسخ نداد.';
         }
 
-        final cleanDetails = errorText.trim().isEmpty ? 'اطلاعات بیشتری از خطای شبکه یا سرور دریافت نشد.' : errorText;
+        final cleanDetails = errorText.trim().isEmpty
+            ? 'اطلاعات بیشتری از خطای شبکه یا سرور دریافت نشد.'
+            : errorText;
 
-        final formattedBox = '''
+        final formattedBox =
+            '''
 ⚠️ **خطا در ارتباط با سرور هوش مصنوعی**
 
 📌 **تحلیل خطا:**
@@ -964,7 +1107,10 @@ $suggestedSteps''';
             ? formattedBox
             : '$currentContent\n\n$formattedBox';
 
-        _messages[idx] = _messages[idx].copyWith(content: finalContent, isStreaming: false);
+        _messages[idx] = _messages[idx].copyWith(
+          content: finalContent,
+          isStreaming: false,
+        );
       });
     }
     setState(() {
@@ -976,7 +1122,7 @@ $suggestedSteps''';
 
   Future<void> _cancelStream() async {
     if (_sub == null && !_isAgentWorking) return;
-    
+
     final subToCancel = _sub;
     final streamingIdToCancel = _streamingId;
 
@@ -997,7 +1143,7 @@ $suggestedSteps''';
     }
 
     final targetId = streamingIdToCancel;
-    final idx = targetId != null 
+    final idx = targetId != null
         ? _messages.indexWhere((m) => m.id == targetId)
         : _messages.indexWhere((m) => m.isStreaming);
 
@@ -1038,8 +1184,8 @@ $suggestedSteps''';
     ChatGptWebBridgeManager.instance.cancelCurrentStream();
 
     subToCancel?.cancel();
-    
-    final idx = targetId != null 
+
+    final idx = targetId != null
         ? _messages.indexWhere((m) => m.id == targetId)
         : _messages.indexWhere((m) => m.isStreaming);
 
@@ -1086,8 +1232,19 @@ $suggestedSteps''';
     );
   }
 
-  void _showTopToast(String message, IconData icon, Color iconColor, {VoidCallback? onUndo}) {
-    RitmoToast.show(context, message, icon: icon, iconColor: iconColor, onUndo: onUndo);
+  void _showTopToast(
+    String message,
+    IconData icon,
+    Color iconColor, {
+    VoidCallback? onUndo,
+  }) {
+    RitmoToast.show(
+      context,
+      message,
+      icon: icon,
+      iconColor: iconColor,
+      onUndo: onUndo,
+    );
   }
 
   @override
@@ -1158,10 +1315,17 @@ $suggestedSteps''';
                 Container(
                   width: double.infinity,
                   color: colors.primary.withValues(alpha: 0.08),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.info_circle, size: 16, color: colors.primary),
+                      Icon(
+                        CupertinoIcons.info_circle,
+                        size: 16,
+                        color: colors.primary,
+                      ),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
@@ -1171,7 +1335,9 @@ $suggestedSteps''';
                       ),
                       TextButton(
                         onPressed: () async {
-                          await AssistantActionRegistry.undoLastDayPlanCommit(context);
+                          await AssistantActionRegistry.undoLastDayPlanCommit(
+                            context,
+                          );
                           unawaited(_checkLastCommit());
                         },
                         child: Text(
@@ -1191,124 +1357,154 @@ $suggestedSteps''';
                 child: _isLoading
                     ? _buildDayPlanningLoadingState(colors)
                     : _messages.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.sparkles,
-                                    size: 44,
-                                    color: colors.textSecondary.withValues(alpha: 0.5),
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                CupertinoIcons.sparkles,
+                                size: 44,
+                                color: colors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'چگونه می‌توانم به ارتقای ریتم روزانه‌ات کمک کنم؟',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton.icon(
+                                onPressed: () => _send('روزم رو بچین'),
+                                icon: const Icon(
+                                  CupertinoIcons.calendar_badge_plus,
+                                  size: 18,
+                                ),
+                                label: const Text(
+                                  'روزم رو بچین ✨',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'چگونه می‌توانم به ارتقای ریتم روزانه‌ات کمک کنم؟',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      color: colors.textSecondary,
-                                    ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
                                   ),
-                                  const SizedBox(height: 24),
-                                  ElevatedButton.icon(
-                                    onPressed: () => _send('روزم رو بچین'),
-                                    icon: const Icon(CupertinoIcons.calendar_badge_plus, size: 18),
-                                    label: const Text(
-                                      'روزم رو بچین ✨',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colors.primary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      elevation: 0,
-                                    ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                ],
+                                  elevation: 0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = _messages[index];
+                          final msgId = msg.id;
+                          return Dismissible(
+                            key: ValueKey<String>(msgId),
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.trash,
+                                color: Colors.redAccent,
+                                size: 20,
                               ),
                             ),
-                          )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final msg = _messages[index];
-                              final msgId = msg.id;
-                              return Dismissible(
-                                key: ValueKey<String>(msgId),
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
-                                ),
-                                secondaryBackground: Container(
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
-                                ),
-                                onDismissed: (direction) {
-                                  final removedMsg = msg;
-                                  final removedIndex = index;
-                                  setState(() {
-                                    _messages.removeAt(removedIndex);
-                                  });
+                            secondaryBackground: Container(
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.trash,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                            ),
+                            onDismissed: (direction) {
+                              final removedMsg = msg;
+                              final removedIndex = index;
+                              setState(() {
+                                _messages.removeAt(removedIndex);
+                              });
 
-                                  // Defer DB deletion for 5s
-                                  _pendingDeletedMsgs[msgId] = removedMsg;
-                                  final t = Timer(const Duration(seconds: 5), () async {
-                                    await ChatRepository.instance.deleteMessage(msgId);
-                                    _pendingDeleteTimers.remove(msgId);
-                                    _pendingDeletedMsgs.remove(msgId);
-                                  });
-                                  _pendingDeleteTimers[msgId] = t;
-
-                                  _showTopToast(
-                                    'پیام حذف شد.',
-                                    CupertinoIcons.trash,
-                                    Colors.redAccent,
-                                    onUndo: () {
-                                      _pendingDeleteTimers[msgId]?.cancel();
-                                      _pendingDeleteTimers.remove(msgId);
-                                      _pendingDeletedMsgs.remove(msgId);
-                                      setState(() {
-                                        if (removedIndex <= _messages.length) {
-                                          _messages.insert(removedIndex, removedMsg);
-                                        } else {
-                                          _messages.add(removedMsg);
-                                        }
-                                      });
-                                      _scrollToBottom();
-                                    },
+                              // Defer DB deletion for 5s
+                              _pendingDeletedMsgs[msgId] = removedMsg;
+                              final t = Timer(
+                                const Duration(seconds: 5),
+                                () async {
+                                  await ChatRepository.instance.deleteMessage(
+                                    msgId,
                                   );
+                                  _pendingDeleteTimers.remove(msgId);
+                                  _pendingDeletedMsgs.remove(msgId);
                                 },
-                                child: StreamingMessageBubble(
-                                  message: msg,
-                                  isLast: index == _messages.length - 1,
-                                  onAction: _handleAction,
-                                  onCopy: _copyToClipboard,
-                                ),
+                              );
+                              _pendingDeleteTimers[msgId] = t;
+
+                              _showTopToast(
+                                'پیام حذف شد.',
+                                CupertinoIcons.trash,
+                                Colors.redAccent,
+                                onUndo: () {
+                                  _pendingDeleteTimers[msgId]?.cancel();
+                                  _pendingDeleteTimers.remove(msgId);
+                                  _pendingDeletedMsgs.remove(msgId);
+                                  setState(() {
+                                    if (removedIndex <= _messages.length) {
+                                      _messages.insert(
+                                        removedIndex,
+                                        removedMsg,
+                                      );
+                                    } else {
+                                      _messages.add(removedMsg);
+                                    }
+                                  });
+                                  _scrollToBottom();
+                                },
                               );
                             },
-                          ),
+                            child: StreamingMessageBubble(
+                              message: msg,
+                              isLast: index == _messages.length - 1,
+                              onAction: _handleAction,
+                              onCopy: _copyToClipboard,
+                            ),
+                          );
+                        },
+                      ),
               ),
-
 
               if (_currentQuickReplies.isNotEmpty)
                 Container(
@@ -1318,7 +1514,8 @@ $suggestedSteps''';
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _currentQuickReplies.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final text = _currentQuickReplies[index];
                       return Material(
@@ -1330,10 +1527,15 @@ $suggestedSteps''';
                           },
                           borderRadius: BorderRadius.circular(RitmoRadius.pill),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.pill,
+                              ),
                               border: Border.all(
                                 color: colors.primary.withValues(alpha: 0.25),
                                 width: 1,
@@ -1342,7 +1544,11 @@ $suggestedSteps''';
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.bolt_rounded, size: 14, color: colors.primary),
+                                Icon(
+                                  Icons.bolt_rounded,
+                                  size: 14,
+                                  color: colors.primary,
+                                ),
                                 const SizedBox(width: 5),
                                 Text(
                                   text,
@@ -1374,7 +1580,8 @@ $suggestedSteps''';
               // 2026 Floating Chat Input Bar
               Builder(
                 builder: (context) {
-                  final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+                  final isKeyboardOpen =
+                      MediaQuery.of(context).viewInsets.bottom > 0;
                   final effectiveBottomPadding = isKeyboardOpen
                       ? 12.0
                       : (widget.isTab ? 88.0 : 16.0);
@@ -1389,9 +1596,14 @@ $suggestedSteps''';
                         effectiveBottomPadding,
                       ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? colors.surfaceElevated : colors.surface,
+                          color: isDark
+                              ? colors.surfaceElevated
+                              : colors.surface,
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
                             color: isDark
@@ -1401,7 +1613,9 @@ $suggestedSteps''';
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.25 : 0.05,
+                              ),
                               blurRadius: 16,
                               offset: const Offset(0, 4),
                             ),
@@ -1415,31 +1629,46 @@ $suggestedSteps''';
                                 onLongPressStart: (_) => _startListening(),
                                 onLongPressEnd: (_) => _stopListening(),
                                 onLongPressCancel: _stopListening,
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: _isListening
-                                        ? colors.error
-                                        : colors.primary.withValues(alpha: 0.08),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    _isListening ? CupertinoIcons.mic_fill : CupertinoIcons.mic,
-                                    color: _isListening ? Colors.white : colors.primary,
-                                    size: 20,
-                                  ),
-                                )
-                                .animate(target: _isListening ? 1.0 : 0.0)
-                                .scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 150.ms)
-                                .then()
-                                .shake(hz: 3, curve: Curves.easeInOut),
+                                child:
+                                    Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: _isListening
+                                                ? colors.error
+                                                : colors.primary.withValues(
+                                                    alpha: 0.08,
+                                                  ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            _isListening
+                                                ? CupertinoIcons.mic_fill
+                                                : CupertinoIcons.mic,
+                                            color: _isListening
+                                                ? Colors.white
+                                                : colors.primary,
+                                            size: 20,
+                                          ),
+                                        )
+                                        .animate(
+                                          target: _isListening ? 1.0 : 0.0,
+                                        )
+                                        .scale(
+                                          begin: const Offset(1, 1),
+                                          end: const Offset(1.15, 1.15),
+                                          duration: 150.ms,
+                                        )
+                                        .then()
+                                        .shake(hz: 3, curve: Curves.easeInOut),
                               ),
                               const SizedBox(width: 4),
                             ],
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
                                 child: TextField(
                                   controller: _textController,
                                   minLines: 1,
@@ -1450,21 +1679,33 @@ $suggestedSteps''';
                                     color: colors.textPrimary,
                                   ),
                                   decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                     isDense: true,
                                     border: InputBorder.none,
-                                    hintText: _isStreaming ? 'دستیار در حال نوشتن است...' : 'گفتگو با دستیار ریتمو...',
+                                    hintText: _isStreaming
+                                        ? 'دستیار در حال نوشتن است...'
+                                        : 'گفتگو با دستیار ریتمو...',
                                     hintStyle: TextStyle(
                                       fontSize: 12.5,
-                                      color: colors.textSecondary.withValues(alpha: 0.55),
+                                      color: colors.textSecondary.withValues(
+                                        alpha: 0.55,
+                                      ),
                                     ),
                                   ),
                                   onTap: () {
-                                    unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                                    unawaited(
+                                      ChatGptWebBridgeManager.instance
+                                          .ensureBooted(),
+                                    );
                                   },
                                   onChanged: (val) {
                                     if (val.isNotEmpty) {
-                                      unawaited(ChatGptWebBridgeManager.instance.ensureBooted());
+                                      unawaited(
+                                        ChatGptWebBridgeManager.instance
+                                            .ensureBooted(),
+                                      );
                                     }
                                   },
                                 ),
@@ -1487,20 +1728,36 @@ $suggestedSteps''';
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: _isStreaming
-                                        ? [colors.error, colors.error.withValues(alpha: 0.85)]
-                                        : [colors.primary, colors.primary.withValues(alpha: 0.88)],
+                                        ? [
+                                            colors.error,
+                                            colors.error.withValues(
+                                              alpha: 0.85,
+                                            ),
+                                          ]
+                                        : [
+                                            colors.primary,
+                                            colors.primary.withValues(
+                                              alpha: 0.88,
+                                            ),
+                                          ],
                                   ),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (_isStreaming ? colors.error : colors.primary).withValues(alpha: 0.3),
+                                      color:
+                                          (_isStreaming
+                                                  ? colors.error
+                                                  : colors.primary)
+                                              .withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
                                 child: Icon(
-                                  _isStreaming ? CupertinoIcons.stop_fill : CupertinoIcons.arrow_up,
+                                  _isStreaming
+                                      ? CupertinoIcons.stop_fill
+                                      : CupertinoIcons.arrow_up,
                                   color: Colors.white,
                                   size: _isStreaming ? 15 : 20,
                                 ),
@@ -1513,15 +1770,16 @@ $suggestedSteps''';
                   );
                 },
               ),
-        ],
-      ),
-    ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildDayPlanningLoadingState(RitmoColors colors) {
-    final stepMsg = _dayPlanningStepMessage ?? 'در حال پردازش و استخراج لایه‌ها...';
+    final stepMsg =
+        _dayPlanningStepMessage ?? 'در حال پردازش و استخراج لایه‌ها...';
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 28),
@@ -1529,13 +1787,16 @@ $suggestedSteps''';
         decoration: BoxDecoration(
           color: colors.card.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xff06B6D4).withValues(alpha: 0.35), width: 1.5),
+          border: Border.all(
+            color: const Color(0xff06B6D4).withValues(alpha: 0.35),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: const Color(0xff06B6D4).withValues(alpha: 0.15),
               blurRadius: 30,
               spreadRadius: 4,
-            )
+            ),
           ],
         ),
         child: Column(

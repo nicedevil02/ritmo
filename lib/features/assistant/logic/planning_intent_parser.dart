@@ -2,31 +2,14 @@ import 'dart:convert';
 
 import 'package:ritmo/core/utils/persian_text.dart';
 
-enum ParsedPlanningIntent {
-  planWeek,
-  unknown,
-}
+enum ParsedPlanningIntent { planWeek, unknown }
 
-enum ParsedDayOfWeek {
-  sat,
-  sun,
-  mon,
-  tue,
-  wed,
-  thu,
-  fri,
-}
+enum ParsedDayOfWeek { sat, sun, mon, tue, wed, thu, fri }
 
-enum ParsedDayLoad {
-  light,
-  normal,
-}
+enum ParsedDayLoad { light, normal }
 
 class ParsedConstraint {
-  const ParsedConstraint({
-    required this.day,
-    required this.load,
-  });
+  const ParsedConstraint({required this.day, required this.load});
 
   final ParsedDayOfWeek day;
   final ParsedDayLoad load;
@@ -127,11 +110,7 @@ class PlanningIntentParser {
     'FRI',
   };
 
-  static const Set<String> _validImportances = {
-    'MUST',
-    'SHOULD',
-    'COULD',
-  };
+  static const Set<String> _validImportances = {'MUST', 'SHOULD', 'COULD'};
 
   /// Parses LLM response string into PlanningIntentResult.
   /// [existingCommitmentTitles] can optionally be provided to fuzzy match titles.
@@ -196,7 +175,8 @@ class PlanningIntentParser {
         splitSuggestions: [],
         questions: [],
         isValid: false,
-        validationError: 'خروجی حاوی کلیدهای زمانی دقیق غیرمجاز (startTime/exactTime/hour) است.',
+        validationError:
+            'خروجی حاوی کلیدهای زمانی دقیق غیرمجاز (startTime/exactTime/hour) است.',
       );
     }
 
@@ -205,13 +185,15 @@ class PlanningIntentParser {
         ? ParsedPlanningIntent.planWeek
         : ParsedPlanningIntent.unknown;
 
-    final focusTitles = (decoded['focusTitles'] as List?)
+    final focusTitles =
+        (decoded['focusTitles'] as List?)
             ?.map((e) => e.toString().trim())
             .where((s) => s.isNotEmpty)
             .toList() ??
         [];
 
-    final questions = (decoded['questions'] as List?)
+    final questions =
+        (decoded['questions'] as List?)
             ?.map((e) => e.toString().trim())
             .where((s) => s.isNotEmpty)
             .toList() ??
@@ -227,7 +209,9 @@ class PlanningIntentParser {
           final loadStr = (c['load'] as String?)?.toUpperCase() ?? '';
           if (_validDays.contains(dayStr)) {
             final day = _parseDay(dayStr);
-            final load = loadStr == 'LIGHT' ? ParsedDayLoad.light : ParsedDayLoad.normal;
+            final load = loadStr == 'LIGHT'
+                ? ParsedDayLoad.light
+                : ParsedDayLoad.normal;
             constraints.add(ParsedConstraint(day: day, load: load));
           }
         }
@@ -258,9 +242,13 @@ class PlanningIntentParser {
           if (title.isNotEmpty && effort > 0) {
             final matched = matchTitle(title);
             if (matched != null) {
-              budgetOverrides.add(BudgetOverride(title: matched, effortMinutes: effort));
+              budgetOverrides.add(
+                BudgetOverride(title: matched, effortMinutes: effort),
+              );
             } else {
-              questions.add('تعهد «$title» در لیست تعهدات جاری یافت نشد تا زمانش تغییر یابد.');
+              questions.add(
+                'تعهد «$title» در لیست تعهدات جاری یافت نشد تا زمانش تغییر یابد.',
+              );
             }
           }
         }
@@ -274,11 +262,14 @@ class PlanningIntentParser {
       for (final imp in rawImportances) {
         if (imp is Map) {
           final title = (imp['title'] as String?)?.trim() ?? '';
-          final impStr = (imp['importance'] as String?)?.toUpperCase() ?? 'SHOULD';
+          final impStr =
+              (imp['importance'] as String?)?.toUpperCase() ?? 'SHOULD';
           if (title.isNotEmpty && _validImportances.contains(impStr)) {
             final matched = matchTitle(title);
             if (matched != null) {
-              importanceOverrides.add(ImportanceOverride(title: matched, importance: impStr));
+              importanceOverrides.add(
+                ImportanceOverride(title: matched, importance: impStr),
+              );
             } else {
               questions.add('تعهد «$title» برای تغییر اولویت یافت نشد.');
             }
@@ -298,7 +289,9 @@ class PlanningIntentParser {
           if (title.isNotEmpty && parts > 1) {
             final matched = matchTitle(title);
             if (matched != null) {
-              splitSuggestions.add(SplitSuggestion(title: matched, parts: parts));
+              splitSuggestions.add(
+                SplitSuggestion(title: matched, parts: parts),
+              );
             } else {
               questions.add('تعهد «$title» برای تقسیم به بخش‌ها یافت نشد.');
             }
@@ -322,7 +315,10 @@ class PlanningIntentParser {
   bool _hasForbiddenKeys(dynamic obj) {
     if (obj is Map) {
       for (final key in obj.keys) {
-        final keyStr = key.toString().toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+        final keyStr = key.toString().toLowerCase().replaceAll(
+          RegExp(r'[^a-z]'),
+          '',
+        );
         if (_forbiddenTimeKeys.contains(keyStr)) {
           return true;
         }
@@ -347,7 +343,10 @@ class PlanningIntentParser {
     }
 
     // Match code block ```json ... ``` or ``` ... ```
-    final codeBlockMatch = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```', caseSensitive: false).firstMatch(trimmed);
+    final codeBlockMatch = RegExp(
+      r'```(?:json)?\s*([\s\S]*?)\s*```',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
     if (codeBlockMatch != null) {
       final inside = codeBlockMatch.group(1)?.trim();
       if (inside != null && inside.startsWith('{') && inside.endsWith('}')) {
@@ -367,14 +366,22 @@ class PlanningIntentParser {
 
   ParsedDayOfWeek _parseDay(String dayStr) {
     switch (dayStr) {
-      case 'SAT': return ParsedDayOfWeek.sat;
-      case 'SUN': return ParsedDayOfWeek.sun;
-      case 'MON': return ParsedDayOfWeek.mon;
-      case 'TUE': return ParsedDayOfWeek.tue;
-      case 'WED': return ParsedDayOfWeek.wed;
-      case 'THU': return ParsedDayOfWeek.thu;
-      case 'FRI': return ParsedDayOfWeek.fri;
-      default: return ParsedDayOfWeek.sat;
+      case 'SAT':
+        return ParsedDayOfWeek.sat;
+      case 'SUN':
+        return ParsedDayOfWeek.sun;
+      case 'MON':
+        return ParsedDayOfWeek.mon;
+      case 'TUE':
+        return ParsedDayOfWeek.tue;
+      case 'WED':
+        return ParsedDayOfWeek.wed;
+      case 'THU':
+        return ParsedDayOfWeek.thu;
+      case 'FRI':
+        return ParsedDayOfWeek.fri;
+      default:
+        return ParsedDayOfWeek.sat;
     }
   }
 }

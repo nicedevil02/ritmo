@@ -20,6 +20,11 @@ class MovementHasSessionView extends StatelessWidget {
     required this.onQuickLog,
     required this.onSelectDay,
     this.onDismissOccurrence,
+    this.onMoveSession,
+    this.onPlanB,
+    this.onSkipSession,
+    this.onRetroLog,
+    this.onReviewWeek,
   });
 
   final MovementOccurrence occurrence;
@@ -31,6 +36,11 @@ class MovementHasSessionView extends StatelessWidget {
   final VoidCallback onQuickLog;
   final ValueChanged<DateTime> onSelectDay;
   final VoidCallback? onDismissOccurrence;
+  final VoidCallback? onMoveSession;
+  final VoidCallback? onPlanB;
+  final VoidCallback? onSkipSession;
+  final VoidCallback? onRetroLog;
+  final VoidCallback? onReviewWeek;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +94,11 @@ class MovementHasSessionView extends StatelessWidget {
                       : HeroCardVariant.ready,
                   primaryOccurrence: occurrence,
                   onPrimaryAction: onStartSession,
-                  onSkipAction: onDismissOccurrence,
+                  onMoveAction: onMoveSession,
+                  onShortVersionAction: onPlanB,
+                  onSkipAction: onSkipSession ?? onDismissOccurrence,
+                  onLogManualAction: onRetroLog,
+                  onReviewWeekAction: onReviewWeek,
                 ),
                 const SizedBox(height: RitmoSpacing.lg),
 

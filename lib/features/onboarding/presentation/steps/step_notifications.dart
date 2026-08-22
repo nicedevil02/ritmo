@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/onboarding/presentation/ritmo_orb.dart';
 import 'package:sqflite/sqflite.dart';
@@ -19,52 +20,90 @@ class _StepNotificationsState extends State<StepNotifications> {
   bool _isLoading = false;
 
   Future<void> _requestPermission() async {
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
     await HapticFeedback.mediumImpact();
 
     try {
-      final flutterLocalNotificationsPlugin =
-          FlutterLocalNotificationsPlugin();
-
-      // 1. Request Android notifications permission (Android 13+)
-      final androidImplementation = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImplementation != null) {
-        await androidImplementation.requestNotificationsPermission();
-      }
-
-      // 2. Request iOS notifications permission
-      final iosImplementation = flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-      if (iosImplementation != null) {
-        await iosImplementation.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-      }
-
-      // 3. Save notification enabled state in settings database
-      final db = await DatabaseHelper.instance.database;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'persistent_status_notification_enabled',
-          'value': 'true',
-          'updatedAt': now
+      await _executePermissionFlow().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () {
+          debugPrint('Notification permission request timed out (safe fallback).');
         },
-        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } catch (e) {
       debugPrint('Error requesting notifications permission: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       widget.onFinished();
+    }
+  }
+
+  Future<void> _executePermissionFlow() async {
+    try {
+      final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+      // 1. Initialize plugin if not already initialized
+      const initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+      );
+      try {
+        await flutterLocalNotificationsPlugin
+            .initialize(initializationSettings)
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+      } catch (_) {}
+
+      // 2. Request Android notifications permission (Android 13+ / Huawei EMUI)
+      final androidImplementation = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        await androidImplementation
+            .requestNotificationsPermission()
+            .timeout(const Duration(seconds: 3), onTimeout: () => false);
+      }
+
+      // 3. Request iOS notifications permission
+      final iosImplementation = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+      if (iosImplementation != null) {
+        await iosImplementation
+            .requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            )
+            .timeout(const Duration(seconds: 3), onTimeout: () => false);
+      }
+
+      // 4. Save notification enabled state
+      try {
+        await SettingsService.instance.set(
+          'persistent_status_notification_enabled',
+          'true',
+        ).timeout(const Duration(seconds: 2));
+      } catch (_) {
+        final db = await DatabaseHelper.instance.database;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await db.insert(
+          'app_settings',
+          {
+            'key': 'persistent_status_notification_enabled',
+            'value': 'true',
+            'updatedAt': now
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error in _executePermissionFlow: $e');
     }
   }
 
@@ -122,19 +161,24 @@ class _StepNotificationsState extends State<StepNotifications> {
             onPressed: () async {
               await HapticFeedback.lightImpact();
               try {
-                final db = await DatabaseHelper.instance.database;
-                final now = DateTime.now().millisecondsSinceEpoch;
-                await db.insert(
-                  'app_settings',
-                  {
-                    'key': 'persistent_status_notification_enabled',
-                    'value': 'false',
-                    'updatedAt': now
-                  },
-                  conflictAlgorithm: ConflictAlgorithm.replace,
-                );
+                await SettingsService.instance.set(
+                  'persistent_status_notification_enabled',
+                  'false',
+                ).timeout(const Duration(seconds: 2));
               } catch (e) {
-                debugPrint('Error saving skipped notification setting: $e');
+                try {
+                  final db = await DatabaseHelper.instance.database;
+                  final now = DateTime.now().millisecondsSinceEpoch;
+                  await db.insert(
+                    'app_settings',
+                    {
+                      'key': 'persistent_status_notification_enabled',
+                      'value': 'false',
+                      'updatedAt': now
+                    },
+                    conflictAlgorithm: ConflictAlgorithm.replace,
+                  );
+                } catch (_) {}
               }
               widget.onFinished();
             },

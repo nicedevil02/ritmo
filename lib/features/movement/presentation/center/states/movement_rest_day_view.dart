@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/recovery_day_card.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/week_rail.dart';
 
 /// وضعیت B صفحهٔ اصلی: روز استراحت برنامه‌ریزی‌شده (P-08 State B)
@@ -68,7 +69,13 @@ class MovementRestDayView extends StatelessWidget {
                   style: RitmoTextStyles.body(colors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: RitmoSpacing.xxl),
+                const SizedBox(height: RitmoSpacing.lg),
+
+                // کارت راهنمای ریکاوری فعال
+                RecoveryDayCard(
+                  onAddLightMovement: onOpenPicker,
+                ),
+                const SizedBox(height: RitmoSpacing.lg),
 
                 // دکمهٔ «همین‌طور ثبتش کن»
                 ElevatedButton(

@@ -201,6 +201,7 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
     return RitmoPageScaffold(
       appBar: const RitmoModuleAppBar(title: 'داده و پشتیبان'),
@@ -208,25 +209,26 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
         child: Column(
           children: [
-            SettingsSection(
-              title: 'انتقال و استخراج تنظیمات',
-              children: [
-                SettingsTile(
-                  key: const ValueKey('export_settings_tile'),
-                  title: 'خروجی تنظیمات (JSON)',
-                  subtitle: 'کپی پیکربندی تنظیمات در حافظه موقت',
-                  leading: Icon(CupertinoIcons.square_arrow_up, color: colors.primary),
-                  onTap: _exportSettings,
-                ),
-                SettingsTile(
-                  key: const ValueKey('import_settings_tile'),
-                  title: 'ورود تنظیمات با پیش‌نمای تغییرات',
-                  subtitle: 'تحلیل تفاوت‌ها و اعمال انتخابی فایل تنظیمات',
-                  leading: Icon(CupertinoIcons.square_arrow_down, color: colors.primary),
-                  onTap: _importSettings,
-                ),
-              ],
-            ),
+            if (showAdvanced)
+              SettingsSection(
+                title: 'انتقال و استخراج تنظیمات',
+                children: [
+                  SettingsTile(
+                    key: const ValueKey('export_settings_tile'),
+                    title: 'خروجی تنظیمات (JSON)',
+                    subtitle: 'کپی پیکربندی تنظیمات در حافظه موقت',
+                    leading: Icon(CupertinoIcons.square_arrow_up, color: colors.primary),
+                    onTap: _exportSettings,
+                  ),
+                  SettingsTile(
+                    key: const ValueKey('import_settings_tile'),
+                    title: 'ورود تنظیمات با پیش‌نمای تغییرات',
+                    subtitle: 'تحلیل تفاوت‌ها و اعمال انتخابی فایل تنظیمات',
+                    leading: Icon(CupertinoIcons.square_arrow_down, color: colors.primary),
+                    onTap: _importSettings,
+                  ),
+                ],
+              ),
             SettingsSection(
               title: 'پشتیبان‌گیری محلی و ابری',
               children: [
@@ -262,7 +264,7 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
                     ],
                   ),
                 ),
-                if (_autoBackup) ...[
+                if (_autoBackup && showAdvanced) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Column(
@@ -289,49 +291,50 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
                 ],
               ],
             ),
-            SettingsSection(
-              title: 'پایداری و گزارش خطا',
-              children: [
-                SettingsTile(
-                  title: 'مشاهده گزارش خطاهای سیستم (Crash Reports)',
-                  subtitle: 'ثبت و بررسی گزارش خطاهای غیرمنتظره',
-                  leading: Icon(CupertinoIcons.ant_fill, color: colors.primary),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(builder: (_) => const CrashReportsScreen()),
-                    );
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('ثبت خودکار گزارش خطاها', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary)),
-                          const SizedBox(height: 4),
-                          Text('کمک به عیب‌یابی و پایداری اپلیکیشن', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                        ],
-                      ),
-                      CupertinoSwitch(
-                        value: _crashReports,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _update('crash_reports_enabled', val),
-                      ),
-                    ],
+            if (showAdvanced)
+              SettingsSection(
+                title: 'پایداری و گزارش خطا',
+                children: [
+                  SettingsTile(
+                    title: 'مشاهده گزارش خطاهای سیستم (Crash Reports)',
+                    subtitle: 'ثبت و بررسی گزارش خطاهای غیرمنتظره',
+                    leading: Icon(CupertinoIcons.ant_fill, color: colors.primary),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(builder: (_) => const CrashReportsScreen()),
+                      );
+                    },
                   ),
-                ),
-                SettingsTile(
-                  title: 'حذف تاریخچه اعلان‌ها',
-                  subtitle: 'پاک‌سازی لاگ‌ها و رویدادهای اعلان‌های گذشته',
-                  leading: Icon(CupertinoIcons.trash, color: colors.textSecondary),
-                  onTap: _clearNotificationHistory,
-                ),
-              ],
-            ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('ثبت خودکار گزارش خطاها', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary)),
+                            const SizedBox(height: 4),
+                            Text('کمک به عیب‌یابی و پایداری اپلیکیشن', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                          ],
+                        ),
+                        CupertinoSwitch(
+                          value: _crashReports,
+                          activeTrackColor: colors.primary,
+                          onChanged: (val) => _update('crash_reports_enabled', val),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SettingsTile(
+                    title: 'حذف تاریخچه اعلان‌ها',
+                    subtitle: 'پاک‌سازی لاگ‌ها و رویدادهای اعلان‌های گذشته',
+                    leading: Icon(CupertinoIcons.trash, color: colors.textSecondary),
+                    onTap: _clearNotificationHistory,
+                  ),
+                ],
+              ),
             const SizedBox(height: 24),
             DangerZone(
               onFactoryReset: widget.onFactoryReset ?? () {},

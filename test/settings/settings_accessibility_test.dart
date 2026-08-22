@@ -43,6 +43,7 @@ void main() {
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
       SettingsService.instance.resetForTesting();
       await SettingsService.instance.init();
+      await SettingsService.instance.set('show_advanced_settings', true);
     });
 
     tearDown(() async {
@@ -79,6 +80,9 @@ void main() {
     });
 
     testWidgets('Integer field has minimum 44x44 touch targets for plus and minus with Semantics', (tester) async {
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('show_advanced_settings', true);
+      });
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(

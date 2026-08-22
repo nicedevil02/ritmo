@@ -95,13 +95,12 @@ class StepIdentity extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildGenderChip(context, 'MALE', 'مرد'),
+            _buildGenderOption(context, 'MALE', 'مرد', flex: 3),
             const SizedBox(width: 8),
-            _buildGenderChip(context, 'FEMALE', 'زن'),
+            _buildGenderOption(context, 'FEMALE', 'زن', flex: 3),
             const SizedBox(width: 8),
-            _buildGenderChip(context, 'PREFER_NOT_TO_SAY', 'ترجیح می‌دم نگم'),
+            _buildGenderOption(context, 'PREFER_NOT_TO_SAY', 'ترجیح می‌دم نگم', flex: 5),
           ],
         ),
         const SizedBox(height: 24),
@@ -148,31 +147,49 @@ class StepIdentity extends StatelessWidget {
     );
   }
 
-  Widget _buildGenderChip(BuildContext context, String value, String label) {
+  Widget _buildGenderOption(
+    BuildContext context,
+    String value,
+    String label, {
+    int flex = 1,
+  }) {
     final colors = context.colors;
     final isSelected = gender.toUpperCase() == value.toUpperCase() ||
         (value == 'OTHER' && gender == 'PREFER_NOT_TO_SAY') ||
         (value == 'PREFER_NOT_TO_SAY' && gender == 'OTHER');
-    return ChoiceChip(
 
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) {
-          onGenderChanged(value);
-        }
-      },
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : colors.textSecondary,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        fontSize: 13,
-      ),
-      selectedColor: const Color(0xff9B89FF).withValues(alpha: 0.4),
-      backgroundColor: colors.textPrimary.withValues(alpha: 0.03),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isSelected ? const Color(0xff9B89FF) : colors.border.withValues(alpha: 0.15),
+    return Expanded(
+      flex: flex,
+      child: GestureDetector(
+        onTap: () => onGenderChanged(value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xff9B89FF).withValues(alpha: 0.35)
+                : colors.textPrimary.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xff9B89FF)
+                  : colors.border.withValues(alpha: 0.15),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                color: isSelected ? Colors.white : colors.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ),
         ),
       ),
     );

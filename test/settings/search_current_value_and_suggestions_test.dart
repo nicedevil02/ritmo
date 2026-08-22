@@ -106,8 +106,11 @@ void main() {
       );
 
       // Change calendar_show_tasks to true (default true)
-      await SettingsService.instance.set('calendar_show_tasks', true);
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('calendar_show_tasks', true);
+      });
 
+      delegate.query = 'تقویم';
       await tester.pumpWidget(
         MaterialApp(
           theme: RitmoTheme.build(
@@ -115,22 +118,11 @@ void main() {
             brightness: Brightness.light,
           ),
           home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () => showSearch(context: context, delegate: delegate),
-                child: const Text('جست‌وجو'),
-              ),
-            ),
+            body: Builder(builder: (context) => delegate.buildSuggestions(context)),
           ),
         ),
       );
       await tester.pump();
-
-      await tester.tap(find.text('جست‌وجو'));
-      await tester.pumpAndSettle();
-
-      delegate.query = 'تقویم';
-      await tester.pumpAndSettle();
 
       // Look for the chip 'روشن'
       expect(find.text('روشن'), findsWidgets);

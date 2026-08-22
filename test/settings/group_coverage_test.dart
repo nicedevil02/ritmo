@@ -41,10 +41,13 @@ void main() {
         },
       );
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
+      SettingsService.instance.resetForTesting();
       await SettingsService.instance.init();
+      await SettingsService.instance.set('show_advanced_settings', true);
     });
 
     tearDown(() async {
+      SettingsService.instance.cancelPendingSignals();
       await db.close();
     });
 
@@ -60,7 +63,8 @@ void main() {
 
     testWidgets('CalendarGroupScreen renders all calendar descriptors', (tester) async {
       await tester.pumpWidget(createTestWidget(const CalendarGroupScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       final calendarDescriptors = SettingsRegistry.userVisibleByGroup(SettingsGroup.calendar);
 

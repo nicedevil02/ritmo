@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
@@ -94,6 +95,7 @@ void main() {
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
       SettingsService.instance.resetForTesting();
       await SettingsService.instance.init();
+      await AppModeService.instance.load();
     });
 
     tearDown(() async {
@@ -164,22 +166,28 @@ void main() {
       expect(find.byKey(const ValueKey('mode_switch_advanced')), findsOneWidget);
 
       // Tap on 'حالت پیشرفته'
-      await tester.tap(find.byKey(const ValueKey('mode_switch_advanced')));
       await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 150));
+        await tester.tap(find.byKey(const ValueKey('mode_switch_advanced')));
+        await Future.delayed(const Duration(milliseconds: 300));
       });
       await tester.pump();
+      await tester.pump(const Duration(seconds: 4));
 
       expect(SettingsService.instance.get<bool>('show_advanced_settings'), isTrue);
 
       // Tap back on 'حالت ساده'
-      await tester.tap(find.byKey(const ValueKey('mode_switch_simple')));
       await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 150));
+        await tester.tap(find.byKey(const ValueKey('mode_switch_simple')));
+        await Future.delayed(const Duration(milliseconds: 300));
       });
       await tester.pump();
+      await tester.pump(const Duration(seconds: 4));
 
       expect(SettingsService.instance.get<bool>('show_advanced_settings'), isFalse);
+
+      SettingsService.instance.cancelPendingSignals();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

@@ -30,7 +30,6 @@ import 'package:ritmo/features/settings/presentation/widgets/quick_settings_shee
 import 'package:ritmo/features/settings/presentation/widgets/settings_degraded_banner.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_group_tile.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_health_card.dart';
-import 'package:ritmo/features/settings/presentation/widgets/settings_mode_switcher.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_premium_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_ready_gate.dart';
 
@@ -347,11 +346,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // ─── کارت وضعیت اشتراک ریتمو پلاس ───
               const SettingsPremiumCard(),
-              const SizedBox(height: 16),
-
-              // ─── جابجایی حالت ساده / پیشرفته ───
-              const SettingsModeSwitcher(),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
 
               // ─── بخش‌های جزیره‌ای تنظیمات تفکیک‌شده به سبک iOS 26 ───
               AnimatedBuilder(

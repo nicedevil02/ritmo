@@ -39,6 +39,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
   int _maxNonEssential = 3;
   int _snoozeMinutes = 10;
   int _snoozeMaxDefer = 3;
+  bool _showAdvanced = false;
 
   Map<String, bool> _channelEnabled = {
     for (final ch in NotificationChannelId.values) ch.nativeId: true,
@@ -63,6 +64,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
       _maxNonEssential = SettingsService.instance.get<int>('max_non_essential_per_hour');
       _snoozeMinutes = SettingsService.instance.get<int>('snooze_minutes');
       _snoozeMaxDefer = SettingsService.instance.get<int>('snooze_max_defer_count');
+      _showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
     });
   }
 
@@ -206,8 +208,8 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
                 // 3. Quiet Hours Section
                 _buildQuietHoursSection(colors),
 
-                // 4. Rate Limiting & Digest
-                _buildThrottlingSection(colors),
+                // 4. Rate Limiting & Digest (Advanced Mode only)
+                if (_showAdvanced) _buildThrottlingSection(colors),
 
                 // 5. Snooze Settings
                 _buildSnoozeSection(colors),
@@ -263,39 +265,40 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'اعلان دائمی وضعیت (Live Status)',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
+        if (_showAdvanced)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'اعلان دائمی وضعیت (Live Status)',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'نمایش نوار وضعیت و وظیفه جاری در پنل نوتیفیکیشن‌ها',
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        'نمایش نوار وضعیت و وظیفه جاری در پنل نوتیفیکیشن‌ها',
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              CupertinoSwitch(
-                value: _persistentEnabled,
-                activeTrackColor: colors.primary,
-                onChanged: (val) => _updateSetting('persistent_status_notification_enabled', val),
-              ),
-            ],
+                CupertinoSwitch(
+                  value: _persistentEnabled,
+                  activeTrackColor: colors.primary,
+                  onChanged: (val) => _updateSetting('persistent_status_notification_enabled', val),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -500,29 +503,30 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('سقف دفعات تعویق در روز', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                  Text('${toPersianDigits(_snoozeMaxDefer)} بار', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                ],
-              ),
-              CupertinoSlider(
-                value: _snoozeMaxDefer.toDouble(),
-                min: 1,
-                max: 10,
-                divisions: 9,
-                activeColor: colors.primary,
-                onChanged: (val) => _updateSetting('snooze_max_defer_count', val.round()),
-              ),
-            ],
+        if (_showAdvanced)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('سقف دفعات تعویق در روز', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                    Text('${toPersianDigits(_snoozeMaxDefer)} بار', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+                  ],
+                ),
+                CupertinoSlider(
+                  value: _snoozeMaxDefer.toDouble(),
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  activeColor: colors.primary,
+                  onChanged: (val) => _updateSetting('snooze_max_defer_count', val.round()),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

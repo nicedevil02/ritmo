@@ -39,34 +39,34 @@ class AppModeService {
   }
 
   AppMode get current => _current;
-  bool get isSimple => _current == AppMode.simple;
+
+  bool get isSimple {
+    try {
+      final s = SettingsService.instance.get<String>('app_mode').toLowerCase();
+      if (s == 'simple') return true;
+      if (s == 'full') return false;
+    } catch (_) {}
+    return _current == AppMode.simple;
+  }
+
+  void syncFromSettings(String modeStr) {
+    final mode = modeStr.toLowerCase() == 'simple' ? AppMode.simple : AppMode.full;
+    _current = mode;
+    notifier.value = mode;
+  }
 
   Future<void> set(AppMode mode) async {
     _current = mode;
     notifier.value = mode;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final strVal = mode == AppMode.full ? 'FULL' : 'SIMPLE';
+    final modeStr = mode == AppMode.full ? 'full' : 'simple';
     try {
-      final db = await DatabaseHelper.instance.database;
-      await db.execute('''
-        INSERT INTO app_settings (key, value, updatedAt)
-        VALUES ('app_mode', '$strVal', $nowMs)
-        ON CONFLICT(key) DO UPDATE SET
-          value = excluded.value,
-          updatedAt = excluded.updatedAt;
-      ''');
+      await SettingsService.instance.set('app_mode', modeStr);
     } catch (_) {}
-
-    if (mode == AppMode.simple) {
-      try {
-        await SettingsService.instance.set('show_advanced_settings', false);
-      } catch (_) {}
-    }
 
     RitmoEventBus().fire(RitmoEvent(
       type: 'app_mode_changed',
       timestamp: DateTime.now(),
-      payload: {'mode': strVal},
+      payload: {'mode': modeStr.toUpperCase()},
     ));
   }
 }

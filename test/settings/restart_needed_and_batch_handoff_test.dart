@@ -43,6 +43,7 @@ void main() {
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
       SettingsService.instance.resetForTesting();
       await SettingsService.instance.init();
+      await SettingsService.instance.set('show_advanced_settings', true);
     });
 
     tearDown(() async {
@@ -83,6 +84,7 @@ void main() {
 
     testWidgets('SettingField renders restart needed chip when modified', (tester) async {
       await tester.runAsync(() async {
+        await SettingsService.instance.set('show_advanced_settings', true);
         await SettingsService.instance.set('theme_true_black', true);
       });
 

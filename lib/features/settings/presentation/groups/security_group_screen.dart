@@ -280,6 +280,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
     final isCycleVisible = CyclePrivacyGuard.isVisible({
       'user_gender': SettingsService.instance.get<String>('user_gender'),
       'module_cycle_enabled': ModuleGate.instance.isEnabled('module_cycle_enabled') ? 'true' : 'false',
@@ -361,31 +362,32 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                     ],
                   ),
                 ),
-                SettingsTile(
-                  title: 'مهلت قفل خودکار',
-                  subtitle: timeoutLabels[_timeoutSeconds] ?? '${toPersianDigits(_timeoutSeconds)} ثانیه',
-                  onTap: () {
-                    showCupertinoModalPopup<void>(
-                      context: context,
-                      builder: (ctx) => CupertinoActionSheet(
-                        title: const Text('انتخاب مهلت قفل خودکار'),
-                        actions: timeoutLabels.entries.map((e) {
-                          return CupertinoActionSheetAction(
-                            onPressed: () {
-                              _update('app_lock_timeout_seconds', e.key);
-                              Navigator.pop(ctx);
-                            },
-                            child: Text(e.value),
-                          );
-                        }).toList(),
-                        cancelButton: CupertinoActionSheetAction(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('انصراف'),
+                if (showAdvanced)
+                  SettingsTile(
+                    title: 'مهلت قفل خودکار',
+                    subtitle: timeoutLabels[_timeoutSeconds] ?? '${toPersianDigits(_timeoutSeconds)} ثانیه',
+                    onTap: () {
+                      showCupertinoModalPopup<void>(
+                        context: context,
+                        builder: (ctx) => CupertinoActionSheet(
+                          title: const Text('انتخاب مهلت قفل خودکار'),
+                          actions: timeoutLabels.entries.map((e) {
+                            return CupertinoActionSheetAction(
+                              onPressed: () {
+                                _update('app_lock_timeout_seconds', e.key);
+                                Navigator.pop(ctx);
+                              },
+                              child: Text(e.value),
+                            );
+                          }).toList(),
+                          cancelButton: CupertinoActionSheetAction(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('انصراف'),
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  ),
               ],
             ),
             if (isCycleVisible) ...[
@@ -405,32 +407,33 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                         : null,
                     onTap: () => _setPin('cycle_lock_password', 'رمز بخش خصوصی چرخه'),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('بیومتریک اختصاصی بخش چرخه', style: TextStyle(fontSize: 14, color: _canUseBiometrics ? colors.textPrimary : colors.textSecondary)),
-                              if (!_canUseBiometrics) ...[
-                                const SizedBox(height: 4),
-                                Text('این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                  if (showAdvanced)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('بیومتریک اختصاصی بخش چرخه', style: TextStyle(fontSize: 14, color: _canUseBiometrics ? colors.textPrimary : colors.textSecondary)),
+                                if (!_canUseBiometrics) ...[
+                                  const SizedBox(height: 4),
+                                  Text('این دستگاه از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند یا حسگری ثبت نشده است', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        CupertinoSwitch(
-                          value: _canUseBiometrics && _cycleBiometricEnabled,
-                          activeTrackColor: colors.primary,
-                          onChanged: _canUseBiometrics ? _onCycleBiometricToggled : null,
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          CupertinoSwitch(
+                            value: _canUseBiometrics && _cycleBiometricEnabled,
+                            activeTrackColor: colors.primary,
+                            onChanged: _canUseBiometrics ? _onCycleBiometricToggled : null,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

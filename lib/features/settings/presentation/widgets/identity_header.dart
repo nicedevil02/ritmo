@@ -38,15 +38,16 @@ class _IdentityHeaderState extends State<IdentityHeader>
   int _completedTodayCount = 0;
   bool _isSimpleMode = false;
   bool _isLoading = true;
-  bool _isPressed = false;
 
   late AnimationController _ringController;
 
   @override
   void initState() {
     super.initState();
+    _isSimpleMode = AppModeService.instance.isSimple;
     _loadIdentityData();
     SettingsService.instance.revision.addListener(_onSettingsChanged);
+    AppModeService.instance.notifier.addListener(_onAppModeChanged);
     _ringController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 5),
@@ -55,12 +56,27 @@ class _IdentityHeaderState extends State<IdentityHeader>
 
   @override
   void dispose() {
+    _ringController.stop();
     _ringController.dispose();
+    AppModeService.instance.notifier.removeListener(_onAppModeChanged);
     SettingsService.instance.revision.removeListener(_onSettingsChanged);
     super.dispose();
   }
 
+  void _onAppModeChanged() {
+    if (mounted) {
+      setState(() {
+        _isSimpleMode = AppModeService.instance.isSimple;
+      });
+    }
+  }
+
   void _onSettingsChanged() {
+    if (mounted) {
+      setState(() {
+        _isSimpleMode = AppModeService.instance.isSimple;
+      });
+    }
     _loadIdentityData();
   }
 
@@ -189,57 +205,49 @@ class _IdentityHeaderState extends State<IdentityHeader>
       return _buildSkeleton(colors);
     }
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? RitmoMotion.pressScale : 1.0,
-        duration: RitmoMotion.press,
-        curve: RitmoMotion.enter,
-        child: Container(
-          // ─── حاشیه گرادیانی n-stroke: لایه بیرونی ───
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
-            gradient: LinearGradient(
-              colors: [
-                colors.brandGradient.first.withValues(alpha: isDark ? 0.75 : 0.5),
-                colors.brandGradient.last.withValues(alpha: isDark ? 0.55 : 0.35),
-                colors.accent.withValues(alpha: isDark ? 0.4 : 0.2),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.primary.withValues(alpha: isDark ? 0.15 : 0.08),
-                blurRadius: 28,
-                offset: const Offset(0, 10),
-                spreadRadius: -4,
-              ),
-            ],
+    return Container(
+      // ─── حاشیه گرادیانی n-stroke: لایه بیرونی ───
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          colors: [
+            colors.brandGradient.first.withValues(alpha: isDark ? 0.75 : 0.5),
+            colors.brandGradient.last.withValues(alpha: isDark ? 0.55 : 0.35),
+            colors.accent.withValues(alpha: isDark ? 0.4 : 0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: isDark ? 0.15 : 0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
+            spreadRadius: -4,
           ),
-          child: Container(
-            // ─── لایه داخلی: محتوای کارت شیشه‌ای ───
-            margin: const EdgeInsets.all(1.5),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(24.5),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    // ─── آواتار با قابلیت کلیک مستقیم برای تغییر عکس ───
-                    GestureDetector(
-                      onTap: _pickAvatar,
-                      child: _buildAvatarWithBadge(colors),
-                    ),
+        ],
+      ),
+      child: Container(
+        // ─── لایه داخلی: محتوای کارت شیشه‌ای ───
+        margin: const EdgeInsets.all(1.5),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(24.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.onTap,
+              child: Row(
+                children: [
+                  // ─── آواتار با قابلیت کلیک مستقیم برای تغییر عکس ───
+                  GestureDetector(
+                    onTap: _pickAvatar,
+                    child: _buildAvatarWithBadge(colors),
+                  ),
                     const SizedBox(width: 16),
 
                     // ─── بخش اطلاعات نام + زیرعنوان ───
@@ -301,7 +309,8 @@ class _IdentityHeaderState extends State<IdentityHeader>
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+              ),
+              const SizedBox(height: 14),
 
                 // ─── نوار آمارهای سه‌گانه زنده ───
                 Row(
@@ -347,10 +356,8 @@ class _IdentityHeaderState extends State<IdentityHeader>
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
+        );
+      }
 
   /// ساخت آواتار با حلقه هولوگرام و نشان دوربین
   Widget _buildAvatarWithBadge(RitmoColors colors) {

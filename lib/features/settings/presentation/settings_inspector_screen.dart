@@ -10,6 +10,9 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/features/assistant/presentation/day_plan_template_management_screen.dart';
+import 'package:ritmo/features/dev/presentation/data_health_screen.dart';
+import 'package:ritmo/features/dev/presentation/persona_telemetry_screen.dart';
 
 /// صفحهٔ بازرس تنظیمات — ویژه حالت دیباگ (`kDebugMode`)
 /// فراهم‌کننده دید ۳۶۰ درجه از ردیف‌های یتیم، کلیدهای پیش‌فرض، مقادیر کش و وضعیت پایگاه داده
@@ -220,6 +223,50 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // ── ۰. ابزارهای تشخیصی و مانیتورینگ سیستم ──
+                    _buildSectionHeader('ابزارهای تشخیصی و مانیتورینگ', CupertinoIcons.wrench_fill, colors),
+                    const SizedBox(height: 8),
+                    _buildCard(
+                      colors: colors,
+                      child: Column(
+                        children: [
+                          _buildToolTile(
+                            title: 'تله‌متری هوش مصنوعی و پرسوناها',
+                            subtitle: 'پایش زنده مصرف توکن، مهارت‌ها و اعتبارسنجی پاسخ‌ها',
+                            icon: CupertinoIcons.sparkles,
+                            iconColor: colors.primary,
+                            colors: colors,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const PersonaTelemetryScreen()),
+                            ),
+                          ),
+                          const Divider(height: 16),
+                          _buildToolTile(
+                            title: 'ممیزی سلامت پایگاه داده (Data Health)',
+                            subtitle: 'بررسی رکوردهای تکراری، ناهماهنگی و سلامت جداول SQLite',
+                            icon: CupertinoIcons.circle_grid_hex_fill,
+                            iconColor: colors.warning,
+                            colors: colors,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const DataHealthScreen()),
+                            ),
+                          ),
+                          const Divider(height: 16),
+                          _buildToolTile(
+                            title: 'مدیریت قالب‌های برنامهٔ روزانه',
+                            subtitle: 'قالب‌های از پیش تعریف‌شده برای روزهای کاری و استراحت',
+                            icon: CupertinoIcons.square_list_fill,
+                            iconColor: colors.accent,
+                            colors: colors,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const DayPlanTemplateManagementScreen()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
                     // ── ۱. کارت وضعیت سرویس تنظیمات ──
                     _buildSectionHeader('وضعیت سلامت سرویس', CupertinoIcons.waveform_path_ecg, colors),
                     const SizedBox(height: 8),
@@ -506,6 +553,66 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildToolTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required RitmoColors colors,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.textSecondary,
+                      fontFamily: 'Vazirmatn',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              CupertinoIcons.chevron_left,
+              size: 14,
+              color: colors.textTertiary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

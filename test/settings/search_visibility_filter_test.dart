@@ -58,41 +58,33 @@ void main() {
         localeRepository: LocaleRepository(),
       );
 
-      // Find any internal setting in registry if exists
       final internalKeys = SettingsRegistry.all
           .where((d) => d.visibility == SettingVisibility.internal)
           .map((d) => d.labelFa)
           .toList();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: RitmoTheme.build(
-            palette: RitmoPalette.jadeNoir,
-            brightness: Brightness.light,
-          ),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () => showSearch(context: context, delegate: delegate),
-                child: const Text('جست‌وجو'),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      await tester.tap(find.text('جست‌وجو'));
-      await tester.pumpAndSettle();
-
       for (final label in internalKeys) {
         delegate.query = label;
-        await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.light,
+            ),
+            home: Scaffold(
+              body: Builder(builder: (context) => delegate.buildSuggestions(context)),
+            ),
+          ),
+        );
+        await tester.pump();
         expect(find.widgetWithText(ListTile, label), findsNothing);
       }
     });
 
     testWidgets('Advanced settings are excluded when show_advanced_settings is false', (tester) async {
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('show_advanced_settings', false);
+      });
       final delegate = SettingsSearchDelegate(
         themeRepository: ThemeRepository(),
         localeRepository: LocaleRepository(),
@@ -106,6 +98,7 @@ void main() {
       );
 
       if (advancedDesc.visibility == SettingVisibility.advanced) {
+        delegate.query = advancedDesc.labelFa;
         await tester.pumpWidget(
           MaterialApp(
             theme: RitmoTheme.build(
@@ -113,22 +106,11 @@ void main() {
               brightness: Brightness.light,
             ),
             home: Scaffold(
-              body: Builder(
-                builder: (context) => ElevatedButton(
-                  onPressed: () => showSearch(context: context, delegate: delegate),
-                  child: const Text('جست‌وجو'),
-                ),
-              ),
+              body: Builder(builder: (context) => delegate.buildSuggestions(context)),
             ),
           ),
         );
         await tester.pump();
-
-        await tester.tap(find.text('جست‌وجو'));
-        await tester.pumpAndSettle();
-
-        delegate.query = advancedDesc.labelFa;
-        await tester.pumpAndSettle();
 
         expect(find.widgetWithText(ListTile, advancedDesc.labelFa), findsNothing);
       }

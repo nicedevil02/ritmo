@@ -45,6 +45,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
     return ValueListenableBuilder<ThemePreferences>(
       valueListenable: widget.themeRepository.preferencesNotifier,
@@ -73,54 +74,56 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                         );
                       },
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('کاهش شفافیت', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary)),
-                                const SizedBox(height: 4),
-                                Text('سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                              ],
+                    if (showAdvanced) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('کاهش شفافیت', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary)),
+                                  const SizedBox(height: 4),
+                                  Text('سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          CupertinoSwitch(
-                            value: prefs.reduceTransparency,
-                            activeTrackColor: colors.primary,
-                            onChanged: (val) => widget.themeRepository.updateReduceTransparency(val),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('سیاه خالص (OLED)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary)),
-                                const SizedBox(height: 4),
-                                Text('پس‌زمینه کاملاً مشکی در حالت تاریک جهت صرفه‌جویی در باتری', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-                              ],
+                            const SizedBox(width: 12),
+                            CupertinoSwitch(
+                              value: prefs.reduceTransparency,
+                              activeTrackColor: colors.primary,
+                              onChanged: (val) => widget.themeRepository.updateReduceTransparency(val),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          CupertinoSwitch(
-                            value: prefs.trueBlack,
-                            activeTrackColor: colors.primary,
-                            onChanged: (val) => widget.themeRepository.updateTrueBlack(val),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('سیاه خالص (OLED)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textPrimary)),
+                                  const SizedBox(height: 4),
+                                  Text('پس‌زمینه کاملاً مشکی در حالت تاریک جهت صرفه‌جویی در باتری', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            CupertinoSwitch(
+                              value: prefs.trueBlack,
+                              activeTrackColor: colors.primary,
+                              onChanged: (val) => widget.themeRepository.updateTrueBlack(val),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 SettingsSection(

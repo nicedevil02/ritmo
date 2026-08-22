@@ -33,6 +33,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
   int _dailyCapacity = 480;
   String _wakeTime = '06:30';
   String _sleepTime = '23:00';
+  bool _showAdvanced = false;
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
       _dailyCapacity = SettingsService.instance.get<int>('daily_capacity_minutes');
       _wakeTime = SettingsService.instance.get<String>('wake_time');
       _sleepTime = SettingsService.instance.get<String>('sleep_time');
+      _showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
     });
   }
 
@@ -124,17 +126,18 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
             SettingsSection(
               title: 'پیکربندی هوش مصنوعی',
               children: [
-                SettingsTile(
-                  title: 'اتصال و سرور هوش مصنوعی',
-                  subtitle: 'پیش‌تنظیم ژیپو، کلودفلر، اوپن‌روتر، کلیدهای اختصاصی و پینگ زنده',
-                  leading: Icon(CupertinoIcons.sparkles, color: colors.primary),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(builder: (_) => const AiConnectionScreen()),
-                    );
-                  },
-                ),
+                if (_showAdvanced)
+                  SettingsTile(
+                    title: 'اتصال و سرور هوش مصنوعی',
+                    subtitle: 'پیش‌تنظیم ژیپو، کلودفلر، اوپن‌روتر، کلیدهای اختصاصی و پینگ زنده',
+                    leading: Icon(CupertinoIcons.sparkles, color: colors.primary),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(builder: (_) => const AiConnectionScreen()),
+                      );
+                    },
+                  ),
                 SettingsTile(
                   title: 'حافظه و یادگیری شناختی',
                   subtitle: 'فکت‌ها، ترجیحات و استخراج خودکار الگوهای رفتاری',
@@ -156,79 +159,81 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                 ),
               ],
             ),
-            SettingsSection(
-              title: 'حریم خصوصی و پردازش ابری',
-              footer: 'در صورت غیرفعال بودن، اطلاعات متن روز به سرویس‌دهنده‌های هوش مصنوعی ارسال نخواهد شد.',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'رضایت‌نامه پردازش ابری',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'مجوز تحلیل داده‌های متنی روتین‌ها',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                      CupertinoSwitch(
-                        value: _cloudConsent,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _update('assistant_cloud_consent', val),
-                      ),
-                    ],
+            if (_showAdvanced)
+              SettingsSection(
+                title: 'حریم خصوصی و پردازش ابری',
+                footer: 'در صورت غیرفعال بودن، اطلاعات متن روز به سرویس‌دهنده‌های هوش مصنوعی ارسال نخواهد شد.',
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'رضایت‌نامه پردازش ابری',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'مجوز تحلیل داده‌های متنی روتین‌ها',
+                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                        CupertinoSwitch(
+                          value: _cloudConsent,
+                          activeTrackColor: colors.primary,
+                          onChanged: (val) => _update('assistant_cloud_consent', val),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            SettingsSection(
-              title: 'اختیارات و تغییرات خودکار دستیار',
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'تغییر خودکار تنظیمات توسط دستیار',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'هماهنگی هوشمند ساعات خواب، آلارم‌ها و ظرفیت',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                          ),
-                        ],
-                      ),
-                      CupertinoSwitch(
-                        key: const ValueKey('assistant_modify_switch'),
-                        value: _assistantCanModify,
-                        activeTrackColor: colors.primary,
-                        onChanged: (val) => _update('assistant_can_modify_settings', val),
-                      ),
-                    ],
+                ],
+              ),
+            if (_showAdvanced)
+              SettingsSection(
+                title: 'اختیارات و تغییرات خودکار دستیار',
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'تغییر خودکار تنظیمات توسط دستیار',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colors.textPrimary),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'هماهنگی هوشمند ساعات خواب، آلارم‌ها و ظرفیت',
+                              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                        CupertinoSwitch(
+                          key: const ValueKey('assistant_modify_switch'),
+                          value: _assistantCanModify,
+                          activeTrackColor: colors.primary,
+                          onChanged: (val) => _update('assistant_can_modify_settings', val),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                SettingsTile(
-                  key: const ValueKey('ai_write_history_tile'),
-                  title: 'تاریخچه تغییرات دستیار هوشمند',
-                  subtitle: 'مشاهده گزارش ویرایش‌های خودکار و امکان بازگردانی',
-                  leading: Icon(CupertinoIcons.clock_fill, color: colors.primary),
-                  onTap: () => AiWriteHistorySheet.show(context),
-                ),
-              ],
-            ),
+                  SettingsTile(
+                    key: const ValueKey('ai_write_history_tile'),
+                    title: 'تاریخچه تغییرات دستیار هوشمند',
+                    subtitle: 'مشاهده گزارش ویرایش‌های خودکار و امکان بازگردانی',
+                    leading: Icon(CupertinoIcons.clock_fill, color: colors.primary),
+                    onTap: () => AiWriteHistorySheet.show(context),
+                  ),
+                ],
+              ),
             SettingsSection(
               title: 'رفتار و پارامترهای دستیار',
               children: [
@@ -254,30 +259,31 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('ظرفیت کار روزانه', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-                          Text('${toPersianDigits(_dailyCapacity ~/ 60)} ساعت و ${toPersianDigits(_dailyCapacity % 60)} دقیقه',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
-                        ],
-                      ),
-                      CupertinoSlider(
-                        value: _dailyCapacity.toDouble(),
-                        min: 60,
-                        max: 1440,
-                        divisions: 23,
-                        activeColor: colors.primary,
-                        onChanged: (val) => _update('daily_capacity_minutes', val.round()),
-                      ),
-                    ],
+                if (_showAdvanced)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('ظرفیت کار روزانه', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                            Text('${toPersianDigits(_dailyCapacity ~/ 60)} ساعت و ${toPersianDigits(_dailyCapacity % 60)} دقیقه',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+                          ],
+                        ),
+                        CupertinoSlider(
+                          value: _dailyCapacity.toDouble(),
+                          min: 60,
+                          max: 1440,
+                          divisions: 23,
+                          activeColor: colors.primary,
+                          onChanged: (val) => _update('daily_capacity_minutes', val.round()),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 SettingsTile(
                   title: 'زمان معمول بیداری',
                   subtitle: toPersianDigits(_wakeTime),

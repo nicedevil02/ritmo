@@ -90,7 +90,9 @@ void main() {
     });
 
     testWidgets('SettingsImportDiffDialog renders diff items and applies selection', (tester) async {
-      await SettingsService.instance.set('snooze_minutes', 10);
+      await tester.runAsync(() async {
+        await SettingsService.instance.set('snooze_minutes', 10);
+      });
 
       const diff = SettingsDiffPreview(
         schemaVersion: 1,

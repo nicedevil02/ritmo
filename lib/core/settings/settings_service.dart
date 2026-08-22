@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -133,6 +134,8 @@ class SettingsService {
 
       if (_cache['app_mode'] == 'simple' || _cache['app_mode'] == 'SIMPLE') {
         _cache['show_advanced_settings'] = false;
+      } else if (_cache['app_mode'] == 'full' || _cache['app_mode'] == 'FULL') {
+        _cache['show_advanced_settings'] = true;
       }
 
       _initialized = true;
@@ -409,10 +412,13 @@ class SettingsService {
       return const SettingWriteRejected('مقدار وارد شده برای این تنظیم معتبر نیست.');
     }
 
-    final currentVal = _cache[key];
-    if (currentVal == normalized) {
-      return const SettingWriteOk();
+    final oldVal = _cache[key];
+    _cache[key] = normalized;
+    if (desc.requiresRestart) {
+      _pendingRestartKeys.add(key);
     }
+    revision.value++;
+    _changeController.add(key);
 
     try {
       if (desc.scope == SettingScope.db) {
@@ -440,13 +446,6 @@ class SettingsService {
         await SecureKeyStore.setKey(key, normalized.toString());
       }
 
-      _cache[key] = normalized;
-      if (desc.requiresRestart) {
-        _pendingRestartKeys.add(key);
-      }
-      revision.value++;
-      _changeController.add(key);
-
       if (desc.affectsAgenda) {
         _scheduleAgendaRefreshSignal();
       }
@@ -464,12 +463,42 @@ class SettingsService {
         }
       }
 
-      if (key == 'app_mode' && normalized.toString().toLowerCase() == 'simple') {
-        await setChecked('show_advanced_settings', false, origin: origin);
+      if (key == 'app_mode') {
+        final modeLower = normalized.toString().toLowerCase();
+        if (modeLower == 'simple') {
+          AppModeService.instance.syncFromSettings('simple');
+          if (get<bool>('show_advanced_settings') != false) {
+            await setChecked('show_advanced_settings', false, origin: origin);
+          }
+        } else if (modeLower == 'full') {
+          AppModeService.instance.syncFromSettings('full');
+          if (get<bool>('show_advanced_settings') != true) {
+            await setChecked('show_advanced_settings', true, origin: origin);
+          }
+        }
+      } else if (key == 'show_advanced_settings') {
+        if (normalized == false) {
+          AppModeService.instance.syncFromSettings('simple');
+          if (get<String>('app_mode').toLowerCase() != 'simple') {
+            await setChecked('app_mode', 'simple', origin: origin);
+          }
+        } else if (normalized == true) {
+          AppModeService.instance.syncFromSettings('full');
+          if (get<String>('app_mode').toLowerCase() != 'full') {
+            await setChecked('app_mode', 'full', origin: origin);
+          }
+        }
       }
 
       return const SettingWriteOk();
     } catch (e, st) {
+      if (oldVal != null) {
+        _cache[key] = oldVal;
+      } else {
+        _cache.remove(key);
+      }
+      revision.value++;
+      _changeController.add(key);
       RitmoLog.error('Settings', 'خطا در ذخیره‌سازی کلید $key', e, st);
       return const SettingWriteFailed('خطا در ثبت تغییرات در پایگاه داده');
     }

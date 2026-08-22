@@ -37,7 +37,6 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
   }
 
   Future<void> _switchToSimple() async {
-    if (_isSimpleMode) return;
     RitmoHapticsPolicy.selection();
     await AppModeService.instance.set(AppMode.simple);
     if (!mounted) return;
@@ -47,7 +46,6 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
   }
 
   Future<void> _switchToFull() async {
-    if (!_isSimpleMode) return;
     RitmoHapticsPolicy.selection();
     await AppModeService.instance.set(AppMode.full);
     if (!mounted) return;
@@ -76,6 +74,8 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
           // ─── حالت ساده (سمت راست در RTL) ───
           Expanded(
             child: GestureDetector(
+              key: const ValueKey('mode_switch_simple'),
+              behavior: HitTestBehavior.opaque,
               onTap: _switchToSimple,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
@@ -119,6 +119,8 @@ class _IdentityAppModeToggleState extends State<IdentityAppModeToggle> {
           // ─── حالت کامل (سمت چپ در RTL) ───
           Expanded(
             child: GestureDetector(
+              key: const ValueKey('mode_switch_advanced'),
+              behavior: HitTestBehavior.opaque,
               onTap: _switchToFull,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),

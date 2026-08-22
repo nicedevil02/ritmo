@@ -57,7 +57,7 @@ class _StepNotificationsState extends State<StepNotifications> {
       );
       try {
         await flutterLocalNotificationsPlugin
-            .initialize(initializationSettings)
+            .initialize(settings: initializationSettings)
             .timeout(const Duration(seconds: 2), onTimeout: () => null);
       } catch (_) {}
 

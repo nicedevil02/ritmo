@@ -1,6 +1,6 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-24T11:42:25.987381
+Generated At: 2026-08-24T13:37:01.938740
 
 ## Audit Metrics Summary
 
@@ -21,17 +21,8 @@ Generated At: 2026-08-24T11:42:25.987381
 | Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 153 | 153 | OK |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3644 | 3644 | OK |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4513 | 4513 | OK |
-
-## تغییر روش شمارش (Counting Methodology Changes)
-
-1. **تفکیک متریک‌های Core و Features**:
-   - برای افزایش دقت و جلوگیری از مخفی ماندن تخلفات در لایهٔ پایه، متریک‌های مربوط به `lib/core/` به صورت قوانین جداگانه (`coreHardcodedColors`, `coreMaterialColors`, `coreDuplicateFont`, `coreScatteredBlur`, `coreManualShadow`) تعریف شدند و محدودهٔ قوانین عمومی به `lib/features/` اختصاص داده شد.
-2. **افزودن متریک‌های اندازه قلم و هندسه خام**:
-   - متریک‌های جدید `rawFontSize` (اندازه‌های فونت دستی بدون مقیاس) و `rawGeometryLiteral` (اعداد هندسی بدون استفاده از توکن‌های `metrics`) جهت رصد روند سیستم مقیاس‌پذیری اضافه شدند.
-3. **بهبود مستمر و قفل بیس‌لاین**:
-   - تمام متریک‌های بهبودیافته (`manualShadow`, `localDirectionality`, `hardcodedDuration`, `rawFontSize`, `rawGeometryLiteral`) در فایل `tool/theme_baseline.json` قفل گردیدند و وضعیت گارد کیفیت به صورت کامل سبز (OK) است.
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3638 | 3644 | IMPROVED (3638 < 3644) |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4504 | 4513 | IMPROVED (4504 < 4513) |
 
 ## Top Offenders by Metric
 
@@ -195,7 +186,7 @@ Total: 9 occurrences
 | `lib/core/utils/ritmo_date_picker.dart` | 1 |
 
 ### Raw Font Size (`rawFontSize`)
-Total: 3644 occurrences
+Total: 3638 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -206,13 +197,13 @@ Total: 3644 occurrences
 | `lib/features/supplementary_sports/presentation/ss_onboarding_flow.dart` | 49 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4513 occurrences
+Total: 4504 occurrences
 
 | File | Occurrences |
 |---|---|
 | `lib/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart` | 131 |
-| `lib/features/today/presentation/insights_screen.dart` | 104 |
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 96 |
+| `lib/features/today/presentation/insights_screen.dart` | 93 |
 | `lib/features/notes/presentation/screens/notebook_screen.dart` | 74 |
 | `lib/features/worship/presentation/widgets/quran_dhikr_section.dart` | 64 |
 

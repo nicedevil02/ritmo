@@ -47,8 +47,7 @@ abstract final class RitmoBreakpoints {
   static const double minTouchTarget = 48.0;
 
   // سقف مقیاس متن که برنامه رسماً پشتیبانی می‌کند
-  // TODO(scale-ceiling): تا سبز شدن ماتریس گام F، سقف ۱.۳ می‌ماند؛ در گام J به ۱.۶ برمی‌گردد.
-  static const double supportedMaxTextScale = 1.3;
+  static const double supportedMaxTextScale = 1.6;
   static const double supportedMinTextScale = 0.85;
 
   // حداکثر عرض حباب چت نسبت به عرض در دسترس (R-17)

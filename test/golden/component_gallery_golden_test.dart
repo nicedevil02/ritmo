@@ -94,9 +94,9 @@ class ComponentGalleryScreen extends StatelessWidget {
                   fullWidth: false,
                 ),
                 const RitmoPrimaryButton(
-                  label: 'در حال بارگذاری',
+                  label: 'دکمه غیرفعال',
                   onPressed: null,
-                  isLoading: true,
+                  isLoading: false,
                   fullWidth: false,
                 ),
               ],
@@ -217,7 +217,7 @@ void main() {
                 ),
               );
 
-              await tester.pumpAndSettle();
+              await tester.pump(const Duration(milliseconds: 100));
 
               await expectLater(
                 find.byType(MaterialApp),
@@ -262,7 +262,7 @@ void main() {
               ),
             );
 
-            await tester.pumpAndSettle();
+            await tester.pump(const Duration(milliseconds: 100));
 
             await expectLater(
               find.byType(MaterialApp),

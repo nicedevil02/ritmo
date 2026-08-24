@@ -532,16 +532,17 @@ RIE رهبر ارکستر است.
 
 ### Pure Scaler & Metrics Delegation
 
-مقیاس متن و هندسه المان‌ها باید منحصراً از سیستم توکن و مقیاس سراسری مشتق شوند.
+**قانون طلایی:** مقیاس متن فقط از طریق `MediaQuery.textScaler` و مقیاس هندسه فقط از طریق `RitmoMetrics` اعمال می‌شود.
 
 ممنوع:
-* ضرب دستی `fontSize` در ضرایب دلخواه
-* ثابت فرض‌کردن ابعاد و اهداف لمس بدون توجه به `RitmoMetrics`
+* ضرب دستی `fontSize` در ضرایب دلخواه (`fontSize * scale`)
+* ثابت فرض‌کردن ابعاد و اهداف لمس بدون توجه به `context.metrics`
 * نادیده‌گرفتن تنظیمات دسترس‌پذیری و مقیاس فونت سیستم‌عامل
 
 مجاز:
-* استفاده از `MediaQuery.textScaler` در ریشه اپلیکیشن
-* استفاده از توکن‌های `RitmoMetrics` برای فواصل، گوشه‌ها، آیکن‌ها و اهداف لمس
+* تزریق متمرکز `MediaQuery.textScaler` در ریشه اپلیکیشن (`lib/main.dart`)
+* استفاده از توکن‌های پویا از طریق `context.metrics` (`spaceSm`, `spaceMd`, `spaceLg`, `radiusCard`, ...)
+* استفاده از تایپوگرافی ساختاریافته از طریق `context.t` یا `Theme.of(context).textTheme`
 
 ---
 

@@ -81,7 +81,6 @@ import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite/sqflite.dart';
 
 class NowDashboardScreen extends StatefulWidget {
-
   const NowDashboardScreen({
     super.key,
     required this.onLogout,
@@ -98,7 +97,8 @@ class NowDashboardScreen extends StatefulWidget {
   State<NowDashboardScreen> createState() => _NowDashboardScreenState();
 }
 
-class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBindingObserver {
+class _NowDashboardScreenState extends State<NowDashboardScreen>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isFirstLoad = true;
   AiBriefing? _briefing;
@@ -107,7 +107,6 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   StreamSubscription? _inboxSubscription;
   StreamSubscription? _agendaSubscription;
   List<InboxItem> _recentInboxItems = [];
-
 
   // Timeline list representation
   List<Map<String, dynamic>> _timelineItems = [];
@@ -158,13 +157,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     _checkLaunchIntent();
     RitmoEvents.routineChanges.addListener(_onRoutineChanges);
     _updateUnreadCount();
-    _inboxSubscription = RitmoEventBus().onEvents.where((e) => e.type == 'inbox_updated').listen((_) {
-      _updateUnreadCount();
-    });
+    _inboxSubscription = RitmoEventBus().onEvents
+        .where((e) => e.type == 'inbox_updated')
+        .listen((_) {
+          _updateUnreadCount();
+        });
     // P1-1: وقتی از کارت «مسیر امروز» یا تقویم آیتمی تیک میخورد، خانه تازه شود.
-    _agendaSubscription = RitmoEventBus().onEvents.where((e) => e.type == 'AgendaItemToggled').listen((_) {
-      _loadDashboardData();
-    });
+    _agendaSubscription = RitmoEventBus().onEvents
+        .where((e) => e.type == 'AgendaItemToggled')
+        .listen((_) {
+          _loadDashboardData();
+        });
   }
 
   @override
@@ -195,16 +198,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     // Quick Add notification action tapped
     if (launchInfo != null && launchInfo['action'] == 'OPEN_QUICK_ADD') {
       if (mounted) {
-        unawaited(Navigator.push(
-          context,
-          PageRouteBuilder(
-            opaque: false,
-            barrierDismissible: true,
-            pageBuilder: (context, _, _) => UniversalPlannerSheet(
-              onSaved: _loadDashboardData,
+        unawaited(
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              opaque: false,
+              barrierDismissible: true,
+              pageBuilder: (context, _, _) =>
+                  UniversalPlannerSheet(onSaved: _loadDashboardData),
             ),
           ),
-        ));
+        );
       }
       return;
     }
@@ -237,10 +241,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             // که _resumeActiveTimer استفاده میکند، منبع واحد تبدیل ردیف است.
             final routine = Routine.fromMap(routines.first);
             if (routine.isPrivate) {
-              final authenticated = await AppLockService.instance.authenticateWithDevice(
-                reason: 'تأیید هویت برای اجرای رویداد محرمانه',
-                biometricOnly: false,
-              );
+              final authenticated = await AppLockService.instance
+                  .authenticateWithDevice(
+                    reason: 'تأیید هویت برای اجرای رویداد محرمانه',
+                    biometricOnly: false,
+                  );
               if (!authenticated) return;
             }
             if (mounted) {
@@ -282,7 +287,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         final routineId = timerData['routineId']! as String;
         final plannedMinutes = timerData['plannedDurationMinutes']! as int;
 
-        final routineMapList = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+        final routineMapList = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
         if (routineMapList.isNotEmpty) {
           final routine = Routine.fromMap(routineMapList.first);
 
@@ -382,7 +391,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           debugPrint('Error loading recent inbox: $e');
         }
 
-        final showReplan = await MidDayReplanService.instance.shouldSuggestReplan();
+        final showReplan = await MidDayReplanService.instance
+            .shouldSuggestReplan();
 
         // G-4: وجود فایل آواتار بهصورت async و خارج از build چک میشود (نه existsSync)
         var avatarExistsResult = false;
@@ -435,15 +445,24 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   void _openModuleScreen(String moduleId) {
     Widget? screen;
     switch (moduleId) {
-      case 'sleep': screen = const WellbeingScreen(initialSection: WellbeingSection.trend); break;
+      case 'wellbeing':
+      case 'energy':
+        screen = const WellbeingScreen();
+        break;
+      case 'sleep':
+        screen = const WellbeingScreen(initialSection: WellbeingSection.sleep);
+        break;
       case 'sports':
         _openSupplementarySports();
         return;
-      case 'energy': screen = const WellbeingScreen();
-      case 'medicine': screen = const HealthScreen();
-      case 'worship': screen = const WorshipScreen();
-      case 'cycle': screen = const CycleScreen();
-      case 'goals': screen = const GoalsScreen();
+      case 'medicine':
+        screen = const HealthScreen();
+      case 'worship':
+        screen = const WorshipScreen();
+      case 'cycle':
+        screen = const CycleScreen();
+      case 'goals':
+        screen = const GoalsScreen();
       case 'courses':
         screen = const CoursesScreen(); // can() always returns true
       case 'study':
@@ -452,40 +471,52 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         return;
     }
     if (screen == null) return;
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen!))
-        .then((_) => _loadDashboardData());
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen!),
+    ).then((_) => _loadDashboardData());
   }
 
   Future<void> _openSupplementarySports() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final profiles = await db.query('ss_user_profile', where: 'onboardingCompleted = 1', limit: 1);
+      final profiles = await db.query(
+        'ss_user_profile',
+        where: 'onboardingCompleted = 1',
+        limit: 1,
+      );
       final hasCompletedOnboarding = profiles.isNotEmpty;
 
       if (mounted) {
-        unawaited(Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => hasCompletedOnboarding 
-                ? const SSHomeDashboardScreen() 
-                : const SSIntroScreen(),
-          ),
-        ).then((_) => _loadDashboardData()));
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => hasCompletedOnboarding
+                  ? const SSHomeDashboardScreen()
+                  : const SSIntroScreen(),
+            ),
+          ).then((_) => _loadDashboardData()),
+        );
       }
     } catch (e) {
       debugPrint('Error opening supplementary sports: $e');
       if (mounted) {
-        unawaited(Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const SSIntroScreen(),
-          ),
-        ).then((_) => _loadDashboardData()));
+        unawaited(
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SSIntroScreen()),
+          ).then((_) => _loadDashboardData()),
+        );
       }
     }
   }
 
-  Future<void> _completeTask(Routine routine, String resultType, [int? customDuration]) async {
+  Future<void> _completeTask(
+    Routine routine,
+    String resultType, [
+    int? customDuration,
+  ]) async {
     final todayStr = RitmoDate.now().value;
 
     if (resultType == 'SKIPPED') {
@@ -514,19 +545,26 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
     if (mounted) {
       var msg = 'روتین "${routine.title}" انجام شد! 🌟';
-      if (resultType == 'LIGHT') msg = 'روتین "${routine.title}" به صورت سبک انجام شد! ⚡';
-      if (resultType == 'MINIMAL') msg = 'روتین "${routine.title}" به صورت حداقلی انجام شد! 🌿';
+      if (resultType == 'LIGHT')
+        msg = 'روتین "${routine.title}" به صورت سبک انجام شد! ⚡';
+      if (resultType == 'MINIMAL')
+        msg = 'روتین "${routine.title}" به صورت حداقلی انجام شد! 🌿';
       if (resultType == 'SKIPPED') msg = 'روتین "${routine.title}" رد شد. ✕';
       if (resultType == 'CANNOT_NOW' || resultType == 'SNOOZED') {
         msg = 'روتین "${routine.title}" به تعویق افتاد. ⏳';
       }
 
       final colors = context.colors;
-      final isWarning = (resultType == 'CANNOT_NOW' || resultType == 'SNOOZED' || resultType == 'SKIPPED');
+      final isWarning =
+          (resultType == 'CANNOT_NOW' ||
+          resultType == 'SNOOZED' ||
+          resultType == 'SKIPPED');
       RitmoToast.show(
         context,
         msg,
-        icon: isWarning ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+        icon: isWarning
+            ? Icons.warning_amber_rounded
+            : Icons.check_circle_outline,
         iconColor: isWarning ? colors.warning : colors.success,
       );
     }
@@ -592,9 +630,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             PageRouteBuilder(
               opaque: false,
               barrierDismissible: true,
-              pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                onSaved: _loadDashboardData,
-              ),
+              pageBuilder: (context, _, _) =>
+                  UniversalPlannerSheet(onSaved: _loadDashboardData),
             ),
           );
         },
@@ -617,10 +654,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         label: 'برنامه‌ریز هوشمند',
         icon: CupertinoIcons.sparkles,
         color: colors.reflectionAccent,
-        onTap: () => AiDayPlannerLauncher.open(
-          context,
-          onSaved: _loadDashboardData,
-        ),
+        onTap: () =>
+            AiDayPlannerLauncher.open(context, onSaved: _loadDashboardData),
       ),
       HomeQuickAction(
         label: 'مدیریت انرژی',
@@ -656,7 +691,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         child: AnimatedContainer(
           duration: RitmoMotion.effective(context, RitmoMotion.state),
           curve: RitmoMotion.standard,
-          padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.sm, 14, RitmoSpacing.sm),
+          padding: const EdgeInsets.fromLTRB(
+            14,
+            RitmoSpacing.sm,
+            14,
+            RitmoSpacing.sm,
+          ),
           decoration: BoxDecoration(
             color: isScrolled
                 ? colors.background.withValues(alpha: 0.72)
@@ -695,7 +735,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           physics: NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(14, 16, 14, 140),
+          padding: EdgeInsets.fromLTRB(14, 16, 14, 140),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -719,29 +759,51 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               SizedBox(height: RitmoSpacing.xl),
               // کارت تمرکز اکنون
               RitmoSkeleton(
-                  width: double.infinity, height: 208, borderRadius: 24),
+                width: double.infinity,
+                height: 208,
+                borderRadius: 24,
+              ),
               SizedBox(height: RitmoSpacing.md),
               // نبض امروز
               RitmoSkeleton(
-                  width: double.infinity, height: 122, borderRadius: 20),
+                width: double.infinity,
+                height: 122,
+                borderRadius: 20,
+              ),
               SizedBox(height: RitmoSpacing.md),
               // نوار میانبرها
               Row(
                 children: [
                   Expanded(
-                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                    child: RitmoSkeleton(
+                      width: double.infinity,
+                      height: 88,
+                      borderRadius: 16,
+                    ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                    child: RitmoSkeleton(
+                      width: double.infinity,
+                      height: 88,
+                      borderRadius: 16,
+                    ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                    child: RitmoSkeleton(
+                      width: double.infinity,
+                      height: 88,
+                      borderRadius: 16,
+                    ),
                   ),
                   SizedBox(width: RitmoSpacing.sm),
                   Expanded(
-                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                    child: RitmoSkeleton(
+                      width: double.infinity,
+                      height: 88,
+                      borderRadius: 16,
+                    ),
                   ),
                 ],
               ),
@@ -750,17 +812,29 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               RitmoSkeleton(width: 140, height: 14, borderRadius: 4),
               SizedBox(height: RitmoSpacing.md),
               RitmoSkeleton(
-                  width: double.infinity, height: 136, borderRadius: 20),
+                width: double.infinity,
+                height: 136,
+                borderRadius: 20,
+              ),
               SizedBox(height: RitmoSpacing.xl),
               // ۳ ردیف کار امروز
               RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
+                width: double.infinity,
+                height: 62,
+                borderRadius: 18,
+              ),
               SizedBox(height: 10),
               RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
+                width: double.infinity,
+                height: 62,
+                borderRadius: 18,
+              ),
               SizedBox(height: 10),
               RitmoSkeleton(
-                  width: double.infinity, height: 62, borderRadius: 18),
+                width: double.infinity,
+                height: 62,
+                borderRadius: 18,
+              ),
             ],
           ),
         ),
@@ -785,9 +859,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     // جای دیگری دوباره تکرار نمیشود.
     final heroData = _buildNextActionHeroData();
 
-    final showReflectionCard = DateTime.now().hour >= 22 &&
-        !_hasReflection &&
-        !_reflectionDismissed;
+    final showReflectionCard =
+        DateTime.now().hour >= 22 && !_hasReflection && !_reflectionDismissed;
 
     final detailsChildren = <Widget>[
       if (_showReplanBanner)
@@ -806,7 +879,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         RecentInboxCard(
           items: _recentInboxItems,
           onItemTap: (item) {
-            InboxNavigator.open(context, item).then((_) => _loadDashboardData());
+            InboxNavigator.open(
+              context,
+              item,
+            ).then((_) => _loadDashboardData());
           },
           onViewAll: () {
             Navigator.push(
@@ -838,7 +914,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.md, 14, 140),
+                padding: const EdgeInsets.fromLTRB(
+                  14,
+                  RitmoSpacing.md,
+                  14,
+                  140,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
@@ -873,12 +954,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                     const SizedBox(height: RitmoSpacing.md),
 
                     // ۲. تمرکز اکنون — تنها اقدام مهم این لحظه
-                    _enter(
-                      2,
-                      HomeFocusHero(
-                        data: heroData,
-                      ),
-                    ),
+                    _enter(2, HomeFocusHero(data: heroData)),
                     const SizedBox(height: RitmoSpacing.md),
 
                     // ۳. نبض امروز — وضعیت روز در یک نگاه
@@ -888,7 +964,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                         progress: progress.ratio,
                         doneCount: progress.done,
                         totalCount: progress.total,
-                        caption: (_activeZoneName == null ||
+                        caption:
+                            (_activeZoneName == null ||
                                 _activeZoneName!.isEmpty)
                             ? null
                             : 'قلمرو: ${_activeZoneName!}',
@@ -1038,7 +1115,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                                 _engineOutput?.suggestLightVersion ?? false,
                             activeZoneName: _activeZoneName ?? '',
                             defaultEnergyLevel:
-                                _settingsMap['default_energy_level'] ?? 'MEDIUM',
+                                _settingsMap['default_energy_level'] ??
+                                'MEDIUM',
                             dailyBehavior: _dailyBehavior,
                             onStartTap: _showNiyyahSheet,
                             onWhyTap: _showWhySuggestionDialog,
@@ -1059,8 +1137,13 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                         TodayDetailsSection(
                           itemCount: detailsChildren.length,
                           children: [
-                            for (int i = 0; i < detailsChildren.length; i++) ...[
-                              if (i > 0) const SizedBox(height: RitmoSpacing.md),
+                            for (
+                              int i = 0;
+                              i < detailsChildren.length;
+                              i++
+                            ) ...[
+                              if (i > 0)
+                                const SizedBox(height: RitmoSpacing.md),
                               detailsChildren[i],
                             ],
                           ],
@@ -1108,8 +1191,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   Future<void> _resumeActiveTimer(String routineId, String mode) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('routines',
-          where: 'id = ?', whereArgs: [routineId], limit: 1);
+      final rows = await db.query(
+        'routines',
+        where: 'id = ?',
+        whereArgs: [routineId],
+        limit: 1,
+      );
       if (rows.isEmpty || !mounted) return;
       final routine = Routine.fromMap(rows.first);
       _startTimerFlow(routine, mode);
@@ -1125,18 +1212,23 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
     // P2-2: تصمیم اولویت به رتبهبند خالص واگذار شده (قابلتست واحد — P2-3).
     // توجه: medicalCriticalCount فعلاً ۰ است تا محاسبهٔ واقعی بحران دارویی
     // (تداخل/minInterval/maxDoses/حیاتی) در فاز بعد سیم شود.
-    final decision = HomeFocusRanker.decide(HomeFocusInput(
-      now: DateTime.now(),
-      hasActiveTimer: activeTimer != null,
-      medicalCriticalCount: 0,
-      pendingMedDoses: _pendingMedDoses,
-      medicineModuleEnabled: ModuleGate.instance
-          .isEnabledFrom(_settingsMap, 'module_medicine_enabled'),
-      agendaItems: _agendaItems,
-      fallbackTasksPending:
-          _timelineItems.any((i) => i['isCompleted'] != true),
-      needCheckin: _needCheckin,
-    ));
+    final decision = HomeFocusRanker.decide(
+      HomeFocusInput(
+        now: DateTime.now(),
+        hasActiveTimer: activeTimer != null,
+        medicalCriticalCount: 0,
+        pendingMedDoses: _pendingMedDoses,
+        medicineModuleEnabled: ModuleGate.instance.isEnabledFrom(
+          _settingsMap,
+          'module_medicine_enabled',
+        ),
+        agendaItems: _agendaItems,
+        fallbackTasksPending: _timelineItems.any(
+          (i) => i['isCompleted'] != true,
+        ),
+        needCheckin: _needCheckin,
+      ),
+    );
 
     switch (decision.level) {
       // بحران/باقیماندهٔ دارویی
@@ -1145,8 +1237,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         final isCritical = decision.level == HomeFocusLevel.medicalCritical;
         return NextActionHeroData(
           type: HeroPriorityType.medicalSafety,
-          title:
-              isCritical ? 'هشدار مهم دارویی' : 'دوز داروی امروز هنوز کامل نشده',
+          title: isCritical
+              ? 'هشدار مهم دارویی'
+              : 'دوز داروی امروز هنوز کامل نشده',
           subtitle: isCritical
               ? 'نیازمند بررسی فوری تداخل یا سقف دوز'
               : '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقی‌مانده',
@@ -1180,15 +1273,19 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         String subtitleText;
         if (isNow) {
           final parts = chosen.timeOfDay!.split(':');
-          final startM = (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
-          final duration = (chosen.durationMinutes != null && chosen.durationMinutes! > 0)
+          final startM =
+              (int.tryParse(parts[0]) ?? 0) * 60 +
+              (int.tryParse(parts[1]) ?? 0);
+          final duration =
+              (chosen.durationMinutes != null && chosen.durationMinutes! > 0)
               ? chosen.durationMinutes!
               : 30;
           final endM = startM + duration;
           final now = DateTime.now();
           final nowM = now.hour * 60 + now.minute;
           final remainingM = (endM - nowM).clamp(1, duration);
-          subtitleText = 'زمان: $timeLabel · ${PersianDigits.convert(remainingM.toString())} دقیقه باقی‌مانده از بازه';
+          subtitleText =
+              'زمان: $timeLabel · ${PersianDigits.convert(remainingM.toString())} دقیقه باقی‌مانده از بازه';
         } else if (decision.isOverdue) {
           subtitleText = 'عقب‌افتاده · $timeLabel';
         } else {
@@ -1201,7 +1298,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           subtitle: subtitleText,
           primaryCtaLabel: isNow
               ? 'تکمیل / ثبت'
-              : (chosen.domain == AgendaDomain.routine ? 'ثبت / شروع' : 'مشاهده'),
+              : (chosen.domain == AgendaDomain.routine
+                    ? 'ثبت / شروع'
+                    : 'مشاهده'),
           onPrimaryTap: () => _openAgendaItem(chosen),
           isCurrentActive: isNow,
           previousTaskTitle: decision.previousItem?.title,
@@ -1216,8 +1315,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       case HomeFocusLevel.agendaFallback:
         final now = DateTime.now();
         final nowMinutes = now.hour * 60 + now.minute;
-        final pendingTasks =
-            _timelineItems.where((i) => i['isCompleted'] != true).toList();
+        final pendingTasks = _timelineItems
+            .where((i) => i['isCompleted'] != true)
+            .toList();
         Map<String, dynamic> chosen = pendingTasks.first;
         var foundUpcoming = false;
         for (final item in pendingTasks) {
@@ -1225,7 +1325,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           final parts = t.split(':');
           if (parts.length == 2) {
             final m =
-                (int.tryParse(parts[0]) ?? 0) * 60 + (int.tryParse(parts[1]) ?? 0);
+                (int.tryParse(parts[0]) ?? 0) * 60 +
+                (int.tryParse(parts[1]) ?? 0);
             if (m >= nowMinutes) {
               chosen = item;
               foundUpcoming = true;
@@ -1343,7 +1444,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       isEssential: routine.isEssential ? 1 : 0,
     );
 
-    final isBlocked = decision.verdict == SnoozeVerdict.exhausted ||
+    final isBlocked =
+        decision.verdict == SnoozeVerdict.exhausted ||
         decision.verdict == SnoozeVerdict.blockedMidnight;
 
     if (isBlocked) {
@@ -1377,8 +1479,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       builder: (context) => MorningCheckinSheet(
         onSaved: () {
           final now = DateTime.now();
-          final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-          CentralInboxService.markActionedForEntity('system', 'checkin_$dateStr');
+          final dateStr =
+              '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+          CentralInboxService.markActionedForEntity(
+            'system',
+            'checkin_$dateStr',
+          );
           _loadDashboardData();
         },
       ),
@@ -1446,7 +1552,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   void _startTimerFlow(Routine routine, String mode) {
     // T4: compute today's date explicitly and pass as dateStr
     final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
     Navigator.push(
       context,
@@ -1454,8 +1561,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         builder: (context) => ActiveTimerOverlay(
           routine: routine,
           completionMode: mode,
-          dateStr: todayStr,         // T4: explicit, not hidden DateTime.now() inside overlay
-          onCompleted: (outcome) {  // T6: only on confirmed completion
+          dateStr:
+              todayStr, // T4: explicit, not hidden DateTime.now() inside overlay
+          onCompleted: (outcome) {
+            // T6: only on confirmed completion
             Navigator.pop(context);
             _loadDashboardData();
             if (outcome.didWrite) {
@@ -1464,7 +1573,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               RitmoToast.show(context, outcome.errorMessage ?? 'ثبت انجام نشد');
             }
           },
-          onCancelled: () {         // T6: neutral — no success message
+          onCancelled: () {
+            // T6: neutral — no success message
             Navigator.pop(context);
             // No feedback — user chose not to complete
           },
@@ -1475,8 +1585,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   void _showWhySuggestionDialog(String titleText) {
     final l10n = AppLocalizations.of(context)!;
-    var explanationText = 'سیستم بر اساس موتور تحلیل بافت (Context Engine)، شرایط زمانی و انرژی فعلی شما را سنجیده است.';
-    
+    var explanationText =
+        'سیستم بر اساس موتور تحلیل بافت (Context Engine)، شرایط زمانی و انرژی فعلی شما را سنجیده است.';
+
     if (_engineOutput?.contextExplanation != null) {
       final exp = _engineOutput!.contextExplanation;
       final title = exp.params['title'] as String? ?? titleText;
@@ -1492,7 +1603,10 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         case ContextExplanationType.busy:
           explanationText = l10n.contextExplanationBusy(title);
         case ContextExplanationType.worship:
-          explanationText = l10n.contextExplanationWorship(exp.params['season'] as String? ?? '', title);
+          explanationText = l10n.contextExplanationWorship(
+            exp.params['season'] as String? ?? '',
+            title,
+          );
         case ContextExplanationType.zone:
           explanationText = l10n.contextExplanationZone(title);
         case ContextExplanationType.lowEnergy:
@@ -1518,7 +1632,11 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               const SizedBox(width: 8),
               Text(
                 'تحلیل هوشمند ریتمو',
-                style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ],
           ),
@@ -1526,13 +1644,23 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             textDirection: TextDirection.rtl,
             child: Text(
               explanationText,
-              style: TextStyle(fontSize: 13, height: 1.6, color: colors.textPrimary.withValues(alpha: 0.9)),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.6,
+                color: colors.textPrimary.withValues(alpha: 0.9),
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('فهمیدم', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary)),
+              child: Text(
+                'فهمیدم',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: colors.primary,
+                ),
+              ),
             ),
           ],
         );
@@ -1576,8 +1704,12 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
       context: context,
       onSaved: () {
         final now = DateTime.now();
-        final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-        CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+        final dateStr =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        CentralInboxService.markActionedForEntity(
+          'system',
+          'reflection_$dateStr',
+        );
         _loadDashboardData();
       },
     );
@@ -1586,19 +1718,19 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
   Future<void> _dismissReflection() async {
     final db = await DatabaseHelper.instance.database;
     final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    await db.insert(
-      'app_settings',
-      {
-        'key': 'dismissed_reflection_date',
-        'value': todayStr,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_settings', {
+      'key': 'dismissed_reflection_date',
+      'value': todayStr,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
     await HapticFeedback.lightImpact();
     final now = DateTime.now();
-    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    await CentralInboxService.markActionedForEntity('system', 'reflection_$dateStr');
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    await CentralInboxService.markActionedForEntity(
+      'system',
+      'reflection_$dateStr',
+    );
     if (!mounted) return;
     setState(() {
       _reflectionDismissed = true;
@@ -1640,8 +1772,9 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
 
   Future<void> _pushCheckinsAndReflections() async {
     final now = DateTime.now();
-    final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    
+    final dateStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
     if (_needCheckin) {
       final dedupeKey = 'checkin_$dateStr';
       await CentralInboxService.push(
@@ -1650,15 +1783,17 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         entityId: dedupeKey,
         eventType: 'morning_checkin',
         title: 'ارزیابی صبحگاهی 🌅',
-        body: 'روز خود را با ثبت ارزیابی صبحگاهی آغاز کنید تا وضعیت انرژی شما محاسبه شود.',
+        body:
+            'روز خود را با ثبت ارزیابی صبحگاهی آغاز کنید تا وضعیت انرژی شما محاسبه شود.',
         priority: 1,
         linkModule: 'home',
         linkAction: 'open_checkin',
         dateBucket: dateStr,
       );
     }
-    
-    final reflectionAvailable = now.hour >= 22 && !_hasReflection && !_reflectionDismissed;
+
+    final reflectionAvailable =
+        now.hour >= 22 && !_hasReflection && !_reflectionDismissed;
     if (reflectionAvailable) {
       final dedupeKey = 'reflection_$dateStr';
       await CentralInboxService.push(
@@ -1696,7 +1831,11 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox(
       height: height,
       child: builder(context, shrinkOffset > 4 || overlapsContent),

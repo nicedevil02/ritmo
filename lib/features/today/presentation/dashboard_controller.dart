@@ -31,7 +31,7 @@ import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
-import 'package:ritmo/features/sleep/models/sleep_models.dart';        // SleepLog, SleepQuality
+import 'package:ritmo/features/sleep/models/sleep_models.dart'; // SleepLog, SleepQuality
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -44,7 +44,6 @@ class DashboardController {
   RoutineTask? nextTask;
   AiBriefing? briefing;
   bool isBriefingLoading = false;
-
 
   // Timeline list representation
   //
@@ -85,8 +84,17 @@ class DashboardController {
 
   int get pendingMedicationDoseCount {
     final totalDoses = medicationRoutines.fold<int>(
-        0, (a, r) => a + (((r['maxDosesPerDay'] as int?) ?? 1) <= 0 ? 1 : ((r['maxDosesPerDay'] as int?) ?? 1)));
-    final taken = medicationCompletionsToday.values.fold<int>(0, (a, c) => a + c);
+      0,
+      (a, r) =>
+          a +
+          (((r['maxDosesPerDay'] as int?) ?? 1) <= 0
+              ? 1
+              : ((r['maxDosesPerDay'] as int?) ?? 1)),
+    );
+    final taken = medicationCompletionsToday.values.fold<int>(
+      0,
+      (a, c) => a + c,
+    );
     final remaining = (totalDoses - taken) < 0 ? 0 : (totalDoses - taken);
     return remaining;
   }
@@ -161,7 +169,9 @@ class DashboardController {
       await _ensureWorshipDebtRoutineExists(db);
 
       final settings = await db.query('app_settings');
-      settingsMap = <String, String>{for (final s in settings) s['key']! as String: s['value']! as String};
+      settingsMap = <String, String>{
+        for (final s in settings) s['key']! as String: s['value']! as String,
+      };
 
       // Load today's check-in status
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
@@ -181,7 +191,8 @@ class DashboardController {
       hasReflection = reflections.isNotEmpty;
 
       // Check if reflection suggestion was dismissed today
-      final dismissedReflectionDate = settingsMap['dismissed_reflection_date'] ?? '';
+      final dismissedReflectionDate =
+          settingsMap['dismissed_reflection_date'] ?? '';
       reflectionDismissed = dismissedReflectionDate == todayStr;
 
       // 2. Load today's routine completions
@@ -190,10 +201,17 @@ class DashboardController {
         where: 'completionDate = ?',
         whereArgs: [todayStr],
       );
-      completionsToday = completionsTodayRaw.map(Map<String, dynamic>.from).toList();
+      completionsToday = completionsTodayRaw
+          .map(Map<String, dynamic>.from)
+          .toList();
 
       final completedIds = completionsToday
-          .where((c) => c['resultType'] != 'SNOOZED' && c['resultType'] != 'CANNOT_NOW' && c['resultType'] != 'SKIPPED')
+          .where(
+            (c) =>
+                c['resultType'] != 'SNOOZED' &&
+                c['resultType'] != 'CANNOT_NOW' &&
+                c['resultType'] != 'SKIPPED',
+          )
           .map((c) => c['routineId'] as String)
           .toSet();
 
@@ -204,12 +222,17 @@ class DashboardController {
         whereArgs: [todayStr],
       );
       final occurrenceMap = {
-        for (final o in occurrencesToday) o['routine_id']! as String: o
+        for (final o in occurrencesToday) o['routine_id']! as String: o,
       };
 
       // 3. Load all active routines and schedules
-      final routinesMapListRaw = await db.query('routines', where: 'isArchived = 0');
-      final routinesMapList = routinesMapListRaw.map(Map<String, dynamic>.from).toList();
+      final routinesMapListRaw = await db.query(
+        'routines',
+        where: 'isArchived = 0',
+      );
+      final routinesMapList = routinesMapListRaw
+          .map(Map<String, dynamic>.from)
+          .toList();
       final activeTasks = <RoutineTask>[];
       final medRoutines = <Map<String, dynamic>>[];
       final routineList = <Routine>[];
@@ -244,17 +267,23 @@ class DashboardController {
           customCategoryId: rMap['customCategoryId'] as String?,
           zoneId: rMap['zoneId'] as String?,
           routineType: RoutineType.values.firstWhere(
-            (e) => e.name.toLowerCase() == (rMap['routineType'] as String? ?? '').toLowerCase(),
+            (e) =>
+                e.name.toLowerCase() ==
+                (rMap['routineType'] as String? ?? '').toLowerCase(),
             orElse: () => RoutineType.timeBased,
           ),
           notificationLevel: NotificationLevel.values.firstWhere(
-            (e) => e.name.toLowerCase() == (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
+            (e) =>
+                e.name.toLowerCase() ==
+                (rMap['notificationLevel'] as String? ?? '').toLowerCase(),
             orElse: () => NotificationLevel.none,
           ),
           isEssential: rMap['isEssential'] == 1,
           isEssentialLocked: (rMap['isEssentialLocked'] as int? ?? 0) == 1,
           energyRule: EnergyRule.values.firstWhere(
-            (e) => e.name.toLowerCase() == (rMap['energyRule'] as String? ?? '').toLowerCase(),
+            (e) =>
+                e.name.toLowerCase() ==
+                (rMap['energyRule'] as String? ?? '').toLowerCase(),
             orElse: () => EnergyRule.none,
           ),
 
@@ -272,7 +301,8 @@ class DashboardController {
           progressionStep: rMap['progressionStep'] as int? ?? 0,
           progressionEveryN: rMap['progressionEveryN'] as int? ?? 1,
           progressionCurrent: rMap['progressionCurrent'] as int? ?? 0,
-          progressionDoneSinceAdvance: rMap['progressionDoneSinceAdvance'] as int? ?? 0,
+          progressionDoneSinceAdvance:
+              rMap['progressionDoneSinceAdvance'] as int? ?? 0,
           itemType: rMap['itemType'] as String? ?? 'ROUTINE',
         );
 
@@ -292,11 +322,13 @@ class DashboardController {
               microsecond: 0,
             );
 
-            activeTasks.add(RoutineTask(
-              routine: routine,
-              scheduleTimeStr: timeOfDayStr,
-              scheduledTime: schedTime,
-            ));
+            activeTasks.add(
+              RoutineTask(
+                routine: routine,
+                scheduleTimeStr: timeOfDayStr,
+                scheduledTime: schedTime,
+              ),
+            );
           }
         }
       }
@@ -307,7 +339,9 @@ class DashboardController {
       final medCompletions = <String, int>{};
       for (final rMap in medicationRoutines) {
         final rId = rMap['id'] as String;
-        final count = completionsToday.where((c) => c['routineId'] == rId).length;
+        final count = completionsToday
+            .where((c) => c['routineId'] == rId)
+            .length;
         medCompletions[rId] = count;
       }
       medicationCompletionsToday = medCompletions;
@@ -323,11 +357,12 @@ class DashboardController {
       activeZoneColorHex = activeZone?['color'] as String?;
       final activeStart = activeZone?['startTime'] as String?;
       final activeEnd = activeZone?['endTime'] as String?;
-      
+
       final isOverride = activeZone?['isOverride'] == true;
       if (isOverride) {
         final overrideUntilMs = activeZone?['overrideUntilMs'] as int? ?? 0;
-        final remainingMs = overrideUntilMs - DateTime.now().millisecondsSinceEpoch;
+        final remainingMs =
+            overrideUntilMs - DateTime.now().millisecondsSinceEpoch;
         final remainingMin = (remainingMs / 60000).ceil();
         activeZoneTimeRange = 'فعال‌سازی دستی ($remainingMin دقیقه)';
       } else if (activeStart != null && activeEnd != null) {
@@ -335,10 +370,12 @@ class DashboardController {
       } else {
         activeZoneTimeRange = null;
       }
-      
+
       activeZoneRoutinesCount = 0;
       if (activeZoneId != null) {
-        activeZoneRoutinesCount = routineList.where((r) => r.zoneId == activeZoneId).length;
+        activeZoneRoutinesCount = routineList
+            .where((r) => r.zoneId == activeZoneId)
+            .length;
       }
 
       // Load current energy (default value — full analytics run in loadP1)
@@ -369,7 +406,8 @@ class DashboardController {
       );
 
       // Map suggested routine to nextTask so existing UI is compatible
-      final visibleIds = engineOutput?.visibleRoutines.map((r) => r.id).toSet() ?? {};
+      final visibleIds =
+          engineOutput?.visibleRoutines.map((r) => r.id).toSet() ?? {};
       if (engineOutput?.suggestedRoutine != null) {
         final sugg = engineOutput!.suggestedRoutine!;
         nextTask = activeTasks.firstWhere(
@@ -388,7 +426,7 @@ class DashboardController {
       var totalWeight = 0.0;
       var completedWeight = 0.0;
       final completionMap = {
-        for (final c in completionsToday) c['routineId'] as String: c
+        for (final c in completionsToday) c['routineId'] as String: c,
       };
 
       for (final task in activeTasks) {
@@ -396,7 +434,8 @@ class DashboardController {
         final routineType = task.routine.routineType;
         final completion = completionMap[rId];
         final isAsNeeded = routineType == RoutineType.asNeeded;
-        final isSystemResult = completion != null && completion['resultSource'] == 'SYSTEM';
+        final isSystemResult =
+            completion != null && completion['resultSource'] == 'SYSTEM';
 
         if (!isAsNeeded && !isSystemResult) {
           totalWeight += task.routine.priority;
@@ -426,24 +465,26 @@ class DashboardController {
       final items = activeTasks
           .where((t) => visibleIds.contains(t.routine.id))
           .map((t) {
-        final isCompleted = completedIds.contains(t.routine.id);
-        return <String, dynamic>{
-          'type': 'task',
-          'id': t.routine.id,
-          'title': t.routine.title,
-          'time': t.scheduleTimeStr ?? '--:--',
-          'status': isCompleted ? '✓ انجام' : 'منتظر',
-          'isCompleted': isCompleted,
-          'category': t.routine.category.name,
-          'routine': t.routine,
-          'domainLabel': 'روتین',
-          'hasConflict': false,
-        };
-      }).toList();
+            final isCompleted = completedIds.contains(t.routine.id);
+            return <String, dynamic>{
+              'type': 'task',
+              'id': t.routine.id,
+              'title': t.routine.title,
+              'time': t.scheduleTimeStr ?? '--:--',
+              'status': isCompleted ? '✓ انجام' : 'منتظر',
+              'isCompleted': isCompleted,
+              'category': t.routine.category.name,
+              'routine': t.routine,
+              'domainLabel': 'روتین',
+              'hasConflict': false,
+            };
+          })
+          .toList();
 
-      items.sort((a, b) => (a['time'] as String).compareTo(b['time'] as String));
+      items.sort(
+        (a, b) => (a['time'] as String).compareTo(b['time'] as String),
+      );
       timelineItems = items;
-
     } catch (e, stack) {
       debugPrint('Error in loadP0: $e\n$stack');
     } finally {
@@ -460,10 +501,16 @@ class DashboardController {
       final actZoneName = activeZoneName ?? 'خارج از قلمرو';
 
       // 4. Load Worship Debts if module enabled
-      if (ModuleGate.instance.isEnabledFrom(settingsMap, 'module_religion_enabled')) {
-        final worshipDebtsRaw = await db.query('worship_debts', where: 'isArchived = 0');
+      if (ModuleGate.instance.isEnabledFrom(
+        settingsMap,
+        'module_religion_enabled',
+      )) {
+        final worshipDebtsRaw = await db.query(
+          'worship_debts',
+          where: 'isArchived = 0',
+        );
         worshipDebts = worshipDebtsRaw.map(Map<String, dynamic>.from).toList();
-        
+
         // Load prayer times from central WorshipRepository
         prayerTimes = await WorshipRepository.instance.getPrayerTimesForDate(
           DateTime.now(),
@@ -486,7 +533,9 @@ class DashboardController {
           ? energyStr.toLowerCase()
           : EnergyModel.bandKey(currentEnergyPercent!);
       final energyBandLabel = currentEnergyPercent == null
-          ? (energyStr == 'LOW' ? 'پایین' : (energyStr == 'HIGH' ? 'بالا' : 'متوسط'))
+          ? (energyStr == 'LOW'
+                ? 'پایین'
+                : (energyStr == 'HIGH' ? 'بالا' : 'متوسط'))
           : currentEnergyLabel;
 
       // DailyBehavior (uses RIE gentle mode signal)
@@ -505,7 +554,8 @@ class DashboardController {
       );
 
       // Update foreground service Status Notification if enabled
-      final persistentNotifEnabled = settingsMap['persistent_status_notification_enabled'] != 'false';
+      final persistentNotifEnabled =
+          settingsMap['persistent_status_notification_enabled'] != 'false';
       if (persistentNotifEnabled) {
         await sl<NotificationPlatform>().startStatusMode(
           zone: actZoneName,
@@ -527,13 +577,14 @@ class DashboardController {
             .getOrRefresh()
             .timeout(const Duration(seconds: 6), onTimeout: () => briefing)
             .then((newBriefing) {
-          if (newBriefing != null) {
-            briefing = newBriefing;
-          }
-        }).catchError((e) {
-          debugPrint('[BRIEFING] background refresh note: $e');
-          return null;
-        }),
+              if (newBriefing != null) {
+                briefing = newBriefing;
+              }
+            })
+            .catchError((e) {
+              debugPrint('[BRIEFING] background refresh note: $e');
+              return null;
+            }),
       );
 
       await _buildModuleSummaries(db);
@@ -547,80 +598,124 @@ class DashboardController {
     final s = settingsMap;
     String fa(Object v) => toPersianDigits(v.toString());
 
-    // خواب — آخرین لاگ از bedtime_diagnostics
-    if (ModuleGate.instance.isEnabledFrom(s, 'module_sleep_enabled')) {
-      final rows = await db.query('bedtime_diagnostics', orderBy: 'date DESC', limit: 1);
-      if (rows.isNotEmpty) {
-        final log = SleepLog.fromMap(rows.first);
-        final h = log.durationMinutes ~/ 60;
-        final m = log.durationMinutes % 60;
-        out.add(DashboardModuleSummary(
-          moduleId: 'sleep', title: 'خواب',
-          icon: CupertinoIcons.moon_stars_fill, accentColor: const Color(0xff8B5CF6),
-          primary: '${fa(h)}:${fa(m.toString().padLeft(2, '0'))} ساعت',
-          secondary: 'کیفیت دیشب: ${log.quality.emoji} ${log.quality.label}',
-          backgroundImage: 'assets/images/sleep_card_top.png',
-        ));
+    // حال و تعادل — انرژی، خواب و بازتاب در یک نگاه
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_energy_enabled') ||
+        ModuleGate.instance.isEnabledFrom(s, 'module_sleep_enabled')) {
+      final rows = await db.query(
+        'bedtime_diagnostics',
+        orderBy: 'date DESC',
+        limit: 1,
+      );
+      final SleepLog? lastSleep = rows.isNotEmpty
+          ? SleepLog.fromMap(rows.first)
+          : null;
+
+      String primaryText;
+      String secondaryText;
+
+      if (currentEnergyPercent != null) {
+        primaryText = '${fa(currentEnergyPercent!.round())}٪ انرژی';
+        if (lastSleep != null) {
+          final h = lastSleep.durationMinutes ~/ 60;
+          final m = lastSleep.durationMinutes % 60;
+          secondaryText =
+              'خواب دیشب: ${fa(h)}:${fa(m.toString().padLeft(2, '0'))} · $currentEnergyLabel';
+        } else {
+          secondaryText = currentEnergyIsEstimated
+              ? 'تخمینی · سطح: $currentEnergyLabel'
+              : 'ثبت خودت · سطح: $currentEnergyLabel';
+        }
+      } else if (lastSleep != null) {
+        final h = lastSleep.durationMinutes ~/ 60;
+        final m = lastSleep.durationMinutes % 60;
+        primaryText = '${fa(h)}:${fa(m.toString().padLeft(2, '0'))} ساعت خواب';
+        secondaryText =
+            'کیفیت دیشب: ${lastSleep.quality.emoji} ${lastSleep.quality.label}';
       } else {
-        out.add(const DashboardModuleSummary(
-          moduleId: 'sleep', title: 'خواب',
-          icon: CupertinoIcons.moon_stars_fill, accentColor: Color(0xff8B5CF6),
-          primary: '—', secondary: 'هنوز خوابی ثبت نشده',
-          backgroundImage: 'assets/images/sleep_card_top.png',
-        ));
+        primaryText = '—';
+        secondaryText = 'انرژی، خواب و بازتاب در یک نگاه';
       }
+
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'wellbeing',
+          title: 'حال و تعادل',
+          icon: CupertinoIcons.waveform_path_ecg,
+          accentColor: const Color(0xff8B5CF6),
+          primary: primaryText,
+          secondary: secondaryText,
+          backgroundImage: 'assets/images/energy_card_top.png',
+        ),
+      );
     }
 
     // ورزش — جلسات و دقایق این هفته از workout_logs
-    if (ModuleGate.instance.isEnabledFrom(s, 'module_sports_enabled') || ModuleGate.instance.isEnabledFrom(s, 'module_supplementary_sports_enabled')) {
-      final weekAgo = DateTime.now().subtract(const Duration(days: 7)).millisecondsSinceEpoch;
-      final rows = await db.query('workout_logs', where: 'loggedAt >= ?', whereArgs: [weekAgo]);
+    if (ModuleGate.instance.isEnabledFrom(s, 'module_sports_enabled') ||
+        ModuleGate.instance.isEnabledFrom(
+          s,
+          'module_supplementary_sports_enabled',
+        )) {
+      final weekAgo = DateTime.now()
+          .subtract(const Duration(days: 7))
+          .millisecondsSinceEpoch;
+      final rows = await db.query(
+        'workout_logs',
+        where: 'loggedAt >= ?',
+        whereArgs: [weekAgo],
+      );
       final sessions = rows.length;
-      final minutes = rows.fold<int>(0, (a, r) => a + ((r['durationMinutes'] as int?) ?? 0));
-      out.add(DashboardModuleSummary(
-        moduleId: 'sports', title: 'ورزش',
-        icon: Icons.fitness_center, accentColor: const Color(0xff10B981),
-        primary: '${fa(sessions)} جلسه', secondary: 'این هفته: ${fa(minutes)} دقیقه',
-        backgroundImage: 'assets/images/sports_card_top.png',
-      ));
-    }
-
-    // انرژی و مود — از فیلدهای از قبل محاسبه‌شده‌ی کنترلر
-    if (ModuleGate.instance.isEnabledFrom(s, 'module_energy_enabled')) {
-      out.add(DashboardModuleSummary(
-        moduleId: 'energy', title: 'انرژی و مود',
-        icon: CupertinoIcons.bolt_fill, accentColor: const Color(0xffEC4899),
-        primary: currentEnergyPercent == null
-            ? '—'
-            : '${fa(currentEnergyPercent!.round())}٪',
-        secondary: currentEnergyPercent == null
-            ? 'هنوز داده‌ای برای تخمین نیست'
-            : (currentEnergyIsEstimated
-                ? 'تخمینی · سطح: $currentEnergyLabel'
-                : 'ثبت خودت · سطح: $currentEnergyLabel'),
-        backgroundImage: 'assets/images/energy_card_top.png',
-      ));
+      final minutes = rows.fold<int>(
+        0,
+        (a, r) => a + ((r['durationMinutes'] as int?) ?? 0),
+      );
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'sports',
+          title: 'ورزش',
+          icon: Icons.fitness_center,
+          accentColor: const Color(0xff10B981),
+          primary: '${fa(sessions)} جلسه',
+          secondary: 'این هفته: ${fa(minutes)} دقیقه',
+          backgroundImage: 'assets/images/sports_card_top.png',
+        ),
+      );
     }
 
     // دارو — پایبندی امروز از medicationRoutines + medicationCompletionsToday
     if (ModuleGate.instance.isEnabledFrom(s, 'module_medicine_enabled')) {
       final totalDoses = medicationRoutines.fold<int>(
-          0, (a, r) => a + (((r['maxDosesPerDay'] as int?) ?? 1) <= 0 ? 1 : ((r['maxDosesPerDay'] as int?) ?? 1)));
-      final taken = medicationCompletionsToday.values.fold<int>(0, (a, c) => a + c);
-      final pct = totalDoses > 0 ? ((taken / totalDoses) * 100).round().clamp(0, 100) : 0;
+        0,
+        (a, r) =>
+            a +
+            (((r['maxDosesPerDay'] as int?) ?? 1) <= 0
+                ? 1
+                : ((r['maxDosesPerDay'] as int?) ?? 1)),
+      );
+      final taken = medicationCompletionsToday.values.fold<int>(
+        0,
+        (a, c) => a + c,
+      );
+      final pct = totalDoses > 0
+          ? ((taken / totalDoses) * 100).round().clamp(0, 100)
+          : 0;
       final remaining = (totalDoses - taken) < 0 ? 0 : (totalDoses - taken);
-      out.add(DashboardModuleSummary(
-        moduleId: 'medicine', title: 'دارو',
-        icon: CupertinoIcons.bandage_fill, accentColor: const Color(0xffEF4444),
-        primary: '${fa(pct)}٪', secondary: 'پایبندی امروز · ${fa(remaining)} باقی‌مانده',
-        backgroundImage: 'assets/images/medicine_card_top.png',
-      ));
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'medicine',
+          title: 'دارو',
+          icon: CupertinoIcons.bandage_fill,
+          accentColor: const Color(0xffEF4444),
+          primary: '${fa(pct)}٪',
+          secondary: 'پایبندی امروز · ${fa(remaining)} باقی‌مانده',
+          backgroundImage: 'assets/images/medicine_card_top.png',
+        ),
+      );
     }
 
     // عبادت — تعداد قضاها از worshipDebts (نماز بعدی از prayerTimes اختیاری است)
     if (ModuleGate.instance.isEnabledFrom(s, 'module_religion_enabled')) {
       final debts = worshipDebts.length;
-      
+
       // استخراج نماز بعدی از prayerTimes
       var secondaryText = 'برنامهٔ عبادی';
       try {
@@ -631,10 +726,10 @@ class DashboardController {
         final dhuhrMin = TimeOfDayMinutes.tryParse(prayerTimes['dhuhr']);
         final maghribMin = TimeOfDayMinutes.tryParse(prayerTimes['maghrib']);
         final ishaMin = TimeOfDayMinutes.tryParse(prayerTimes['isha']);
-        
+
         String? nextName;
         String? nextTime;
-        
+
         if (fajrMin != null && currentMinutes < fajrMin) {
           nextName = 'اذان صبح';
           nextTime = prayerTimes['fajr'];
@@ -651,7 +746,7 @@ class DashboardController {
           nextName = 'اذان صبح فردا';
           nextTime = prayerTimes['fajr'];
         }
-        
+
         if (nextName != null && nextTime != null) {
           secondaryText = '$nextName: ${toPersianDigits(nextTime)}';
         }
@@ -659,64 +754,103 @@ class DashboardController {
         // fallback to default
       }
 
-      out.add(DashboardModuleSummary(
-        moduleId: 'worship', title: 'عبادت',
-        icon: CupertinoIcons.circle_grid_hex, accentColor: const Color(0xffFBBF24),
-        primary: debts > 0 ? '${fa(debts)} قضا' : 'به‌روز ✓',
-        secondary: secondaryText,
-        backgroundImage: 'assets/images/worship_card_top.png',
-      ));
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'worship',
+          title: 'عبادت',
+          icon: CupertinoIcons.circle_grid_hex,
+          accentColor: const Color(0xffFBBF24),
+          primary: debts > 0 ? '${fa(debts)} قضا' : 'به‌روز ✓',
+          secondary: secondaryText,
+          backgroundImage: 'assets/images/worship_card_top.png',
+        ),
+      );
     }
 
     // چرخه — فاز فعلی از cycleEngineOutput (فقط با رعایت حریم خصوصی و فعال بودن ماژول)
-    final isCycleEnabled = ModuleGate.instance.isEnabledFrom(s, 'module_cycle_enabled');
+    final isCycleEnabled = ModuleGate.instance.isEnabledFrom(
+      s,
+      'module_cycle_enabled',
+    );
     final isFemale = CyclePrivacyGuard.isVisible(s);
     final cycleConsent = s['cycle_consent_dashboard'] == 'true';
-    if (cycleEngineOutput != null && isCycleEnabled && isFemale && cycleConsent) {
+    if (cycleEngineOutput != null &&
+        isCycleEnabled &&
+        isFemale &&
+        cycleConsent) {
       final p = cycleEngineOutput!.currentPhase;
-      final label = p == CyclePhase.menstrual ? 'قاعدگی'
-          : p == CyclePhase.follicular ? 'فولیکولار'
-          : p == CyclePhase.ovulation ? 'تخمک‌گذاری' : 'لوتئال';
-      out.add(DashboardModuleSummary(
-        moduleId: 'cycle', title: 'چرخه بدن',
-        icon: CupertinoIcons.heart_fill, accentColor: const Color(0xffEC4899),
-        primary: label, secondary: 'فاز کنونی بدن',
-        backgroundImage: 'assets/images/cycle_card_top.png',
-      ));
+      final label = p == CyclePhase.menstrual
+          ? 'قاعدگی'
+          : p == CyclePhase.follicular
+          ? 'فولیکولار'
+          : p == CyclePhase.ovulation
+          ? 'تخمک‌گذاری'
+          : 'لوتئال';
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'cycle',
+          title: 'چرخه بدن',
+          icon: CupertinoIcons.heart_fill,
+          accentColor: const Color(0xffEC4899),
+          primary: label,
+          secondary: 'فاز کنونی بدن',
+          backgroundImage: 'assets/images/cycle_card_top.png',
+        ),
+      );
     }
 
     // اهداف — گام‌های امروز از todaysGoalSteps
     if (ModuleGate.instance.isEnabledFrom(s, 'module_goals_enabled')) {
       final total = todaysGoalSteps.length;
-      final done = todaysGoalSteps.where((g) =>
-          g['isCompleted'] == 1 || g['isCompleted'] == true || g['completedAt'] != null).length;
-      out.add(DashboardModuleSummary(
-        moduleId: 'goals', title: 'اهداف',
-        icon: CupertinoIcons.flag_fill, accentColor: const Color(0xffF59E0B),
-        primary: total > 0 ? '${fa(done)}/${fa(total)}' : '—',
-        secondary: 'گام‌های امروز',
-        backgroundImage: 'assets/images/konkur_card_top.png',
-      ));
+      final done = todaysGoalSteps
+          .where(
+            (g) =>
+                g['isCompleted'] == 1 ||
+                g['isCompleted'] == true ||
+                g['completedAt'] != null,
+          )
+          .length;
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'goals',
+          title: 'اهداف',
+          icon: CupertinoIcons.flag_fill,
+          accentColor: const Color(0xffF59E0B),
+          primary: total > 0 ? '${fa(done)}/${fa(total)}' : '—',
+          secondary: 'گام‌های امروز',
+          backgroundImage: 'assets/images/konkur_card_top.png',
+        ),
+      );
     }
 
     // دوره‌ها — جلسات مطالعهٔ امروز
     if (ModuleGate.instance.isEnabledFrom(s, 'module_courses_enabled')) {
-      out.add(DashboardModuleSummary(
-        moduleId: 'courses', title: 'دوره‌ها',
-        icon: CupertinoIcons.book_fill, accentColor: const Color(0xff3B82F6),
-        primary: '${fa(todaysCourseSessions.length)} جلسه', secondary: 'مطالعهٔ امروز',
-        backgroundImage: 'assets/images/courses_card_top.png',
-      ));
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'courses',
+          title: 'دوره‌ها',
+          icon: CupertinoIcons.book_fill,
+          accentColor: const Color(0xff3B82F6),
+          primary: '${fa(todaysCourseSessions.length)} جلسه',
+          secondary: 'مطالعهٔ امروز',
+          backgroundImage: 'assets/images/courses_card_top.png',
+        ),
+      );
     }
 
     // درس و مطالعه — مباحث امروز
     if (ModuleGate.instance.isEnabledFrom(s, 'module_study_enabled')) {
-      out.add(DashboardModuleSummary(
-        moduleId: 'konkur', title: 'درس و مطالعه',
-        icon: CupertinoIcons.book_fill, accentColor: const Color(0xff8B5CF6),
-        primary: '${fa(todaysKonkurPlanItems.length)} مبحث', secondary: 'برنامهٔ امروز',
-        backgroundImage: 'assets/images/goals_card_top.png',
-      ));
+      out.add(
+        DashboardModuleSummary(
+          moduleId: 'konkur',
+          title: 'درس و مطالعه',
+          icon: CupertinoIcons.book_fill,
+          accentColor: const Color(0xff8B5CF6),
+          primary: '${fa(todaysKonkurPlanItems.length)} مبحث',
+          secondary: 'برنامهٔ امروز',
+          backgroundImage: 'assets/images/goals_card_top.png',
+        ),
+      );
     }
 
     moduleSummaries = out;
@@ -731,25 +865,29 @@ class DashboardController {
     DateTime now,
   ) async {
     try {
-      final reflectionMaps =
-          await db.query('daily_reflections', orderBy: 'date DESC');
+      final reflectionMaps = await db.query(
+        'daily_reflections',
+        orderBy: 'date DESC',
+      );
       if (reflectionMaps.isEmpty) return null;
-      final checkinMaps =
-          await db.query('daily_checkins', orderBy: 'date DESC');
+      final checkinMaps = await db.query(
+        'daily_checkins',
+        orderBy: 'date DESC',
+      );
       final energyLogs = await db.query('energy_logs');
       final moodLogs = await db.query('mood_logs');
 
       final out = await RitmoEngineBus.instance
           .execute<ReflectionEngineInput, ReflectionEngineOutput>(
-        ReflectionEngine,
-        ReflectionEngineInput(
-          dailyReflections: reflectionMaps,
-          dailyCheckins: checkinMaps,
-          energyLogs: energyLogs,
-          moodLogs: moodLogs,
-          today: now,
-        ),
-      );
+            ReflectionEngine,
+            ReflectionEngineInput(
+              dailyReflections: reflectionMaps,
+              dailyCheckins: checkinMaps,
+              energyLogs: energyLogs,
+              moodLogs: moodLogs,
+              today: now,
+            ),
+          );
 
       // No entries inside the horizon → no actionable signal.
       if (out.entryCount == 0) return null;
@@ -790,8 +928,10 @@ class DashboardController {
 
       // P1-1: ساخت اسنپشات از همان Agenda — بدون هیچ کوئری اضافهٔ جدید.
       try {
-        todaySnapshot =
-            const DayAgendaSnapshotBuilder().buildSnapshot(dayAgenda, now: now);
+        todaySnapshot = const DayAgendaSnapshotBuilder().buildSnapshot(
+          dayAgenda,
+          now: now,
+        );
       } catch (e) {
         debugPrint('Error building today snapshot: $e');
         todaySnapshot = null;
@@ -806,11 +946,17 @@ class DashboardController {
       // Course sessions: Home shows only the not-yet-completed ones.
       todaysCourseSessions = agenda
           .where((i) => i.domain == AgendaDomain.course && !i.isCompleted)
-          .map((i) => CourseSession.fromMap(
-              Map<String, dynamic>.from(i.meta['session'] as Map)))
+          .map(
+            (i) => CourseSession.fromMap(
+              Map<String, dynamic>.from(i.meta['session'] as Map),
+            ),
+          )
           .toList();
       if (todaysCourseSessions.isNotEmpty &&
-          ModuleGate.instance.isEnabledFrom(settingsMap, 'module_courses_enabled')) {
+          ModuleGate.instance.isEnabledFrom(
+            settingsMap,
+            'module_courses_enabled',
+          )) {
         allCourses = await CoursesRepository.instance.getActiveCourses();
       } else {
         allCourses = [];
@@ -818,11 +964,16 @@ class DashboardController {
 
       // Konkur plan items: Home shows only PENDING.
       todaysKonkurPlanItems = agenda
-          .where((i) =>
-              i.domain == AgendaDomain.konkur &&
-              i.completion == AgendaCompletion.pending)
-          .map((i) => KonkurPlanItem.fromMap(
-              Map<String, dynamic>.from(i.meta['planItem'] as Map)))
+          .where(
+            (i) =>
+                i.domain == AgendaDomain.konkur &&
+                i.completion == AgendaCompletion.pending,
+          )
+          .map(
+            (i) => KonkurPlanItem.fromMap(
+              Map<String, dynamic>.from(i.meta['planItem'] as Map),
+            ),
+          )
           .toList();
       if (todaysKonkurPlanItems.isNotEmpty) {
         final repo = KonkurRepository.instance;
@@ -836,18 +987,18 @@ class DashboardController {
       // Cycle: the Home cycle widget needs the full engine output, which the
       // agenda only summarizes — compute it here under the same gates.
       final isFemale = CyclePrivacyGuard.isVisible(settingsMap);
-      final cycleEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_cycle_enabled');
+      final cycleEnabled = ModuleGate.instance.isEnabledFrom(
+        settingsMap,
+        'module_cycle_enabled',
+      );
       final dashboardConsent = settingsMap['cycle_consent_dashboard'] == 'true';
       final setupDone = settingsMap['cycle_setup_done'] == 'true';
       if (isFemale && cycleEnabled && dashboardConsent && setupDone) {
-        cycleEngineOutput = await RitmoEngineBus.instance.execute<CycleEngineInput, CycleEngineOutput>(
-          CycleEngine,
-          CycleEngineInput(
-            db: db,
-            appSettings: settingsMap,
-            now: now,
-          ),
-        );
+        cycleEngineOutput = await RitmoEngineBus.instance
+            .execute<CycleEngineInput, CycleEngineOutput>(
+              CycleEngine,
+              CycleEngineInput(db: db, appSettings: settingsMap, now: now),
+            );
       } else {
         cycleEngineOutput = null;
       }
@@ -936,8 +1087,7 @@ class DashboardController {
         if (eStart == null) continue;
         final eEnd = eStart + ((event['durationMinutes'] as int?) ?? 60);
         if (eStart < aEnd && aStart < eEnd) {
-          out[timed[a].id] =
-              (event['title'] as String?) ?? 'رویداد موقت';
+          out[timed[a].id] = (event['title'] as String?) ?? 'رویداد موقت';
         }
       }
     }
@@ -961,10 +1111,12 @@ class DashboardController {
     }
 
     final completedRoutineIds = completionsToday
-        .where((c) =>
-            c['resultType'] != 'SNOOZED' &&
-            c['resultType'] != 'CANNOT_NOW' &&
-            c['resultType'] != 'SKIPPED')
+        .where(
+          (c) =>
+              c['resultType'] != 'SNOOZED' &&
+              c['resultType'] != 'CANNOT_NOW' &&
+              c['resultType'] != 'SKIPPED',
+        )
         .map((c) => c['routineId'] as String)
         .toSet();
 
@@ -973,7 +1125,8 @@ class DashboardController {
       final routine = item.domain == AgendaDomain.routine
           ? _routinesById[item.sourceId]
           : null;
-      final isCompleted = item.isCompleted ||
+      final isCompleted =
+          item.isCompleted ||
           (routine != null && completedRoutineIds.contains(routine.id));
 
       cards.add(<String, dynamic>{
@@ -1013,8 +1166,9 @@ class DashboardController {
           int.tryParse(settingsMap['energy_validity_minutes'] ?? '180') ?? 180;
       final defaultLevel = settingsMap['default_energy_level'] ?? 'MEDIUM';
 
-      final windowStartMs =
-          now.subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+      final windowStartMs = now
+          .subtract(const Duration(days: 30))
+          .millisecondsSinceEpoch;
 
       final energyLogsRaw = await db.query(
         'energy_logs',
@@ -1022,8 +1176,7 @@ class DashboardController {
         whereArgs: [windowStartMs],
         orderBy: 'loggedAt DESC',
       );
-      final energyLogs =
-          energyLogsRaw.map(Map<String, dynamic>.from).toList();
+      final energyLogs = energyLogsRaw.map(Map<String, dynamic>.from).toList();
 
       final completionsRaw = await db.query(
         'routine_completions',
@@ -1037,15 +1190,17 @@ class DashboardController {
         return m;
       }).toList();
 
-      final threeHoursAgo =
-          now.subtract(const Duration(hours: 3)).millisecondsSinceEpoch;
+      final threeHoursAgo = now
+          .subtract(const Duration(hours: 3))
+          .millisecondsSinceEpoch;
       final recentCompletions = completions
           .where((c) => ((c['completionTime'] as int?) ?? 0) >= threeHoursAgo)
           .toList();
 
       // خواب دیشب — قبلاً کوئری میشد ولی هیچوقت در محاسبه استفاده نمیشد.
-      final oneDayAgo =
-          now.subtract(const Duration(hours: 24)).millisecondsSinceEpoch;
+      final oneDayAgo = now
+          .subtract(const Duration(hours: 24))
+          .millisecondsSinceEpoch;
       final sleepRows = await db.query(
         'bedtime_diagnostics',
         where: 'createdAt >= ?',
@@ -1077,8 +1232,9 @@ class DashboardController {
         energyLogs: energyLogs,
         completions: completions,
       );
-      mostProductiveWeekday =
-          EnergyModel.productiveWeekday(completions: completions);
+      mostProductiveWeekday = EnergyModel.productiveWeekday(
+        completions: completions,
+      );
 
       final trustworthy = estimate.isTrustworthy;
       currentEnergyPercent = trustworthy ? estimate.percent : null;
@@ -1119,7 +1275,11 @@ class DashboardController {
       );
       final hasActiveDebts = activeDebts.isNotEmpty;
 
-      final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
+      final results = await db.query(
+        'routines',
+        where: 'id = ?',
+        whereArgs: ['worship_debt_routine'],
+      );
       final now = DateTime.now().millisecondsSinceEpoch;
 
       if (results.isEmpty) {
@@ -1141,17 +1301,32 @@ class DashboardController {
         });
       } else {
         // Synchronize archive state with active debts
-        final isCurrentlyArchived = (results.first['isArchived'] as int? ?? 0) == 1;
+        final isCurrentlyArchived =
+            (results.first['isArchived'] as int? ?? 0) == 1;
         if (hasActiveDebts && isCurrentlyArchived) {
-          await db.update('routines', {'isArchived': 0, 'updatedAt': now}, where: 'id = ?', whereArgs: ['worship_debt_routine']);
+          await db.update(
+            'routines',
+            {'isArchived': 0, 'updatedAt': now},
+            where: 'id = ?',
+            whereArgs: ['worship_debt_routine'],
+          );
         } else if (!hasActiveDebts && !isCurrentlyArchived) {
-          await db.update('routines', {'isArchived': 1, 'updatedAt': now}, where: 'id = ?', whereArgs: ['worship_debt_routine']);
+          await db.update(
+            'routines',
+            {'isArchived': 1, 'updatedAt': now},
+            where: 'id = ?',
+            whereArgs: ['worship_debt_routine'],
+          );
         }
       }
 
       // If no active debts, also clean up any orphaned tasks for worship debt
       if (!hasActiveDebts) {
-        await db.delete('simple_tasks', where: "linkedRoutineId = 'worship_debt_routine' OR title = 'بدهی عبادی'");
+        await db.delete(
+          'simple_tasks',
+          where:
+              "linkedRoutineId = 'worship_debt_routine' OR title = 'بدهی عبادی'",
+        );
       }
     } catch (e) {
       _worshipDebtRoutineEnsured = false; // فقط در خطای واقعی اجازهٔ تلاش مجدد
@@ -1159,7 +1334,10 @@ class DashboardController {
     }
   }
 
-  Future<Map<String, dynamic>?> _resolveActiveZone(Database db, DateTime now) async {
+  Future<Map<String, dynamic>?> _resolveActiveZone(
+    Database db,
+    DateTime now,
+  ) async {
     // Check override settings first
     final overrideIdQuery = await db.query(
       'app_settings',
@@ -1175,10 +1353,16 @@ class DashboardController {
     if (overrideIdQuery.isNotEmpty && overrideUntilQuery.isNotEmpty) {
       final overrideId = overrideIdQuery.first['value'] as String?;
       final overrideUntilStr = overrideUntilQuery.first['value'] as String?;
-      if (overrideId != null && overrideId.isNotEmpty && overrideUntilStr != null) {
+      if (overrideId != null &&
+          overrideId.isNotEmpty &&
+          overrideUntilStr != null) {
         final overrideUntilMs = int.tryParse(overrideUntilStr) ?? 0;
         if (now.millisecondsSinceEpoch < overrideUntilMs) {
-          final zoneQuery = await db.query('zones', where: 'id = ?', whereArgs: [overrideId]);
+          final zoneQuery = await db.query(
+            'zones',
+            where: 'id = ?',
+            whereArgs: [overrideId],
+          );
           if (zoneQuery.isNotEmpty) {
             final zone = Map<String, dynamic>.from(zoneQuery.first);
             zone['isOverride'] = true;
@@ -1211,16 +1395,20 @@ class DashboardController {
       final endParts = endTimeStr.split(':');
       if (startParts.length != 2 || endParts.length != 2) continue;
       final startMin =
-          (int.tryParse(startParts[0]) ?? 0) * 60 + (int.tryParse(startParts[1]) ?? 0);
+          (int.tryParse(startParts[0]) ?? 0) * 60 +
+          (int.tryParse(startParts[1]) ?? 0);
       final endMin =
-          (int.tryParse(endParts[0]) ?? 0) * 60 + (int.tryParse(endParts[1]) ?? 0);
+          (int.tryParse(endParts[0]) ?? 0) * 60 +
+          (int.tryParse(endParts[1]) ?? 0);
 
       final crossesMidnight = startMin > endMin;
       // برای بازهٔ شبانه، ساعات بعد از شروع متعلق به «همین روز» و ساعات قبل از
       // پایان متعلق به «روز قبل» است.
       final prevWeekday = weekday == 1 ? 7 : weekday - 1;
       final dayMatches = crossesMidnight
-          ? (currentMinutes >= startMin ? days.contains(weekday) : days.contains(prevWeekday))
+          ? (currentMinutes >= startMin
+                ? days.contains(weekday)
+                : days.contains(prevWeekday))
           : days.contains(weekday);
       if (!dayMatches) continue;
 
@@ -1246,8 +1434,11 @@ class DashboardController {
         return (a['zoneId'] as String).compareTo(b['zoneId'] as String);
       });
       final chosen = matches.first;
-      final zoneQuery = await db.query('zones',
-          where: 'id = ?', whereArgs: [chosen['zoneId']]);
+      final zoneQuery = await db.query(
+        'zones',
+        where: 'id = ?',
+        whereArgs: [chosen['zoneId']],
+      );
       if (zoneQuery.isNotEmpty) {
         final zone = Map<String, dynamic>.from(zoneQuery.first);
         zone['startTime'] = chosen['startTime'];
@@ -1258,4 +1449,3 @@ class DashboardController {
     return null;
   }
 }
-

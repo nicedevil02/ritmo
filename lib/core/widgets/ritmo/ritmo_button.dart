@@ -26,6 +26,7 @@ class RitmoPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final canPress = isEnabled && !isLoading && onPressed != null;
 
     final childWidget = Row(
@@ -41,20 +42,26 @@ class RitmoPrimaryButton extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(colors.onPrimary),
             ),
           ),
-          const SizedBox(width: RitmoSpacing.sm),
+          SizedBox(width: m.spaceSm),
         ] else if (icon != null) ...[
-          Icon(icon, size: 20, color: colors.onPrimary),
-          const SizedBox(width: RitmoSpacing.sm),
+          Icon(icon, size: m.iconMd, color: colors.onPrimary),
+          SizedBox(width: m.spaceSm),
         ],
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: colors.onPrimary,
-            fontFamily: 'Vazirmatn',
-            height: 1.3,
-          ),
+          style:
+              context.t.labelLarge?.copyWith(
+                color: colors.onPrimary,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ) ??
+              TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.onPrimary,
+                fontFamily: 'Vazirmatn',
+                height: 1.3,
+              ),
         ),
       ],
     );
@@ -68,17 +75,14 @@ class RitmoPrimaryButton extends StatelessWidget {
           : null,
       color: canPress ? colors.primary : colors.disabled,
       disabledColor: colors.disabled,
-      height: 48,
+      height: m.touchTarget,
       minWidth: fullWidth ? double.infinity : 120,
       elevation: 0,
       highlightElevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
+        borderRadius: BorderRadius.circular(m.radiusField),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.lg,
-        vertical: RitmoSpacing.md,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceMd),
       child: childWidget,
     );
 
@@ -108,24 +112,31 @@ class RitmoSecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     final childWidget = Row(
       mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 18, color: colors.primary),
-          const SizedBox(width: RitmoSpacing.sm),
+          Icon(icon, size: m.iconSm, color: colors.primary),
+          SizedBox(width: m.spaceSm),
         ],
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: colors.primary,
-            fontFamily: 'Vazirmatn',
-            height: 1.3,
-          ),
+          style:
+              context.t.labelLarge?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ) ??
+              TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.primary,
+                fontFamily: 'Vazirmatn',
+                height: 1.3,
+              ),
         ),
       ],
     );
@@ -138,12 +149,12 @@ class RitmoSecondaryButton extends StatelessWidget {
             }
           : null,
       style: OutlinedButton.styleFrom(
-        minimumSize: Size(fullWidth ? double.infinity : 100, 48),
+        minimumSize: Size(fullWidth ? double.infinity : 100, m.touchTarget),
         side: BorderSide(color: colors.border),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+        padding: EdgeInsets.symmetric(horizontal: m.spaceLg),
       ),
       child: childWidget,
     );
@@ -169,6 +180,7 @@ class RitmoIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     final iconBtn = IconButton(
       icon: Icon(icon, size: size, color: color ?? colors.textPrimary),
@@ -179,7 +191,10 @@ class RitmoIconButton extends StatelessWidget {
             }
           : null,
       tooltip: tooltip,
-      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+      constraints: BoxConstraints(
+        minWidth: m.touchTarget,
+        minHeight: m.touchTarget,
+      ),
     );
 
     return iconBtn;

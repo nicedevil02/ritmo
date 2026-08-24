@@ -22,7 +22,7 @@ class RitmoScreen extends StatelessWidget {
     this.floatingActionButton,
     this.bottomNavigationBar,
     this.collapsingHeader = true,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = const EdgeInsets.symmetric(horizontal: 14),
     this.bottomInsetPadding = 96,
   });
 

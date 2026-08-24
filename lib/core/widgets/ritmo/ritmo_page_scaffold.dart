@@ -11,7 +11,7 @@ class RitmoPageScaffold extends StatelessWidget {
     this.appBar,
     this.bottomNavigationBar,
     this.floatingActionButton,
-    this.padding = const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+    this.padding = EdgeInsets.zero,
     this.resizeToAvoidBottomInset = true,
   });
 

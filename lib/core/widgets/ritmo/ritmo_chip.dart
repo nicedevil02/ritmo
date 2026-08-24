@@ -23,6 +23,7 @@ class RitmoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final activeColor = color ?? colors.primary;
 
     return GestureDetector(
@@ -32,9 +33,9 @@ class RitmoChip extends StatelessWidget {
       },
       child: AnimatedContainer(
         duration: RitmoMotion.state,
-        padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.md,
-          vertical: RitmoSpacing.xs + 2,
+        padding: EdgeInsets.symmetric(
+          horizontal: m.spaceMd,
+          vertical: m.spaceXs + 2,
         ),
         decoration: BoxDecoration(
           color: isSelected
@@ -52,19 +53,24 @@ class RitmoChip extends StatelessWidget {
             if (icon != null) ...[
               Icon(
                 icon,
-                size: 14,
+                size: m.iconSm,
                 color: isSelected ? activeColor : colors.textSecondary,
               ),
-              const SizedBox(width: RitmoSpacing.xs),
+              SizedBox(width: m.spaceXs),
             ],
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected ? activeColor : colors.textSecondary,
-                fontFamily: 'Vazirmatn',
-              ),
+              style:
+                  context.t.labelMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected ? activeColor : colors.textSecondary,
+                  ) ??
+                  TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected ? activeColor : colors.textSecondary,
+                    fontFamily: 'Vazirmatn',
+                  ),
             ),
           ],
         ),

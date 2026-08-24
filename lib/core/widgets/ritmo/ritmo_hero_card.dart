@@ -28,7 +28,7 @@ class RitmoHeroCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(RitmoRadius.hero),
+        borderRadius: BorderRadius.circular(context.metrics.radiusHero),
         border: Border.all(
           color: isDark ? colors.border : accentColor.withValues(alpha: 0.25),
           width: 1.0,

@@ -28,7 +28,7 @@ class RitmoCard extends StatelessWidget {
     final isDark = context.isDark;
 
     final effectiveRadius =
-        borderRadius ?? BorderRadius.circular(RitmoRadius.card);
+        borderRadius ?? BorderRadius.circular(context.metrics.radiusCard);
 
     final cardContent = Container(
       padding: padding,

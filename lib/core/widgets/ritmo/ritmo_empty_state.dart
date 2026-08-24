@@ -24,44 +24,55 @@ class RitmoEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     return Padding(
-      padding: const EdgeInsets.all(RitmoSpacing.xxxl),
+      padding: EdgeInsets.all(m.spaceXxxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(RitmoSpacing.xl),
+            padding: EdgeInsets.all(m.spaceXl),
             decoration: BoxDecoration(
               color: colors.primaryContainer.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 48, color: colors.primary),
           ),
-          const SizedBox(height: RitmoSpacing.xl),
+          SizedBox(height: m.spaceXl),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              fontFamily: 'Vazirmatn',
-            ),
+            style:
+                context.t.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ) ??
+                TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                  fontFamily: 'Vazirmatn',
+                ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: RitmoSpacing.sm),
+          SizedBox(height: m.spaceSm),
           Text(
             description,
-            style: TextStyle(
-              fontSize: 13,
-              color: colors.textSecondary,
-              height: 1.6,
-              fontFamily: 'Vazirmatn',
-            ),
+            style:
+                context.t.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.6,
+                ) ??
+                TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.6,
+                  fontFamily: 'Vazirmatn',
+                ),
             textAlign: TextAlign.center,
           ),
           if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: RitmoSpacing.xl),
+            SizedBox(height: m.spaceXl),
             RitmoPrimaryButton(
               label: actionLabel!,
               onPressed: onAction,

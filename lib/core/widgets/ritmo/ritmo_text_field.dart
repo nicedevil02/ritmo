@@ -37,6 +37,7 @@ class RitmoTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     return TextFormField(
       controller: controller,
@@ -47,45 +48,53 @@ class RitmoTextField extends StatelessWidget {
       onFieldSubmitted: onSubmitted,
       maxLines: maxLines,
       enabled: enabled,
-      style: TextStyle(
-        fontSize: 15,
-        color: colors.textPrimary,
-        fontFamily: 'Vazirmatn',
-      ),
+      style:
+          context.t.bodyLarge?.copyWith(color: colors.textPrimary) ??
+          TextStyle(
+            fontSize: 15,
+            color: colors.textPrimary,
+            fontFamily: 'Vazirmatn',
+          ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(
-          color: colors.textSecondary,
-          fontSize: 13,
-          fontFamily: 'Vazirmatn',
-        ),
+        labelStyle:
+            context.t.bodySmall?.copyWith(color: colors.textSecondary) ??
+            TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13,
+              fontFamily: 'Vazirmatn',
+            ),
         hintText: hint,
-        hintStyle: TextStyle(
-          color: colors.textTertiary,
-          fontSize: 13,
-          fontFamily: 'Vazirmatn',
-        ),
+        hintStyle:
+            context.t.bodySmall?.copyWith(color: colors.textTertiary) ??
+            TextStyle(
+              color: colors.textTertiary,
+              fontSize: 13,
+              fontFamily: 'Vazirmatn',
+            ),
         errorText: errorText,
-        errorStyle: TextStyle(
-          color: colors.error,
-          fontSize: 11,
-          fontFamily: 'Vazirmatn',
-        ),
+        errorStyle:
+            context.t.labelSmall?.copyWith(color: colors.error) ??
+            TextStyle(
+              color: colors.error,
+              fontSize: 11,
+              fontFamily: 'Vazirmatn',
+            ),
         prefixIcon: icon != null
-            ? Icon(icon, color: colors.primary, size: 20)
+            ? Icon(icon, color: colors.primary, size: m.iconMd)
             : null,
         filled: true,
         fillColor: colors.surfaceSunken,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
       ),

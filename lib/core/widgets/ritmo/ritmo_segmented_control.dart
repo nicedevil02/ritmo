@@ -19,12 +19,13 @@ class RitmoSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.xs),
+      padding: EdgeInsets.all(m.spaceXs),
       decoration: BoxDecoration(
         color: colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(RitmoRadius.field),
+        borderRadius: BorderRadius.circular(m.radiusField),
         border: Border.all(color: colors.border),
       ),
       child: Row(
@@ -41,22 +42,35 @@ class RitmoSegmentedControl<T> extends StatelessWidget {
                 duration: RitmoMotion.state,
                 curve: RitmoMotion.enter,
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+                padding: EdgeInsets.symmetric(vertical: m.spaceSm),
                 decoration: BoxDecoration(
                   color: isSelected ? colors.surface : Colors.transparent,
-                  borderRadius: BorderRadius.circular(RitmoRadius.field - 2),
+                  borderRadius: BorderRadius.circular(m.radiusField - 2),
                   boxShadow: isSelected && !context.isDark
                       ? RitmoElevation.cardLight
                       : RitmoElevation.none,
                 ),
                 child: Text(
                   entry.value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                    color: isSelected ? colors.primary : colors.textSecondary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                  style:
+                      context.t.labelMedium?.copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: isSelected
+                            ? colors.primary
+                            : colors.textSecondary,
+                      ) ??
+                      TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: isSelected
+                            ? colors.primary
+                            : colors.textSecondary,
+                        fontFamily: 'Vazirmatn',
+                      ),
                 ),
               ),
             ),

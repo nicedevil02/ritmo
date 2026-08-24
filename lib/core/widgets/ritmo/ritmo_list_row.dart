@@ -30,15 +30,13 @@ class RitmoListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     final content = Padding(
       padding: padding,
       child: Row(
         children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: RitmoSpacing.md),
-          ],
+          if (leading != null) ...[leading!, SizedBox(width: m.spaceMd)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,36 +44,45 @@ class RitmoListRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textPrimary,
-                    fontFamily: 'Vazirmatn',
-                  ),
+                  style:
+                      context.t.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: colors.textPrimary,
+                      ) ??
+                      TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textPrimary,
+                        fontFamily: 'Vazirmatn',
+                      ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                      fontFamily: 'Vazirmatn',
-                    ),
+                    style:
+                        context.t.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ) ??
+                        TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                          fontFamily: 'Vazirmatn',
+                        ),
                   ),
                 ],
               ],
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: RitmoSpacing.md),
+            SizedBox(width: m.spaceMd),
             trailing!,
           ] else if (onTap != null) ...[
-            const SizedBox(width: RitmoSpacing.md),
+            SizedBox(width: m.spaceMd),
             Icon(
               Icons.chevron_left_rounded,
               color: colors.textTertiary,
-              size: 20,
+              size: m.iconMd,
             ),
           ],
         ],

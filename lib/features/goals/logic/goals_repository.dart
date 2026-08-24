@@ -204,7 +204,7 @@ class GoalsRepository {
     currentVisited.add(goalId);
 
     final steps = await txn.query('goal_steps', where: 'goalId = ?', whereArgs: [goalId]);
-    final subGoals = await txn.query('goals', where: 'parentGoalId = ? AND status != "ABANDONED"', whereArgs: [goalId]);
+    final subGoals = await txn.query('goals', where: 'parentGoalId = ? AND status != ?', whereArgs: [goalId, 'ABANDONED']);
 
     final allStepsDone = steps.every((s) => s['isCompleted'] == 1);
     final allSubGoalsDone = subGoals.every((g) => g['status'] == 'COMPLETED');

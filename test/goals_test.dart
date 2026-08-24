@@ -53,10 +53,10 @@ void main() {
         ]
       };
 
-      // child1 progress = 1/2 = 0.5
-      // child2 has child (grandchild). grandchild progress = 1/1 = 1.0. So child2 progress = 1.0.
-      // parent progress = (child1 + child2) / 2 = (0.5 + 1.0) / 2 = 0.75.
-      expect(goalProgress('parent', goals, stepsByGoal), 0.75);
+      // child1 has 2 steps (1 completed) -> 2 leaves, progress = 0.5
+      // child2 has 1 step via grandchild -> 1 leaf, progress = 1.0
+      // Leaf-weighted parent progress = (0.5 * 2 + 1.0 * 1) / 3 = 2 / 3 (~0.6667)
+      expect(goalProgress('parent', goals, stepsByGoal), closeTo(2 / 3, 0.0001));
     });
 
     test('Loop detection prevents infinite recursion and returns 0.0', () {

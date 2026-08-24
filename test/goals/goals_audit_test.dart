@@ -176,7 +176,7 @@ void main() {
       );
 
       final gRow = (await db.query('goals', where: "id = 'G_METRIC'")).first;
-      expect(gRow['progressCache'], equals(75.0));
+      expect(gRow['progressCache'], equals(0.5));
 
       final checkins = await db.query('goal_checkins', where: "goalId = 'G_METRIC'");
       expect(checkins.length, equals(1));

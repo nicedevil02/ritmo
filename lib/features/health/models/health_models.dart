@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 export 'medication_models.dart';
 
@@ -291,6 +292,15 @@ class BloodSugarStats {
   }
 }
 
+enum BloodPressureCategory {
+  hypotension,
+  normal,
+  elevated,
+  stage1,
+  stage2,
+  crisis,
+}
+
 class BloodPressureLog { // epoch ms
 
   BloodPressureLog({
@@ -325,20 +335,103 @@ class BloodPressureLog { // epoch ms
   final String? note;
   final int loggedAt;
 
-  String get stageLabel {
-    if (systolic > 180 || diastolic > 120) {
-      return 'بحران فشار خون';
+  BloodPressureCategory get category {
+    if (systolic >= 180 || diastolic >= 120) {
+      return BloodPressureCategory.crisis;
     }
     if (systolic >= 140 || diastolic >= 90) {
-      return 'فشار خون مرحله ۲';
+      return BloodPressureCategory.stage2;
     }
     if ((systolic >= 130 && systolic <= 139) || (diastolic >= 80 && diastolic <= 89)) {
-      return 'فشار خون مرحله ۱';
+      return BloodPressureCategory.stage1;
     }
     if (systolic >= 120 && systolic <= 129 && diastolic < 80) {
-      return 'پیش فشار خون';
+      return BloodPressureCategory.elevated;
     }
-    return 'نرمال';
+    if (systolic < 90 || diastolic < 60) {
+      return BloodPressureCategory.hypotension;
+    }
+    return BloodPressureCategory.normal;
+  }
+
+  String get stageLabel {
+    switch (category) {
+      case BloodPressureCategory.crisis:
+        return 'بحران فشار خون';
+      case BloodPressureCategory.stage2:
+        return 'پرفشاری مرحله ۲';
+      case BloodPressureCategory.stage1:
+        return 'پرفشاری مرحله ۱';
+      case BloodPressureCategory.elevated:
+        return 'افزایش‌یافته (پیش‌فشار)';
+      case BloodPressureCategory.hypotension:
+        return 'افت فشار خون';
+      case BloodPressureCategory.normal:
+        return 'نرمال و سلامت';
+    }
+  }
+
+  Color get stageColor {
+    switch (category) {
+      case BloodPressureCategory.crisis:
+        return const Color(0xFFDC2626); // Crimson
+      case BloodPressureCategory.stage2:
+        return const Color(0xFFF43F5E); // Rose Red
+      case BloodPressureCategory.stage1:
+        return const Color(0xFFF97316); // Orange
+      case BloodPressureCategory.elevated:
+        return const Color(0xFFF59E0B); // Amber
+      case BloodPressureCategory.hypotension:
+        return const Color(0xFF06B6D4); // Cyan
+      case BloodPressureCategory.normal:
+        return const Color(0xFF10B981); // Emerald Green
+    }
+  }
+
+  int get pulsePressure => systolic - diastolic;
+
+  String get pulsePressureLabel {
+    final pp = pulsePressure;
+    if (pp < 30) return 'پایین (ریسک نارسایی)';
+    if (pp <= 50) return 'ایده‌آل و منعطف';
+    if (pp <= 60) return 'کمی بالا';
+    return 'بالا (سفتی عروق)';
+  }
+
+  Color get pulsePressureColor {
+    final pp = pulsePressure;
+    if (pp >= 30 && pp <= 50) return const Color(0xFF10B981);
+    if (pp <= 60) return const Color(0xFFF59E0B);
+    return const Color(0xFFF43F5E);
+  }
+
+  double get meanArterialPressure => diastolic + ((systolic - diastolic) / 3.0);
+
+  String get mapLabel {
+    final map = meanArterialPressure;
+    if (map < 70) return 'پرفیوژن ناکافی';
+    if (map <= 100) return 'خون‌رسانی بهینه';
+    return 'فشار شریانی بالا';
+  }
+
+  Color get mapColor {
+    final map = meanArterialPressure;
+    if (map >= 70 && map <= 100) return const Color(0xFF10B981);
+    if (map < 70) return const Color(0xFF06B6D4);
+    return const Color(0xFFF97316);
+  }
+
+  bool get isMorningLog {
+    final dt = DateTime.fromMillisecondsSinceEpoch(loggedAt);
+    return dt.hour >= 5 && dt.hour < 12;
+  }
+
+  String get daypartLabel {
+    final dt = DateTime.fromMillisecondsSinceEpoch(loggedAt);
+    final hour = dt.hour;
+    if (hour >= 5 && hour < 12) return 'صبح';
+    if (hour >= 12 && hour < 18) return 'عصر';
+    return 'شب';
   }
 
   Map<String, dynamic> toMap() {
@@ -352,6 +445,159 @@ class BloodPressureLog { // epoch ms
       'note': note,
       'loggedAt': loggedAt,
     };
+  }
+}
+
+class BloodPressureStats {
+  const BloodPressureStats({
+    required this.averageSystolic,
+    required this.averageDiastolic,
+    this.averagePulse,
+    required this.averageMAP,
+    required this.averagePulsePressure,
+    required this.minSystolic,
+    required this.maxSystolic,
+    required this.minDiastolic,
+    required this.maxDiastolic,
+    required this.totalCount,
+    required this.inRangePercentage,
+    required this.stage1Percentage,
+    required this.stage2Percentage,
+    required this.crisisPercentage,
+    required this.hypotensionPercentage,
+    this.morningAverageSys,
+    this.eveningAverageSys,
+    required this.morningSurgeDetected,
+    required this.systolicVariabilitySD,
+  });
+
+  final double averageSystolic;
+  final double averageDiastolic;
+  final double? averagePulse;
+  final double averageMAP;
+  final double averagePulsePressure;
+  final int minSystolic;
+  final int maxSystolic;
+  final int minDiastolic;
+  final int maxDiastolic;
+  final int totalCount;
+  final double inRangePercentage;
+  final double stage1Percentage;
+  final double stage2Percentage;
+  final double crisisPercentage;
+  final double hypotensionPercentage;
+  final double? morningAverageSys;
+  final double? eveningAverageSys;
+  final bool morningSurgeDetected;
+  final double systolicVariabilitySD;
+
+  static BloodPressureStats? compute(List<BloodPressureLog> logs) {
+    if (logs.isEmpty) return null;
+
+    int sysSum = 0;
+    int diaSum = 0;
+    int pulseSum = 0;
+    int pulseCount = 0;
+
+    int minS = logs.first.systolic;
+    int maxS = logs.first.systolic;
+    int minD = logs.first.diastolic;
+    int maxD = logs.first.diastolic;
+
+    int inRangeCount = 0;
+    int stage1Count = 0;
+    int stage2Count = 0;
+    int crisisCount = 0;
+    int hypotensionCount = 0;
+
+    int morningSysSum = 0;
+    int morningCount = 0;
+    int eveningSysSum = 0;
+    int eveningCount = 0;
+
+    for (final log in logs) {
+      sysSum += log.systolic;
+      diaSum += log.diastolic;
+
+      if (log.systolic < minS) minS = log.systolic;
+      if (log.systolic > maxS) maxS = log.systolic;
+      if (log.diastolic < minD) minD = log.diastolic;
+      if (log.diastolic > maxD) maxD = log.diastolic;
+
+      if (log.pulse != null) {
+        pulseSum += log.pulse!;
+        pulseCount++;
+      }
+
+      switch (log.category) {
+        case BloodPressureCategory.normal:
+        case BloodPressureCategory.elevated:
+          inRangeCount++;
+        case BloodPressureCategory.stage1:
+          stage1Count++;
+        case BloodPressureCategory.stage2:
+          stage2Count++;
+        case BloodPressureCategory.crisis:
+          crisisCount++;
+        case BloodPressureCategory.hypotension:
+          hypotensionCount++;
+      }
+
+      if (log.isMorningLog) {
+        morningSysSum += log.systolic;
+        morningCount++;
+      } else {
+        eveningSysSum += log.systolic;
+        eveningCount++;
+      }
+    }
+
+    final avgSys = sysSum / logs.length;
+    final avgDia = diaSum / logs.length;
+    final avgPulse = pulseCount > 0 ? (pulseSum / pulseCount) : null;
+    final avgMap = avgDia + ((avgSys - avgDia) / 3.0);
+    final avgPP = avgSys - avgDia;
+
+    final inRangePct = (inRangeCount / logs.length) * 100;
+    final stage1Pct = (stage1Count / logs.length) * 100;
+    final stage2Pct = (stage2Count / logs.length) * 100;
+    final crisisPct = (crisisCount / logs.length) * 100;
+    final hypotensionPct = (hypotensionCount / logs.length) * 100;
+
+    final morningAvgSys = morningCount > 0 ? (morningSysSum / morningCount) : null;
+    final eveningAvgSys = eveningCount > 0 ? (eveningSysSum / eveningCount) : null;
+
+    final morningSurge = morningAvgSys != null &&
+        eveningAvgSys != null &&
+        (morningAvgSys - eveningAvgSys) >= 15.0;
+
+    double sumSquaredDiff = 0;
+    for (final log in logs) {
+      sumSquaredDiff += (log.systolic - avgSys) * (log.systolic - avgSys);
+    }
+    final sd = math.sqrt(sumSquaredDiff / logs.length);
+
+    return BloodPressureStats(
+      averageSystolic: avgSys,
+      averageDiastolic: avgDia,
+      averagePulse: avgPulse,
+      averageMAP: avgMap,
+      averagePulsePressure: avgPP,
+      minSystolic: minS,
+      maxSystolic: maxS,
+      minDiastolic: minD,
+      maxDiastolic: maxD,
+      totalCount: logs.length,
+      inRangePercentage: inRangePct,
+      stage1Percentage: stage1Pct,
+      stage2Percentage: stage2Pct,
+      crisisPercentage: crisisPct,
+      hypotensionPercentage: hypotensionPct,
+      morningAverageSys: morningAvgSys,
+      eveningAverageSys: eveningAvgSys,
+      morningSurgeDetected: morningSurge,
+      systolicVariabilitySD: sd,
+    );
   }
 }
 

@@ -917,10 +917,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
                         children: [
                           CycleSegmentedTabs(
                             activeTab: _activeTab,
@@ -929,34 +926,38 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             settings: _settings,
                             activeThemeColor: _getActivePhaseColor(context),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
-                                _dataQualityReport != null)
+                                _dataQualityReport != null) ...[
                               CyclePredictionConfidenceCard(
                                 confidence: _predictionConfidence!,
                                 dataQuality: _dataQualityReport!,
                               ),
-                            const SizedBox(height: 16),
-                            if (_burdenScore != null && _adaptiveAdvice != null)
+                              const SizedBox(height: 8),
+                            ],
+                            if (_burdenScore != null && _adaptiveAdvice != null) ...[
                               CycleBurdenCard(
                                 burden: _burdenScore!,
                                 advice: _adaptiveAdvice!,
                               ),
-                            const SizedBox(height: 16),
-                            if (_personalForecasts.isNotEmpty)
+                              const SizedBox(height: 8),
+                            ],
+                            if (_personalForecasts.isNotEmpty) ...[
                               CyclePersonalForecastCard(
                                 forecasts: _personalForecasts,
                               ),
-                            const SizedBox(height: 16),
-                            if (_engineOutput != null)
+                              const SizedBox(height: 8),
+                            ],
+                            if (_engineOutput != null) ...[
                               CycleSosSection(
                                 engineOutput: _engineOutput,
                                 dayLogs: _dayLogs,
                                 settings: _settings,
                                 phase: _engineOutput!.currentPhase,
                               ),
-                            const SizedBox(height: 16),
+                              const SizedBox(height: 8),
+                            ],
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
                               periods: _periods,
@@ -977,7 +978,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                     )
                                   : null,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             CycleCalendarView(
                               calendarMonth: _calendarMonth,
                               onMonthChanged: (m) async {
@@ -1023,7 +1024,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             CycleHistoryList(
                               periods: _periods,
                               onAddNewPeriod: () => _openAddEditPeriodSheet(),
@@ -1058,7 +1059,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                               onReloadData: _loadData,
                             ),
                           ],
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),

@@ -87,8 +87,10 @@ RitmoSheetScaffold.present(
 
 ---
 
-## ۵. سیاست مقیاس متن (Text Scaling Policy)
+## ۵. سیاست مقیاس متن و چگالی المان‌ها (Text & Density Scaling Policy)
 
-- مبدأ تعیین سقف و کف مجاز: `RitmoBreakpoints.supportedMinTextScale` و `RitmoBreakpoints.supportedMaxTextScale`.
-- در فازهای ۰ تا ۴ سقف روی ۱.۳ نگه‌داشته می‌شود و در فاز ۵ پس از اصلاح تمام چیدمان‌ها به ۱.۶ ارتقا می‌یابد.
-- اعمال سرتاسری در [`lib/main.dart`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/lib/main.dart) با `MediaQuery.copyWith(textScaler: ...)` انجام می‌پذیرد.
+- مبدأ تعیین سقف و کف مجاز: `RitmoBreakpoints.supportedMinTextScale` (۰.۸۵) و `RitmoBreakpoints.supportedMaxTextScale` (۱.۶۰).
+- دو محور مستقل مقیاس:
+  ۱. **اندازهٔ متن (`ui_text_scale`):** منحصراً از طریق `MaterialApp.builder` به `MediaQuery.textScaler` تزریق می‌شود و شامل ۶ پله استاندارد (۸۵٪ تا ۱۴۰٪) با قابلیت پیروی از مقیاس سیستم‌عامل (`ui_text_follow_os`).
+  ۲. **چگالی المان‌ها (`ui_density`):** فواصل، اهداف لمس و رادیوس‌ها را از طریق اکستنشن `RitmoMetrics` و `VisualDensity` در تم مدیریت می‌کند.
+- تمام ویجت‌های سفارشی و بوم‌های ترسیمی با `FittedBox` یا `context.metrics` محافظت شده‌اند تا در سقف ۱.۶۰x بدون سرریز رندر شوند.

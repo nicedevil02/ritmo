@@ -58,6 +58,7 @@ class JourneyAgendaView extends StatefulWidget {
 
 class _JourneyAgendaViewState extends State<JourneyAgendaView> {
   final Set<String> _expandedSeriesKeys = <String>{};
+  bool _isOverdueCollapsed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +111,9 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
     // 2. Bucket slivers
     for (final bucket in activeBuckets) {
       final items = bucketed[bucket]!;
+      final isOverdueBucket = bucket == AgendaBucket.overdue;
+      final isCollapsed = isOverdueBucket && _isOverdueCollapsed;
+
       final shouldCompress = compressEnabled &&
           (bucket == AgendaBucket.thisWeek ||
            bucket == AgendaBucket.nextWeek ||
@@ -127,65 +131,72 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
         slivers.add(_BucketHeaderSliver(
           bucket: bucket,
           countText: countText,
-          isOverdue: bucket == AgendaBucket.overdue,
+          isOverdue: isOverdueBucket,
+          isCollapsible: isOverdueBucket,
+          isCollapsed: isCollapsed,
+          onToggleCollapse: isOverdueBucket
+              ? () => setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+              : null,
         ));
 
-        // Render Singles grouped by date
-        if (singles.isNotEmpty) {
-          final groupedSingles = groupByDate(singles);
-          final sortedDates = groupedSingles.keys.toList()..sort();
-          for (final dateStr in sortedDates) {
-            final dayItems = _sortItems(groupedSingles[dateStr]!);
-            slivers.add(_DaySubGroupHeader(dateStr: dateStr));
-            slivers.add(_ItemsSliver(
-              items: dayItems,
-              onItemTap: widget.onItemTap,
-              onPostponeItem: widget.onPostponeItem,
-              onDoneItem: widget.onDoneItem,
-            ));
-          }
-        }
-
-        // Render Series groups
-        if (seriesList.isNotEmpty) {
-          slivers.add(SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  RitmoSpacing.xl, RitmoSpacing.md, RitmoSpacing.xl, 4),
-              child: Text(
-                'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
-                style: TextStyle(
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                ),
-              ),
-            ),
-          ));
-
-          for (final series in seriesList) {
-            final seriesKey = series.representative.recurrenceKey;
-            final isExpanded = _expandedSeriesKeys.contains(seriesKey);
-
-            slivers.add(SliverToBoxAdapter(
-              child: _RecurringGroupRow(
-                key: ValueKey('series_$seriesKey'),
-                series: series,
-                isExpanded: isExpanded,
-                onToggleExpand: () {
-                  setState(() {
-                    if (isExpanded) {
-                      _expandedSeriesKeys.remove(seriesKey);
-                    } else {
-                      _expandedSeriesKeys.add(seriesKey);
-                    }
-                  });
-                },
+        if (!isCollapsed) {
+          // Render Singles grouped by date
+          if (singles.isNotEmpty) {
+            final groupedSingles = groupByDate(singles);
+            final sortedDates = groupedSingles.keys.toList()..sort();
+            for (final dateStr in sortedDates) {
+              final dayItems = _sortItems(groupedSingles[dateStr]!);
+              slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+              slivers.add(_ItemsSliver(
+                items: dayItems,
                 onItemTap: widget.onItemTap,
                 onPostponeItem: widget.onPostponeItem,
                 onDoneItem: widget.onDoneItem,
+              ));
+            }
+          }
+
+          // Render Series groups
+          if (seriesList.isNotEmpty) {
+            slivers.add(SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    RitmoSpacing.xl, RitmoSpacing.md, RitmoSpacing.xl, 4),
+                child: Text(
+                  'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                  ),
+                ),
               ),
             ));
+
+            for (final series in seriesList) {
+              final seriesKey = series.representative.recurrenceKey;
+              final isExpanded = _expandedSeriesKeys.contains(seriesKey);
+
+              slivers.add(SliverToBoxAdapter(
+                child: _RecurringGroupRow(
+                  key: ValueKey('series_$seriesKey'),
+                  series: series,
+                  isExpanded: isExpanded,
+                  onToggleExpand: () {
+                    setState(() {
+                      if (isExpanded) {
+                        _expandedSeriesKeys.remove(seriesKey);
+                      } else {
+                        _expandedSeriesKeys.add(seriesKey);
+                      }
+                    });
+                  },
+                  onItemTap: widget.onItemTap,
+                  onPostponeItem: widget.onPostponeItem,
+                  onDoneItem: widget.onDoneItem,
+                ),
+              ));
+            }
           }
         }
       } else {
@@ -193,39 +204,46 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
         slivers.add(_BucketHeaderSliver(
           bucket: bucket,
           countText: toPersianDigits(items.length),
-          isOverdue: bucket == AgendaBucket.overdue,
+          isOverdue: isOverdueBucket,
+          isCollapsible: isOverdueBucket,
+          isCollapsed: isCollapsed,
+          onToggleCollapse: isOverdueBucket
+              ? () => setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+              : null,
         ));
 
-        final needsSubGroups = bucket == AgendaBucket.thisWeek ||
-            bucket == AgendaBucket.nextWeek ||
-            bucket == AgendaBucket.later;
+        if (!isCollapsed) {
+          final needsSubGroups = bucket == AgendaBucket.thisWeek ||
+              bucket == AgendaBucket.nextWeek ||
+              bucket == AgendaBucket.later;
 
-        if (needsSubGroups) {
-          final grouped = groupByDate(items);
-          final sortedDates = grouped.keys.toList()..sort();
-          for (final dateStr in sortedDates) {
-            final dayItems = _sortItems(grouped[dateStr]!);
-            slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+          if (needsSubGroups) {
+            final grouped = groupByDate(items);
+            final sortedDates = grouped.keys.toList()..sort();
+            for (final dateStr in sortedDates) {
+              final dayItems = _sortItems(grouped[dateStr]!);
+              slivers.add(_DaySubGroupHeader(dateStr: dateStr));
+              slivers.add(_ItemsSliver(
+                items: dayItems,
+                onItemTap: widget.onItemTap,
+                onPostponeItem: widget.onPostponeItem,
+                onDoneItem: widget.onDoneItem,
+              ));
+            }
+          } else {
+            final sorted = _sortItems(items);
             slivers.add(_ItemsSliver(
-              items: dayItems,
+              items: sorted,
               onItemTap: widget.onItemTap,
               onPostponeItem: widget.onPostponeItem,
               onDoneItem: widget.onDoneItem,
             ));
           }
-        } else {
-          final sorted = _sortItems(items);
-          slivers.add(_ItemsSliver(
-            items: sorted,
-            onItemTap: widget.onItemTap,
-            onPostponeItem: widget.onPostponeItem,
-            onDoneItem: widget.onDoneItem,
-          ));
         }
       }
 
-      // Display older overdue expansion banner if historical overdue items exist outside window
-      if (bucket == AgendaBucket.overdue && widget.olderOverdueCount > 0) {
+      // Display older overdue expansion banner if historical overdue items exist outside window and not collapsed
+      if (bucket == AgendaBucket.overdue && widget.olderOverdueCount > 0 && !isCollapsed) {
         slivers.add(SliverToBoxAdapter(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl, vertical: RitmoSpacing.sm),
@@ -355,11 +373,17 @@ class _BucketHeaderSliver extends StatelessWidget {
     required this.bucket,
     required this.countText,
     required this.isOverdue,
+    this.isCollapsible = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
   });
 
   final AgendaBucket bucket;
   final String countText;
   final bool isOverdue;
+  final bool isCollapsible;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
 
   @override
   Widget build(BuildContext context) {
@@ -369,6 +393,9 @@ class _BucketHeaderSliver extends StatelessWidget {
         bucket: bucket,
         countText: countText,
         isOverdue: isOverdue,
+        isCollapsible: isCollapsible,
+        isCollapsed: isCollapsed,
+        onToggleCollapse: onToggleCollapse,
       ),
     );
   }
@@ -379,11 +406,17 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.bucket,
     required this.countText,
     required this.isOverdue,
+    this.isCollapsible = false,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
   });
 
   final AgendaBucket bucket;
   final String countText;
   final bool isOverdue;
+  final bool isCollapsible;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
 
   @override
   double get minExtent => CalendarGeometry.agendaBucketHeaderHeight;
@@ -398,41 +431,78 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
         ? context.colors.warning
         : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75);
 
-    return Container(
+    return Material(
       color: theme.scaffoldBackgroundColor,
-      alignment: AlignmentDirectional.centerStart,
-      padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.xl,
-        vertical: RitmoSpacing.xs,
-      ),
-      child: Row(
-        children: [
-          Text(
-            bucketLabelFa(bucket),
-            style: TextStyle(
-              fontSize: 13.0,
-              fontWeight: FontWeight.w700,
-              color: labelColor,
-            ),
+      child: InkWell(
+        onTap: isCollapsible ? onToggleCollapse : null,
+        child: Container(
+          alignment: AlignmentDirectional.centerStart,
+          padding: const EdgeInsets.symmetric(
+            horizontal: RitmoSpacing.xl,
+            vertical: RitmoSpacing.xs,
           ),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-            decoration: BoxDecoration(
-              color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
-                  .withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(RitmoRadius.badge),
-            ),
-            child: Text(
-              countText,
-              style: TextStyle(
-                fontSize: 11.0,
-                fontWeight: FontWeight.w600,
-                color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+          child: Row(
+            children: [
+              Text(
+                bucketLabelFa(bucket),
+                style: TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w700,
+                  color: labelColor,
+                ),
               ),
-            ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                ),
+                child: Text(
+                  countText,
+                  style: TextStyle(
+                    fontSize: 11.0,
+                    fontWeight: FontWeight.w600,
+                    color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              if (isCollapsible) ...[
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
+                        .withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(RitmoRadius.chip),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isCollapsed ? 'نمایش' : 'جمع‌کردن',
+                        style: TextStyle(
+                          fontSize: 11.0,
+                          fontWeight: FontWeight.w600,
+                          color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        isCollapsed
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_up_rounded,
+                        size: 16,
+                        color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -441,7 +511,9 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_StickyHeaderDelegate oldDelegate) =>
       oldDelegate.bucket != bucket ||
       oldDelegate.countText != countText ||
-      oldDelegate.isOverdue != isOverdue;
+      oldDelegate.isOverdue != isOverdue ||
+      oldDelegate.isCollapsible != isCollapsible ||
+      oldDelegate.isCollapsed != isCollapsed;
 }
 
 // ────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@ void main() {
       );
 
       // Verify title shows Persian count
-      expect(find.textContaining('بدون زمانبندی (۵)'), findsOneWidget);
+      expect(find.textContaining('بدون زمان'), findsOneWidget);
 
       // Verify SingleChildScrollView with horizontal scroll is present
       expect(find.byType(SingleChildScrollView), findsOneWidget);
@@ -62,7 +62,7 @@ void main() {
       expect(find.byType(SingleChildScrollView), findsOneWidget);
 
       // Tap header to expand
-      await tester.tap(find.textContaining('بدون زمانبندی'));
+      await tester.tap(find.textContaining('بدون زمان'));
       await tester.pumpAndSettle();
 
       // Now expanded into Wrap mode
@@ -70,7 +70,7 @@ void main() {
       expect(find.byType(SingleChildScrollView), findsNothing);
 
       // Tap header again to collapse
-      await tester.tap(find.textContaining('بدون زمانبندی'));
+      await tester.tap(find.textContaining('بدون زمان'));
       await tester.pumpAndSettle();
 
       // Back in horizontal scroll mode

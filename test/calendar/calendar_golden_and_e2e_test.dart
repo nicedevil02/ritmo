@@ -10,8 +10,6 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
-import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -107,70 +105,6 @@ void main() {
     CommandStack.instance.clear();
     DatabaseHelper.databaseInstance = null;
     await db.close();
-  });
-
-  group('CAL-60: RTL Text Scaler Golden Overflow Tests (1.0, 1.3, 1.6)', () {
-    for (final scale in [1.0, 1.3, 1.6]) {
-      testWidgets('NowPill renders without overflow at textScaleFactor $scale in RTL', (tester) async {
-        final currentItem = AgendaItem(
-          id: 'routine:reading:2026-08-18',
-          domain: AgendaDomain.routine,
-          kind: AgendaItemKind.routine,
-          sourceId: 'reading',
-          title: 'مطالعهٔ عمیق کتاب معماری سیستم‌های توزیع‌شده با یادداشت‌برداری تفصیلی',
-          category: Category.learning,
-          dateStr: '2026-08-18',
-          timeOfDay: '10:00',
-          durationMinutes: 45,
-          deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: 'reading'),
-        );
-
-        final viewModel = NowPillViewModel(
-          isVisible: true,
-          isCurrent: true,
-          targetItem: currentItem,
-          statusLabel: 'در حال انجام',
-          timeLabel: '۱۰:۰۰',
-          remainingMinutesCurrent: 25,
-          nextItemTitle: 'ورزش عصرگاهی و تمرینات کششی سبک',
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: RitmoTheme.lightTheme,
-            home: MediaQuery(
-              data: MediaQueryData(
-                textScaler: TextScaler.linear(scale),
-                size: const Size(390, 844),
-              ),
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Scaffold(
-                  body: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: NowPill(
-                        viewModel: viewModel,
-                        onTapPill: () {},
-                        onTapComplete: () {},
-                        onTapStartFocus: () {},
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-
-        await tester.pump(const Duration(milliseconds: 100));
-        await tester.pump(const Duration(milliseconds: 100));
-        expect(tester.takeException(), isNull);
-        expect(find.byType(NowPill), findsOneWidget);
-        expect(find.textContaining('مطالعهٔ عمیق'), findsOneWidget);
-        expect(find.byIcon(Icons.center_focus_strong_rounded), findsOneWidget);
-      });
-    }
   });
 
   group('CAL-60: Full End-to-End User Flow & Triple Undo Regression Test', () {

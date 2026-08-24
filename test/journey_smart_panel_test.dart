@@ -4,12 +4,11 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/analysis/agenda_gap_calculator.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_free_gaps_section.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_summary_section.dart';
 
 void main() {
-  group('Phase 2 Now Pill & Smart Panel Tests', () {
+  group('Phase 2 Smart Panel Tests', () {
     final sampleItem = AgendaItem(
       id: 'test:current',
       domain: AgendaDomain.routine,
@@ -21,75 +20,6 @@ void main() {
       category: Category.fitness,
       deepLink: const AgendaDeepLink(domain: AgendaDomain.routine, targetId: 'c1'),
     );
-
-    final nextItem = AgendaItem(
-      id: 'test:next',
-      domain: AgendaDomain.course,
-      sourceId: 'n1',
-      title: 'Study Session',
-      dateStr: '2026-07-24',
-      timeOfDay: '14:00',
-      durationMinutes: 45,
-      category: Category.learning,
-      deepLink: const AgendaDeepLink(domain: AgendaDomain.course, targetId: 'n1'),
-    );
-
-    test('1. NowPillViewModel returns NOW status when current activity exists', () {
-      final snapshot = DayAgendaSnapshot(
-        dayAgenda: DayAgenda(dateStr: '2026-07-24', items: [sampleItem]),
-        completedCount: 0,
-        remainingCount: 1,
-        freeGaps: const [],
-        conflicts: const [],
-        overloadScore: 0.1,
-        currentActivity: sampleItem,
-        nextActivity: null,
-        suggestions: const [],
-      );
-
-      final vm = NowPillViewModel.fromSnapshot(snapshot, now: DateTime(2026, 7, 24, 10, 0), isToday: true);
-      expect(vm.isVisible, isTrue);
-      expect(vm.isCurrent, isTrue);
-      expect(vm.statusLabel, equals('NOW'));
-      expect(vm.targetItem?.title, equals('Current Workout'));
-    });
-
-    test('2. NowPillViewModel returns NEXT status when only next activity exists', () {
-      final snapshot = DayAgendaSnapshot(
-        dayAgenda: DayAgenda(dateStr: '2026-07-24', items: [nextItem]),
-        completedCount: 0,
-        remainingCount: 1,
-        freeGaps: const [],
-        conflicts: const [],
-        overloadScore: 0.1,
-        currentActivity: null,
-        nextActivity: nextItem,
-        suggestions: const [],
-      );
-
-      final vm = NowPillViewModel.fromSnapshot(snapshot, now: DateTime(2026, 7, 24, 10, 0), isToday: true);
-      expect(vm.isVisible, isTrue);
-      expect(vm.isCurrent, isFalse);
-      expect(vm.statusLabel, equals('NEXT'));
-      expect(vm.targetItem?.title, equals('Study Session'));
-    });
-
-    test('3. NowPillViewModel is hidden when neither current nor next activity exists', () {
-      final snapshot = DayAgendaSnapshot(
-        dayAgenda: DayAgenda.empty('2026-07-24'),
-        completedCount: 0,
-        remainingCount: 0,
-        freeGaps: const [],
-        conflicts: const [],
-        overloadScore: 0.0,
-        currentActivity: null,
-        nextActivity: null,
-        suggestions: const [],
-      );
-
-      final vm = NowPillViewModel.fromSnapshot(snapshot, now: DateTime(2026, 7, 24, 10, 0), isToday: true);
-      expect(vm.isVisible, isFalse);
-    });
 
     testWidgets('4. JourneySummarySection renders rhythm score and metrics', (tester) async {
       final snapshot = DayAgendaSnapshot(

@@ -211,6 +211,7 @@ void main() {
       );
 
       // Load agenda so snapshot exists
+      controller.selectDate(DateTime(2026, 8, 18));
       await controller.loadAgendaRange(anchorDate: DateTime(2026, 8, 18));
 
       // Move into existing item window (10:00 - 11:00)

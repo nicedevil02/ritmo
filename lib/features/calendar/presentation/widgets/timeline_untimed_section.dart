@@ -88,44 +88,74 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                     width: isHovered ? 1.5 : 1.0,
                   ),
                 ),
-                child: AnimatedSize(
-                  duration: RitmoMotion.state,
-                  curve: RitmoMotion.enter,
-                  alignment: Alignment.topRight,
-                  child: _isExpanded
-                      ? Wrap(
-                          spacing: RitmoSpacing.sm,
-                          runSpacing: RitmoSpacing.sm,
-                          children: untimedItems
-                              .map(
-                                (item) => _buildChipItem(context, item, isDark),
+                child: Row(
+                  crossAxisAlignment: _isExpanded ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: AnimatedSize(
+                        duration: RitmoMotion.state,
+                        curve: RitmoMotion.enter,
+                        alignment: Alignment.topRight,
+                        child: _isExpanded
+                            ? Wrap(
+                                spacing: RitmoSpacing.sm,
+                                runSpacing: RitmoSpacing.sm,
+                                children: untimedItems
+                                    .map(
+                                      (item) => _buildChipItem(context, item, isDark),
+                                    )
+                                    .toList(),
                               )
-                              .toList(),
-                        )
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          child: Row(
-                            children: untimedItems
-                                .map(
-                                  (item) => Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: RitmoSpacing.sm,
-                                    ),
-                                    child: _buildChipItem(
-                                      context,
-                                      item,
-                                      isDark,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: untimedItems
+                                      .map(
+                                        (item) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: RitmoSpacing.sm,
+                                          ),
+                                          child: _buildChipItem(
+                                            context,
+                                            item,
+                                            isDark,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                      ),
+                    ),
+                    if (canExpand && !isHovered) ...[
+                      const SizedBox(width: 4),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _toggleExpanded,
+                          borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: AnimatedRotation(
+                              turns: _isExpanded ? 0.5 : 0.0,
+                              duration: RitmoMotion.state,
+                              curve: RitmoMotion.enter,
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 20,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
                           ),
                         ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
 
-              // Notched Title Badge sitting directly on the top border line
+              // Notched Title Badge sitting directly on the top border line (right side)
               Positioned(
                 top: 0,
                 right: RitmoSpacing.xl + 4,
@@ -159,7 +189,7 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                         Text(
                           isHovered
                               ? 'رها کنید برای لغو زمان‌بندی'
-                              : 'بدون زمانبندی (${toPersianDigits(untimedItems.length.toString())})',
+                              : 'بدون زمان‌بندی (${toPersianDigits(untimedItems.length.toString())})',
                           style: TextStyle(
                             fontSize: 11.0,
                             fontWeight: FontWeight.w600,
@@ -170,19 +200,6 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                                   ),
                           ),
                         ),
-                        if (canExpand && !isHovered) ...[
-                          const SizedBox(width: 2),
-                          AnimatedRotation(
-                            turns: _isExpanded ? 0.5 : 0.0,
-                            duration: RitmoMotion.state,
-                            curve: RitmoMotion.enter,
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),

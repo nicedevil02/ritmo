@@ -13,7 +13,7 @@ class TimelineHourAxis extends StatelessWidget {
     this.rangeEndMinutes = 1440,
     this.width = CalendarGeometry.hourAxisWidth,
     this.side = HourAxisSide.leading,
-    this.labelFontSize = 11.0,
+    this.labelFontSize = 10.5,
     this.isToday = false,
     this.now,
   });
@@ -46,8 +46,8 @@ class TimelineHourAxis extends StatelessWidget {
           for (var h = startHour; h <= endHour; h++)
             Positioned(
               top: ((h * 60) - rangeStartMinutes) * pxPerMinute - 7,
-              left: isLeading ? RitmoSpacing.xs : 0,
-              right: isLeading ? 0 : RitmoSpacing.xs,
+              left: isLeading ? 1.0 : 0,
+              right: isLeading ? 0 : 1.0,
               child: Align(
                 alignment: isLeading ? Alignment.centerLeft : Alignment.centerRight,
                 child: Text(

@@ -12,7 +12,7 @@ abstract final class CalendarGeometry {
   static const double pxPerMinute = 1.2;
 
   /// Width of the hour axis gutter in single-day view.
-  static const double hourAxisWidth = 44.0;
+  static const double hourAxisWidth = 34.0;
 
   /// Width of the accent color bar indicator on the side of timeline cards.
   static const double accentBarWidth = 3.0;
@@ -28,10 +28,10 @@ abstract final class CalendarGeometry {
   static const double pxPerMinuteSplit = 1.6;
 
   /// Width of the hour axis in split two-column view.
-  static const double hourAxisWidthSplit = 40.0;
+  static const double hourAxisWidthSplit = 28.0;
 
   /// Horizontal gap between the morning and afternoon columns.
-  static const double columnGap = 12.0;
+  static const double columnGap = 4.0;
 
   /// Maximum parallel lanes per column in split mode.
   static const int maxLanesSplit = 2;

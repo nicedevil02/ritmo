@@ -5,6 +5,8 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
 
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 class EmptyDayAgendaService implements DayAgendaService {
   @override
   AgendaLoadStatus get lastLoadStatus => const AgendaLoadStatus.ok();
@@ -24,6 +26,8 @@ class EmptyDayAgendaService implements DayAgendaService {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
 
   group('CAL-21: Unified Fallback for Empty Snapshot', () {
     test('loadForActiveScale provides non-null fallback snapshot when selectedKey is missing in range', () async {
@@ -47,6 +51,7 @@ void main() {
       final testDate = DateTime(2026, 8, 18);
       final testKey = DateKey.of(DateKey.dayOf(testDate));
 
+      controller.selectDate(testDate);
       await controller.loadAgendaRange(anchorDate: testDate);
 
       expect(controller.snapshot, isNotNull);

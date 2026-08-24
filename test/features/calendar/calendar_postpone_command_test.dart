@@ -29,6 +29,8 @@ void main() {
             title TEXT NOT NULL,
             titleNormalized TEXT,
             note TEXT,
+            noteNormalized TEXT,
+            tagsJson TEXT,
             isDone INTEGER NOT NULL DEFAULT 0,
             dueDate TEXT,
             dueTime TEXT,
@@ -39,6 +41,7 @@ void main() {
             origin TEXT NOT NULL DEFAULT 'SIMPLE',
             isImportant INTEGER NOT NULL DEFAULT 0,
             importantAt INTEGER,
+            addedToMyDayAt INTEGER,
             doneAt INTEGER,
             createdAt INTEGER NOT NULL,
             updatedAt INTEGER NOT NULL

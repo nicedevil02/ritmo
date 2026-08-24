@@ -374,7 +374,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
             Directionality(
               textDirection: TextDirection.rtl,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Row(
                   children: [
                     Expanded(
@@ -407,7 +407,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                 child: Directionality(
                   textDirection: TextDirection.rtl,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm),
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

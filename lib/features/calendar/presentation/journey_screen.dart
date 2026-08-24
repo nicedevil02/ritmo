@@ -23,7 +23,6 @@ import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/day_template_repository.dart';
 import 'package:ritmo/features/calendar/data/occasions_calendar_source.dart';
 import 'package:ritmo/features/calendar/presentation/journey_controller.dart';
-import 'package:ritmo/features/calendar/presentation/models/now_pill_view_model.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_date_formatter.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_management_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_delegate.dart';
@@ -38,7 +37,6 @@ import 'package:ritmo/features/calendar/presentation/widgets/journey_scale_switc
 import 'package:ritmo/features/calendar/presentation/widgets/journey_smart_panel.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_week_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_year_view.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/now_pill.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_split_day_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_untimed_section.dart';
 import 'package:ritmo/core/utils/shamsi_week.dart';
@@ -581,13 +579,6 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         final untimedItems = allItems.where((i) => !i.isTimed).toList();
         final timedItems = allItems.where((i) => i.isTimed).toList();
 
-        final pillViewModel = NowPillViewModel.fromSnapshot(
-          snapshot,
-          now: DateTime.now(),
-          isToday: isToday,
-          selectedDate: selectedDate,
-        );
-
         final dateKey = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
 
         return Directionality(
@@ -1061,7 +1052,6 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                     snapshot: snapshot,
                                     untimedItems: untimedItems,
                                     timedItems: timedItems,
-                                    pillViewModel: pillViewModel,
                                     isToday: isToday,
                                   ),
                                 ),
@@ -1082,7 +1072,6 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     required DayAgendaSnapshot? snapshot,
     required List<AgendaItem> untimedItems,
     required List<AgendaItem> timedItems,
-    required NowPillViewModel pillViewModel,
     required bool isToday,
   }) {
     final colors = context.colors;
@@ -1247,37 +1236,6 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
               ],
             ),
 
-            // NowPill positioned above bottom nav bar (Section 4.7)
-            if (pillViewModel.isVisible)
-              Positioned(
-                bottom: RitmoShellMetrics.navBarHeight + RitmoShellMetrics.navBarBottomGap + 8,
-                left: RitmoSpacing.lg,
-                right: RitmoSpacing.lg,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: NowPill(
-                    viewModel: pillViewModel,
-                    onTapPill: _openSmartPanel,
-                    onTapJumpNow: _autoScrollToNow,
-                    onTapStartFocus: pillViewModel.targetItem != null
-                        ? () => _startFocusMode(pillViewModel.targetItem!)
-                        : null,
-                    onTapComplete: pillViewModel.targetItem != null
-                        ? () async {
-                            final item = pillViewModel.targetItem!;
-                            await _controller.completeItem(item);
-                            if (mounted) {
-                              ActionFeedback.success(
-                                context,
-                                message: 'رویداد با موفقیت ثبت شد',
-                                dateStr: item.dateStr,
-                              );
-                            }
-                          }
-                        : null,
-                  ),
-                ),
-              ),
           ],
         );
 

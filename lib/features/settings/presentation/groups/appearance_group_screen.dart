@@ -6,6 +6,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_preferences.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
@@ -54,18 +55,15 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
     );
     final m = RitmoMetrics.of(prefs.density);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      padding: EdgeInsets.all(m.spaceMd),
-      decoration: BoxDecoration(
-        color: colors.surfaceSunken,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: RitmoCard(
+        padding: EdgeInsets.all(m.spaceMd),
         borderRadius: BorderRadius.circular(m.radiusCard),
-        border: Border.all(color: colors.border.withValues(alpha: 0.15)),
-      ),
-      child: MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(previewScale)),
+        child: MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(previewScale)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -153,8 +151,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -708,8 +707,7 @@ class _PalettePreviewCard extends StatelessWidget {
                     // Sample Title & Subtitle
                     Text(
                       'نمونه عنوان کارت',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: innerContext.t.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                         color: innerColors.textPrimary,
                       ),
@@ -717,8 +715,7 @@ class _PalettePreviewCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'این پیش‌نمایش نحوه رندر رنگ‌های پالت را نشان می‌دهد',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: innerContext.t.bodySmall?.copyWith(
                         color: innerColors.textSecondary,
                       ),
                     ),
@@ -733,8 +730,7 @@ class _PalettePreviewCard extends StatelessWidget {
                       ),
                       child: Text(
                         'دکمه نمونه',
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: innerContext.t.labelMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                           color: innerColors.onPrimary,
                         ),
@@ -763,8 +759,7 @@ class _PalettePreviewCard extends StatelessWidget {
                     // Name & Tagline
                     Text(
                       '${palette.nameFa} · ${palette.taglineFa}',
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: innerContext.t.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: innerColors.textPrimary,
                       ),

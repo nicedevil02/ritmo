@@ -1,21 +1,73 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_group_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (call) async => null,
+    );
+  });
 
   late ThemeRepository themeRepository;
   late LocaleRepository localeRepository;
+  late Database db;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    db = await openDatabase(
+      inMemoryDatabasePath,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updatedAt INTEGER
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS user_profile (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            avatarPath TEXT,
+            themeMode TEXT,
+            accentColor INTEGER
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS agenda_items (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            isCompleted INTEGER,
+            dateStr TEXT
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS routines (
+            id TEXT PRIMARY KEY,
+            isArchived INTEGER
+          );
+        ''');
+      },
+    );
+    DatabaseHelper.databaseInstance = db;
+    SettingsService.instance.resetForTesting();
     await SettingsService.instance.init();
     themeRepository = ThemeRepository();
     localeRepository = LocaleRepository();

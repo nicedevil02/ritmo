@@ -5,30 +5,36 @@ import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/foreground_notification_updater.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 
 class QuickSettingsSheet extends StatelessWidget {
-  const QuickSettingsSheet({super.key});
+  const QuickSettingsSheet({super.key, this.themeRepository});
 
-  static Future<void> show(BuildContext context) {
+  final ThemeRepository? themeRepository;
+
+  static Future<void> show(BuildContext context, {ThemeRepository? themeRepository}) {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const QuickSettingsSheet(),
+      builder: (_) => QuickSettingsSheet(themeRepository: themeRepository),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isCurrentlyDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
+        final themeMode = SettingsService.instance.get<String>('theme_mode');
+        final isCurrentlyDark = themeMode == 'dark' ||
+            (themeMode == 'system' &&
+                Theme.of(context).brightness == Brightness.dark);
         final quiet = SettingsService.instance.get<bool>('notif_quiet_enabled');
         final persistent = SettingsService.instance.get<bool>(
           'persistent_status_notification_enabled',
@@ -358,42 +364,43 @@ class QuickSettingsSheet extends StatelessWidget {
                           } else if (currentScale >= 125) {
                             selectedOption = 125;
                           }
+                          final repo = themeRepository ?? ThemeRepository();
+
                           return SegmentedButton<int>(
-                            segments: const [
+                            segments: [
                               ButtonSegment(
                                 value: 92,
                                 label: Text(
                                   'کوچک',
-                                  style: TextStyle(fontSize: 11),
+                                  style: context.t.labelSmall,
                                 ),
                               ),
                               ButtonSegment(
                                 value: 100,
                                 label: Text(
                                   'معمولی',
-                                  style: TextStyle(fontSize: 11),
+                                  style: context.t.labelSmall,
                                 ),
                               ),
                               ButtonSegment(
                                 value: 125,
                                 label: Text(
                                   'بزرگ',
-                                  style: TextStyle(fontSize: 11),
+                                  style: context.t.labelSmall,
                                 ),
                               ),
                             ],
                             selected: {selectedOption},
                             showSelectedIcon: false,
-                            style: const ButtonStyle(
-                              visualDensity: VisualDensity.compact,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            style: ButtonStyle(
+                              visualDensity: VisualDensity.standard,
+                              minimumSize: WidgetStatePropertyAll(
+                                Size(0, RitmoBreakpoints.minTouchTarget),
+                              ),
                             ),
                             onSelectionChanged: (val) async {
                               RitmoHaptics.selection();
-                              await SettingsService.instance.set(
-                                'ui_text_scale',
-                                val.first,
-                              );
+                              await repo.updateTextScalePercent(val.first);
                             },
                           );
                         })(),

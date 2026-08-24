@@ -17,6 +17,9 @@ void main() {
   setUp(() async {
     SettingsService.instance.resetForTesting();
     await SettingsService.instance.init();
+    await SettingsService.instance.set('ui_text_scale', 100);
+    await SettingsService.instance.set('ui_text_follow_os', true);
+    await SettingsService.instance.set('ui_density', 'comfortable');
   });
 
   group('UI Scale & Density Settings Registry & Repository Tests', () {

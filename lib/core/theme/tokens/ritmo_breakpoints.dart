@@ -46,9 +46,9 @@ abstract final class RitmoBreakpoints {
   // هدف لمس — راهنمای دسترس‌پذیری
   static const double minTouchTarget = 48.0;
 
-  // سقف مقیاس متن که برنامه رسماً پشتیبانی می‌کند (R-08: مرحلهٔ ۱ روی ۱.۳، مرحلهٔ ۲ در فاز ۵ روی ۱.۶)
-  static const double supportedMaxTextScale = 1.3;
-  static const double supportedMinTextScale = 0.9;
+  // سقف مقیاس متن که برنامه رسماً پشتیبانی می‌کند (R-08: سقف ۱.۶ و کف ۰.۸۵)
+  static const double supportedMaxTextScale = 1.6;
+  static const double supportedMinTextScale = 0.85;
 
   // حداکثر عرض حباب چت نسبت به عرض در دسترس (R-17)
   static const double chatBubbleMaxWidthFactor = 0.76;

@@ -5,16 +5,8 @@ import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
-import 'package:ritmo/features/movement/domain/models/movement_activity_kind.dart';
-import 'package:ritmo/features/movement/domain/models/movement_workout_log.dart';
-import 'package:ritmo/features/movement/presentation/activity_picker/activity_picker_screen.dart';
-import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
-import 'package:ritmo/features/movement/presentation/movement_routes.dart';
-import 'package:ritmo/features/movement/presentation/planner/activity_plan_editor_screen.dart';
-import 'package:ritmo/features/movement/presentation/session/movement_live_session_screen.dart';
-import 'package:ritmo/features/movement/presentation/settings/movement_settings_screen.dart';
-import 'package:ritmo/features/movement/presentation/summary/session_summary_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
@@ -33,13 +25,13 @@ class RitmoRouteTarget {
   });
 
   RitmoRouteTarget.tab(int tabIndex)
-      : this._(kind: RitmoRouteKind.tab, tabIndex: tabIndex);
+    : this._(kind: RitmoRouteKind.tab, tabIndex: tabIndex);
 
   RitmoRouteTarget.screen(WidgetBuilder builder)
-      : this._(kind: RitmoRouteKind.screen, builder: builder);
+    : this._(kind: RitmoRouteKind.screen, builder: builder);
 
   RitmoRouteTarget.module(Future<void> Function(BuildContext) opener)
-      : this._(kind: RitmoRouteKind.moduleEntry, moduleOpener: opener);
+    : this._(kind: RitmoRouteKind.moduleEntry, moduleOpener: opener);
 
   final RitmoRouteKind kind;
 
@@ -93,7 +85,7 @@ class RitmoRouter {
       return RitmoRouteTarget.screen((_) => const GoalsScreen());
     }
     if (r == '/sports' || r == '/sport') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+      return RitmoRouteTarget.screen((_) => const SSHomeDashboardScreen());
     }
     if (r == '/health') {
       return RitmoRouteTarget.screen((_) => const HealthScreen());
@@ -105,8 +97,9 @@ class RitmoRouter {
     // بخش خواب در «حال و تعادل» زندگی می‌کند؛ «مسیر پله‌ها» هم بلوکی درون
     // همان بخش است (اسکرول به بلوک در فاز A)، پس هر دو به یک مقصد می‌رسند.
     if (r == '/sleep' || r == '/sleep/journey') {
-      return RitmoRouteTarget.screen((_) =>
-          const WellbeingScreen(initialSection: WellbeingSection.trend));
+      return RitmoRouteTarget.screen(
+        (_) => const WellbeingScreen(initialSection: WellbeingSection.trend),
+      );
     }
 
     // چرخه: کلیدواژه‌های فارسی/انگلیسی (مثل رفتار قبلی registry)
@@ -129,63 +122,6 @@ class RitmoRouter {
       return RitmoRouteTarget.screen((_) => const WebBridgeDiagnosticsScreen());
     }
 
-    // مسیرهای ماژول حرکت (Movement Module)
-    if (r == MovementRoutes.center || r == '/movement' || r == 'movement.center') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
-    if (r == MovementRoutes.picker || r == '/movement/picker' || r == 'movement.picker') {
-      return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
-    }
-    if (r == MovementRoutes.planEditor || r == '/movement/plan' || r == 'movement.plan_editor') {
-      return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
-    }
-    if (r == MovementRoutes.occurrence || r == 'movement.occurrence') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
-    if (r == MovementRoutes.liveSession || r == '/movement/live' || r == 'movement.session') {
-      return RitmoRouteTarget.screen((_) => MovementLiveSessionScreen(
-        activityKind: MovementActivityKind(
-          id: 'kind_walking',
-          nameFa: 'پیاده‌روی',
-          family: 'walking',
-          icon: 'directions_walk',
-          primaryMetric: 'duration',
-          createdAt: DateTime.now(),
-        ),
-      ));
-    }
-    if (r == MovementRoutes.summary || r == '/movement/summary' || r == 'movement.summary') {
-      return RitmoRouteTarget.screen((_) => SessionSummaryScreen(
-        workoutLog: MovementWorkoutLog(
-          id: 'sample_log',
-          activityKindId: 'kind_walking',
-          dateIso: '2026-08-16',
-          durationSec: 1800,
-          source: 'live',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ));
-    }
-    if (r == MovementRoutes.strengthHub || r == 'movement.strength') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
-    if (r == MovementRoutes.strengthOnboarding || r == 'movement.strength.onboarding') {
-      return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
-    }
-    if (r == MovementRoutes.strengthPreview || r == 'movement.strength.preview') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
-    if (r == MovementRoutes.progress || r == 'movement.progress') {
-      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
-    }
-    if (r == MovementRoutes.library || r == 'movement.library') {
-      return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
-    }
-    if (r == MovementRoutes.settings || r == '/movement/settings' || r == 'movement.settings') {
-      return RitmoRouteTarget.screen((_) => const MovementSettingsScreen());
-    }
-
     return null;
   }
 
@@ -205,11 +141,13 @@ class RitmoRouter {
     }
 
     if (target.kind == RitmoRouteKind.tab && target.tabIndex != null) {
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'navigate_tab',
-        timestamp: DateTime.now(),
-        payload: {'index': target.tabIndex},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'navigate_tab',
+          timestamp: DateTime.now(),
+          payload: {'index': target.tabIndex},
+        ),
+      );
       return null;
     }
 
@@ -233,11 +171,13 @@ class RitmoRouter {
     switch (target.kind) {
       case RitmoRouteKind.tab:
         nav.popUntil((r) => r.isFirst);
-        RitmoEventBus().fire(RitmoEvent(
-          type: 'navigate_tab',
-          timestamp: DateTime.now(),
-          payload: {'index': target.tabIndex},
-        ));
+        RitmoEventBus().fire(
+          RitmoEvent(
+            type: 'navigate_tab',
+            timestamp: DateTime.now(),
+            payload: {'index': target.tabIndex},
+          ),
+        );
         return true;
       case RitmoRouteKind.screen:
         unawaited(nav.push(MaterialPageRoute(builder: target.builder!)));

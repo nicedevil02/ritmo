@@ -25,16 +25,12 @@ import 'package:ritmo/features/settings/presentation/groups/modules_group_screen
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/notebook_screen.dart';
 
-import 'package:ritmo/features/movement/presentation/center/movement_center_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 
-
-
 class SystemsHubScreen extends StatefulWidget {
-
   const SystemsHubScreen({
     super.key,
     required this.onLogout,
@@ -49,7 +45,8 @@ class SystemsHubScreen extends StatefulWidget {
   State<SystemsHubScreen> createState() => _SystemsHubScreenState();
 }
 
-class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProviderStateMixin {
+class _SystemsHubScreenState extends State<SystemsHubScreen>
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late List<Animation<double>> _fadeAnimations;
   late List<Animation<Offset>> _slideAnimations;
@@ -58,7 +55,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
   bool _isFirstLoad = true;
   bool _avatarFileExists = false;
   Map<String, String> _settingsMap = {};
-  
+
   bool _isSearching = false;
   String _searchQuery = '';
 
@@ -66,14 +63,16 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     if (_searchQuery.isEmpty) return true;
     final query = _searchQuery.toLowerCase();
     if (title == 'حال و تعادل') {
-      const combinedTags = 'انرژی و حالت روحی خواب و بیداری خودارزیابی و بازتاب حال و تعادل';
+      const combinedTags =
+          'انرژی و حالت روحی خواب و بیداری خودارزیابی و بازتاب حال و تعادل';
       return title.toLowerCase().contains(query) ||
           description.toLowerCase().contains(query) ||
           combinedTags.contains(query);
     }
-    return title.toLowerCase().contains(query) || description.toLowerCase().contains(query);
+    return title.toLowerCase().contains(query) ||
+        description.toLowerCase().contains(query);
   }
-  
+
   // Enabled flags
   bool _religionEnabled = false;
   bool _medicineEnabled = false;
@@ -159,33 +158,75 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 
       // 1. Load app_settings
       final settings = await db.query('app_settings');
-      _settingsMap = <String, String>{for (final s in settings) s['key']! as String: s['value']! as String};
+      _settingsMap = <String, String>{
+        for (final s in settings) s['key']! as String: s['value']! as String,
+      };
 
       // 2. Map module enable flags
-      _religionEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_religion_enabled');
-      _medicineEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_medicine_enabled');
-      _cycleEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_cycle_enabled');
-      _coursesEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_courses_enabled');
-      _konkurEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_study_enabled');
-      _goalsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_goals_enabled');
-      _assistantEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_assistant_enabled');
-      _sportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_sports_enabled');
-      _supplementarySportsEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_supplementary_sports_enabled');
-      _notesEnabled = ModuleGate.instance.isEnabledFrom(_settingsMap, 'module_notes_enabled');
-
+      _religionEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_religion_enabled',
+      );
+      _medicineEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_medicine_enabled',
+      );
+      _cycleEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_cycle_enabled',
+      );
+      _coursesEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_courses_enabled',
+      );
+      _konkurEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_study_enabled',
+      );
+      _goalsEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_goals_enabled',
+      );
+      _assistantEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_assistant_enabled',
+      );
+      _sportsEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_sports_enabled',
+      );
+      _supplementarySportsEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_supplementary_sports_enabled',
+      );
+      _notesEnabled = ModuleGate.instance.isEnabledFrom(
+        _settingsMap,
+        'module_notes_enabled',
+      );
 
       // 3. Load konkur subjects to determine status (active vs setupRequired)
-      final subjects = await db.query('konkur_subjects', where: 'isArchived = 0');
+      final subjects = await db.query(
+        'konkur_subjects',
+        where: 'isArchived = 0',
+      );
       final hasSubjects = subjects.isNotEmpty;
-      _konkurStatus = SystemsHubLogic.determineKonkurStatus(_konkurEnabled, hasSubjects);
+      _konkurStatus = SystemsHubLogic.determineKonkurStatus(
+        _konkurEnabled,
+        hasSubjects,
+      );
 
       // 3b. Load goals to determine status
       final goals = await db.query('goals');
       final hasGoals = goals.isNotEmpty;
-      _goalsStatus = SystemsHubLogic.determineKonkurStatus(_goalsEnabled, hasGoals);
+      _goalsStatus = SystemsHubLogic.determineKonkurStatus(
+        _goalsEnabled,
+        hasGoals,
+      );
 
       // 4. Load assistant and notes status
-      _assistantStatus = SystemsHubLogic.determineGenericStatus(_assistantEnabled);
+      _assistantStatus = SystemsHubLogic.determineGenericStatus(
+        _assistantEnabled,
+      );
       _notesStatus = SystemsHubLogic.determineGenericStatus(_notesEnabled);
 
       // 5. Check user avatar existence asynchronously
@@ -228,9 +269,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -249,19 +288,26 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                 onTap: _showModulesManagementSheet,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isDarkMode
                         ? colors.card.withValues(alpha: 0.6)
                         : colors.surface.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colors.primary.withValues(alpha: isDarkMode ? 0.2 : 0.15),
+                      color: colors.primary.withValues(
+                        alpha: isDarkMode ? 0.2 : 0.15,
+                      ),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.primary.withValues(alpha: isDarkMode ? 0.08 : 0.04),
+                        color: colors.primary.withValues(
+                          alpha: isDarkMode ? 0.08 : 0.04,
+                        ),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -354,7 +400,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
               ),
             ),
             IconButton(
-              icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 18),
+              icon: Icon(
+                CupertinoIcons.xmark,
+                color: colors.textSecondary,
+                size: 18,
+              ),
               onPressed: () {
                 setState(() {
                   _isSearching = false;
@@ -405,7 +455,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     gradient: LinearGradient(colors: colors.energyGradient),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.energyGradient.first.withValues(alpha: 0.28),
+                        color: colors.energyGradient.first.withValues(
+                          alpha: 0.28,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -452,14 +504,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
                 Text(
                   'تمام سیستم‌های فعال و قابل مدیریت زندگی شما',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colors.textSecondary,
-                    ),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
               ],
             ),
@@ -477,7 +526,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     );
   }
 
-  Widget _buildCategoryHeader(String title, Color accentColor, RitmoColors colors) {
+  Widget _buildCategoryHeader(
+    String title,
+    Color accentColor,
+    RitmoColors colors,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -572,7 +625,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                 children: [
                   _buildCategoryHeader(rightTitle, rightAccentColor, colors),
                   const SizedBox(height: 8),
-                  ...rightCards.map((card) => AspectRatio(aspectRatio: 1.05, child: card)),
+                  ...rightCards.map(
+                    (card) => AspectRatio(aspectRatio: 1.05, child: card),
+                  ),
                 ],
               ),
             ),
@@ -583,7 +638,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                 children: [
                   _buildCategoryHeader(leftTitle, leftAccentColor, colors),
                   const SizedBox(height: 8),
-                  ...leftCards.map((card) => AspectRatio(aspectRatio: 1.05, child: card)),
+                  ...leftCards.map(
+                    (card) => AspectRatio(aspectRatio: 1.05, child: card),
+                  ),
                 ],
               ),
             ),
@@ -609,10 +666,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           minTileWidth: 140,
           spacing: 10,
           maxColumns: 2,
-          children: cards.map((card) => AspectRatio(
-            aspectRatio: 1.05,
-            child: card,
-          )).toList(),
+          children: cards
+              .map((card) => AspectRatio(aspectRatio: 1.05, child: card))
+              .toList(),
         ),
       ],
     );
@@ -686,7 +742,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           iconColor: const Color(0xffEF4444),
           title: 'دارو و سلامت',
           description: 'مراقبت سلامتی باش',
-          status: _medicineEnabled ? ModuleStatus.active : ModuleStatus.inactive,
+          status: _medicineEnabled
+              ? ModuleStatus.active
+              : ModuleStatus.inactive,
           illustrationAsset: 'assets/images/medicine_card_top.png',
           onTap: () => _handleMedicineTap(colors),
           colors: colors,
@@ -709,11 +767,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const WellbeingScreen(
-                  
-                ),
-              ),
+              MaterialPageRoute(builder: (context) => const WellbeingScreen()),
             ).then((_) => _loadAllData());
           },
           colors: colors,
@@ -723,7 +777,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     }
 
     // 4.5. Supplementary Sports Module (سیستم ورزش قبلی)
-    if (_matchesSearch('ورزش تکمیلی', 'برنامه تمرین هوشمند فیتنس') || _matchesSearch('ورزش', 'قدرت امروز، سلامتی فردا')) {
+    if (_matchesSearch('ورزش تکمیلی', 'برنامه تمرین هوشمند فیتنس') ||
+        _matchesSearch('ورزش', 'قدرت امروز، سلامتی فردا')) {
       healthCards.add(
         _buildGridItem(
           index: cardIndex++,
@@ -731,27 +786,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           iconColor: const Color(0xff10B981),
           title: 'ورزش تکمیلی',
           description: 'برنامه تمرین هوشمند و بودجهٔ حرکت هفتگی',
-          status: (_sportsEnabled || _supplementarySportsEnabled) ? ModuleStatus.active : ModuleStatus.inactive,
+          status: (_sportsEnabled || _supplementarySportsEnabled)
+              ? ModuleStatus.active
+              : ModuleStatus.inactive,
           illustrationAsset: 'assets/images/sports_card_top.png',
           onTap: () => _handleSupplementarySportsTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
-      );
-    }
-
-    // 4.6. Movement Greenfield Module (مرکز حرکت جدید)
-    if (_matchesSearch('مرکز حرکت', 'برنامه‌ریزی حرکت، قدرت در خانه') || _matchesSearch('حرکت', 'برنامه‌ریزی حرکت')) {
-      healthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: Icons.directions_run_rounded,
-          iconColor: const Color(0xff10B981),
-          title: 'مرکز حرکت',
-          description: 'برنامه‌ریزی حرکت، قدرت در خانه، تحلیل پیشرفت و کتابخانه',
-          status: ModuleStatus.active,
-          illustrationAsset: 'assets/images/sports_card_top.png',
-          onTap: () => _handleMovementTap(colors),
           colors: colors,
           isDarkMode: isDarkMode,
         ),
@@ -812,7 +851,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       );
     }
 
-
     // 7. Goals Module
     if (_matchesSearch('اهداف و برنامه‌ها', 'برنامه‌ریزی برای بهترین خود')) {
       growthCards.add(
@@ -840,7 +878,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           iconColor: const Color(0xffFBBF24),
           title: 'عبادت',
           description: 'رشد روح، آرامش قلب',
-          status: SystemsHubLogic.determineReligionStatus(_religionEnabled, _settingsMap['religion_city_id']),
+          status: SystemsHubLogic.determineReligionStatus(
+            _religionEnabled,
+            _settingsMap['religion_city_id'],
+          ),
           illustrationAsset: 'assets/images/worship_card_top.png',
           onTap: () => _handleReligionTap(colors),
           colors: colors,
@@ -897,10 +938,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     );
   }
 
-  Widget _buildAnimatedModuleCard({
-    required int index,
-    required Widget child,
-  }) {
+  Widget _buildAnimatedModuleCard({required int index, required Widget child}) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -930,16 +968,16 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     // Use the specific illustration if it's one of the new high-quality card backgrounds.
     // Otherwise, fallback to cycle_card_top.png as requested by the user.
     final String imageAsset;
-    if (illustrationAsset.contains('goals_card_top.png') || 
-        illustrationAsset.contains('konkur_card_top.png') || 
-        illustrationAsset.contains('medicine_card_top.png') || 
-        illustrationAsset.contains('courses_card_top.png') || 
-        illustrationAsset.contains('worship_card_top.png') || 
-        illustrationAsset.contains('sports_card_top.png') || 
-        illustrationAsset.contains('assistant_card_top.png') || 
-        illustrationAsset.contains('energy_card_top.png') || 
-        illustrationAsset.contains('notes_card_top.png') || 
-        illustrationAsset.contains('reflection_card_top.png') || 
+    if (illustrationAsset.contains('goals_card_top.png') ||
+        illustrationAsset.contains('konkur_card_top.png') ||
+        illustrationAsset.contains('medicine_card_top.png') ||
+        illustrationAsset.contains('courses_card_top.png') ||
+        illustrationAsset.contains('worship_card_top.png') ||
+        illustrationAsset.contains('sports_card_top.png') ||
+        illustrationAsset.contains('assistant_card_top.png') ||
+        illustrationAsset.contains('energy_card_top.png') ||
+        illustrationAsset.contains('notes_card_top.png') ||
+        illustrationAsset.contains('reflection_card_top.png') ||
         illustrationAsset.contains('cycle_card_top.png')) {
       imageAsset = illustrationAsset;
     } else {
@@ -969,11 +1007,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           fit: StackFit.expand,
           children: [
             // 🎨 Full Card Image
-            Image.asset(
-              imageAsset,
-              cacheWidth: 600,
-              fit: BoxFit.cover,
-            ),
+            Image.asset(imageAsset, cacheWidth: 600, fit: BoxFit.cover),
 
             // Subtle gradient overlay (iOS depth feel)
             Container(
@@ -1010,7 +1044,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                      color: (isDarkMode ? Colors.black : Colors.white)
+                          .withValues(alpha: 0.65),
                       border: Border.all(
                         color: iconColor.withValues(alpha: 0.3),
                         width: 0.75,
@@ -1035,7 +1070,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: isDarkMode
                           ? Colors.black.withValues(alpha: 0.48)
@@ -1062,7 +1100,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                           style: TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w800,
-                            color: isDarkMode ? Colors.white : const Color(0xFF1C1C1E),
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1C1C1E),
                           ),
                         ),
                         const SizedBox(height: 1),
@@ -1119,7 +1159,9 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.65),
+            color: (isDarkMode ? Colors.black : Colors.white).withValues(
+              alpha: 0.65,
+            ),
             border: Border.all(
               color: color.withValues(alpha: 0.45),
               width: 0.8,
@@ -1179,7 +1221,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم چرخه بدن',
-        description: 'با فعال‌سازی این سیستم، می‌توانید فازهای چرخه زیستی، پیش‌بینی هوشمند و نوسانات هورمونی خود را پایش کرده و بینش‌های سلامتی اختصاصی دریافت کنید.',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید فازهای چرخه زیستی، پیش‌بینی هوشمند و نوسانات هورمونی خود را پایش کرده و بینش‌های سلامتی اختصاصی دریافت کنید.',
         icon: CupertinoIcons.heart_fill,
         iconColor: const Color(0xffEC4899),
         settingKey: 'module_cycle_enabled',
@@ -1203,7 +1246,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم دارو و سلامت',
-        description: 'با فعال‌سازی این سیستم، می‌توانید برنامه‌ی داروها، نوبت‌های پزشک، قند خون، فشار خون، علائم حیاتی، مدارک پزشکی، واکسیناسیون و آلرژی‌های خود را ثبت و پیگیری کنید.',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید برنامه‌ی داروها، نوبت‌های پزشک، قند خون، فشار خون، علائم حیاتی، مدارک پزشکی، واکسیناسیون و آلرژی‌های خود را ثبت و پیگیری کنید.',
         icon: CupertinoIcons.bandage_fill,
         iconColor: const Color(0xffEF4444),
         settingKey: 'module_medicine_enabled',
@@ -1228,7 +1272,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم دوره‌های آموزشی',
-        description: 'با فعال‌سازی این سیستم، می‌توانید دوره‌های ویدیویی، کتاب‌ها و دوره‌های دلخواه خود را زمان‌بندی ریتمیک کرده، ساعت مطالعه را ثبت و استریک‌های پیشرفت خود را پیگیری کنید.',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید دوره‌های ویدیویی، کتاب‌ها و دوره‌های دلخواه خود را زمان‌بندی ریتمیک کرده، ساعت مطالعه را ثبت و استریک‌های پیشرفت خود را پیگیری کنید.',
         icon: CupertinoIcons.book_fill,
         iconColor: const Color(0xff3B82F6),
         settingKey: 'module_courses_enabled',
@@ -1249,7 +1294,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی ماژول درس و مطالعه',
-        description: 'با فعال‌سازی این سیستم، می‌توانید دروس، سرفصل‌ها و جلسات مطالعه را مدیریت کنید. (شامل حالت اختیاری برای داوطلبان کنکور)',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید دروس، سرفصل‌ها و جلسات مطالعه را مدیریت کنید. (شامل حالت اختیاری برای داوطلبان کنکور)',
         icon: CupertinoIcons.book_fill,
         iconColor: const Color(0xff8B5CF6),
         settingKey: 'module_study_enabled',
@@ -1270,12 +1316,13 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم اهداف و برنامه‌ها',
-        description: 'با فعال‌سازی این سیستم، می‌توانید درختواره اهداف زندگی خود را تعریف کرده، آن‌ها را با کمک هوش مصنوعی خرد کنید، و برنامه‌های زمانی خود را پیگیری کنید.',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید درختواره اهداف زندگی خود را تعریف کرده، آن‌ها را با کمک هوش مصنوعی خرد کنید، و برنامه‌های زمانی خود را پیگیری کنید.',
         icon: CupertinoIcons.flag_fill,
         iconColor: const Color(0xffF59E0B),
         settingKey: 'module_goals_enabled',
         onActivated: () {
-           Navigator.push(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const GoalsScreen()),
           ).then((_) => _loadAllData());
@@ -1294,7 +1341,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم دفترچه و تجربه‌ها',
-        description: 'با فعال‌سازی این ماژول، می‌توانید یادداشت‌های آزاد، ایده‌ها و درس‌های زندگی خود را ثبت و در زمان‌های طلایی بازخوانی کنید.',
+        description:
+            'با فعال‌سازی این ماژول، می‌توانید یادداشت‌های آزاد، ایده‌ها و درس‌های زندگی خود را ثبت و در زمان‌های طلایی بازخوانی کنید.',
         icon: CupertinoIcons.doc_text_fill,
         iconColor: colors.warning,
         settingKey: 'module_notes_enabled',
@@ -1309,13 +1357,17 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     }
   }
 
-
   Future<void> _handleSupplementarySportsTap(RitmoColors colors) async {
     final isSportsActive = _sportsEnabled || _supplementarySportsEnabled;
     if (isSportsActive) {
       final db = await DatabaseHelper.instance.database;
-      final profileResult = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
-      final hasCompletedOnboarding = profileResult.isNotEmpty && 
+      final profileResult = await db.query(
+        'ss_user_profile',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+      final hasCompletedOnboarding =
+          profileResult.isNotEmpty &&
           (profileResult.first['onboardingCompleted'] as int? ?? 0) == 1;
 
       if (mounted) {
@@ -1333,16 +1385,28 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم ورزش تکمیلی',
-        description: 'با فعال‌سازی این سیستم، می‌توانید برنامه تمرین هوشمند بر اساس سطح و اهداف خود دریافت کنید، حرکات را با بازخورد کیفی ثبت کنید و روند تداوم خود را دنبال کنید.',
+        description:
+            'با فعال‌سازی این سیستم، می‌توانید برنامه تمرین هوشمند بر اساس سطح و اهداف خود دریافت کنید، حرکات را با بازخورد کیفی ثبت کنید و روند تداوم خود را دنبال کنید.',
         icon: Icons.fitness_center,
         iconColor: const Color(0xff10B981),
         settingKey: 'module_sports_enabled',
         onActivated: () async {
-          await ModuleManagementService.instance.setModuleEnabled('module_sports_enabled', true);
-          await ModuleManagementService.instance.setModuleEnabled('module_supplementary_sports_enabled', true);
+          await ModuleManagementService.instance.setModuleEnabled(
+            'module_sports_enabled',
+            true,
+          );
+          await ModuleManagementService.instance.setModuleEnabled(
+            'module_supplementary_sports_enabled',
+            true,
+          );
           final db = await DatabaseHelper.instance.database;
-          final profileResult = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
-          final hasCompletedOnboarding = profileResult.isNotEmpty && 
+          final profileResult = await db.query(
+            'ss_user_profile',
+            where: 'id = ?',
+            whereArgs: ['default'],
+          );
+          final hasCompletedOnboarding =
+              profileResult.isNotEmpty &&
               (profileResult.first['onboardingCompleted'] as int? ?? 0) == 1;
 
           if (mounted) {
@@ -1350,8 +1414,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => hasCompletedOnboarding 
-                      ? const SSHomeDashboardScreen() 
+                  builder: (context) => hasCompletedOnboarding
+                      ? const SSHomeDashboardScreen()
                       : const SSIntroScreen(),
                 ),
               ).then((_) => _loadAllData()),
@@ -1363,20 +1427,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     }
   }
 
-  Future<void> _handleMovementTap(RitmoColors colors) async {
-    if (mounted) {
-      unawaited(
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const MovementCenterScreen(),
-          ),
-        ).then((_) => _loadAllData()),
-      );
-    }
-  }
-
-
   void _handleAssistantTap(RitmoColors colors) {
     if (_assistantEnabled) {
       Navigator.push(
@@ -1386,7 +1436,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی دستیار هوشمند ریتمو',
-        description: 'دستیار هوشمند با پایش کاملاً امن و محلی روتین‌ها، اهداف، انرژی، خواب و برنامه‌ریزی، به صورت متنی به شما توصیه‌های کاربردی و بینش‌های عملی ارائه می‌دهد.',
+        description:
+            'دستیار هوشمند با پایش کاملاً امن و محلی روتین‌ها، اهداف، انرژی، خواب و برنامه‌ریزی، به صورت متنی به شما توصیه‌های کاربردی و بینش‌های عملی ارائه می‌دهد.',
         icon: CupertinoIcons.sparkles,
         iconColor: const Color(0xff06B6D4),
         settingKey: 'module_assistant_enabled',
@@ -1410,7 +1461,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     } else {
       _showActivationSheet(
         title: 'فعال‌سازی سیستم عبادی ریتمو',
-        description: 'سیستم عبادی به شما کمک می‌کند با ثبت مناسبت‌های خاص (مانند ماه مبارک رمضان، ایام اعتکاف، یا چله‌های مذهبی شخصی) وزن و اولویت روتین‌های عبادی خود را به طور هوشمند و بدون مزاحمت مدیریت کنید.',
+        description:
+            'سیستم عبادی به شما کمک می‌کند با ثبت مناسبت‌های خاص (مانند ماه مبارک رمضان، ایام اعتکاف، یا چله‌های مذهبی شخصی) وزن و اولویت روتین‌های عبادی خود را به طور هوشمند و بدون مزاحمت مدیریت کنید.',
         icon: CupertinoIcons.circle_grid_hex,
         iconColor: const Color(0xffFBBF24),
         settingKey: 'module_religion_enabled',
@@ -1446,13 +1498,17 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
             decoration: BoxDecoration(
-              color: isDark 
-                  ? const Color(0xff12141C).withValues(alpha: 0.85) 
+              color: isDark
+                  ? const Color(0xff12141C).withValues(alpha: 0.85)
                   : Colors.white.withValues(alpha: 0.88),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
               border: Border(
                 top: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.4),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.4),
                   width: 1.5,
                 ),
               ),
@@ -1479,7 +1535,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                         color: iconColor.withValues(alpha: 0.2),
                         blurRadius: 20,
                         spreadRadius: 2,
-                      )
+                      ),
                     ],
                   ),
                   child: Icon(icon, color: iconColor, size: 38),
@@ -1491,7 +1547,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
-                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1501,7 +1557,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                     fontSize: 13,
                     color: colors.textSecondary,
                     height: 1.5,
-                    ),
+                  ),
                 ),
                 const SizedBox(height: 28),
                 SizedBox(
@@ -1510,13 +1566,18 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                   child: TextButton(
                     onPressed: () async {
                       Navigator.pop(context);
-                      await ModuleManagementService.instance.setModuleEnabled(settingKey, true);
+                      await ModuleManagementService.instance.setModuleEnabled(
+                        settingKey,
+                        true,
+                      );
                       await _loadAllData();
                       onActivated();
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: colors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: const Text(
                       'فعال‌سازی سیستم',
@@ -1524,7 +1585,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -1545,7 +1606,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 }
 
 class PressableGlassCard extends StatefulWidget {
-
   const PressableGlassCard({
     super.key,
     required this.child,
@@ -1603,7 +1663,6 @@ class _PressableGlassCardState extends State<PressableGlassCard> {
 }
 
 class ParallaxImage extends StatelessWidget {
-
   const ParallaxImage({super.key, required this.asset});
   final String asset;
 
@@ -1618,11 +1677,7 @@ class ParallaxImage extends StatelessWidget {
           builder: (context, value, _) {
             return Transform.translate(
               offset: Offset(0, 6 * (1 - value)),
-              child: Image.asset(
-                asset,
-                cacheWidth: 600,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(asset, cacheWidth: 600, fit: BoxFit.cover),
             );
           },
         );
@@ -1630,5 +1685,3 @@ class ParallaxImage extends StatelessWidget {
     );
   }
 }
-
-

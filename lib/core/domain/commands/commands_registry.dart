@@ -5,7 +5,6 @@ import 'package:ritmo/core/domain/commands/catalog/goal_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/study_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/worship_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/wellbeing_commands.dart';
-import 'package:ritmo/core/domain/commands/catalog/sports_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/planning_commands.dart';
 import 'package:ritmo/core/domain/commands/catalog/notes_commands.dart';
 
@@ -80,26 +79,6 @@ void registerAllRitmoCommands() {
     const HealthLogAdherenceCommand(),
     const HealthLogVitalCommand(),
     const HealthScheduleTestCommand(),
-
-    // Sports & Movement commands
-    const SportsMarkDoneCommand(),
-    const SportsSkipSessionCommand(),
-    const SportsMoveSessionCommand(),
-    const SportsLogCustomMovementCommand(),
-    const SportsSetDaysPerWeekCommand(),
-    const SportsLockDayCommand(),
-    const SportsUnlockDayCommand(),
-    const SportsApplyDeloadCommand(),
-    const SportsRegenerateWeekCommand(),
-    const SportsSwapExerciseCommand(),
-    const SportsSetTrainingDaysCommand(),
-    const SportsSetSessionMinutesCommand(),
-    const SportsSetFocusCommand(),
-    const SportsSetRestDayCommand(),
-    const SportsAdjustIntensityCommand(),
-    const SportsLogSessionCommand(),
-    const SportsGenerateProgramCommand(),
-    const SportsSetQuietModeCommand(),
 
     // Notes & Experience commands (Prompt 071)
     const NoteCreateCommand(),

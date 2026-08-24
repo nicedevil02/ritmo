@@ -39,7 +39,6 @@ import 'package:ritmo/core/platform/backup_platform.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/device_service.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
-import 'package:ritmo/features/movement/presentation/agenda/sport_agenda_renderer.dart';
 import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
@@ -61,7 +60,8 @@ class AppBootstrapper {
   /// Standalone initializer that registers all core singletons.
   /// Decoupled from WidgetsFlutterBinding and runApp for isolate compatibility (BOOT-01).
   static Future<void> init() {
-    if (_initialized && sl.isRegistered<ThemeRepository>()) return Future<void>.value();
+    if (_initialized && sl.isRegistered<ThemeRepository>())
+      return Future<void>.value();
     return _initFuture ??= _doInit();
   }
 
@@ -76,18 +76,24 @@ class AppBootstrapper {
       registerAllRitmoCommands();
       initializeAllAgentTools();
       if (RitmoCommandBus.instance.registeredCommandIds.isEmpty) {
-        throw StateError('Bootstrap invariant violated: Commands must be registered before personas (BOOT-03).');
+        throw StateError(
+          'Bootstrap invariant violated: Commands must be registered before personas (BOOT-03).',
+        );
       }
 
       PersonaRegistry.instance.initStandardPersonas();
       final globalPersona = PersonaRegistry.instance.getPersona('global');
       if (globalPersona == null || globalPersona.commandIds.isEmpty) {
-        throw StateError('Bootstrap invariant violated: Global persona missing or has no commands (BOOT-03).');
+        throw StateError(
+          'Bootstrap invariant violated: Global persona missing or has no commands (BOOT-03).',
+        );
       }
 
       // Agenda Renderers (BOOT-09)
-      AgendaRendererRegistry.register(AgendaDomain.prayer, const PrayerAgendaRenderer());
-      AgendaRendererRegistry.register(AgendaDomain.sport, const SportAgendaRenderer());
+      AgendaRendererRegistry.register(
+        AgendaDomain.prayer,
+        const PrayerAgendaRenderer(),
+      );
 
       final eventBus = RitmoEventBus();
       sl.registerSingleton<RitmoEventBus>(eventBus);
@@ -147,15 +153,21 @@ class AppBootstrapper {
 
       // 6. Register Platform Implementations
       sl.registerSingleton<AlarmPlatform>(const MethodChannelAlarmPlatform());
-      sl.registerSingleton<NotificationPlatform>(const MethodChannelNotificationPlatform());
+      sl.registerSingleton<NotificationPlatform>(
+        const MethodChannelNotificationPlatform(),
+      );
       sl.registerSingleton<BackupPlatform>(GoogleDriveBackupService.instance);
 
       // 7. Register Backend Auth Services (BOOT-02: init deferred to non-critical path)
       sl.registerSingleton<AuthService>(AuthService.instance);
 
       // 8. Register feature warmup hooks
-      if (!DatabaseHelper.warmupHooks.contains(MovementReminderService.rescheduleWeekReminders)) {
-        DatabaseHelper.warmupHooks.add(MovementReminderService.rescheduleWeekReminders);
+      if (!DatabaseHelper.warmupHooks.contains(
+        MovementReminderService.rescheduleWeekReminders,
+      )) {
+        DatabaseHelper.warmupHooks.add(
+          MovementReminderService.rescheduleWeekReminders,
+        );
       }
 
       _initialized = true;
@@ -163,7 +175,12 @@ class AppBootstrapper {
       await sl.reset();
       _initialized = false;
       _initFuture = null;
-      RitmoLog.error('AppBootstrapper', 'init failed, resetting GetIt state (BOOT-01)', e, st);
+      RitmoLog.error(
+        'AppBootstrapper',
+        'init failed, resetting GetIt state (BOOT-01)',
+        e,
+        st,
+      );
       rethrow;
     }
   }

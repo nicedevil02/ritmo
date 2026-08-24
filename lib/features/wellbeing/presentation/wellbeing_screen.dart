@@ -2,8 +2,6 @@ import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:shamsi_date/shamsi_date.dart';
-import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +22,6 @@ import 'package:ritmo/core/domain/models.dart' hide EnergyLevel;
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
-import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/core/widgets/ritmo_progress_ring.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
@@ -46,7 +43,6 @@ import 'package:ritmo/features/wellbeing/presentation/widgets/frictionless_mood_
 import 'package:ritmo/features/wellbeing/presentation/widgets/index_trend_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/mood_analytics_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/narrative_inbox_card.dart';
-import 'package:ritmo/features/wellbeing/presentation/widgets/reflection_themes_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/sleep_overview_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_day_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_explanation_sheet.dart';
@@ -58,11 +54,11 @@ import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_quick_ch
 enum WellbeingSection {
   today,
   sleep,
-  energy,
-  journal;
+  energy;
 
   static const WellbeingSection trend = WellbeingSection.sleep;
-  static const WellbeingSection mirror = WellbeingSection.journal;
+  static const WellbeingSection mirror = WellbeingSection.energy;
+  static const WellbeingSection journal = WellbeingSection.energy;
 }
 
 class WellbeingScreen extends StatefulWidget {
@@ -99,7 +95,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   List<MoodLog> _rawMoodLogs = [];
   List<SleepLog> _rawSleepLogs = [];
   List<ReflectionEntry> _reflections = [];
-  List<CheckinEntry> _checkins = [];
   List<WellbeingDailyRecord> _dailyRecords = [];
   SleepTarget _sleepTarget = SleepTarget.defaultTarget();
   bool _isSleepTargetExpanded = true;
@@ -108,11 +103,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   WellbeingInsightSnapshot _insightSnapshotCache =
       const WellbeingInsightSnapshot();
   SleepProgramState? _sleepProgramState;
-
-  final TextEditingController _quickReflectionController =
-      TextEditingController();
-  bool _isSavingReflection = false;
-  int? _quickReflectionMood;
 
   StreamSubscription? _eventSub;
 
@@ -134,9 +124,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 4,
+      length: 3,
       vsync: this,
-      initialIndex: widget.initialSection.index.clamp(0, 3),
+      initialIndex: widget.initialSection.index.clamp(0, 2),
     );
 
     RitmoEvents.routineChanges.addListener(_requestReload);
@@ -169,7 +159,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     RitmoEvents.routineChanges.removeListener(_requestReload);
     _eventSub?.cancel();
     _tabController.dispose();
-    _quickReflectionController.dispose();
     super.dispose();
   }
 
@@ -316,12 +305,12 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       _reflections = reflectionRows
           .map((r) => ReflectionEntry.fromMap(r))
           .toList();
-      _checkins = checkinRows.map((r) => CheckinEntry.fromMap(r)).toList();
 
       final energyInput = EnergyAnalyticsEngineInput(
         energyLogs: energyRows,
         routineCompletions: completionRows,
         dailyRhythm: rhythmRows,
+        sleepDiagList: sleepRows,
         now: now,
       );
       final moodInput = MoodEngineInput(
@@ -556,28 +545,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     }
   }
 
-  Future<void> _saveQuickReflection() async {
-    final text = _quickReflectionController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() => _isSavingReflection = true);
-    try {
-      await WellbeingLogGateway.instance.saveReflection(
-        goodThing: text,
-        moodScore: _quickReflectionMood,
-      );
-
-      _quickReflectionController.clear();
-      setState(() => _quickReflectionMood = null);
-      RitmoHapticsPolicy.tap();
-      _requestReload();
-    } catch (e) {
-      debugPrint('Error saving quick reflection: $e');
-    } finally {
-      if (mounted) setState(() => _isSavingReflection = false);
-    }
-  }
-
   void _openAssistant() {
     showModalBottomSheet(
       context: context,
@@ -724,7 +691,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   Tab(text: 'امروز و تعادل'),
                   Tab(text: 'خواب و استراحت'),
                   Tab(text: 'انرژی و خلق'),
-                  Tab(text: 'دفتر بازتاب'),
                 ],
               ),
             ),
@@ -739,7 +705,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               _WellbeingTabKeepAlive(child: _buildTodayTab(context)),
               _WellbeingTabKeepAlive(child: _buildSleepTab(context)),
               _WellbeingTabKeepAlive(child: _buildEnergyTab(context)),
-              _WellbeingTabKeepAlive(child: _buildMirrorTab(context)),
             ],
           ),
         ),
@@ -824,7 +789,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   );
                 },
                 onReflectionTap: () {
-                  _tabController.animateTo(3);
+                  DailyReflectionSheet.show(
+                    context: context,
+                    onSaved: _requestReload,
+                  );
                 },
               ),
               const SizedBox(height: RitmoSpacing.lg),
@@ -1032,238 +1000,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               FrictionlessMoodBar(onLogChanged: _requestReload),
               const SizedBox(height: RitmoSpacing.lg),
               _buildEffortDistributionCard(context),
-            ]),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMirrorTab(BuildContext context) {
-    final colors = context.colors;
-
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              Container(
-                padding: const EdgeInsets.all(RitmoSpacing.md),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.edit_note, color: colors.primary, size: 20),
-                        const SizedBox(width: 6),
-                        Text(
-                          'ثبت سریع بازتاب امروز',
-                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _quickReflectionController,
-                      style: RitmoTextStyles.body(colors.textPrimary),
-                      maxLines: 3,
-                      minLines: 1,
-                      maxLength: 500,
-                      decoration: InputDecoration(
-                        hintText: 'امروز چه چیز خوبی اتفاق افتاد؟',
-                        hintStyle: RitmoTextStyles.caption(
-                          colors.textSecondary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Text(
-                          'حال امروز (اختیاری):',
-                          style: RitmoTextStyles.caption(colors.textSecondary),
-                        ),
-                        const Spacer(),
-                        for (int score = 1; score <= 5; score++) ...[
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _quickReflectionMood =
-                                    _quickReflectionMood == score
-                                    ? null
-                                    : score;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _quickReflectionMood == score
-                                    ? colors.primary.withValues(alpha: 0.2)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: _quickReflectionMood == score
-                                      ? colors.primary
-                                      : colors.border.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: Text(
-                                score == 1
-                                    ? '😫'
-                                    : score == 2
-                                    ? '🥱'
-                                    : score == 3
-                                    ? '😐'
-                                    : score == 4
-                                    ? '🙂'
-                                    : '😴',
-                                style: RitmoTextStyles.body(
-                                  colors.textPrimary,
-                                ).copyWith(fontSize: 16),
-                              ),
-                            ),
-                          ),
-                          if (score < 5) const SizedBox(width: 6),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSavingReflection
-                            ? null
-                            : _saveQuickReflection,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                        ),
-                        icon: _isSavingReflection
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.send, size: 16),
-                        label: Text(
-                          'ثبت بازتاب',
-                          style: RitmoTextStyles.label(colors.onPrimary),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: RitmoSpacing.lg),
-
-              Container(
-                padding: const EdgeInsets.all(RitmoSpacing.lg),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'پیوستگی بازتاب: ${RitmoNumber.faInt(_reflectionOutput?.currentStreak ?? 0)} روز پیاپی 🔥',
-                          style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                        ),
-                        if (_reflectionOutput?.longestStreak != null &&
-                            (_reflectionOutput?.longestStreak ?? 0) > 0)
-                          Text(
-                            'بهترین: ${RitmoNumber.faInt(_reflectionOutput!.longestStreak)} روز',
-                            style: RitmoTextStyles.caption(
-                              colors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${RitmoNumber.faInt(_reflections.length)} بازتاب و ${RitmoNumber.faInt(_checkins.length)} چک‌ین در $_selectedHorizonDays روز اخیر ثبت شده است.',
-                      style: RitmoTextStyles.body(colors.textSecondary),
-                    ),
-                    if (_reflectionOutput?.forgivenThisWeek == true) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.shield_outlined,
-                            size: 16,
-                            color: colors.primary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'فرصت جبران ۱ روزهٔ این هفته اعمال شد 🌱',
-                            style: RitmoTextStyles.caption(
-                              colors.primary,
-                            ).copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: RitmoSpacing.lg),
-              ReflectionThemesCard(
-                themes: _reflectionOutput?.themeFrequency ?? const {},
-                reflectionCount: _reflections.length,
-              ),
-              const SizedBox(height: RitmoSpacing.lg),
-              _buildGoodThingsQuotesCard(context),
-              const SizedBox(height: RitmoSpacing.lg),
-              Text(
-                'دفتر ثبت‌ها و بازتاب روزها',
-                style: RitmoTextStyles.cardTitle(colors.textPrimary),
-              ),
-              const SizedBox(height: RitmoSpacing.md),
-              if (_reflections.isEmpty && _checkins.isEmpty)
-                const RitmoEmptyState(
-                  icon: Icons.auto_stories,
-                  title: 'هنوز بازتابی ثبت نشده',
-                  description: 'از کادر بالای صفحه اولین بازتاب خود را ثبت کن.',
-                )
-              else
-                ..._reflections
-                    .take(20)
-                    .map((r) => _buildReflectionItemCard(context, r)),
             ]),
           ),
         ),
@@ -1997,47 +1733,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  Widget _buildGoodThingsQuotesCard(BuildContext context) {
-    final colors = context.colors;
-
-    final quotes = _reflections
-        .map((r) => r.goodThing)
-        .whereType<String>()
-        .where((s) => s.trim().isNotEmpty)
-        .take(3)
-        .toList();
-
-    if (quotes.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'چیزهایی که خوب بودند',
-            style: RitmoTextStyles.cardTitle(colors.textPrimary),
-          ),
-          const SizedBox(height: RitmoSpacing.md),
-          ...quotes.map(
-            (q) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                '💬 «$q»',
-                style: RitmoTextStyles.body(colors.textPrimary),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildErrorCard(BuildContext context) {
     final colors = context.colors;
 
@@ -2070,379 +1765,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           ],
         ),
       ),
-    );
-  }
-
-  String _formatReflectionJalaliDate(String dateIso) {
-    final dt = DateTime.tryParse(dateIso);
-    if (dt == null) return RitmoNumber.fa(dateIso);
-    final j = Jalali.fromDateTime(dt);
-    const months = [
-      'فروردین',
-      'اردیبهشت',
-      'خرداد',
-      'تیر',
-      'مرداد',
-      'شهریور',
-      'مهر',
-      'آبان',
-      'آذر',
-      'دی',
-      'بهمن',
-      'اسفند',
-    ];
-    const weekdays = [
-      'دوشنبه',
-      'سه‌شنبه',
-      'چهارشنبه',
-      'پنج‌شنبه',
-      'جمعه',
-      'شنبه',
-      'یک‌شنبه',
-    ];
-    final weekdayName = weekdays[dt.weekday - 1];
-    final monthName = months[j.month - 1];
-    return '$weekdayName، ${RitmoNumber.faInt(j.day)} $monthName ${RitmoNumber.faInt(j.year)}';
-  }
-
-  Widget _buildReflectionItemCard(BuildContext context, ReflectionEntry r) {
-    final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final moodEmoji = r.moodScore == 1
-        ? '😫'
-        : r.moodScore == 2
-        ? '🥱'
-        : r.moodScore == 3
-        ? '😐'
-        : r.moodScore == 4
-        ? '🙂'
-        : (r.moodScore == 5 ? '🤩' : '📝');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
-      child: InkWell(
-        onTap: () => _showReflectionDetailSheet(context, r),
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        child: Container(
-          padding: const EdgeInsets.all(RitmoSpacing.md),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            border: Border.all(
-              color: colors.border.withValues(alpha: isDark ? 0.4 : 0.8),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Text(moodEmoji, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatReflectionJalaliDate(r.date),
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      if (r.isPrivate == 1) ...[
-                        Icon(
-                          Icons.lock_outline_rounded,
-                          size: 14,
-                          color: colors.textSecondary.withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      Icon(
-                        Icons.chevron_left,
-                        size: 18,
-                        color: colors.textSecondary,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Structured Rows
-              if (r.wins != null && r.wins!.trim().isNotEmpty)
-                _buildReflectionChipRow(
-                  '🏆 دستاورد:',
-                  r.wins!,
-                  colors.success,
-                  colors,
-                ),
-              if (r.gratitude != null && r.gratitude!.trim().isNotEmpty)
-                _buildReflectionChipRow(
-                  '💖 شکرگزاری:',
-                  r.gratitude!,
-                  const Color(0xffEC4899),
-                  colors,
-                ),
-              if (r.challenges != null && r.challenges!.trim().isNotEmpty)
-                _buildReflectionChipRow(
-                  '⚡ چالش:',
-                  r.challenges!,
-                  colors.warning,
-                  colors,
-                ),
-              if (r.learnings != null && r.learnings!.trim().isNotEmpty)
-                _buildReflectionChipRow(
-                  '📚 یادگیری:',
-                  r.learnings!,
-                  colors.primary,
-                  colors,
-                ),
-              if (r.tomorrowFocus != null && r.tomorrowFocus!.trim().isNotEmpty)
-                _buildReflectionChipRow(
-                  '🎯 تمرکز فردا:',
-                  r.tomorrowFocus!,
-                  colors.sleepAccent,
-                  colors,
-                ),
-
-              if (r.reflectionText != null &&
-                  r.reflectionText!.trim().isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  r.reflectionText!,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 12,
-                    color: colors.textPrimary.withValues(alpha: 0.9),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReflectionChipRow(
-    String label,
-    String content,
-    Color tagColor,
-    RitmoColors colors,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Vazirmatn',
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
-              color: tagColor,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              content,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 11.5,
-                color: colors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showReflectionDetailSheet(
-    BuildContext context,
-    ReflectionEntry reflection,
-  ) {
-    RitmoSheetScaffold.present(
-      context: context,
-      title: 'بازتاب ${_formatReflectionJalaliDate(reflection.date)}',
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (reflection.wins != null &&
-                  reflection.wins!.trim().isNotEmpty) ...[
-                Text(
-                  '🏆 دستاوردها و پیروزی‌ها:',
-                  style: RitmoTextStyles.caption(colors.success),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.wins!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (reflection.gratitude != null &&
-                  reflection.gratitude!.trim().isNotEmpty) ...[
-                Text(
-                  '💖 شکرگزاری:',
-                  style: RitmoTextStyles.caption(const Color(0xffEC4899)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.gratitude!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (reflection.challenges != null &&
-                  reflection.challenges!.trim().isNotEmpty) ...[
-                Text(
-                  '⚡ چالش‌ها و دشواری‌ها:',
-                  style: RitmoTextStyles.caption(colors.warning),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.challenges!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (reflection.learnings != null &&
-                  reflection.learnings!.trim().isNotEmpty) ...[
-                Text(
-                  '📚 یادگیری و درس‌آموخته:',
-                  style: RitmoTextStyles.caption(colors.primary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.learnings!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (reflection.tomorrowFocus != null &&
-                  reflection.tomorrowFocus!.trim().isNotEmpty) ...[
-                Text(
-                  '🎯 تمرکز و اولویت فردا:',
-                  style: RitmoTextStyles.caption(colors.sleepAccent),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.tomorrowFocus!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              if (reflection.reflectionText != null &&
-                  reflection.reflectionText!.trim().isNotEmpty) ...[
-                Text(
-                  '📝 یادداشت و دلنوشته:',
-                  style: RitmoTextStyles.caption(colors.textSecondary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reflection.reflectionText!,
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      DailyReflectionSheet.show(
-                        context: context,
-                        date: reflection.date,
-                        onSaved: _requestReload,
-                      );
-                    },
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: Text(
-                      'ویرایش کامل',
-                      style: RitmoTextStyles.label(colors.onPrimary),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (dCtx) => AlertDialog(
-                          title: const Text('حذف بازتاب'),
-                          content: const Text(
-                            'آیا از حذف این بازتاب مطمئن هستید؟',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dCtx, false),
-                              child: const Text('انصراف'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(dCtx, true),
-                              child: Text(
-                                'حذف',
-                                style: RitmoTextStyles.label(colors.error),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (confirmed == true && context.mounted) {
-                        Navigator.pop(ctx);
-                        final deletedRow = await WellbeingLogGateway.instance
-                            .deleteReflection(reflection.date);
-                        _requestReload();
-
-                        if (deletedRow != null && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('بازتاب حذف شد'),
-                              action: SnackBarAction(
-                                label: 'برگردان',
-                                onPressed: () async {
-                                  await WellbeingLogGateway.instance
-                                      .restoreReflection(deletedRow);
-                                  _requestReload();
-                                },
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: Icon(Icons.delete, size: 16, color: colors.error),
-                    label: Text(
-                      'حذف',
-                      style: RitmoTextStyles.label(colors.error),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

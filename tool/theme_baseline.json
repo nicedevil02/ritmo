@@ -4,16 +4,16 @@
   "oldOpacity": 0,
   "duplicateFont": 124,
   "scatteredBlur": 30,
-  "manualShadow": 200,
+  "manualShadow": 199,
   "rawScaffold": 106,
   "circularProgress": 135,
-  "localDirectionality": 324,
-  "hardcodedDuration": 196,
+  "localDirectionality": 323,
+  "hardcodedDuration": 195,
   "coreHardcodedColors": 415,
   "coreMaterialColors": 75,
   "coreDuplicateFont": 153,
   "coreScatteredBlur": 6,
   "coreManualShadow": 9,
-  "rawFontSize": 3649,
-  "rawGeometryLiteral": 4518
+  "rawFontSize": 3644,
+  "rawGeometryLiteral": 4513
 }

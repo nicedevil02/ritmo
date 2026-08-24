@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/energy_analytics_engine.dart';
@@ -862,38 +863,76 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   Widget _buildHorizonFilterRow(BuildContext context) {
     final colors = context.colors;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [7, 14, 30, 90].map((d) {
-          final isSelected = _selectedHorizonDays == d;
-          return Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: ChoiceChip(
-              label: Text('${RitmoNumber.faInt(d)} روزه'),
-              selected: isSelected,
-              onSelected: (_) => _setHorizonDays(d),
-              selectedColor: colors.primary.withValues(alpha: 0.18),
-              backgroundColor: colors.surface,
-              side: BorderSide(
-                color: isSelected
-                    ? colors.primary
-                    : colors.border.withValues(alpha: 0.5),
-                width: isSelected ? 1.2 : 0.8,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Center(
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: isDark
+              ? colors.surface.withValues(alpha: 0.6)
+              : colors.border.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: colors.border.withValues(alpha: isDark ? 0.2 : 0.12),
+            width: 0.75,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [7, 14, 30, 90].map((d) {
+            final isSelected = _selectedHorizonDays == d;
+            return GestureDetector(
+              onTap: () {
+                RitmoHapticsPolicy.selection();
+                _setHorizonDays(d);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? colors.card : colors.surface)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                        ]
+                      : [],
+                  border: isSelected
+                      ? Border.all(
+                          color: isDark
+                              ? colors.border.withValues(alpha: 0.2)
+                              : colors.border.withValues(alpha: 0.12),
+                          width: 0.75,
+                        )
+                      : null,
+                ),
+                child: Center(
+                  child: Text(
+                    '${RitmoNumber.faInt(d)} روزه',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 11.5,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected
+                          ? colors.primary
+                          : colors.textSecondary.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ),
               ),
-              labelStyle: RitmoTextStyles.caption(
-                isSelected ? colors.primary : colors.textSecondary,
-              ).copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -916,7 +955,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       child: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 SleepTargetCard(
@@ -936,17 +975,17 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     );
                   },
                 ),
-                const SizedBox(height: RitmoSpacing.lg),
+                const SizedBox(height: 10),
                 _buildHorizonFilterRow(context),
-                const SizedBox(height: RitmoSpacing.md),
+                const SizedBox(height: 10),
                 SleepOverviewCard(
                   output: _sleepOutput,
                   target: _sleepTarget,
                   sleepLogCount: _rawSleepLogs.length,
                 ),
-                const SizedBox(height: RitmoSpacing.lg),
+                const SizedBox(height: 10),
                 _buildSleepProgramCard(context),
-                const SizedBox(height: RitmoSpacing.lg),
+                const SizedBox(height: 10),
                 _buildSleepBankCard(context),
               ]),
             ),
@@ -1400,15 +1439,15 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final score = _lifeBalanceOutput?.score;
     final distribution = _lifeBalanceOutput?.distribution ?? {};
 
-    final domainMap = {
-      'RELIGION': 'عبادی 🤲',
-      'HEALTH': 'ورزش و سلامت 🏋️',
-      'LEARNING': 'یادگیری 📚',
-      'WORK': 'کار و تلاش 💼',
-      'PERSONAL': 'شخصی 🌿',
-      'FREE': 'تفریح 🎨',
-      'OTHER': 'سایر / متفرقه 📌',
-    };
+    final domainList = [
+      (key: 'RELIGION', label: 'عبادی', icon: CupertinoIcons.heart_circle_fill, color: const Color(0xff06B6D4)),
+      (key: 'HEALTH', label: 'ورزش و سلامت', icon: CupertinoIcons.flame_fill, color: const Color(0xff10B981)),
+      (key: 'LEARNING', label: 'یادگیری', icon: CupertinoIcons.book_fill, color: const Color(0xff3B82F6)),
+      (key: 'WORK', label: 'کار و تلاش', icon: CupertinoIcons.briefcase_fill, color: const Color(0xffF59E0B)),
+      (key: 'PERSONAL', label: 'شخصی', icon: CupertinoIcons.person_crop_circle_fill, color: const Color(0xff8B5CF6)),
+      (key: 'FREE', label: 'تفریح', icon: CupertinoIcons.gamecontroller_fill, color: const Color(0xffEC4899)),
+      (key: 'OTHER', label: 'سایر / متفرقه', icon: CupertinoIcons.circle_grid_hex_fill, color: colors.textSecondary),
+    ];
 
     final skipped = _lifeBalanceOutput?.skippedRows ?? 0;
 
@@ -1422,51 +1461,78 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'توزیع تلاش بین حوزه‌ها',
-            style: RitmoTextStyles.cardTitle(colors.textPrimary),
-          ),
-          const SizedBox(height: 8),
-          if (score == null)
-            Text(
-              'برای محاسبهٔ تعادل، حداقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
-              style: RitmoTextStyles.caption(colors.textSecondary),
-            )
-          else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'شاخص تعادل زمانی:',
-                  style: RitmoTextStyles.body(colors.textPrimary),
-                ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.chart_pie_fill,
+                      color: colors.primary,
+                      size: 17,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'توزیع تلاش بین حوزه‌ها',
+                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                  ),
+                ],
+              ),
+              if (score != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
-                    vertical: 2,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
                   ),
                   child: Text(
-                    '${RitmoNumber.faInt(score)} از ۱۰۰',
-                    style: RitmoTextStyles.caption(colors.primary).copyWith(
+                    'تعادل: ${RitmoNumber.faInt(score)}٪',
+                    style: TextStyle(
+                      fontSize: 10.5,
                       fontWeight: FontWeight.bold,
+                      color: colors.primary,
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (score == null)
+            Container(
+              padding: const EdgeInsets.all(RitmoSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surfaceSunken,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'برای محاسبهٔ تعادل زمانی، حداقل ${RitmoNumber.faInt(LifeBalanceEngine.minCompletionsForBalance)} روتین تکمیل‌شده لازم است.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colors.textSecondary,
+                  height: 1.45,
+                ),
+              ),
+            )
+          else ...[
             Column(
-              children: domainMap.entries.map((e) {
-                final percent = distribution[e.key] ?? 0.0;
+              children: domainList.map((d) {
+                final percent = distribution[d.key] ?? 0.0;
                 final ratio = (percent / 100.0).clamp(0.0, 1.0);
-                final minutes = _lifeBalanceOutput?.domainMinutes[e.key] ?? 0;
+                final minutes = _lifeBalanceOutput?.domainMinutes[d.key] ?? 0;
                 final timeLabel = minutes >= 60
-                    ? '${RitmoNumber.faInt(minutes ~/ 60)} س ${minutes % 60 > 0 ? 'و ${RitmoNumber.faInt(minutes % 60)} د' : ''}'
-                    : '${RitmoNumber.faInt(minutes)} د';
+                    ? '${RitmoNumber.faInt(minutes ~/ 60)} ساعت ${minutes % 60 > 0 ? 'و ${RitmoNumber.faInt(minutes % 60)} دقیقه' : ''}'
+                    : '${RitmoNumber.faInt(minutes)} دقیقه';
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1475,16 +1541,32 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(e.value, style: RitmoTextStyles.caption(colors.textPrimary)),
+                          Row(
+                            children: [
+                              Icon(d.icon, size: 13, color: d.color),
+                              const SizedBox(width: 6),
+                              Text(
+                                d.label,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                           Text(
                             minutes > 0
                                 ? '$timeLabel (${RitmoNumber.faInt(percent.round())}٪)'
                                 : '—',
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: minutes > 0 ? colors.textPrimary : colors.textSecondary.withValues(alpha: 0.5),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
@@ -1516,19 +1598,22 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   Widget _buildSleepProgramCard(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = _sleepProgramState;
     if (state == null) return const SizedBox.shrink();
 
     // ۱. فاز گوش دادن (listening): زیر ۷ شب داده
     if (state.status == SleepProgramStatus.listening) {
       final nights = state.nightsLogged;
-      final progress = (nights / 7.0).clamp(0.0, 1.0);
       return Container(
-        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.25)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colors.sleepAccent.withValues(alpha: isDark ? 0.25 : 0.2),
+            width: 0.8,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1536,7 +1621,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
                     color: colors.sleepAccent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
@@ -1544,66 +1629,97 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   child: Icon(
                     Icons.headphones_rounded,
                     color: colors.sleepAccent,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'مسیر خواب · در حال شنیدن ریتم شما',
-                        style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
                         '${RitmoNumber.faInt(nights)} شب از ۷ شب لازم برای تنظیم الگوی خواب ثبت شده است.',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 10,
+                          color: colors.textSecondary.withValues(alpha: 0.8),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor: colors.border.withValues(alpha: 0.5),
-                valueColor: AlwaysStoppedAnimation<Color>(colors.sleepAccent),
-              ),
+            const SizedBox(height: 10),
+            // 7-Night step indicator pills
+            Row(
+              children: List.generate(7, (i) {
+                final isDone = i < nights;
+                final isCurrent = i == nights;
+                return Expanded(
+                  child: Container(
+                    height: 5,
+                    margin: EdgeInsets.only(left: i == 6 ? 0 : 4),
+                    decoration: BoxDecoration(
+                      color: isDone
+                          ? colors.sleepAccent
+                          : (isCurrent
+                              ? colors.sleepAccent.withValues(alpha: 0.4)
+                              : colors.border.withValues(alpha: isDark ? 0.25 : 0.4)),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                );
+              }),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     'تا تکمیل این دوره هیچ ساعتی تحمیل نمی‌شود.',
-                    style: RitmoTextStyles.caption(colors.textSecondary),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 10,
+                      color: colors.textSecondary.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      _onInsightAction(WellbeingInsightAction.logSleep),
-                  style: OutlinedButton.styleFrom(
+                const SizedBox(width: 8),
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    RitmoHapticsPolicy.tap();
+                    _onInsightAction(WellbeingInsightAction.logSleep);
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.sleepAccent.withValues(alpha: 0.15),
                     foregroundColor: colors.sleepAccent,
-                    side: BorderSide(color: colors.sleepAccent),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: Text(
+                  icon: const Icon(Icons.add, size: 14),
+                  label: const Text(
                     'ثبت خواب دیشب',
-                    style: RitmoTextStyles.caption(colors.sleepAccent),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -1616,16 +1732,19 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     // ۲. شب آزاد (freeNightTonight)
     if (state.freeNightTonight) {
       return Container(
-        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.25)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colors.sleepAccent.withValues(alpha: isDark ? 0.25 : 0.2),
+            width: 0.8,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: colors.sleepAccent.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
@@ -1633,22 +1752,31 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               child: Icon(
                 Icons.nightlife_rounded,
                 color: colors.sleepAccent,
-                size: 22,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'امشب شب آزاد است 🌙',
-                    style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     'هیچ انتظاری از زمان خواب امشب نیست و در سنجش پایبندی شمرده نمی‌شود. استراحت کن و لذت ببر!',
-                    style: RitmoTextStyles.caption(colors.textSecondary),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 10,
+                      color: colors.textSecondary.withValues(alpha: 0.8),
+                    ),
                   ),
                 ],
               ),
@@ -1662,11 +1790,14 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final timeStr = SleepPlanInsights.hhmm(state.tonightBedtimeMin);
     final targetWakeStr = SleepPlanInsights.hhmm(state.tonightWakeMin);
     return Container(
-      padding: const EdgeInsets.all(RitmoSpacing.lg),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(color: colors.sleepAccent.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colors.sleepAccent.withValues(alpha: isDark ? 0.3 : 0.25),
+          width: 0.8,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1674,7 +1805,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: colors.sleepAccent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
@@ -1682,68 +1813,87 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 child: Icon(
                   Icons.bedtime_rounded,
                   color: colors.sleepAccent,
-                  size: 22,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'پلهٔ امشب · $timeStr',
-                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       'هدف بیداری: $targetWakeStr · گام‌های ${RitmoNumber.faInt(state.stepMinutes)} دقیقه‌ای',
-                      style: RitmoTextStyles.caption(colors.textSecondary),
+                      style: TextStyle(
+                        fontFamily: 'Vazirmatn',
+                        fontSize: 10,
+                        color: colors.textSecondary.withValues(alpha: 0.8),
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             state.holdTonight
                 ? 'امشب روی همین پله می‌مانیم تا بدنت تثبیت شود.'
                 : 'برای رسیدن تدریجی به هدف نهایی، خوابیدن در بازهٔ ۱۵± دقیقه از این پله پیشنهاد می‌شود.',
-            style: RitmoTextStyles.body(
-              colors.textSecondary,
-            ).copyWith(fontSize: 12),
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 10.5,
+              color: colors.textSecondary.withValues(alpha: 0.85),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (state.adherence7d != null)
                 Text(
                   'پایبندی ۷ روزه: ${RitmoNumber.faPercent((state.adherence7d! * 100).round())}',
-                  style: RitmoTextStyles.caption(colors.sleepAccent).copyWith(
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
+                    color: colors.sleepAccent,
                   ),
                 )
               else
                 const SizedBox.shrink(),
-              OutlinedButton.icon(
-                onPressed: () =>
-                    _onInsightAction(WellbeingInsightAction.logSleep),
-                style: OutlinedButton.styleFrom(
+              FilledButton.tonalIcon(
+                onPressed: () {
+                  RitmoHapticsPolicy.tap();
+                  _onInsightAction(WellbeingInsightAction.logSleep);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.sleepAccent.withValues(alpha: 0.15),
                   foregroundColor: colors.sleepAccent,
-                  side: BorderSide(color: colors.sleepAccent),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                icon: const Icon(Icons.check, size: 16),
-                label: Text(
+                icon: const Icon(Icons.check, size: 14),
+                label: const Text(
                   'ثبت خواب',
-                  style: RitmoTextStyles.caption(colors.sleepAccent),
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -1755,9 +1905,14 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   Widget _buildSleepBankCard(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final balance = _sleepOutput?.sleepBalanceHours ?? 0.0;
     final isDeficit = balance < 0;
     final isZeroData = _rawSleepLogs.isEmpty;
+
+    final Color statusColor = isZeroData
+        ? colors.textSecondary
+        : (isDeficit ? colors.cautionAccent : colors.success);
 
     return InkWell(
       onTap: () {
@@ -1771,28 +1926,36 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           ),
         );
       },
-      borderRadius: BorderRadius.circular(RitmoRadius.card),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colors.border.withValues(alpha: isDark ? 0.3 : 0.6),
+            width: 0.8,
+          ),
         ),
         child: Row(
           children: [
-            Icon(
-              isZeroData
-                  ? Icons.bedtime_outlined
-                  : (isDeficit
-                        ? Icons.battery_alert
-                        : Icons.battery_charging_full),
-              color: isZeroData
-                  ? colors.textSecondary
-                  : (isDeficit ? colors.cautionAccent : colors.success),
-              size: 28,
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isZeroData
+                    ? Icons.bedtime_outlined
+                    : (isDeficit
+                        ? Icons.battery_alert_rounded
+                        : Icons.battery_charging_full_rounded),
+                color: statusColor,
+                size: 18,
+              ),
             ),
-            const SizedBox(width: RitmoSpacing.md),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1801,27 +1964,36 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     isZeroData
                         ? 'ذخیرهٔ خواب: داده‌ای ثبت نشده است'
                         : (isDeficit
-                              ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
-                              : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
-                    style: RitmoTextStyles.cardTitle(
-                      isZeroData
-                          ? colors.textPrimary
-                          : (isDeficit ? colors.cautionAccent : colors.success),
+                            ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
+                            : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isZeroData ? colors.textPrimary : statusColor,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 1),
                   Text(
                     isZeroData
                         ? 'برای تنظیم هدف خواب و پایش ذخیره زیستی، کلیک کنید.'
                         : (isDeficit
-                              ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
-                              : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
-                    style: RitmoTextStyles.caption(colors.textSecondary),
+                            ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
+                            : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontSize: 10,
+                      color: colors.textSecondary.withValues(alpha: 0.75),
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_left, color: colors.textSecondary, size: 20),
+            Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: colors.textSecondary.withValues(alpha: 0.4),
+              size: 13,
+            ),
           ],
         ),
       ),

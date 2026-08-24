@@ -100,11 +100,11 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
 
     final subtext = _todayLogCount > 0
         ? 'آخرین ثبت: $_lastLogTimeFa (${RitmoNumber.faInt(_todayLogCount)} ثبت امروز)'
-        : 'ثبت حال لحظه‌ای';
+        : 'ثبت لحظه‌ای حال روحی';
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.lg,
+        horizontal: RitmoSpacing.md,
         vertical: RitmoSpacing.md,
       ),
       decoration: BoxDecoration(
@@ -112,30 +112,35 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
         borderRadius: BorderRadius.circular(RitmoRadius.card),
         border: Border.all(color: colors.border),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'الان در چه حالی؟',
-                  style: RitmoTextStyles.body(colors.textPrimary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'الان در چه حالی؟',
+                style: RitmoTextStyles.body(colors.textPrimary).copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtext,
-                  style: RitmoTextStyles.caption(colors.textSecondary),
-                ),
-              ],
-            ),
+              ),
+              Text(
+                subtext,
+                style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 10.5),
+              ),
+            ],
           ),
-          _moodButton(context, 1, '🙁', 'ناآرام', colors.error),
-          const SizedBox(width: 8),
-          _moodButton(context, 3, '😐', 'معمولی', colors.cautionAccent),
-          const SizedBox(width: 8),
-          _moodButton(context, 5, '😊', 'خوب', colors.success),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _moodButton(context, 1, Icons.sentiment_very_dissatisfied_rounded, 'خیلی بد', const Color(0xffF43F5E)),
+              _moodButton(context, 2, Icons.sentiment_dissatisfied_rounded, 'کمی خسته', const Color(0xffF97316)),
+              _moodButton(context, 3, Icons.sentiment_neutral_rounded, 'معمولی', const Color(0xffF59E0B)),
+              _moodButton(context, 4, Icons.sentiment_satisfied_rounded, 'خوب', const Color(0xff10B981)),
+              _moodButton(context, 5, Icons.sentiment_very_satisfied_rounded, 'عالی', const Color(0xff06B6D4)),
+            ],
+          ),
         ],
       ),
     );
@@ -144,7 +149,7 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
   Widget _moodButton(
     BuildContext context,
     int valence,
-    String emoji,
+    IconData icon,
     String label,
     Color color,
   ) {
@@ -153,20 +158,42 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
       label: 'ثبت حال: $label',
       child: InkWell(
         onTap: () => _logMood(valence, label),
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.12),
-            border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
-          ),
-          child: Text(
-            emoji,
-            style: RitmoTextStyles.body(color).copyWith(fontSize: 20),
-          ),
+        borderRadius: BorderRadius.circular(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.12),
+                border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: context.colors.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

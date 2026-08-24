@@ -1,18 +1,8 @@
 import 'package:flutter/material.dart';
 
-enum SettingScope {
-  db,
-  prefs,
-  secure,
-}
+enum SettingScope { db, prefs, secure }
 
-enum SettingType {
-  boolean,
-  integer,
-  text,
-  enumeration,
-  time,
-}
+enum SettingType { boolean, integer, text, enumeration, time }
 
 enum SettingsGroup {
   identity,
@@ -118,8 +108,10 @@ abstract final class AppLockTimeout {
 enum SettingVisibility {
   /// در فهرست گروه و جست‌وجو دیده می‌شود.
   normal,
+
   /// فقط وقتی «نمایش تنظیمات پیشرفته» روشن باشد.
   advanced,
+
   /// وضعیت داخلی؛ نه در فهرست، نه در جست‌وجو.
   internal,
 }
@@ -135,7 +127,8 @@ class SettingCondition {
     if (expectedValue == null) {
       return actualValue == true || actualValue == 'true';
     }
-    return actualValue == expectedValue || actualValue == expectedValue.toString();
+    return actualValue == expectedValue ||
+        actualValue == expectedValue.toString();
   }
 }
 
@@ -163,12 +156,37 @@ class SettingDescriptor {
     this.unitFa,
     this.optionLabelsFa,
     this.searchTermsEn = const [],
-  })  : assert(type != SettingType.boolean || defaultValue is bool, 'Boolean setting $key must have bool defaultValue'),
-        assert(type != SettingType.integer || (defaultValue is int && (min == null || defaultValue >= min) && (max == null || defaultValue <= max)), 'Integer setting $key defaultValue ($defaultValue) must be int within [$min, $max]'),
-        assert((type != SettingType.text && type != SettingType.enumeration && type != SettingType.time) || defaultValue is String, 'Text/Enum/Time setting $key must have String defaultValue'),
-        assert(type != SettingType.enumeration || allowed != null, 'Enum setting $key must have allowed list'),
-        assert(min == null || max == null || min <= max, 'Setting $key min ($min) must be <= max ($max)'),
-        assert(type != SettingType.time || (defaultValue is String && defaultValue.length == 5), 'Time setting $key defaultValue ($defaultValue) must match HH:mm pattern');
+  }) : assert(
+         type != SettingType.boolean || defaultValue is bool,
+         'Boolean setting $key must have bool defaultValue',
+       ),
+       assert(
+         type != SettingType.integer ||
+             (defaultValue is int &&
+                 (min == null || defaultValue >= min) &&
+                 (max == null || defaultValue <= max)),
+         'Integer setting $key defaultValue ($defaultValue) must be int within [$min, $max]',
+       ),
+       assert(
+         (type != SettingType.text &&
+                 type != SettingType.enumeration &&
+                 type != SettingType.time) ||
+             defaultValue is String,
+         'Text/Enum/Time setting $key must have String defaultValue',
+       ),
+       assert(
+         type != SettingType.enumeration || allowed != null,
+         'Enum setting $key must have allowed list',
+       ),
+       assert(
+         min == null || max == null || min <= max,
+         'Setting $key min ($min) must be <= max ($max)',
+       ),
+       assert(
+         type != SettingType.time ||
+             (defaultValue is String && defaultValue.length == 5),
+         'Time setting $key defaultValue ($defaultValue) must match HH:mm pattern',
+       );
 
   final String key;
   final SettingType type;
@@ -301,7 +319,8 @@ class SettingsRegistry {
       defaultValue: false,
       labelFa: 'نمایش تنظیمات پیشرفته',
       group: SettingsGroup.identity,
-      descriptionFa: 'نمایش کلیدها و گزینه‌های تخصصی و پیشرفته در صفحات تنظیمات',
+      descriptionFa:
+          'نمایش کلیدها و گزینه‌های تخصصی و پیشرفته در صفحات تنظیمات',
       searchTerms: ['پیشرفته', 'ساده', 'حالت پیشرفته'],
     ),
     SettingDescriptor(
@@ -523,7 +542,8 @@ class SettingsRegistry {
       labelFa: 'ساعات سکوت',
       group: SettingsGroup.notifications,
       descriptionFa: 'قطع موقت اعلان‌های غیراضطراری در ساعات مشخص',
-      whyExplanationFa: 'سکوت شبانه مانع از بیداری ناگهانی و قطع فازهای خواب عمیق می‌شود و پیام‌های غیرضروری را تا صبح به تعویق می‌اندازد.',
+      whyExplanationFa:
+          'سکوت شبانه مانع از بیداری ناگهانی و قطع فازهای خواب عمیق می‌شود و پیام‌های غیرضروری را تا صبح به تعویق می‌اندازد.',
       aiWritable: true,
       searchTerms: ['سکوت', 'ساعت سکوت', 'شب', 'مزاحم نشوید'],
     ),
@@ -710,6 +730,75 @@ class SettingsRegistry {
       searchTerms: ['سیاه', 'امولد', 'oled', 'تاریک خالص'],
     ),
     SettingDescriptor(
+      key: 'ui_text_scale',
+      type: SettingType.integer,
+      scope: SettingScope.db,
+      defaultValue: 100,
+      min: 85,
+      max: 140,
+      labelFa: 'اندازهٔ متن',
+      group: SettingsGroup.appearance,
+      requiresRestart: false,
+      descriptionFa: 'تنظیم مقیاس و بزرگی متن‌ها در سراسر برنامه',
+      searchTerms: [
+        'اندازه متن',
+        'فونت',
+        'بزرگنمایی',
+        'درشتی',
+        'ریزی',
+        'چگالی',
+        'فشردگی',
+        'بزرگی المان',
+        'دسترس‌پذیری',
+        'کم‌بینا',
+      ],
+    ),
+    SettingDescriptor(
+      key: 'ui_text_follow_os',
+      type: SettingType.boolean,
+      scope: SettingScope.db,
+      defaultValue: true,
+      labelFa: 'پیروی از اندازه فونت سیستم',
+      group: SettingsGroup.appearance,
+      requiresRestart: false,
+      descriptionFa: 'اعمال مقیاس فونت تنظیم‌شده در سیستم‌عامل دستگاه',
+      searchTerms: [
+        'اندازه متن',
+        'فونت',
+        'بزرگنمایی',
+        'درشتی',
+        'ریزی',
+        'چگالی',
+        'فشردگی',
+        'بزرگی المان',
+        'دسترس‌پذیری',
+        'کم‌بینا',
+      ],
+    ),
+    SettingDescriptor(
+      key: 'ui_density',
+      type: SettingType.enumeration,
+      scope: SettingScope.db,
+      defaultValue: 'comfortable',
+      allowed: ['compact', 'comfortable', 'spacious', 'xl'],
+      labelFa: 'چگالی و اندازهٔ المان‌ها',
+      group: SettingsGroup.appearance,
+      requiresRestart: false,
+      descriptionFa: 'تنظیم فواصل، دکمه‌ها و بزرگی اجزای رابط کاربری',
+      searchTerms: [
+        'اندازه متن',
+        'فونت',
+        'بزرگنمایی',
+        'درشتی',
+        'ریزی',
+        'چگالی',
+        'فشردگی',
+        'بزرگی المان',
+        'دسترس‌پذیری',
+        'کم‌بینا',
+      ],
+    ),
+    SettingDescriptor(
       key: 'locale',
       type: SettingType.enumeration,
       scope: SettingScope.db,
@@ -871,7 +960,8 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       allowed: ['gentle', 'medium', 'strict'],
       descriptionFa: 'میزان سخت‌گیری و سبک پیام‌های یادآوری',
-      whyExplanationFa: 'لحن دستیار نحوه برخورد سیستم هنگام عقب افتادن برنامه‌ها را تنظیم می‌کند؛ لحن ملایم استرس روانی را کاهش داده و لحن قاطع از اهمال‌کاری جلوگیری می‌کند.',
+      whyExplanationFa:
+          'لحن دستیار نحوه برخورد سیستم هنگام عقب افتادن برنامه‌ها را تنظیم می‌کند؛ لحن ملایم استرس روانی را کاهش داده و لحن قاطع از اهمال‌کاری جلوگیری می‌کند.',
       searchTerms: ['لحن', 'سختی', 'سخت‌گیری', 'انعطاف'],
     ),
     SettingDescriptor(
@@ -886,7 +976,8 @@ class SettingsRegistry {
       min: 60,
       max: 1440,
       descriptionFa: 'حداکثر دقایق تخصیص داده شده به فعالیت‌های تمرکزی',
-      whyExplanationFa: 'مغز انسان توان تمرکزی محدودی در طول شبانه‌روز دارد. این سقف مانع از فشردگی بیش‌ازحد کارهای تمرکزی و فرسودگی ذهنی می‌شود.',
+      whyExplanationFa:
+          'مغز انسان توان تمرکزی محدودی در طول شبانه‌روز دارد. این سقف مانع از فشردگی بیش‌ازحد کارهای تمرکزی و فرسودگی ذهنی می‌شود.',
       searchTerms: ['ظرفیت', 'توان', 'ساعت کار'],
     ),
     SettingDescriptor(
@@ -898,7 +989,8 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       affectsAgenda: true,
       descriptionFa: 'آغاز خط زمانی روز در تقویم و برنامه‌ریز',
-      whyExplanationFa: 'تقویم هوشمند آغاز روز و بلوک‌های تمرکز صبحگاهی را با ساعت فیزیولوژیک بیداری شما تراز می‌کند.',
+      whyExplanationFa:
+          'تقویم هوشمند آغاز روز و بلوک‌های تمرکز صبحگاهی را با ساعت فیزیولوژیک بیداری شما تراز می‌کند.',
       searchTerms: ['بیداری', 'صبح', 'طلوع', 'خواب'],
     ),
     SettingDescriptor(
@@ -910,7 +1002,8 @@ class SettingsRegistry {
       group: SettingsGroup.assistant,
       affectsAgenda: true,
       descriptionFa: 'پایان فعالیت‌های فعال و بسته شدن پرونده روز',
-      whyExplanationFa: 'برای تثبیت ریتم سیرکادین و ترشح ملاتونین، وظایف قبل از این زمان بسته شده تا ذهن آماده استراحت کامل شود.',
+      whyExplanationFa:
+          'برای تثبیت ریتم سیرکادین و ترشح ملاتونین، وظایف قبل از این زمان بسته شده تا ذهن آماده استراحت کامل شود.',
       searchTerms: ['خواب', 'شب', 'استراحت'],
     ),
     SettingDescriptor(
@@ -924,7 +1017,8 @@ class SettingsRegistry {
       min: 180,
       max: 900,
       descriptionFa: 'میزان خواب ایده‌آل روزانه برای شارژ کامل انرژی',
-      whyExplanationFa: 'برای محاسبه شاخص تعادل و بررسی کسری خواب هفتگی مورد استفاده قرار می‌گیرد.',
+      whyExplanationFa:
+          'برای محاسبه شاخص تعادل و بررسی کسری خواب هفتگی مورد استفاده قرار می‌گیرد.',
       searchTerms: ['خواب', 'مدت خواب', 'کسر خواب'],
     ),
     SettingDescriptor(
@@ -935,7 +1029,8 @@ class SettingsRegistry {
       labelFa: 'اجازه به دستیار برای تغییر تنظیمات',
       group: SettingsGroup.assistant,
       visibility: SettingVisibility.advanced,
-      descriptionFa: 'اجازه به دستیار هوشمند برای اعمال تغییرات مجاز (مانند ساعات خواب و اعلان‌ها)',
+      descriptionFa:
+          'اجازه به دستیار هوشمند برای اعمال تغییرات مجاز (مانند ساعات خواب و اعلان‌ها)',
       searchTerms: ['تغییر تنظیمات', 'دستیار', 'مجوز هوش مصنوعی', 'هوشمند'],
     ),
     SettingDescriptor(
@@ -946,7 +1041,8 @@ class SettingsRegistry {
       labelFa: 'کلیدهای ممنوعه برای تغییر توسط دستیار',
       group: SettingsGroup.assistant,
       visibility: SettingVisibility.advanced,
-      descriptionFa: 'فهرست کلیدهای جداشده با کاما که دستیار حق تغییر آن‌ها را ندارد',
+      descriptionFa:
+          'فهرست کلیدهای جداشده با کاما که دستیار حق تغییر آن‌ها را ندارد',
       searchTerms: ['ممنوعه', 'بلک لیست', 'لیست سیاه دستیار'],
     ),
     SettingDescriptor(
@@ -957,8 +1053,10 @@ class SettingsRegistry {
       labelFa: 'پردازش هوش مصنوعی صرفاً محلی',
       group: SettingsGroup.assistant,
       visibility: SettingVisibility.advanced,
-      descriptionFa: 'عدم ارسال داده‌های شناختی و پردازش‌ها به سرویس‌های ابری خارج از دستگاه',
-      whyExplanationFa: 'برای بیشترین میزان محرمانگی، تمام تحلیل‌های رفتارشناسی و حافظه دستیار در داخل حافظه محلی دستگاه شما باقی می‌مانند.',
+      descriptionFa:
+          'عدم ارسال داده‌های شناختی و پردازش‌ها به سرویس‌های ابری خارج از دستگاه',
+      whyExplanationFa:
+          'برای بیشترین میزان محرمانگی، تمام تحلیل‌های رفتارشناسی و حافظه دستیار در داخل حافظه محلی دستگاه شما باقی می‌مانند.',
       searchTerms: ['محلی', 'آفلاین', 'حریم خصوصی', 'local'],
     ),
     SettingDescriptor(
@@ -971,7 +1069,8 @@ class SettingsRegistry {
       visibility: SettingVisibility.advanced,
       min: 0,
       max: 365,
-      descriptionFa: 'حذف خودکار تاریخچه پردازش و گفتگوها پس از تعداد روز مشخص (۰ برای دائمی)',
+      descriptionFa:
+          'حذف خودکار تاریخچه پردازش و گفتگوها پس از تعداد روز مشخص (۰ برای دائمی)',
       searchTerms: ['پاکسازی', 'حذف سوابق', 'انقضا', 'purge'],
     ),
 
@@ -1072,7 +1171,8 @@ class SettingsRegistry {
       dependsOn: SettingCondition('app_lock_enabled'),
       min: -1,
       max: 3600,
-      descriptionFa: 'مدت زمان خروج از برنامه تا فعال شدن مجدد قفل (ثانیه؛ ۱- برای هرگز)',
+      descriptionFa:
+          'مدت زمان خروج از برنامه تا فعال شدن مجدد قفل (ثانیه؛ ۱- برای هرگز)',
       searchTerms: ['زمان قفل', 'تایم اوت قفل', 'قفل خودکار'],
     ),
     SettingDescriptor(
@@ -1106,8 +1206,15 @@ class SettingsRegistry {
       labelFa: 'امنیت صفحه و پیش‌نمای برنامه',
       group: SettingsGroup.security,
       visibility: SettingVisibility.advanced,
-      descriptionFa: 'جلوگیری از اسکرین‌شات و مخفی‌سازی محتوا هنگام باز کردن اپ سوئیچر',
-      searchTerms: ['اسکرین شات', 'امنیت صفحه', 'اپ سوئیچر', 'task switcher', 'مخفی سازی'],
+      descriptionFa:
+          'جلوگیری از اسکرین‌شات و مخفی‌سازی محتوا هنگام باز کردن اپ سوئیچر',
+      searchTerms: [
+        'اسکرین شات',
+        'امنیت صفحه',
+        'اپ سوئیچر',
+        'task switcher',
+        'مخفی سازی',
+      ],
     ),
     // Prompt 063: Task Settings (T-38)
     SettingDescriptor(
@@ -1165,7 +1272,8 @@ class SettingsRegistry {
       labelFa: 'نمای پیش‌فرض تقویم',
       group: SettingsGroup.calendar,
       allowed: ['agenda', 'day', 'week', 'month', 'year'],
-      descriptionFa: 'مقیاس اولیه تقویم هنگام ورود به برنامه (برنامه، روز، هفته، ماه، سال)',
+      descriptionFa:
+          'مقیاس اولیه تقویم هنگام ورود به برنامه (برنامه، روز، هفته، ماه، سال)',
       searchTerms: ['نمای تقویم', 'پیش‌فرض تقویم', 'مقیاس'],
     ),
     SettingDescriptor(
@@ -1176,7 +1284,8 @@ class SettingsRegistry {
       labelFa: 'نمایش کارها در تقویم',
       group: SettingsGroup.calendar,
       affectsAgenda: true,
-      descriptionFa: 'نمایش کارهای ساده و گام‌های اهداف در خط زمان و نمای برنامه',
+      descriptionFa:
+          'نمایش کارهای ساده و گام‌های اهداف در خط زمان و نمای برنامه',
       searchTerms: ['نمایش کارها', 'تسک', 'کارها'],
     ),
     SettingDescriptor(
@@ -1199,7 +1308,8 @@ class SettingsRegistry {
       group: SettingsGroup.calendar,
       visibility: SettingVisibility.advanced,
       affectsAgenda: true,
-      descriptionFa: 'نمایش تعهدها و تخصیص‌های چرخهٔ برنامه‌ریزی در خط زمان و نمای برنامه',
+      descriptionFa:
+          'نمایش تعهدها و تخصیص‌های چرخهٔ برنامه‌ریزی در خط زمان و نمای برنامه',
       searchTerms: ['تعهد', 'برنامه‌ریزی', 'تخصیص', 'اهداف'],
     ),
     SettingDescriptor(
@@ -1211,7 +1321,8 @@ class SettingsRegistry {
       group: SettingsGroup.calendar,
       visibility: SettingVisibility.advanced,
       affectsAgenda: true,
-      descriptionFa: 'نمایش ویزیت‌های پزشک و واکسیناسیون در خط زمان و نمای برنامه',
+      descriptionFa:
+          'نمایش ویزیت‌های پزشک و واکسیناسیون در خط زمان و نمای برنامه',
       searchTerms: ['پزشک', 'ویزیت', 'واکسن', 'سلامت', 'دکتر'],
     ),
     SettingDescriptor(
@@ -1235,7 +1346,8 @@ class SettingsRegistry {
       group: SettingsGroup.calendar,
       visibility: SettingVisibility.advanced,
       affectsAgenda: true,
-      descriptionFa: 'نمایش روزهای پیش‌بینی‌شده و فاز چرخه در تقویم (نیازمند رضایت صریح)',
+      descriptionFa:
+          'نمایش روزهای پیش‌بینی‌شده و فاز چرخه در تقویم (نیازمند رضایت صریح)',
       searchTerms: ['چرخه', 'پریود', 'بانوان', 'فاز چرخه'],
     ),
     SettingDescriptor(
@@ -1250,7 +1362,8 @@ class SettingsRegistry {
       min: 0,
       max: 365,
       unitFa: 'روز',
-      descriptionFa: 'تعداد روزهای گذشته برای جستجو و نمایش کارهای انجام‌نشده در نمای امروز',
+      descriptionFa:
+          'تعداد روزهای گذشته برای جستجو و نمایش کارهای انجام‌نشده در نمای امروز',
       searchTerms: ['معوقه', 'کارهای عقب‌افتاده', 'تسک', 'بازه'],
     ),
     SettingDescriptor(
@@ -1273,7 +1386,8 @@ class SettingsRegistry {
       group: SettingsGroup.calendar,
       visibility: SettingVisibility.advanced,
       affectsAgenda: true,
-      descriptionFa: 'نمایش کارهای مستحب، تعقیبات و اذکار روزانه در خط زمان و شناورهای تقویم',
+      descriptionFa:
+          'نمایش کارهای مستحب، تعقیبات و اذکار روزانه در خط زمان و شناورهای تقویم',
       searchTerms: ['مستحب', 'ذکر', 'قرآن', 'تعقیبات', 'زیارت'],
     ),
     SettingDescriptor(
@@ -1297,7 +1411,8 @@ class SettingsRegistry {
       group: SettingsGroup.calendar,
       visibility: SettingVisibility.advanced,
       affectsAgenda: true,
-      descriptionFa: 'تجمیع روتین‌ها و کارهای تکرارشونده روزانه در باکت‌های دور تقویم',
+      descriptionFa:
+          'تجمیع روتین‌ها و کارهای تکرارشونده روزانه در باکت‌های دور تقویم',
       searchTerms: ['فشرده‌سازی', 'تکرارها', 'روتین', 'تجمیع'],
     ),
     SettingDescriptor(
@@ -1347,22 +1462,34 @@ class SettingsRegistry {
 
   static SettingDescriptor? find(String key) => _byKey[key];
 
-  static List<SettingDescriptor> byGroup(SettingsGroup g) => _byGroup[g] ?? const [];
+  static List<SettingDescriptor> byGroup(SettingsGroup g) =>
+      _byGroup[g] ?? const [];
 
-  static List<SettingDescriptor> userVisibleByGroup(SettingsGroup g, {bool includeAdvanced = true}) {
+  static List<SettingDescriptor> userVisibleByGroup(
+    SettingsGroup g, {
+    bool includeAdvanced = true,
+  }) {
     final list = _byGroup[g] ?? const [];
-    return list.where((d) {
-      if (d.visibility == SettingVisibility.internal) return false;
-      if (!includeAdvanced && d.visibility == SettingVisibility.advanced) return false;
-      return true;
-    }).toList(growable: false);
+    return list
+        .where((d) {
+          if (d.visibility == SettingVisibility.internal) return false;
+          if (!includeAdvanced && d.visibility == SettingVisibility.advanced)
+            return false;
+          return true;
+        })
+        .toList(growable: false);
   }
 
   static List<SettingDescriptor> searchable() {
-    return all.where((d) => d.visibility != SettingVisibility.internal).toList(growable: false);
+    return all
+        .where((d) => d.visibility != SettingVisibility.internal)
+        .toList(growable: false);
   }
 
   static List<String> get aiWritableKeys {
-    return all.where((d) => d.aiWritable).map((d) => d.key).toList(growable: false);
+    return all
+        .where((d) => d.aiWritable)
+        .map((d) => d.key)
+        .toList(growable: false);
   }
 }

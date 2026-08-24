@@ -7,6 +7,7 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_palette.dart';
 import 'package:ritmo/core/theme/theme_preferences.dart';
+import 'package:ritmo/core/theme/ui_scale.dart';
 
 class ThemeRepository {
   final ValueNotifier<ThemePreferences> preferencesNotifier =
@@ -25,7 +26,10 @@ class ThemeRepository {
       if (key == 'theme_mode' ||
           key == 'theme_palette' ||
           key == 'theme_reduce_transparency' ||
-          key == 'theme_true_black') {
+          key == 'theme_true_black' ||
+          key == 'ui_text_scale' ||
+          key == 'ui_text_follow_os' ||
+          key == 'ui_density') {
         _syncFromSettings();
       }
     });
@@ -39,15 +43,24 @@ class ThemeRepository {
         'theme_reduce_transparency',
       );
       final trueBlk = SettingsService.instance.get<bool>('theme_true_black');
+      final textScalePercent = SettingsService.instance.get<int>(
+        'ui_text_scale',
+      );
+      final followOs = SettingsService.instance.get<bool>('ui_text_follow_os');
+      final densityStr = SettingsService.instance.get<String>('ui_density');
 
       final mode = _parseThemeMode(modeStr);
       final paletteId = RitmoPalette.parseId(paletteStr);
+      final density = RitmoUiScale.parseDensity(densityStr);
 
       final prefs = ThemePreferences(
         mode: mode,
         paletteId: paletteId,
         reduceTransparency: reduceTrans,
         trueBlack: trueBlk,
+        textScalePercent: textScalePercent,
+        followOsTextScale: followOs,
+        density: density,
       );
 
       preferencesNotifier.value = prefs;
@@ -124,6 +137,30 @@ class ThemeRepository {
     return SettingsService.instance.set('theme_true_black', trueBlack);
   }
 
+  Future<bool> updateTextScalePercent(int percent) async {
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(textScalePercent: percent);
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.set('ui_text_scale', percent);
+  }
+
+  Future<bool> updateFollowOsTextScale(bool followOs) async {
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(followOsTextScale: followOs);
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.set('ui_text_follow_os', followOs);
+  }
+
+  Future<bool> updateDensity(RitmoDensityLevel density) async {
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(density: density);
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.set(
+      'ui_density',
+      RitmoUiScale.serializeDensity(density),
+    );
+  }
+
   Future<bool> resetAppearance() async {
     const defaults = ThemePreferences.defaults;
     preferencesNotifier.value = defaults;
@@ -134,6 +171,9 @@ class ThemeRepository {
       'theme_palette': RitmoPalette.serializeId(defaults.paletteId),
       'theme_reduce_transparency': false,
       'theme_true_black': false,
+      'ui_text_scale': defaults.textScalePercent,
+      'ui_text_follow_os': defaults.followOsTextScale,
+      'ui_density': RitmoUiScale.serializeDensity(defaults.density),
     });
   }
 }

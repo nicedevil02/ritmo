@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_palette.dart';
+import 'package:ritmo/core/theme/ui_scale.dart';
 
 @immutable
 class ThemePreferences {
@@ -12,6 +13,9 @@ class ThemePreferences {
     required this.reduceTransparency,
     required this.trueBlack,
     this.autoDarkAtMaghrib = false, // Hook رزروشده بر اساس اوقات شرعی
+    this.textScalePercent = RitmoUiScale.defaultTextPercent,
+    this.followOsTextScale = true,
+    this.density = RitmoUiScale.defaultDensity,
   });
 
   final ThemeMode mode;
@@ -19,6 +23,9 @@ class ThemePreferences {
   final bool reduceTransparency;
   final bool trueBlack;
   final bool autoDarkAtMaghrib;
+  final int textScalePercent;
+  final bool followOsTextScale;
+  final RitmoDensityLevel density;
 
   static const ThemePreferences defaults = ThemePreferences(
     mode: ThemeMode.system,
@@ -26,6 +33,9 @@ class ThemePreferences {
     reduceTransparency: false,
     trueBlack: false,
     autoDarkAtMaghrib: false,
+    textScalePercent: RitmoUiScale.defaultTextPercent,
+    followOsTextScale: true,
+    density: RitmoUiScale.defaultDensity,
   );
 
   ThemePreferences copyWith({
@@ -34,6 +44,9 @@ class ThemePreferences {
     bool? reduceTransparency,
     bool? trueBlack,
     bool? autoDarkAtMaghrib,
+    int? textScalePercent,
+    bool? followOsTextScale,
+    RitmoDensityLevel? density,
   }) {
     return ThemePreferences(
       mode: mode ?? this.mode,
@@ -41,6 +54,9 @@ class ThemePreferences {
       reduceTransparency: reduceTransparency ?? this.reduceTransparency,
       trueBlack: trueBlack ?? this.trueBlack,
       autoDarkAtMaghrib: autoDarkAtMaghrib ?? this.autoDarkAtMaghrib,
+      textScalePercent: textScalePercent ?? this.textScalePercent,
+      followOsTextScale: followOsTextScale ?? this.followOsTextScale,
+      density: density ?? this.density,
     );
   }
 
@@ -53,13 +69,20 @@ class ThemePreferences {
           paletteId == other.paletteId &&
           reduceTransparency == other.reduceTransparency &&
           trueBlack == other.trueBlack &&
-          autoDarkAtMaghrib == other.autoDarkAtMaghrib;
+          autoDarkAtMaghrib == other.autoDarkAtMaghrib &&
+          textScalePercent == other.textScalePercent &&
+          followOsTextScale == other.followOsTextScale &&
+          density == other.density;
 
   @override
-  int get hashCode =>
-      mode.hashCode ^
-      paletteId.hashCode ^
-      reduceTransparency.hashCode ^
-      trueBlack.hashCode ^
-      autoDarkAtMaghrib.hashCode;
+  int get hashCode => Object.hash(
+    mode,
+    paletteId,
+    reduceTransparency,
+    trueBlack,
+    autoDarkAtMaghrib,
+    textScalePercent,
+    followOsTextScale,
+    density,
+  );
 }

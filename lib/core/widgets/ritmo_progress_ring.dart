@@ -62,12 +62,7 @@ class RitmoProgressRing extends StatelessWidget {
                       if (value == null) ...[
                         Text(
                           '؟',
-                          style: TextStyle(
-                            fontSize: size * 0.28,
-                            fontWeight: FontWeight.w700,
-                            color: colors.textTertiary,
-                            fontFamily: 'Vazirmatn',
-                          ),
+                          style: RitmoTextStyles.heroNumber(colors.textTertiary),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -77,13 +72,7 @@ class RitmoProgressRing extends StatelessWidget {
                       ] else ...[
                         Text(
                           RitmoNumber.faInt(animValue),
-                          style: TextStyle(
-                            fontSize: size * 0.26,
-                            fontWeight: FontWeight.w800,
-                            color: colors.textPrimary,
-                            fontFamily: 'Vazirmatn',
-                            height: 1.1,
-                          ),
+                          style: RitmoTextStyles.heroNumber(colors.textPrimary),
                         ),
                         const SizedBox(height: 2),
                         Text(

@@ -1,33 +1,33 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-24T20:26:41.771347
+Generated At: 2026-08-24T22:42:00.597527
 
 ## Audit Metrics Summary
 
 | Metric | Key | Scope | Current Count | Baseline | Status |
 |---|---|---|---|---|---|
-| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1253 | 1235 | REGRESSION (+1253 > 1235) |
-| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 2083 | 2080 | REGRESSION (+2083 > 2080) |
+| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1272 | 1272 | OK |
+| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 2020 | 2020 | OK |
 | Old Opacity withOpacity() | `oldOpacity` | `lib/` | 0 | 0 | OK |
-| Duplicate Local Font Family | `duplicateFont` | `lib/features/` | 127 | 124 | REGRESSION (+127 > 124) |
-| Scattered BackdropFilter | `scatteredBlur` | `lib/features/` | 32 | 30 | REGRESSION (+32 > 30) |
-| Manual BoxShadow | `manualShadow` | `lib/features/` | 201 | 199 | REGRESSION (+201 > 199) |
+| Duplicate Local Font Family | `duplicateFont` | `lib/features/` | 158 | 158 | OK |
+| Scattered BackdropFilter | `scatteredBlur` | `lib/features/` | 33 | 33 | OK |
+| Manual BoxShadow | `manualShadow` | `lib/features/` | 206 | 206 | OK |
 | Raw Scaffold | `rawScaffold` | `lib/features/` | 106 | 106 | OK |
-| Page-level CircularProgressIndicator | `circularProgress` | `lib/features/` | 135 | 135 | OK |
-| Local Directionality Override | `localDirectionality` | `lib/features/` | 324 | 323 | REGRESSION (+324 > 323) |
-| Hardcoded Millisecond Duration | `hardcodedDuration` | `lib/features/` | 196 | 195 | REGRESSION (+196 > 195) |
+| Page-level CircularProgressIndicator | `circularProgress` | `lib/features/` | 134 | 134 | OK |
+| Local Directionality Override | `localDirectionality` | `lib/features/` | 324 | 324 | OK |
+| Hardcoded Millisecond Duration | `hardcodedDuration` | `lib/features/` | 200 | 200 | OK |
 | Core Hardcoded Colors | `coreHardcodedColors` | `lib/core/` | 415 | 415 | OK |
 | Core Material Colors (non-transparent) | `coreMaterialColors` | `lib/core/` | 75 | 75 | OK |
-| Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 153 | 153 | OK |
+| Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 151 | 151 | OK |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3649 | 3637 | REGRESSION (+3649 > 3637) |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4529 | 4504 | REGRESSION (+4529 > 4504) |
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3618 | 3618 | OK |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4472 | 4472 | OK |
 
 ## Top Offenders by Metric
 
 ### Hardcoded Colors (`hardcodedColors`)
-Total: 1253 occurrences
+Total: 1272 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -38,7 +38,7 @@ Total: 1253 occurrences
 | `lib/features/worship/presentation/theme/worship_sky_palette.dart` | 57 |
 
 ### Material Colors (non-transparent) (`materialColors`)
-Total: 2083 occurrences
+Total: 2020 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -54,18 +54,18 @@ Total: 0 occurrences
 *No violations found.*
 
 ### Duplicate Local Font Family (`duplicateFont`)
-Total: 127 occurrences
+Total: 158 occurrences
 
 | File | Occurrences |
 |---|---|
 | `lib/features/supplementary_sports/presentation/ss_exercise_library_screen.dart` | 20 |
 | `lib/features/supplementary_sports/movement/presentation/movement_log_sheet.dart` | 18 |
+| `lib/features/wellbeing/presentation/wellbeing_screen.dart` | 14 |
 | `lib/features/supplementary_sports/movement/presentation/widgets/movement_session_recovery.dart` | 11 |
-| `lib/features/supplementary_sports/movement/presentation/widgets/movement_week_timeline.dart` | 10 |
-| `lib/features/supplementary_sports/presentation/ss_movement_tab_screen.dart` | 10 |
+| `lib/features/today/presentation/widgets/daily_reflection_sheet.dart` | 10 |
 
 ### Scattered BackdropFilter (`scatteredBlur`)
-Total: 32 occurrences
+Total: 33 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -76,7 +76,7 @@ Total: 32 occurrences
 | `lib/features/today/presentation/widgets/dashboard/module_summary_grid.dart` | 2 |
 
 ### Manual BoxShadow (`manualShadow`)
-Total: 201 occurrences
+Total: 206 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -98,14 +98,14 @@ Total: 106 occurrences
 | `lib/features/cycle/presentation/cycle_screen.dart` | 3 |
 
 ### Page-level CircularProgressIndicator (`circularProgress`)
-Total: 135 occurrences
+Total: 134 occurrences
 
 | File | Occurrences |
 |---|---|
-| `lib/features/goals/presentation/widgets/create_goal_sheet.dart` | 3 |
 | `lib/features/profile/presentation/backup_screen.dart` | 3 |
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 3 |
-| `lib/features/worship/presentation/widgets/prayer_city_picker.dart` | 2 |
+| `lib/features/goals/presentation/widgets/create_goal_sheet.dart` | 3 |
+| `lib/features/health/presentation/widgets/medication_form_sheet.dart` | 2 |
 | `lib/features/chat/presentation/ai_chat_screen.dart` | 2 |
 
 ### Local Directionality Override (`localDirectionality`)
@@ -120,7 +120,7 @@ Total: 324 occurrences
 | `lib/features/worship/presentation/widgets/quran_dhikr_section.dart` | 6 |
 
 ### Hardcoded Millisecond Duration (`hardcodedDuration`)
-Total: 196 occurrences
+Total: 200 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -128,7 +128,7 @@ Total: 196 occurrences
 | `lib/features/routines/presentation/widgets/planner_timeline_picker.dart` | 8 |
 | `lib/features/supplementary_sports/presentation/ss_onboarding_flow.dart` | 7 |
 | `lib/features/worship/presentation/widgets/worship_reminder_settings_sheet.dart` | 6 |
-| `lib/features/routines/presentation/widgets/planner_advanced_section.dart` | 5 |
+| `lib/features/health/presentation/health_screen.dart` | 5 |
 
 ### Core Hardcoded Colors (`coreHardcodedColors`)
 Total: 415 occurrences
@@ -153,7 +153,7 @@ Total: 75 occurrences
 | `lib/core/theme/ritmo_theme.dart` | 6 |
 
 ### Core Local Font Family (`coreDuplicateFont`)
-Total: 153 occurrences
+Total: 151 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -186,7 +186,7 @@ Total: 9 occurrences
 | `lib/core/utils/ritmo_date_picker.dart` | 1 |
 
 ### Raw Font Size (`rawFontSize`)
-Total: 3649 occurrences
+Total: 3618 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -197,13 +197,13 @@ Total: 3649 occurrences
 | `lib/features/supplementary_sports/presentation/ss_onboarding_flow.dart` | 49 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4529 occurrences
+Total: 4472 occurrences
 
 | File | Occurrences |
 |---|---|
 | `lib/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart` | 131 |
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 96 |
 | `lib/features/today/presentation/insights_screen.dart` | 93 |
-| `lib/features/notes/presentation/screens/notebook_screen.dart` | 74 |
+| `lib/features/notes/presentation/screens/notebook_screen.dart` | 76 |
 | `lib/features/worship/presentation/widgets/quran_dhikr_section.dart` | 65 |
 

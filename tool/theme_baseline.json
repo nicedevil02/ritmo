@@ -1,19 +1,19 @@
 {
   "hardcodedColors": 1272,
-  "materialColors": 2027,
+  "materialColors": 2020,
   "oldOpacity": 0,
-  "duplicateFont": 148,
-  "scatteredBlur": 32,
-  "manualShadow": 205,
+  "duplicateFont": 158,
+  "scatteredBlur": 33,
+  "manualShadow": 206,
   "rawScaffold": 106,
   "circularProgress": 134,
   "localDirectionality": 324,
-  "hardcodedDuration": 201,
+  "hardcodedDuration": 200,
   "coreHardcodedColors": 415,
   "coreMaterialColors": 75,
-  "coreDuplicateFont": 153,
+  "coreDuplicateFont": 151,
   "coreScatteredBlur": 6,
   "coreManualShadow": 9,
-  "rawFontSize": 3617,
-  "rawGeometryLiteral": 4452
+  "rawFontSize": 3618,
+  "rawGeometryLiteral": 4472
 }

@@ -285,7 +285,6 @@ class _NotebookScreenState extends State<NotebookScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Right side: Back Button & Screen Title
                     Expanded(
@@ -300,8 +299,8 @@ class _NotebookScreenState extends State<NotebookScreen>
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
-                                width: 40,
-                                height: 40,
+                                width: 38,
+                                height: 38,
                                 decoration: BoxDecoration(
                                   color: colors.surfaceSunken,
                                   borderRadius: BorderRadius.circular(14),
@@ -326,18 +325,20 @@ class _NotebookScreenState extends State<NotebookScreen>
                               children: [
                                 Text(
                                   'دفترچه و تجارب',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 18.5,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: -0.4,
                                     color: colors.textPrimary,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 if (totalActiveCount > 0)
                                   Text(
                                     '${PersianDigits.convert(totalActiveCount.toString())} یادداشت فعال',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -345,8 +346,6 @@ class _NotebookScreenState extends State<NotebookScreen>
                                         alpha: 0.7,
                                       ),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                               ],
                             ),
@@ -365,7 +364,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 7,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
                             color: colors.primaryContainer,
@@ -391,10 +390,10 @@ class _NotebookScreenState extends State<NotebookScreen>
                             children: [
                               Icon(
                                 CupertinoIcons.sparkles,
-                                size: 14,
+                                size: 13,
                                 color: colors.primary,
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Text(
                                 'دستیار هوش مصنوعی',
                                 style: TextStyle(
@@ -439,11 +438,10 @@ class _NotebookScreenState extends State<NotebookScreen>
                   ),
                   child: TabBar(
                     controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 2),
                     indicator: BoxDecoration(
                       color: colors.primaryContainer,
                       borderRadius: BorderRadius.circular(16),
@@ -466,60 +464,69 @@ class _NotebookScreenState extends State<NotebookScreen>
                       alpha: 0.7,
                     ),
                     labelStyle: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w800,
                     ),
                     unselectedLabelStyle: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
                     tabs: [
                       Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(CupertinoIcons.doc_text_fill, size: 14),
-                            const SizedBox(width: 5),
-                            Text(
-                              'یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})',
-                            ),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(CupertinoIcons.lightbulb_fill, size: 14),
-                            const SizedBox(width: 5),
-                            Text(
-                              'درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})',
-                            ),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              CupertinoIcons.arrow_2_circlepath_circle_fill,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 5),
-                            const Text('مرور و تحلیل'),
-                            if (_dueNotesCount > 0) ...[
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(CupertinoIcons.doc_text_fill, size: 13),
                               const SizedBox(width: 4),
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: colors.error,
-                                  shape: BoxShape.circle,
-                                ),
+                              Text(
+                                'یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})',
                               ),
                             ],
-                          ],
+                          ),
+                        ),
+                      ),
+                      Tab(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(CupertinoIcons.lightbulb_fill, size: 13),
+                              const SizedBox(width: 4),
+                              Text(
+                                'درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Tab(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.arrow_2_circlepath_circle_fill,
+                                size: 13,
+                              ),
+                              const SizedBox(width: 4),
+                              const Text('مرور و تحلیل'),
+                              if (_dueNotesCount > 0) ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: colors.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

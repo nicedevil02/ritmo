@@ -92,5 +92,11 @@ RitmoSheetScaffold.present(
 - مبدأ تعیین سقف و کف مجاز: `RitmoBreakpoints.supportedMinTextScale` (۰.۸۵) و `RitmoBreakpoints.supportedMaxTextScale` (۱.۳۰ فعلی؛ ۱.۶۰ پس از تکمیل ماتریس مقیاس).
 - دو محور مستقل مقیاس:
   ۱. **اندازهٔ متن (`ui_text_scale`):** منحصراً از طریق `MaterialApp.builder` به `MediaQuery.textScaler` تزریق می‌شود و شامل ۶ پله استاندارد (۸۵٪ تا ۱۴۰٪) با قابلیت پیروی از مقیاس سیستم‌عامل (`ui_text_follow_os`).
-  ۲. **چگالی المان‌ها (`ui_density`):** فواصل، اهداف لمس و رادیوس‌ها را از طریق اکستنشن `RitmoMetrics` و `VisualDensity` در تم مدیریت می‌کند.
+  ۲. **چگالی المان‌ها (`ui_density`):** فواصل، اهداف لمس و رادیوس‌ها را از طریق اکستنشن `RitmoMetrics` و `VisualDensity` در تم مدیریت می‌کند (شامل ۴ چگالی: `compact`, `comfortable`, `spacious`, `xl`).
 - تمام ویجت‌های سفارشی و بوم‌های ترسیمی با `FittedBox` یا `context.metrics` محافظت می‌شوند تا در سقف مقیاس بدون سرریز رندر شوند.
+
+### قوانین تکمیلی سیستم مقیاس (Scale & Density Rules)
+
+- **`R-93` (No Raw Font Size in Features):** هیچ `fontSize` تازه‌ای در لایهٔ `lib/features` مجاز نیست و کلیهٔ متن‌ها باید از تایپوگرافی ساختاریافتهٔ تم (`context.t.*` یا `RitmoTextStyles`) استفاده کنند.
+- **`R-94` (Minimum Touch Target Floor):** هدف لمس برای تمامی عناصر تعاملی و دکمه‌ها هرگز نباید از ۴۸ پیکسل (`RitmoBreakpoints.minTouchTarget` / `context.metrics.touchTarget`) کمتر شود.
+- **ماتریس تست ۱۶ حالته:** ۴ ویوپورت × ۴ مقیاس متن × ۴ سطح چگالی (پیاده‌سازی‌شده در `test/theme/ui_scale_matrix_test.dart`).

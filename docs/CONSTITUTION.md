@@ -528,7 +528,7 @@ RIE رهبر ارکستر است.
 
 ---
 
-## قانون ۲۱
+## قانون ۳۶
 
 ### Pure Scaler & Metrics Delegation
 
@@ -543,6 +543,22 @@ RIE رهبر ارکستر است.
 * تزریق متمرکز `MediaQuery.textScaler` در ریشه اپلیکیشن (`lib/main.dart`)
 * استفاده از توکن‌های پویا از طریق `context.metrics` (`spaceSm`, `spaceMd`, `spaceLg`, `radiusCard`, ...)
 * استفاده از تایپوگرافی ساختاریافته از طریق `context.t` یا `Theme.of(context).textTheme`
+
+---
+
+## قانون ۳۷
+
+### No Raw Font Size in Features
+
+هیچ `fontSize` تازه‌ای در لایهٔ `lib/features` مجاز نیست و کلیهٔ متن‌ها باید از تایپوگرافی ساختاریافتهٔ تم (`context.t.*` یا `RitmoTextStyles`) استفاده کنند.
+
+---
+
+## قانون ۳۸
+
+### Minimum Touch Target Floor
+
+هدف لمس برای تمامی عناصر تعاملی و دکمه‌ها هرگز نباید از ۴۸ پیکسل (`RitmoBreakpoints.minTouchTarget` / `context.metrics.touchTarget`) کمتر شود.
 
 ---
 
@@ -920,7 +936,7 @@ RIE رهبر ارکستر است.
 
 ---
 
-## ماده ۳۶
+## ماده ۳۹
 
 ### Constitutional Authority
 
@@ -935,7 +951,7 @@ RIE رهبر ارکستر است.
 
 ---
 
-## ماده ۳۷
+## ماده ۴۰
 
 ### Version Control
 
@@ -953,7 +969,7 @@ RIE رهبر ارکستر است.
 
 ---
 
-## ماده ۳۸
+## ماده ۴۱
 
 ### Immutable Core
 

@@ -40,7 +40,8 @@ void main() async {
 
   // Memory optimization: Bound Flutter image cache to prevent RSS/VRAM bloat
   PaintingBinding.instance.imageCache.maximumSize = 100;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024; // 30 MB
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      30 * 1024 * 1024; // 30 MB
 
   RitmoLog.addSink(PrivacyErrorSink.instance);
   await PrivacyErrorSink.instance.init();
@@ -63,7 +64,12 @@ void main() async {
     }
   };
 
+  // Sliding window rate limiter for error storms (10 errors within 60s)
+  final List<DateTime> errorTimestamps = [];
+  bool hasShownErrorStormDialog = false;
+
   PlatformDispatcher.instance.onError = (error, stack) {
+    // 1. Guaranteed logging to PrivacyErrorSink and logger
     PrivacyErrorSink.instance.logError(
       'PlatformError',
       error.toString(),
@@ -71,7 +77,67 @@ void main() async {
       stack,
     );
     RitmoLog.error('PlatformError', error.toString(), error, stack);
-    return kReleaseMode; // Handled after logging (BOOT-05)
+
+    // 2. Error storm detection
+    final now = DateTime.now();
+    errorTimestamps.add(now);
+    errorTimestamps.removeWhere((t) => now.difference(t).inSeconds > 60);
+
+    if (errorTimestamps.length >= 10 && !hasShownErrorStormDialog) {
+      hasShownErrorStormDialog = true;
+      unawaited(
+        SharedPreferences.getInstance().then((prefs) {
+          final count = prefs.getInt('error_storm_count') ?? 0;
+          prefs.setInt('error_storm_count', count + 1);
+        }),
+      );
+
+      final navContext = RitmoRouter.navigatorKey.currentContext;
+      if (navContext != null && navContext.mounted) {
+        showDialog<void>(
+          context: navContext,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              'مشکلی پیش آمده',
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            content: const Text(
+              'برنامه با خطاهای متوالی مواجه شده است. داده‌های شما محفوظ هستند اما در صورت تداوم مشکل، راه‌اندازی مجدد برنامه توصیه می‌شود.',
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 13,
+                height: 1.6,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'متوجه شدم',
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    // Explicit Policy Rationale:
+    // In release mode, return true after guaranteed sink logging to prevent fatal UI thread
+    // termination on unhandled async microtasks, while tracking storm frequency.
+    // In debug mode, return false to surface uncaught async errors in the developer console.
+    return kReleaseMode;
   };
 
   if (!kIsWeb &&
@@ -262,22 +328,27 @@ class _RitmoAppState extends State<RitmoApp> {
 
   void _ensureThemes(RitmoPalette palette, ThemePreferences prefs) {
     final inputsKey =
-        '${prefs.paletteId}|${prefs.mode}|${prefs.reduceTransparency}|${prefs.trueBlack}';
+        '${prefs.paletteId}|${prefs.mode}|${prefs.reduceTransparency}'
+        '|${prefs.trueBlack}|${prefs.density}|${prefs.textScalePercent}'
+        '|${prefs.followOsTextScale}';
     if (_themeInputsKey == inputsKey &&
         _lightCache != null &&
-        _darkCache != null)
+        _darkCache != null) {
       return;
+    }
     _themeInputsKey = inputsKey;
     _lightCache = RitmoTheme.build(
       palette: palette,
       brightness: Brightness.light,
       reduceTransparency: prefs.reduceTransparency,
+      density: prefs.density,
     );
     _darkCache = RitmoTheme.build(
       palette: palette,
       brightness: Brightness.dark,
       reduceTransparency: prefs.reduceTransparency,
       trueBlack: prefs.trueBlack,
+      density: prefs.density,
     );
   }
 
@@ -310,13 +381,13 @@ class _RitmoAppState extends State<RitmoApp> {
                 Theme.of(context).extension<RitmoColors>() ??
                 palette.forBrightness(brightness);
             _applySystemOverlay(colors, brightness);
+            final effective = RitmoUiScale.effectiveTextScale(
+              osScale: mq.textScaler.scale(1.0),
+              appPercent: prefs.textScalePercent,
+              followOs: prefs.followOsTextScale,
+            );
             return MediaQuery(
-              data: mq.copyWith(
-                textScaler: mq.textScaler.clamp(
-                  minScaleFactor: RitmoBreakpoints.supportedMinTextScale,
-                  maxScaleFactor: RitmoBreakpoints.supportedMaxTextScale,
-                ),
-              ),
+              data: mq.copyWith(textScaler: TextScaler.linear(effective)),
               child: AppLockGate(child: child!),
             );
           },

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_behavior.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
+import 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
 
 /// متریال شیشه‌ای لایه‌ای — RFC «Ritmo Aurora» §۵.۲
 ///
@@ -166,6 +167,9 @@ class RitmoMaterial extends StatelessWidget {
   Widget build(BuildContext context) {
     final spec = context.materials.of(tier);
     final tint = Theme.of(context).extension<RitmoColors>()?.glassTint;
+    final effectiveRadius = radius == 16
+        ? (Theme.of(context).extension<RitmoMetrics>()?.radiusCard ?? 16.0)
+        : radius;
 
     // تنزل خودکار: دسترس‌پذیری + دستگاه ضعیف
     final reduceTransparency =
@@ -179,14 +183,14 @@ class RitmoMaterial extends StatelessWidget {
     if (degrade) {
       return _OpaqueSurface(
         color: spec.opaqueFallback,
-        radius: radius,
+        radius: effectiveRadius,
         child: child,
       );
     }
 
     return RepaintBoundary(
       child: ClipPath(
-        clipper: RitmoShapes.squircleClipper(radius),
+        clipper: RitmoShapes.squircleClipper(effectiveRadius),
         child: BackdropFilter(
           // صریح، برای جلوگیری از نشتی و هاله‌ی رنگی در لبه‌ها.
           filter: ImageFilter.blur(

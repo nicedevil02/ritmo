@@ -11,6 +11,8 @@ import 'package:ritmo/core/theme/ritmo_module_colors.dart';
 import 'package:ritmo/core/theme/ritmo_palette.dart';
 import 'package:ritmo/core/theme/palettes/jade_noir.dart';
 import 'package:ritmo/core/theme/tokens/ritmo_material.dart';
+import 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
+import 'package:ritmo/core/theme/ui_scale.dart';
 
 export 'package:ritmo/core/theme/ritmo_behavior.dart';
 export 'package:ritmo/core/theme/ritmo_colors.dart';
@@ -18,7 +20,9 @@ export 'package:ritmo/core/theme/ritmo_module_colors.dart';
 export 'package:ritmo/core/theme/ritmo_palette.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_material.dart';
+export 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
 export 'package:ritmo/core/theme/tokens/ritmo_springs.dart';
+export 'package:ritmo/core/theme/ui_scale.dart';
 
 /// توکن‌های فاصله‌گذاری — فقط ۷ مقدار مجاز (سند طراحی §۳.۲)
 abstract final class RitmoSpacing {
@@ -323,6 +327,7 @@ class RitmoTheme {
     required Brightness brightness,
     bool reduceTransparency = false,
     bool trueBlack = false,
+    RitmoDensityLevel density = RitmoDensityLevel.comfortable,
   }) {
     var colors = palette.forBrightness(brightness);
     if (trueBlack && brightness == Brightness.dark) {
@@ -333,6 +338,8 @@ class RitmoTheme {
     }
 
     final isDark = brightness == Brightness.dark;
+    final m = RitmoMetrics.of(density);
+    final vd = ((RitmoUiScale.densityFactor(density) - 1) * 8).clamp(-2.0, 2.0);
 
     return ThemeData(
       useMaterial3: true,
@@ -341,10 +348,12 @@ class RitmoTheme {
       scaffoldBackgroundColor: colors.background,
       colorScheme: _schemeFrom(colors, brightness),
       textTheme: RitmoTypography.textTheme(colors),
+      visualDensity: VisualDensity(horizontal: vd, vertical: vd),
       extensions: <ThemeExtension<dynamic>>[
         colors,
         RitmoBehavior(reduceTransparency: reduceTransparency),
         RitmoMaterials.fromColors(colors),
+        m,
       ],
       appBarTheme: AppBarTheme(
         backgroundColor: colors.background,
@@ -353,13 +362,14 @@ class RitmoTheme {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
+        toolbarHeight: m.rowHeight,
         titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: colors.textPrimary,
           fontFamily: 'Vazirmatn',
         ),
-        iconTheme: IconThemeData(color: colors.textPrimary, size: 24),
+        iconTheme: IconThemeData(color: colors.textPrimary, size: m.iconLg),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -376,7 +386,7 @@ class RitmoTheme {
             fontWeight: FontWeight.w600,
             fontFamily: 'Vazirmatn',
           ),
-          minimumSize: const Size(48, 48),
+          minimumSize: Size(m.touchTarget, m.touchTarget),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -395,7 +405,7 @@ class RitmoTheme {
             fontWeight: FontWeight.w600,
             fontFamily: 'Vazirmatn',
           ),
-          minimumSize: const Size(48, 48),
+          minimumSize: Size(m.touchTarget, m.touchTarget),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -409,7 +419,7 @@ class RitmoTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(RitmoRadius.field),
           ),
-          minimumSize: const Size(48, 48),
+          minimumSize: Size(m.touchTarget, m.touchTarget),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -424,7 +434,7 @@ class RitmoTheme {
             fontWeight: FontWeight.w600,
             fontFamily: 'Vazirmatn',
           ),
-          minimumSize: const Size(48, 48),
+          minimumSize: Size(m.touchTarget, m.touchTarget),
         ),
       ),
       cardTheme: CardThemeData(
@@ -461,9 +471,9 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.field),
           borderSide: BorderSide(color: colors.disabled.withValues(alpha: 0.3)),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: m.spaceLg,
+          vertical: m.spaceMd,
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -476,7 +486,10 @@ class RitmoTheme {
         disabledColor: colors.disabled,
         selectedColor: colors.primaryContainer,
         secondarySelectedColor: colors.primary,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: m.spaceMd,
+          vertical: m.spaceSm,
+        ),
         labelStyle: TextStyle(
           color: colors.textPrimary,
           fontSize: 13,
@@ -497,9 +510,9 @@ class RitmoTheme {
         backgroundColor: colors.surfaceElevated,
         modalBackgroundColor: colors.surfaceElevated,
         surfaceTintColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(RitmoRadius.sheet),
+            top: Radius.circular(m.radiusSheet),
           ),
         ),
       ),
@@ -507,7 +520,7 @@ class RitmoTheme {
         backgroundColor: colors.surfaceElevated,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          borderRadius: BorderRadius.circular(m.radiusCard),
           side: isDark ? BorderSide(color: colors.border) : BorderSide.none,
         ),
         titleTextStyle: TextStyle(
@@ -571,9 +584,9 @@ class RitmoTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: colors.primary, size: 24);
+            return IconThemeData(color: colors.primary, size: m.iconLg);
           }
-          return IconThemeData(color: colors.textSecondary, size: 24);
+          return IconThemeData(color: colors.textSecondary, size: m.iconLg);
         }),
       ),
       listTileTheme: ListTileThemeData(
@@ -582,7 +595,10 @@ class RitmoTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(RitmoRadius.card),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: m.spaceLg,
+          vertical: m.spaceXs,
+        ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -682,7 +698,7 @@ class RitmoTheme {
           borderRadius: BorderRadius.circular(RitmoRadius.card),
         ),
       ),
-      iconTheme: IconThemeData(color: colors.textPrimary, size: 24),
+      iconTheme: IconThemeData(color: colors.textPrimary, size: m.iconLg),
     );
   }
 

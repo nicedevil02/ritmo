@@ -19,10 +19,13 @@ class SettingField extends StatefulWidget {
     bool highlighted = false,
     this.customSubtitle,
     SettingDescriptor? descriptor,
-  })  : highlighted = highlight ?? highlighted,
-        descriptor = descriptor ?? SettingsRegistry.find(settingKey) {
+  }) : highlighted = highlight ?? highlighted,
+       descriptor = descriptor ?? SettingsRegistry.find(settingKey) {
     if (this.descriptor == null) {
-      RitmoLog.error('Settings', 'SettingDescriptor for key "$settingKey" not found in SettingsRegistry');
+      RitmoLog.error(
+        'Settings',
+        'SettingDescriptor for key "$settingKey" not found in SettingsRegistry',
+      );
     }
   }
 
@@ -32,8 +35,8 @@ class SettingField extends StatefulWidget {
     bool? highlight,
     bool highlighted = false,
     this.customSubtitle,
-  })  : highlighted = highlight ?? highlighted,
-        settingKey = descriptor?.key ?? '';
+  }) : highlighted = highlight ?? highlighted,
+       settingKey = descriptor?.key ?? '';
 
   final String settingKey;
   final SettingDescriptor? descriptor;
@@ -67,7 +70,8 @@ class SettingField extends StatefulWidget {
   State<SettingField> createState() => _SettingFieldState();
 }
 
-class _SettingFieldState extends State<SettingField> with SingleTickerProviderStateMixin {
+class _SettingFieldState extends State<SettingField>
+    with SingleTickerProviderStateMixin {
   AnimationController? _highlightController;
   Animation<double>? _pulseAnimation;
 
@@ -116,7 +120,9 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           'بازنشانی به مقدار پیش‌فرض',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        message: Text('آیا می‌خواهید «${desc.labelFa}» به مقدار پیش‌فرض بازگردد؟'),
+        message: Text(
+          'آیا می‌خواهید «${desc.labelFa}» به مقدار پیش‌فرض بازگردد؟',
+        ),
         actions: [
           CupertinoActionSheetAction(
             isDestructiveAction: true,
@@ -148,7 +154,9 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
-        final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
+        final showAdvanced = SettingsService.instance.get<bool>(
+          'show_advanced_settings',
+        );
         if (desc.visibility == SettingVisibility.advanced && !showAdvanced) {
           return const SizedBox.shrink();
         }
@@ -167,31 +175,63 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
             if (!desc.dependsOn!.isSatisfied(parentVal)) {
               isEnabled = false;
               final parentDesc = SettingsRegistry.find(parentKey);
-              dependencyHint = 'نیاز به روشن بودن «${parentDesc?.labelFa ?? parentKey}»';
+              dependencyHint =
+                  'نیاز به روشن بودن «${parentDesc?.labelFa ?? parentKey}»';
             }
           }
 
-          if (isEnabled && desc.group == SettingsGroup.notifications && desc.key != 'notif_master_enabled') {
-            final masterEnabled = SettingsService.instance.get<bool>('notif_master_enabled');
+          if (isEnabled &&
+              desc.group == SettingsGroup.notifications &&
+              desc.key != 'notif_master_enabled') {
+            final masterEnabled = SettingsService.instance.get<bool>(
+              'notif_master_enabled',
+            );
             if (!masterEnabled) {
               isEnabled = false;
               final masterDesc = SettingsRegistry.find('notif_master_enabled');
-              dependencyHint = 'نیاز به روشن بودن «${masterDesc?.labelFa ?? "اعلان‌های کلی"}»';
+              dependencyHint =
+                  'نیاز به روشن بودن «${masterDesc?.labelFa ?? "اعلان‌های کلی"}»';
             }
           }
         }
 
-        final subtitleText = widget.customSubtitle ??
+        final subtitleText =
+            widget.customSubtitle ??
             (dependencyHint != null
                 ? '$dependencyHint\n${desc.descriptionFa ?? ''}'
                 : desc.descriptionFa);
 
         final child = switch (desc.type) {
-          SettingType.boolean => _buildBooleanTile(context, desc, isEnabled, subtitleText),
-          SettingType.enumeration => _buildEnumTile(context, desc, isEnabled, subtitleText),
-          SettingType.integer => _buildIntegerTile(context, desc, isEnabled, subtitleText),
-          SettingType.text => _buildTextTile(context, desc, isEnabled, subtitleText),
-          SettingType.time => _buildTimeTile(context, desc, isEnabled, subtitleText),
+          SettingType.boolean => _buildBooleanTile(
+            context,
+            desc,
+            isEnabled,
+            subtitleText,
+          ),
+          SettingType.enumeration => _buildEnumTile(
+            context,
+            desc,
+            isEnabled,
+            subtitleText,
+          ),
+          SettingType.integer => _buildIntegerTile(
+            context,
+            desc,
+            isEnabled,
+            subtitleText,
+          ),
+          SettingType.text => _buildTextTile(
+            context,
+            desc,
+            isEnabled,
+            subtitleText,
+          ),
+          SettingType.time => _buildTimeTile(
+            context,
+            desc,
+            isEnabled,
+            subtitleText,
+          ),
         };
 
         Widget finalChild = child;
@@ -202,7 +242,9 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           );
         }
 
-        if (widget.highlighted && _highlightController != null && _pulseAnimation != null) {
+        if (widget.highlighted &&
+            _highlightController != null &&
+            _pulseAnimation != null) {
           return AnimatedBuilder(
             animation: _pulseAnimation!,
             builder: (context, _) {
@@ -241,9 +283,16 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
-      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
-      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
-      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
+      requiresRestart:
+          desc.requiresRestart &&
+          (isModified ||
+              SettingsService.instance.pendingRestartKeys.contains(desc.key)),
+      onWhyTap: desc.whyExplanationFa != null
+          ? () => SettingExplainerSheet.show(context, desc)
+          : null,
+      onLongPress: isModified && isEnabled
+          ? () => _showResetSheet(context, desc)
+          : null,
       trailing: Semantics(
         label: desc.labelFa,
         toggled: value,
@@ -256,7 +305,11 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
               activeTrackColor: colors.primary,
               onChanged: isEnabled
                   ? (newVal) async {
-                      await SettingField.executeWrite(context, desc.key, newVal);
+                      await SettingField.executeWrite(
+                        context,
+                        desc.key,
+                        newVal,
+                      );
                     }
                   : null,
             ),
@@ -283,7 +336,8 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
     final isModified = SettingsService.instance.isModifiedFromDefault(desc.key);
 
     String displayVal = currentVal;
-    if (desc.optionLabelsFa != null && desc.optionLabelsFa!.containsKey(currentVal)) {
+    if (desc.optionLabelsFa != null &&
+        desc.optionLabelsFa!.containsKey(currentVal)) {
       displayVal = desc.optionLabelsFa![currentVal]!;
     }
 
@@ -295,9 +349,16 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
-      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
-      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
-      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
+      requiresRestart:
+          desc.requiresRestart &&
+          (isModified ||
+              SettingsService.instance.pendingRestartKeys.contains(desc.key)),
+      onWhyTap: desc.whyExplanationFa != null
+          ? () => SettingExplainerSheet.show(context, desc)
+          : null,
+      onLongPress: isModified && isEnabled
+          ? () => _showResetSheet(context, desc)
+          : null,
       trailing: Semantics(
         label: '${desc.labelFa}، گزینه فعلی: $displayVal',
         button: true,
@@ -313,7 +374,11 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
               ),
             ),
             const SizedBox(width: 6),
-            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+            Icon(
+              CupertinoIcons.chevron_back,
+              size: 14,
+              color: colors.textTertiary,
+            ),
           ],
         ),
       ),
@@ -327,7 +392,9 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                     desc.labelFa,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  message: desc.descriptionFa != null ? Text(desc.descriptionFa!) : null,
+                  message: desc.descriptionFa != null
+                      ? Text(desc.descriptionFa!)
+                      : null,
                   actions: allowed.map((opt) {
                     final label = desc.optionLabelsFa?[opt] ?? opt;
                     final isCurrent = opt == currentVal;
@@ -337,8 +404,12 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                       child: Text(
                         label,
                         style: TextStyle(
-                          color: isCurrent ? colors.primary : colors.textPrimary,
-                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                          color: isCurrent
+                              ? colors.primary
+                              : colors.textPrimary,
+                          fontWeight: isCurrent
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     );
@@ -351,7 +422,9 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                 ),
               );
 
-              if (selected != null && selected != currentVal && context.mounted) {
+              if (selected != null &&
+                  selected != currentVal &&
+                  context.mounted) {
                 await SettingField.executeWrite(context, desc.key, selected);
               }
             }
@@ -380,9 +453,16 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
-      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
-      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
-      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
+      requiresRestart:
+          desc.requiresRestart &&
+          (isModified ||
+              SettingsService.instance.pendingRestartKeys.contains(desc.key)),
+      onWhyTap: desc.whyExplanationFa != null
+          ? () => SettingExplainerSheet.show(context, desc)
+          : null,
+      onLongPress: isModified && isEnabled
+          ? () => _showResetSheet(context, desc)
+          : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -396,7 +476,11 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                 color: value > min ? colors.primary : colors.textTertiary,
                 onPressed: isEnabled && value > min
                     ? () async {
-                        await SettingField.executeWrite(context, desc.key, value - 1);
+                        await SettingField.executeWrite(
+                          context,
+                          desc.key,
+                          value - 1,
+                        );
                       }
                     : null,
               ),
@@ -423,7 +507,11 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                 color: value < max ? colors.primary : colors.textTertiary,
                 onPressed: isEnabled && value < max
                     ? () async {
-                        await SettingField.executeWrite(context, desc.key, value + 1);
+                        await SettingField.executeWrite(
+                          context,
+                          desc.key,
+                          value + 1,
+                        );
                       }
                     : null,
               ),
@@ -452,9 +540,16 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
-      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
-      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
-      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
+      requiresRestart:
+          desc.requiresRestart &&
+          (isModified ||
+              SettingsService.instance.pendingRestartKeys.contains(desc.key)),
+      onWhyTap: desc.whyExplanationFa != null
+          ? () => SettingExplainerSheet.show(context, desc)
+          : null,
+      onLongPress: isModified && isEnabled
+          ? () => _showResetSheet(context, desc)
+          : null,
       trailing: Semantics(
         label: 'ویرایش مقدار ${desc.labelFa}',
         button: true,
@@ -468,12 +563,18 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13,
-                  color: value.isEmpty ? colors.textTertiary : colors.textSecondary,
+                  color: value.isEmpty
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
             ),
             const SizedBox(width: 6),
-            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+            Icon(
+              CupertinoIcons.chevron_back,
+              size: 14,
+              color: colors.textTertiary,
+            ),
           ],
         ),
       ),
@@ -486,10 +587,16 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                   context: context,
                   builder: (modalCtx) => AlertDialog(
                     backgroundColor: colors.card,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     title: Text(
                       desc.labelFa,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
                     content: CupertinoTextField(
                       controller: controller,
@@ -500,18 +607,34 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(modalCtx),
-                        child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                        child: Text(
+                          'انصراف',
+                          style: TextStyle(color: colors.textSecondary),
+                        ),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pop(modalCtx, controller.text.trim()),
-                        child: Text('ذخیره', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
+                        onPressed: () =>
+                            Navigator.pop(modalCtx, controller.text.trim()),
+                        child: Text(
+                          'ذخیره',
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 );
 
-                if (updatedText != null && updatedText != value && context.mounted) {
-                  await SettingField.executeWrite(context, desc.key, updatedText);
+                if (updatedText != null &&
+                    updatedText != value &&
+                    context.mounted) {
+                  await SettingField.executeWrite(
+                    context,
+                    desc.key,
+                    updatedText,
+                  );
                 }
               } finally {
                 controller.dispose();
@@ -542,11 +665,19 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
           : null,
       highlighted: widget.highlighted,
       isModified: isModified,
-      requiresRestart: desc.requiresRestart && (isModified || SettingsService.instance.pendingRestartKeys.contains(desc.key)),
-      onWhyTap: desc.whyExplanationFa != null ? () => SettingExplainerSheet.show(context, desc) : null,
-      onLongPress: isModified && isEnabled ? () => _showResetSheet(context, desc) : null,
+      requiresRestart:
+          desc.requiresRestart &&
+          (isModified ||
+              SettingsService.instance.pendingRestartKeys.contains(desc.key)),
+      onWhyTap: desc.whyExplanationFa != null
+          ? () => SettingExplainerSheet.show(context, desc)
+          : null,
+      onLongPress: isModified && isEnabled
+          ? () => _showResetSheet(context, desc)
+          : null,
       trailing: Semantics(
-        label: 'تنظیم زمان ${desc.labelFa}، مقدار فعلی: ${toPersianDigits(value)}',
+        label:
+            'تنظیم زمان ${desc.labelFa}، مقدار فعلی: ${toPersianDigits(value)}',
         button: true,
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -560,14 +691,21 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
               ),
             ),
             const SizedBox(width: 6),
-            Icon(CupertinoIcons.chevron_back, size: 14, color: colors.textTertiary),
+            Icon(
+              CupertinoIcons.chevron_back,
+              size: 14,
+              color: colors.textTertiary,
+            ),
           ],
         ),
       ),
       onTap: isEnabled
           ? () async {
               RitmoHaptics.tap();
-              Duration selectedDuration = Duration(hours: hour, minutes: minute);
+              Duration selectedDuration = Duration(
+                hours: hour,
+                minutes: minute,
+              );
 
               final picked = await showCupertinoModalPopup<String>(
                 context: context,
@@ -592,8 +730,12 @@ class _SettingFieldState extends State<SettingField> with SingleTickerProviderSt
                             CupertinoButton(
                               child: const Text('تایید'),
                               onPressed: () {
-                                final h = selectedDuration.inHours.toString().padLeft(2, '0');
-                                final m = (selectedDuration.inMinutes % 60).toString().padLeft(2, '0');
+                                final h = selectedDuration.inHours
+                                    .toString()
+                                    .padLeft(2, '0');
+                                final m = (selectedDuration.inMinutes % 60)
+                                    .toString()
+                                    .padLeft(2, '0');
                                 Navigator.pop(modalCtx, '$h:$m');
                               },
                             ),

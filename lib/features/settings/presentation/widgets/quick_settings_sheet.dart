@@ -30,10 +30,16 @@ class QuickSettingsSheet extends StatelessWidget {
       animation: SettingsService.instance.revision,
       builder: (context, _) {
         final quiet = SettingsService.instance.get<bool>('notif_quiet_enabled');
-        final persistent = SettingsService.instance.get<bool>('persistent_status_notification_enabled');
+        final persistent = SettingsService.instance.get<bool>(
+          'persistent_status_notification_enabled',
+        );
         final oled = SettingsService.instance.get<bool>('theme_true_black');
-        final biometric = SettingsService.instance.get<bool>('app_biometric_enabled');
-        final haptic = SettingsService.instance.get<bool>('haptic_feedback_enabled');
+        final biometric = SettingsService.instance.get<bool>(
+          'app_biometric_enabled',
+        );
+        final haptic = SettingsService.instance.get<bool>(
+          'haptic_feedback_enabled',
+        );
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -46,223 +52,359 @@ class QuickSettingsSheet extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
               border: Border.all(color: colors.border),
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Icon(CupertinoIcons.slider_horizontal_3, color: colors.primary, size: 22),
-                    const SizedBox(width: 8),
-                    Text(
-                      'تنظیمات سریع',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.border,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'دسترسی آنی به کلیدهای پرکاربرد برنامه',
-                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
-                ),
-                const SizedBox(height: 20),
-                RitmoAdaptiveGrid(
-                  minTileWidth: RitmoBreakpoints.tileMinWidthCompact,
-                  spacing: 12,
-                  maxColumns: 2,
-                  children: [
-                    _QuickTile(
-                      keyName: 'quick_quiet_tile',
-                      title: 'ساعات سکوت',
-                      isActive: quiet,
-                      icon: quiet ? CupertinoIcons.moon_fill : CupertinoIcons.moon,
-                      activeColor: colors.primary,
-                      onTap: () async {
-                        RitmoHaptics.selection();
-                        final nextVal = !quiet;
-                        await SettingsService.instance.set('notif_quiet_enabled', nextVal);
-                        await AlarmSchedulerService.scheduleNextAlarms();
-                        if (context.mounted) {
-                          RitmoToast.show(
-                            context,
-                            nextVal ? 'ساعات سکوت فعال شد 🌙' : 'ساعات سکوت غیرفعال شد',
-                            icon: nextVal ? CupertinoIcons.moon_fill : CupertinoIcons.moon,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.slider_horizontal_3,
+                        color: colors.primary,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'تنظیمات سریع',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'دسترسی آنی به کلیدهای پرکاربرد برنامه',
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: 20),
+                  RitmoAdaptiveGrid(
+                    minTileWidth: RitmoBreakpoints.tileMinWidthCompact,
+                    spacing: 12,
+                    maxColumns: 2,
+                    children: [
+                      _QuickTile(
+                        keyName: 'quick_quiet_tile',
+                        title: 'ساعات سکوت',
+                        isActive: quiet,
+                        icon: quiet
+                            ? CupertinoIcons.moon_fill
+                            : CupertinoIcons.moon,
+                        activeColor: colors.primary,
+                        onTap: () async {
+                          RitmoHaptics.selection();
+                          final nextVal = !quiet;
+                          await SettingsService.instance.set(
+                            'notif_quiet_enabled',
+                            nextVal,
                           );
-                        }
-                      },
-                    ),
-                    _QuickTile(
-                      keyName: 'quick_persistent_tile',
-                      title: 'اعلان دائمی',
-                      isActive: persistent,
-                      icon: persistent ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
-                      activeColor: colors.success,
-                      onTap: () async {
-                        RitmoHaptics.selection();
-                        final nextVal = !persistent;
-                        await SettingsService.instance.set('persistent_status_notification_enabled', nextVal);
-                        await ForegroundNotificationUpdater.update();
-                        if (context.mounted) {
-                          RitmoToast.show(
-                            context,
-                            nextVal ? 'اعلان دائمی وضعیت فعال شد 🔔' : 'اعلان دائمی وضعیت غیرفعال شد',
-                            icon: nextVal ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
-                          );
-                        }
-                      },
-                    ),
-                    _QuickTile(
-                      keyName: 'quick_theme_tile',
-                      title: isCurrentlyDark ? 'حالت تیره' : 'حالت روشن',
-                      isActive: isCurrentlyDark,
-                      icon: isCurrentlyDark ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
-                      activeColor: colors.warning,
-                      onTap: () async {
-                        RitmoHaptics.selection();
-                        final nextMode = isCurrentlyDark ? 'light' : 'dark';
-                        await SettingsService.instance.set('theme_mode', nextMode);
-                        if (context.mounted) {
-                          RitmoToast.show(
-                            context,
-                            nextMode == 'dark' ? 'حالت تیره فعال شد 🌙' : 'حالت روشن فعال شد ☀️',
-                            icon: nextMode == 'dark' ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
-                          );
-                        }
-                      },
-                    ),
-                    _QuickTile(
-                      keyName: 'quick_oled_tile',
-                      title: 'سیاه OLED',
-                      isActive: oled,
-                      icon: CupertinoIcons.circle_filled,
-                      activeColor: colors.textPrimary,
-                      onTap: () async {
-                        RitmoHaptics.selection();
-                        final nextVal = !oled;
-                        await SettingsService.instance.set('theme_true_black', nextVal);
-                        if (context.mounted) {
-                          RitmoToast.show(
-                            context,
-                            nextVal ? 'حالت سیاه خالص (OLED) فعال شد 🖤' : 'حالت سیاه خالص (OLED) غیرفعال شد',
-                            icon: CupertinoIcons.circle_filled,
-                          );
-                        }
-                      },
-                    ),
-                    _QuickTile(
-                      keyName: 'quick_biometric_tile',
-                      title: 'قفل اثرانگشت',
-                      isActive: biometric,
-                      icon: CupertinoIcons.lock_shield_fill,
-                      activeColor: colors.accent,
-                      onTap: () async {
-                        RitmoHaptics.selection();
-                        if (!biometric) {
-                          final supported = await AppLockService.instance.isDeviceSupported();
-                          final canCheck = await AppLockService.instance.canCheckBiometrics();
-                          if (!supported || !canCheck) {
-                            if (context.mounted) {
-                              RitmoToast.show(
-                                context,
-                                'دستگاه شما از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند.',
-                                icon: Icons.warning_amber_rounded,
-                              );
-                            }
-                            return;
-                          }
-                          final password = await AppLockService.instance.getLockPassword();
-                          if (password == null || password.isEmpty) {
-                            if (context.mounted) {
-                              RitmoToast.show(
-                                context,
-                                'لطفاً ابتدا در بخش «امنیت و قفل برنامه»، رمز عبور تعیین کنید.',
-                                icon: Icons.lock_outline_rounded,
-                              );
-                            }
-                            return;
-                          }
-                          final authenticated = await AppLockService.instance.authenticateWithDevice(
-                            reason: 'لطفاً برای فعال‌سازی قفل بیومتریک، هویت خود را تایید کنید',
-                            biometricOnly: true,
-                          );
-                          if (authenticated) {
-                            await SettingsService.instance.set('app_biometric_enabled', true);
-                            await SettingsService.instance.set('app_lock_enabled', true);
-                            if (context.mounted) {
-                              RitmoToast.show(
-                                context,
-                                'قفل اثرانگشت با موفقیت فعال شد 🔒',
-                                icon: CupertinoIcons.lock_shield_fill,
-                              );
-                            }
-                          } else {
-                            if (context.mounted) {
-                              RitmoToast.show(
-                                context,
-                                'احراز هویت بیومتریک ناموفق بود.',
-                                icon: Icons.error_outline_rounded,
-                              );
-                            }
-                          }
-                        } else {
-                          await SettingsService.instance.set('app_biometric_enabled', false);
+                          await AlarmSchedulerService.scheduleNextAlarms();
                           if (context.mounted) {
                             RitmoToast.show(
                               context,
-                              'قفل اثرانگشت غیرفعال شد',
-                              icon: CupertinoIcons.lock_shield,
+                              nextVal
+                                  ? 'ساعات سکوت فعال شد 🌙'
+                                  : 'ساعات سکوت غیرفعال شد',
+                              icon: nextVal
+                                  ? CupertinoIcons.moon_fill
+                                  : CupertinoIcons.moon,
                             );
                           }
-                        }
-                      },
-                    ),
-                    _QuickTile(
-                      keyName: 'quick_haptic_tile',
-                      title: 'بازخورد لرزشی',
-                      isActive: haptic,
-                      icon: CupertinoIcons.waveform_path,
-                      activeColor: colors.secondary,
-                      onTap: () async {
-                        final nextVal = !haptic;
-                        await SettingsService.instance.set('haptic_feedback_enabled', nextVal);
-                        if (nextVal) {
+                        },
+                      ),
+                      _QuickTile(
+                        keyName: 'quick_persistent_tile',
+                        title: 'اعلان دائمی',
+                        isActive: persistent,
+                        icon: persistent
+                            ? CupertinoIcons.bell_fill
+                            : CupertinoIcons.bell,
+                        activeColor: colors.success,
+                        onTap: () async {
                           RitmoHaptics.selection();
-                        }
-                        if (context.mounted) {
-                          RitmoToast.show(
-                            context,
-                            nextVal ? 'بازخورد لرزشی فعال شد 📳' : 'بازخورد لرزشی غیرفعال شد',
-                            icon: CupertinoIcons.waveform_path,
+                          final nextVal = !persistent;
+                          await SettingsService.instance.set(
+                            'persistent_status_notification_enabled',
+                            nextVal,
                           );
-                        }
-                      },
+                          await ForegroundNotificationUpdater.update();
+                          if (context.mounted) {
+                            RitmoToast.show(
+                              context,
+                              nextVal
+                                  ? 'اعلان دائمی وضعیت فعال شد 🔔'
+                                  : 'اعلان دائمی وضعیت غیرفعال شد',
+                              icon: nextVal
+                                  ? CupertinoIcons.bell_fill
+                                  : CupertinoIcons.bell,
+                            );
+                          }
+                        },
+                      ),
+                      _QuickTile(
+                        keyName: 'quick_theme_tile',
+                        title: isCurrentlyDark ? 'حالت تیره' : 'حالت روشن',
+                        isActive: isCurrentlyDark,
+                        icon: isCurrentlyDark
+                            ? CupertinoIcons.moon_stars_fill
+                            : CupertinoIcons.sun_max_fill,
+                        activeColor: colors.warning,
+                        onTap: () async {
+                          RitmoHaptics.selection();
+                          final nextMode = isCurrentlyDark ? 'light' : 'dark';
+                          await SettingsService.instance.set(
+                            'theme_mode',
+                            nextMode,
+                          );
+                          if (context.mounted) {
+                            RitmoToast.show(
+                              context,
+                              nextMode == 'dark'
+                                  ? 'حالت تیره فعال شد 🌙'
+                                  : 'حالت روشن فعال شد ☀️',
+                              icon: nextMode == 'dark'
+                                  ? CupertinoIcons.moon_stars_fill
+                                  : CupertinoIcons.sun_max_fill,
+                            );
+                          }
+                        },
+                      ),
+                      _QuickTile(
+                        keyName: 'quick_oled_tile',
+                        title: 'سیاه OLED',
+                        isActive: oled,
+                        icon: CupertinoIcons.circle_filled,
+                        activeColor: colors.textPrimary,
+                        onTap: () async {
+                          RitmoHaptics.selection();
+                          final nextVal = !oled;
+                          await SettingsService.instance.set(
+                            'theme_true_black',
+                            nextVal,
+                          );
+                          if (context.mounted) {
+                            RitmoToast.show(
+                              context,
+                              nextVal
+                                  ? 'حالت سیاه خالص (OLED) فعال شد 🖤'
+                                  : 'حالت سیاه خالص (OLED) غیرفعال شد',
+                              icon: CupertinoIcons.circle_filled,
+                            );
+                          }
+                        },
+                      ),
+                      _QuickTile(
+                        keyName: 'quick_biometric_tile',
+                        title: 'قفل اثرانگشت',
+                        isActive: biometric,
+                        icon: CupertinoIcons.lock_shield_fill,
+                        activeColor: colors.accent,
+                        onTap: () async {
+                          RitmoHaptics.selection();
+                          if (!biometric) {
+                            final supported = await AppLockService.instance
+                                .isDeviceSupported();
+                            final canCheck = await AppLockService.instance
+                                .canCheckBiometrics();
+                            if (!supported || !canCheck) {
+                              if (context.mounted) {
+                                RitmoToast.show(
+                                  context,
+                                  'دستگاه شما از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند.',
+                                  icon: Icons.warning_amber_rounded,
+                                );
+                              }
+                              return;
+                            }
+                            final password = await AppLockService.instance
+                                .getLockPassword();
+                            if (password == null || password.isEmpty) {
+                              if (context.mounted) {
+                                RitmoToast.show(
+                                  context,
+                                  'لطفاً ابتدا در بخش «امنیت و قفل برنامه»، رمز عبور تعیین کنید.',
+                                  icon: Icons.lock_outline_rounded,
+                                );
+                              }
+                              return;
+                            }
+                            final authenticated = await AppLockService.instance
+                                .authenticateWithDevice(
+                                  reason:
+                                      'لطفاً برای فعال‌سازی قفل بیومتریک، هویت خود را تایید کنید',
+                                  biometricOnly: true,
+                                );
+                            if (authenticated) {
+                              await SettingsService.instance.set(
+                                'app_biometric_enabled',
+                                true,
+                              );
+                              await SettingsService.instance.set(
+                                'app_lock_enabled',
+                                true,
+                              );
+                              if (context.mounted) {
+                                RitmoToast.show(
+                                  context,
+                                  'قفل اثرانگشت با موفقیت فعال شد 🔒',
+                                  icon: CupertinoIcons.lock_shield_fill,
+                                );
+                              }
+                            } else {
+                              if (context.mounted) {
+                                RitmoToast.show(
+                                  context,
+                                  'احراز هویت بیومتریک ناموفق بود.',
+                                  icon: Icons.error_outline_rounded,
+                                );
+                              }
+                            }
+                          } else {
+                            await SettingsService.instance.set(
+                              'app_biometric_enabled',
+                              false,
+                            );
+                            if (context.mounted) {
+                              RitmoToast.show(
+                                context,
+                                'قفل اثرانگشت غیرفعال شد',
+                                icon: CupertinoIcons.lock_shield,
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      _QuickTile(
+                        keyName: 'quick_haptic_tile',
+                        title: 'بازخورد لرزشی',
+                        isActive: haptic,
+                        icon: CupertinoIcons.waveform_path,
+                        activeColor: colors.secondary,
+                        onTap: () async {
+                          final nextVal = !haptic;
+                          await SettingsService.instance.set(
+                            'haptic_feedback_enabled',
+                            nextVal,
+                          );
+                          if (nextVal) {
+                            RitmoHaptics.selection();
+                          }
+                          if (context.mounted) {
+                            RitmoToast.show(
+                              context,
+                              nextVal
+                                  ? 'بازخورد لرزشی فعال شد 📳'
+                                  : 'بازخورد لرزشی غیرفعال شد',
+                              icon: CupertinoIcons.waveform_path,
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
                     ),
-                  ],
-                ),
-              ],
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.textformat_size,
+                          color: colors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'اندازهٔ متن',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        (() {
+                          final currentScale = SettingsService.instance
+                              .get<int>('ui_text_scale');
+                          int selectedOption = 100;
+                          if (currentScale <= 92) {
+                            selectedOption = 92;
+                          } else if (currentScale >= 125) {
+                            selectedOption = 125;
+                          }
+                          return SegmentedButton<int>(
+                            segments: const [
+                              ButtonSegment(
+                                value: 92,
+                                label: Text(
+                                  'کوچک',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              ButtonSegment(
+                                value: 100,
+                                label: Text(
+                                  'معمولی',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ),
+                              ButtonSegment(
+                                value: 125,
+                                label: Text(
+                                  'بزرگ',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                              ),
+                            ],
+                            selected: {selectedOption},
+                            showSelectedIcon: false,
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onSelectionChanged: (val) async {
+                              RitmoHaptics.selection();
+                              await SettingsService.instance.set(
+                                'ui_text_scale',
+                                val.first,
+                              );
+                            },
+                          );
+                        })(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
+        );
       },
     );
   }
@@ -296,35 +438,39 @@ class _QuickTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? activeColor.withValues(alpha: 0.15) : colors.surface,
+          color: isActive
+              ? activeColor.withValues(alpha: 0.15)
+              : colors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isActive ? activeColor.withValues(alpha: 0.4) : colors.border,
+            color: isActive
+                ? activeColor.withValues(alpha: 0.4)
+                : colors.border,
           ),
         ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: isActive ? activeColor : colors.textSecondary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    color: isActive ? colors.textPrimary : colors.textSecondary,
-                  ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isActive ? activeColor : colors.textSecondary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                  color: isActive ? colors.textPrimary : colors.textSecondary,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }

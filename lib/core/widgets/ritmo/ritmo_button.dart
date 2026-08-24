@@ -141,22 +141,29 @@ class RitmoSecondaryButton extends StatelessWidget {
       ],
     );
 
-    return OutlinedButton(
-      onPressed: onPressed != null
-          ? () {
-              RitmoHapticsPolicy.selection();
-              onPressed?.call();
-            }
-          : null,
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(fullWidth ? double.infinity : 100, m.touchTarget),
-        side: BorderSide(color: colors.border),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(m.radiusField),
-        ),
-        padding: EdgeInsets.symmetric(horizontal: m.spaceLg),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: m.touchTarget,
+        minWidth: fullWidth ? double.infinity : 100,
       ),
-      child: childWidget,
+      child: OutlinedButton(
+        onPressed: onPressed != null
+            ? () {
+                RitmoHapticsPolicy.selection();
+                onPressed?.call();
+              }
+            : null,
+        style: OutlinedButton.styleFrom(
+          visualDensity: VisualDensity.standard,
+          minimumSize: Size(fullWidth ? double.infinity : 100, m.touchTarget),
+          side: BorderSide(color: colors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(m.radiusField),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: m.spaceLg),
+        ),
+        child: childWidget,
+      ),
     );
   }
 }
@@ -168,22 +175,27 @@ class RitmoIconButton extends StatelessWidget {
     required this.onPressed,
     this.tooltip,
     this.color,
-    this.size = 24.0,
+    this.size,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
   final String? tooltip;
   final Color? color;
-  final double size;
+  final double? size;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final m = context.metrics;
+    final effectiveIconSize = size ?? m.iconLg;
 
     final iconBtn = IconButton(
-      icon: Icon(icon, size: size, color: color ?? colors.textPrimary),
+      icon: Icon(
+        icon,
+        size: effectiveIconSize,
+        color: color ?? colors.textPrimary,
+      ),
       onPressed: onPressed != null
           ? () {
               RitmoHapticsPolicy.selection();
@@ -191,6 +203,12 @@ class RitmoIconButton extends StatelessWidget {
             }
           : null,
       tooltip: tooltip,
+      style: IconButton.styleFrom(
+        minimumSize: Size(m.touchTarget, m.touchTarget),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(m.radiusField),
+        ),
+      ),
       constraints: BoxConstraints(
         minWidth: m.touchTarget,
         minHeight: m.touchTarget,

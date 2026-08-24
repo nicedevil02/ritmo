@@ -42,7 +42,11 @@ class RitmoSegmentedControl<T> extends StatelessWidget {
                 duration: RitmoMotion.state,
                 curve: RitmoMotion.enter,
                 alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(vertical: m.spaceSm),
+                constraints: BoxConstraints(minHeight: m.touchTarget),
+                padding: EdgeInsets.symmetric(
+                  horizontal: m.spaceSm,
+                  vertical: m.spaceXs,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? colors.surface : Colors.transparent,
                   borderRadius: BorderRadius.circular(m.radiusField - 2),

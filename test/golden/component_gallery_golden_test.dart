@@ -26,19 +26,31 @@ class ComponentGalleryScreen extends StatelessWidget {
         backgroundColor: colors.background,
         appBar: AppBar(
           title: const Text('گالری کامپوننت‌های ریتمو'),
-          leading: const RitmoDirectionalIcon(type: RitmoDirectionalIconType.back),
+          leading: RitmoIcons.back(context),
         ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // 1. Hero Card
             RitmoHeroCard(
-              title: 'کارت ویژه ریتمو',
-              subtitle: 'طراحی شده برای تمرکز و انسجام بصری',
-              accentColor: colors.primary,
-              child: Text(
-                'این یک محتوای نمونه برای بررسی تایپوگرافی و تراز متن است.',
-                style: TextStyle(color: colors.textSecondary, fontSize: 13),
+              moduleColor: colors.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'کارت ویژه ریتمو',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'طراحی شده برای تمرکز و انسجام بصری',
+                    style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -71,20 +83,21 @@ class ComponentGalleryScreen extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                RitmoButton(
-                  text: 'دکمه اصلی',
+                RitmoPrimaryButton(
+                  label: 'دکمه اصلی',
                   onPressed: () {},
-                  variant: RitmoButtonVariant.primary,
+                  fullWidth: false,
                 ),
-                RitmoButton(
-                  text: 'دکمه ثانویه',
+                RitmoSecondaryButton(
+                  label: 'دکمه ثانویه',
                   onPressed: () {},
-                  variant: RitmoButtonVariant.secondary,
+                  fullWidth: false,
                 ),
-                RitmoButton(
-                  text: 'در حال بارگذاری',
-                  onPressed: () {},
-                  loading: true,
+                const RitmoPrimaryButton(
+                  label: 'در حال بارگذاری',
+                  onPressed: null,
+                  isLoading: true,
+                  fullWidth: false,
                 ),
               ],
             ),
@@ -97,12 +110,12 @@ class ComponentGalleryScreen extends StatelessWidget {
                 RitmoChip(
                   label: 'انتخاب شده',
                   isSelected: true,
-                  onSelected: (_) {},
+                  onTap: () {},
                 ),
                 RitmoChip(
                   label: 'غیرفعال / عادی',
                   isSelected: false,
-                  onSelected: (_) {},
+                  onTap: () {},
                 ),
               ],
             ),
@@ -115,15 +128,15 @@ class ComponentGalleryScreen extends StatelessWidget {
                 2: 'هفتگی',
                 3: 'ماهانه',
               },
-              selectedValue: 1,
-              onValueChanged: (_) {},
+              selected: 1,
+              onSelected: (_) {},
             ),
             const SizedBox(height: 16),
 
             // 6. Text Field
             const RitmoTextField(
-              hintText: 'متن ورودی نمونه...',
-              prefixIcon: Icons.search,
+              label: 'متن ورودی نمونه...',
+              icon: Icons.search,
             ),
             const SizedBox(height: 16),
 
@@ -132,19 +145,19 @@ class ComponentGalleryScreen extends StatelessWidget {
               title: 'ردیف لیست استاندارد',
               subtitle: 'توضیحات تکمیلی برای آیتم',
               leading: Icon(Icons.bolt, color: colors.primary),
-              trailing: const RitmoDirectionalIcon(type: RitmoDirectionalIconType.forward),
+              trailing: RitmoIcons.forward(context),
             ),
             const SizedBox(height: 16),
 
             // 8. Progress
-            const RitmoProgress(value: 0.65),
+            const RitmoProgressBar(progress: 0.65),
             const SizedBox(height: 16),
 
             // 9. Skeleton
             const RitmoSkeleton(
               width: double.infinity,
               height: 24,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+              borderRadius: 8,
             ),
           ],
         ),

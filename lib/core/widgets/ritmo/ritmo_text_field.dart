@@ -97,6 +97,10 @@ class RitmoTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: m.spaceLg,
+          vertical: m.spaceMd + 2,
+        ),
       ),
     );
   }

@@ -23,8 +23,11 @@ class RitmoAdaptiveRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final m = context.metrics;
+        final effectiveMinWidth =
+            minWidthForRow * m.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
         final canUseRow =
-            constraints.maxWidth >= minWidthForRow && !context.isLargeTextScale;
+            constraints.maxWidth >= effectiveMinWidth && !context.isLargeTextScale;
         if (canUseRow) {
           return Row(
             crossAxisAlignment: crossAxisAlignment,

@@ -8,33 +8,34 @@ enum HourAxisSide { leading, trailing }
 class TimelineHourAxis extends StatelessWidget {
   const TimelineHourAxis({
     super.key,
-    required this.pxPerMinute,
+    this.pxPerMinute,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
     this.width = CalendarGeometry.hourAxisWidth,
     this.side = HourAxisSide.leading,
-    this.labelFontSize = 10.5,
+    this.labelFontSize,
     this.isToday = false,
     this.now,
   });
 
-  final double pxPerMinute;
+  final double? pxPerMinute;
   final int rangeStartMinutes;
   final int rangeEndMinutes;
   final double width;
   final HourAxisSide side;
-  final double labelFontSize;
+  final double? labelFontSize;
   final bool isToday;
   final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final effectivePxPerMinute = pxPerMinute ?? CalendarGeometry.effectivePxPerMinute(context);
     final effectiveNow = now ?? DateTime.now();
     final nowHour = effectiveNow.hour;
     final startHour = (rangeStartMinutes / 60.0).ceil();
     final endHour = (rangeEndMinutes / 60.0).floor();
-    final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * pxPerMinute;
+    final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * effectivePxPerMinute;
 
     final isLeading = side == HourAxisSide.leading;
 
@@ -45,7 +46,7 @@ class TimelineHourAxis extends StatelessWidget {
         children: [
           for (var h = startHour; h <= endHour; h++)
             Positioned(
-              top: ((h * 60) - rangeStartMinutes) * pxPerMinute - 7,
+              top: ((h * 60) - rangeStartMinutes) * effectivePxPerMinute - 7,
               left: isLeading ? 1.0 : 0,
               right: isLeading ? 0 : 1.0,
               child: Align(
@@ -55,7 +56,7 @@ class TimelineHourAxis extends StatelessWidget {
                 child: Text(
                   toPersianDigits('${h.toString().padLeft(2, '0')}:00'),
                   style: TextStyle(
-                    fontSize: labelFontSize,
+                    fontSize: labelFontSize ?? 10.5,
                     fontWeight: (isToday && h == nowHour)
                         ? FontWeight.w700
                         : FontWeight.w500,
@@ -79,26 +80,27 @@ class TimelineHourAxis extends StatelessWidget {
 class TimelineGridLines extends StatelessWidget {
   const TimelineGridLines({
     super.key,
-    required this.pxPerMinute,
+    this.pxPerMinute,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
   });
 
-  final double pxPerMinute;
+  final double? pxPerMinute;
   final int rangeStartMinutes;
   final int rangeEndMinutes;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * pxPerMinute;
+    final effectivePxPerMinute = pxPerMinute ?? CalendarGeometry.effectivePxPerMinute(context);
+    final rangeHeight = (rangeEndMinutes - rangeStartMinutes) * effectivePxPerMinute;
 
     return SizedBox(
       height: rangeHeight,
       child: CustomPaint(
         size: Size(double.infinity, rangeHeight),
         painter: _GridLinesPainter(
-          pxPerMinute: pxPerMinute,
+          pxPerMinute: effectivePxPerMinute,
           rangeStartMinutes: rangeStartMinutes,
           rangeEndMinutes: rangeEndMinutes,
           lineColor: colors.borderSubtle.withValues(alpha: 0.25),

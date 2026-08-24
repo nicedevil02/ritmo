@@ -9,6 +9,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_list_row.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_progress.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_text_field.dart';
+import 'package:ritmo/features/cycle/cycle_hero_card.dart';
 import '../support/responsive_harness.dart';
 
 void main() {
@@ -125,6 +126,13 @@ void main() {
                                   Text('توضیحات تکمیلی برای کارت هیرو'),
                                 ],
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            const CycleHeroCard(
+                              key: ValueKey('cycle_hero_card'),
+                              currentPhase: CyclePhase.follicular,
+                              currentDay: 5,
+                              totalDaysInPhase: 9,
                             ),
                             const SizedBox(height: 12),
                             RitmoListRow(

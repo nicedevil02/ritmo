@@ -100,279 +100,330 @@ class ZoneCard extends StatelessWidget {
         ? l10n.noActiveSchedule
         : toPersianDigits(activeZoneTimeRange);
 
-    return Row(
-      children: [
-        // Right side (RTL first child): Energy card
-        Expanded(
-          child: RitmoTheme.glassCardLight(
-            color: colors.card.withValues(alpha: 0.65),
-            child: InkWell(
-              onTap: onEnergyTap,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 1.3,
-                    colors: [
-                      energyColor.withValues(alpha: 0.08),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.currentEnergyTitle,
-                          style: RitmoTextStyles.badge(
-                            colors.textSecondary,
-                          ).copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: energyColor.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            energyIcon,
-                            size: 11,
-                            color: energyColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        // Circle Indicator
-                        SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: CustomPaint(
-                            painter: _EnergyRingPainter(
-                              // G-9: در حالت ثبتنشده حلقه خالی (صفر) رسم میشود.
-                              percentage: currentEnergyPercent ?? 0,
-                              colors: energyRingColors,
-                            ),
-                            child: Center(
-                              child: Text(
-                                // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
-                                currentEnergyPercent == null
-                                    ? '—'
-                                    : toPersianDigits(
-                                        '${currentEnergyPercent!.toInt()}٪'),
-                                style: RitmoTextStyles.badge(
-                                  colors.textPrimary,
-                                ).copyWith(fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                energyLabel,
-                                style: RitmoTextStyles.titleMedium(
-                                  energyColor,
-                                ).copyWith(fontWeight: FontWeight.w900),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                energyDesc,
-                                style: RitmoTextStyles.badge(
-                                  colors.textSecondary,
-                                ).copyWith(height: 1.3),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colors.textSecondary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colors.border.withValues(alpha: 0.5), width: 0.8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                l10n.manageEnergy,
-                                style: RitmoTextStyles.badge(
-                                  colors.textPrimary,
-                                ).copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(width: 3),
-                              Icon(
-                                CupertinoIcons.chevron_left,
-                                size: 8,
-                                color: colors.textSecondary,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    final m = context.metrics;
+
+    final energyCard = RitmoTheme.glassCardLight(
+      color: colors.card.withValues(alpha: 0.65),
+      child: InkWell(
+        onTap: onEnergyTap,
+        borderRadius: BorderRadius.circular(m.radiusHero),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(m.radiusHero),
+            gradient: RadialGradient(
+              center: Alignment.topLeft,
+              radius: 1.3,
+              colors: [
+                energyColor.withValues(alpha: 0.08),
+                Colors.transparent,
+              ],
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-
-        // Left side (RTL second child): Realm (Zone) card
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: !isOutOfZone
-                  ? RadialGradient(
-                      center: const Alignment(0.8, -0.6),
-                      radius: 1.2,
-                      colors: [
-                        _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.25),
-                        colors.card.withValues(alpha: 0.65),
-                      ],
-                    )
-                  : null,
-              color: isOutOfZone
-                  ? colors.card.withValues(alpha: 0.65)
-                  : null,
-              border: Border.all(
-                color: !isOutOfZone
-                    ? _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.4)
-                    : colors.border.withValues(alpha: 0.5),
-                width: !isOutOfZone
-                    ? 1.5
-                    : 1.0,
+          padding: EdgeInsets.all(m.spaceLg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.currentEnergyTitle,
+                    style: RitmoTextStyles.badge(
+                      colors.textSecondary,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(m.spaceXs),
+                    decoration: BoxDecoration(
+                      color: energyColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      energyIcon,
+                      size: m.iconSm,
+                      color: energyColor,
+                    ),
+                  ),
+                ],
               ),
-              boxShadow: !isOutOfZone
-                  ? [
-                      BoxShadow(
-                        color: _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : null,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (context) => RealmManagementSheet(
-                        isDarkMode: isDarkMode,
-                        onChanged: onRealmChanged,
+              SizedBox(height: m.spaceMd),
+              Row(
+                children: [
+                  // Circle Indicator
+                  SizedBox(
+                    width: m.touchTarget,
+                    height: m.touchTarget,
+                    child: CustomPaint(
+                      painter: _EnergyRingPainter(
+                        // G-9: در حالت ثبتنشده حلقه خالی (صفر) رسم میشود.
+                        percentage: currentEnergyPercent ?? 0,
+                        colors: energyRingColors,
                       ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
+                      child: Center(
+                        child: Text(
+                          // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
+                          currentEnergyPercent == null
+                              ? '—'
+                              : toPersianDigits(
+                                  '${currentEnergyPercent!.toInt()}٪'),
+                          style: RitmoTextStyles.badge(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: m.spaceSm),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              l10n.currentRealmTitle,
-                              style: RitmoTextStyles.badge(
-                                colors.textSecondary,
-                              ).copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            if (activeZoneIcon != null)
-                              Text(activeZoneIcon!, style: RitmoTextStyles.label(colors.textPrimary))
-                            else
-                              Icon(
-                                CupertinoIcons.briefcase_fill,
-                                size: 14,
-                                color: _parseColorSafe(activeZoneColorHex, colors.primary),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
                         Text(
-                          realmName,
-                          style: RitmoTextStyles.cardTitle(
-                            colors.textPrimary,
+                          energyLabel,
+                          style: RitmoTextStyles.titleMedium(
+                            energyColor,
                           ).copyWith(fontWeight: FontWeight.w900),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          realmTimeRange,
-                          style: RitmoTextStyles.caption(
-                            colors.textSecondary,
-                          ).copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        if (activeZone != null && !isOutOfZone)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: RealmCountdownWidget(
-                              activeZone: activeZone!,
-                              style: RitmoTextStyles.badge(
-                                _parseColorSafe(
-                                  activeZoneColorHex,
-                                  colors.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        Text(
-                          isOutOfZone
-                              ? l10n.logNewDailyRealm
-                              : l10n.routinesConnectedToRealm(
-                                activeZoneRoutinesCount,
-                              ),
+                          energyDesc,
                           style: RitmoTextStyles.badge(
-                            _parseColorSafe(
-                              activeZoneColorHex,
-                              colors.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          isOutOfZone ? l10n.addRealm : l10n.manageRealm,
-                          style: RitmoTextStyles.badge(colors.textSecondary),
+                            colors.textSecondary,
+                          ).copyWith(height: 1.3),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
+                ],
+              ),
+              SizedBox(height: m.spaceMd),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: m.spaceSm,
+                      vertical: m.spaceXs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(m.radiusCard),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.5),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.manageEnergy,
+                          style: RitmoTextStyles.badge(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          CupertinoIcons.chevron_left,
+                          size: m.iconSm * 0.75,
+                          color: colors.textSecondary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final realmCard = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(m.radiusHero),
+        gradient: !isOutOfZone
+            ? RadialGradient(
+                center: const Alignment(0.8, -0.6),
+                radius: 1.2,
+                colors: [
+                  _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.25),
+                  colors.card.withValues(alpha: 0.65),
+                ],
+              )
+            : null,
+        color: isOutOfZone
+            ? colors.card.withValues(alpha: 0.65)
+            : null,
+        border: Border.all(
+          color: !isOutOfZone
+              ? _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.4)
+              : colors.border.withValues(alpha: 0.5),
+          width: !isOutOfZone
+              ? 1.5
+              : 1.0,
+        ),
+        boxShadow: !isOutOfZone
+            ? [
+                BoxShadow(
+                  color: _parseColorSafe(activeZoneColorHex, colors.primary).withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                )
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(m.radiusHero),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (context) => RealmManagementSheet(
+                  isDarkMode: isDarkMode,
+                  onChanged: onRealmChanged,
                 ),
+              );
+            },
+            borderRadius: BorderRadius.circular(m.radiusHero),
+            child: Padding(
+              padding: EdgeInsets.all(m.spaceLg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.currentRealmTitle,
+                        style: RitmoTextStyles.badge(
+                          colors.textSecondary,
+                        ).copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (activeZoneIcon != null)
+                        Text(activeZoneIcon!, style: RitmoTextStyles.label(colors.textPrimary))
+                      else
+                        Icon(
+                          CupertinoIcons.briefcase_fill,
+                          size: m.iconSm,
+                          color: _parseColorSafe(activeZoneColorHex, colors.primary),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: m.spaceMd),
+                  Text(
+                    realmName,
+                    style: RitmoTextStyles.cardTitle(
+                      colors.textPrimary,
+                    ).copyWith(fontWeight: FontWeight.w900),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    realmTimeRange,
+                    style: RitmoTextStyles.caption(
+                      colors.textSecondary,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: m.spaceXs),
+                  if (activeZone != null && !isOutOfZone)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: m.spaceXs),
+                      child: RealmCountdownWidget(
+                        activeZone: activeZone!,
+                        style: RitmoTextStyles.badge(
+                          _parseColorSafe(
+                            activeZoneColorHex,
+                            colors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Text(
+                    isOutOfZone
+                        ? l10n.logNewDailyRealm
+                        : l10n.routinesConnectedToRealm(
+                          activeZoneRoutinesCount,
+                        ),
+                    style: RitmoTextStyles.badge(
+                      _parseColorSafe(
+                        activeZoneColorHex,
+                        colors.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: m.spaceMd),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: m.spaceSm,
+                      vertical: m.spaceXs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(m.radiusCard),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.5),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isOutOfZone ? l10n.addRealm : l10n.manageRealm,
+                          style: RitmoTextStyles.badge(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 3),
+                        Icon(
+                          CupertinoIcons.chevron_left,
+                          size: m.iconSm * 0.75,
+                          color: colors.textSecondary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
-      ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final canUseRow =
+            constraints.maxWidth >= (280 * m.densityFactor) &&
+            !context.isLargeTextScale;
+        if (canUseRow) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: energyCard),
+              SizedBox(width: m.spaceMd),
+              Expanded(child: realmCard),
+            ],
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              energyCard,
+              SizedBox(height: m.spaceMd),
+              realmCard,
+            ],
+          );
+        }
+      },
     );
   }
 }

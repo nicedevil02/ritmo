@@ -153,8 +153,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     }
 
     final pxRate = isSingle
-        ? CalendarGeometry.pxPerMinute
-        : CalendarGeometry.pxPerMinuteSplit;
+        ? CalendarGeometry.effectivePxPerMinute(context)
+        : CalendarGeometry.effectivePxPerMinuteSplit(context);
     final offset = ((firstMinute - rangeStart - 30).clamp(0, 720)) * pxRate;
     final maxScroll = controller.position.maxScrollExtent;
     controller.animateTo(
@@ -172,6 +172,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final pxSplit = CalendarGeometry.effectivePxPerMinuteSplit(context);
 
     final columnItems = widget.items.where((item) {
       if (!item.isTimed) return false;
@@ -190,7 +191,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         if (renderBox == null) return;
         final localOffset = renderBox.globalToLocal(details.offset);
         final rawMinutes =
-            ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) +
+            ((localOffset.dy / pxSplit) +
                     range.startMinutes)
                 .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
@@ -215,7 +216,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
             ? renderBox.globalToLocal(details.offset)
             : Offset.zero;
         final rawMinutes =
-            ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) +
+            ((localOffset.dy / pxSplit) +
                     range.startMinutes)
                 .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
@@ -244,7 +245,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               isToday: widget.isToday,
               rangeStartMinutes: range.startMinutes,
               rangeEndMinutes: range.endMinutes,
-              pxPerMinute: CalendarGeometry.pxPerMinuteSplit,
+              pxPerMinute: pxSplit,
               hourAxisWidth: CalendarGeometry.hourAxisWidthSplit,
               maxLanes: CalendarGeometry.maxLanesSplit,
               axisSide: side,
@@ -321,7 +322,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < CalendarGeometry.splitMinScreenWidth) {
-          // Fallback to single column timeline for narrow screens
+          final pxSingle = CalendarGeometry.effectivePxPerMinute(context);
           return DragTarget<AgendaItem>(
             onWillAcceptWithDetails: (details) => true,
             onMove: (details) {
@@ -330,7 +331,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                       as RenderBox?;
               if (renderBox == null) return;
               final localOffset = renderBox.globalToLocal(details.offset);
-              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute)
+              final rawMinutes = (localOffset.dy / pxSingle)
                   .round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(
@@ -354,7 +355,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               final localOffset = renderBox != null
                   ? renderBox.globalToLocal(details.offset)
                   : Offset.zero;
-              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute)
+              final rawMinutes = (localOffset.dy / pxSingle)
                   .round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(
@@ -383,7 +384,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                   isToday: widget.isToday,
                   rangeStartMinutes: 0,
                   rangeEndMinutes: 1440,
-                  pxPerMinute: CalendarGeometry.pxPerMinute,
+                  pxPerMinute: pxSingle,
                   hourAxisWidth: CalendarGeometry.hourAxisWidth,
                   sleepStartMinutes: widget.sleepStartMinutes,
                   sleepEndMinutes: widget.sleepEndMinutes,
@@ -415,6 +416,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
             },
           );
         }
+
+        final pxSplit = CalendarGeometry.effectivePxPerMinuteSplit(context);
 
         // Split 2-column layout (Morning on RIGHT in RTL, Afternoon on LEFT)
         // Synchronized Scrolling & Borderless Frameless UI
@@ -475,7 +478,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                           child: Center(
                             child: Container(
                               width: 1.0,
-                              height: 720 * CalendarGeometry.pxPerMinuteSplit,
+                              height: 720 * pxSplit,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,

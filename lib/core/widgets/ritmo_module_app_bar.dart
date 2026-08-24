@@ -11,15 +11,23 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.statusBadge,
     this.actions,
     this.onBack,
+    this.density,
+    this.preferredHeight,
   });
   final String title;
   final String? subtitle;
   final Widget? statusBadge;
   final List<Widget>? actions;
   final VoidCallback? onBack;
+  final RitmoDensityLevel? density;
+  final double? preferredHeight;
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize {
+    if (preferredHeight != null) return Size.fromHeight(preferredHeight!);
+    final m = RitmoMetrics.of(density ?? RitmoUiScale.defaultDensity);
+    return Size.fromHeight(m.rowHeight + m.spaceSm);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +114,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
 
               // Action Buttons
-              if (actions != null) ...actions!,
+              ...?actions,
             ],
           ),
         ),

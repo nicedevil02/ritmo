@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 // lib/features/calendar/presentation/utils/calendar_geometry.dart
 
@@ -30,6 +31,10 @@ abstract final class CalendarGeometry {
 
   /// Vertical pixels per minute in split two-column view (more compact).
   static const double pxPerMinuteSplit = 1.6;
+
+  /// Returns dynamic pixels per minute for split view based on hour slot height token.
+  static double effectivePxPerMinuteSplit(BuildContext context) =>
+      (context.metrics.hourSlotHeight * (1.6 / 1.2)) / 60.0;
 
   /// Width of the hour axis in split two-column view.
   static const double hourAxisWidthSplit = 28.0;

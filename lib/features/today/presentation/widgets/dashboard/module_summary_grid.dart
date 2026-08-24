@@ -14,6 +14,7 @@ class ModuleSummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (summaries.isEmpty) return const SizedBox.shrink();
     final colors = context.colors;
+    final m = context.metrics;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -21,21 +22,17 @@ class ModuleSummaryGrid extends StatelessWidget {
       children: [
         Text(
           'سیستم‌های فعال',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-            ),
+          style: RitmoTextStyles.sectionHeadline(colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         RitmoAdaptiveGrid(
           minTileWidth: 140,
-          spacing: 10,
+          spacing: m.spaceSm,
           maxColumns: 2,
           children: [
             for (final summary in summaries)
               SizedBox(
-                height: (118.0 * context.textScale).clamp(118.0, 160.0),
+                height: (118.0 * context.textScale * m.densityFactor).clamp(118.0, 175.0),
                 child: _ModuleSummaryCard(
                   summary: summary,
                   onTap: () => onModuleTap(summary.moduleId),
@@ -98,10 +95,11 @@ class _ImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final m = context.metrics;
     return RitmoPressable(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(m.radiusCard),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -142,35 +140,33 @@ class _ImageCard extends StatelessWidget {
 
             // ── آیکون و عنوان بالا ──
             Positioned(
-              top: 9,
-              right: 11,
-              left: 11,
+              top: m.spaceSm,
+              right: m.spaceSm,
+              left: m.spaceSm,
               child: Row(
                 children: [
                   Container(
-                    height: 26,
-                    width: 26,
+                    height: m.iconLg,
+                    width: m.iconLg,
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(m.radiusField),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.25),
                         width: 0.8,
                       ),
                     ),
-                    child: Icon(summary.icon, size: 13, color: Colors.white),
+                    child: Icon(summary.icon, size: m.iconSm, color: Colors.white),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: m.spaceXs),
                   Expanded(
                     child: Text(
                       summary.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
+                      style: RitmoTextStyles.caption(Colors.white).copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        shadows: [
+                        shadows: const [
                           Shadow(blurRadius: 4, color: Colors.black45),
                         ],
                       ),
@@ -185,16 +181,16 @@ class _ImageCard extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              height: 54,
+              height: 54 * m.densityFactor,
               child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(18),
-                  bottomRight: Radius.circular(18),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(m.radiusCard),
+                  bottomRight: Radius.circular(m.radiusCard),
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceXs),
                     decoration: BoxDecoration(
                       color: (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.35 : 0.45),
                       border: Border(
@@ -213,24 +209,24 @@ class _ImageCard extends StatelessWidget {
                           summary.primary,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
+                          style: RitmoTextStyles.cardTitle(
+                            isDark ? Colors.white : Colors.black87,
+                          ).copyWith(
                             height: 1.15,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : Colors.black87,
-                            ),
+                          ),
                         ),
                         const SizedBox(height: 1),
                         Text(
                           summary.secondary,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 9.5,
+                          style: RitmoTextStyles.badge(
+                            isDark ? Colors.white70 : Colors.black54,
+                          ).copyWith(
                             height: 1.15,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -261,18 +257,19 @@ class _PlainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final m = context.metrics;
     final accentAlpha = isDark ? 0.18 : 0.10;
     final borderAlpha = isDark ? 0.30 : 0.20;
 
     return RitmoPressable(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(m.radiusCard),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(m.radiusCard),
               color: isDark
                   ? colors.card.withValues(alpha: 0.55)
                   : Colors.white.withValues(alpha: 0.70),
@@ -288,7 +285,7 @@ class _PlainCard extends StatelessWidget {
                 ],
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceSm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -297,28 +294,26 @@ class _PlainCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      height: 26, width: 26,
+                      height: m.iconLg, width: m.iconLg,
                       decoration: BoxDecoration(
                         color: summary.accentColor.withValues(alpha: isDark ? 0.22 : 0.14),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(m.radiusField),
                         border: Border.all(
                           color: summary.accentColor.withValues(alpha: isDark ? 0.40 : 0.30),
                           width: 0.8,
                         ),
                       ),
-                      child: Icon(summary.icon, size: 13, color: summary.accentColor),
+                      child: Icon(summary.icon, size: m.iconSm, color: summary.accentColor),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: m.spaceXs),
                     Expanded(
                       child: Text(
                         summary.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: RitmoTextStyles.caption(colors.textPrimary).copyWith(
                           fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
-                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -333,29 +328,25 @@ class _PlainCard extends StatelessWidget {
                       summary.primary,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary).copyWith(
                         height: 1.15,
                         fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: m.spaceXs, vertical: 2),
                       decoration: BoxDecoration(
                         color: summary.accentColor.withValues(alpha: isDark ? 0.14 : 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(m.radiusField),
                       ),
                       child: Text(
                         summary.secondary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 9.5,
+                        style: RitmoTextStyles.badge(colors.textSecondary).copyWith(
                           height: 1.15,
-                          color: colors.textSecondary,
-                          ),
+                        ),
                       ),
                     ),
                   ],

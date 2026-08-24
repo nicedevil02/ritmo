@@ -26,11 +26,15 @@ class RitmoProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final disableAnim = MediaQuery.disableAnimationsOf(context);
 
+    final effectiveSize = size * m.densityFactor;
+    final effectiveStrokeWidth = strokeWidth * m.densityFactor;
+
     final widgetContent = SizedBox(
-      width: size,
-      height: size,
+      width: effectiveSize,
+      height: effectiveSize,
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: 0.0, end: value ?? 0.0),
         duration: disableAnim
@@ -44,7 +48,7 @@ class RitmoProgressRing extends StatelessWidget {
               confidence: confidence,
               lowerBound: lowerBound,
               upperBound: upperBound,
-              strokeWidth: strokeWidth,
+              strokeWidth: effectiveStrokeWidth,
               trackColor: colors.surfaceSunken,
               activeColor: colors.primary,
               uncertaintyColor: colors.primary.withValues(alpha: 0.25),
@@ -53,7 +57,7 @@ class RitmoProgressRing extends StatelessWidget {
             ),
             child: Center(
               child: Padding(
-                padding: EdgeInsets.all(strokeWidth + 4),
+                padding: EdgeInsets.all(effectiveStrokeWidth + 4),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Column(

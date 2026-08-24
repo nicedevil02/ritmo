@@ -575,9 +575,9 @@ ${jsonEncode(digest.json)}
                 constraints: const BoxConstraints(maxHeight: 250),
                 decoration: BoxDecoration(
                   color: isDarkMode ? Colors.black.withValues(alpha: 0.2) : colors.textSecondary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(m.radiusField),
                 ),
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(m.spaceMd),
                 child: SingleChildScrollView(
                   child: Text(
                     _deepAnalysisResult!,
@@ -588,16 +588,16 @@ ${jsonEncode(digest.json)}
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: m.spaceMd),
             ] else ...[
               ElevatedButton.icon(
                 onPressed: _runDeepAnalysis,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xff06B6D4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(m.radiusCard)),
+                  padding: EdgeInsets.symmetric(vertical: m.spaceSm),
                 ),
-                icon: const Icon(CupertinoIcons.sparkles, size: 16, color: Colors.white),
+                icon: Icon(CupertinoIcons.sparkles, size: m.iconSm, color: Colors.white),
                 label: const Text(
                   'تحلیل عمیق با هوش مصنوعی',
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -613,6 +613,7 @@ ${jsonEncode(digest.json)}
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {
@@ -637,13 +638,13 @@ ${jsonEncode(digest.json)}
             color: colors.primary,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(14, 24, 14, 120),
+              padding: EdgeInsets.fromLTRB(m.spaceMd, m.spaceXl, m.spaceMd, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Custom Header Row
                   _buildHeader(colors),
-                  const SizedBox(height: 16),
+                  SizedBox(height: m.spaceLg),
 
                   // Time Window Ruler (ط۵)
                   InsightsTimeWindowRuler(
@@ -655,14 +656,14 @@ ${jsonEncode(digest.json)}
                       _loadAnalytics();
                     },
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: m.spaceXl),
 
                   // AI Briefing section
                   PremiumGate(
                     feature: PremiumFeature.unlimitedAi,
                     child: _buildAIBriefingSection(colors, isDarkMode),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: m.spaceXl),
 
                   // Maturity Gate Dispatcher
                   if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
@@ -672,7 +673,7 @@ ${jsonEncode(digest.json)}
                       feature: PremiumFeature.advancedInsights,
                       child: _buildAdvancedView(colors, isDarkMode),
                     ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: m.spaceXl),
                   AdService.instance.getBannerAd(),
                 ],
               ),
@@ -741,11 +742,12 @@ ${jsonEncode(digest.json)}
       color = const Color(0xffF5B95B);
     }
 
+    final m = context.metrics;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceXs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(m.radiusCard),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
@@ -757,28 +759,29 @@ ${jsonEncode(digest.json)}
 
   // EARLY STAGE MODE VIEW
   Widget _buildEarlyStageView(RitmoColors colors, bool isDarkMode) {
+    final m = context.metrics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Maturity Banner
         RitmoTheme.glassCardLight(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(m.spaceXl),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   CupertinoIcons.square_stack_3d_down_right_fill,
-                  size: 52,
-                  color: Color(0xff5B8AF5),
+                  size: 52 * m.densityFactor,
+                  color: const Color(0xff5B8AF5),
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: m.spaceLg),
                 Text(
                   'هنوز در حال شناخت شما هستیم',
                   style: RitmoTextStyles.cardTitle(
                     colors.textPrimary,
                   ).copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: m.spaceSm),
                 Text(
                   'با ادامه استفاده از ریتمو و تکمیل روتین‌های روزانه، بینش‌های هوشمند، آنالیز تعادل ابعاد زندگی و تحلیل‌های پیشرفته ریتم انرژی شما ظاهر خواهند شد.',
                   textAlign: TextAlign.center,
@@ -786,17 +789,17 @@ ${jsonEncode(digest.json)}
                     colors.textSecondary,
                   ).copyWith(height: 1.6),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: m.spaceLg),
                 _buildMaturityBadge(),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: m.spaceXl),
 
         // Section Title
         _buildSectionTitle(colors, 'وضعیت فعلی ریتم زندگی'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
 
         // 3 metrics allowed in Early Stage
         Row(
@@ -809,7 +812,7 @@ ${jsonEncode(digest.json)}
                 colors.success,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: m.spaceMd),
             Expanded(
               child: _buildEarlyMetricCard(
                 colors,
@@ -820,7 +823,7 @@ ${jsonEncode(digest.json)}
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildEarlyMetricCard(
           colors,
           'کل روتین‌های تکمیل شده',
@@ -832,16 +835,17 @@ ${jsonEncode(digest.json)}
   }
 
   Widget _buildEarlyMetricCard(RitmoColors colors, String title, String val, Color color) {
+    final m = context.metrics;
     return RitmoTheme.glassCardLight(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(m.spaceXl),
         child: Column(
           children: [
             Text(
               title,
               style: RitmoTextStyles.caption(colors.textSecondary),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: m.spaceSm),
             Text(
               val,
               style: RitmoTextStyles.sectionHeadline(color).copyWith(fontWeight: FontWeight.bold),
@@ -854,65 +858,66 @@ ${jsonEncode(digest.json)}
 
   // ADVANCED ANALYTICS MODE VIEW
   Widget _buildAdvancedView(RitmoColors colors, bool isDarkMode) {
+    final m = context.metrics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildMaturityBadge(),
-        const SizedBox(height: 16),
+        SizedBox(height: m.spaceLg),
 
         // SECTION 1: Life Pulse Hero
         _buildLifePulseHero(colors),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 2: Life Balance
         _buildSectionTitle(colors, 'تعادل ابعاد زندگی ⚖️'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildLifeBalanceCard(colors, isDarkMode),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 3: Streaks & Momentum
         _buildSectionTitle(colors, 'تداوم و انرژی رفتاری 🔥'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildStreaksCard(colors),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 4: Trend Analysis
         _buildSectionTitle(colors, 'تحلیل پویای روندهای پیشرفت 📈'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildTrendAnalysisGrid(colors),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 5: Energy Insights
         _buildSectionTitle(colors, 'بینش‌های ریتم شبانه‌روزی و انرژی ⚡'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildEnergyInsights(colors),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 6: Intelligence Insights
         if (_insights.isNotEmpty) ...[
           _buildSectionTitle(colors, 'بینش‌های هوشمند رفتاری 💡'),
-          const SizedBox(height: 12),
+          SizedBox(height: m.spaceMd),
           _buildIntelligenceInsightsList(colors, isDarkMode),
-          const SizedBox(height: 24),
+          SizedBox(height: m.spaceXl),
         ],
 
         // SECTION 7: Milestones
         if (_milestones.isNotEmpty) ...[
           _buildSectionTitle(colors, 'دستاوردهای آزاد شده و مایل‌استون‌ها 🎖️'),
-          const SizedBox(height: 12),
+          SizedBox(height: m.spaceMd),
           _buildMilestonesTimeline(colors),
-          const SizedBox(height: 24),
+          SizedBox(height: m.spaceXl),
         ],
 
         // SECTION 8: Comparative Analysis
         _buildSectionTitle(colors, 'تحلیل‌های مقایسه‌ای زمان‌محور 📊'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildComparativeAnalysis(colors),
-        const SizedBox(height: 24),
+        SizedBox(height: m.spaceXl),
 
         // SECTION 9: Reflection Summary
         _buildSectionTitle(colors, 'خلاصه انعکاس رفتاری (تصویر زندگی شما) 🌿'),
-        const SizedBox(height: 12),
+        SizedBox(height: m.spaceMd),
         _buildReflectionSummary(colors),
       ],
     );
@@ -929,12 +934,13 @@ ${jsonEncode(digest.json)}
 
   // SECTION 1: Life Pulse Hero
   Widget _buildLifePulseHero(RitmoColors colors) {
+    final m = context.metrics;
     return RitmoTheme.glassCardLight(
       child: InkWell(
         onTap: () => _showPulseHistorySheet(colors),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(m.radiusHero),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(m.spaceXl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -945,15 +951,15 @@ ${jsonEncode(digest.json)}
                     'نبض زندگی جاری (میانگین ۷ روزه)',
                     style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
-                  Icon(CupertinoIcons.chevron_left, size: 16, color: colors.textSecondary.withValues(alpha: 0.5)),
+                  Icon(CupertinoIcons.chevron_left, size: m.iconSm, color: colors.textSecondary.withValues(alpha: 0.5)),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: m.spaceSm),
               Text(
                 toPersianDigits('$_lifePulseAverage٪'),
                 style: RitmoTextStyles.heroNumber(colors.success),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: m.spaceMd),
               // Trend indicator
               Row(
                 children: [
@@ -964,7 +970,7 @@ ${jsonEncode(digest.json)}
                     colors: colors,
                   ),
                   if (_daysOfData >= 60) ...[
-                    const SizedBox(width: 16),
+                    SizedBox(width: m.spaceLg),
                     _buildPulseTrendIndicator(
                       label: 'نسبت به ماه قبل',
                       value: _pulseMonthlyChange,

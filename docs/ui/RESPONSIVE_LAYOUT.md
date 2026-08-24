@@ -1,6 +1,6 @@
 # معماری چیدمان پاسخ‌گو و دسترس‌پذیری ریتمو (Ritmo Responsive Layout Architecture)
 
-این سند مرجع واحد اصول، کلاس‌های اندازه، گریدها، شیت‌ها و قواعد تست چیدمان پاسخ‌گو در اپلیکیشن ریتمو است (`R-01` … `R-92`).
+این سند مرجع واحد اصول، کلاس‌های اندازه، گریدها، شیت‌ها و قواعد تست چیدمان پاسخ‌گو در اپلیکیشن ریتمو است (`R-01` … `R-94`).
 
 ---
 
@@ -72,24 +72,24 @@ RitmoSheetScaffold.present(
 
 ---
 
-## ۴. ماتریس ۱۲ حالته تست‌های استاندارد پاسخ‌گویی
+## ۴. ماتریس ۶۴ حالته تست‌های جامع پاسخ‌گویی
 
-تمام ویجت‌های کلیدی در ماتریس ۴ نمای دید × ۳ مقیاس متن اعتبارسنجی می‌شوند:
+تمام ویجت‌های کلیدی در ماتریس ۴ نمای دید × ۴ مقیاس متن × ۴ سطح چگالی (۶۴ ترکیب) اعتبارسنجی می‌شوند:
 
-| نمای دید (Viewport) | ابعاد (Px) | مقیاس ۱.۰x | مقیاس ۱.۳x | مقیاس ۱.۶x |
-|---|---|---|---|---|
-| `compact-short` | 320 × 568 | ✅ | ✅ | ✅ |
-| `compact` | 360 × 640 | ✅ | ✅ | ✅ |
-| `regular` | 390 × 844 | ✅ | ✅ | ✅ |
-| `large` | 430 × 932 | ✅ | ✅ | ✅ |
+| نمای دید (Viewport) | ابعاد (Px) | مقیاس ۰.۸۵x | مقیاس ۱.۰x | مقیاس ۱.۳x | مقیاس ۱.۶x | سطوح چگالی تحت آزمون |
+|---|---|---|---|---|---|---|
+| `compact-short` | 320 × 568 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
+| `compact` | 360 × 640 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
+| `regular` | 390 × 844 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
+| `large` | 430 × 932 | ✅ | ✅ | ✅ | ✅ | `compact`, `comfortable`, `spacious`, `xl` |
 
-ابزار تست: [`testAcrossViewports`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/support/responsive_harness.dart) و [`expectNoOverflow`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/support/responsive_harness.dart).
+ابزار تست: [`testAcrossViewports`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/support/responsive_harness.dart) و [`ui_scale_matrix_test.dart`](file:///c:/Users/bahman/Desktop/Besme-Allah/Ritmo3/ritmo/test/theme/ui_scale_matrix_test.dart).
 
 ---
 
 ## ۵. سیاست مقیاس متن و چگالی المان‌ها (Text & Density Scaling Policy)
 
-- مبدأ تعیین سقف و کف مجاز: `RitmoBreakpoints.supportedMinTextScale` (۰.۸۵) و `RitmoBreakpoints.supportedMaxTextScale` (۱.۳۰ فعلی؛ ۱.۶۰ پس از تکمیل ماتریس مقیاس).
+- مبدأ تعیین سقف و کف مجاز: `RitmoBreakpoints.supportedMinTextScale` (۰.۸۵) و `RitmoBreakpoints.supportedMaxTextScale` (۱.۶۰).
 - دو محور مستقل مقیاس:
   ۱. **اندازهٔ متن (`ui_text_scale`):** منحصراً از طریق `MaterialApp.builder` به `MediaQuery.textScaler` تزریق می‌شود و شامل ۶ پله استاندارد (۸۵٪ تا ۱۴۰٪) با قابلیت پیروی از مقیاس سیستم‌عامل (`ui_text_follow_os`).
   ۲. **چگالی المان‌ها (`ui_density`):** فواصل، اهداف لمس و رادیوس‌ها را از طریق اکستنشن `RitmoMetrics` و `VisualDensity` در تم مدیریت می‌کند (شامل ۴ چگالی: `compact`, `comfortable`, `spacious`, `xl`).

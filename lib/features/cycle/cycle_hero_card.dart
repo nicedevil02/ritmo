@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// فازهای مختلف چرخه بدن
 enum CyclePhase {
@@ -24,52 +26,65 @@ class PhaseDesignTheme {
   final Color baseColor;
   final List<Color> gradientColors;
   final IconData icon;
-  static PhaseDesignTheme getTheme(CyclePhase phase) {
+
+  static PhaseDesignTheme getTheme(CyclePhase phase, RitmoColors colors) {
     switch (phase) {
       case CyclePhase.menstrual:
-        return const PhaseDesignTheme(
+        return PhaseDesignTheme(
           title: 'فاز قاعدگی',
           description: 'زمان استراحت، تغذیه گرم و مراقبت ملایم از خود.',
-          baseColor: Colors.pink,
-          gradientColors: [Colors.pinkAccent, Colors.pink, Colors.redAccent],
+          baseColor: colors.medicalRed,
+          gradientColors: [
+            colors.medicalRed,
+            colors.medicalRed.withValues(alpha: 0.85),
+            colors.accent,
+          ],
           icon: Icons.water_drop,
         );
       case CyclePhase.follicular:
-        return const PhaseDesignTheme(
+        return PhaseDesignTheme(
           title: 'فاز فولیکولار',
           description:
               'افزایش سطح انرژی! زمان ایده‌آل برای برنامه‌ریزی و یادگیری.',
-          baseColor: Colors.teal,
-          gradientColors: [Colors.tealAccent, Colors.teal, Colors.green],
+          baseColor: colors.success,
+          gradientColors: [
+            colors.success,
+            colors.success.withValues(alpha: 0.85),
+            colors.primary,
+          ],
           icon: Icons.wb_sunny_outlined,
         );
       case CyclePhase.ovulatory:
-        return const PhaseDesignTheme(
+        return PhaseDesignTheme(
           title: 'فاز تخمک‌گذاری',
           description:
               'اوج درخشش و ارتباطات اجتماعی. کارهای گروهی عالی پیش می‌روند.',
-          baseColor: Colors.purple,
+          baseColor: colors.primary,
           gradientColors: [
-            Colors.purpleAccent,
-            Colors.purple,
-            Colors.deepPurple,
+            colors.primary,
+            colors.primary.withValues(alpha: 0.85),
+            colors.accent,
           ],
           icon: Icons.auto_awesome,
         );
       case CyclePhase.luteal:
-        return const PhaseDesignTheme(
+        return PhaseDesignTheme(
           title: 'فاز لوتئال',
           description:
               'کاهش تدریجی انرژی. به سمت کارهای انفرادی و آرامش حرکت کنید.',
-          baseColor: Colors.amber,
-          gradientColors: [Colors.amberAccent, Colors.amber, Colors.orange],
+          baseColor: colors.warning,
+          gradientColors: [
+            colors.warning,
+            colors.warning.withValues(alpha: 0.85),
+            colors.accent,
+          ],
           icon: Icons.nights_stay_outlined,
         );
     }
   }
 }
 
-/// کارت هیرو پرمیوم چرخه بدنهمراه با انیمیشن ذرات و گلبرگ‌های صعودی نرم
+/// کارت هیرو پرمیوم چرخه بدن همراه با انیمیشن ذرات و گلبرگ‌های صعودی نرم
 class CycleHeroCard extends StatefulWidget {
   const CycleHeroCard({
     super.key,
@@ -115,7 +130,9 @@ class _CycleHeroCardState extends State<CycleHeroCard>
 
   @override
   Widget build(BuildContext context) {
-    final theme = PhaseDesignTheme.getTheme(widget.currentPhase);
+    final colors = context.colors;
+    final theme = PhaseDesignTheme.getTheme(widget.currentPhase, colors);
+    final m = context.metrics;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -123,10 +140,12 @@ class _CycleHeroCardState extends State<CycleHeroCard>
         onTap: widget.onTap,
         child: Container(
           width: double.infinity,
-          height: 190,
-          margin: const EdgeInsets.all(16),
+          constraints: BoxConstraints(
+            minHeight: 180 * m.densityFactor,
+          ),
+          margin: EdgeInsets.all(m.spaceLg),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(m.radiusHero),
             gradient: LinearGradient(
               colors: theme.gradientColors,
               begin: Alignment.topLeft,
@@ -161,15 +180,15 @@ class _CycleHeroCardState extends State<CycleHeroCard>
 
               // محتوای کارت متنی و اطلاعات چرخه
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(m.spaceXl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: EdgeInsets.all(m.spaceSm),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
@@ -177,66 +196,61 @@ class _CycleHeroCardState extends State<CycleHeroCard>
                           child: Icon(
                             theme.icon,
                             color: Colors.white,
-                            size: 24,
+                            size: m.iconLg,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              theme.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                // یا فونت دلخواه پروژه
+                        SizedBox(width: m.spaceMd),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  theme.title,
+                                  style: RitmoTextStyles.sectionHeadline(Colors.white),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'روز ${widget.currentDay} از ${widget.totalDaysInPhase}',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                              const SizedBox(height: 2),
+                              Text(
+                                toPersianDigits(
+                                  'روز ${widget.currentDay} از ${widget.totalDaysInPhase}',
+                                ),
+                                style: RitmoTextStyles.caption(
+                                  Colors.white.withValues(alpha: 0.9),
+                                ).copyWith(fontWeight: FontWeight.w600),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const Spacer(),
+                        SizedBox(width: m.spaceSm),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: m.spaceMd,
+                            vertical: m.spaceXs,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(m.radiusHero),
                           ),
-                          child: const Text(
+                          child: Text(
                             'پرمیوم',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
+                            style: RitmoTextStyles.badge(Colors.white).copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: Text(
-                        theme.description,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    SizedBox(height: m.spaceMd),
+                    Text(
+                      theme.description,
+                      style: RitmoTextStyles.body(
+                        Colors.white.withValues(alpha: 0.95),
+                      ).copyWith(height: 1.4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),

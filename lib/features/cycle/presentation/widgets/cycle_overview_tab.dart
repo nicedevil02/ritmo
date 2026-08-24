@@ -93,7 +93,7 @@ class CycleOverviewTab extends StatelessWidget {
           ),
         if (forgottenPeriod != null && pendingConfirmation == null) ...[
           _buildForgottenPeriodWarning(context, colors, isDark),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
         ],
         CycleOrbCard(
           phase: phase,
@@ -105,19 +105,19 @@ class CycleOverviewTab extends StatelessWidget {
               engineOutput?.stats.avgPeriodDuration ??
               CycleSettings.getPeriodDuration(settings).toDouble(),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         _buildNextPeriodPredictionCard(context, colors, isDark),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         _buildQuickActionButtons(context, colors, isDark),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         CycleWorkoutCard(phase: phase),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         Builder(
           builder: (ctx) {
             final card = _buildSymptomPredictionCard(ctx, colors, isDark);
             return card != null
                 ? Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: card,
                   )
                 : const SizedBox();

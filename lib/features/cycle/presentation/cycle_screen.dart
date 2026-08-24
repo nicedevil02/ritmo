@@ -926,7 +926,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             settings: _settings,
                             activeThemeColor: _getActivePhaseColor(context),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 6),
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
                                 _dataQualityReport != null)
@@ -934,18 +934,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 confidence: _predictionConfidence!,
                                 dataQuality: _dataQualityReport!,
                               ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             if (_burdenScore != null && _adaptiveAdvice != null)
                               CycleBurdenCard(
                                 burden: _burdenScore!,
                                 advice: _adaptiveAdvice!,
                               ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             if (_personalForecasts.isNotEmpty)
                               CyclePersonalForecastCard(
                                 forecasts: _personalForecasts,
                               ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             if (_engineOutput != null)
                               CycleSosSection(
                                 engineOutput: _engineOutput,
@@ -953,7 +953,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 settings: _settings,
                                 phase: _engineOutput!.currentPhase,
                               ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
                               periods: _periods,
@@ -974,7 +974,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                     )
                                   : null,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             CycleCalendarView(
                               calendarMonth: _calendarMonth,
                               onMonthChanged: (m) async {
@@ -1020,7 +1020,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 6),
                             CycleHistoryList(
                               periods: _periods,
                               onAddNewPeriod: () => _openAddEditPeriodSheet(),

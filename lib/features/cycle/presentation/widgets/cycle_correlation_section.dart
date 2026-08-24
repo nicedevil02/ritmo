@@ -128,7 +128,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
 
         // List of correlations
         ..._correlations.map((corr) {
@@ -155,7 +155,7 @@ class _CycleCorrelationSectionState extends State<CycleCorrelationSection> {
           }
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 6),
             child: RitmoTheme.glassCardLight(
               child: Padding(
                 padding: const EdgeInsets.all(16),

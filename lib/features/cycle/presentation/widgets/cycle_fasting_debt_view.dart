@@ -99,7 +99,7 @@ class CycleFastingDebtView extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
         if (fastingDebts.isEmpty)
           RitmoTheme.glassCardLight(
             child: Padding(
@@ -122,7 +122,7 @@ class CycleFastingDebtView extends StatelessWidget {
               final dateStr = _formatIsoToJalali(debt.dateIso);
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: RitmoTheme.glassCardLight(
                   child: ListTile(
                     title: Text(

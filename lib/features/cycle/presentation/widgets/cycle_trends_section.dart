@@ -220,7 +220,7 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
 
         // 2. Trend Line Chart Card
         RitmoTheme.glassCardLight(
@@ -269,12 +269,12 @@ class _CycleTrendsSectionState extends State<CycleTrendsSection> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
 
         CycleMoodChartSection(
           averageCycleLength: widget.engineOutput.stats.avgCycleLength.round(),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
 
         // 3. Symptom Stats Card
         RitmoTheme.glassCardLight(

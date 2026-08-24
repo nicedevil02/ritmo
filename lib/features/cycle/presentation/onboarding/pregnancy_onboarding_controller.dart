@@ -326,11 +326,15 @@ class PregnancyOnboardingController extends ChangeNotifier {
     // Post transaction invalidations
     try {
       CycleEngine().invalidate();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[PregnancyOnboardingController] Invalidation error: $e');
+    }
 
     try {
       RitmoEvents.notifyRoutineChanged();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[PregnancyOnboardingController] Event notification error: $e');
+    }
   }
 
   Future<void> save({DatabaseExecutor? db}) async {

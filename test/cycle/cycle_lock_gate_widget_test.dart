@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/theme/palettes/jade_noir.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/cycle/presentation/widgets/cycle_lock_gate.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -38,7 +38,10 @@ void main() {
         await CycleLockService.instance.setLockEnabled(false, db);
         await tester.pumpWidget(
           MaterialApp(
-            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.light,
+            ),
             home: const Scaffold(
               body: CycleLockGate(child: Text('PROTECTED_CYCLE_CONTENT')),
             ),
@@ -56,7 +59,10 @@ void main() {
         await CycleLockService.instance.setPin('1234', db);
         await tester.pumpWidget(
           MaterialApp(
-            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.light,
+            ),
             home: const Scaffold(
               body: CycleLockGate(child: Text('PROTECTED_CYCLE_CONTENT')),
             ),
@@ -77,7 +83,10 @@ void main() {
         await CycleLockService.instance.setPin('1234', db);
         await tester.pumpWidget(
           MaterialApp(
-            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.light,
+            ),
             home: const Scaffold(
               body: CycleLockGate(child: Text('PROTECTED_CYCLE_CONTENT')),
             ),
@@ -89,7 +98,7 @@ void main() {
         expect(find.text('PROTECTED_CYCLE_CONTENT'), findsNothing);
 
         for (final d in ['۱', '۲', '۳', '۴']) {
-          final btn = find.widgetWithText(InkWell, d);
+          final btn = find.text(d);
           expect(btn, findsOneWidget);
           await tester.tap(btn);
           await tester.pump(const Duration(milliseconds: 50));
@@ -108,7 +117,10 @@ void main() {
         await CycleLockService.instance.setPin('1234', db);
         await tester.pumpWidget(
           MaterialApp(
-            theme: ThemeData.light().copyWith(extensions: [kJadeNoirLight]),
+            theme: RitmoTheme.build(
+              palette: RitmoPalette.jadeNoir,
+              brightness: Brightness.light,
+            ),
             home: const Scaffold(
               body: CycleLockGate(child: Text('PROTECTED_CYCLE_CONTENT')),
             ),
@@ -118,7 +130,7 @@ void main() {
         await tester.pump();
 
         for (int i = 0; i < 4; i++) {
-          final btn = find.widgetWithText(InkWell, '۹');
+          final btn = find.text('۹');
           expect(btn, findsOneWidget);
           await tester.tap(btn);
           await tester.pump(const Duration(milliseconds: 50));

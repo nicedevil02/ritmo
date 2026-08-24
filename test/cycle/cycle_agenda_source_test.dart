@@ -54,7 +54,8 @@ void main() {
         expect(items.length, equals(1));
         expect(
           items.first.title.contains('Day 3') ||
-              items.first.title.contains('3'),
+              items.first.title.contains('3') ||
+              items.first.title.contains('۳'),
           isTrue,
         );
         expect(items.first.domain, equals(AgendaDomain.cycle));
@@ -100,7 +101,7 @@ void main() {
         final items = populatedSource.itemsForDate(ctx);
         expect(items.length, equals(2));
         expect(
-          items.any((i) => i.title.contains('Period Prediction Window')),
+          items.any((i) => i.title.contains('پیش‌بینی دوره قاعدگی') || i.title.contains('Period Prediction Window')),
           isTrue,
         );
         expect(items.any((i) => i.title.contains('PMS')), isTrue);

@@ -261,13 +261,38 @@ class MovementReadinessService {
   }) async {
     if (checkin == null) return null;
     final eval = computeReadinessResult(checkin);
+
     if (eval.statusHeadline.contains('ریکاوری')) {
+      const id = 'sug_recovery';
+      if (dismissedSuggestionIds.contains(id)) return null;
       return const CoachSuggestion(
-        id: 'sug_recovery',
+        id: id,
         text: 'امروز تمرکز روی حرکات سبک و ریکاوری به بدنت کمک می‌کنه.',
         reason: 'ریکاوری',
+        primaryActionLabel: 'ثبت تمرین سبک',
       );
     }
-    return null;
+
+    final energy = checkin.energy ?? 3;
+    final sleep = checkin.sleep ?? 3;
+    if (energy >= 4 && sleep >= 4) {
+      const id = 'sug_high_energy_focus';
+      if (dismissedSuggestionIds.contains(id)) return null;
+      return const CoachSuggestion(
+        id: id,
+        text: 'انرژی و کیفیت خوابت عالیه! امروز بهترین فرصت برای یک تمرین پرقدرته.',
+        reason: 'انرژی بالا',
+        primaryActionLabel: 'شروع تمرین اصلی',
+      );
+    }
+
+    const id = 'sug_normal_flow';
+    if (dismissedSuggestionIds.contains(id)) return null;
+    return const CoachSuggestion(
+      id: id,
+      text: 'پیوستگی رمز موفقیته؛ طبق برنامه حرکت کن و از ریتمت لذت ببر.',
+      reason: 'حفظ ریتم',
+      primaryActionLabel: 'ادامه برنامه',
+    );
   }
 }

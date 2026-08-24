@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/application/movement_log_service.dart';
 import 'package:ritmo/features/movement/application/movement_occurrence_service.dart';
+import 'package:ritmo/features/movement/application/movement_readiness_service.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/presentation/activity_picker/sheets/retro_log_form_sheet.dart';
 import 'package:ritmo/features/movement/presentation/center/movement_center_controller.dart';
@@ -9,9 +10,12 @@ import 'package:ritmo/features/movement/presentation/center/sheets/move_session_
 import 'package:ritmo/features/movement/presentation/center/sheets/plan_b_sheet.dart';
 import 'package:ritmo/features/movement/presentation/center/sheets/skip_session_sheet.dart';
 import 'package:ritmo/features/movement/presentation/center/sheets/week_reshuffle_sheet.dart';
-import 'package:ritmo/features/movement/presentation/center/states/movement_has_session_view.dart';
-import 'package:ritmo/features/movement/presentation/center/states/movement_no_plan_view.dart';
-import 'package:ritmo/features/movement/presentation/center/states/movement_rest_day_view.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/hero_session_card.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/live_session_banner.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/session_card.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/strength_entry_card.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/week_rail.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/week_summary_card.dart';
 import 'package:ritmo/features/movement/presentation/common/movement_strings.dart';
 import 'package:ritmo/features/movement/presentation/common/undo_toast.dart';
 import 'package:ritmo/features/movement/presentation/movement_routes.dart';
@@ -44,6 +48,9 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     final occService = widget.occurrenceService ?? MovementOccurrenceService();
     _controller = widget.controller ??
         MovementCenterController(occurrenceService: occService);
+    if (widget.controller == null) {
+      _controller.loadData();
+    }
     _logService = widget.logService ?? MovementLogService();
   }
 
@@ -150,12 +157,15 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
         note,
         matchedOccurrenceId,
       }) async {
-        return await _logService.quickCompleteOccurrence(
-          occurrenceId: occ.id,
+        return await _logService.logRetroWorkout(
           activityKindId: occ.activityKindId,
           dateIso: dateIso,
+          startTime: startTime,
           durationSec: durationSec,
-          intensityTag: feeling ?? 'medium',
+          metrics: metrics,
+          feeling: feeling,
+          note: note,
+          matchedOccurrenceId: occ.id,
         );
       },
     );
@@ -171,13 +181,21 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
     final occs = await (widget.occurrenceService ?? MovementOccurrenceService())
         .getOccurrencesForRange(startIso, endIso);
 
-    final changes = occs.map((o) => WeekReshuffleChangeItem(
+    final plannedOccs = occs.where((o) => !o.isCompleted && !o.isRestDay).toList();
+    if (plannedOccs.isEmpty) {
+      if (mounted) {
+        MovementUndoToast.show(context, message: 'تمام جلسات هفته تکمیل یا تنظیم شده‌اند');
+      }
+      return;
+    }
+
+    final changes = plannedOccs.map((o) => WeekReshuffleChangeItem(
       occurrence: o,
       originalDateIso: o.dateIso,
       proposedDateIso: o.dateIso,
       originalTime: o.startTime ?? '18:00',
       proposedTime: o.startTime ?? '18:00',
-      reason: 'تنظیم بر اساس ریتم بدنی',
+      reason: 'تنظیم بر اساس ریتم بدنی و ریکاوری',
     )).toList();
 
     if (changes.isNotEmpty && mounted) {
@@ -256,57 +274,218 @@ class _MovementCenterScreenState extends State<MovementCenterScreen> {
           }
 
           final ready = state as MovementCenterReady;
+          final primaryOcc = ready.todayOccurrence;
+          final dayOccs = ready.dayOccurrences;
 
-          switch (ready.view) {
-            case MovementCenterView.hasSession:
-              return MovementHasSessionView(
-                occurrence: ready.todayOccurrence!,
-                weekStats: ready.weekStats,
-                readiness: ready.readiness,
-                tier: ready.tier,
-                railDays: ready.railDays,
-                onStartSession: () => _navigateToSession(
-                  ready.todayOccurrence?.id,
-                  ready.todayOccurrence?.activityKindId,
-                ),
-                onQuickLog: () => _handleQuickLog(
-                  ready.todayOccurrence!.id,
-                  ready.todayOccurrence!.activityKindId,
-                ),
-                onSelectDay: (d) => _controller.setSelectedDate(d),
-                onPlanB: () => _handlePlanB(ready.todayOccurrence!),
-                onMoveSession: () => _handleMoveSession(ready.todayOccurrence!),
-                onSkipSession: () => _handleSkipSession(ready.todayOccurrence!),
-                onRetroLog: () => _handleRetroLog(ready.todayOccurrence!),
-                onReviewWeek: _handleReshuffleWeek,
-              );
-
-            case MovementCenterView.restDay:
-              return MovementRestDayView(
-                railDays: ready.railDays,
-                onConfirmRestDay: () async {
-                  if (ready.todayOccurrence != null) {
-                    await widget.occurrenceService?.updateOccurrenceStatus(
-                      ready.todayOccurrence!.id,
-                      MovementOccurrenceStatus.restDay,
-                    );
-                    await _controller.refresh();
-                  }
-                },
-                onOpenPicker: () => Navigator.of(context).pushNamed(MovementRoutes.picker),
-                onSelectDay: (d) => _controller.setSelectedDate(d),
-              );
-
-            case MovementCenterView.noPlan:
-              return MovementNoPlanView(
-                tier: ready.tier,
-                railDays: ready.railDays,
-                absenceStatus: ready.absenceStatus,
-                onOpenPicker: () => Navigator.of(context).pushNamed(MovementRoutes.picker),
-                onOpenPlanEditor: () => Navigator.of(context).pushNamed(MovementRoutes.planEditor),
-                onSelectDay: (d) => _controller.setSelectedDate(d),
-              );
+          // نگاشت وضعیت ورودی به وریانت کارت هیرو
+          final HeroCardVariant heroVariant;
+          switch (_controller.entryState) {
+            case MovementCenterEntryState.brandNewUser:
+            case MovementCenterEntryState.firstLaunchAfterCutover:
+              heroVariant = HeroCardVariant.emptyPlan;
+              break;
+            case MovementCenterEntryState.recoveryDay:
+              heroVariant = HeroCardVariant.restDay;
+              break;
+            case MovementCenterEntryState.todaySessionCompleted:
+              heroVariant = HeroCardVariant.allDone;
+              break;
+            case MovementCenterEntryState.pastPlannedTime:
+              heroVariant = HeroCardVariant.late;
+              break;
+            case MovementCenterEntryState.multiSessionsToday:
+              heroVariant = HeroCardVariant.multiToday;
+              break;
+            case MovementCenterEntryState.hasPlanTodaySession:
+            case MovementCenterEntryState.inProgressLiveSession:
+              heroVariant = HeroCardVariant.ready;
+              break;
           }
+
+          final secondaryOccurrences =
+              dayOccs.where((o) => primaryOcc == null || o.id != primaryOcc.id).toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // بنر اعلام بعد از مهاجرت/کاتاُوور (State 8)
+              if (_controller.isFirstLaunchAfterCutover)
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.lg,
+                    vertical: RitmoSpacing.xs,
+                  ),
+                  padding: const EdgeInsets.all(RitmoSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(RitmoRadius.card),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: colors.primary),
+                      const SizedBox(width: RitmoSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          MovementStrings.cutoverCalloutDesc,
+                          style: RitmoTextStyles.body(colors.textPrimary),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        onPressed: _controller.dismissCutoverCallout,
+                      ),
+                    ],
+                  ),
+                ),
+
+              // ریل هفتگی
+              WeekRail(
+                days: ready.railDays,
+                onDaySelected: _controller.selectDay,
+              ),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // بنر تمرین زنده در صورت وجود
+                      if (ready.activeLiveSession != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                          child: LiveSessionBanner(
+                            session: ready.activeLiveSession!,
+                            onResume: () => _navigateToSession(
+                              ready.activeLiveSession?.occurrenceId,
+                              ready.activeLiveSession?.activityKindId,
+                            ),
+                            onFinishAndSave: () async {
+                              if (ready.activeLiveSession != null) {
+                                await _controller.sessionService.finishSession(ready.activeLiveSession!.id);
+                                await _controller.refresh();
+                              }
+                            },
+                            onDiscard: () async {
+                              if (ready.activeLiveSession != null) {
+                                await _controller.sessionService.abandonSession(ready.activeLiveSession!.id);
+                                await _controller.refresh();
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: RitmoSpacing.sm),
+                      ],
+
+                      // کارت شاخص هیرو
+                      HeroSessionCard(
+                        variant: heroVariant,
+                        primaryOccurrence: primaryOcc,
+                        totalTodaySessions: dayOccs.isEmpty ? 1 : dayOccs.length,
+                        currentSessionIndex: 1,
+                        onPrimaryAction: () {
+                          if (primaryOcc != null) {
+                            _navigateToSession(primaryOcc.id, primaryOcc.activityKindId);
+                          } else {
+                            Navigator.of(context).pushNamed(MovementRoutes.picker);
+                          }
+                        },
+                        onSecondaryAction: () {
+                          if (heroVariant == HeroCardVariant.restDay) {
+                            Navigator.of(context).pushNamed(MovementRoutes.picker);
+                          } else {
+                            Navigator.of(context).pushNamed(MovementRoutes.planEditor);
+                          }
+                        },
+                        onMoveAction: primaryOcc != null ? () => _handleMoveSession(primaryOcc) : null,
+                        onShortVersionAction: primaryOcc != null ? () => _handlePlanB(primaryOcc) : null,
+                        onSkipAction: primaryOcc != null ? () => _handleSkipSession(primaryOcc) : null,
+                        onLogManualAction: primaryOcc != null ? () => _handleRetroLog(primaryOcc) : null,
+                        onReviewWeekAction: _handleReshuffleWeek,
+                      ),
+
+                      // سایر جلسات روز در صورت وجود بیش از ۱ جلسه
+                      if (secondaryOccurrences.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.xl,
+                            vertical: RitmoSpacing.xs,
+                          ),
+                          child: Text(
+                            'سایر جلسات امروز',
+                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                          ),
+                        ),
+                        for (final secOcc in secondaryOccurrences) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: RitmoSpacing.lg,
+                              vertical: RitmoSpacing.xs,
+                            ),
+                            child: SessionCard(
+                              occurrence: secOcc,
+                              onTap: () => _navigateToSession(secOcc.id, secOcc.activityKindId),
+                              onStart: () => _navigateToSession(secOcc.id, secOcc.activityKindId),
+                              onQuickComplete: () => _handleQuickLog(secOcc.id, secOcc.activityKindId),
+                              onMove: () => _handleMoveSession(secOcc),
+                              onShortVersion: () => _handlePlanB(secOcc),
+                              onSkip: () => _handleSkipSession(secOcc),
+                              onManualLog: () => _handleRetroLog(secOcc),
+                            ),
+                          ),
+                        ],
+                      ],
+
+                      // کارت ورودی برنامه تمرین قدرتی (Tier 3)
+                      StrengthEntryCard(
+                        program: _controller.strengthProgram,
+                        onBuildProgram: () => Navigator.of(context).pushNamed(MovementRoutes.strengthOnboarding),
+                        onViewProgram: () => Navigator.of(context).pushNamed(MovementRoutes.strengthHub),
+                        onResumeSession: () => _navigateToSession(null, 'kind_strength'),
+                        onStartNextCycle: () => Navigator.of(context).pushNamed(MovementRoutes.strengthPreview),
+                      ),
+
+                      // کارت خلاصه ۳ متریکی هفته
+                      WeekSummaryCard(
+                        summary: _controller.summary,
+                        onTap: () => Navigator.of(context).pushNamed(MovementRoutes.summary),
+                      ),
+
+                      // کارت پیشنهاد آمادگی بدنی
+                      if (ready.readiness is ReadinessReady) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.lg,
+                            vertical: RitmoSpacing.sm,
+                          ),
+                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceElevated,
+                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                            border: Border.all(color: colors.borderSubtle),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded, size: 20, color: colors.textSecondary),
+                              const SizedBox(width: RitmoSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  (ready.readiness as ReadinessReady).suggestionFa,
+                                  style: RitmoTextStyles.body(colors.textSecondary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: RitmoSpacing.xl),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );

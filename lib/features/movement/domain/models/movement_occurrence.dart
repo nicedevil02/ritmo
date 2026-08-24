@@ -76,6 +76,7 @@ class MovementOccurrence {
   bool get isInProgress => status == MovementOccurrenceStatus.inProgress;
   bool get isLate => status == MovementOccurrenceStatus.late;
   bool get isRestDay => status == MovementOccurrenceStatus.restDay;
+  bool get isSkipped => status == MovementOccurrenceStatus.skipped;
 
   String get displayName => activityKind?.nameFa ?? 'تمرین حرکتی';
 

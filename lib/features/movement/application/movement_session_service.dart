@@ -41,6 +41,9 @@ class MovementSessionService {
     return _hydrateSession(dbExec, rows.first);
   }
 
+  /// بازیابی جلسهٔ در حال اجرای جاری
+  Future<MovementLiveSession?> getActiveSession() => getActiveOrPausedSession();
+
   /// بازیابی جلسه با شناسه
   Future<MovementLiveSession?> getSessionById(String sessionId) async {
     final dbExec = await _database;

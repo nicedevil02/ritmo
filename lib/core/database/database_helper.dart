@@ -50,6 +50,7 @@ class DatabaseHelper {
     if (completer != null) return completer.future;
 
     final newCompleter = Completer<Database>();
+    newCompleter.future.ignore();
     _dbInitCompleter = newCompleter;
 
     try {

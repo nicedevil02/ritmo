@@ -198,7 +198,17 @@ class MovementOccurrenceService {
     String endDateIso,
     List<String> allSevenDaysIso,
   ) async {
-    final occurrences = await getOccurrencesForRange(startDateIso, endDateIso);
+    List<MovementOccurrence> occurrences;
+    try {
+      occurrences = await getOccurrencesForRange(startDateIso, endDateIso);
+    } catch (_) {
+      try {
+        final grouped = await getWeekOccurrencesGrouped(startDateIso, endDateIso);
+        occurrences = grouped.values.expand((l) => l).toList();
+      } catch (_) {
+        occurrences = [];
+      }
+    }
 
     int completed = 0;
     final int planned = occurrences.length;

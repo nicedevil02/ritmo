@@ -108,8 +108,12 @@ class MovementPreferencesService {
 
   // ۴. سطح (Tier) ماژول حرکت (P-02)
   Future<MovementTier> getTier() async {
-    final val = await getInt(keyMovementTier, defaultValue: 1);
-    return MovementTierX.fromValue(val);
+    try {
+      final value = await getInt(keyMovementTier, defaultValue: 1);
+      return MovementTierX.fromValue(value);
+    } catch (_) {
+      return MovementTier.one;
+    }
   }
 
   Future<void> setTier(MovementTier tier) async {
@@ -118,26 +122,30 @@ class MovementPreferencesService {
 
   /// اعتبارسنجی سطح واقعی کاربر بر اساس جلسات ثبت‌شده
   Future<MovementTier> resolveTier() async {
-    final savedTier = await getTier();
-    if (savedTier == MovementTier.three) {
-      return MovementTier.three;
-    }
-    if (savedTier == MovementTier.one) {
+    try {
+      final savedTier = await getTier();
+      if (savedTier == MovementTier.three) {
+        return MovementTier.three;
+      }
+      if (savedTier == MovementTier.one) {
+        return MovementTier.one;
+      }
+
+      final dbExec = await _database;
+      final countResult = await dbExec.rawQuery(
+        'SELECT COUNT(*) as c FROM ${MovementTables.tableWorkoutLogs}',
+      );
+      final count = Sqflite.firstIntValue(countResult) ?? 0;
+
+      if (count < kTierTwoUnlockSessions) {
+        // کاربر هنوز حداقل ۶ جلسه را ثبت نکرده است
+        return MovementTier.one;
+      }
+
+      return savedTier;
+    } catch (_) {
       return MovementTier.one;
     }
-
-    final dbExec = await _database;
-    final countResult = await dbExec.rawQuery(
-      'SELECT COUNT(*) as c FROM ${MovementTables.tableWorkoutLogs}',
-    );
-    final count = Sqflite.firstIntValue(countResult) ?? 0;
-
-    if (count < kTierTwoUnlockSessions) {
-      // کاربر هنوز حداقل ۶ جلسه را ثبت نکرده است
-      return MovementTier.one;
-    }
-
-    return savedTier;
   }
 
   /// حذف کامل و بدون بازگشت تمام داده‌های ماژول حرکت در یک تراکنش امن

@@ -363,6 +363,7 @@ class _RitmoAppState extends State<RitmoApp> {
         return MaterialApp(
           title: 'ریتمو',
           navigatorKey: RitmoRouter.navigatorKey,
+          onGenerateRoute: RitmoRouter.onGenerateRoute,
           themeMode: prefs.mode,
           theme: _lightCache,
           darkTheme: _darkCache,

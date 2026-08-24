@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/application/movement_preferences_service.dart';
+import 'package:ritmo/features/movement/domain/models/movement_tier.dart';
 import 'package:ritmo/features/movement/presentation/settings/movement_settings_screen.dart';
 import 'package:ritmo/features/movement/presentation/settings/widgets/settings_danger_row.dart';
 import 'package:ritmo/features/movement/presentation/settings/widgets/settings_group.dart';
@@ -28,6 +29,15 @@ class FakeMovementPreferencesService extends MovementPreferencesService {
 
   @override
   Future<void> setReminderHour(int? hour) async => _reminder = hour;
+
+  @override
+  Future<MovementTier> resolveTier() async => MovementTier.one;
+
+  @override
+  Future<MovementTier> getTier() async => MovementTier.one;
+
+  @override
+  Future<void> setTier(MovementTier tier) async {}
 
   @override
   Future<void> deleteAllMovementData() async {
@@ -66,7 +76,7 @@ void main() {
       expect(find.text('هدف هفتگی'), findsOneWidget);
       expect(find.text('روزهای ترجیحی تمرین'), findsOneWidget);
       expect(find.text('یادآور روزانه'), findsOneWidget);
-      expect(find.byType(SettingsGroup), findsNWidgets(3));
+      expect(find.byType(SettingsGroup), findsNWidgets(4));
       expect(find.byType(SettingsDangerRow), findsOneWidget);
     });
   });

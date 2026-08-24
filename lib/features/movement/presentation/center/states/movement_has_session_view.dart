@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/movement/application/movement_readiness_service.dart';
+import 'package:ritmo/features/movement/domain/models/movement_live_session.dart';
 import 'package:ritmo/features/movement/domain/models/movement_occurrence.dart';
 import 'package:ritmo/features/movement/domain/models/movement_tier.dart';
 import 'package:ritmo/features/movement/domain/models/movement_week_stats.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/hero_session_card.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/live_session_banner.dart';
+import 'package:ritmo/features/movement/presentation/center/widgets/session_card.dart';
 import 'package:ritmo/features/movement/presentation/center/widgets/week_rail.dart';
 
 /// وضعیت A صفحهٔ اصلی: کاربر برای امروز جلسه دارد (P-08)
@@ -12,6 +15,8 @@ class MovementHasSessionView extends StatelessWidget {
   const MovementHasSessionView({
     super.key,
     required this.occurrence,
+    this.dayOccurrences = const [],
+    this.activeSession,
     required this.weekStats,
     required this.readiness,
     required this.tier,
@@ -25,9 +30,16 @@ class MovementHasSessionView extends StatelessWidget {
     this.onSkipSession,
     this.onRetroLog,
     this.onReviewWeek,
+    this.onResumeActiveSession,
+    this.onFinishActiveSession,
+    this.onDiscardActiveSession,
+    this.onStartSpecificOccurrence,
+    this.onQuickLogSpecificOccurrence,
   });
 
   final MovementOccurrence occurrence;
+  final List<MovementOccurrence> dayOccurrences;
+  final MovementLiveSession? activeSession;
   final MovementWeekStats weekStats;
   final ReadinessResult readiness;
   final MovementTier tier;
@@ -41,6 +53,11 @@ class MovementHasSessionView extends StatelessWidget {
   final VoidCallback? onSkipSession;
   final VoidCallback? onRetroLog;
   final VoidCallback? onReviewWeek;
+  final VoidCallback? onResumeActiveSession;
+  final VoidCallback? onFinishActiveSession;
+  final VoidCallback? onDiscardActiveSession;
+  final void Function(MovementOccurrence occ)? onStartSpecificOccurrence;
+  final void Function(MovementOccurrence occ)? onQuickLogSpecificOccurrence;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +75,20 @@ class MovementHasSessionView extends StatelessWidget {
     // ۲. قرارداد هفتگی (فقط در صورت اطمینان نمونه)
     final contractLabel = weekStats.weekContractLabel();
 
+    // تعیین وریانت کارت هیرو
+    final HeroCardVariant heroVariant;
+    if (dayOccurrences.isNotEmpty && dayOccurrences.every((o) => o.isCompleted)) {
+      heroVariant = HeroCardVariant.allDone;
+    } else if (dayOccurrences.length > 1) {
+      heroVariant = HeroCardVariant.multiToday;
+    } else if (occurrence.isCompleted) {
+      heroVariant = HeroCardVariant.allDone;
+    } else {
+      heroVariant = HeroCardVariant.ready;
+    }
+
+    final secondaryOccurrences = dayOccurrences.where((o) => o.id != occurrence.id).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -74,6 +105,17 @@ class MovementHasSessionView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // بنر تمرین زنده در صورت وجود
+                if (activeSession != null) ...[
+                  LiveSessionBanner(
+                    session: activeSession!,
+                    onResume: onResumeActiveSession ?? onStartSession,
+                    onFinishAndSave: onFinishActiveSession ?? onQuickLog,
+                    onDiscard: onDiscardActiveSession ?? () {},
+                  ),
+                  const SizedBox(height: RitmoSpacing.md),
+                ],
+
                 // برچسب قرارداد هفتگی
                 if (contractLabel.isNotEmpty) ...[
                   Padding(
@@ -87,12 +129,12 @@ class MovementHasSessionView extends StatelessWidget {
                   const SizedBox(height: RitmoSpacing.sm),
                 ],
 
-                // کارت قهرمان جلسهٔ امروز
+                // کارت هیرو جلسه شاخص امروز
                 HeroSessionCard(
-                  variant: occurrence.isCompleted
-                      ? HeroCardVariant.allDone
-                      : HeroCardVariant.ready,
+                  variant: heroVariant,
                   primaryOccurrence: occurrence,
+                  totalTodaySessions: dayOccurrences.isEmpty ? 1 : dayOccurrences.length,
+                  currentSessionIndex: 1,
                   onPrimaryAction: onStartSession,
                   onMoveAction: onMoveSession,
                   onShortVersionAction: onPlanB,
@@ -100,10 +142,10 @@ class MovementHasSessionView extends StatelessWidget {
                   onLogManualAction: onRetroLog,
                   onReviewWeekAction: onReviewWeek,
                 ),
-                const SizedBox(height: RitmoSpacing.lg),
+                const SizedBox(height: RitmoSpacing.md),
 
-                // دکمه‌های اقدام اصلی (بر اساس Tier)
-                if (tier == MovementTier.one) ...[
+                // دکمهٔ ثبت ۵ ثانیه‌ای برای کاربران Tier 1 در صورت عدم تکمیل
+                if (tier == MovementTier.one && !occurrence.isCompleted) ...[
                   ElevatedButton.icon(
                     onPressed: onQuickLog,
                     icon: const Icon(Icons.bolt_rounded),
@@ -117,38 +159,38 @@ class MovementHasSessionView extends StatelessWidget {
                       ),
                     ),
                   ),
-                ] else ...[
-                  ElevatedButton.icon(
-                    onPressed: onStartSession,
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('شروع تمرین'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: sportsColor,
-                      foregroundColor: colors.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(RitmoRadius.field),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: RitmoSpacing.sm),
-                  OutlinedButton.icon(
-                    onPressed: onQuickLog,
-                    icon: const Icon(Icons.bolt_rounded),
-                    label: const Text('ثبت سریع (انجام شد)'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.textPrimary,
-                      side: BorderSide(color: colors.borderSubtle),
-                      padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(RitmoRadius.field),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: RitmoSpacing.md),
                 ],
-                const SizedBox(height: RitmoSpacing.md),
 
-                // پیشنهاد آمادگی (زیر دکمه)
+                // بخش جلسات بعدی امروز در صورت وجود بیش از ۱ جلسه
+                if (secondaryOccurrences.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      right: RitmoSpacing.xs,
+                      bottom: RitmoSpacing.sm,
+                    ),
+                    child: Text(
+                      'سایر جلسات امروز',
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                  ),
+                  for (final secOcc in secondaryOccurrences) ...[
+                    SessionCard(
+                      occurrence: secOcc,
+                      onTap: () => onStartSpecificOccurrence?.call(secOcc),
+                      onStart: () => onStartSpecificOccurrence?.call(secOcc),
+                      onQuickComplete: () => onQuickLogSpecificOccurrence?.call(secOcc),
+                      onMove: onMoveSession,
+                      onShortVersion: onPlanB,
+                      onSkip: onSkipSession,
+                      onManualLog: onRetroLog,
+                    ),
+                    const SizedBox(height: RitmoSpacing.sm),
+                  ],
+                  const SizedBox(height: RitmoSpacing.sm),
+                ],
+
+                // پیشنهاد آمادگی بدنی
                 Container(
                   padding: const EdgeInsets.all(RitmoSpacing.md),
                   decoration: BoxDecoration(

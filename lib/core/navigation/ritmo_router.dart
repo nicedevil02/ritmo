@@ -130,16 +130,19 @@ class RitmoRouter {
     }
 
     // مسیرهای ماژول حرکت (Movement Module)
-    if (r == MovementRoutes.center || r == '/movement') {
+    if (r == MovementRoutes.center || r == '/movement' || r == 'movement.center') {
       return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
     }
-    if (r == MovementRoutes.picker) {
+    if (r == MovementRoutes.picker || r == '/movement/picker' || r == 'movement.picker') {
       return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
     }
-    if (r == MovementRoutes.planEditor) {
+    if (r == MovementRoutes.planEditor || r == '/movement/plan' || r == 'movement.plan_editor') {
       return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
     }
-    if (r == MovementRoutes.liveSession) {
+    if (r == MovementRoutes.occurrence || r == 'movement.occurrence') {
+      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+    }
+    if (r == MovementRoutes.liveSession || r == '/movement/live' || r == 'movement.session') {
       return RitmoRouteTarget.screen((_) => MovementLiveSessionScreen(
         activityKind: MovementActivityKind(
           id: 'kind_walking',
@@ -151,7 +154,7 @@ class RitmoRouter {
         ),
       ));
     }
-    if (r == MovementRoutes.summary) {
+    if (r == MovementRoutes.summary || r == '/movement/summary' || r == 'movement.summary') {
       return RitmoRouteTarget.screen((_) => SessionSummaryScreen(
         workoutLog: MovementWorkoutLog(
           id: 'sample_log',
@@ -164,8 +167,50 @@ class RitmoRouter {
         ),
       ));
     }
-    if (r == MovementRoutes.settings) {
+    if (r == MovementRoutes.strengthHub || r == 'movement.strength') {
+      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+    }
+    if (r == MovementRoutes.strengthOnboarding || r == 'movement.strength.onboarding') {
+      return RitmoRouteTarget.screen((_) => const ActivityPlanEditorScreen());
+    }
+    if (r == MovementRoutes.strengthPreview || r == 'movement.strength.preview') {
+      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+    }
+    if (r == MovementRoutes.progress || r == 'movement.progress') {
+      return RitmoRouteTarget.screen((_) => const MovementCenterScreen());
+    }
+    if (r == MovementRoutes.library || r == 'movement.library') {
+      return RitmoRouteTarget.screen((_) => const ActivityPickerScreen());
+    }
+    if (r == MovementRoutes.settings || r == '/movement/settings' || r == 'movement.settings') {
       return RitmoRouteTarget.screen((_) => const MovementSettingsScreen());
+    }
+
+    return null;
+  }
+
+  /// تولیدکنندهٔ مسیرها برای MaterialApp.onGenerateRoute
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final name = settings.name;
+    if (name == null) return null;
+
+    final target = resolve(name);
+    if (target == null) return null;
+
+    if (target.kind == RitmoRouteKind.screen && target.builder != null) {
+      return MaterialPageRoute<dynamic>(
+        settings: settings,
+        builder: target.builder!,
+      );
+    }
+
+    if (target.kind == RitmoRouteKind.tab && target.tabIndex != null) {
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'navigate_tab',
+        timestamp: DateTime.now(),
+        payload: {'index': target.tabIndex},
+      ));
+      return null;
     }
 
     return null;

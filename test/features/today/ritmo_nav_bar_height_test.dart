@@ -14,11 +14,13 @@ void main() {
     VoidCallback? onCenterTap,
     double width = 380,
     double textScale = 1.0,
+    RitmoDensityLevel density = RitmoDensityLevel.comfortable,
   }) {
     return MaterialApp(
       theme: RitmoTheme.build(
         palette: RitmoPalette.jadeNoir,
         brightness: Brightness.dark,
+        density: density,
       ),
       home: Builder(
         builder: (context) {
@@ -46,25 +48,27 @@ void main() {
   }
 
   group('NAV0-5 — قرارداد ارتفاع نوار ناوبری', () {
-    testWidgets('در حالت ساده ارتفاع دقیقاً برابر navBarHeight است', (tester) async {
-      await tester.pumpWidget(harness(AppMode.simple));
-      await tester.pumpAndSettle();
+    for (final level in RitmoDensityLevel.values) {
+      testWidgets('در حالت ساده ارتفاع در چگالی ${level.name} مطابق توکن است', (tester) async {
+        await tester.pumpWidget(harness(AppMode.simple, density: level));
+        await tester.pumpAndSettle();
 
-      expect(
-        tester.getSize(find.byType(RitmoNavBar)).height,
-        equals(RitmoShellMetrics.navBarHeight),
-      );
-    });
+        expect(
+          tester.getSize(find.byType(RitmoNavBar)).height,
+          equals(RitmoMetrics.of(level).navBarHeight),
+        );
+      });
 
-    testWidgets('در حالت کامل ارتفاع دقیقاً برابر navBarHeight است', (tester) async {
-      await tester.pumpWidget(harness(AppMode.full));
-      await tester.pumpAndSettle();
+      testWidgets('در حالت کامل ارتفاع در چگالی ${level.name} مطابق توکن است', (tester) async {
+        await tester.pumpWidget(harness(AppMode.full, density: level));
+        await tester.pumpAndSettle();
 
-      expect(
-        tester.getSize(find.byType(RitmoNavBar)).height,
-        equals(RitmoShellMetrics.navBarHeight),
-      );
-    });
+        expect(
+          tester.getSize(find.byType(RitmoNavBar)).height,
+          equals(RitmoMetrics.of(level).navBarHeight),
+        );
+      });
+    }
 
     testWidgets('در عرض ۳۲۰ و متن بزرگ، نه سرریز نه تغییر ارتفاع', (tester) async {
       await tester.pumpWidget(
@@ -75,7 +79,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(
         tester.getSize(find.byType(RitmoNavBar)).height,
-        equals(RitmoShellMetrics.navBarHeight),
+        equals(RitmoMetrics.of(RitmoDensityLevel.comfortable).navBarHeight),
       );
     });
   });

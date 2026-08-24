@@ -1,6 +1,7 @@
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 
 abstract final class RitmoShellMetrics {
+  @Deprecated('از context.metrics.navBarHeight استفاده کن')
   static const double navBarHeight = 42.0;
   static const double navBarBottomGap = 0.0;
 

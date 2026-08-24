@@ -153,7 +153,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
     final centerBtnColor = isDark ? const Color(0xFF1B2228) : const Color(0xFF1C2126);
 
     return SizedBox(
-      height: RitmoShellMetrics.navBarHeight + bottomInset,
+      height: context.metrics.navBarHeight + bottomInset,
       width: double.infinity,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -222,7 +222,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     left: 0,
                     right: 0,
                     top: 0,
-                    height: RitmoShellMetrics.navBarHeight,
+                    height: context.metrics.navBarHeight,
                     child: Directionality(
                       textDirection: TextDirection.rtl,
                       child: Row(

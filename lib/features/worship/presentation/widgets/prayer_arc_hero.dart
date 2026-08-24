@@ -43,7 +43,8 @@ class PrayerArcHero extends StatefulWidget {
   State<PrayerArcHero> createState() => _PrayerArcHeroState();
 }
 
-class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProviderStateMixin {
+class _PrayerArcHeroState extends State<PrayerArcHero>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   Timer? _tickerTimer;
   String _persianCityName = 'تهران';
@@ -88,14 +89,20 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
   Future<void> _loadSettings() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       // Load Asr/Isha setting
-      final settingsList = await db.query('app_settings', where: 'key = ?', whereArgs: ['show_asr_isha_prayers'], limit: 1);
-      final bool showAsrIsha = settingsList.isNotEmpty && settingsList.first['value'] == 'true';
-      
+      final settingsList = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['show_asr_isha_prayers'],
+        limit: 1,
+      );
+      final bool showAsrIsha =
+          settingsList.isNotEmpty && settingsList.first['value'] == 'true';
+
       final cityId = widget.day.times.cityId;
       String cityName = 'تهران';
-      
+
       if (cityId.isNotEmpty) {
         if (cityId.startsWith('CUSTOM_') || cityId.startsWith('INTL_')) {
           final customNameSetting = await db.query(
@@ -105,7 +112,8 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
             limit: 1,
           );
           if (customNameSetting.isNotEmpty) {
-            cityName = customNameSetting.first['value'] as String? ?? 'موقعیت سفارشی';
+            cityName =
+                customNameSetting.first['value'] as String? ?? 'موقعیت سفارشی';
           } else {
             cityName = 'موقعیت سفارشی';
           }
@@ -122,7 +130,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
           }
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _persianCityName = cityName;
@@ -146,16 +154,35 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     // ── Triple Date Formatting ──
     final jalali = Jalali.now();
-    final shamsiDate = '${ShamsiWeek.nameOf(jalali.weekDay)}، ${jalali.day} ${jalali.formatter.mN} ${jalali.year}';
+    final shamsiDate =
+        '${ShamsiWeek.nameOf(jalali.weekDay)}، ${jalali.day} ${jalali.formatter.mN} ${jalali.year}';
     final shamsiStr = toPersianDigits(shamsiDate);
 
-    final monthsEn = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسمبر'];
-    final gregorianStr = toPersianDigits('${_now.day} ${monthsEn[_now.month - 1]} ${_now.year}');
+    final monthsEn = [
+      'ژانویه',
+      'فوریه',
+      'مارس',
+      'آوریل',
+      'مه',
+      'ژوئن',
+      'ژوئیه',
+      'اوت',
+      'سپتامبر',
+      'اکتبر',
+      'نوامبر',
+      'دسمبر',
+    ];
+    final gregorianStr = toPersianDigits(
+      '${_now.day} ${monthsEn[_now.month - 1]} ${_now.year}',
+    );
 
     final hijriStr = widget.day.hijri.formatted;
 
     // ── Next Milestone & Countdown (Includes all celestial & prayer milestones) ──
-    final candidates = PrayerTimeline.slotsForTimes(times, includeAsrIsha: _showAsrIsha);
+    final candidates = PrayerTimeline.slotsForTimes(
+      times,
+      includeAsrIsha: _showAsrIsha,
+    );
 
     PrayerSlot? nextSlot;
     for (final s in candidates) {
@@ -179,7 +206,9 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
     if (diff.isNegative) {
       countdownText = 'زمان ${nextSlot.titleFa} فرا رسید';
     } else if (hoursLeft > 0) {
-      countdownText = toPersianDigits('$hoursLeft ساعت و $minsLeft دقیقه تا ${nextSlot.titleFa}');
+      countdownText = toPersianDigits(
+        '$hoursLeft ساعت و $minsLeft دقیقه تا ${nextSlot.titleFa}',
+      );
     } else if (minsLeft > 0) {
       countdownText = toPersianDigits('$minsLeft دقیقه تا ${nextSlot.titleFa}');
     } else {
@@ -231,22 +260,31 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                       behavior: HitTestBehavior.opaque,
                       onTap: widget.onOpenCityPicker,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: sky.textColor.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: sky.textColor.withValues(alpha: 0.20)),
+                          border: Border.all(
+                            color: sky.textColor.withValues(alpha: 0.20),
+                          ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               CupertinoIcons.location_solid,
                               size: 13,
-                              color: times.isFallbackLocation ? colors.warning : sky.goldColor,
+                              color: times.isFallbackLocation
+                                  ? colors.warning
+                                  : sky.goldColor,
                             ),
                             SizedBox(width: 5),
                             Text(
-                              times.isFallbackLocation ? 'تهران (پیش‌فرض)' : _persianCityName,
+                              times.isFallbackLocation
+                                  ? 'تهران (پیش‌فرض)'
+                                  : _persianCityName,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -266,14 +304,19 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                         widget.onTravellerToggle(!isTraveller);
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: isTraveller
                               ? sky.goldColor.withValues(alpha: 0.25)
                               : sky.textColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isTraveller ? sky.goldColor : sky.textColor.withValues(alpha: 0.18),
+                            color: isTraveller
+                                ? sky.goldColor
+                                : sky.textColor.withValues(alpha: 0.18),
                           ),
                         ),
                         child: Row(
@@ -281,15 +324,21 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                             Icon(
                               CupertinoIcons.airplane,
                               size: 13,
-                              color: isTraveller ? sky.goldColor : sky.textColor.withValues(alpha: 0.7),
+                              color: isTraveller
+                                  ? sky.goldColor
+                                  : sky.textColor.withValues(alpha: 0.7),
                             ),
                             SizedBox(width: 4),
                             Text(
                               isTraveller ? 'مسافر (قصر)' : 'مقیم',
                               style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: isTraveller ? FontWeight.bold : FontWeight.normal,
-                                color: isTraveller ? sky.goldColor : sky.textColor.withValues(alpha: 0.7),
+                                fontWeight: isTraveller
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isTraveller
+                                    ? sky.goldColor
+                                    : sky.textColor.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -316,15 +365,28 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                           final center = Offset(w / 2, h / 2);
 
                           // Proportional geometric calculations:
-                          final orbitRadius = (canvasSize / 2) - (canvasSize * 0.045).clamp(10.0, 24.0);
-                          final centerDiameter = (canvasSize * 0.46).clamp(140.0, 220.0);
+                          final orbitRadius =
+                              (canvasSize / 2) -
+                              (canvasSize * 0.045).clamp(10.0, 24.0);
+                          final centerDiameter = (canvasSize * 0.46).clamp(
+                            140.0,
+                            220.0,
+                          );
                           final centerRadius = centerDiameter / 2.0;
-                          final sphereDiameter = (canvasSize * 0.125).clamp(36.0, 56.0);
+                          final sphereDiameter = (canvasSize * 0.125).clamp(
+                            36.0,
+                            56.0,
+                          );
                           final sphereRadius = sphereDiameter / 2.0;
 
                           // Inner radius positioned strictly in the middle of available gap between central hub and orbit
-                          final innerRadius = centerRadius + sphereRadius +
-                              ((orbitRadius - sphereRadius - (centerRadius + sphereRadius)) * 0.5);
+                          final innerRadius =
+                              centerRadius +
+                              sphereRadius +
+                              ((orbitRadius -
+                                      sphereRadius -
+                                      (centerRadius + sphereRadius)) *
+                                  0.5);
 
                           // Pre-compute static relaxation base nodes once per layout
                           final baseNodes = _computeBaseRelaxedNodes(
@@ -339,19 +401,26 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                           return AnimatedBuilder(
                             animation: _pulseController,
                             builder: (context, child) {
-                              final resolvedNodes = _animateAndResolveCollisions(
-                                baseNodes: baseNodes,
-                                animValue: _pulseController.value,
-                                sphereDiameter: sphereDiameter,
-                              );
+                              final resolvedNodes =
+                                  _animateAndResolveCollisions(
+                                    baseNodes: baseNodes,
+                                    animValue: _pulseController.value,
+                                    sphereDiameter: sphereDiameter,
+                                  );
 
                               // Dynamic font scaling inside central clock hub
-                              final clockFontSize = (centerDiameter * 0.13).clamp(16.0, 28.0);
-                              final countdownFontSize = (centerDiameter * 0.062).clamp(9.5, 13.0);
-                              final shamsiFontSize = (centerDiameter * 0.065).clamp(10.0, 13.5);
-                              final hijriFontSize = (centerDiameter * 0.065).clamp(10.0, 13.5);
-                              final gregorianFontSize = (centerDiameter * 0.055).clamp(8.5, 11.5);
-                              final centerPadding = (centerDiameter * 0.05).clamp(6.0, 12.0);
+                              final clockFontSize = (centerDiameter * 0.13)
+                                  .clamp(16.0, 28.0);
+                              final countdownFontSize = (centerDiameter * 0.062)
+                                  .clamp(9.5, 13.0);
+                              final shamsiFontSize = (centerDiameter * 0.065)
+                                  .clamp(10.0, 13.5);
+                              final hijriFontSize = (centerDiameter * 0.065)
+                                  .clamp(10.0, 13.5);
+                              final gregorianFontSize = (centerDiameter * 0.055)
+                                  .clamp(8.5, 11.5);
+                              final centerPadding = (centerDiameter * 0.05)
+                                  .clamp(6.0, 12.0);
 
                               return Stack(
                                 alignment: Alignment.center,
@@ -376,14 +445,20 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                     padding: EdgeInsets.all(centerPadding),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: sky.gradient.first.withValues(alpha: 0.95),
+                                      color: sky.gradient.first.withValues(
+                                        alpha: 0.95,
+                                      ),
                                       border: Border.all(
-                                        color: sky.goldColor.withValues(alpha: 0.60),
+                                        color: sky.goldColor.withValues(
+                                          alpha: 0.60,
+                                        ),
                                         width: 2.0,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.5),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.5,
+                                          ),
                                           blurRadius: 28,
                                         ),
                                       ],
@@ -391,77 +466,87 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
-                                            // Live Digital Clock with Roll-up upward animation
-                                            _RollUpClock(
-                                              time: _now,
-                                              style: TextStyle(
-                                                fontSize: clockFontSize,
-                                                fontWeight: FontWeight.w900,
-                                                letterSpacing: 1.0,
-                                                color: sky.textColor,
-                                              ),
+                                          // Live Digital Clock with Roll-up upward animation
+                                          _RollUpClock(
+                                            time: _now,
+                                            style: TextStyle(
+                                              fontSize: clockFontSize,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.0,
+                                              color: sky.textColor,
                                             ),
-                                            SizedBox(height: 3),
+                                          ),
+                                          SizedBox(height: 3),
 
-                                            // Countdown text with Roll-up upward animation
-                                            _RollUpText(
-                                              text: countdownText,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: countdownFontSize,
-                                                fontWeight: FontWeight.bold,
-                                                color: sky.goldColor,
-                                                height: 1.15,
-                                              ),
+                                          // Countdown text with Roll-up upward animation
+                                          _RollUpText(
+                                            text: countdownText,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: countdownFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: sky.goldColor,
+                                              height: 1.15,
                                             ),
+                                          ),
 
-                                            SizedBox(height: 4),
-                                            Divider(
-                                              height: 5,
-                                              indent: 14,
-                                              endIndent: 14,
-                                              color: sky.goldColor.withValues(alpha: 0.4),
+                                          SizedBox(height: 4),
+                                          Divider(
+                                            height: 5,
+                                            indent: 14,
+                                            endIndent: 14,
+                                            color: sky.goldColor.withValues(
+                                              alpha: 0.4,
                                             ),
+                                          ),
 
-                                            // Integrated Triple Date with Roll-up upward animation
-                                            _RollUpText(
-                                              text: shamsiStr,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: shamsiFontSize,
-                                                fontWeight: FontWeight.bold,
-                                                color: sky.textColor,
+                                          // Integrated Triple Date with Roll-up upward animation
+                                          _RollUpText(
+                                            text: shamsiStr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: shamsiFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: sky.textColor,
+                                            ),
+                                          ),
+                                          SizedBox(height: 1),
+                                          _RollUpText(
+                                            text: hijriStr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: hijriFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: sky.goldColor,
+                                            ),
+                                          ),
+                                          SizedBox(height: 1),
+                                          _RollUpText(
+                                            text: gregorianStr,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: gregorianFontSize,
+                                              fontWeight: FontWeight.w600,
+                                              color: sky.textColor.withValues(
+                                                alpha: 0.8,
                                               ),
                                             ),
-                                            SizedBox(height: 1),
-                                            _RollUpText(
-                                              text: hijriStr,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: hijriFontSize,
-                                                fontWeight: FontWeight.bold,
-                                                color: sky.goldColor,
-                                              ),
-                                            ),
-                                            SizedBox(height: 1),
-                                            _RollUpText(
-                                              text: gregorianStr,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: gregorianFontSize,
-                                                fontWeight: FontWeight.w600,
-                                                color: sky.textColor.withValues(alpha: 0.8),
-                                              ),
-                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
 
                                   // 3. Floating Circular Spheres with Stacked Title & Time
-                                  ..._buildCircularSphereWidgets(context, resolvedNodes, sky, sphereDiameter),
+                                  ..._buildCircularSphereWidgets(
+                                    context,
+                                    resolvedNodes,
+                                    sky,
+                                    sphereDiameter,
+                                  ),
                                 ],
                               );
                             },
@@ -477,11 +562,16 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: sky.textColor.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: sky.textColor.withValues(alpha: 0.20)),
+                        border: Border.all(
+                          color: sky.textColor.withValues(alpha: 0.20),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -536,7 +626,8 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
       final isDone = state?.isDone ?? false;
       final isPrayer = a.isPrayer;
 
-      final rawTimeStr = '${a.time.hour.toString().padLeft(2, '0')}:${a.time.minute.toString().padLeft(2, '0')}';
+      final rawTimeStr =
+          '${a.time.hour.toString().padLeft(2, '0')}:${a.time.minute.toString().padLeft(2, '0')}';
       final faTimeStr = toPersianDigits(rawTimeStr);
 
       nodes.add(
@@ -575,8 +666,8 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                   color: isDone
                       ? sky.goldColor
                       : isPrayer
-                          ? sky.goldColor.withValues(alpha: 0.65)
-                          : sky.textColor.withValues(alpha: 0.35),
+                      ? sky.goldColor.withValues(alpha: 0.65)
+                      : sky.textColor.withValues(alpha: 0.35),
                   width: isDone ? borderWidth * 1.2 : borderWidth,
                 ),
                 boxShadow: [
@@ -590,32 +681,43 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
                 ],
               ),
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isDone)
-                      Icon(Icons.check_rounded, size: checkIconSize, color: Colors.black)
-                    else
-                      Text(
-                        a.titleFa,
-                        style: TextStyle(
-                          fontSize: titleFontSize,
-                          fontWeight: FontWeight.w900,
-                          color: sky.textColor,
-                          height: 1.05,
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (isDone)
+                          Icon(
+                            Icons.check_rounded,
+                            size: checkIconSize,
+                            color: Colors.black,
+                          )
+                        else
+                          Text(
+                            a.titleFa,
+                            style: TextStyle(
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.w900,
+                              color: sky.textColor,
+                              height: 1.05,
+                            ),
+                          ),
+                        SizedBox(height: circleDiameter * 0.025),
+                        Text(
+                          faTimeStr,
+                          style: TextStyle(
+                            fontSize: timeFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: isDone ? Colors.black87 : sky.goldColor,
+                            height: 1.05,
+                          ),
                         ),
-                      ),
-                    SizedBox(height: circleDiameter * 0.025),
-                    Text(
-                      faTimeStr,
-                      style: TextStyle(
-                        fontSize: timeFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: isDone ? Colors.black87 : sky.goldColor,
-                        height: 1.05,
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -626,7 +728,6 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     return nodes;
   }
-
 
   // ── Dynamic Sky Theme Calculation ──
   _SkyTheme _getSkyTheme(DateTime now, PrayerTimes times) {
@@ -707,7 +808,12 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     if (now.isBefore(maghrib)) {
       return const _SkyTheme(
-        gradient: [Color(0xFF2C3E6B), Color(0xFFBE5B3A), Color(0xFFE8913A), Color(0xFFF5D78A)],
+        gradient: [
+          Color(0xFF2C3E6B),
+          Color(0xFFBE5B3A),
+          Color(0xFFE8913A),
+          Color(0xFFF5D78A),
+        ],
         textColor: Color(0xFFFFF5E8),
         accentColor: Color(0xFFFFD185),
         goldColor: Color(0xFFFFD700),
@@ -779,7 +885,7 @@ List<_ResolvedNode> _computeBaseRelaxedNodes({
     _AnchorData('ISHA', 'عشا', 'عش', times.isha, true),
     _AnchorData('MIDNIGHT_SHARI', 'نیمه‌شب', 'ن', times.midnightShari, false),
   ];
-  
+
   if (!showAsrIsha) {
     anchors.removeWhere((a) => a.key == 'ASR' || a.key == 'ISHA');
   }
@@ -802,16 +908,20 @@ List<_ResolvedNode> _computeBaseRelaxedNodes({
       center.dy + innerRadius * math.sin(angleRad),
     );
 
-    rawNodes.add(_ResolvedNode(
-      anchor: a,
-      angleRad: angleRad,
-      dotOffset: dotOffset,
-      badgeOffset: rawBadgeOffset,
-      animatedOffset: rawBadgeOffset,
-    ));
+    rawNodes.add(
+      _ResolvedNode(
+        anchor: a,
+        angleRad: angleRad,
+        dotOffset: dotOffset,
+        badgeOffset: rawBadgeOffset,
+        animatedOffset: rawBadgeOffset,
+      ),
+    );
   }
 
-  final rightNodes = rawNodes.where((n) => n.dotOffset.dx >= center.dx).toList();
+  final rightNodes = rawNodes
+      .where((n) => n.dotOffset.dx >= center.dx)
+      .toList();
   final leftNodes = rawNodes.where((n) => n.dotOffset.dx < center.dx).toList();
 
   void relaxHemisphere(List<_ResolvedNode> nodes, bool isRight) {
@@ -833,8 +943,20 @@ List<_ResolvedNode> _computeBaseRelaxedNodes({
           final newCurrY = curr.badgeOffset.dy - shift;
           final newNextY = next.badgeOffset.dy + shift;
 
-          curr.badgeOffset = _adjustPosition(curr.badgeOffset, newCurrY, center, innerRadius, isRight);
-          next.badgeOffset = _adjustPosition(next.badgeOffset, newNextY, center, innerRadius, isRight);
+          curr.badgeOffset = _adjustPosition(
+            curr.badgeOffset,
+            newCurrY,
+            center,
+            innerRadius,
+            isRight,
+          );
+          next.badgeOffset = _adjustPosition(
+            next.badgeOffset,
+            newNextY,
+            center,
+            innerRadius,
+            isRight,
+          );
         }
       }
     }
@@ -865,8 +987,12 @@ List<_ResolvedNode> _animateAndResolveCollisions({
     final phaseY2 = i * 2.15 + 2.1;
 
     final maxAmplitude = (sphereDiameter * 0.15).clamp(4.0, 8.5);
-    final floatDx = maxAmplitude * (math.sin(t + phaseX1) + 0.35 * math.sin(2.1 * t + phaseX2));
-    final floatDy = maxAmplitude * (math.cos(0.85 * t + phaseY1) + 0.35 * math.cos(1.6 * t + phaseY2));
+    final floatDx =
+        maxAmplitude *
+        (math.sin(t + phaseX1) + 0.35 * math.sin(2.1 * t + phaseX2));
+    final floatDy =
+        maxAmplitude *
+        (math.cos(0.85 * t + phaseY1) + 0.35 * math.cos(1.6 * t + phaseY2));
 
     final node = _ResolvedNode(
       anchor: base.anchor,
@@ -900,17 +1026,31 @@ List<_ResolvedNode> _animateAndResolveCollisions({
   return resultNodes;
 }
 
-Offset _adjustPosition(Offset orig, double newY, Offset center, double radius, bool isRight) {
+Offset _adjustPosition(
+  Offset orig,
+  double newY,
+  Offset center,
+  double radius,
+  bool isRight,
+) {
   final dy = newY - center.dy;
   final clampedDy = dy.clamp(-radius + 5.0, radius - 5.0);
-  final dxAbs = math.sqrt(math.max(0.0, radius * radius - clampedDy * clampedDy));
+  final dxAbs = math.sqrt(
+    math.max(0.0, radius * radius - clampedDy * clampedDy),
+  );
   final newX = isRight ? center.dx + dxAbs : center.dx - dxAbs;
   return Offset(newX, center.dy + clampedDy);
 }
 
 // ── Model: Anchor Data ──
 class _AnchorData {
-  const _AnchorData(this.key, this.titleFa, this.initial, this.time, this.isPrayer);
+  const _AnchorData(
+    this.key,
+    this.titleFa,
+    this.initial,
+    this.time,
+    this.isPrayer,
+  );
   final String key;
   final String titleFa;
   final String initial;
@@ -1023,7 +1163,13 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.0;
 
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), angleSunset, nightSweep, false, nightArcPaint);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      angleSunset,
+      nightSweep,
+      false,
+      nightArcPaint,
+    );
 
     // B) Draw Day Arc Track (Sunrise -> Sunset, Golden Solar Gradient)
     final dayArcPaint = Paint()
@@ -1041,7 +1187,13 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4.5;
 
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), angleSunrise, daySweep, false, dayArcPaint);
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      angleSunrise,
+      daySweep,
+      false,
+      dayArcPaint,
+    );
 
     // C) Draw Active Trail from Start of Current Period up to Now
     final isDayTime = now.isAfter(times.sunrise) && now.isBefore(times.sunset);
@@ -1057,7 +1209,13 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 4);
 
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), angleSunrise, activeSweep, false, activeDayPaint);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        angleSunrise,
+        activeSweep,
+        false,
+        activeDayPaint,
+      );
     } else {
       var activeSweep = (nowAngle - angleSunset) % (2 * math.pi);
       if (activeSweep <= 0) activeSweep += 2 * math.pi;
@@ -1069,7 +1227,13 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 4);
 
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), angleSunset, activeSweep, false, activeNightPaint);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        angleSunset,
+        activeSweep,
+        false,
+        activeNightPaint,
+      );
     }
 
     // 4. Ultra-Smooth Celestial Body Morphing (Sun ☀️ <-> Moon 🌙)
@@ -1087,11 +1251,15 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
 
     if (minutesBeforeSunrise.abs() <= transitionWindowMin) {
       // Morphing around Sunrise (-15 min to +15 min)
-      final progress = (transitionWindowMin - minutesBeforeSunrise) / (2 * transitionWindowMin);
+      final progress =
+          (transitionWindowMin - minutesBeforeSunrise) /
+          (2 * transitionWindowMin);
       tMorph = progress.clamp(0.0, 1.0);
     } else if (minutesBeforeSunset.abs() <= transitionWindowMin) {
       // Morphing around Sunset (-15 min to +15 min)
-      final progress = (transitionWindowMin + minutesBeforeSunset) / (2 * transitionWindowMin);
+      final progress =
+          (transitionWindowMin + minutesBeforeSunset) /
+          (2 * transitionWindowMin);
       tMorph = (1.0 - progress).clamp(0.0, 1.0);
     } else {
       tMorph = isDayTime ? 1.0 : 0.0;
@@ -1108,11 +1276,20 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 14);
       canvas.drawCircle(bodyCenter, pulseRadius, glowPaint);
 
-      final moonPaint = Paint()..color = Color(0xFFFFF9C4).withValues(alpha: moonOpacity);
+      final moonPaint = Paint()
+        ..color = Color(0xFFFFF9C4).withValues(alpha: moonOpacity);
       canvas.drawCircle(bodyCenter, 12 * moonScale, moonPaint);
 
-      final shadowPaint = Paint()..color = sky.gradient.first.withValues(alpha: moonOpacity);
-      canvas.drawCircle(Offset(bodyCenter.dx + 4.0 * moonScale, bodyCenter.dy - 3.0 * moonScale), 9.5 * moonScale, shadowPaint);
+      final shadowPaint = Paint()
+        ..color = sky.gradient.first.withValues(alpha: moonOpacity);
+      canvas.drawCircle(
+        Offset(
+          bodyCenter.dx + 4.0 * moonScale,
+          bodyCenter.dy - 3.0 * moonScale,
+        ),
+        9.5 * moonScale,
+        shadowPaint,
+      );
     }
 
     // B) Draw Radiant Solar Sun Layer (Opacity = tMorph)
@@ -1149,23 +1326,33 @@ class _TwentyFourHourOrbitPainter extends CustomPainter {
         final r1 = 13.0 * sunScale;
         final r2 = (20.0 + pulseValue * 2.5) * sunScale;
         canvas.drawLine(
-          Offset(bodyCenter.dx + r1 * math.cos(rayAngle), bodyCenter.dy + r1 * math.sin(rayAngle)),
-          Offset(bodyCenter.dx + r2 * math.cos(rayAngle), bodyCenter.dy + r2 * math.sin(rayAngle)),
+          Offset(
+            bodyCenter.dx + r1 * math.cos(rayAngle),
+            bodyCenter.dy + r1 * math.sin(rayAngle),
+          ),
+          Offset(
+            bodyCenter.dx + r2 * math.cos(rayAngle),
+            bodyCenter.dy + r2 * math.sin(rayAngle),
+          ),
           rayPaint,
         );
       }
 
-      final sunPaint = Paint()..color = sunDiscColor.withValues(alpha: sunOpacity);
+      final sunPaint = Paint()
+        ..color = sunDiscColor.withValues(alpha: sunOpacity);
       canvas.drawCircle(bodyCenter, 12 * sunScale, sunPaint);
 
-      final innerPaint = Paint()..color = Colors.white.withValues(alpha: sunOpacity);
+      final innerPaint = Paint()
+        ..color = Colors.white.withValues(alpha: sunOpacity);
       canvas.drawCircle(bodyCenter, 5 * sunScale, innerPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _TwentyFourHourOrbitPainter oldDelegate) =>
-      oldDelegate.now != now || oldDelegate.pulseValue != pulseValue || oldDelegate.sky.periodName != sky.periodName;
+      oldDelegate.now != now ||
+      oldDelegate.pulseValue != pulseValue ||
+      oldDelegate.sky.periodName != sky.periodName;
 }
 
 // ── Stars Painter ──
@@ -1194,10 +1381,7 @@ class _StarsPainter extends CustomPainter {
 
 // ── 3D Cube Roll Single Digit (چرخش سه‌بعدی مکعبی به عقب: وجه پایین میاد روبرو) ──
 class _CubeRollDigit extends StatelessWidget {
-  const _CubeRollDigit({
-    required this.digit,
-    required this.style,
-  });
+  const _CubeRollDigit({required this.digit, required this.style});
 
   static const Duration duration = Duration(milliseconds: 320);
   static const Curve curve = Curves.easeOutCubic;
@@ -1257,10 +1441,7 @@ class _CubeRollDigit extends StatelessWidget {
               return Transform(
                 transform: transform,
                 alignment: Alignment.center,
-                child: Opacity(
-                  opacity: opacity,
-                  child: child,
-                ),
+                child: Opacity(opacity: opacity, child: child),
               );
             },
           );
@@ -1278,10 +1459,7 @@ class _CubeRollDigit extends StatelessWidget {
 
 // ── 3D Cube Roll Digital Clock (Per-digit: فقط ارقام در حال تغییر می‌چرخند) ──
 class _RollUpClock extends StatelessWidget {
-  const _RollUpClock({
-    required this.time,
-    required this.style,
-  });
+  const _RollUpClock({required this.time, required this.style});
 
   final DateTime time;
   final TextStyle style;
@@ -1386,10 +1564,7 @@ class _RollUpText extends StatelessWidget {
             return Transform(
               transform: transform,
               alignment: Alignment.center,
-              child: Opacity(
-                opacity: opacity,
-                child: child,
-              ),
+              child: Opacity(opacity: opacity, child: child),
             );
           },
         );
@@ -1403,4 +1578,3 @@ class _RollUpText extends StatelessWidget {
     );
   }
 }
-

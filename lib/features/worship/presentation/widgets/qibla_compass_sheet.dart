@@ -29,7 +29,8 @@ class QiblaCompassSheet extends StatefulWidget {
   State<QiblaCompassSheet> createState() => _QiblaCompassSheetState();
 }
 
-class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTickerProviderStateMixin {
+class _QiblaCompassSheetState extends State<QiblaCompassSheet>
+    with SingleTickerProviderStateMixin {
   late double _qiblaAzimuth;
   double _lat = 35.6892;
   double _lng = 51.3890;
@@ -64,15 +65,22 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
         final db = await DatabaseHelper.instance.database;
         final settingsList = await db.query('app_settings');
         final settings = {
-          for (final row in settingsList) row['key']! as String: row['value']! as String
+          for (final row in settingsList)
+            row['key']! as String: row['value']! as String,
         };
 
         final cityId = settings['prayer_city_id'] ?? 'TEHRAN_TEHRAN';
         final locationMode = settings['prayer_location_mode'];
 
-        if (locationMode == 'CUSTOM_COORDS' || cityId.startsWith('CUSTOM_') || cityId.startsWith('INTL_')) {
-          final customLat = double.tryParse(settings['prayer_custom_lat'] ?? '');
-          final customLng = double.tryParse(settings['prayer_custom_lng'] ?? '');
+        if (locationMode == 'CUSTOM_COORDS' ||
+            cityId.startsWith('CUSTOM_') ||
+            cityId.startsWith('INTL_')) {
+          final customLat = double.tryParse(
+            settings['prayer_custom_lat'] ?? '',
+          );
+          final customLng = double.tryParse(
+            settings['prayer_custom_lng'] ?? '',
+          );
           final customName = settings['prayer_custom_city_name'];
           if (customLat != null && customLng != null) {
             _lat = customLat;
@@ -132,7 +140,8 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
 
           if (isAligned && !_isAlignedWithQibla) {
             final now = DateTime.now();
-            if (_lastHapticTime == null || now.difference(_lastHapticTime!).inMilliseconds > 1500) {
+            if (_lastHapticTime == null ||
+                now.difference(_lastHapticTime!).inMilliseconds > 1500) {
               _lastHapticTime = now;
               unawaited(HapticFeedback.heavyImpact());
             }
@@ -170,7 +179,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
     final deltaLambda = kaabaLng - lambda;
 
     final y = math.sin(deltaLambda);
-    final x = math.cos(phi) * math.tan(kaabaLat) - math.sin(phi) * math.cos(deltaLambda);
+    final x =
+        math.cos(phi) * math.tan(kaabaLat) -
+        math.sin(phi) * math.cos(deltaLambda);
 
     var azimuth = math.atan2(y, x) * (180.0 / math.pi);
     if (azimuth < 0) {
@@ -219,43 +230,49 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'قبله‌نمای زنده',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'قبله‌نمای زنده',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'موقعیت: $_name ($degreesStr° نسبت به شمال)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary,
+                    const SizedBox(height: 2),
+                    Text(
+                      'موقعیت: $_name ($degreesStr° نسبت به شمال)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _isAlignedWithQibla
                       ? Colors.green.withValues(alpha: 0.18)
                       : (_hasCompassSensor && _deviceHeading != null
-                          ? colors.primary.withValues(alpha: 0.12)
-                          : colors.surfaceSunken),
+                            ? colors.primary.withValues(alpha: 0.12)
+                            : colors.surfaceSunken),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isAlignedWithQibla
                         ? Colors.green
                         : (_hasCompassSensor && _deviceHeading != null
-                            ? colors.primary.withValues(alpha: 0.4)
-                            : colors.border.withValues(alpha: 0.2)),
+                              ? colors.primary.withValues(alpha: 0.4)
+                              : colors.border.withValues(alpha: 0.2)),
                     width: 1.2,
                   ),
                 ),
@@ -266,30 +283,30 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                       _isAlignedWithQibla
                           ? CupertinoIcons.check_mark_circled_solid
                           : (_hasCompassSensor && _deviceHeading != null
-                              ? CupertinoIcons.compass
-                              : CupertinoIcons.location_north),
+                                ? CupertinoIcons.compass
+                                : CupertinoIcons.location_north),
                       size: 14,
                       color: _isAlignedWithQibla
                           ? Colors.green
                           : (_hasCompassSensor && _deviceHeading != null
-                              ? colors.primary
-                              : colors.textSecondary),
+                                ? colors.primary
+                                : colors.textSecondary),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _isAlignedWithQibla
                           ? 'رو به قبله 🕋'
                           : (_hasCompassSensor && _deviceHeading != null
-                              ? 'سنسور فعال 🧭'
-                              : 'حالت آفلاین'),
+                                ? 'سنسور فعال 🧭'
+                                : 'حالت آفلاین'),
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
                         color: _isAlignedWithQibla
                             ? Colors.green
                             : (_hasCompassSensor && _deviceHeading != null
-                                ? colors.primary
-                                : colors.textSecondary),
+                                  ? colors.primary
+                                  : colors.textSecondary),
                       ),
                     ),
                   ],
@@ -319,7 +336,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                               border: Border.all(
                                 color: _isAlignedWithQibla
                                     ? Colors.green.withValues(alpha: 0.8)
-                                    : colors.textPrimary.withValues(alpha: 0.12),
+                                    : colors.textPrimary.withValues(
+                                        alpha: 0.12,
+                                      ),
                                 width: _isAlignedWithQibla ? 3.5 : 2.5,
                               ),
                               boxShadow: [
@@ -338,19 +357,47 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                                 // Cardinal Labels
                                 Positioned(
                                   top: 10,
-                                  child: Text('شمال (N)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Colors.red)),
+                                  child: Text(
+                                    'شمال (N)',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      color: Colors.red,
+                                    ),
+                                  ),
                                 ),
                                 Positioned(
                                   bottom: 10,
-                                  child: Text('جنوب (S)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Colors.blueGrey)),
+                                  child: Text(
+                                    'جنوب (S)',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
                                 ),
                                 Positioned(
                                   left: 10,
-                                  child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Colors.blueGrey)),
+                                  child: Text(
+                                    'W',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
                                 ),
                                 Positioned(
                                   right: 10,
-                                  child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Colors.blueGrey)),
+                                  child: Text(
+                                    'E',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.5,
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -363,7 +410,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                           child: Icon(
                             CupertinoIcons.chevron_up,
                             size: 20,
-                            color: _isAlignedWithQibla ? Colors.green : colors.primary,
+                            color: _isAlignedWithQibla
+                                ? Colors.green
+                                : colors.primary,
                           ),
                         ),
 
@@ -379,13 +428,17 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                                 width: _isAlignedWithQibla ? 42 : 36,
                                 height: _isAlignedWithQibla ? 42 : 36,
                                 decoration: BoxDecoration(
-                                  color: _isAlignedWithQibla ? Colors.green : colors.accent,
+                                  color: _isAlignedWithQibla
+                                      ? Colors.green
+                                      : colors.accent,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color: _isAlignedWithQibla
                                           ? Colors.green.withValues(alpha: 0.6)
-                                          : colors.accent.withValues(alpha: 0.4),
+                                          : colors.accent.withValues(
+                                              alpha: 0.4,
+                                            ),
                                       blurRadius: _isAlignedWithQibla ? 16 : 10,
                                     ),
                                   ],
@@ -401,7 +454,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                                 width: _isAlignedWithQibla ? 4 : 3,
                                 height: 75,
                                 decoration: BoxDecoration(
-                                  color: _isAlignedWithQibla ? Colors.green : colors.accent,
+                                  color: _isAlignedWithQibla
+                                      ? Colors.green
+                                      : colors.accent,
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -416,7 +471,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
                           height: 14,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _isAlignedWithQibla ? Colors.green : colors.primary,
+                            color: _isAlignedWithQibla
+                                ? Colors.green
+                                : colors.primary,
                             border: Border.all(color: Colors.white, width: 2.5),
                           ),
                         ),
@@ -437,20 +494,28 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(CupertinoIcons.info_circle, size: 14, color: colors.textSecondary),
+                Icon(
+                  CupertinoIcons.info_circle,
+                  size: 14,
+                  color: colors.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
                     _isAlignedWithQibla
                         ? '✨ جهت گوشی شما دقیقاً رو به قبله است.'
                         : (_hasCompassSensor && _deviceHeading != null
-                            ? 'گوشی را بچرخانید تا نشانگر 🕋 به سمت بالای صفحه قرار گیرد.'
-                            : 'گوشی را افقی نگه دارید و دور از میدان‌های مغناطیسی قرار دهید.'),
+                              ? 'گوشی را بچرخانید تا نشانگر 🕋 به سمت بالای صفحه قرار گیرد.'
+                              : 'گوشی را افقی نگه دارید و دور از میدان‌های مغناطیسی قرار دهید.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 11.5,
-                      fontWeight: _isAlignedWithQibla ? FontWeight.bold : FontWeight.normal,
-                      color: _isAlignedWithQibla ? Colors.green : colors.textSecondary,
+                      fontWeight: _isAlignedWithQibla
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _isAlignedWithQibla
+                          ? Colors.green
+                          : colors.textSecondary,
                     ),
                   ),
                 ),
@@ -462,4 +527,3 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet> with SingleTicker
     );
   }
 }
-

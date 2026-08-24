@@ -39,7 +39,11 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
           ? exps.where((e) => e.noteId == _featuredExp!.noteId).firstOrNull
           : null;
       if (featured == null && exps.isNotEmpty) {
-        featured = (exps.where((e) => e.isActive && e.importance >= 4).toList()..shuffle()).firstOrNull ?? exps.first;
+        featured =
+            (exps.where((e) => e.isActive && e.importance >= 4).toList()
+                  ..shuffle())
+                .firstOrNull ??
+            exps.first;
       }
       if (mounted) {
         setState(() {
@@ -93,14 +97,22 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
               if (!context.mounted) return;
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const NoteEditorScreen(isExperience: true)),
+                MaterialPageRoute(
+                  builder: (_) => const NoteEditorScreen(isExperience: true),
+                ),
               );
               if (mounted) await _loadData();
             },
             backgroundColor: insightsColor,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            icon: Icon(CupertinoIcons.pencil, color: colors.onPrimary, size: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            icon: Icon(
+              CupertinoIcons.pencil,
+              color: colors.onPrimary,
+              size: 18,
+            ),
             label: Text(
               'ثبت تجربه جدید',
               style: TextStyle(
@@ -157,7 +169,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                             fontSize: 18.5,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -168,7 +180,9 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                           RitmoHapticsPolicy.tap();
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const NoteSrsReviewScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const NoteSrsReviewScreen(),
+                            ),
                           ).then((_) {
                             if (mounted) _loadData();
                           });
@@ -178,7 +192,9 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                            color: insightsColor.withValues(
+                              alpha: isDark ? 0.2 : 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: insightsColor.withValues(alpha: 0.4),
@@ -208,7 +224,8 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     children: [
                       _buildFilterChip(
-                        label: 'همه (${PersianDigits.convert(_experiences.length.toString())})',
+                        label:
+                            'همه (${PersianDigits.convert(_experiences.length.toString())})',
                         isSelected: _selectedCategory == null,
                         onTap: () => setState(() => _selectedCategory = null),
                         isDark: isDark,
@@ -217,13 +234,17 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                       ),
                       const SizedBox(width: 8),
                       ...ExperienceCategory.values.map((cat) {
-                        final count = _experiences.where((e) => e.category == cat).length;
+                        final count = _experiences
+                            .where((e) => e.category == cat)
+                            .length;
                         return Padding(
                           padding: const EdgeInsets.only(left: 8),
                           child: _buildFilterChip(
-                            label: '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
+                            label:
+                                '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
                             isSelected: _selectedCategory == cat,
-                            onTap: () => setState(() => _selectedCategory = cat),
+                            onTap: () =>
+                                setState(() => _selectedCategory = cat),
                             isDark: isDark,
                             colors: colors,
                             insightsColor: insightsColor,
@@ -240,51 +261,77 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                 child: _isLoading
                     ? const RitmoShimmerGrid(count: 4)
                     : filtered.isEmpty
-                        ? _buildEmptyState(colors)
-                        : RefreshIndicator(
-                            onRefresh: _loadData,
-                            child: CustomScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                              slivers: [
-                                SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                  sliver: SliverList(
-                                    delegate: SliverChildListDelegate([
-                                      if (_selectedCategory == null && featuredExp != null) ...[
-                                        _buildFeaturedHeroCard(context, featuredExp, isDark, colors, insightsColor),
-                                        const SizedBox(height: 14),
-                                        Row(
-                                          children: [
-                                            Icon(CupertinoIcons.sparkles, size: 14, color: insightsColor),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
-                                              style: TextStyle(
-                                                fontSize: 13.5,
-                                                fontWeight: FontWeight.w800,
-                                                color: colors.textPrimary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                      ],
-                                    ]),
-                                  ),
-                                ),
-                                SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  sliver: SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (ctx, i) => _buildWisdomCard(context, filtered[i], isDark, colors, insightsColor),
-                                      childCount: filtered.length,
-                                    ),
-                                  ),
-                                ),
-                                const SliverToBoxAdapter(child: SizedBox(height: 90)),
-                              ],
-                            ),
+                    ? _buildEmptyState(colors)
+                    : RefreshIndicator(
+                        onRefresh: _loadData,
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
                           ),
+                          slivers: [
+                            SliverPadding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildListDelegate([
+                                  if (_selectedCategory == null &&
+                                      featuredExp != null) ...[
+                                    _buildFeaturedHeroCard(
+                                      context,
+                                      featuredExp,
+                                      isDark,
+                                      colors,
+                                      insightsColor,
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          CupertinoIcons.sparkles,
+                                          size: 14,
+                                          color: insightsColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'همه آموزه‌ها (${PersianDigits.convert(filtered.length.toString())})',
+                                          style: TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: colors.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                  ],
+                                ]),
+                              ),
+                            ),
+                            SliverPadding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (ctx, i) => _buildWisdomCard(
+                                    context,
+                                    filtered[i],
+                                    isDark,
+                                    colors,
+                                    insightsColor,
+                                  ),
+                                  childCount: filtered.length,
+                                ),
+                              ),
+                            ),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 90),
+                            ),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),
@@ -365,7 +412,10 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -377,7 +427,11 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(CupertinoIcons.sparkles, size: 12, color: insightsColor),
+                    Icon(
+                      CupertinoIcons.sparkles,
+                      size: 12,
+                      color: insightsColor,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       'درس برگزیده • ${exp.category.labelFa}',
@@ -396,9 +450,13 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 1),
                     child: Icon(
-                      starFilled ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                      starFilled
+                          ? CupertinoIcons.star_fill
+                          : CupertinoIcons.star,
                       size: 13,
-                      color: starFilled ? insightsColor : colors.textTertiary.withValues(alpha: 0.35),
+                      color: starFilled
+                          ? insightsColor
+                          : colors.textTertiary.withValues(alpha: 0.35),
                     ),
                   );
                 }),
@@ -446,10 +504,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.22 : 0.06),
@@ -468,7 +523,10 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             if (note != null && context.mounted) {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note, isExperience: true)),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      NoteEditorScreen(note: note, isExperience: true),
+                ),
               );
               await _loadData();
             }
@@ -481,9 +539,14 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                      color: insightsColor.withValues(
+                        alpha: isDark ? 0.2 : 0.12,
+                      ),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: insightsColor.withValues(alpha: 0.4),
@@ -493,7 +556,10 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(exp.category.emoji, style: const TextStyle(fontSize: 12)),
+                        Text(
+                          exp.category.emoji,
+                          style: const TextStyle(fontSize: 12),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           exp.category.labelFa,
@@ -512,9 +578,13 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 1),
                           child: Icon(
-                            idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                            idx < exp.importance
+                                ? CupertinoIcons.star_fill
+                                : CupertinoIcons.star,
                             size: 11,
-                            color: idx < exp.importance ? insightsColor : colors.textTertiary.withValues(alpha: 0.35),
+                            color: idx < exp.importance
+                                ? insightsColor
+                                : colors.textTertiary.withValues(alpha: 0.35),
                           ),
                         );
                       }),
@@ -524,7 +594,10 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                         activeTrackColor: colors.success,
                         onChanged: (val) async {
                           RitmoHapticsPolicy.selection();
-                          await ExperienceRepository.instance.setActive(exp.noteId, val);
+                          await ExperienceRepository.instance.setActive(
+                            exp.noteId,
+                            val,
+                          );
                           await _loadData();
                         },
                       ),
@@ -573,7 +646,11 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   ),
                   Row(
                     children: [
-                      Icon(CupertinoIcons.checkmark_seal_fill, size: 12, color: colors.success),
+                      Icon(
+                        CupertinoIcons.checkmark_seal_fill,
+                        size: 12,
+                        color: colors.success,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${PersianDigits.convert(exp.acknowledgedCount.toString())} تایید',
@@ -598,7 +675,8 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
     return RitmoEmptyState(
       icon: CupertinoIcons.lightbulb,
       title: 'هیچ تجربه یا درسی ثبت نشده',
-      description: 'با ثبت درس‌های ماندگار زندگی، سیستم بازخوانی هوشمند روزانه آن‌ها را به شما یادآوری می‌کند.',
+      description:
+          'با ثبت درس‌های ماندگار زندگی، سیستم بازخوانی هوشمند روزانه آن‌ها را به شما یادآوری می‌کند.',
     );
   }
 }

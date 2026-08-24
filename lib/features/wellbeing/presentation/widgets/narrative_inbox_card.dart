@@ -64,9 +64,7 @@ class NarrativeInboxCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(
-                color: colors.border.withValues(alpha: 0.6),
-              ),
+              border: Border.all(color: colors.border.withValues(alpha: 0.6)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,16 +90,14 @@ class NarrativeInboxCard extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.timelapse,
-                          size: 14,
-                          color: colors.primary,
-                        ),
+                        Icon(Icons.timelapse, size: 14, color: colors.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             g.body,
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ),
                       ],

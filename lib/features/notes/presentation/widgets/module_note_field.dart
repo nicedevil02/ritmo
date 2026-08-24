@@ -60,10 +60,7 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               maxLines: 3,
               maxLength: widget.maxLength,
               textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textPrimary,
-              ),
+              style: TextStyle(fontSize: 13, color: colors.textPrimary),
               onChanged: widget.onChanged,
               decoration: InputDecoration(
                 hintText: widget.hintFa,
@@ -77,24 +74,15 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
                 contentPadding: const EdgeInsets.fromLTRB(44, 12, 14, 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: colors.border,
-                    width: 1,
-                  ),
+                  borderSide: BorderSide(color: colors.border, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: colors.border,
-                    width: 1,
-                  ),
+                  borderSide: BorderSide(color: colors.border, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(
-                    color: colors.primary,
-                    width: 1.4,
-                  ),
+                  borderSide: BorderSide(color: colors.primary, width: 1.4),
                 ),
               ),
             ),
@@ -106,16 +94,25 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
                 children: [
                   if (widget.controller.text.isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.clear, size: 16, color: colors.textSecondary),
+                      icon: Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: colors.textSecondary,
+                      ),
                       onPressed: () {
                         widget.controller.clear();
                         widget.onChanged?.call('');
                       },
                       tooltip: 'پاک کردن',
                     ),
-                  if (widget.onPromote != null && widget.controller.text.trim().isNotEmpty)
+                  if (widget.onPromote != null &&
+                      widget.controller.text.trim().isNotEmpty)
                     IconButton(
-                      icon: Icon(Icons.menu_book_rounded, size: 16, color: colors.primary),
+                      icon: Icon(
+                        Icons.menu_book_rounded,
+                        size: 16,
+                        color: colors.primary,
+                      ),
                       onPressed: widget.onPromote,
                       tooltip: 'تبدیل به یادداشت دفترچه',
                     ),
@@ -132,7 +129,9 @@ class _ModuleNoteFieldState extends State<ModuleNoteField> {
               textAlign: TextAlign.left,
               style: TextStyle(
                 fontSize: 10.5,
-                color: textLength >= widget.maxLength ? colors.error : colors.textSecondary,
+                color: textLength >= widget.maxLength
+                    ? colors.error
+                    : colors.textSecondary,
               ),
             ),
           ),

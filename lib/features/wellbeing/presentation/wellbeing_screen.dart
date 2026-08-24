@@ -2,6 +2,7 @@ import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:shamsi_date/shamsi_date.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
 import 'package:flutter/cupertino.dart';
@@ -892,7 +893,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isDark ? colors.card : colors.surface)
@@ -901,7 +905,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.25 : 0.06,
+                            ),
                             blurRadius: 4,
                             offset: const Offset(0, 1.5),
                           ),
@@ -922,7 +928,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 11.5,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected
                           ? colors.primary
                           : colors.textSecondary.withValues(alpha: 0.75),
@@ -962,7 +970,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   target: _sleepTarget,
                   isExpanded: _isSleepTargetExpanded,
                   onToggleExpand: () {
-                    setState(() => _isSleepTargetExpanded = !_isSleepTargetExpanded);
+                    setState(
+                      () => _isSleepTargetExpanded = !_isSleepTargetExpanded,
+                    );
                   },
                   onEditTap: () {
                     RitmoSheetScaffold.present(
@@ -1127,7 +1137,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                                     : score == 4
                                     ? '🙂'
                                     : '😴',
-                                style: RitmoTextStyles.body(colors.textPrimary).copyWith(fontSize: 16),
+                                style: RitmoTextStyles.body(
+                                  colors.textPrimary,
+                                ).copyWith(fontSize: 16),
                               ),
                             ),
                           ),
@@ -1219,9 +1231,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                           const SizedBox(width: 6),
                           Text(
                             'فرصت جبران ۱ روزهٔ این هفته اعمال شد 🌱',
-                            style: RitmoTextStyles.caption(colors.primary).copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: RitmoTextStyles.caption(
+                              colors.primary,
+                            ).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -1238,7 +1250,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
               _buildGoodThingsQuotesCard(context),
               const SizedBox(height: RitmoSpacing.lg),
               Text(
-                'دفتر ثبت‌ها',
+                'دفتر ثبت‌ها و بازتاب روزها',
                 style: RitmoTextStyles.cardTitle(colors.textPrimary),
               ),
               const SizedBox(height: RitmoSpacing.md),
@@ -1249,71 +1261,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   description: 'از کادر بالای صفحه اولین بازتاب خود را ثبت کن.',
                 )
               else
-                ..._reflections.take(15).map((r) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
-                    child: InkWell(
-                      onTap: () => _showReflectionDetailSheet(context, r),
-                      borderRadius: BorderRadius.circular(RitmoRadius.card),
-                      child: Container(
-                        padding: const EdgeInsets.all(RitmoSpacing.md),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          borderRadius: BorderRadius.circular(RitmoRadius.card),
-                          border: Border.all(color: colors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      RitmoNumber.fa(r.date),
-                                      style: RitmoTextStyles.caption(
-                                        colors.textSecondary,
-                                      ),
-                                    ),
-                                    if (r.moodScore > 0) ...[
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        r.moodScore == 1
-                                            ? '😫'
-                                            : r.moodScore == 2
-                                            ? '🥱'
-                                            : r.moodScore == 3
-                                            ? '😐'
-                                            : r.moodScore == 4
-                                            ? '🙂'
-                                            : '😴',
-                                        style: RitmoTextStyles.caption(colors.textPrimary).copyWith(fontSize: 14),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                Icon(
-                                  Icons.chevron_left,
-                                  size: 18,
-                                  color: colors.textSecondary,
-                                ),
-                              ],
-                            ),
-                            if (r.goodThing != null &&
-                                r.goodThing!.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                '💡 ${r.goodThing}',
-                                style: RitmoTextStyles.body(colors.textPrimary),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+                ..._reflections
+                    .take(20)
+                    .map((r) => _buildReflectionItemCard(context, r)),
             ]),
           ),
         ),
@@ -1440,13 +1390,48 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     final distribution = _lifeBalanceOutput?.distribution ?? {};
 
     final domainList = [
-      (key: 'RELIGION', label: 'عبادی', icon: CupertinoIcons.heart_circle_fill, color: const Color(0xff06B6D4)),
-      (key: 'HEALTH', label: 'ورزش و سلامت', icon: CupertinoIcons.flame_fill, color: const Color(0xff10B981)),
-      (key: 'LEARNING', label: 'یادگیری', icon: CupertinoIcons.book_fill, color: const Color(0xff3B82F6)),
-      (key: 'WORK', label: 'کار و تلاش', icon: CupertinoIcons.briefcase_fill, color: const Color(0xffF59E0B)),
-      (key: 'PERSONAL', label: 'شخصی', icon: CupertinoIcons.person_crop_circle_fill, color: const Color(0xff8B5CF6)),
-      (key: 'FREE', label: 'تفریح', icon: CupertinoIcons.gamecontroller_fill, color: const Color(0xffEC4899)),
-      (key: 'OTHER', label: 'سایر / متفرقه', icon: CupertinoIcons.circle_grid_hex_fill, color: colors.textSecondary),
+      (
+        key: 'RELIGION',
+        label: 'عبادی',
+        icon: CupertinoIcons.heart_circle_fill,
+        color: const Color(0xff06B6D4),
+      ),
+      (
+        key: 'HEALTH',
+        label: 'ورزش و سلامت',
+        icon: CupertinoIcons.flame_fill,
+        color: const Color(0xff10B981),
+      ),
+      (
+        key: 'LEARNING',
+        label: 'یادگیری',
+        icon: CupertinoIcons.book_fill,
+        color: const Color(0xff3B82F6),
+      ),
+      (
+        key: 'WORK',
+        label: 'کار و تلاش',
+        icon: CupertinoIcons.briefcase_fill,
+        color: const Color(0xffF59E0B),
+      ),
+      (
+        key: 'PERSONAL',
+        label: 'شخصی',
+        icon: CupertinoIcons.person_crop_circle_fill,
+        color: const Color(0xff8B5CF6),
+      ),
+      (
+        key: 'FREE',
+        label: 'تفریح',
+        icon: CupertinoIcons.gamecontroller_fill,
+        color: const Color(0xffEC4899),
+      ),
+      (
+        key: 'OTHER',
+        label: 'سایر / متفرقه',
+        icon: CupertinoIcons.circle_grid_hex_fill,
+        color: colors.textSecondary,
+      ),
     ];
 
     final skipped = _lifeBalanceOutput?.skippedRows ?? 0;
@@ -1494,7 +1479,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: Text(
                     'تعادل: ${RitmoNumber.faInt(score)}٪',
@@ -1561,7 +1548,9 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                                 : '—',
                             style: TextStyle(
                               fontSize: 11,
-                              color: minutes > 0 ? colors.textPrimary : colors.textSecondary.withValues(alpha: 0.5),
+                              color: minutes > 0
+                                  ? colors.textPrimary
+                                  : colors.textSecondary.withValues(alpha: 0.5),
                             ),
                           ),
                         ],
@@ -1674,8 +1663,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                       color: isDone
                           ? colors.sleepAccent
                           : (isCurrent
-                              ? colors.sleepAccent.withValues(alpha: 0.4)
-                              : colors.border.withValues(alpha: isDark ? 0.25 : 0.4)),
+                                ? colors.sleepAccent.withValues(alpha: 0.4)
+                                : colors.border.withValues(
+                                    alpha: isDark ? 0.25 : 0.4,
+                                  )),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -1705,7 +1696,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.sleepAccent.withValues(alpha: 0.15),
                     foregroundColor: colors.sleepAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
@@ -1879,7 +1873,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.sleepAccent.withValues(alpha: 0.15),
                   foregroundColor: colors.sleepAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
@@ -1949,8 +1946,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 isZeroData
                     ? Icons.bedtime_outlined
                     : (isDeficit
-                        ? Icons.battery_alert_rounded
-                        : Icons.battery_charging_full_rounded),
+                          ? Icons.battery_alert_rounded
+                          : Icons.battery_charging_full_rounded),
                 color: statusColor,
                 size: 18,
               ),
@@ -1964,8 +1961,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     isZeroData
                         ? 'ذخیرهٔ خواب: داده‌ای ثبت نشده است'
                         : (isDeficit
-                            ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
-                            : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
+                              ? 'کسری خواب: ${RitmoNumber.faHours(balance.abs())}'
+                              : 'ذخیرهٔ خواب: ${RitmoNumber.faHours(balance)}'),
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 13,
@@ -1978,8 +1975,8 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                     isZeroData
                         ? 'برای تنظیم هدف خواب و پایش ذخیره زیستی، کلیک کنید.'
                         : (isDeficit
-                            ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
-                            : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
+                              ? 'یک خواب جبرانی کوتاه می‌تواند به بازیابی کمک کند.'
+                              : 'خواب کافی در روزهای اخیر ذخیرهٔ خوبی ایجاد کرده است.'),
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 10,
@@ -2076,7 +2073,204 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
+  String _formatReflectionJalaliDate(String dateIso) {
+    final dt = DateTime.tryParse(dateIso);
+    if (dt == null) return RitmoNumber.fa(dateIso);
+    final j = Jalali.fromDateTime(dt);
+    const months = [
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
+    ];
+    const weekdays = [
+      'دوشنبه',
+      'سه‌شنبه',
+      'چهارشنبه',
+      'پنج‌شنبه',
+      'جمعه',
+      'شنبه',
+      'یک‌شنبه',
+    ];
+    final weekdayName = weekdays[dt.weekday - 1];
+    final monthName = months[j.month - 1];
+    return '$weekdayName، ${RitmoNumber.faInt(j.day)} $monthName ${RitmoNumber.faInt(j.year)}';
+  }
 
+  Widget _buildReflectionItemCard(BuildContext context, ReflectionEntry r) {
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final moodEmoji = r.moodScore == 1
+        ? '😫'
+        : r.moodScore == 2
+        ? '🥱'
+        : r.moodScore == 3
+        ? '😐'
+        : r.moodScore == 4
+        ? '🙂'
+        : (r.moodScore == 5 ? '🤩' : '📝');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
+      child: InkWell(
+        onTap: () => _showReflectionDetailSheet(context, r),
+        borderRadius: BorderRadius.circular(RitmoRadius.card),
+        child: Container(
+          padding: const EdgeInsets.all(RitmoSpacing.md),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(RitmoRadius.card),
+            border: Border.all(
+              color: colors.border.withValues(alpha: isDark ? 0.4 : 0.8),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(moodEmoji, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatReflectionJalaliDate(r.date),
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      if (r.isPrivate == 1) ...[
+                        Icon(
+                          Icons.lock_outline_rounded,
+                          size: 14,
+                          color: colors.textSecondary.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Icon(
+                        Icons.chevron_left,
+                        size: 18,
+                        color: colors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Structured Rows
+              if (r.wins != null && r.wins!.trim().isNotEmpty)
+                _buildReflectionChipRow(
+                  '🏆 دستاورد:',
+                  r.wins!,
+                  colors.success,
+                  colors,
+                ),
+              if (r.gratitude != null && r.gratitude!.trim().isNotEmpty)
+                _buildReflectionChipRow(
+                  '💖 شکرگزاری:',
+                  r.gratitude!,
+                  const Color(0xffEC4899),
+                  colors,
+                ),
+              if (r.challenges != null && r.challenges!.trim().isNotEmpty)
+                _buildReflectionChipRow(
+                  '⚡ چالش:',
+                  r.challenges!,
+                  colors.warning,
+                  colors,
+                ),
+              if (r.learnings != null && r.learnings!.trim().isNotEmpty)
+                _buildReflectionChipRow(
+                  '📚 یادگیری:',
+                  r.learnings!,
+                  colors.primary,
+                  colors,
+                ),
+              if (r.tomorrowFocus != null && r.tomorrowFocus!.trim().isNotEmpty)
+                _buildReflectionChipRow(
+                  '🎯 تمرکز فردا:',
+                  r.tomorrowFocus!,
+                  colors.sleepAccent,
+                  colors,
+                ),
+
+              if (r.reflectionText != null &&
+                  r.reflectionText!.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  r.reflectionText!,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Vazirmatn',
+                    fontSize: 12,
+                    color: colors.textPrimary.withValues(alpha: 0.9),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReflectionChipRow(
+    String label,
+    String content,
+    Color tagColor,
+    RitmoColors colors,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Vazirmatn',
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: tagColor,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Vazirmatn',
+                fontSize: 11.5,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showReflectionDetailSheet(
     BuildContext context,
@@ -2084,7 +2278,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   ) {
     RitmoSheetScaffold.present(
       context: context,
-      title: 'بازتاب روز ${RitmoNumber.fa(reflection.date)}',
+      title: 'بازتاب ${_formatReflectionJalaliDate(reflection.date)}',
       builder: (ctx) {
         final colors = ctx.colors;
         return Padding(
@@ -2093,22 +2287,24 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (reflection.goodThing != null) ...[
+              if (reflection.wins != null &&
+                  reflection.wins!.trim().isNotEmpty) ...[
                 Text(
-                  '💡 اتفاق خوب:',
-                  style: RitmoTextStyles.caption(colors.textSecondary),
+                  '🏆 دستاوردها و پیروزی‌ها:',
+                  style: RitmoTextStyles.caption(colors.success),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  reflection.goodThing!,
+                  reflection.wins!,
                   style: RitmoTextStyles.body(colors.textPrimary),
                 ),
                 const SizedBox(height: 12),
               ],
-              if (reflection.gratitude != null) ...[
+              if (reflection.gratitude != null &&
+                  reflection.gratitude!.trim().isNotEmpty) ...[
                 Text(
-                  '🙏 شکرگزاری:',
-                  style: RitmoTextStyles.caption(colors.textSecondary),
+                  '💖 شکرگزاری:',
+                  style: RitmoTextStyles.caption(const Color(0xffEC4899)),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -2117,14 +2313,54 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 ),
                 const SizedBox(height: 12),
               ],
-              if (reflection.challenges != null) ...[
+              if (reflection.challenges != null &&
+                  reflection.challenges!.trim().isNotEmpty) ...[
                 Text(
-                  '🌱 چالش و یادگیری:',
-                  style: RitmoTextStyles.caption(colors.textSecondary),
+                  '⚡ چالش‌ها و دشواری‌ها:',
+                  style: RitmoTextStyles.caption(colors.warning),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   reflection.challenges!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (reflection.learnings != null &&
+                  reflection.learnings!.trim().isNotEmpty) ...[
+                Text(
+                  '📚 یادگیری و درس‌آموخته:',
+                  style: RitmoTextStyles.caption(colors.primary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reflection.learnings!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (reflection.tomorrowFocus != null &&
+                  reflection.tomorrowFocus!.trim().isNotEmpty) ...[
+                Text(
+                  '🎯 تمرکز و اولویت فردا:',
+                  style: RitmoTextStyles.caption(colors.sleepAccent),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reflection.tomorrowFocus!,
+                  style: RitmoTextStyles.body(colors.textPrimary),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (reflection.reflectionText != null &&
+                  reflection.reflectionText!.trim().isNotEmpty) ...[
+                Text(
+                  '📝 یادداشت و دلنوشته:',
+                  style: RitmoTextStyles.caption(colors.textSecondary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reflection.reflectionText!,
                   style: RitmoTextStyles.body(colors.textPrimary),
                 ),
                 const SizedBox(height: 12),

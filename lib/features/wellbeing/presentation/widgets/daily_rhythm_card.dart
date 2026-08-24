@@ -6,10 +6,7 @@ import 'package:ritmo/core/util/ritmo_number.dart';
 
 /// کارت نمایش ریتم شبانه‌روزی ۲۴ ساعته با منحنی پیوسته انرژی، پنجرهٔ طلایی و پنجرهٔ افت
 class DailyRhythmCard extends StatelessWidget {
-  const DailyRhythmCard({
-    super.key,
-    required this.output,
-  });
+  const DailyRhythmCard({super.key, required this.output});
 
   final EnergyAnalyticsOutput? output;
 
@@ -21,7 +18,8 @@ class DailyRhythmCard extends StatelessWidget {
     final fatigued = out?.mostFatiguedWindow;
     final weekday = out?.mostProductiveWeekday;
 
-    final hasData = (golden != null && golden.isNotEmpty) ||
+    final hasData =
+        (golden != null && golden.isNotEmpty) ||
         (fatigued != null && fatigued.isNotEmpty);
 
     final goldenRange = _parseWindowRange(golden);
@@ -112,11 +110,36 @@ class DailyRhythmCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(RitmoNumber.fa('۰۰:۰۰'), style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 9.5)),
-              Text(RitmoNumber.fa('۰۶:۰۰'), style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 9.5)),
-              Text(RitmoNumber.fa('۱۲:۰۰'), style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 9.5)),
-              Text(RitmoNumber.fa('۱۸:۰۰'), style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 9.5)),
-              Text(RitmoNumber.fa('۲۴:۰۰'), style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontSize: 9.5)),
+              Text(
+                RitmoNumber.fa('۰۰:۰۰'),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(fontSize: 9.5),
+              ),
+              Text(
+                RitmoNumber.fa('۰۶:۰۰'),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(fontSize: 9.5),
+              ),
+              Text(
+                RitmoNumber.fa('۱۲:۰۰'),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(fontSize: 9.5),
+              ),
+              Text(
+                RitmoNumber.fa('۱۸:۰۰'),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(fontSize: 9.5),
+              ),
+              Text(
+                RitmoNumber.fa('۲۴:۰۰'),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(fontSize: 9.5),
+              ),
             ],
           ),
           const SizedBox(height: RitmoSpacing.md),
@@ -132,7 +155,11 @@ class DailyRhythmCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(CupertinoIcons.sparkles, size: 16, color: colors.primary),
+                  Icon(
+                    CupertinoIcons.sparkles,
+                    size: 16,
+                    color: colors.primary,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -308,7 +335,10 @@ class _CircadianWavePainter extends CustomPainter {
             const Color(0xff10B981).withValues(alpha: 0.04),
           ],
         ).createShader(rect);
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)), goldenPaint);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+        goldenPaint,
+      );
     }
 
     // 2. Draw Fatigued Window Shading
@@ -325,7 +355,10 @@ class _CircadianWavePainter extends CustomPainter {
             const Color(0xff8B5CF6).withValues(alpha: 0.03),
           ],
         ).createShader(rect);
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)), fatiguePaint);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+        fatiguePaint,
+      );
     }
 
     // 3. Draw Base Circadian Rhythm Sine Wave Curve
@@ -383,12 +416,21 @@ class _CircadianWavePainter extends CustomPainter {
     final currentHour = now.hour + (now.minute / 60.0);
     final currentX = (currentHour / 24.0) * width;
     final nowWave1 = math.sin((currentHour - 4.0) * (2 * math.pi / 24.0));
-    final nowWave2 = 0.35 * math.sin((currentHour - 8.0) * (4 * math.pi / 24.0));
+    final nowWave2 =
+        0.35 * math.sin((currentHour - 8.0) * (4 * math.pi / 24.0));
     final currentY = baselineY - (((nowWave1 + nowWave2) / 1.35) * amplitude);
 
     // Current Time Pulsing Dot
-    canvas.drawCircle(Offset(currentX, currentY), 6.5, Paint()..color = colors.surface);
-    canvas.drawCircle(Offset(currentX, currentY), 4.5, Paint()..color = colors.energyAccent);
+    canvas.drawCircle(
+      Offset(currentX, currentY),
+      6.5,
+      Paint()..color = colors.surface,
+    );
+    canvas.drawCircle(
+      Offset(currentX, currentY),
+      4.5,
+      Paint()..color = colors.energyAccent,
+    );
     canvas.drawCircle(
       Offset(currentX, currentY),
       8.0,
@@ -406,4 +448,3 @@ class _CircadianWavePainter extends CustomPainter {
         oldDelegate.colors != colors;
   }
 }
-

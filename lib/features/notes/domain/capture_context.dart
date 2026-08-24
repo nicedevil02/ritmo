@@ -47,7 +47,9 @@ class CaptureContext {
       energy: map['energy'] as int?,
       mood: map['mood'] as int?,
       sleepDebtMin: map['sleepDebtMin'] as int?,
-      activeSession: map['activeSession'] != null ? Map<String, dynamic>.from(map['activeSession'] as Map) : null,
+      activeSession: map['activeSession'] != null
+          ? Map<String, dynamic>.from(map['activeSession'] as Map)
+          : null,
       activeZone: map['activeZone'] as String?,
     );
   }
@@ -89,7 +91,9 @@ class CaptureContext {
       final db = await DatabaseHelper.instance.database;
 
       // 1. Fetch energy / mood (only if logged in the last 12 hours)
-      final recencyThresholdMs = now.subtract(const Duration(hours: 12)).millisecondsSinceEpoch;
+      final recencyThresholdMs = now
+          .subtract(const Duration(hours: 12))
+          .millisecondsSinceEpoch;
       final energyRows = await db.query(
         'energy_logs',
         where: 'loggedAt >= ?',
@@ -113,13 +117,16 @@ class CaptureContext {
       }
 
       // 2. Fetch active study session if exists
-      final studyTimerTables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='study_active_session';");
+      final studyTimerTables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='study_active_session';",
+      );
       if (studyTimerTables.isNotEmpty) {
         final activeRows = await db.query('study_active_session', limit: 1);
         if (activeRows.isNotEmpty) {
           final s = activeRows.first;
           final startMs = s['startedAt'] as int? ?? now.millisecondsSinceEpoch;
-          final elapsedMin = ((now.millisecondsSinceEpoch - startMs) / 60000).round();
+          final elapsedMin = ((now.millisecondsSinceEpoch - startMs) / 60000)
+              .round();
           activeSession = {
             'module': 'study',
             'entityId': s['subjectId'] ?? s['topicId'] ?? '',

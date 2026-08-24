@@ -96,8 +96,9 @@ class SleepTargetCard extends StatelessWidget {
                             'هدف و زمان‌بندی خواب',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: RitmoTextStyles.cardTitle(colors.textPrimary)
-                                .copyWith(fontSize: 13.5),
+                            style: RitmoTextStyles.cardTitle(
+                              colors.textPrimary,
+                            ).copyWith(fontSize: 13.5),
                           )
                         : FittedBox(
                             fit: BoxFit.scaleDown,

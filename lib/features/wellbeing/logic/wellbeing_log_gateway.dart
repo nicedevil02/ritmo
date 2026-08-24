@@ -87,6 +87,7 @@ class WellbeingLogGateway {
       final row = <String, Object?>{
         'id': id,
         'date': date,
+        'reason': 'ثبت خواب',
         'durationMinutes': durationMinutes,
         'quality': quality,
         'awakenings': awakenings,

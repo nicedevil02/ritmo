@@ -47,10 +47,17 @@ class NotesRepository {
     final trimmedBody = body.trim();
     final derivedTitle = title?.trim().isNotEmpty == true
         ? title!.trim()
-        : (trimmedBody.length > 40 ? '${trimmedBody.substring(0, 40)}...' : trimmedBody);
+        : (trimmedBody.length > 40
+              ? '${trimmedBody.substring(0, 40)}...'
+              : trimmedBody);
 
-    final captureContext = await CaptureContext.buildCurrent(activeZone: activeZone);
-    final wordCount = trimmedBody.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final captureContext = await CaptureContext.buildCurrent(
+      activeZone: activeZone,
+    );
+    final wordCount = trimmedBody
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
 
     final note = Note(
       id: id,
@@ -108,7 +115,12 @@ class NotesRepository {
 
   Future<Note?> getById(String id) async {
     final db = await _db;
-    final rows = await db.query('notes', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows = await db.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return Note.fromMap(rows.first);
   }
@@ -121,7 +133,9 @@ class NotesRepository {
     final trimmedBody = note.body.trim();
     final derivedTitle = note.title?.trim().isNotEmpty == true
         ? note.title!.trim()
-        : (trimmedBody.length > 40 ? '${trimmedBody.substring(0, 40)}...' : trimmedBody);
+        : (trimmedBody.length > 40
+              ? '${trimmedBody.substring(0, 40)}...'
+              : trimmedBody);
 
     if (existing != null) {
       final bodyChanged = existing.body != trimmedBody;
@@ -166,7 +180,10 @@ class NotesRepository {
       }
     }
 
-    final wordCount = trimmedBody.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final wordCount = trimmedBody
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
     final updatedNote = note.copyWith(
       title: derivedTitle,
       body: trimmedBody,
@@ -191,11 +208,7 @@ class NotesRepository {
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
     await db.update(
       'notes',
-      {
-        'status': 'TRASHED',
-        'trashedAt': nowMs,
-        'updatedAt': nowMs,
-      },
+      {'status': 'TRASHED', 'trashedAt': nowMs, 'updatedAt': nowMs},
       where: 'id = ?',
       whereArgs: [noteId],
     );
@@ -208,11 +221,7 @@ class NotesRepository {
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
     await db.update(
       'notes',
-      {
-        'status': 'ACTIVE',
-        'trashedAt': null,
-        'updatedAt': nowMs,
-      },
+      {'status': 'ACTIVE', 'trashedAt': null, 'updatedAt': nowMs},
       where: 'id = ?',
       whereArgs: [noteId],
     );
@@ -232,8 +241,11 @@ class NotesRepository {
 
   Future<void> purge({int daysOld = 30}) async {
     final db = await _db;
-    final thresholdMs = SystemClock().now().subtract(Duration(days: daysOld)).millisecondsSinceEpoch;
-    
+    final thresholdMs = SystemClock()
+        .now()
+        .subtract(Duration(days: daysOld))
+        .millisecondsSinceEpoch;
+
     final toPurge = await db.query(
       'notes',
       columns: ['id'],
@@ -257,13 +269,23 @@ class NotesRepository {
   Future<void> archive(String noteId) async {
     final db = await _db;
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
-    await db.update('notes', {'status': 'ARCHIVED', 'updatedAt': nowMs}, where: 'id = ?', whereArgs: [noteId]);
+    await db.update(
+      'notes',
+      {'status': 'ARCHIVED', 'updatedAt': nowMs},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
   }
 
   Future<void> unarchive(String noteId) async {
     final db = await _db;
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
-    await db.update('notes', {'status': 'ACTIVE', 'updatedAt': nowMs}, where: 'id = ?', whereArgs: [noteId]);
+    await db.update(
+      'notes',
+      {'status': 'ACTIVE', 'updatedAt': nowMs},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
     final note = await getById(noteId);
     if (note != null) {
       await NoteFtsEngine.instance.indexNote(note);
@@ -272,23 +294,36 @@ class NotesRepository {
 
   Future<void> pin(String noteId) async {
     final db = await _db;
-    await db.update('notes', {'isPinned': 1}, where: 'id = ?', whereArgs: [noteId]);
+    await db.update(
+      'notes',
+      {'isPinned': 1},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
   }
 
   Future<void> unpin(String noteId) async {
     final db = await _db;
-    await db.update('notes', {'isPinned': 0}, where: 'id = ?', whereArgs: [noteId]);
+    await db.update(
+      'notes',
+      {'isPinned': 0},
+      where: 'id = ?',
+      whereArgs: [noteId],
+    );
   }
 
   /// Records that the note was opened/read without tampering with `updatedAt`.
   Future<void> markOpened(String noteId) async {
     final db = await _db;
     final nowMs = SystemClock().now().millisecondsSinceEpoch;
-    await db.rawUpdate('''
+    await db.rawUpdate(
+      '''
       UPDATE notes
       SET openCount = openCount + 1, openedAt = ?
       WHERE id = ?
-    ''', [nowMs, noteId]);
+    ''',
+      [nowMs, noteId],
+    );
   }
 
   Future<List<Note>> listRecent({int limit = 30, int offset = 0}) async {
@@ -365,12 +400,15 @@ class NotesRepository {
 
   Future<List<Note>> listByTag(String tagNormalized) async {
     final db = await _db;
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT n.* FROM notes n
       INNER JOIN note_tags t ON n.id = t.noteId
       WHERE n.status = 'ACTIVE' AND t.tagNormalized = ?
       ORDER BY n.updatedAt DESC
-    ''', [tagNormalized.toLowerCase()]);
+    ''',
+      [tagNormalized.toLowerCase()],
+    );
     return rows.map((r) => Note.fromMap(r)).toList();
   }
 
@@ -387,8 +425,12 @@ class NotesRepository {
 
   Future<List<Note>> listOrphans({int minDays = 60}) async {
     final db = await _db;
-    final thresholdMs = SystemClock().now().subtract(Duration(days: minDays)).millisecondsSinceEpoch;
-    final rows = await db.rawQuery('''
+    final thresholdMs = SystemClock()
+        .now()
+        .subtract(Duration(days: minDays))
+        .millisecondsSinceEpoch;
+    final rows = await db.rawQuery(
+      '''
       SELECT n.* FROM notes n
       LEFT JOIN note_links l ON n.id = l.noteId
       WHERE n.status = 'ACTIVE'
@@ -396,7 +438,9 @@ class NotesRepository {
         AND n.createdAt <= ?
         AND l.id IS NULL
       ORDER BY n.createdAt DESC
-    ''', [thresholdMs]);
+    ''',
+      [thresholdMs],
+    );
     return rows.map((r) => Note.fromMap(r)).toList();
   }
 
@@ -425,21 +469,21 @@ class NotesRepository {
     );
   }
 
-  Future<void> addTag(String noteId, String tag, {String source = 'USER'}) async {
+  Future<void> addTag(
+    String noteId,
+    String tag, {
+    String source = 'USER',
+  }) async {
     final db = await _db;
     final norm = tag.trim().toLowerCase();
     if (norm.isEmpty) return;
-    await db.insert(
-      'note_tags',
-      {
-        'noteId': noteId,
-        'tag': tag.trim(),
-        'tagNormalized': norm,
-        'source': source,
-        'createdAt': SystemClock().now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('note_tags', {
+      'noteId': noteId,
+      'tag': tag.trim(),
+      'tagNormalized': norm,
+      'source': source,
+      'createdAt': SystemClock().now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
     final note = await getById(noteId);
     if (note != null) {
@@ -461,23 +505,23 @@ class NotesRepository {
     }
   }
 
-  Future<void> setTags(String noteId, List<String> tags, {String source = 'USER'}) async {
+  Future<void> setTags(
+    String noteId,
+    List<String> tags, {
+    String source = 'USER',
+  }) async {
     final db = await _db;
     await db.delete('note_tags', where: 'noteId = ?', whereArgs: [noteId]);
     for (final t in tags) {
       final norm = t.trim().toLowerCase();
       if (norm.isNotEmpty) {
-        await db.insert(
-          'note_tags',
-          {
-            'noteId': noteId,
-            'tag': t.trim(),
-            'tagNormalized': norm,
-            'source': source,
-            'createdAt': SystemClock().now().millisecondsSinceEpoch,
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore,
-        );
+        await db.insert('note_tags', {
+          'noteId': noteId,
+          'tag': t.trim(),
+          'tagNormalized': norm,
+          'source': source,
+          'createdAt': SystemClock().now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     }
 
@@ -506,19 +550,15 @@ class NotesRepository {
     String relation = 'MENTIONS',
   }) async {
     final db = await _db;
-    await db.insert(
-      'note_links',
-      {
-        'id': 'link_${_uuid.v4()}',
-        'noteId': noteId,
-        'linkModule': linkModule,
-        'linkEntityId': linkEntityId,
-        'linkAction': linkAction,
-        'relation': relation,
-        'createdAt': SystemClock().now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert('note_links', {
+      'id': 'link_${_uuid.v4()}',
+      'noteId': noteId,
+      'linkModule': linkModule,
+      'linkEntityId': linkEntityId,
+      'linkAction': linkAction,
+      'relation': relation,
+      'createdAt': SystemClock().now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   Future<void> removeLink(String linkId) async {
@@ -528,16 +568,44 @@ class NotesRepository {
 
   Future<List<NoteLink>> listLinks(String noteId) async {
     final db = await _db;
-    final rows = await db.query('note_links', where: 'noteId = ?', whereArgs: [noteId]);
+    final rows = await db.query(
+      'note_links',
+      where: 'noteId = ?',
+      whereArgs: [noteId],
+    );
     return rows.map((r) => NoteLink.fromMap(r)).toList();
   }
 
   Future<Map<String, int>> counts() async {
     final db = await _db;
-    final active = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM notes WHERE status = 'ACTIVE'")) ?? 0;
-    final archived = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM notes WHERE status = 'ARCHIVED'")) ?? 0;
-    final trashed = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM notes WHERE status = 'TRASHED'")) ?? 0;
-    final exp = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM notes WHERE kind = 'EXPERIENCE' AND status = 'ACTIVE'")) ?? 0;
+    final active =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM notes WHERE status = 'ACTIVE'",
+          ),
+        ) ??
+        0;
+    final archived =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM notes WHERE status = 'ARCHIVED'",
+          ),
+        ) ??
+        0;
+    final trashed =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM notes WHERE status = 'TRASHED'",
+          ),
+        ) ??
+        0;
+    final exp =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM notes WHERE kind = 'EXPERIENCE' AND status = 'ACTIVE'",
+          ),
+        ) ??
+        0;
     return {
       'active': active,
       'archived': archived,

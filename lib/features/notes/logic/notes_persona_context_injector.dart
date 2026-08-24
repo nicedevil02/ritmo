@@ -4,7 +4,8 @@ import 'package:ritmo/features/notes/logic/note_fts_engine.dart';
 
 class NotesPersonaContextInjector {
   NotesPersonaContextInjector._();
-  static final NotesPersonaContextInjector instance = NotesPersonaContextInjector._();
+  static final NotesPersonaContextInjector instance =
+      NotesPersonaContextInjector._();
 
   /// Builds context prompt text for AI personas (P-01, P-02).
   ///
@@ -24,18 +25,25 @@ class NotesPersonaContextInjector {
     }
 
     // Exclude private notes & cycle module notes (Decision 7)
-    final filtered = candidates.where((n) {
-      if (n.isPrivate) return false;
-      if (n.sourceModule?.toLowerCase() == 'cycle' && personaId.toLowerCase() != 'cycle') return false;
-      return true;
-    }).take(limit).toList();
+    final filtered = candidates
+        .where((n) {
+          if (n.isPrivate) return false;
+          if (n.sourceModule?.toLowerCase() == 'cycle' &&
+              personaId.toLowerCase() != 'cycle')
+            return false;
+          return true;
+        })
+        .take(limit)
+        .toList();
 
     if (filtered.isEmpty) return '';
 
     final sb = StringBuffer();
     sb.writeln('--- یادداشت‌ها و تجربه‌های مرتبط کاربر ---');
     for (final note in filtered) {
-      final kindLabel = note.kind == NoteKind.experience ? '[تجربه زندگی]' : '[یادداشت]';
+      final kindLabel = note.kind == NoteKind.experience
+          ? '[تجربه زندگی]'
+          : '[یادداشت]';
       sb.writeln('• $kindLabel ${note.title ?? ''}: ${note.body}');
     }
     sb.writeln('----------------------------------------');

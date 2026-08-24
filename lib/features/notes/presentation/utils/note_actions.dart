@@ -16,7 +16,8 @@ class NoteActions {
     final confirmed = await RitmoDialog.show(
       context,
       title: 'انتقال به سطل زباله',
-      content: 'آیا از انتقال یادداشت «${note.title ?? "بدون عنوان"}» به سطل زباله اطمینان دارید؟',
+      content:
+          'آیا از انتقال یادداشت «${note.title ?? "بدون عنوان"}» به سطل زباله اطمینان دارید؟',
       confirmLabel: 'انتقال به زباله',
       cancelLabel: 'انصراف',
       isDestructive: true,

@@ -80,8 +80,9 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'ارزیابی و چک‌این سریع امروز',
-                    style: RitmoTextStyles.cardTitle(colors.textPrimary)
-                        .copyWith(fontSize: 14),
+                    style: RitmoTextStyles.cardTitle(
+                      colors.textPrimary,
+                    ).copyWith(fontSize: 14),
                   ),
                 ],
               ),

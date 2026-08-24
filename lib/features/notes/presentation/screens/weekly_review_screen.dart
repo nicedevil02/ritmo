@@ -57,15 +57,15 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
           backgroundColor: colors.surface,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
             'مرور هفتگی دفترچه',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
           ),
         ),
         body: _isLoading
@@ -73,30 +73,45 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
             : RefreshIndicator(
                 onRefresh: _loadWeeklyReview,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.lg, 14, RitmoSpacing.xl),
+                  padding: const EdgeInsets.fromLTRB(
+                    14,
+                    RitmoSpacing.lg,
+                    14,
+                    RitmoSpacing.xl,
+                  ),
                   children: [
                     // Summary Banner
                     Container(
                       padding: const EdgeInsets.all(RitmoSpacing.lg),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [colors.primary.withValues(alpha: 0.15), colors.surface],
+                          colors: [
+                            colors.primary.withValues(alpha: 0.15),
+                            colors.surface,
+                          ],
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
                         ),
                         borderRadius: BorderRadius.circular(RitmoRadius.hero),
-                        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
+                              Icon(
+                                CupertinoIcons.sparkles,
+                                color: colors.primary,
+                                size: 20,
+                              ),
                               const SizedBox(width: RitmoSpacing.xs),
                               Text(
                                 'گزارش دستاوردهای ۷ روز اخیر',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colors.primary,
                                     ),
@@ -109,7 +124,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                               Expanded(
                                 child: _buildStatItem(
                                   label: 'یادداشت جدید',
-                                  value: PersianDigits.convert(_stats?.notesCreatedCount.toString() ?? '۰'),
+                                  value: PersianDigits.convert(
+                                    _stats?.notesCreatedCount.toString() ?? '۰',
+                                  ),
                                   icon: CupertinoIcons.doc_text,
                                 ),
                               ),
@@ -117,7 +134,10 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                               Expanded(
                                 child: _buildStatItem(
                                   label: 'درس زندگی',
-                                  value: PersianDigits.convert(_stats?.experiencesAddedCount.toString() ?? '۰'),
+                                  value: PersianDigits.convert(
+                                    _stats?.experiencesAddedCount.toString() ??
+                                        '۰',
+                                  ),
                                   icon: Icons.lightbulb_outline_rounded,
                                 ),
                               ),
@@ -125,7 +145,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                               Expanded(
                                 child: _buildStatItem(
                                   label: 'مجموع کلمات',
-                                  value: PersianDigits.convert(_stats?.wordCountSum.toString() ?? '۰'),
+                                  value: PersianDigits.convert(
+                                    _stats?.wordCountSum.toString() ?? '۰',
+                                  ),
                                   icon: CupertinoIcons.pencil,
                                 ),
                               ),
@@ -140,7 +162,8 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                     if (_stats != null && _stats!.topTags.isNotEmpty) ...[
                       Text(
                         'موضوعات و برچسب‌های پرکاربرد هفته',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
                             ),
@@ -165,11 +188,16 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(CupertinoIcons.archivebox, size: 16, color: colors.textPrimary),
+                            Icon(
+                              CupertinoIcons.archivebox,
+                              size: 16,
+                              color: colors.textPrimary,
+                            ),
                             const SizedBox(width: RitmoSpacing.xs),
                             Text(
                               'صف مرور یادداشت‌های خاک‌خورده',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
                                   ),
@@ -177,14 +205,20 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs / 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.sm,
+                            vertical: RitmoSpacing.xs / 2,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.badge,
+                            ),
                           ),
                           child: Text(
                             '${PersianDigits.convert(_orphanNotes.length.toString())} مورد',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: colors.primary,
                                 ),
@@ -195,7 +229,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                     const SizedBox(height: RitmoSpacing.xs / 2),
                     Text(
                       'یادداشت‌هایی که بیش از ۳۰ روز است باز نشده‌اند و پیوندی ندارند.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: RitmoSpacing.sm),
 
@@ -209,14 +245,15 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                         child: Center(
                           child: Text(
                             'هیچ یادداشت خاک‌خورده‌ای نداری! دفترچه‌ات کاملاً به‌روز است.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: colors.textSecondary,
-                                ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: colors.textSecondary),
                           ),
                         ),
                       )
                     else
-                      ..._orphanNotes.map((note) => _buildOrphanCard(context, note)),
+                      ..._orphanNotes.map(
+                        (note) => _buildOrphanCard(context, note),
+                      ),
                   ],
                 ),
               ),
@@ -231,7 +268,10 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   }) {
     final colors = context.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm, horizontal: RitmoSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        vertical: RitmoSpacing.sm,
+        horizontal: RitmoSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: colors.surfaceSunken,
         borderRadius: BorderRadius.circular(RitmoRadius.card),
@@ -244,15 +284,15 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: colors.primary,
+            ),
           ),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -277,9 +317,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                 child: Text(
                   note.title ?? 'بدون عنوان',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -290,9 +330,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.textSecondary,
-                  height: 1.4,
-                ),
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: RitmoSpacing.sm),
           Row(
@@ -304,11 +344,16 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   if (!context.mounted) return;
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                    MaterialPageRoute(
+                      builder: (_) => NoteEditorScreen(note: note),
+                    ),
                   );
                   await _loadWeeklyReview();
                 },
-                child: Text('مشاهده و ویرایش', style: Theme.of(context).textTheme.labelSmall),
+                child: Text(
+                  'مشاهده و ویرایش',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
               TextButton(
                 onPressed: () async {
@@ -319,7 +364,10 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   }
                   await _loadWeeklyReview();
                 },
-                child: Text('آرشیو', style: Theme.of(context).textTheme.labelSmall),
+                child: Text(
+                  'آرشیو',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
               TextButton(
                 onPressed: () {
@@ -327,9 +375,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                 },
                 child: Text(
                   'حذف',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colors.error,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: colors.error),
                 ),
               ),
             ],
@@ -339,4 +387,3 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     );
   }
 }
-

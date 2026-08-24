@@ -15,16 +15,14 @@ import 'package:shamsi_date/shamsi_date.dart';
 class NoteTrashArchiveScreen extends StatefulWidget {
   final int initialTabIndex; // 0 for Trash, 1 for Archive
 
-  const NoteTrashArchiveScreen({
-    super.key,
-    this.initialTabIndex = 0,
-  });
+  const NoteTrashArchiveScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<NoteTrashArchiveScreen> createState() => _NoteTrashArchiveScreenState();
 }
 
-class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with SingleTickerProviderStateMixin {
+class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Note> _trashedNotes = [];
   List<Note> _archivedNotes = [];
@@ -33,7 +31,11 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -68,7 +70,8 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     final confirmed = await RitmoDialog.show(
       context,
       title: 'تخلیه کامل سطل زباله',
-      content: 'آیا از حذف قطعی تمامی یادداشت‌های سطل زباله و فایل‌های پیوست آن‌ها اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
+      content:
+          'آیا از حذف قطعی تمامی یادداشت‌های سطل زباله و فایل‌های پیوست آن‌ها اطمینان دارید؟ این عمل غیرقابل بازگشت است.',
       confirmLabel: 'تخلیه کامل',
       cancelLabel: 'انصراف',
       isDestructive: true,
@@ -88,7 +91,8 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     final confirmed = await RitmoDialog.show(
       context,
       title: 'حذف دائمی یادداشت',
-      content: 'یادداشت «${note.title ?? "بدون عنوان"}» و پیوست‌های آن برای همیشه حذف خواهند شد.',
+      content:
+          'یادداشت «${note.title ?? "بدون عنوان"}» و پیوست‌های آن برای همیشه حذف خواهند شد.',
       confirmLabel: 'حذف دائمی',
       cancelLabel: 'انصراف',
       isDestructive: true,
@@ -183,7 +187,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                             fontSize: 18.5,
                             fontWeight: FontWeight.w900,
                             color: colors.textPrimary,
-                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -194,7 +198,10 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                           onTap: _confirmPurgeAll,
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.error.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
@@ -206,7 +213,11 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(CupertinoIcons.trash_slash, size: 14, color: colors.error),
+                                Icon(
+                                  CupertinoIcons.trash_slash,
+                                  size: 14,
+                                  color: colors.error,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'تخلیه کامل',
@@ -227,17 +238,17 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
 
               // Segmented Tab Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 child: Container(
                   height: 44,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: colors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                   child: TabBar(
                     controller: _tabController,
@@ -252,12 +263,26 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                       ),
                     ),
                     labelColor: isDark ? colors.accent : colors.primary,
-                    unselectedLabelColor: colors.textSecondary.withValues(alpha: 0.7),
-                    labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                    unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    unselectedLabelColor: colors.textSecondary.withValues(
+                      alpha: 0.7,
+                    ),
+                    labelStyle: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                     tabs: [
-                      Tab(text: 'سطل زباله (${PersianDigits.convert(_trashedNotes.length.toString())})'),
-                      Tab(text: 'بایگانی (${PersianDigits.convert(_archivedNotes.length.toString())})'),
+                      Tab(
+                        text:
+                            'سطل زباله (${PersianDigits.convert(_trashedNotes.length.toString())})',
+                      ),
+                      Tab(
+                        text:
+                            'بایگانی (${PersianDigits.convert(_archivedNotes.length.toString())})',
+                      ),
                     ],
                   ),
                 ),
@@ -326,10 +351,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.border,
-                width: 1,
-              ),
+              border: Border.all(color: colors.border, width: 1),
               boxShadow: [
                 BoxShadow(
                   color: colors.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
@@ -385,8 +407,17 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                     if (isTrash) ...[
                       TextButton.icon(
                         onPressed: () => _restoreNote(note.id),
-                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 13),
-                        label: const Text('بازیابی', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        icon: const Icon(
+                          CupertinoIcons.arrow_counterclockwise,
+                          size: 13,
+                        ),
+                        label: const Text(
+                          'بازیابی',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                           foregroundColor: colors.success,
@@ -396,7 +427,13 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                       TextButton.icon(
                         onPressed: () => _confirmPermanentDelete(note),
                         icon: const Icon(CupertinoIcons.delete, size: 13),
-                        label: const Text('حذف قطعی', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'حذف قطعی',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                           foregroundColor: colors.error,
@@ -406,7 +443,13 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                       TextButton.icon(
                         onPressed: () => _unarchiveNote(note.id),
                         icon: const Icon(CupertinoIcons.arrow_up_doc, size: 13),
-                        label: const Text('خروج از بایگانی', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'خروج از بایگانی',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                           foregroundColor: colors.accent,
@@ -416,7 +459,13 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
                       TextButton.icon(
                         onPressed: () => _trashNote(note.id),
                         icon: const Icon(CupertinoIcons.trash, size: 13),
-                        label: const Text('انتقال به سطل زباله', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                        label: const Text(
+                          'انتقال به سطل زباله',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact,
                           foregroundColor: colors.error,

@@ -61,7 +61,7 @@ class WellbeingDailyRecord {
 /// مخزن دادهٔ تاریخچهٔ شاخص حال و تعادل (`wellbeing_daily`)
 class WellbeingDailyRepository {
   WellbeingDailyRepository({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+    : _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   final DatabaseHelper _dbHelper;
 
@@ -101,7 +101,7 @@ class WellbeingDailyRepository {
           'score': c.score,
           'weight': c.weight,
           'confidence': c.confidence,
-        }
+        },
     ];
 
     final record = WellbeingDailyRecord(
@@ -129,7 +129,10 @@ class WellbeingDailyRepository {
   }
 
   /// بارگذاری بازه‌ای از سطور تاریخچهٔ شاخص
-  Future<List<WellbeingDailyRecord>> loadRange(DateTime from, DateTime to) async {
+  Future<List<WellbeingDailyRecord>> loadRange(
+    DateTime from,
+    DateTime to,
+  ) async {
     final fromStr = RitmoDate.dayKey(from);
     final toStr = RitmoDate.dayKey(to);
 
@@ -144,13 +147,21 @@ class WellbeingDailyRepository {
 
       return rows.map((r) => WellbeingDailyRecord.fromMap(r)).toList();
     } catch (e, st) {
-      RitmoLog.error('WellbeingDaily', 'خطا در خواندن بازه تاریخچه شاخص', e, st);
+      RitmoLog.error(
+        'WellbeingDaily',
+        'خطا در خواندن بازه تاریخچه شاخص',
+        e,
+        st,
+      );
       return [];
     }
   }
 
   /// بارگذاری سطور تاریخچهٔ اخیر بر حسب تعداد روز
-  Future<List<WellbeingDailyRecord>> loadRecent(int days, {DateTime? now}) async {
+  Future<List<WellbeingDailyRecord>> loadRecent(
+    int days, {
+    DateTime? now,
+  }) async {
     final end = now ?? DateTime.now();
     final start = end.subtract(Duration(days: days - 1));
     return loadRange(start, end);

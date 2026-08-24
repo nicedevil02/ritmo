@@ -2,12 +2,7 @@ import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 
-enum ReviewFeedback {
-  forgotten,
-  hard,
-  good,
-  easy,
-}
+enum ReviewFeedback { forgotten, hard, good, easy }
 
 class SpacedRepetitionEngine {
   SpacedRepetitionEngine._();
@@ -16,7 +11,10 @@ class SpacedRepetitionEngine {
   static const List<int> _stageIntervalDays = [0, 1, 3, 7, 14, 30, 60, 120];
 
   /// Calculates next review stage and target DateTime (R-01).
-  Map<String, dynamic> calculateNextReview(int currentStage, ReviewFeedback feedback) {
+  Map<String, dynamic> calculateNextReview(
+    int currentStage,
+    ReviewFeedback feedback,
+  ) {
     int nextStage = currentStage;
     int daysAdd = 1;
 
@@ -27,7 +25,11 @@ class SpacedRepetitionEngine {
         break;
       case ReviewFeedback.hard:
         nextStage = currentStage;
-        final base = _stageIntervalDays[currentStage.clamp(0, _stageIntervalDays.length - 1)];
+        final base =
+            _stageIntervalDays[currentStage.clamp(
+              0,
+              _stageIntervalDays.length - 1,
+            )];
         daysAdd = (base * 0.8).round().clamp(1, 120);
         break;
       case ReviewFeedback.good:
@@ -47,7 +49,10 @@ class SpacedRepetitionEngine {
     };
   }
 
-  Future<void> scheduleNextReview(String noteId, ReviewFeedback feedback) async {
+  Future<void> scheduleNextReview(
+    String noteId,
+    ReviewFeedback feedback,
+  ) async {
     final note = await NotesRepository.instance.getById(noteId);
     if (note == null) return;
 

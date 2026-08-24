@@ -10,11 +10,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 
 /// Card widget to display a single past note (M-01).
 class ModuleNoteHistoryTile extends StatelessWidget {
-  const ModuleNoteHistoryTile({
-    super.key,
-    required this.note,
-    this.onTap,
-  });
+  const ModuleNoteHistoryTile({super.key, required this.note, this.onTap});
 
   final BridgedNote note;
   final VoidCallback? onTap;
@@ -67,7 +63,10 @@ class ModuleNoteHistoryTile extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.sm, vertical: RitmoSpacing.xs / 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.sm,
+                    vertical: RitmoSpacing.xs / 2,
+                  ),
                   margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.15),
@@ -76,13 +75,17 @@ class ModuleNoteHistoryTile extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.menu_book_rounded, size: 12, color: colors.primary),
+                      Icon(
+                        Icons.menu_book_rounded,
+                        size: 12,
+                        color: colors.primary,
+                      ),
                       const SizedBox(width: RitmoSpacing.xs),
                       Text(
                         'دفترچه',
-                        style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                              color: colors.primary,
-                            ),
+                        style: Theme.of(
+                          ctx,
+                        ).textTheme.labelSmall?.copyWith(color: colors.primary),
                       ),
                     ],
                   ),
@@ -92,9 +95,9 @@ class ModuleNoteHistoryTile extends StatelessWidget {
               note.text,
               textDirection: TextDirection.rtl,
               style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                    height: 1.6,
-                    color: colors.textPrimary,
-                  ),
+                height: 1.6,
+                color: colors.textPrimary,
+              ),
             ),
             const SizedBox(height: RitmoSpacing.xl),
             RitmoPrimaryButton(
@@ -124,7 +127,11 @@ class ModuleNoteHistoryTile extends StatelessWidget {
             padding: const EdgeInsets.all(RitmoSpacing.md),
             child: Row(
               children: [
-                Icon(_getModuleIcon(note.sourceModule), size: 18, color: colors.primary),
+                Icon(
+                  _getModuleIcon(note.sourceModule),
+                  size: 18,
+                  color: colors.primary,
+                ),
                 const SizedBox(width: RitmoSpacing.md),
                 Expanded(
                   child: Column(
@@ -136,15 +143,15 @@ class ModuleNoteHistoryTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         textDirection: TextDirection.rtl,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colors.textPrimary,
-                            ),
+                          color: colors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: RitmoSpacing.xs),
                       Text(
                         _formatJalali(note.createdAt),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.textSecondary,
-                            ),
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -170,7 +177,8 @@ class ModuleNoteHistorySection extends StatefulWidget {
   final String entityId;
 
   @override
-  State<ModuleNoteHistorySection> createState() => _ModuleNoteHistorySectionState();
+  State<ModuleNoteHistorySection> createState() =>
+      _ModuleNoteHistorySectionState();
 }
 
 class _ModuleNoteHistorySectionState extends State<ModuleNoteHistorySection> {
@@ -185,7 +193,8 @@ class _ModuleNoteHistorySectionState extends State<ModuleNoteHistorySection> {
   @override
   void didUpdateWidget(covariant ModuleNoteHistorySection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.module != widget.module || oldWidget.entityId != widget.entityId) {
+    if (oldWidget.module != widget.module ||
+        oldWidget.entityId != widget.entityId) {
       _loadNotes();
     }
   }
@@ -215,9 +224,9 @@ class _ModuleNoteHistorySectionState extends State<ModuleNoteHistorySection> {
             child: Text(
               'هنوز یادداشتی برای این مورد ثبت نکردی.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
             ),
           );
         }

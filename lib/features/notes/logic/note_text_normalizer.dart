@@ -6,8 +6,30 @@
 class NoteTextNormalizer {
   NoteTextNormalizer._();
 
-  static const _persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  static const _arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  static const _persianDigits = [
+    '۰',
+    '۱',
+    '۲',
+    '۳',
+    '۴',
+    '۵',
+    '۶',
+    '۷',
+    '۸',
+    '۹',
+  ];
+  static const _arabicDigits = [
+    '٠',
+    '١',
+    '٢',
+    '٣',
+    '٤',
+    '٥',
+    '٦',
+    '٧',
+    '٨',
+    '٩',
+  ];
 
   static const _stemSuffixes = [
     'هایشان',
@@ -33,7 +55,6 @@ class NoteTextNormalizer {
     'اش',
     'را',
   ];
-
 
   static String forIndex(String input) {
     if (input.isEmpty) return '';
@@ -66,7 +87,6 @@ class NoteTextNormalizer {
 
     // 5. Punctuation -> space
     text = text.replaceAll(RegExp(r'''[،؛؟«»"'()\[\]{}<>\/\\\|—–_*\#]'''), ' ');
-
 
     // 6. Compress spaces & toLowerCase
     text = text.replaceAll(RegExp(r'\s+'), ' ').trim().toLowerCase();

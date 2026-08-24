@@ -21,11 +21,7 @@ class NotesActionRail extends StatelessWidget {
   final List<NotesActionItem> items;
   final Widget? trailing;
 
-  const NotesActionRail({
-    super.key,
-    required this.items,
-    this.trailing,
-  });
+  const NotesActionRail({super.key, required this.items, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +35,7 @@ class NotesActionRail extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: isDark ? 0.92 : 0.95),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: colors.border,
-            width: 1,
-          ),
+          border: Border.all(color: colors.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: colors.shadow.withValues(alpha: isDark ? 0.3 : 0.08),
@@ -58,18 +51,21 @@ class NotesActionRail extends StatelessWidget {
               _buildActionItem(context, items[i], colors, isDark),
               if (i < items.length - 1) const SizedBox(width: 4),
             ],
-            if (trailing != null) ...[
-              const SizedBox(width: 4),
-              trailing!,
-            ],
+            if (trailing != null) ...[const SizedBox(width: 4), trailing!],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionItem(BuildContext context, NotesActionItem item, RitmoColors colors, bool isDark) {
-    final itemColor = item.color ?? (item.isPrimary ? colors.primary : colors.textSecondary);
+  Widget _buildActionItem(
+    BuildContext context,
+    NotesActionItem item,
+    RitmoColors colors,
+    bool isDark,
+  ) {
+    final itemColor =
+        item.color ?? (item.isPrimary ? colors.primary : colors.textSecondary);
 
     return Material(
       color: Colors.transparent,
@@ -80,10 +76,7 @@ class NotesActionRail extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: item.isPrimary
               ? BoxDecoration(
                   color: itemColor.withValues(alpha: isDark ? 0.2 : 0.12),
@@ -103,7 +96,9 @@ class NotesActionRail extends StatelessWidget {
                 item.label,
                 style: TextStyle(
                   fontSize: 11.5,
-                  fontWeight: item.isPrimary ? FontWeight.bold : FontWeight.w500,
+                  fontWeight: item.isPrimary
+                      ? FontWeight.bold
+                      : FontWeight.w500,
                   color: itemColor,
                 ),
               ),

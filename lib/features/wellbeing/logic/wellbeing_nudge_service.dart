@@ -6,11 +6,9 @@ import 'package:sqflite/sqflite.dart';
 
 /// سرویس ارسال و مدیریت یادآورهای ملایم روزانهٔ حال، انرژی و بازتاب
 class WellbeingNudgeService {
-  WellbeingNudgeService({
-    SettingsService? settings,
-    DatabaseHelper? dbHelper,
-  })  : _settings = settings ?? SettingsService.instance,
-        _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  WellbeingNudgeService({SettingsService? settings, DatabaseHelper? dbHelper})
+    : _settings = settings ?? SettingsService.instance,
+      _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   static final WellbeingNudgeService instance = WellbeingNudgeService();
 
@@ -74,19 +72,23 @@ class WellbeingNudgeService {
   Future<bool> _hasLoggedToday(String todayStr) async {
     try {
       final db = await _dbHelper.database;
-      final energyCount = Sqflite.firstIntValue(
-        await db.rawQuery(
-          'SELECT COUNT(*) FROM energy_logs WHERE date = ?',
-          [todayStr],
-        ),
-      ) ?? 0;
+      final energyCount =
+          Sqflite.firstIntValue(
+            await db.rawQuery(
+              'SELECT COUNT(*) FROM energy_logs WHERE date = ?',
+              [todayStr],
+            ),
+          ) ??
+          0;
 
-      final reflectionCount = Sqflite.firstIntValue(
-        await db.rawQuery(
-          'SELECT COUNT(*) FROM daily_reflections WHERE date = ?',
-          [todayStr],
-        ),
-      ) ?? 0;
+      final reflectionCount =
+          Sqflite.firstIntValue(
+            await db.rawQuery(
+              'SELECT COUNT(*) FROM daily_reflections WHERE date = ?',
+              [todayStr],
+            ),
+          ) ??
+          0;
 
       return energyCount > 0 || reflectionCount > 0;
     } catch (_) {

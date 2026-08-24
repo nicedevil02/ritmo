@@ -12,16 +12,15 @@ class RitmoShimmer extends StatefulWidget {
   State<RitmoShimmer> createState() => _RitmoShimmerState();
 }
 
-class _RitmoShimmerState extends State<RitmoShimmer> with SingleTickerProviderStateMixin {
+class _RitmoShimmerState extends State<RitmoShimmer>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: _kShimmerPeriod,
-    )..repeat();
+    _controller = AnimationController(vsync: this, duration: _kShimmerPeriod)
+      ..repeat();
   }
 
   @override
@@ -37,8 +36,12 @@ class _RitmoShimmerState extends State<RitmoShimmer> with SingleTickerProviderSt
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04);
-    final highlightColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.09);
+    final baseColor = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.04);
+    final highlightColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.09);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -54,11 +57,7 @@ class _RitmoShimmerState extends State<RitmoShimmer> with SingleTickerProviderSt
                 _controller.value.clamp(0.0, 1.0),
                 (_controller.value + 0.3).clamp(0.0, 1.0),
               ],
-              colors: [
-                baseColor,
-                highlightColor,
-                baseColor,
-              ],
+              colors: [baseColor, highlightColor, baseColor],
             ).createShader(bounds);
           },
           child: child,
@@ -201,10 +200,10 @@ class RitmoShimmerList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(RitmoSpacing.lg),
         itemCount: count,
-        separatorBuilder: (context, index) => const SizedBox(height: RitmoSpacing.md),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: RitmoSpacing.md),
         itemBuilder: (context, index) => const RitmoShimmerCard(height: 100),
       ),
     );
   }
 }
-

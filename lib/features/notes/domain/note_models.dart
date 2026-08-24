@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 class _Unset {
   const _Unset();
 }
+
 const Object _unset = _Unset();
 
 enum NoteKind {
@@ -10,7 +11,8 @@ enum NoteKind {
   daily('DAILY'),
   experience('EXPERIENCE'),
   idea('IDEA'),
-  decision('DECISION');
+  decision('DECISION'),
+  gratitude('GRATITUDE');
 
   final String value;
   const NoteKind(this.value);
@@ -147,17 +149,29 @@ class Note {
       isPrivate: isPrivate ?? this.isPrivate,
       isPinned: isPinned ?? this.isPinned,
       dayKey: identical(dayKey, _unset) ? this.dayKey : dayKey as String?,
-      sourceModule: identical(sourceModule, _unset) ? this.sourceModule : sourceModule as String?,
-      sourceEntityId: identical(sourceEntityId, _unset) ? this.sourceEntityId : sourceEntityId as String?,
-      captureContextJson: identical(captureContextJson, _unset) ? this.captureContextJson : captureContextJson as String?,
+      sourceModule: identical(sourceModule, _unset)
+          ? this.sourceModule
+          : sourceModule as String?,
+      sourceEntityId: identical(sourceEntityId, _unset)
+          ? this.sourceEntityId
+          : sourceEntityId as String?,
+      captureContextJson: identical(captureContextJson, _unset)
+          ? this.captureContextJson
+          : captureContextJson as String?,
       wordCount: wordCount ?? this.wordCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      openedAt: identical(openedAt, _unset) ? this.openedAt : openedAt as DateTime?,
+      openedAt: identical(openedAt, _unset)
+          ? this.openedAt
+          : openedAt as DateTime?,
       openCount: openCount ?? this.openCount,
-      reviewAt: identical(reviewAt, _unset) ? this.reviewAt : reviewAt as DateTime?,
+      reviewAt: identical(reviewAt, _unset)
+          ? this.reviewAt
+          : reviewAt as DateTime?,
       reviewStage: reviewStage ?? this.reviewStage,
-      trashedAt: identical(trashedAt, _unset) ? this.trashedAt : trashedAt as DateTime?,
+      trashedAt: identical(trashedAt, _unset)
+          ? this.trashedAt
+          : trashedAt as DateTime?,
     );
   }
 
@@ -205,11 +219,17 @@ class Note {
       wordCount: (map['wordCount'] as int?) ?? 0,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
-      openedAt: map['openedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(map['openedAt'] as int) : null,
+      openedAt: map['openedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['openedAt'] as int)
+          : null,
       openCount: (map['openCount'] as int?) ?? 0,
-      reviewAt: map['reviewAt'] != null ? DateTime.fromMillisecondsSinceEpoch(map['reviewAt'] as int) : null,
+      reviewAt: map['reviewAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['reviewAt'] as int)
+          : null,
       reviewStage: (map['reviewStage'] as int?) ?? 0,
-      trashedAt: map['trashedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(map['trashedAt'] as int) : null,
+      trashedAt: map['trashedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['trashedAt'] as int)
+          : null,
     );
   }
 }
@@ -415,13 +435,19 @@ class Experience {
     return Experience(
       noteId: noteId ?? this.noteId,
       lesson: lesson ?? this.lesson,
-      contextText: identical(contextText, _unset) ? this.contextText : contextText as String?,
+      contextText: identical(contextText, _unset)
+          ? this.contextText
+          : contextText as String?,
       category: category ?? this.category,
       importance: importance ?? this.importance,
-      occurredOnDayKey: identical(occurredOnDayKey, _unset) ? this.occurredOnDayKey : occurredOnDayKey as String?,
+      occurredOnDayKey: identical(occurredOnDayKey, _unset)
+          ? this.occurredOnDayKey
+          : occurredOnDayKey as String?,
       isActive: isActive ?? this.isActive,
       showCount: showCount ?? this.showCount,
-      lastShownAtDayKey: identical(lastShownAtDayKey, _unset) ? this.lastShownAtDayKey : lastShownAtDayKey as String?,
+      lastShownAtDayKey: identical(lastShownAtDayKey, _unset)
+          ? this.lastShownAtDayKey
+          : lastShownAtDayKey as String?,
       acknowledgedCount: acknowledgedCount ?? this.acknowledgedCount,
     );
   }

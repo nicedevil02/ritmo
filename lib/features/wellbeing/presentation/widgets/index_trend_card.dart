@@ -88,7 +88,8 @@ class IndexTrendCard extends StatelessWidget {
       final mid = validRecords.length ~/ 2;
       final firstHalf = validRecords.sublist(0, mid);
       final secondHalf = validRecords.sublist(mid);
-      final avg1 = firstHalf.map((r) => r.indexValue!).reduce((a, b) => a + b) /
+      final avg1 =
+          firstHalf.map((r) => r.indexValue!).reduce((a, b) => a + b) /
           firstHalf.length;
       final avg2 =
           secondHalf.map((r) => r.indexValue!).reduce((a, b) => a + b) /
@@ -105,7 +106,10 @@ class IndexTrendCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('آخرین شاخص', style: RitmoTextStyles.caption(colors.textSecondary)),
+            Text(
+              'آخرین شاخص',
+              style: RitmoTextStyles.caption(colors.textSecondary),
+            ),
             const SizedBox(height: 2),
             Text(
               '${RitmoNumber.faInt(latest.round())} از ۱۰۰',
@@ -116,7 +120,10 @@ class IndexTrendCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('میانگین بازه', style: RitmoTextStyles.caption(colors.textSecondary)),
+            Text(
+              'میانگین بازه',
+              style: RitmoTextStyles.caption(colors.textSecondary),
+            ),
             const SizedBox(height: 2),
             Text(
               '${RitmoNumber.faInt(avg.round())}٪',
@@ -128,7 +135,10 @@ class IndexTrendCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('تغییرات', style: RitmoTextStyles.caption(colors.textSecondary)),
+              Text(
+                'تغییرات',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
               const SizedBox(height: 2),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

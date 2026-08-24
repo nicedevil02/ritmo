@@ -34,7 +34,8 @@ class NotebookScreen extends StatefulWidget {
   State<NotebookScreen> createState() => _NotebookScreenState();
 }
 
-class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProviderStateMixin {
+class _NotebookScreenState extends State<NotebookScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   // --- Tab 0 (Notes) State ---
@@ -64,7 +65,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   WeeklyReviewStats? _weeklyStats;
   List<Note> _dustyNotes = [];
   int _dueNotesCount = 0;
-  int _dustyNotesCount = 0;
   int _createdThisWeekCount = 0;
   int _archivedCount = 0;
   int _trashCount = 0;
@@ -110,11 +110,13 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   void _onScrollChanged() {
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       if (!_isFabCompact) {
         setState(() => _isFabCompact = true);
       }
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (_isFabCompact) {
         setState(() => _isFabCompact = false);
       }
@@ -122,11 +124,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   Future<void> _loadAllData() async {
-    await Future.wait([
-      _loadNotes(),
-      _loadExperiences(),
-      _loadReviewStats(),
-    ]);
+    await Future.wait([_loadNotes(), _loadExperiences(), _loadReviewStats()]);
   }
 
   // --- Load Notes (Tab 0) ---
@@ -194,7 +192,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           ? exps.where((e) => e.noteId == _featuredExp!.noteId).firstOrNull
           : null;
       if (featured == null && exps.isNotEmpty) {
-        featured = (exps.where((e) => e.isActive && e.importance >= 4).toList()..shuffle()).firstOrNull ?? exps.first;
+        featured =
+            (exps.where((e) => e.isActive && e.importance >= 4).toList()
+                  ..shuffle())
+                .firstOrNull ??
+            exps.first;
       }
       if (mounted) {
         setState(() {
@@ -231,7 +233,6 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           _dueNotesCount = due.length;
           _weeklyStats = stats;
           _dustyNotes = orphans;
-          _dustyNotesCount = orphans.length;
           _createdThisWeekCount = stats.notesCreatedCount;
           _archivedCount = archived.length;
           _trashCount = trash.length;
@@ -253,7 +254,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final persona = PersonaRegistry.instance.getPersona('notes') ?? PersonaRegistry.instance.getPersona('global')!;
+        final persona =
+            PersonaRegistry.instance.getPersona('notes') ??
+            PersonaRegistry.instance.getPersona('global')!;
         return AssistantSheet(persona: persona);
       },
     );
@@ -264,7 +267,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final totalActiveCount = _countsByKind.values.fold<int>(0, (sum, c) => sum + c);
+    final totalActiveCount = _countsByKind.values.fold<int>(
+      0,
+      (sum, c) => sum + c,
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -322,7 +328,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.4,
                                 color: colors.textPrimary,
-                                ),
+                              ),
                             ),
                             if (totalActiveCount > 0)
                               Text(
@@ -330,8 +336,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: colors.textSecondary.withValues(alpha: 0.7),
+                                  color: colors.textSecondary.withValues(
+                                    alpha: 0.7,
                                   ),
+                                ),
                               ),
                           ],
                         ),
@@ -345,17 +353,24 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         onTap: _openAiAssistantSheet,
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.primaryContainer,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: colors.primary.withValues(alpha: isDark ? 0.45 : 0.35),
+                              color: colors.primary.withValues(
+                                alpha: isDark ? 0.45 : 0.35,
+                              ),
                               width: 1,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                                color: colors.primary.withValues(
+                                  alpha: isDark ? 0.12 : 0.08,
+                                ),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -376,7 +391,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
                                   color: colors.primary,
-                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -391,20 +406,22 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
               // 2. Modern Segmented Tab Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 child: Container(
                   height: 46,
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: colors.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: colors.border, width: 1),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.shadow.withValues(alpha: isDark ? 0.2 : 0.06),
+                        color: colors.shadow.withValues(
+                          alpha: isDark ? 0.2 : 0.06,
+                        ),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -423,14 +440,18 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: colors.shadow.withValues(alpha: isDark ? 0.25 : 0.12),
+                          color: colors.shadow.withValues(
+                            alpha: isDark ? 0.25 : 0.12,
+                          ),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     labelColor: isDark ? colors.accent : colors.primary,
-                    unselectedLabelColor: colors.textSecondary.withValues(alpha: 0.7),
+                    unselectedLabelColor: colors.textSecondary.withValues(
+                      alpha: 0.7,
+                    ),
                     labelStyle: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
@@ -446,7 +467,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           children: [
                             const Icon(CupertinoIcons.doc_text_fill, size: 14),
                             const SizedBox(width: 5),
-                            Text('یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})'),
+                            Text(
+                              'یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})',
+                            ),
                           ],
                         ),
                       ),
@@ -456,7 +479,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           children: [
                             const Icon(CupertinoIcons.lightbulb_fill, size: 14),
                             const SizedBox(width: 5),
-                            Text('درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})'),
+                            Text(
+                              'درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})',
+                            ),
                           ],
                         ),
                       ),
@@ -464,7 +489,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(CupertinoIcons.arrow_2_circlepath_circle_fill, size: 14),
+                            const Icon(
+                              CupertinoIcons.arrow_2_circlepath_circle_fill,
+                              size: 14,
+                            ),
                             const SizedBox(width: 5),
                             const Text('مرور و تحلیل'),
                             if (_dueNotesCount > 0) ...[
@@ -519,16 +547,22 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     final pinnedNotes = _notes.where((n) => n.isPinned).toList();
     final otherNotes = _notes.where((n) => !n.isPinned).toList();
 
-    final totalActiveCount = _countsByKind.values.fold<int>(0, (sum, c) => sum + c);
+    final totalActiveCount = _countsByKind.values.fold<int>(
+      0,
+      (sum, c) => sum + c,
+    );
     final noteCount = _countsByKind['NOTE'] ?? 0;
     final experienceCount = _countsByKind['EXPERIENCE'] ?? 0;
     final ideaCount = _countsByKind['IDEA'] ?? 0;
     final decisionCount = _countsByKind['DECISION'] ?? 0;
     final dailyCount = _countsByKind['DAILY'] ?? 0;
+    final gratitudeCount = _countsByKind['GRATITUDE'] ?? 0;
 
     return CustomScrollView(
       controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      physics: const AlwaysScrollableScrollPhysics(
+        parent: BouncingScrollPhysics(),
+      ),
       slivers: [
         // Search Bar & Filter Chips Header
         SliverToBoxAdapter(
@@ -546,7 +580,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                           color: colors.surface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _isSearchingFocused ? colors.primary : colors.border,
+                            color: _isSearchingFocused
+                                ? colors.primary
+                                : colors.border,
                             width: _isSearchingFocused ? 1.4 : 1.0,
                           ),
                         ),
@@ -562,12 +598,21 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                             hintText: 'جستجو در یادداشت‌ها، متن یا برچسب‌ها...',
                             hintStyle: TextStyle(
                               fontSize: 12.5,
-                              color: colors.textSecondary.withValues(alpha: 0.6),
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
-                            prefixIcon: Icon(CupertinoIcons.search, size: 17, color: colors.textSecondary),
+                            prefixIcon: Icon(
+                              CupertinoIcons.search,
+                              size: 17,
+                              color: colors.textSecondary,
+                            ),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(CupertinoIcons.clear_circled_solid, size: 16),
+                                    icon: const Icon(
+                                      CupertinoIcons.clear_circled_solid,
+                                      size: 16,
+                                    ),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() => _searchQuery = '');
@@ -576,7 +621,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                                   )
                                 : null,
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                            ),
                           ),
                           onChanged: _onSearchChanged,
                         ),
@@ -625,7 +672,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                               ),
                             ),
                             child: Icon(
-                              _isGridView ? CupertinoIcons.rectangle_grid_1x2 : CupertinoIcons.square_grid_2x2,
+                              _isGridView
+                                  ? CupertinoIcons.rectangle_grid_1x2
+                                  : CupertinoIcons.square_grid_2x2,
                               size: 18,
                               color: colors.textPrimary,
                             ),
@@ -639,7 +688,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 // Filter Chips Bar
                 AnimatedCrossFade(
                   duration: RitmoMotion.state,
-                  crossFadeState: _isSearchingFocused ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                  crossFadeState: _isSearchingFocused
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
                   secondChild: const SizedBox(height: 6),
                   firstChild: Column(
                     children: [
@@ -650,7 +701,8 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                         child: Row(
                           children: [
                             RitmoChip(
-                              label: 'همه (${PersianDigits.convert(totalActiveCount.toString())})',
+                              label:
+                                  'همه (${PersianDigits.convert(totalActiveCount.toString())})',
                               icon: Icons.all_inclusive_rounded,
                               color: colors.primary,
                               isSelected: _selectedKind == null,
@@ -658,7 +710,20 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                             ),
                             const SizedBox(width: 8),
                             RitmoChip(
-                              label: 'یادداشت‌ها (${PersianDigits.convert(noteCount.toString())})',
+                              label:
+                                  'شکرگزاری (${PersianDigits.convert(gratitudeCount.toString())})',
+                              icon: Icons.favorite_rounded,
+                              color: NoteUiHelper.getKindStyle(
+                                context,
+                                NoteKind.gratitude,
+                              ).accentColor,
+                              isSelected: _selectedKind == NoteKind.gratitude,
+                              onTap: () => _onKindSelected(NoteKind.gratitude),
+                            ),
+                            const SizedBox(width: 8),
+                            RitmoChip(
+                              label:
+                                  'یادداشت‌ها (${PersianDigits.convert(noteCount.toString())})',
                               icon: Icons.description_rounded,
                               color: colors.primary,
                               isSelected: _selectedKind == NoteKind.note,
@@ -666,33 +731,49 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                             ),
                             const SizedBox(width: 8),
                             RitmoChip(
-                              label: 'درس زندگی (${PersianDigits.convert(experienceCount.toString())})',
+                              label:
+                                  'درس زندگی (${PersianDigits.convert(experienceCount.toString())})',
                               icon: Icons.lightbulb_rounded,
-                              color: NoteUiHelper.getKindStyle(context, NoteKind.experience).accentColor,
+                              color: NoteUiHelper.getKindStyle(
+                                context,
+                                NoteKind.experience,
+                              ).accentColor,
                               isSelected: _selectedKind == NoteKind.experience,
                               onTap: () => _onKindSelected(NoteKind.experience),
                             ),
                             const SizedBox(width: 8),
                             RitmoChip(
-                              label: 'ایده‌ها (${PersianDigits.convert(ideaCount.toString())})',
+                              label:
+                                  'ایده‌ها (${PersianDigits.convert(ideaCount.toString())})',
                               icon: Icons.bolt_rounded,
-                              color: NoteUiHelper.getKindStyle(context, NoteKind.idea).accentColor,
+                              color: NoteUiHelper.getKindStyle(
+                                context,
+                                NoteKind.idea,
+                              ).accentColor,
                               isSelected: _selectedKind == NoteKind.idea,
                               onTap: () => _onKindSelected(NoteKind.idea),
                             ),
                             const SizedBox(width: 8),
                             RitmoChip(
-                              label: 'تصمیم‌ها (${PersianDigits.convert(decisionCount.toString())})',
+                              label:
+                                  'تصمیم‌ها (${PersianDigits.convert(decisionCount.toString())})',
                               icon: Icons.check_circle_rounded,
-                              color: NoteUiHelper.getKindStyle(context, NoteKind.decision).accentColor,
+                              color: NoteUiHelper.getKindStyle(
+                                context,
+                                NoteKind.decision,
+                              ).accentColor,
                               isSelected: _selectedKind == NoteKind.decision,
                               onTap: () => _onKindSelected(NoteKind.decision),
                             ),
                             const SizedBox(width: 8),
                             RitmoChip(
-                              label: 'ژورنال (${PersianDigits.convert(dailyCount.toString())})',
+                              label:
+                                  'ژورنال (${PersianDigits.convert(dailyCount.toString())})',
                               icon: Icons.auto_stories_rounded,
-                              color: NoteUiHelper.getKindStyle(context, NoteKind.daily).accentColor,
+                              color: NoteUiHelper.getKindStyle(
+                                context,
+                                NoteKind.daily,
+                              ).accentColor,
                               isSelected: _selectedKind == NoteKind.daily,
                               onTap: () => _onKindSelected(NoteKind.daily),
                             ),
@@ -710,9 +791,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
         // Notes Content Area
         if (_isLoadingNotes)
-          const SliverToBoxAdapter(
-            child: RitmoShimmerGrid(count: 6),
-          )
+          const SliverToBoxAdapter(child: RitmoShimmerGrid(count: 6))
         else if (_notes.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -729,7 +808,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     padding: const EdgeInsets.only(bottom: 8, top: 4),
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.pin_fill, size: 14, color: colors.accent),
+                        Icon(
+                          CupertinoIcons.pin_fill,
+                          size: 14,
+                          color: colors.accent,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'سنجاق‌شده (${PersianDigits.convert(pinnedNotes.length.toString())})',
@@ -772,7 +855,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   // ==========================================
   // TAB 1: LIFE LESSONS & EXPERIENCES VIEW
   // ==========================================
-  Widget _buildExperiencesTab(BuildContext context, RitmoColors colors, bool isDark) {
+  Widget _buildExperiencesTab(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     final insightsColor = context.modules.insights;
 
     final filtered = _selectedCategory == null
@@ -789,13 +876,16 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       return RitmoEmptyState(
         icon: CupertinoIcons.lightbulb,
         title: 'بانک درس‌های زندگی خالی است',
-        description: 'تجربه‌ها، آموخته‌ها و حکمت‌هایی که در جریان زندگی کسب می‌کنید را ثبت کنید تا چراغ راه تصمیمات آینده‌تان باشند.',
+        description:
+            'تجربه‌ها، آموخته‌ها و حکمت‌هایی که در جریان زندگی کسب می‌کنید را ثبت کنید تا چراغ راه تصمیمات آینده‌تان باشند.',
         actionLabel: 'ثبت اولین آموزه زندگی',
         onAction: () async {
           RitmoHapticsPolicy.tap();
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const NoteEditorScreen(isExperience: true)),
+            MaterialPageRoute(
+              builder: (_) => const NoteEditorScreen(isExperience: true),
+            ),
           );
           if (mounted) await _loadExperiences();
         },
@@ -805,7 +895,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     return RefreshIndicator(
       onRefresh: _loadExperiences,
       child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         slivers: [
           // Category Selector Chips
           SliverToBoxAdapter(
@@ -817,7 +909,8 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Row(
                   children: [
                     RitmoChip(
-                      label: 'همه (${PersianDigits.convert(_experiences.length.toString())})',
+                      label:
+                          'همه (${PersianDigits.convert(_experiences.length.toString())})',
                       isSelected: _selectedCategory == null,
                       color: insightsColor,
                       onTap: () {
@@ -826,11 +919,14 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     ),
                     const SizedBox(width: 8),
                     ...ExperienceCategory.values.map((cat) {
-                      final count = _experiences.where((e) => e.category == cat).length;
+                      final count = _experiences
+                          .where((e) => e.category == cat)
+                          .length;
                       return Padding(
                         padding: const EdgeInsets.only(left: 8),
                         child: RitmoChip(
-                          label: '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
+                          label:
+                              '${cat.emoji} ${cat.labelFa} (${PersianDigits.convert(count.toString())})',
                           isSelected: _selectedCategory == cat,
                           color: insightsColor,
                           onTap: () {
@@ -895,7 +991,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   // ==========================================
   // TAB 2: SPACED REPETITION & REVIEWS VIEW
   // ==========================================
-  Widget _buildReviewTab(BuildContext context, RitmoColors colors, bool isDark) {
+  Widget _buildReviewTab(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     if (_isLoadingReview) {
       return const RitmoShimmerGrid(count: 3);
     }
@@ -903,7 +1003,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
     return RefreshIndicator(
       onRefresh: _loadReviewStats,
       child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
         children: [
           // 1. Spaced Repetition (SRS) Flashcards Hero Card
@@ -924,18 +1026,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   // --- SRS Hero Card Widget ---
-  Widget _buildSrsHeroCard(BuildContext context, RitmoColors colors, bool isDark) {
-    final insightsColor = context.modules.insights;
-
+  Widget _buildSrsHeroCard(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
@@ -996,11 +1097,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               ),
               if (_dueNotesCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.error.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colors.error.withValues(alpha: 0.4), width: 1),
+                    border: Border.all(
+                      color: colors.error.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     '${PersianDigits.convert(_dueNotesCount.toString())} سررسید امروز',
@@ -1016,7 +1123,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           const SizedBox(height: 16),
           Text(
             _dueNotesCount > 0
-                ? 'امروز ${_dueNotesCount} کارت برای مرور و یادآوری طبق منحنی فراموشی آماده هستند.'
+                ? 'امروز ${PersianDigits.convert(_dueNotesCount.toString())} کارت برای مرور و یادآوری طبق منحنی فراموشی آماده هستند.'
                 : 'آفرین! کارت سررسیدشده‌ای برای مرور امروز نداری. تمام آموخته‌هایت به‌روز هستند.',
             style: TextStyle(
               fontSize: 13,
@@ -1052,7 +1159,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(CupertinoIcons.play_circle_fill, size: 18, color: colors.onPrimary),
+                  Icon(
+                    CupertinoIcons.play_circle_fill,
+                    size: 18,
+                    color: colors.onPrimary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'شروع مرور فلش‌کارت‌ها',
@@ -1072,7 +1183,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   // --- Consolidated Weekly Review Section Widget ---
-  Widget _buildWeeklyReviewCard(BuildContext context, RitmoColors colors, bool isDark) {
+  Widget _buildWeeklyReviewCard(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     final stats = _weeklyStats;
     final topTags = stats?.topTags ?? [];
 
@@ -1081,10 +1196,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
@@ -1106,7 +1218,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: colors.success.withValues(alpha: isDark ? 0.2 : 0.12),
+                      color: colors.success.withValues(
+                        alpha: isDark ? 0.2 : 0.12,
+                      ),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: colors.success.withValues(alpha: 0.4),
@@ -1146,11 +1260,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               ),
               if (_dustyNotes.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colors.accent.withValues(alpha: 0.4), width: 1),
+                    border: Border.all(
+                      color: colors.accent.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     '${PersianDigits.convert(_dustyNotes.length.toString())} خاک‌خورده',
@@ -1170,21 +1290,28 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                   child: Column(
                     children: [
-                      Icon(CupertinoIcons.doc_text, size: 18, color: colors.primary),
+                      Icon(
+                        CupertinoIcons.doc_text,
+                        size: 18,
+                        color: colors.primary,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        PersianDigits.convert((stats?.notesCreatedCount ?? _createdThisWeekCount).toString()),
+                        PersianDigits.convert(
+                          (stats?.notesCreatedCount ?? _createdThisWeekCount)
+                              .toString(),
+                        ),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -1206,21 +1333,27 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.lightbulb_outline_rounded, size: 18, color: context.modules.insights),
+                      Icon(
+                        Icons.lightbulb_outline_rounded,
+                        size: 18,
+                        color: context.modules.insights,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        PersianDigits.convert((stats?.experiencesAddedCount ?? 0).toString()),
+                        PersianDigits.convert(
+                          (stats?.experiencesAddedCount ?? 0).toString(),
+                        ),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -1242,21 +1375,27 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.surfaceSunken,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colors.border,
-                      width: 1,
-                    ),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                   child: Column(
                     children: [
-                      Icon(CupertinoIcons.pencil, size: 18, color: colors.success),
+                      Icon(
+                        CupertinoIcons.pencil,
+                        size: 18,
+                        color: colors.success,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        PersianDigits.convert((stats?.wordCountSum ?? 0).toString()),
+                        PersianDigits.convert(
+                          (stats?.wordCountSum ?? 0).toString(),
+                        ),
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -1295,7 +1434,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               runSpacing: 6,
               children: topTags.map((tag) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
@@ -1325,7 +1467,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
             children: [
               Row(
                 children: [
-                  Icon(CupertinoIcons.archivebox_fill, size: 16, color: colors.textPrimary),
+                  Icon(
+                    CupertinoIcons.archivebox_fill,
+                    size: 16,
+                    color: colors.textPrimary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'صف مرور یادداشت‌های خاک‌خورده (>۳۰ روز)',
@@ -1371,7 +1517,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               ),
               child: Row(
                 children: [
-                  Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: colors.success),
+                  Icon(
+                    CupertinoIcons.checkmark_seal_fill,
+                    size: 20,
+                    color: colors.success,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -1387,14 +1537,21 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
               ),
             )
           else
-            ..._dustyNotes.map((note) => _buildDustyNoteCard(context, note, colors, isDark)),
+            ..._dustyNotes.map(
+              (note) => _buildDustyNoteCard(context, note, colors, isDark),
+            ),
         ],
       ),
     );
   }
 
   // --- Dusty Note In-Place Action Card ---
-  Widget _buildDustyNoteCard(BuildContext context, Note note, RitmoColors colors, bool isDark) {
+  Widget _buildDustyNoteCard(
+    BuildContext context,
+    Note note,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     final style = NoteUiHelper.getKindStyle(context, note.kind);
 
     return Container(
@@ -1403,10 +1560,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       decoration: BoxDecoration(
         color: colors.surfaceSunken,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1451,7 +1605,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   if (!context.mounted) return;
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                    MaterialPageRoute(
+                      builder: (_) => NoteEditorScreen(note: note),
+                    ),
                   );
                   await _loadAllData();
                 },
@@ -1510,16 +1666,17 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   // --- Archive & Trash Section ---
-  Widget _buildArchiveAndTrashSection(BuildContext context, RitmoColors colors, bool isDark) {
+  Widget _buildArchiveAndTrashSection(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
@@ -1548,7 +1705,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     RitmoHapticsPolicy.tap();
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const NoteTrashArchiveScreen(initialTabIndex: 1)),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const NoteTrashArchiveScreen(initialTabIndex: 1),
+                      ),
                     );
                     await _loadAllData();
                   },
@@ -1558,25 +1718,32 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     decoration: BoxDecoration(
                       color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colors.border,
-                        width: 1,
-                      ),
+                      border: Border.all(color: colors.border, width: 1),
                     ),
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.archivebox, size: 20, color: colors.accent),
+                        Icon(
+                          CupertinoIcons.archivebox,
+                          size: 20,
+                          color: colors.accent,
+                        ),
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
                               'بایگانی',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               '${PersianDigits.convert(_archivedCount.toString())} مورد',
-                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -1592,7 +1759,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     RitmoHapticsPolicy.tap();
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const NoteTrashArchiveScreen(initialTabIndex: 0)),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const NoteTrashArchiveScreen(initialTabIndex: 0),
+                      ),
                     );
                     await _loadAllData();
                   },
@@ -1602,25 +1772,32 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                     decoration: BoxDecoration(
                       color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colors.border,
-                        width: 1,
-                      ),
+                      border: Border.all(color: colors.border, width: 1),
                     ),
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.trash, size: 20, color: colors.error),
+                        Icon(
+                          CupertinoIcons.trash,
+                          size: 20,
+                          color: colors.error,
+                        ),
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
                               'سطل زباله',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               '${PersianDigits.convert(_trashCount.toString())} مورد',
-                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -1654,7 +1831,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
         RitmoHapticsPolicy.tap();
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const NoteEditorScreen(isExperience: true)),
+          MaterialPageRoute(
+            builder: (_) => const NoteEditorScreen(isExperience: true),
+          ),
         );
         if (mounted) await _loadExperiences();
       };
@@ -1708,7 +1887,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
   }
 
   // --- Featured Hero Card for Experiences ---
-  Widget _buildFeaturedHeroCard(BuildContext context, Experience exp, bool isDark) {
+  Widget _buildFeaturedHeroCard(
+    BuildContext context,
+    Experience exp,
+    bool isDark,
+  ) {
     final colors = context.colors;
     final insightsColor = context.modules.insights;
 
@@ -1717,10 +1900,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.28 : 0.08),
@@ -1736,7 +1916,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(12),
@@ -1748,7 +1931,11 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(CupertinoIcons.sparkles, size: 12, color: insightsColor),
+                    Icon(
+                      CupertinoIcons.sparkles,
+                      size: 12,
+                      color: insightsColor,
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       'درس برگزیده • ${exp.category.labelFa}',
@@ -1767,9 +1954,13 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 1),
                     child: Icon(
-                      starFilled ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                      starFilled
+                          ? CupertinoIcons.star_fill
+                          : CupertinoIcons.star,
                       size: 13,
-                      color: starFilled ? insightsColor : colors.textTertiary.withValues(alpha: 0.4),
+                      color: starFilled
+                          ? insightsColor
+                          : colors.textTertiary.withValues(alpha: 0.4),
                     ),
                   );
                 }),
@@ -1817,7 +2008,9 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
         if (note != null && context.mounted) {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note, isExperience: true)),
+            MaterialPageRoute(
+              builder: (_) => NoteEditorScreen(note: note, isExperience: true),
+            ),
           );
           await _loadExperiences();
         }
@@ -1842,7 +2035,10 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(exp.category.emoji, style: const TextStyle(fontSize: 12)),
+                    Text(
+                      exp.category.emoji,
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       exp.category.labelFa,
@@ -1861,15 +2057,22 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
                   return GestureDetector(
                     onTap: () async {
                       RitmoHapticsPolicy.selection();
-                      await ExperienceRepository.instance.setImportance(exp.noteId, idx + 1);
+                      await ExperienceRepository.instance.setImportance(
+                        exp.noteId,
+                        idx + 1,
+                      );
                       await _loadExperiences();
                     },
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 1.5),
                       child: Icon(
-                        isFilled ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                        isFilled
+                            ? CupertinoIcons.star_fill
+                            : CupertinoIcons.star,
                         size: 14,
-                        color: isFilled ? insightsColor : colors.textTertiary.withValues(alpha: 0.35),
+                        color: isFilled
+                            ? insightsColor
+                            : colors.textTertiary.withValues(alpha: 0.35),
                       ),
                     ),
                   );
@@ -1982,8 +2185,12 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
   Widget _buildEmptyState(RitmoColors colors) {
     return RitmoEmptyState(
-      icon: _searchQuery.isNotEmpty ? CupertinoIcons.search : CupertinoIcons.book,
-      title: _searchQuery.isNotEmpty ? 'نتیجه‌ای یافت نشد' : 'دفترچه یادداشت شما خالی است',
+      icon: _searchQuery.isNotEmpty
+          ? CupertinoIcons.search
+          : CupertinoIcons.book,
+      title: _searchQuery.isNotEmpty
+          ? 'نتیجه‌ای یافت نشد'
+          : 'دفترچه یادداشت شما خالی است',
       description: _searchQuery.isNotEmpty
           ? 'عبارت دیگری را جستجو کنید یا فیلتر دسته‌بندی را تغییر دهید.'
           : 'ایده‌ها، تصمیمات و تجارب ارزشمند زندگی خود را بنویسید تا ماندگار شوند.',

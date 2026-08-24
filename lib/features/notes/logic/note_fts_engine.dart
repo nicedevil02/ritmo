@@ -41,7 +41,11 @@ class NoteFtsEngine {
 
     try {
       final db = await _db;
-      final tagsRows = await db.query('note_tags', where: 'noteId = ?', whereArgs: [note.id]);
+      final tagsRows = await db.query(
+        'note_tags',
+        where: 'noteId = ?',
+        whereArgs: [note.id],
+      );
       final tagsN = tagsRows.map((r) => r['tagNormalized'] as String).join(' ');
 
       final titleN = NoteTextNormalizer.forIndex(note.title ?? '');
@@ -124,7 +128,8 @@ class NoteFtsEngine {
         }
 
         if (tag != null && tag.isNotEmpty) {
-          sql += ' AND EXISTS (SELECT 1 FROM note_tags t WHERE t.noteId = n.id AND t.tagNormalized = ?)';
+          sql +=
+              ' AND EXISTS (SELECT 1 FROM note_tags t WHERE t.noteId = n.id AND t.tagNormalized = ?)';
           params.add(tag.toLowerCase());
         }
 

@@ -1,15 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 
 class NoteLinkTile extends StatelessWidget {
   final NoteLink link;
 
-  const NoteLinkTile({
-    super.key,
-    required this.link,
-  });
+  const NoteLinkTile({super.key, required this.link});
 
   IconData _getModuleIcon(String module) {
     switch (module.toLowerCase()) {
@@ -80,7 +76,9 @@ class NoteLinkTile extends StatelessWidget {
 
     final moduleLabel = _getModuleLabel(link.linkModule);
     final relationLabel = _getRelationLabel(link.relation);
-    final shortEntityId = link.linkEntityId.length > 12 ? '${link.linkEntityId.substring(0, 12)}...' : link.linkEntityId;
+    final shortEntityId = link.linkEntityId.length > 12
+        ? '${link.linkEntityId.substring(0, 12)}...'
+        : link.linkEntityId;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -90,22 +88,20 @@ class NoteLinkTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: colors.border,
-            width: 1,
-          ),
+          border: Border.all(color: colors.border, width: 1),
         ),
         child: Row(
           children: [
-            Icon(_getModuleIcon(link.linkModule), size: 16, color: colors.primary),
+            Icon(
+              _getModuleIcon(link.linkModule),
+              size: 16,
+              color: colors.primary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'مرتبط با $moduleLabel ($shortEntityId)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 12, color: colors.textPrimary),
               ),
             ),
             Container(

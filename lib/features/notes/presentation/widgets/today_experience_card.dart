@@ -10,10 +10,7 @@ import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dar
 class TodayExperienceCard extends StatefulWidget {
   final String? activeCategory;
 
-  const TodayExperienceCard({
-    super.key,
-    this.activeCategory,
-  });
+  const TodayExperienceCard({super.key, this.activeCategory});
 
   @override
   State<TodayExperienceCard> createState() => _TodayExperienceCardState();
@@ -32,9 +29,8 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
   }
 
   Future<void> _loadCandidate() async {
-    final candidate = await ResurfacingEngine.instance.pickTodayExperienceCandidate(
-      activeCategory: widget.activeCategory,
-    );
+    final candidate = await ResurfacingEngine.instance
+        .pickTodayExperienceCandidate(activeCategory: widget.activeCategory);
     if (mounted) {
       setState(() {
         _candidate = candidate;
@@ -46,7 +42,9 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
   Future<void> _handleAcknowledge() async {
     if (_candidate == null || _acknowledged) return;
     RitmoHapticsPolicy.success();
-    await ExperienceRepository.instance.recordAcknowledged(_candidate!.experience.noteId);
+    await ExperienceRepository.instance.recordAcknowledged(
+      _candidate!.experience.noteId,
+    );
     if (mounted) {
       setState(() {
         _acknowledged = true;
@@ -61,7 +59,8 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
     RitmoDialog.show(
       context,
       title: 'چرا این درس پیشنهاد شد؟',
-      content: 'سیستم بازخوانی هوشمند بر اساس عوامل زیر این درس را برای امروز انتخاب کرده است:\n\n'
+      content:
+          'سیستم بازخوانی هوشمند بر اساس عوامل زیر این درس را برای امروز انتخاب کرده است:\n\n'
           '• ${_candidate!.reasonFa}\n'
           '• تعداد مرورهای قبلی: ${PersianDigits.convert(exp.showCount.toString())} بار\n'
           '• تعداد تاییدها: ${PersianDigits.convert(exp.acknowledgedCount.toString())} بار',
@@ -86,10 +85,7 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.25 : 0.08),
@@ -107,7 +103,10 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: insightsColor.withValues(alpha: isDark ? 0.2 : 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -118,7 +117,10 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                 ),
                 child: Row(
                   children: [
-                    Text(exp.category.emoji, style: const TextStyle(fontSize: 12)),
+                    Text(
+                      exp.category.emoji,
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       'درس امروز • ${exp.category.labelFa}',
@@ -135,9 +137,13 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                 children: [
                   ...List.generate(5, (idx) {
                     return Icon(
-                      idx < exp.importance ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                      idx < exp.importance
+                          ? CupertinoIcons.star_fill
+                          : CupertinoIcons.star,
                       size: 12,
-                      color: idx < exp.importance ? insightsColor : colors.textTertiary.withValues(alpha: 0.35),
+                      color: idx < exp.importance
+                          ? insightsColor
+                          : colors.textTertiary.withValues(alpha: 0.35),
                     );
                   }),
                   const SizedBox(width: 6),
@@ -146,7 +152,11 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(2),
-                      child: Icon(CupertinoIcons.question_circle, size: 14, color: colors.textSecondary.withValues(alpha: 0.7)),
+                      child: Icon(
+                        CupertinoIcons.question_circle,
+                        size: 14,
+                        color: colors.textSecondary.withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
                 ],
@@ -189,8 +199,10 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                 scale: _isAcknowledgingPressed ? 0.95 : 1.0,
                 duration: RitmoMotion.press,
                 child: InkWell(
-                  onTapDown: (_) => setState(() => _isAcknowledgingPressed = true),
-                  onTapCancel: () => setState(() => _isAcknowledgingPressed = false),
+                  onTapDown: (_) =>
+                      setState(() => _isAcknowledgingPressed = true),
+                  onTapCancel: () =>
+                      setState(() => _isAcknowledgingPressed = false),
                   onTap: () {
                     setState(() => _isAcknowledgingPressed = false);
                     _handleAcknowledge();
@@ -198,10 +210,15 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                   borderRadius: BorderRadius.circular(12),
                   child: AnimatedContainer(
                     duration: RitmoMotion.state,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _acknowledged
-                          ? colors.success.withValues(alpha: isDark ? 0.2 : 0.12)
+                          ? colors.success.withValues(
+                              alpha: isDark ? 0.2 : 0.12,
+                            )
                           : colors.primaryContainer,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
@@ -214,9 +231,13 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                     child: Row(
                       children: [
                         Icon(
-                          _acknowledged ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.lightbulb_fill,
+                          _acknowledged
+                              ? CupertinoIcons.checkmark_circle_fill
+                              : CupertinoIcons.lightbulb_fill,
                           size: 14,
-                          color: _acknowledged ? colors.success : colors.primary,
+                          color: _acknowledged
+                              ? colors.success
+                              : colors.primary,
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -224,7 +245,9 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.bold,
-                            color: _acknowledged ? colors.success : colors.primary,
+                            color: _acknowledged
+                                ? colors.success
+                                : colors.primary,
                           ),
                         ),
                       ],
@@ -236,7 +259,9 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
+                    MaterialPageRoute(
+                      builder: (_) => NoteEditorScreen(note: note),
+                    ),
                   );
                 },
                 child: Row(
@@ -251,7 +276,11 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(CupertinoIcons.chevron_left, size: 12, color: colors.textSecondary),
+                    Icon(
+                      CupertinoIcons.chevron_left,
+                      size: 12,
+                      color: colors.textSecondary,
+                    ),
                   ],
                 ),
               ),
@@ -270,10 +299,7 @@ class _TodayExperienceCardState extends State<TodayExperienceCard> {
         builder: (context, value, child) {
           return Opacity(
             opacity: value,
-            child: Transform.scale(
-              scale: 0.96 + (0.04 * value),
-              child: child,
-            ),
+            child: Transform.scale(scale: 0.96 + (0.04 * value), child: child),
           );
         },
         child: cardContent,

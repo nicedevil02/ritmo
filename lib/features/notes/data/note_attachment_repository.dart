@@ -56,8 +56,15 @@ class NoteAttachmentRepository {
     await destFile.parent.create(recursive: true);
     await sourceFile.copy(absolutePath);
 
-    final isImg = mimeType?.startsWith('image/') ??
-        ['.png', '.jpg', '.jpeg', '.webp', '.gif'].any((ext) => fileName.toLowerCase().endsWith(ext));
+    final isImg =
+        mimeType?.startsWith('image/') ??
+        [
+          '.png',
+          '.jpg',
+          '.jpeg',
+          '.webp',
+          '.gif',
+        ].any((ext) => fileName.toLowerCase().endsWith(ext));
 
     final attachment = NoteAttachment(
       id: id,
@@ -78,7 +85,12 @@ class NoteAttachmentRepository {
 
   Future<void> remove(String attachmentId) async {
     final db = await _db;
-    final rows = await db.query('note_attachments', where: 'id = ?', whereArgs: [attachmentId], limit: 1);
+    final rows = await db.query(
+      'note_attachments',
+      where: 'id = ?',
+      whereArgs: [attachmentId],
+      limit: 1,
+    );
     if (rows.isEmpty) return;
 
     final attachment = NoteAttachment.fromMap(rows.first);
@@ -90,7 +102,11 @@ class NoteAttachmentRepository {
       } catch (_) {}
     }
 
-    await db.delete('note_attachments', where: 'id = ?', whereArgs: [attachmentId]);
+    await db.delete(
+      'note_attachments',
+      where: 'id = ?',
+      whereArgs: [attachmentId],
+    );
   }
 
   Future<void> removeAllForNote(String noteId) async {

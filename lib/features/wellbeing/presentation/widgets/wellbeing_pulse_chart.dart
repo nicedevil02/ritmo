@@ -237,10 +237,6 @@ class WellbeingPulseChart extends StatelessWidget {
   }
 
   void _showDayDetailDialog(BuildContext context, WellbeingPulseDayData d) {
-    WellbeingDaySheet.show(
-      context: context,
-      day: d,
-    );
+    WellbeingDaySheet.show(context: context, day: d);
   }
 }
-

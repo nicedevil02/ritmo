@@ -35,7 +35,11 @@ class NotePromoter {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final currentDayKey = dayKey ?? SystemClock().today().value;
 
-    final title = titleHint ?? (trimmedText.length > 40 ? '${trimmedText.substring(0, 40)}...' : trimmedText);
+    final title =
+        titleHint ??
+        (trimmedText.length > 40
+            ? '${trimmedText.substring(0, 40)}...'
+            : trimmedText);
 
     final db = await DatabaseHelper.instance.database;
 
@@ -55,7 +59,10 @@ class NotePromoter {
           'dayKey': currentDayKey,
           'sourceModule': module,
           'sourceEntityId': entityId,
-          'wordCount': trimmedText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length,
+          'wordCount': trimmedText
+              .split(RegExp(r'\s+'))
+              .where((w) => w.isNotEmpty)
+              .length,
           'createdAt': nowMs,
           'updatedAt': nowMs,
           'openCount': 0,
@@ -86,7 +93,10 @@ class NotePromoter {
         dayKey: currentDayKey,
         sourceModule: module,
         sourceEntityId: entityId,
-        wordCount: trimmedText.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length,
+        wordCount: trimmedText
+            .split(RegExp(r'\s+'))
+            .where((w) => w.isNotEmpty)
+            .length,
         createdAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
         updatedAt: DateTime.fromMillisecondsSinceEpoch(nowMs),
       );
@@ -101,7 +111,11 @@ class NotePromoter {
           onAction: () async {
             try {
               await db.delete('notes', where: 'id = ?', whereArgs: [noteId]);
-              await db.delete('note_links', where: 'id = ?', whereArgs: [linkId]);
+              await db.delete(
+                'note_links',
+                where: 'id = ?',
+                whereArgs: [linkId],
+              );
               await NoteFtsEngine.instance.deleteFromIndex(noteId);
             } catch (_) {}
           },
@@ -111,10 +125,7 @@ class NotePromoter {
       return noteId;
     } catch (e) {
       if (context != null && context.mounted) {
-        RitmoToast.show(
-          context,
-          'خطا در ثبت دفترچه',
-        );
+        RitmoToast.show(context, 'خطا در ثبت دفترچه');
       }
       return null;
     }

@@ -103,10 +103,7 @@ class NoteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colors.border,
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
             color: colors.shadow.withValues(alpha: isDark ? 0.22 : 0.06),
@@ -146,7 +143,9 @@ class NoteCard extends StatelessWidget {
                       color: style.bgTint,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: style.accentColor.withValues(alpha: isDark ? 0.35 : 0.25),
+                        color: style.accentColor.withValues(
+                          alpha: isDark ? 0.35 : 0.25,
+                        ),
                         width: 0.8,
                       ),
                     ),
@@ -207,10 +206,7 @@ class NoteCard extends StatelessWidget {
 
               // 3. Body
               if (note.isPrivate)
-                Text(
-                  '••••••••••••••••',
-                  style: bodyTextStyle,
-                )
+                Text('••••••••••••••••', style: bodyTextStyle)
               else if (note.body.trim().isNotEmpty) ...[
                 if (query.isNotEmpty)
                   RichText(
@@ -240,10 +236,7 @@ class NoteCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    relativeDate,
-                    style: metaTextStyle,
-                  ),
+                  Text(relativeDate, style: metaTextStyle),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

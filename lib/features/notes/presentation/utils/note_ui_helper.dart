@@ -57,6 +57,12 @@ class NoteUiHelper {
         labelFa = 'ژورنال روزانه';
         emoji = '📅';
         break;
+      case NoteKind.gratitude:
+        accent = const Color(0xffEC4899);
+        icon = Icons.favorite_rounded;
+        labelFa = 'شکرگزاری';
+        emoji = '💖';
+        break;
       case NoteKind.note:
         accent = colors.primary;
         icon = Icons.description_rounded;
@@ -88,7 +94,9 @@ class NoteUiHelper {
       final hour = PersianDigits.convert(dt.hour.toString().padLeft(2, '0'));
       final min = PersianDigits.convert(dt.minute.toString().padLeft(2, '0'));
       return 'امروز، $hour:$min';
-    } else if (diff.inDays < 2 || (diff.inHours < 48 && dt.day == now.subtract(const Duration(days: 1)).day)) {
+    } else if (diff.inDays < 2 ||
+        (diff.inHours < 48 &&
+            dt.day == now.subtract(const Duration(days: 1)).day)) {
       final hour = PersianDigits.convert(dt.hour.toString().padLeft(2, '0'));
       final min = PersianDigits.convert(dt.minute.toString().padLeft(2, '0'));
       return 'دیروز، $hour:$min';
@@ -97,8 +105,18 @@ class NoteUiHelper {
     } else {
       final j = Jalali.fromDateTime(dt);
       final monthNames = [
-        'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-        'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+        'فروردین',
+        'اردیبهشت',
+        'خرداد',
+        'تیر',
+        'مرداد',
+        'شهریور',
+        'مهر',
+        'آبان',
+        'آذر',
+        'دی',
+        'بهمن',
+        'اسفند',
       ];
       final day = PersianDigits.convert(j.day.toString());
       final month = monthNames[j.month - 1];
@@ -128,8 +146,18 @@ class NoteUiHelper {
 
   static String monthName(int month) {
     const names = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
     if (month >= 1 && month <= 12) return names[month - 1];
     return '';
@@ -164,31 +192,29 @@ class NoteUiHelper {
 
     while (index != -1) {
       if (index > start) {
-        spans.add(TextSpan(
-          text: text.substring(start, index),
-          style: baseStyle,
-        ));
+        spans.add(
+          TextSpan(text: text.substring(start, index), style: baseStyle),
+        );
       }
 
       final matchText = text.substring(index, index + q.length);
-      spans.add(TextSpan(
-        text: matchText,
-        style: baseStyle.copyWith(
-          backgroundColor: highlightBg,
-          color: highlightColor,
-          fontWeight: FontWeight.bold,
+      spans.add(
+        TextSpan(
+          text: matchText,
+          style: baseStyle.copyWith(
+            backgroundColor: highlightBg,
+            color: highlightColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-      ));
+      );
 
       start = index + q.length;
       index = lowerText.indexOf(q, start);
     }
 
     if (start < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(start),
-        style: baseStyle,
-      ));
+      spans.add(TextSpan(text: text.substring(start), style: baseStyle));
     }
 
     return spans;

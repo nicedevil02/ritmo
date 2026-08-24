@@ -7,10 +7,7 @@ import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 
 /// کارت‌های تحلیلی جامع «حال»، روند چندروزه، همبستگی و تفکیک بخش‌های روز
 class MoodAnalyticsCard extends StatelessWidget {
-  const MoodAnalyticsCard({
-    super.key,
-    required this.output,
-  });
+  const MoodAnalyticsCard({super.key, required this.output});
 
   final MoodEngineOutput? output;
 
@@ -47,7 +44,9 @@ class MoodAnalyticsCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: const Color(0xffEC4899).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xffEC4899,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
@@ -94,11 +93,17 @@ class MoodAnalyticsCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.surfaceElevated,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: colors.border.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(CupertinoIcons.chart_bar_alt_fill, size: 16, color: colors.primary),
+                      Icon(
+                        CupertinoIcons.chart_bar_alt_fill,
+                        size: 16,
+                        color: colors.primary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -123,7 +128,9 @@ class MoodAnalyticsCard extends StatelessWidget {
                         color: const Color(0xffEC4899).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xffEC4899).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xffEC4899,
+                          ).withValues(alpha: 0.35),
                           width: 1.5,
                         ),
                       ),
@@ -149,7 +156,9 @@ class MoodAnalyticsCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             'میانگین شاخص خلق در این بازه',
-                            style: RitmoTextStyles.caption(colors.textSecondary),
+                            style: RitmoTextStyles.caption(
+                              colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -171,12 +180,18 @@ class MoodAnalyticsCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: colors.surfaceSunken,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(CupertinoIcons.lightbulb_fill, size: 16, color: colors.primary),
+                        Icon(
+                          CupertinoIcons.lightbulb_fill,
+                          size: 16,
+                          color: colors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -271,7 +286,9 @@ class MoodAnalyticsCard extends StatelessWidget {
 
   Widget _buildTrendBars(List<double> trend, RitmoColors colors) {
     // Show up to last 14 days of trends
-    final visible = trend.length > 14 ? trend.sublist(trend.length - 14) : trend;
+    final visible = trend.length > 14
+        ? trend.sublist(trend.length - 14)
+        : trend;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -309,7 +326,9 @@ class MoodAnalyticsCard extends StatelessWidget {
                 final hFactor = ((val - 1.0) / 4.0).clamp(0.2, 1.0);
                 final barColor = val >= 4.0
                     ? const Color(0xff10B981)
-                    : (val >= 3.0 ? const Color(0xffEC4899) : const Color(0xffF59E0B));
+                    : (val >= 3.0
+                          ? const Color(0xffEC4899)
+                          : const Color(0xffF59E0B));
 
                 return Expanded(
                   child: Padding(
@@ -387,7 +406,10 @@ class MoodAnalyticsCard extends StatelessWidget {
           ] else ...[
             Text(
               '—',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary.withValues(alpha: 0.5)),
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.textSecondary.withValues(alpha: 0.5),
+              ),
             ),
           ],
         ],
@@ -403,4 +425,3 @@ class MoodAnalyticsCard extends StatelessWidget {
     return Icons.sentiment_very_satisfied_rounded;
   }
 }
-

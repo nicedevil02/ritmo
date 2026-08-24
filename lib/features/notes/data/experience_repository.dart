@@ -72,7 +72,6 @@ class ExperienceRepository {
     return exp;
   }
 
-
   Future<void> deleteByNoteId(String noteId) async {
     final db = await _db;
     await db.delete(
@@ -194,11 +193,17 @@ class ExperienceRepository {
         wordCount: (r['wordCount'] as int?) ?? 0,
         createdAt: DateTime.fromMillisecondsSinceEpoch(r['createdAt'] as int),
         updatedAt: DateTime.fromMillisecondsSinceEpoch(r['updatedAt'] as int),
-        openedAt: r['openedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(r['openedAt'] as int) : null,
+        openedAt: r['openedAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(r['openedAt'] as int)
+            : null,
         openCount: (r['openCount'] as int?) ?? 0,
-        reviewAt: r['reviewAt'] != null ? DateTime.fromMillisecondsSinceEpoch(r['reviewAt'] as int) : null,
+        reviewAt: r['reviewAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(r['reviewAt'] as int)
+            : null,
         reviewStage: (r['reviewStage'] as int?) ?? 0,
-        trashedAt: r['trashedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(r['trashedAt'] as int) : null,
+        trashedAt: r['trashedAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(r['trashedAt'] as int)
+            : null,
       );
 
       return ExperienceWithNote(experience: exp, note: note);
@@ -211,26 +216,42 @@ class ExperienceRepository {
     if (exp == null) return;
     if (exp.lastShownAtDayKey == dayKey) return; // Record at most once per day
 
-    await db.rawUpdate('''
+    await db.rawUpdate(
+      '''
       UPDATE note_experience_meta
       SET showCount = showCount + 1, lastShownAtDayKey = ?
       WHERE noteId = ?
-    ''', [dayKey, noteId]);
+    ''',
+      [dayKey, noteId],
+    );
   }
 
   Future<void> recordAcknowledged(String noteId) async {
     final db = await _db;
-    await db.rawUpdate('''
+    await db.rawUpdate(
+      '''
       UPDATE note_experience_meta
       SET acknowledgedCount = acknowledgedCount + 1
       WHERE noteId = ?
-    ''', [noteId]);
+    ''',
+      [noteId],
+    );
   }
 
   Future<Map<String, int>> counts() async {
     final db = await _db;
-    final total = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM note_experience_meta")) ?? 0;
-    final active = Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM note_experience_meta WHERE isActive = 1")) ?? 0;
+    final total =
+        Sqflite.firstIntValue(
+          await db.rawQuery("SELECT COUNT(*) FROM note_experience_meta"),
+        ) ??
+        0;
+    final active =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            "SELECT COUNT(*) FROM note_experience_meta WHERE isActive = 1",
+          ),
+        ) ??
+        0;
     return {'total': total, 'active': active};
   }
 }
@@ -239,8 +260,5 @@ class ExperienceWithNote {
   final Experience experience;
   final Note note;
 
-  const ExperienceWithNote({
-    required this.experience,
-    required this.note,
-  });
+  const ExperienceWithNote({required this.experience, required this.note});
 }

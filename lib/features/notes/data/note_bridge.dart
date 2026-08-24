@@ -38,7 +38,9 @@ class NoteBridge {
 
     // 1. Check promoted notes from `notes` table if table exists
     try {
-      final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='notes';");
+      final tables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='notes';",
+      );
       if (tables.isNotEmpty) {
         final rows = await db.query(
           'notes',
@@ -49,15 +51,19 @@ class NoteBridge {
         for (final r in rows) {
           final body = (r['body'] as String?) ?? '';
           if (body.trim().isNotEmpty) {
-            list.add(BridgedNote(
-              id: r['id'] as String,
-              text: body,
-              createdAt: DateTime.fromMillisecondsSinceEpoch(r['createdAt'] as int),
-              sourceModule: module,
-              sourceEntityId: entityId,
-              isPromoted: true,
-              title: r['title'] as String?,
-            ));
+            list.add(
+              BridgedNote(
+                id: r['id'] as String,
+                text: body,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  r['createdAt'] as int,
+                ),
+                sourceModule: module,
+                sourceEntityId: entityId,
+                isPromoted: true,
+                title: r['title'] as String?,
+              ),
+            );
           }
         }
       }
@@ -68,21 +74,26 @@ class NoteBridge {
       if (module == 'study') {
         final rows = await db.query(
           'konkur_study_sessions',
-          where: 'subjectId = ? AND note IS NOT NULL AND note != "" AND note NOT LIKE "ثبت خودکار%"',
+          where:
+              'subjectId = ? AND note IS NOT NULL AND note != "" AND note NOT LIKE "ثبت خودکار%"',
           whereArgs: [entityId],
           orderBy: 'createdAt DESC',
         );
         for (final r in rows) {
           final note = r['note'] as String;
           if (note.trim().isNotEmpty) {
-            list.add(BridgedNote(
-              id: r['id'] as String,
-              text: note,
-              createdAt: DateTime.fromMillisecondsSinceEpoch(r['createdAt'] as int),
-              sourceModule: module,
-              sourceEntityId: entityId,
-              isPromoted: false,
-            ));
+            list.add(
+              BridgedNote(
+                id: r['id'] as String,
+                text: note,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  r['createdAt'] as int,
+                ),
+                sourceModule: module,
+                sourceEntityId: entityId,
+                isPromoted: false,
+              ),
+            );
           }
         }
       } else if (module == 'routines') {
@@ -95,14 +106,18 @@ class NoteBridge {
         for (final r in rows) {
           final note = r['note'] as String;
           if (note.trim().isNotEmpty) {
-            list.add(BridgedNote(
-              id: r['id'] as String,
-              text: note,
-              createdAt: DateTime.fromMillisecondsSinceEpoch(r['completionTime'] as int),
-              sourceModule: module,
-              sourceEntityId: entityId,
-              isPromoted: false,
-            ));
+            list.add(
+              BridgedNote(
+                id: r['id'] as String,
+                text: note,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  r['completionTime'] as int,
+                ),
+                sourceModule: module,
+                sourceEntityId: entityId,
+                isPromoted: false,
+              ),
+            );
           }
         }
       } else if (module == 'courses') {
@@ -115,14 +130,18 @@ class NoteBridge {
         for (final r in rows) {
           final note = r['note'] as String;
           if (note.trim().isNotEmpty) {
-            list.add(BridgedNote(
-              id: r['id'] as String,
-              text: note,
-              createdAt: DateTime.fromMillisecondsSinceEpoch(r['startTime'] as int),
-              sourceModule: module,
-              sourceEntityId: entityId,
-              isPromoted: false,
-            ));
+            list.add(
+              BridgedNote(
+                id: r['id'] as String,
+                text: note,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  r['startTime'] as int,
+                ),
+                sourceModule: module,
+                sourceEntityId: entityId,
+                isPromoted: false,
+              ),
+            );
           }
         }
       }
@@ -137,7 +156,9 @@ class NoteBridge {
     final db = await _db;
     final list = <BridgedNote>[];
     try {
-      final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='notes';");
+      final tables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='notes';",
+      );
       if (tables.isNotEmpty) {
         final rows = await db.query(
           'notes',
@@ -148,15 +169,19 @@ class NoteBridge {
         for (final r in rows) {
           final body = (r['body'] as String?) ?? '';
           if (body.trim().isNotEmpty) {
-            list.add(BridgedNote(
-              id: r['id'] as String,
-              text: body,
-              createdAt: DateTime.fromMillisecondsSinceEpoch(r['createdAt'] as int),
-              sourceModule: r['sourceModule'] as String?,
-              sourceEntityId: r['sourceEntityId'] as String?,
-              isPromoted: true,
-              title: r['title'] as String?,
-            ));
+            list.add(
+              BridgedNote(
+                id: r['id'] as String,
+                text: body,
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  r['createdAt'] as int,
+                ),
+                sourceModule: r['sourceModule'] as String?,
+                sourceEntityId: r['sourceEntityId'] as String?,
+                isPromoted: true,
+                title: r['title'] as String?,
+              ),
+            );
           }
         }
       }

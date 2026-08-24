@@ -94,7 +94,11 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(CupertinoIcons.sparkles, size: 12, color: colors.primary),
+                      Icon(
+                        CupertinoIcons.sparkles,
+                        size: 12,
+                        color: colors.primary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'تخمین هوشمند',
@@ -134,9 +138,9 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                     const SizedBox(height: 4),
                     Text(
                       _energyStatusDescription(percent),
-                      style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
-                        height: 1.45,
-                      ),
+                      style: RitmoTextStyles.caption(
+                        colors.textSecondary,
+                      ).copyWith(height: 1.45),
                     ),
                     const SizedBox(height: 10),
                     InkWell(
@@ -146,7 +150,10 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: energyColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
@@ -157,7 +164,11 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(CupertinoIcons.add_circled, size: 14, color: energyColor),
+                            Icon(
+                              CupertinoIcons.add_circled,
+                              size: 14,
+                              color: energyColor,
+                            ),
                             const SizedBox(width: 5),
                             Text(
                               'ثبت یا تغییر انرژی',
@@ -229,7 +240,9 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
                 decoration: BoxDecoration(
                   color: colors.surfaceSunken,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

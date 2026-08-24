@@ -23,8 +23,11 @@ class ResurfacingEngine {
   static final ResurfacingEngine instance = ResurfacingEngine._();
 
   /// Scores active experiences and picks the top candidate for today in a single query (R-02, X-01).
-  Future<ResurfacingCandidate?> pickTodayExperienceCandidate({String? activeCategory}) async {
-    final activePairs = await ExperienceRepository.instance.listActiveWithNotes();
+  Future<ResurfacingCandidate?> pickTodayExperienceCandidate({
+    String? activeCategory,
+  }) async {
+    final activePairs = await ExperienceRepository.instance
+        .listActiveWithNotes();
     if (activePairs.isEmpty) return null;
 
     final clock = SystemClock();
@@ -42,14 +45,22 @@ class ResurfacingEngine {
         try {
           final parts = exp.lastShownAtDayKey!.split('-');
           if (parts.length == 3) {
-            final jShown = Jalali(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-            daysSinceShown = nowJalali.toDateTime().difference(jShown.toDateTime()).inDays;
+            final jShown = Jalali(
+              int.parse(parts[0]),
+              int.parse(parts[1]),
+              int.parse(parts[2]),
+            );
+            daysSinceShown = nowJalali
+                .toDateTime()
+                .difference(jShown.toDateTime())
+                .inDays;
           }
         } catch (_) {}
       }
 
       double categoryMatchBonus = 0.0;
-      if (activeCategory != null && exp.category.code.toUpperCase() == activeCategory.toUpperCase()) {
+      if (activeCategory != null &&
+          exp.category.code.toUpperCase() == activeCategory.toUpperCase()) {
         categoryMatchBonus = 5.0;
       }
 
@@ -57,12 +68,21 @@ class ResurfacingEngine {
       final ackBonus = (exp.acknowledgedCount * 0.5).clamp(0.0, 3.0);
 
       // Scoring formula: (importance * 3) + (daysSinceShown * 0.5) - (showCount * 1.5) + categoryMatchBonus + ackBonus
-      final score = (exp.importance * 3.0) + (daysSinceShown * 0.5) - (exp.showCount * 1.5) + categoryMatchBonus + ackBonus;
+      final score =
+          (exp.importance * 3.0) +
+          (daysSinceShown * 0.5) -
+          (exp.showCount * 1.5) +
+          categoryMatchBonus +
+          ackBonus;
 
       final reasonParts = <String>[
         'اهمیت ${PersianDigits.convert(exp.importance.toString())} ستاره',
-        if (daysSinceShown >= 30) 'مدت‌هاست مرور نشده' else '${PersianDigits.convert(daysSinceShown.toString())} روز از آخرین نمایش',
-        if (categoryMatchBonus > 0) 'متناسب با زمینه فعلی (${exp.category.labelFa})',
+        if (daysSinceShown >= 30)
+          'مدت‌هاست مرور نشده'
+        else
+          '${PersianDigits.convert(daysSinceShown.toString())} روز از آخرین نمایش',
+        if (categoryMatchBonus > 0)
+          'متناسب با زمینه فعلی (${exp.category.labelFa})',
       ];
 
       if (bestCandidate == null || score > bestCandidate.score) {
@@ -76,7 +96,10 @@ class ResurfacingEngine {
     }
 
     if (bestCandidate != null) {
-      await ExperienceRepository.instance.recordShown(bestCandidate.experience.noteId, todayDayKey);
+      await ExperienceRepository.instance.recordShown(
+        bestCandidate.experience.noteId,
+        todayDayKey,
+      );
     }
 
     return bestCandidate;

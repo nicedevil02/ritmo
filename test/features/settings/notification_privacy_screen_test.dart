@@ -89,12 +89,14 @@ void main() {
 
       // 6. Tap on 'عادی' (none) segment and verify live preview updates to plain text
       await tester.tap(find.text('عادی'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
 
       expect(find.text('یادآوری ریتمو 🌸'), findsOneWidget);
 
+      await tester.pump(const Duration(seconds: 15));
+      await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox());
+      SettingsService.instance.cancelPendingSignals();
     });
   });
 }

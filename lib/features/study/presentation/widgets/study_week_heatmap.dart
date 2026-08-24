@@ -11,24 +11,26 @@ class StudyWeekHeatmap extends StatelessWidget {
     final colors = context.colors;
     final now = DateTime.now();
 
+    final m = context.metrics;
+
     final days = List.generate(56, (i) {
       return now.subtract(Duration(days: 55 - i));
     });
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(m.spaceLg),
       decoration: BoxDecoration(
         color: colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(m.radiusCard),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'فعالیت ۸ هفته اخیر',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: RitmoTextStyles.label(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: m.spaceMd),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

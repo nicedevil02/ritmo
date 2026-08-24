@@ -348,7 +348,7 @@ class RitmoTheme {
       scaffoldBackgroundColor: colors.background,
       colorScheme: _schemeFrom(colors, brightness),
       textTheme: RitmoTypography.textTheme(colors),
-      visualDensity: VisualDensity(horizontal: vd, vertical: vd),
+      visualDensity: VisualDensity(horizontal: vd, vertical: vd.clamp(0.0, 2.0)),
       extensions: <ThemeExtension<dynamic>>[
         colors,
         RitmoBehavior(reduceTransparency: reduceTransparency),
@@ -373,6 +373,7 @@ class RitmoTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          visualDensity: VisualDensity.standard,
           backgroundColor: colors.primary,
           foregroundColor: colors.onPrimary,
           disabledBackgroundColor: colors.disabled,
@@ -391,6 +392,7 @@ class RitmoTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          visualDensity: VisualDensity.standard,
           backgroundColor: colors.surfaceElevated,
           foregroundColor: colors.textPrimary,
           elevation: 0,
@@ -410,6 +412,7 @@ class RitmoTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
+          visualDensity: VisualDensity.standard,
           foregroundColor: colors.primary,
           textStyle: const TextStyle(
             fontSize: 14,
@@ -424,6 +427,7 @@ class RitmoTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          visualDensity: VisualDensity.standard,
           foregroundColor: colors.textPrimary,
           side: BorderSide(color: colors.border),
           shape: RoundedRectangleBorder(

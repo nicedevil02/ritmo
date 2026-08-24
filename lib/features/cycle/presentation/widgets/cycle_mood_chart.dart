@@ -248,6 +248,7 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
                     textColor: colors.textSecondary,
                     gridColor: colors.border.withValues(alpha: 0.15),
                     criticalTextColor: colors.textPrimary,
+                    textScaler: MediaQuery.textScalerOf(context),
                   ),
                 ),
               ),
@@ -303,7 +304,7 @@ class _CycleMoodChartSectionState extends State<CycleMoodChartSection> {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
+          style: RitmoTextStyles.caption(colors.textSecondary),
         ),
       ],
     );
@@ -322,6 +323,7 @@ class _MoodChartPainter extends CustomPainter {
     required this.textColor,
     required this.gridColor,
     required this.criticalTextColor,
+    required this.textScaler,
   });
   final Map<int, double> moodAverages;
   final int cycleLength;
@@ -333,6 +335,7 @@ class _MoodChartPainter extends CustomPainter {
   final Color textColor;
   final Color gridColor;
   final Color criticalTextColor;
+  final TextScaler textScaler;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -356,7 +359,10 @@ class _MoodChartPainter extends CustomPainter {
 
     final fillPaint = Paint()..style = PaintingStyle.fill;
     final dotPaint = Paint()..style = PaintingStyle.fill;
-    final textPainter = TextPainter(textDirection: TextDirection.rtl);
+    final textPainter = TextPainter(
+      textDirection: TextDirection.rtl,
+      textScaler: textScaler,
+    );
 
     final yLabels = {
       4.0: '😃 عالی',

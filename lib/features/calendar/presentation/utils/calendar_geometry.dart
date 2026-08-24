@@ -11,6 +11,10 @@ abstract final class CalendarGeometry {
   /// Vertical pixels allocated per minute in single-day timeline view.
   static const double pxPerMinute = 1.2;
 
+  /// Returns dynamic pixels per minute based on the theme's hour slot height token.
+  static double effectivePxPerMinute(BuildContext context) =>
+      context.metrics.hourSlotHeight / 60.0;
+
   /// Width of the hour axis gutter in single-day view.
   static const double hourAxisWidth = 34.0;
 

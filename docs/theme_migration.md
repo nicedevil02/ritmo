@@ -1,33 +1,33 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-24T22:42:00.597527
+Generated At: 2026-08-24T23:37:41.379529
 
 ## Audit Metrics Summary
 
 | Metric | Key | Scope | Current Count | Baseline | Status |
 |---|---|---|---|---|---|
-| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1272 | 1272 | OK |
-| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 2020 | 2020 | OK |
+| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1292 | 1295 | IMPROVED (1292 < 1295) |
+| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 1979 | 2022 | IMPROVED (1979 < 2022) |
 | Old Opacity withOpacity() | `oldOpacity` | `lib/` | 0 | 0 | OK |
 | Duplicate Local Font Family | `duplicateFont` | `lib/features/` | 158 | 158 | OK |
-| Scattered BackdropFilter | `scatteredBlur` | `lib/features/` | 33 | 33 | OK |
-| Manual BoxShadow | `manualShadow` | `lib/features/` | 206 | 206 | OK |
-| Raw Scaffold | `rawScaffold` | `lib/features/` | 106 | 106 | OK |
-| Page-level CircularProgressIndicator | `circularProgress` | `lib/features/` | 134 | 134 | OK |
+| Scattered BackdropFilter | `scatteredBlur` | `lib/features/` | 32 | 33 | IMPROVED (32 < 33) |
+| Manual BoxShadow | `manualShadow` | `lib/features/` | 205 | 208 | IMPROVED (205 < 208) |
+| Raw Scaffold | `rawScaffold` | `lib/features/` | 102 | 106 | IMPROVED (102 < 106) |
+| Page-level CircularProgressIndicator | `circularProgress` | `lib/features/` | 122 | 134 | IMPROVED (122 < 134) |
 | Local Directionality Override | `localDirectionality` | `lib/features/` | 324 | 324 | OK |
-| Hardcoded Millisecond Duration | `hardcodedDuration` | `lib/features/` | 200 | 200 | OK |
+| Hardcoded Millisecond Duration | `hardcodedDuration` | `lib/features/` | 198 | 201 | IMPROVED (198 < 201) |
 | Core Hardcoded Colors | `coreHardcodedColors` | `lib/core/` | 415 | 415 | OK |
 | Core Material Colors (non-transparent) | `coreMaterialColors` | `lib/core/` | 75 | 75 | OK |
-| Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 151 | 151 | OK |
+| Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 149 | 151 | IMPROVED (149 < 151) |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3618 | 3618 | OK |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4472 | 4472 | OK |
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3561 | 3643 | IMPROVED (3561 < 3643) |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4451 | 4510 | IMPROVED (4451 < 4510) |
 
 ## Top Offenders by Metric
 
 ### Hardcoded Colors (`hardcodedColors`)
-Total: 1272 occurrences
+Total: 1292 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -38,7 +38,7 @@ Total: 1272 occurrences
 | `lib/features/worship/presentation/theme/worship_sky_palette.dart` | 57 |
 
 ### Material Colors (non-transparent) (`materialColors`)
-Total: 2020 occurrences
+Total: 1979 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -65,7 +65,7 @@ Total: 158 occurrences
 | `lib/features/today/presentation/widgets/daily_reflection_sheet.dart` | 10 |
 
 ### Scattered BackdropFilter (`scatteredBlur`)
-Total: 33 occurrences
+Total: 32 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -76,7 +76,7 @@ Total: 33 occurrences
 | `lib/features/today/presentation/widgets/dashboard/module_summary_grid.dart` | 2 |
 
 ### Manual BoxShadow (`manualShadow`)
-Total: 206 occurrences
+Total: 205 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -87,25 +87,25 @@ Total: 206 occurrences
 | `lib/features/worship/presentation/widgets/quran_dhikr_section.dart` | 7 |
 
 ### Raw Scaffold (`rawScaffold`)
-Total: 106 occurrences
+Total: 102 occurrences
 
 | File | Occurrences |
 |---|---|
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 9 |
 | `lib/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart` | 4 |
 | `lib/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart` | 4 |
-| `lib/features/supplementary_sports/presentation/ss_progress_screen.dart` | 3 |
 | `lib/features/cycle/presentation/cycle_screen.dart` | 3 |
+| `lib/features/cycle/presentation/onboarding/cycle_onboarding_shell.dart` | 3 |
 
 ### Page-level CircularProgressIndicator (`circularProgress`)
-Total: 134 occurrences
+Total: 122 occurrences
 
 | File | Occurrences |
 |---|---|
+| `lib/features/goals/presentation/widgets/create_goal_sheet.dart` | 3 |
 | `lib/features/profile/presentation/backup_screen.dart` | 3 |
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 3 |
-| `lib/features/goals/presentation/widgets/create_goal_sheet.dart` | 3 |
-| `lib/features/health/presentation/widgets/medication_form_sheet.dart` | 2 |
+| `lib/features/worship/presentation/widgets/prayer_city_picker.dart` | 2 |
 | `lib/features/chat/presentation/ai_chat_screen.dart` | 2 |
 
 ### Local Directionality Override (`localDirectionality`)
@@ -120,7 +120,7 @@ Total: 324 occurrences
 | `lib/features/worship/presentation/widgets/quran_dhikr_section.dart` | 6 |
 
 ### Hardcoded Millisecond Duration (`hardcodedDuration`)
-Total: 200 occurrences
+Total: 198 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -153,7 +153,7 @@ Total: 75 occurrences
 | `lib/core/theme/ritmo_theme.dart` | 6 |
 
 ### Core Local Font Family (`coreDuplicateFont`)
-Total: 151 occurrences
+Total: 149 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -186,18 +186,18 @@ Total: 9 occurrences
 | `lib/core/utils/ritmo_date_picker.dart` | 1 |
 
 ### Raw Font Size (`rawFontSize`)
-Total: 3618 occurrences
+Total: 3561 occurrences
 
 | File | Occurrences |
 |---|---|
 | `lib/features/supplementary_sports/presentation/ss_workout_session_screen.dart` | 80 |
 | `lib/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart` | 72 |
-| `lib/features/today/presentation/insights_screen.dart` | 62 |
 | `lib/features/profile/presentation/cycle_harmony_screen.dart` | 53 |
 | `lib/features/supplementary_sports/presentation/ss_onboarding_flow.dart` | 49 |
+| `lib/features/notes/presentation/screens/notebook_screen.dart` | 47 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4472 occurrences
+Total: 4451 occurrences
 
 | File | Occurrences |
 |---|---|

@@ -99,4 +99,4 @@ RitmoSheetScaffold.present(
 
 - **`R-93` (No Raw Font Size in Features):** هیچ `fontSize` تازه‌ای در لایهٔ `lib/features` مجاز نیست و کلیهٔ متن‌ها باید از تایپوگرافی ساختاریافتهٔ تم (`context.t.*` یا `RitmoTextStyles`) استفاده کنند.
 - **`R-94` (Minimum Touch Target Floor):** هدف لمس برای تمامی عناصر تعاملی و دکمه‌ها هرگز نباید از ۴۸ پیکسل (`RitmoBreakpoints.minTouchTarget` / `context.metrics.touchTarget`) کمتر شود.
-- **ماتریس تست ۱۶ حالته:** ۴ ویوپورت × ۴ مقیاس متن × ۴ سطح چگالی (پیاده‌سازی‌شده در `test/theme/ui_scale_matrix_test.dart`).
+- **ماتریس تست ۶۴ حالته:** ۴ ویوپورت × ۴ مقیاس متن × ۴ سطح چگالی (پیاده‌سازی‌شده در `test/theme/ui_scale_matrix_test.dart`).

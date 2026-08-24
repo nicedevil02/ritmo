@@ -98,7 +98,7 @@ class ZoneCard extends StatelessWidget {
             activeZoneTimeRange == 'بدون زمانبندی فعال' ||
             activeZoneTimeRange == 'No active schedule')
         ? l10n.noActiveSchedule
-        : toPersianDigits(activeZoneTimeRange!);
+        : toPersianDigits(activeZoneTimeRange);
 
     return Row(
       children: [
@@ -130,11 +130,9 @@ class ZoneCard extends StatelessWidget {
                       children: [
                         Text(
                           l10n.currentEnergyTitle,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            ),
+                          style: RitmoTextStyles.badge(
+                            colors.textSecondary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                         Container(
                           padding: const EdgeInsets.all(4),
@@ -170,11 +168,9 @@ class ZoneCard extends StatelessWidget {
                                     ? '—'
                                     : toPersianDigits(
                                         '${currentEnergyPercent!.toInt()}٪'),
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: colors.textPrimary,
-                                  ),
+                                style: RitmoTextStyles.badge(
+                                  colors.textPrimary,
+                                ).copyWith(fontWeight: FontWeight.w900),
                               ),
                             ),
                           ),
@@ -186,20 +182,16 @@ class ZoneCard extends StatelessWidget {
                             children: [
                               Text(
                                 energyLabel,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: energyColor,
-                                  ),
+                                style: RitmoTextStyles.titleMedium(
+                                  energyColor,
+                                ).copyWith(fontWeight: FontWeight.w900),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 energyDesc,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  color: colors.textSecondary,
-                                  height: 1.3,
-                                ),
+                                style: RitmoTextStyles.badge(
+                                  colors.textSecondary,
+                                ).copyWith(height: 1.3),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -224,11 +216,9 @@ class ZoneCard extends StatelessWidget {
                             children: [
                               Text(
                                 l10n.manageEnergy,
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  color: colors.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                  ),
+                                style: RitmoTextStyles.badge(
+                                  colors.textPrimary,
+                                ).copyWith(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(width: 3),
                               Icon(
@@ -312,13 +302,12 @@ class ZoneCard extends StatelessWidget {
                           children: [
                             Text(
                               l10n.currentRealmTitle,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.bold),
+                              style: RitmoTextStyles.badge(
+                                colors.textSecondary,
+                              ).copyWith(fontWeight: FontWeight.bold),
                             ),
                             if (activeZoneIcon != null)
-                              Text(activeZoneIcon!, style: const TextStyle(fontSize: 14))
+                              Text(activeZoneIcon!, style: RitmoTextStyles.label(colors.textPrimary))
                             else
                               Icon(
                                 CupertinoIcons.briefcase_fill,
@@ -330,22 +319,18 @@ class ZoneCard extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           realmName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: colors.textPrimary,
-                            ),
+                          style: RitmoTextStyles.cardTitle(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.w900),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           realmTimeRange,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textSecondary,
-                            ),
+                          style: RitmoTextStyles.caption(
+                            colors.textSecondary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         if (activeZone != null && !isOutOfZone)
@@ -353,33 +338,31 @@ class ZoneCard extends StatelessWidget {
                             padding: const EdgeInsets.only(bottom: 4),
                             child: RealmCountdownWidget(
                               activeZone: activeZone!,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: _parseColorSafe(activeZoneColorHex, colors.primary),
-                                fontWeight: FontWeight.bold,
+                              style: RitmoTextStyles.badge(
+                                _parseColorSafe(
+                                  activeZoneColorHex,
+                                  colors.primary,
                                 ),
+                              ),
                             ),
                           ),
                         Text(
                           isOutOfZone
                               ? l10n.logNewDailyRealm
-                              : l10n.routinesConnectedToRealm(activeZoneRoutinesCount),
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: _parseColorSafe(activeZoneColorHex, colors.primary),
-                            fontWeight: FontWeight.bold,
+                              : l10n.routinesConnectedToRealm(
+                                activeZoneRoutinesCount,
+                              ),
+                          style: RitmoTextStyles.badge(
+                            _parseColorSafe(
+                              activeZoneColorHex,
+                              colors.primary,
                             ),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          isOutOfZone
-                              ? l10n.addRealm
-                              : l10n.manageRealm,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: colors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            ),
+                          isOutOfZone ? l10n.addRealm : l10n.manageRealm,
+                          style: RitmoTextStyles.badge(colors.textSecondary),
                         ),
                       ],
                     ),

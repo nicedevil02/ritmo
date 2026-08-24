@@ -24,14 +24,16 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
+    final effectiveHeight = m.rowHeight + m.spaceSm; // 60/64/72/78
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: preferredSize.height,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: effectiveHeight,
+          padding: EdgeInsets.symmetric(horizontal: m.spaceLg),
           decoration: BoxDecoration(
             color: Colors.transparent,
             border: Border(
@@ -43,26 +45,26 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Row(
             children: [
-              // Back Button (Min 48dp Touch Target)
+              // Back Button (Min touchTarget)
               Semantics(
                 button: true,
                 label: 'بازگشت',
                 child: InkWell(
                   onTap: onBack ?? () => Navigator.maybePop(context),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(m.touchTarget / 2),
                   child: Container(
-                    width: 48,
-                    height: 48,
+                    width: m.touchTarget,
+                    height: m.touchTarget,
                     alignment: Alignment.center,
                     child: Icon(
                       Icons.arrow_back_rounded,
-                      size: 22,
+                      size: m.iconLg,
                       color: colors.textPrimary,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: m.spaceSm),
 
               // Title and Subtitle / Status Badge
               Expanded(
@@ -75,18 +77,15 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Flexible(
                           child: Text(
                             title,
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
+                            style: RitmoTextStyles.titleMedium(
+                              colors.textPrimary,
+                            ).copyWith(fontWeight: FontWeight.bold),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (statusBadge != null) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: m.spaceSm),
                           statusBadge!,
                         ],
                       ],
@@ -95,10 +94,8 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle!,
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 11,
-                          color: colors.textSecondary.withValues(alpha: 0.7),
+                        style: RitmoTextStyles.badge(
+                          colors.textSecondary.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

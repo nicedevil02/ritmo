@@ -28,12 +28,16 @@ class RitmoAdaptiveGrid extends StatelessWidget {
   final int maxColumns;
 
   static double defaultMinTileWidth(BuildContext context) {
-    return switch (context.widthClass) {
+    final baseWidth = switch (context.widthClass) {
       RitmoWidthClass.compact => RitmoBreakpoints.tileMinWidthCompact,
       RitmoWidthClass.regular => RitmoBreakpoints.tileMinWidthRegular,
       RitmoWidthClass.large => RitmoBreakpoints.tileMinWidthWide,
       RitmoWidthClass.expanded => RitmoBreakpoints.tileMinWidthWide,
     };
+    final m = context.metrics;
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(0.85, 1.6);
+    return baseWidth * m.densityFactor * (textScale > 1.0 ? textScale : 1.0);
   }
 
   /// سازنده کمکی برای ساختارهای SliverGrid با ابعاد پویا.
@@ -59,19 +63,29 @@ class RitmoAdaptiveGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final effectiveMinWidth = minTileWidth ?? defaultMinTileWidth(context);
+        final textScale =
+            MediaQuery.textScalerOf(context).scale(1.0).clamp(0.85, 1.6);
+        final baseMinWidth = minTileWidth ?? defaultMinTileWidth(context);
+        final effectiveMinWidth = minTileWidth != null
+            ? baseMinWidth *
+                context.metrics.densityFactor *
+                (textScale > 1.0 ? textScale : 1.0)
+            : baseMinWidth;
+        final effectiveSpacing =
+            spacing == RitmoSpacing.md ? context.metrics.spaceMd : spacing;
+        final effectiveRunSpacing = runSpacing ?? effectiveSpacing;
         final columns = RitmoBreakpoints.columnsFor(
           availableWidth: constraints.maxWidth,
           minTileWidth: effectiveMinWidth,
-          spacing: spacing,
+          spacing: effectiveSpacing,
           maxColumns: maxColumns,
         );
         final itemWidth =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            (constraints.maxWidth - effectiveSpacing * (columns - 1)) / columns;
 
         return Wrap(
-          spacing: spacing,
-          runSpacing: runSpacing ?? spacing,
+          spacing: effectiveSpacing,
+          runSpacing: effectiveRunSpacing,
           children: [
             for (final child in children)
               SizedBox(width: itemWidth, child: child),

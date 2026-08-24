@@ -465,21 +465,17 @@ ${jsonEncode(digest.json)}
             children: [
               Text(
                 'تحلیل هوشمند ریتمو 🧠',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+                style: RitmoTextStyles.titleMedium(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.bold),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: m.spaceSm),
               Text(
                 'هنوز هیچ تحلیلی ثبت نشده است. دکمه زیر را برای اجرای اولین تحلیل عمیق الگوهای رفتاری خود فشار دهید.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  height: 1.6,
-                ),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(height: 1.6),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: m.spaceLg),
@@ -491,9 +487,9 @@ ${jsonEncode(digest.json)}
                   padding: EdgeInsets.symmetric(vertical: m.spaceMd),
                 ),
                 icon: const Icon(CupertinoIcons.sparkles, size: 16, color: Colors.white),
-                label: const Text(
+                label: Text(
                   'تحلیل عمیق با هوش مصنوعی',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: RitmoTextStyles.label(Colors.white).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -513,11 +509,9 @@ ${jsonEncode(digest.json)}
               children: [
                 Text(
                   'تحلیل هوشمند ریتمو 🧠',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
+                  style: RitmoTextStyles.titleMedium(
+                    colors.textPrimary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 if (!_isDeepAnalyzing)
                   CupertinoButton(
@@ -536,21 +530,17 @@ ${jsonEncode(digest.json)}
             if (_briefing != null) ...[
               Text(
                 _briefing!.headline,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyanAccent,
-                ),
+                style: RitmoTextStyles.label(
+                  Colors.cyanAccent,
+                ).copyWith(fontWeight: FontWeight.bold),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: m.spaceSm),
               Text(
                 _briefing!.summary,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  height: 1.6,
-                ),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(height: 1.6),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: m.spaceMd),
@@ -565,7 +555,7 @@ ${jsonEncode(digest.json)}
                     SizedBox(height: m.spaceMd),
                     Text(
                       'در حال تحلیل عمیق الگوهای رفتاری شما... لطفاً صبور باشید 🧐',
-                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      style: RitmoTextStyles.caption(colors.textSecondary),
                     ),
                   ],
                 ),
@@ -573,13 +563,11 @@ ${jsonEncode(digest.json)}
               SizedBox(height: m.spaceLg),
             ] else if (_deepAnalysisResult != null) ...[
               Divider(color: colors.border, height: 16),
-              const Text(
+              Text(
                 'گزارش تحلیل عمیق:',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyanAccent,
-                ),
+                style: RitmoTextStyles.caption(
+                  Colors.cyanAccent,
+                ).copyWith(fontWeight: FontWeight.bold),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: m.spaceSm),
@@ -593,11 +581,9 @@ ${jsonEncode(digest.json)}
                 child: SingleChildScrollView(
                   child: Text(
                     _deepAnalysisResult!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                      height: 1.6,
-                    ),
+                    style: RitmoTextStyles.caption(
+                      colors.textSecondary,
+                    ).copyWith(height: 1.6),
                     textDirection: TextDirection.rtl,
                   ),
                 ),
@@ -706,19 +692,14 @@ ${jsonEncode(digest.json)}
             children: [
               Text(
                 'بینش‌ها',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  ),
+                style: RitmoTextStyles.pageTitle(
+                  colors.textPrimary,
+                ).copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
                 'درک روندها و الگوهای زندگی شما',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  ),
+                style: RitmoTextStyles.caption(colors.textSecondary),
               ),
             ],
           ),
@@ -769,11 +750,7 @@ ${jsonEncode(digest.json)}
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: color,
-          ),
+        style: RitmoTextStyles.badge(color).copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -797,21 +774,17 @@ ${jsonEncode(digest.json)}
                 const SizedBox(height: 18),
                 Text(
                   'هنوز در حال شناخت شما هستیم',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    ),
+                  style: RitmoTextStyles.cardTitle(
+                    colors.textPrimary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'با ادامه استفاده از ریتمو و تکمیل روتین‌های روزانه، بینش‌های هوشمند، آنالیز تعادل ابعاد زندگی و تحلیل‌های پیشرفته ریتم انرژی شما ظاهر خواهند شد.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                    height: 1.6,
-                    ),
+                  style: RitmoTextStyles.caption(
+                    colors.textSecondary,
+                  ).copyWith(height: 1.6),
                 ),
                 const SizedBox(height: 16),
                 _buildMaturityBadge(),
@@ -866,12 +839,12 @@ ${jsonEncode(digest.json)}
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              style: RitmoTextStyles.caption(colors.textSecondary),
             ),
             const SizedBox(height: 10),
             Text(
               val,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color),
+              style: RitmoTextStyles.sectionHeadline(color).copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -948,11 +921,9 @@ ${jsonEncode(digest.json)}
   Widget _buildSectionTitle(RitmoColors colors, String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-        color: colors.textPrimary,
-        ),
+      style: RitmoTextStyles.body(
+        colors.textPrimary,
+      ).copyWith(fontWeight: FontWeight.bold),
     );
   }
 
@@ -972,7 +943,7 @@ ${jsonEncode(digest.json)}
                 children: [
                   Text(
                     'نبض زندگی جاری (میانگین ۷ روزه)',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
                   Icon(CupertinoIcons.chevron_left, size: 16, color: colors.textSecondary.withValues(alpha: 0.5)),
                 ],
@@ -980,11 +951,7 @@ ${jsonEncode(digest.json)}
               const SizedBox(height: 8),
               Text(
                 toPersianDigits('$_lifePulseAverage٪'),
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                  color: colors.success,
-                  ),
+                style: RitmoTextStyles.heroNumber(colors.success),
               ),
               const SizedBox(height: 12),
               // Trend indicator
@@ -1025,7 +992,7 @@ ${jsonEncode(digest.json)}
     if (value == 0) {
       return Text(
         'پایدار $label',
-        style: TextStyle(fontSize: 11, color: colors.textSecondary),
+        style: RitmoTextStyles.badge(colors.textSecondary),
       );
     }
     final trendColor = isUp ? colors.success : colors.medicalRed;
@@ -1035,7 +1002,7 @@ ${jsonEncode(digest.json)}
         const SizedBox(width: 3),
         Text(
           '$value٪ $label',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: trendColor),
+          style: RitmoTextStyles.badge(trendColor).copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -1078,11 +1045,13 @@ ${jsonEncode(digest.json)}
                         children: [
                           Text(
                             'تایم‌لاین نبض زندگی',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                            style: RitmoTextStyles.titleMedium(
+                              colors.textPrimary,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             'ثبت‌شده: ${_pulseHistoryList.length} روز',
-                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                            style: RitmoTextStyles.caption(colors.textSecondary),
                           ),
                         ],
                       ),
@@ -1093,7 +1062,7 @@ ${jsonEncode(digest.json)}
                           ? Center(
                               child: Text(
                                 'هنوز هیچ نبض روزانه‌ای ثبت نشده است.',
-                                style: TextStyle(color: colors.textSecondary),
+                                style: RitmoTextStyles.caption(colors.textSecondary),
                               ),
                             )
                           : ListView.builder(
@@ -1116,7 +1085,7 @@ ${jsonEncode(digest.json)}
                                     children: [
                                       Text(
                                         item['date'] as String,
-                                        style: const TextStyle(color: Colors.white70, fontSize: 13, fontFamily: 'monospace'),
+                                        style: RitmoTextStyles.caption(Colors.white70).copyWith(fontFamily: 'monospace'),
                                       ),
                                       Row(
                                         children: [
@@ -1143,11 +1112,9 @@ ${jsonEncode(digest.json)}
                                           const SizedBox(width: 12),
                                           Text(
                                             '$score٪',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: score >= 80 ? colors.success : (score >= 50 ? colors.primary : colors.medicalRed),
-                                              ),
+                                            style: RitmoTextStyles.label(
+                                              score >= 80 ? colors.success : (score >= 50 ? colors.primary : colors.medicalRed),
+                                            ).copyWith(fontWeight: FontWeight.bold),
                                           ),
                                         ],
                                       )
@@ -1181,7 +1148,7 @@ ${jsonEncode(digest.json)}
               Text(
                 'هنوز در این ابعاد روتینی تکمیل نشده است تا تعادل محاسبه شود. برای دیدن تعادل ابعاد زندگی، روتین‌های روزانه خود را تکمیل کنید.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6),
+                style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.6),
               ),
             ],
           ),
@@ -1216,12 +1183,12 @@ ${jsonEncode(digest.json)}
                     children: [
                       Text(
                         'شاخص تعادل کل زندگی',
-                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        style: RitmoTextStyles.caption(colors.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$_lifeBalanceScore٪',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: colors.primary),
+                        style: RitmoTextStyles.pageTitle(colors.primary).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -1249,10 +1216,10 @@ ${jsonEncode(digest.json)}
                           children: [
                             Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
                             const SizedBox(width: 8),
-                            Text(name, style: TextStyle(fontSize: 12, color: colors.textPrimary)),
+                            Text(name, style: RitmoTextStyles.caption(colors.textPrimary)),
                           ],
                         ),
-                        Text('${percent.toStringAsFixed(0)}٪', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary)),
+                        Text('${percent.toStringAsFixed(0)}٪', style: RitmoTextStyles.caption(colors.textSecondary).copyWith(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -1297,9 +1264,9 @@ ${jsonEncode(digest.json)}
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('تداوم فعلی', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                          Text('تداوم فعلی', style: RitmoTextStyles.badge(colors.textSecondary)),
                           const SizedBox(height: 4),
-                          Text(toPersianDigits('$_currentStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                          Text(toPersianDigits('$_currentStreak روز متوالی'), style: RitmoTextStyles.body(colors.textPrimary).copyWith(fontWeight: FontWeight.bold)),
                         ],
                       )
                     ],
@@ -1315,9 +1282,9 @@ ${jsonEncode(digest.json)}
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('طولانی‌ترین تداوم', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                          Text('طولانی‌ترین تداوم', style: RitmoTextStyles.badge(colors.textSecondary)),
                           const SizedBox(height: 4),
-                          Text(toPersianDigits('$_longestStreak روز متوالی'), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                          Text(toPersianDigits('$_longestStreak روز متوالی'), style: RitmoTextStyles.body(colors.textPrimary).copyWith(fontWeight: FontWeight.bold)),
                         ],
                       )
                     ],
@@ -1337,7 +1304,7 @@ ${jsonEncode(digest.json)}
                     _pulseDiffUp
                         ? 'شتاب انرژی رفتاری شما در ۷ روز اخیر با افزایش ${toPersianDigits('$_pulseDiffPercentage٪')} همراه بوده است.'
                         : 'شتاب انرژی رفتاری شما در ۷ روز اخیر با تغییر ${toPersianDigits('$_pulseDiffPercentage٪')} نیازمند پایش است.',
-                    style: TextStyle(fontSize: 11, color: colors.textSecondary, height: 1.5),
+                    style: RitmoTextStyles.badge(colors.textSecondary).copyWith(height: 1.5),
                   ),
                 ),
               ],
@@ -1358,7 +1325,7 @@ ${jsonEncode(digest.json)}
         alignment: Alignment.center,
         child: Text(
           'هنوز دسته‌بندی در روتین‌ها برای تحلیل روند وجود ندارد.',
-          style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          style: RitmoTextStyles.caption(colors.textSecondary),
         ),
       );
     }
@@ -1387,7 +1354,7 @@ ${jsonEncode(digest.json)}
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                        style: RitmoTextStyles.caption(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     Container(
@@ -1404,7 +1371,7 @@ ${jsonEncode(digest.json)}
                   children: [
                     Text(
                       toPersianDigits('${e.value.toStringAsFixed(0)}٪'),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: colors.textPrimary),
+                      style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.w900),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1414,11 +1381,7 @@ ${jsonEncode(digest.json)}
                       ),
                       child: Text(
                         'فعال',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
+                        style: RitmoTextStyles.badge(color).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1473,7 +1436,7 @@ ${jsonEncode(digest.json)}
           child: Center(
             child: Text(
               'داده‌های ثبت انرژی کافی نیست.',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              style: RitmoTextStyles.caption(colors.textSecondary),
             ),
           ),
         ),
@@ -1500,8 +1463,8 @@ ${jsonEncode(digest.json)}
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
-            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
+            Text(title, style: RitmoTextStyles.caption(colors.textSecondary)),
+            Text(value, style: RitmoTextStyles.label(color).copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -1616,11 +1579,9 @@ ${jsonEncode(digest.json)}
                     Expanded(
                       child: Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                          ),
+                        style: RitmoTextStyles.label(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
@@ -1633,11 +1594,9 @@ ${jsonEncode(digest.json)}
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                    height: 1.6,
-                    ),
+                  style: RitmoTextStyles.caption(
+                    colors.textSecondary,
+                  ).copyWith(height: 1.6),
                 ),
               ],
             ),
@@ -1663,7 +1622,7 @@ ${jsonEncode(digest.json)}
               children: [
                 Icon(CupertinoIcons.doc_text_search, color: colors.primary, size: 20),
                 const SizedBox(width: 8),
-                const Text('شناسنامه و ردیابی شاخص', style: TextStyle(fontSize: 15, color: Colors.white)),
+                Text('شناسنامه و ردیابی شاخص', style: RitmoTextStyles.body(Colors.white)),
               ],
             ),
             content: Column(
@@ -1695,7 +1654,7 @@ ${jsonEncode(digest.json)}
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+        Text(label, style: RitmoTextStyles.badge(colors.textSecondary)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1707,7 +1666,7 @@ ${jsonEncode(digest.json)}
           ),
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12, color: Colors.white, fontFamily: 'monospace'),
+            style: RitmoTextStyles.caption(Colors.white).copyWith(fontFamily: 'monospace'),
           ),
         ),
       ],
@@ -1753,9 +1712,9 @@ ${jsonEncode(digest.json)}
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(milestone.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(milestone.title, style: RitmoTextStyles.caption(Colors.white).copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(milestone.description, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                      Text(milestone.description, style: RitmoTextStyles.badge(colors.textSecondary)),
                       if (!milestone.isUnlocked) ...[
                         const SizedBox(height: 8),
                         ClipRRect(
@@ -1854,20 +1813,20 @@ ${jsonEncode(digest.json)}
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            Text(title, style: RitmoTextStyles.caption(colors.textPrimary).copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             if (hasEnough) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(value, style: TextStyle(fontSize: 13, color: colors.textSecondary)),
-                  Text(changeStr, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isBetter ? colors.success : colors.medicalRed)),
+                  Text(value, style: RitmoTextStyles.caption(colors.textSecondary)),
+                  Text(changeStr, style: RitmoTextStyles.caption(isBetter ? colors.success : colors.medicalRed).copyWith(fontWeight: FontWeight.bold)),
                 ],
               )
             ] else ...[
               Text(
                 toPersianDigits('هنوز داده کافی برای این تحلیل وجود ندارد (نیاز به حداقل $requiredDays روز داده فعالیتی)'),
-                style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
+                style: RitmoTextStyles.badge(colors.textSecondary.withValues(alpha: 0.6)),
               )
             ]
           ],
@@ -1899,11 +1858,9 @@ ${jsonEncode(digest.json)}
             Expanded(
               child: Text(
                 summary,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
-                  height: 1.6,
-                  ),
+                style: RitmoTextStyles.caption(
+                  colors.textSecondary,
+                ).copyWith(height: 1.6),
               ),
             ),
           ],
@@ -1926,11 +1883,9 @@ ${jsonEncode(digest.json)}
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text(
               'انتخاب محدوده زمانی',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+              style: RitmoTextStyles.titleMedium(
+                colors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1939,10 +1894,9 @@ ${jsonEncode(digest.json)}
                 return ListTile(
                   title: Text(
                     w.label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textPrimary,
-                      ),
+                    style: RitmoTextStyles.caption(
+                      colors.textPrimary,
+                    ),
                   ),
                   leading: Icon(
                     isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
@@ -1991,12 +1945,12 @@ ${jsonEncode(digest.json)}
                 children: [
                   Text(
                     'خروجی از بینش‌ها',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                    style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'گزارش وضعیت روندها و تعادل ابعاد زندگی شما آماده خروجی گرفتن است.',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
@@ -2052,14 +2006,14 @@ ${jsonEncode(digest.json)}
               children: [
                 Icon(CupertinoIcons.checkmark_circle_fill, color: colors.success, size: 22),
                 const SizedBox(width: 8),
-                Text('خروجی با موفقیت آماده شد', style: TextStyle(fontSize: 15, color: colors.textPrimary)),
+                Text('خروجی با موفقیت آماده شد', style: RitmoTextStyles.body(colors.textPrimary)),
               ],
             ),
             content: Text(
               _isFemale
                   ? 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های محرمانه چرخه بدنی و سلامت خصوصی هرگز در خروجی قرار نگرفته‌اند.'
                   : 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های شخصی و حساس هرگز در خروجی قرار نگرفته‌اند.',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary, height: 1.6),
+              style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.6),
             ),
             actions: [
               TextButton(
@@ -2111,14 +2065,14 @@ ${jsonEncode(digest.json)}
                   const SizedBox(width: 10),
                   Text(
                     'اشتراک‌گذاری گزارش بینش‌ها',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                    style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(CupertinoIcons.doc_on_clipboard, color: Color(0xFF10B981)),
-                title: Text('کپی متن گزارش در حافظه (کپی سریع)', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                title: Text('کپی متن گزارش در حافظه (کپی سریع)', style: RitmoTextStyles.label(colors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   await Clipboard.setData(ClipboardData(text: text));
@@ -2129,7 +2083,7 @@ ${jsonEncode(digest.json)}
               ),
               ListTile(
                 leading: const Icon(CupertinoIcons.paperplane, color: Color(0xFF3B82F6)),
-                title: Text('ارسال به پیام‌رسان‌ها (اشتراک سیستم)', style: TextStyle(fontSize: 14, color: colors.textPrimary)),
+                title: Text('ارسال به پیام‌رسان‌ها (اشتراک سیستم)', style: RitmoTextStyles.label(colors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(ctx);
                   final box = buttonContext.findRenderObject() as RenderBox?;

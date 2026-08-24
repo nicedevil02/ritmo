@@ -129,8 +129,12 @@ class _TimelineGridState extends State<TimelineGrid> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final effectivePxPerMinute = widget.pxPerMinute == CalendarGeometry.pxPerMinute
+        ? CalendarGeometry.effectivePxPerMinute(context)
+        : widget.pxPerMinute;
+
     final layoutEngine = TimelineLayoutEngine(
-      pxPerMinute: widget.pxPerMinute,
+      pxPerMinute: effectivePxPerMinute,
       rangeStartMinutes: widget.rangeStartMinutes,
       rangeEndMinutes: widget.rangeEndMinutes,
       maxLanes: widget.maxLanes,
@@ -143,13 +147,13 @@ class _TimelineGridState extends State<TimelineGrid> {
         widget.isToday &&
         nowMinutes >= widget.rangeStartMinutes &&
         nowMinutes < widget.rangeEndMinutes;
-    final nowTop = (nowMinutes - widget.rangeStartMinutes) * widget.pxPerMinute;
+    final nowTop = (nowMinutes - widget.rangeStartMinutes) * effectivePxPerMinute;
 
     final isLeadingAxis = widget.axisSide == HourAxisSide.leading;
 
     final hourAxisWidget = RepaintBoundary(
       child: TimelineHourAxis(
-        pxPerMinute: widget.pxPerMinute,
+        pxPerMinute: effectivePxPerMinute,
         rangeStartMinutes: widget.rangeStartMinutes,
         rangeEndMinutes: widget.rangeEndMinutes,
         width: widget.hourAxisWidth,

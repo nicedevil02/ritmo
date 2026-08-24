@@ -52,42 +52,48 @@ class RitmoProgressRing extends StatelessWidget {
               subtitleColor: colors.textSecondary,
             ),
             child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (value == null) ...[
-                    Text(
-                      '؟',
-                      style: TextStyle(
-                        fontSize: size * 0.28,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textTertiary,
-                        fontFamily: 'Vazirmatn',
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'نامشخص',
-                      style: RitmoTextStyles.caption(colors.textSecondary),
-                    ),
-                  ] else ...[
-                    Text(
-                      RitmoNumber.faInt(animValue),
-                      style: TextStyle(
-                        fontSize: size * 0.26,
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                        fontFamily: 'Vazirmatn',
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'از ۱۰۰',
-                      style: RitmoTextStyles.caption(colors.textSecondary),
-                    ),
-                  ],
-                ],
+              child: Padding(
+                padding: EdgeInsets.all(strokeWidth + 4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (value == null) ...[
+                        Text(
+                          '؟',
+                          style: TextStyle(
+                            fontSize: size * 0.28,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textTertiary,
+                            fontFamily: 'Vazirmatn',
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'نامشخص',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ] else ...[
+                        Text(
+                          RitmoNumber.faInt(animValue),
+                          style: TextStyle(
+                            fontSize: size * 0.26,
+                            fontWeight: FontWeight.w800,
+                            color: colors.textPrimary,
+                            fontFamily: 'Vazirmatn',
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'از ۱۰۰',
+                          style: RitmoTextStyles.caption(colors.textSecondary),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           );

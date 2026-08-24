@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_text_field.dart';

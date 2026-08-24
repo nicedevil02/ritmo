@@ -582,7 +582,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               curve: RitmoMotion.enter,
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -705,7 +705,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg, vertical: RitmoSpacing.md),
+                  padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.md, 14, RitmoSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

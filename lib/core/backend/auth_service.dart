@@ -1,7 +1,6 @@
 // lib/core/backend/auth_service.dart
 
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/backend/appwrite_gateway.dart';
@@ -165,7 +164,7 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Verifies current remote session status quietly in background
-  Future<void> checkRemoteSession() async {
+  Future<void> checkRemoteSession({String? explicitProvider}) async {
     final result = await _gateway.getCurrentUser();
     if (result.isSuccess && result.data != null) {
       final user = result.data!;
@@ -173,13 +172,19 @@ class AuthService extends ChangeNotifier {
       final email = user.email;
       final rawId = email.isNotEmpty ? email : (phone.isNotEmpty ? phone : user.name);
       final masked = maskIdentifier(rawId);
-      final isGoogleUser = user.registration.isNotEmpty && (user.password?.isEmpty ?? true);
+
+      // Determine provider without heuristics
+      final resolvedProvider = explicitProvider ??
+          (_state.provider != 'anonymous'
+              ? _state.provider
+              : (email.isNotEmpty ? 'email' : (phone.isNotEmpty ? 'phone' : 'google')));
+      final googleLinked = resolvedProvider == 'google';
 
       await _saveStateToLocalDb(
         loggedIn: true,
-        provider: email.isNotEmpty ? 'email' : (phone.isNotEmpty ? 'phone' : 'google'),
+        provider: resolvedProvider,
         maskedIdentifier: masked,
-        isGoogleLinked: isGoogleUser || _state.isGoogleLinked,
+        isGoogleLinked: googleLinked,
       );
     }
   }
@@ -198,7 +203,13 @@ class AuthService extends ChangeNotifier {
   Future<AuthResult<bool>> loginWithGoogle() async {
     final res = await _gateway.loginWithGoogle();
     if (res.isSuccess) {
-      await checkRemoteSession();
+      await _saveStateToLocalDb(
+        loggedIn: true,
+        provider: 'google',
+        maskedIdentifier: _state.maskedIdentifier,
+        isGoogleLinked: true,
+      );
+      await checkRemoteSession(explicitProvider: 'google');
     }
     return res;
   }
@@ -216,7 +227,13 @@ class AuthService extends ChangeNotifier {
   Future<AuthResult<bool>> verifyEmailOtp(String userId, String secret) async {
     final res = await _gateway.createSessionWithToken(userId, secret.trim());
     if (!res.isSuccess) return AuthResult.failure(res.errorCode, res.errorMessage);
-    await checkRemoteSession();
+    await _saveStateToLocalDb(
+      loggedIn: true,
+      provider: 'email',
+      maskedIdentifier: _state.maskedIdentifier,
+      isGoogleLinked: false,
+    );
+    await checkRemoteSession(explicitProvider: 'email');
     return const AuthResult.success(true);
   }
 

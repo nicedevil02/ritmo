@@ -322,7 +322,7 @@ class _CycleLockGateState extends State<CycleLockGate>
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
+                          horizontal: 14,
                           vertical: 16,
                         ),
                         child: Directionality(

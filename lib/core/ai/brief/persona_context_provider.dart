@@ -23,8 +23,6 @@ import 'package:ritmo/core/domain/personas/persona_gate.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
-const String _kNotesAiVisibilityClause = 'isLocked = 0 AND isPrivate = 0';
-
 class PersonaContextProvider {
   static const int _horizonDays = 14;
 

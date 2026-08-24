@@ -57,7 +57,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
     final isCompleted = _currentRakah >= 11;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colors.surface,

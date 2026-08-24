@@ -165,13 +165,12 @@ class _TaskDetailSheetState extends State<TaskDetailSheet> {
           decoration: BoxDecoration(
             color: colors.card,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: colors.border),
           ),
           child: _isLoading
               ? Center(child: CircularProgressIndicator(color: colors.primary))
               : ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
                   children: [
                     Center(
                       child: Container(

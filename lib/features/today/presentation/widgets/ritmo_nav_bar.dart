@@ -2,12 +2,14 @@
 // (Ultra-Polished Sleek Moving Notch Navigation Bar)
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 /// مدل هر مقصد ناوبری
 class _NavItem {
@@ -114,13 +116,40 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.colors;
+    final behavior = context.behavior;
+    final isDark = context.isDark;
+    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
     final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    final barBgColor = isDark ? const Color(0xFF13181C) : const Color(0xFFFEFEFD);
+    final isGlassEnabled = !behavior.reduceTransparency && !highContrast;
+
+    // Glass / Theme-Aware Color Tokens
+    final Color barBgColor;
+    final Color borderColor;
+    final Color shadowColor;
+
+    if (!isGlassEnabled) {
+      // Solid Fallback for reduced transparency / high contrast
+      barBgColor = colors.surfaceElevated;
+      borderColor = highContrast
+          ? colors.textPrimary
+          : (isDark ? colors.border : colors.divider);
+      shadowColor = isDark
+          ? Colors.black.withValues(alpha: 0.35)
+          : (colors.shadow.a > 0 ? colors.shadow : Colors.black.withValues(alpha: 0.06));
+    } else {
+      // Frosted Glass Tint adhering to Central Ritmo Theme
+      barBgColor = colors.glassTint;
+      borderColor = isDark
+          ? Colors.white.withValues(alpha: 0.10)
+          : Colors.white.withValues(alpha: 0.65);
+      shadowColor = Colors.black.withValues(alpha: isDark ? 0.38 : 0.05);
+    }
+
     final centerBtnColor = isDark ? const Color(0xFF1B2228) : const Color(0xFF1C2126);
 
     return SizedBox(
@@ -148,23 +177,47 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // 1. پس‌زمینهٔ صیقلی چسبیده به کف با هلال لغزان
+                  // 1. سایه هماهنگ با لبه‌های هلال
                   Positioned.fill(
                     child: CustomPaint(
-                      painter: _DockedNotchedBarPainter(
-                        color: barBgColor,
-                        shadowColor: Colors.black.withValues(
-                          alpha: isDark ? 0.35 : 0.06,
-                        ),
-                        borderColor: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xFFE8E6E0),
+                      painter: _DockedNotchedBarShadowPainter(
+                        shadowColor: shadowColor,
                         notchCenterX: notchCenterX,
                       ),
                     ),
                   ),
 
-                  // 2. تب‌های کناری با ترنزیشن محوشدگی نرم
+                  // 2. پس‌زمینهٔ شیشه‌ای صیقلی با بلور زنده
+                  Positioned.fill(
+                    child: isGlassEnabled
+                        ? ClipPath(
+                            clipper: _DockedNotchedBarClipper(
+                              notchCenterX: notchCenterX,
+                            ),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(
+                                sigmaX: 25.0,
+                                sigmaY: 25.0,
+                              ),
+                              child: CustomPaint(
+                                painter: _DockedNotchedBarPainter(
+                                  color: barBgColor,
+                                  borderColor: borderColor,
+                                  notchCenterX: notchCenterX,
+                                ),
+                              ),
+                            ),
+                          )
+                        : CustomPaint(
+                            painter: _DockedNotchedBarPainter(
+                              color: barBgColor,
+                              borderColor: borderColor,
+                              notchCenterX: notchCenterX,
+                            ),
+                          ),
+                  ),
+
+                  // 3. تب‌های کناری با ترنزیشن محوشدگی نرم
                   Positioned(
                     left: 0,
                     right: 0,
@@ -200,7 +253,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     ),
                   ),
 
-                  // 3. دکمهٔ دایره‌ای شناور فوق‌لوکس با موقعیت هماهنگ با هلال
+                  // 4. دکمهٔ دایره‌ای شناور فوق‌لوکس با موقعیت هماهنگ با هلال
                   Positioned(
                     left: notchCenterX - 19,
                     top: -5,
@@ -476,17 +529,101 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
   }
 }
 
-/// نقاش پس‌زمینه با هلال مقعر متحرک و خط مرزی ظریف
+/// مسیر هلال مقعر متحرک
+Path _buildNotchPath(double w, double h, double cx) {
+  const notchHalfWidth = 44.0;
+  const notchDepth = 35.0;
+
+  final p = Path();
+  p.moveTo(0, 0);
+  p.lineTo(cx - notchHalfWidth, 0);
+
+  // ۱. قوس محدب شانه چپ (انحنای فوق‌العاده نرم از خط افقی به سمت پایین)
+  p.cubicTo(
+    cx - notchHalfWidth + 14.0, 0.0,
+    cx - notchHalfWidth * 0.55 - 3.0, notchDepth * 0.28,
+    cx - notchHalfWidth * 0.50, notchDepth * 0.44,
+  );
+
+  // ۲. قوس مقعر گودی چپ (رسیدن نرم به کف گرد هلال)
+  p.cubicTo(
+    cx - notchHalfWidth * 0.50 + 5.0, notchDepth * 0.62,
+    cx - 14.0, notchDepth,
+    cx, notchDepth,
+  );
+
+  // ۳. قوس مقعر گودی راست (خروج نرم از کف هلال)
+  p.cubicTo(
+    cx + 14.0, notchDepth,
+    cx + notchHalfWidth * 0.50 - 5.0, notchDepth * 0.62,
+    cx + notchHalfWidth * 0.50, notchDepth * 0.44,
+  );
+
+  // ۴. قوس محدب شانه راست (بازگشت کاملاً نرم و بی‌گوشه به خط افقی)
+  p.cubicTo(
+    cx + notchHalfWidth * 0.55 + 3.0, notchDepth * 0.28,
+    cx + notchHalfWidth - 14.0, 0.0,
+    cx + notchHalfWidth, 0.0,
+  );
+
+  p.lineTo(w, 0);
+  p.lineTo(w, h);
+  p.lineTo(0, h);
+  p.close();
+
+  return p;
+}
+
+/// کلیپر دقیق فرم نوار برای ماسک کردن فیلتر شیشه‌ای (BackdropFilter)
+class _DockedNotchedBarClipper extends CustomClipper<Path> {
+  const _DockedNotchedBarClipper({required this.notchCenterX});
+  final double notchCenterX;
+
+  @override
+  Path getClip(Size size) => _buildNotchPath(size.width, size.height, notchCenterX);
+
+  @override
+  bool shouldReclip(covariant _DockedNotchedBarClipper oldClipper) =>
+      oldClipper.notchCenterX != notchCenterX;
+}
+
+/// نقاش سایهٔ نرم پیرامون نوار ناوبری
+class _DockedNotchedBarShadowPainter extends CustomPainter {
+  const _DockedNotchedBarShadowPainter({
+    required this.shadowColor,
+    required this.notchCenterX,
+  });
+
+  final Color shadowColor;
+  final double notchCenterX;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _buildNotchPath(size.width, size.height, notchCenterX);
+    final shadowPaint = Paint()
+      ..color = shadowColor
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.save();
+    canvas.translate(0, -2);
+    canvas.drawPath(path, shadowPaint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _DockedNotchedBarShadowPainter oldDelegate) =>
+      oldDelegate.shadowColor != shadowColor ||
+      oldDelegate.notchCenterX != notchCenterX;
+}
+
+/// نقاش پس‌زمینهٔ صیقلی با هلال مقعر و خط براق بالای شیشه
 class _DockedNotchedBarPainter extends CustomPainter {
   const _DockedNotchedBarPainter({
     required this.color,
-    required this.shadowColor,
     required this.borderColor,
     required this.notchCenterX,
   });
 
   final Color color;
-  final Color shadowColor;
   final Color borderColor;
   final double notchCenterX;
 
@@ -498,69 +635,43 @@ class _DockedNotchedBarPainter extends CustomPainter {
     const notchHalfWidth = 44.0;
     const notchDepth = 35.0;
 
-    Path buildNotchPath() {
-      final p = Path();
-      p.moveTo(0, 0);
-      p.lineTo(cx - notchHalfWidth, 0);
+    final path = _buildNotchPath(w, h, cx);
 
-      // ۱. قوس محدب شانه چپ (انحنای فوق‌العاده نرم از خط افقی به سمت پایین)
-      p.cubicTo(
-        cx - notchHalfWidth + 14.0, 0.0,
-        cx - notchHalfWidth * 0.55 - 3.0, notchDepth * 0.28,
-        cx - notchHalfWidth * 0.50, notchDepth * 0.44,
-      );
-
-      // ۲. قوس مقعر گودی چپ (رسیدن نرم به کف گرد هلال)
-      p.cubicTo(
-        cx - notchHalfWidth * 0.50 + 5.0, notchDepth * 0.62,
-        cx - 14.0, notchDepth,
-        cx, notchDepth,
-      );
-
-      // ۳. قوس مقعر گودی راست (خروج نرم از کف هلال)
-      p.cubicTo(
-        cx + 14.0, notchDepth,
-        cx + notchHalfWidth * 0.50 - 5.0, notchDepth * 0.62,
-        cx + notchHalfWidth * 0.50, notchDepth * 0.44,
-      );
-
-      // ۴. قوس محدب شانه راست (بازگشت کاملاً نرم و بی‌گوشه به خط افقی)
-      p.cubicTo(
-        cx + notchHalfWidth * 0.55 + 3.0, notchDepth * 0.28,
-        cx + notchHalfWidth - 14.0, 0.0,
-        cx + notchHalfWidth, 0.0,
-      );
-
-      return p;
-    }
-
-    final path = buildNotchPath();
-    path.lineTo(w, 0);
-    path.lineTo(w, h);
-    path.lineTo(0, h);
-    path.close();
-
-    // Draw shadow
-    final shadowPaint = Paint()
-      ..color = shadowColor
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    canvas.save();
-    canvas.translate(0, -2);
-    canvas.drawPath(path, shadowPaint);
-    canvas.restore();
-
-    // Draw background
+    // Draw background (Frosted Glass Tint or Solid surface)
     final fillPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
-    // Draw top border
+    // Draw top specular border
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    final topBorderPath = buildNotchPath();
+      ..strokeWidth = 0.9;
+
+    final topBorderPath = Path();
+    topBorderPath.moveTo(0, 0);
+    topBorderPath.lineTo(cx - notchHalfWidth, 0);
+    topBorderPath.cubicTo(
+      cx - notchHalfWidth + 14.0, 0.0,
+      cx - notchHalfWidth * 0.55 - 3.0, notchDepth * 0.28,
+      cx - notchHalfWidth * 0.50, notchDepth * 0.44,
+    );
+    topBorderPath.cubicTo(
+      cx - notchHalfWidth * 0.50 + 5.0, notchDepth * 0.62,
+      cx - 14.0, notchDepth,
+      cx, notchDepth,
+    );
+    topBorderPath.cubicTo(
+      cx + 14.0, notchDepth,
+      cx + notchHalfWidth * 0.50 - 5.0, notchDepth * 0.62,
+      cx + notchHalfWidth * 0.50, notchDepth * 0.44,
+    );
+    topBorderPath.cubicTo(
+      cx + notchHalfWidth * 0.55 + 3.0, notchDepth * 0.28,
+      cx + notchHalfWidth - 14.0, 0.0,
+      cx + notchHalfWidth, 0.0,
+    );
     topBorderPath.lineTo(w, 0);
     canvas.drawPath(topBorderPath, borderPaint);
   }
@@ -568,7 +679,6 @@ class _DockedNotchedBarPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DockedNotchedBarPainter oldDelegate) {
     return oldDelegate.color != color ||
-        oldDelegate.shadowColor != shadowColor ||
         oldDelegate.borderColor != borderColor ||
         oldDelegate.notchCenterX != notchCenterX;
   }

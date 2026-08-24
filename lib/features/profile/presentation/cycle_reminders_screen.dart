@@ -170,7 +170,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
     final avgPeriodDuration = CycleSettings.getPeriodDuration(_settings);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

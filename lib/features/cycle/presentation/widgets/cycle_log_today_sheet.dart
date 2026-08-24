@@ -169,8 +169,8 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             top: 24,
-            left: 20,
-            right: 20,
+            left: 14,
+            right: 14,
           ),
           child: SingleChildScrollView(
             child: Column(

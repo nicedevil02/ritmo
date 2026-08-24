@@ -193,7 +193,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
       textDirection: TextDirection.rtl,
       child: AnimatedContainer(
         duration: Duration(milliseconds: 600),
-        margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         padding: EdgeInsets.fromLTRB(6, 10, 6, 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(

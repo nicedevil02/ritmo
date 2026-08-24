@@ -666,8 +666,8 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
+        left: 14,
+        right: 14,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         top: 20,
       ),

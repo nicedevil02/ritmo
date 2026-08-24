@@ -795,7 +795,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               WellbeingQuickCheckinBar(
@@ -916,7 +916,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       child: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(RitmoSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 SleepTargetCard(
@@ -960,7 +960,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               _buildHorizonFilterRow(context),
@@ -996,7 +996,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.all(RitmoSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               Container(

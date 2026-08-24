@@ -11,6 +11,7 @@ import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
+// TODO(arch): Core layer dependency on supplementary_sports feature. Decouple in future via DatabaseHelper.warmupHooks or an event listener pattern.
 import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -337,8 +338,8 @@ class EndOfDaySweep {
           await prefs.remove('ss_active_session_paused');
         }
       }
-    } catch (e) {
-      debugPrint('Sports sweep error: $e');
+    } catch (e, st) {
+      RitmoLog.error('EndOfDaySweep', 'Sports sweep error', e, st);
     }
   }
 }

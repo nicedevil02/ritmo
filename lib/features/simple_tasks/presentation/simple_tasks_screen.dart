@@ -405,7 +405,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
                 height: 32,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   itemCount: _activeTags.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 6),
                   itemBuilder: (context, index) {
@@ -481,7 +481,7 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
                             ),
                           ),
                           SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 100),
                             sliver: SliverMainAxisGroup(
                               slivers: TaskBucket.values
                                   .where((bucket) => (_buckets[bucket] ?? []).isNotEmpty)

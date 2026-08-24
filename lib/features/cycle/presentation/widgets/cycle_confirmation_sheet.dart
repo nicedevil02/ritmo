@@ -131,7 +131,7 @@ class _CycleConfirmationSheetState extends State<CycleConfirmationSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(color: colors.border),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

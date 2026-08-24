@@ -533,7 +533,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
         // Search Bar & Filter Chips Header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
             child: Column(
               children: [
                 // Search Bar Row
@@ -720,7 +720,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Pinned Notes Section
@@ -877,7 +877,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
 
           // Wisdom Cards List
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) => _buildWisdomCard(context, filtered[i], isDark),
@@ -904,7 +904,7 @@ class _NotebookScreenState extends State<NotebookScreen> with SingleTickerProvid
       onRefresh: _loadReviewStats,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
         children: [
           // 1. Spaced Repetition (SRS) Flashcards Hero Card
           _buildSrsHeroCard(context, colors, isDark),

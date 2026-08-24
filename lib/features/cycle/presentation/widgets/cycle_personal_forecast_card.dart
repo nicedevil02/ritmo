@@ -41,7 +41,7 @@ class CyclePersonalForecastCard extends StatelessWidget {
     final colors = context.colors;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.card,

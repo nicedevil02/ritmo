@@ -474,7 +474,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

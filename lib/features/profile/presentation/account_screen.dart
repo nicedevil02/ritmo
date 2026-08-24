@@ -187,7 +187,7 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
           backgroundColor: Colors.transparent,
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

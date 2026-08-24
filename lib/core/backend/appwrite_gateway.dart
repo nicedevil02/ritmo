@@ -1,7 +1,6 @@
 // lib/core/backend/appwrite_gateway.dart
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/enums.dart';
@@ -16,7 +15,6 @@ class AppwriteGateway {
 
   Client? _client;
   Account? _account;
-  Functions? _functions;
   bool _isInitialized = false;
 
   bool get isConfigured => AppConfig.isAppwriteConfigured;
@@ -36,7 +34,6 @@ class AppwriteGateway {
 
       _client = client;
       _account = Account(client);
-      _functions = Functions(client);
       _isInitialized = true;
       RitmoLog.info('AppwriteGateway', 'Appwrite Gateway initialized successfully.');
     } catch (e, st) {

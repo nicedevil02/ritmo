@@ -143,9 +143,9 @@ class _MorningCheckinSheetState extends State<MorningCheckinSheet> {
         borderRadius: 28,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
+            14,
             20,
-            20,
-            20,
+            14,
             MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           child: SingleChildScrollView(

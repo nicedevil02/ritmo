@@ -63,7 +63,7 @@ class _MyDaySectionState extends State<MyDaySection> {
     if (!hasTasks && !hasSuggestions) {
       // State C: All clear
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: colors.card,
@@ -97,7 +97,7 @@ class _MyDaySectionState extends State<MyDaySection> {
     if (!hasTasks && hasSuggestions) {
       // State A: Empty My Day with suggestions
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: colors.card,
@@ -109,10 +109,10 @@ class _MyDaySectionState extends State<MyDaySection> {
           children: [
             Row(
               children: [
-                Icon(CupertinoIcons.sun_max_fill, size: 18, color: colors.accent),
+                Icon(CupertinoIcons.sparkles, size: 18, color: colors.accent),
                 const SizedBox(width: 8),
                 Text(
-                  TaskStrings.myDayPrompt,
+                  TaskStrings.suggestionsTitle,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
               ],
@@ -124,13 +124,13 @@ class _MyDaySectionState extends State<MyDaySection> {
       );
     }
 
-    // State B: My Day has tasks
+    // State B: Active My Day (has tasks)
     final doneCount = widget.tasks.where((t) => t.isDone).length;
     final totalCount = widget.tasks.length;
     final progressStr = '${PersianDigits.toPersian(doneCount)} از ${PersianDigits.toPersian(totalCount)}';
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.card,

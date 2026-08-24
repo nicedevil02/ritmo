@@ -73,7 +73,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
             : RefreshIndicator(
                 onRefresh: _loadWeeklyReview,
                 child: ListView(
-                  padding: const EdgeInsets.all(RitmoSpacing.lg),
+                  padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.lg, 14, RitmoSpacing.xl),
                   children: [
                     // Summary Banner
                     Container(

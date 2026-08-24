@@ -10,7 +10,6 @@ import 'package:ritmo/features/profile/presentation/ai_connection_screen.dart';
 import 'package:ritmo/features/profile/presentation/ai_memory_management_screen.dart';
 import 'package:ritmo/features/profile/presentation/widgets/psych_layer_settings_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/ai_write_history_sheet.dart';
-import 'package:ritmo/features/settings/presentation/widgets/privacy_summary_card.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
@@ -134,7 +133,6 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
         child: Column(
           children: [
-            const PrivacySummaryCard(),
             SettingsSection(
               title: 'پیکربندی هوش مصنوعی',
               children: [

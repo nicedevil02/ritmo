@@ -5,12 +5,11 @@ import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_preferences.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
-import 'package:ritmo/features/profile/presentation/theme_settings_screen.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
-import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
 class AppearanceGroupScreen extends StatefulWidget {
   final String? highlightKey;
@@ -160,9 +159,6 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final showAdvanced = SettingsService.instance.get<bool>(
-      'show_advanced_settings',
-    );
 
     return ValueListenableBuilder<ThemePreferences>(
       valueListenable: widget.themeRepository.preferencesNotifier,
@@ -362,123 +358,218 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                     ),
                   ],
                 ),
+                // ۲. حالت روشنایی
                 SettingsSection(
-                  title: 'پوسته و تم',
+                  title: 'حالت روشنایی',
                   children: [
-                    SettingsTile(
-                      title: 'تنظیمات تم و پالت رنگی',
-                      subtitle: 'انتخاب حالت روشنایی و پالت‌های رنگی اختصاصی',
-                      leading: Icon(
-                        CupertinoIcons.paintbrush_fill,
-                        color: colors.primary,
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                            builder: (_) => ThemeSettingsScreen(
-                              themeRepository: widget.themeRepository,
-                            ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'انتخاب تم محیط برنامه',
+                            style:
+                                context.t.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ) ??
+                                TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
                           ),
-                        );
-                      },
+                          const SizedBox(height: 12),
+                          RitmoSegmentedControl<ThemeMode>(
+                            segments: const {
+                              ThemeMode.system: 'هماهنگ با سیستم',
+                              ThemeMode.light: 'روشن',
+                              ThemeMode.dark: 'تاریک',
+                            },
+                            selected: prefs.mode,
+                            onSelected: (mode) async {
+                              RitmoHapticsPolicy.selection();
+                              await widget.themeRepository.updateThemeMode(mode);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    if (showAdvanced) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'کاهش شفافیت',
-                                    style:
-                                        context.t.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.textPrimary,
-                                        ) ??
-                                        TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.textPrimary,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)',
-                                    style:
-                                        context.t.bodySmall?.copyWith(
-                                          color: colors.textSecondary,
-                                        ) ??
-                                        TextStyle(color: colors.textSecondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            CupertinoSwitch(
-                              value: prefs.reduceTransparency,
-                              activeTrackColor: colors.primary,
-                              onChanged: (val) => widget.themeRepository
-                                  .updateReduceTransparency(val),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'سیاه خالص (OLED)',
-                                    style:
-                                        context.t.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.textPrimary,
-                                        ) ??
-                                        TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.textPrimary,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'پس‌زمینه کاملاً مشکی در حالت تاریک جهت صرفه‌جویی در باتری',
-                                    style:
-                                        context.t.bodySmall?.copyWith(
-                                          color: colors.textSecondary,
-                                        ) ??
-                                        TextStyle(color: colors.textSecondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            CupertinoSwitch(
-                              value: prefs.trueBlack,
-                              activeTrackColor: colors.primary,
-                              onChanged: (val) =>
-                                  widget.themeRepository.updateTrueBlack(val),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
+
+                // ۳. پالت‌های رنگی اختصاصی
+                SettingsSection(
+                  title: 'پالت‌های رنگی اختصاصی',
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'پالت رنگی مورد علاقه خود را انتخاب کنید:',
+                            style:
+                                context.t.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ) ??
+                                TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...RitmoPalette.all.map((palette) {
+                            final isSelected = palette.id == prefs.paletteId;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _PalettePreviewCard(
+                                palette: palette,
+                                isSelected: isSelected,
+                                onTap: () async {
+                                  final oldPalette = prefs.paletteId;
+                                  final success = await widget.themeRepository.updatePalette(palette.id);
+                                  if (success && context.mounted) {
+                                    RitmoToast.show(
+                                      context,
+                                      'پالت به «${palette.nameFa}» تغییر کرد',
+                                      icon: Icons.palette_rounded,
+                                      iconColor: palette.dark.primary,
+                                      onUndo: () {
+                                        widget.themeRepository.updatePalette(oldPalette);
+                                      },
+                                    );
+                                  } else if (!success && context.mounted) {
+                                    RitmoToast.show(
+                                      context,
+                                      'ذخیرهٔ تنظیمات ناموفق بود',
+                                      icon: Icons.error_outline_rounded,
+                                      iconColor: colors.error,
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ۴. جلوه‌های بصری و نمایشگر
+                SettingsSection(
+                  title: 'جلوه‌های بصری و نمایشگر',
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'کاهش شفافیت',
+                                  style:
+                                      context.t.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.textPrimary,
+                                      ) ??
+                                      TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.textPrimary,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)',
+                                  style:
+                                      context.t.bodySmall?.copyWith(
+                                        color: colors.textSecondary,
+                                      ) ??
+                                      TextStyle(color: colors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          CupertinoSwitch(
+                            value: prefs.reduceTransparency,
+                            activeTrackColor: colors.primary,
+                            onChanged: (val) {
+                              RitmoHapticsPolicy.selection();
+                              widget.themeRepository.updateReduceTransparency(val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'سیاه خالص (OLED)',
+                                  style:
+                                      context.t.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: prefs.mode == ThemeMode.light
+                                            ? colors.disabled
+                                            : colors.textPrimary,
+                                      ) ??
+                                      TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: prefs.mode == ThemeMode.light
+                                            ? colors.disabled
+                                            : colors.textPrimary,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  prefs.mode == ThemeMode.light
+                                      ? 'فقط در حالت تاریک اثر دارد'
+                                      : 'پس‌زمینه کاملاً مشکی در حالت تاریک جهت صرفه‌جویی در باتری',
+                                  style:
+                                      context.t.bodySmall?.copyWith(
+                                        color: colors.textSecondary,
+                                      ) ??
+                                      TextStyle(color: colors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          CupertinoSwitch(
+                            value: prefs.trueBlack,
+                            activeTrackColor: colors.primary,
+                            onChanged: prefs.mode == ThemeMode.light
+                                ? null
+                                : (val) {
+                                    RitmoHapticsPolicy.selection();
+                                    widget.themeRepository.updateTrueBlack(val);
+                                  },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ۵. زبان برنامه
                 SettingsSection(
                   title: 'زبان برنامه',
                   children: [
@@ -529,6 +620,180 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _PalettePreviewCard extends StatelessWidget {
+  const _PalettePreviewCard({
+    required this.palette,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final RitmoPalette palette;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBrightness = Theme.of(context).brightness;
+
+    return Theme(
+      data: RitmoTheme.build(
+        palette: palette,
+        brightness: activeBrightness,
+      ),
+      child: Builder(
+        builder: (innerContext) {
+          final innerColors = innerContext.colors;
+
+          return Semantics(
+            label: 'پالت ${palette.nameFa}',
+            selected: isSelected,
+            button: true,
+            child: GestureDetector(
+              onTap: () {
+                RitmoHapticsPolicy.selection();
+                onTap();
+              },
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: RitmoMotion.state,
+                padding: const EdgeInsets.all(RitmoSpacing.lg),
+                decoration: BoxDecoration(
+                  color: innerColors.surface,
+                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  border: Border.all(
+                    color: isSelected
+                        ? innerColors.primary
+                        : (activeBrightness == Brightness.dark
+                            ? innerColors.border
+                            : innerColors.divider),
+                    width: isSelected ? 2.0 : 1.0,
+                  ),
+                  boxShadow: activeBrightness == Brightness.dark
+                      ? RitmoElevation.none
+                      : RitmoElevation.cardLight,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header row with 3 dots & checkmark
+                    Row(
+                      children: [
+                        _ColorDot(color: innerColors.primary),
+                        const SizedBox(width: RitmoSpacing.xs),
+                        _ColorDot(color: innerColors.accent),
+                        const SizedBox(width: RitmoSpacing.xs),
+                        _ColorDot(color: innerColors.surfaceElevated),
+                        const Spacer(),
+                        if (isSelected)
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: innerColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: innerColors.onPrimary,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // Sample Title & Subtitle
+                    Text(
+                      'نمونه عنوان کارت',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: innerColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'این پیش‌نمایش نحوه رندر رنگ‌های پالت را نشان می‌دهد',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: innerColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // Sample button
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: innerColors.primary,
+                        borderRadius: BorderRadius.circular(RitmoRadius.field),
+                      ),
+                      child: Text(
+                        'دکمه نمونه',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: innerColors.onPrimary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // 8 Module color circles
+                    Row(
+                      children: List.generate(8, (i) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: RitmoSpacing.xs),
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: innerColors.modules.bySlot(i),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: RitmoSpacing.md),
+
+                    // Name & Tagline
+                    Text(
+                      '${palette.nameFa} · ${palette.taglineFa}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: innerColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ColorDot extends StatelessWidget {
+  const _ColorDot({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.black12, width: 0.5),
+      ),
     );
   }
 }

@@ -518,22 +518,48 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                 onChanged: _toggleNeighborFriendly,
               ),
               const Divider(),
-              ListTile(
-                title: const Text('واحد اندازه‌گیری', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: const Text('فرمت وزن و قد در برنامه', style: TextStyle()),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ChoiceChip(
-                      label: const Text('متریک (کیلوگرم)', style: TextStyle(fontSize: 11)),
-                      selected: _unitsMetric,
-                      onSelected: (val) => _toggleUnits(true),
+                    const Text(
+                      'واحد اندازه‌گیری',
+                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                     ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('امپریال (پوند)', style: TextStyle(fontSize: 11)),
-                      selected: !_unitsMetric,
-                      onSelected: (val) => _toggleUnits(false),
+                    const SizedBox(height: 3),
+                    Text(
+                      'فرمت وزن و قد در برنامه',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: SupplementarySportsTheme.getTextSecondary(context),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ChoiceChip(
+                            showCheckmark: true,
+                            label: const Center(
+                              child: Text('متریک (کیلوگرم)', style: TextStyle(fontSize: 12)),
+                            ),
+                            selected: _unitsMetric,
+                            onSelected: (val) => _toggleUnits(true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ChoiceChip(
+                            showCheckmark: true,
+                            label: const Center(
+                              child: Text('امپریال (پوند)', style: TextStyle(fontSize: 12)),
+                            ),
+                            selected: !_unitsMetric,
+                            onSelected: (val) => _toggleUnits(false),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

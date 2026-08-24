@@ -193,7 +193,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             children: [
               // ──── نوار جستجو ────
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
                 child: Row(
                   children: [
                     Expanded(
@@ -343,7 +343,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       children: [
         // ──── هدر گروه ────
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 6),
           child: Row(
             children: [
               Icon(group.icon, size: 15, color: colors.textSecondary),
@@ -375,8 +375,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Divider(
             height: 1,
             thickness: 0.5,
-            indent: 20,
-            endIndent: 20,
+            indent: 14,
+            endIndent: 14,
             color: colors.border.withValues(alpha: 0.4),
           ),
       ],
@@ -409,7 +409,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
               Icon(
@@ -480,7 +480,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       child: InkWell(
         onTap: () => Navigator.pop(context),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
               Icon(

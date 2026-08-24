@@ -650,7 +650,7 @@ ${jsonEncode(digest.json)}
             color: colors.primary,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+              padding: const EdgeInsets.fromLTRB(14, 24, 14, 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

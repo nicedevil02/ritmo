@@ -850,10 +850,10 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             textDirection: TextDirection.rtl,
                             child: Center(
                               child: Padding(
-                                padding: const EdgeInsets.all(24.0),
+                                padding: const EdgeInsets.all(14.0),
                                 child: RitmoSheetGlassCard(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(24.0),
+                                    padding: const EdgeInsets.all(16.0),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -913,7 +913,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 ),
                               ),
                             ),
-                          ))
+                          )
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
@@ -979,6 +979,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                   : null,
                             ),
                             const SizedBox(height: 8),
+                          ],
+                          if (_activeTab == 1) ...[
                             CycleCalendarView(
                               calendarMonth: _calendarMonth,
                               onMonthChanged: (m) async {
@@ -1053,6 +1055,92 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                         CycleClock.nowMillisecondsSinceEpoch,
                                   },
                                   conflictAlgorithm: ConflictAlgorithm.replace,
+=======
+                              CycleCalendarView(
+                                calendarMonth: _calendarMonth,
+                                onMonthChanged: (m) async {
+                                  setState(() => _calendarMonth = m);
+                                  final lastDayOfMonth = Jalali(
+                                    m.year,
+                                    m.month,
+                                    m.monthLength,
+                                  ).toDateTime();
+                                  await CycleStateNotifier.instance
+                                      .ensureHorizonCovers(lastDayOfMonth);
+                                },
+                                periods: _periods,
+                                dayLogs: _dayLogs,
+                                engineOutput: _engineOutput,
+                                settings: _settings,
+                                activePhaseColor: _getActivePhaseColor(context),
+                                onDayTapped: (day, mark) {
+                                  if (mark.kind == CycleDayKind.predictedPeriod ||
+                                      mark.kind ==
+                                          CycleDayKind.predictionWindow ||
+                                      mark.kind == CycleDayKind.ovulation ||
+                                      mark.kind == CycleDayKind.fertileWindow ||
+                                      mark.kind == CycleDayKind.pms) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (ctx) =>
+                                          CyclePredictionDetailSheet(
+                                            selectedDate: day,
+                                            mark: mark,
+                                            engineOutput: _engineOutput,
+                                            symptomForecasts: _personalForecasts,
+                                            onRecordPeriodFromDate: (d) =>
+                                                _openAddEditPeriodSheet(
+                                                  initialStartDate: d,
+                                                ),
+                                          ),
+                                    );
+                                  } else {
+                                    _openLogTodaySheet(day);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              CycleHistoryList(
+                                periods: _periods,
+                                onAddNewPeriod: () => _openAddEditPeriodSheet(),
+                                onEditPeriod: (p) =>
+                                    _openAddEditPeriodSheet(period: p),
+                                onDeletePeriod: _deletePeriod,
+                              ),
+                            ] else if (_activeTab == 1) ...[
+                              if (_engineOutput != null)
+                                CycleTrendsSection(engineOutput: _engineOutput!),
+                            ] else if (_activeTab == 2) ...[
+                              const CycleCorrelationSection(),
+                            ] else if (_activeTab == 3) ...[
+                              CycleFastingDebtView(
+                                fastingDebts: _fastingDebts,
+                                settings: _settings,
+                                onToggleSync: (enabled) async {
+                                  final db =
+                                      await DatabaseHelper.instance.database;
+                                  await db.insert(
+                                    'app_settings',
+                                    {
+                                      'key': 'cycle_send_fasting_debt_to_worship',
+                                      'value': enabled.toString(),
+                                      'updatedAt':
+                                          CycleClock.nowMillisecondsSinceEpoch,
+                                    },
+                                    conflictAlgorithm: ConflictAlgorithm.replace,
+                                  );
+                                  await _loadData();
+                                },
+                                onReloadData: _loadData,
+                              ),
+                            ],
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),              conflictAlgorithm: ConflictAlgorithm.replace,
+>>>>>>> 66f90c8f (feat: security hardening, AI provider grid, UI text scale migration, and full module responsiveness polish)
                                 );
                                 await _loadData();
                               },

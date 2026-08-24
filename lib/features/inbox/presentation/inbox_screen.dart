@@ -123,7 +123,7 @@ class _InboxScreenState extends State<InboxScreen> {
                     onRefresh: _loadItems,
                     color: const Color(0xff5B8AF5),
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
                       itemCount: _items.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {

@@ -585,7 +585,7 @@ class DashboardController {
       ));
     }
 
-    // انرژی و مود — از فیلدهای از قبل محاسبهشدهی کنترلر
+    // انرژی و مود — از فیلدهای از قبل محاسبه‌شده‌ی کنترلر
     if (ModuleGate.instance.isEnabledFrom(s, 'module_energy_enabled')) {
       out.add(DashboardModuleSummary(
         moduleId: 'energy', title: 'انرژی و مود',
@@ -594,7 +594,7 @@ class DashboardController {
             ? '—'
             : '${fa(currentEnergyPercent!.round())}٪',
         secondary: currentEnergyPercent == null
-            ? 'هنوز دادهای برای تخمین نیست'
+            ? 'هنوز داده‌ای برای تخمین نیست'
             : (currentEnergyIsEstimated
                 ? 'تخمینی · سطح: $currentEnergyLabel'
                 : 'ثبت خودت · سطح: $currentEnergyLabel'),
@@ -612,7 +612,7 @@ class DashboardController {
       out.add(DashboardModuleSummary(
         moduleId: 'medicine', title: 'دارو',
         icon: CupertinoIcons.bandage_fill, accentColor: const Color(0xffEF4444),
-        primary: '${fa(pct)}٪', secondary: 'پایبندی امروز · ${fa(remaining)} باقیمانده',
+        primary: '${fa(pct)}٪', secondary: 'پایبندی امروز · ${fa(remaining)} باقی‌مانده',
         backgroundImage: 'assets/images/medicine_card_top.png',
       ));
     }
@@ -622,7 +622,7 @@ class DashboardController {
       final debts = worshipDebts.length;
       
       // استخراج نماز بعدی از prayerTimes
-      var secondaryText = 'برنامهی عبادی';
+      var secondaryText = 'برنامهٔ عبادی';
       try {
         final now = DateTime.now();
         final currentMinutes = now.hour * 60 + now.minute;
@@ -662,7 +662,7 @@ class DashboardController {
       out.add(DashboardModuleSummary(
         moduleId: 'worship', title: 'عبادت',
         icon: CupertinoIcons.circle_grid_hex, accentColor: const Color(0xffFBBF24),
-        primary: debts > 0 ? '${fa(debts)} قضا' : 'بهروز ✓',
+        primary: debts > 0 ? '${fa(debts)} قضا' : 'به‌روز ✓',
         secondary: secondaryText,
         backgroundImage: 'assets/images/worship_card_top.png',
       ));
@@ -676,7 +676,7 @@ class DashboardController {
       final p = cycleEngineOutput!.currentPhase;
       final label = p == CyclePhase.menstrual ? 'قاعدگی'
           : p == CyclePhase.follicular ? 'فولیکولار'
-          : p == CyclePhase.ovulation ? 'تخمکگذاری' : 'لوتئال';
+          : p == CyclePhase.ovulation ? 'تخمک‌گذاری' : 'لوتئال';
       out.add(DashboardModuleSummary(
         moduleId: 'cycle', title: 'چرخه بدن',
         icon: CupertinoIcons.heart_fill, accentColor: const Color(0xffEC4899),
@@ -685,7 +685,7 @@ class DashboardController {
       ));
     }
 
-    // اهداف — گامهای امروز از todaysGoalSteps
+    // اهداف — گام‌های امروز از todaysGoalSteps
     if (ModuleGate.instance.isEnabledFrom(s, 'module_goals_enabled')) {
       final total = todaysGoalSteps.length;
       final done = todaysGoalSteps.where((g) =>
@@ -694,17 +694,17 @@ class DashboardController {
         moduleId: 'goals', title: 'اهداف',
         icon: CupertinoIcons.flag_fill, accentColor: const Color(0xffF59E0B),
         primary: total > 0 ? '${fa(done)}/${fa(total)}' : '—',
-        secondary: 'گامهای امروز',
+        secondary: 'گام‌های امروز',
         backgroundImage: 'assets/images/konkur_card_top.png',
       ));
     }
 
-    // دورهها — جلسات مطالعهی امروز
+    // دوره‌ها — جلسات مطالعهٔ امروز
     if (ModuleGate.instance.isEnabledFrom(s, 'module_courses_enabled')) {
       out.add(DashboardModuleSummary(
-        moduleId: 'courses', title: 'دورهها',
+        moduleId: 'courses', title: 'دوره‌ها',
         icon: CupertinoIcons.book_fill, accentColor: const Color(0xff3B82F6),
-        primary: '${fa(todaysCourseSessions.length)} جلسه', secondary: 'مطالعهی امروز',
+        primary: '${fa(todaysCourseSessions.length)} جلسه', secondary: 'مطالعهٔ امروز',
         backgroundImage: 'assets/images/courses_card_top.png',
       ));
     }
@@ -714,7 +714,7 @@ class DashboardController {
       out.add(DashboardModuleSummary(
         moduleId: 'konkur', title: 'درس و مطالعه',
         icon: CupertinoIcons.book_fill, accentColor: const Color(0xff8B5CF6),
-        primary: '${fa(todaysKonkurPlanItems.length)} مبحث', secondary: 'برنامهی امروز',
+        primary: '${fa(todaysKonkurPlanItems.length)} مبحث', secondary: 'برنامهٔ امروز',
         backgroundImage: 'assets/images/goals_card_top.png',
       ));
     }

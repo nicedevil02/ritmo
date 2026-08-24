@@ -22,6 +22,7 @@ class AppConfig {
   );
 
   /// Flag to indicate if SMS OTP is enabled (or feature-flagged off)
+  @Deprecated('SMS OTP flow decommissioned')
   static const bool smsEnabled = bool.fromEnvironment(
     'SMS_ENABLED',
     defaultValue: true,

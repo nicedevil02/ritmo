@@ -117,7 +117,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
             children: [
               // Top Luxury App Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -205,7 +205,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     children: [
                       _buildFilterChip(
                         label: 'همه (${PersianDigits.convert(_experiences.length.toString())})',
@@ -247,7 +247,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                               slivers: [
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                   sliver: SliverList(
                                     delegate: SliverChildListDelegate([
                                       if (_selectedCategory == null && featuredExp != null) ...[
@@ -273,7 +273,7 @@ class _ExperienceHubScreenState extends State<ExperienceHubScreen> {
                                   ),
                                 ),
                                 SliverPadding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
                                   sliver: SliverList(
                                     delegate: SliverChildBuilderDelegate(
                                       (ctx, i) => _buildWisdomCard(context, filtered[i], isDark, colors, insightsColor),

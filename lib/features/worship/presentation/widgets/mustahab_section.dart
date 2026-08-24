@@ -197,7 +197,7 @@ class _MustahabSectionState extends State<MustahabSection> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
           color: isDark

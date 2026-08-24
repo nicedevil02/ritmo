@@ -218,7 +218,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+          padding: const EdgeInsets.fromLTRB(14, 24, 14, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

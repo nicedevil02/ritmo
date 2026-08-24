@@ -328,7 +328,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => RitmoSheetGlassCard(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -425,7 +425,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => RitmoSheetGlassCard(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -524,7 +524,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setModalState) => RitmoSheetGlassCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -627,7 +627,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setModalState) => RitmoSheetGlassCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -728,7 +728,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setModalState) => RitmoSheetGlassCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -831,7 +831,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setModalState) => RitmoSheetGlassCard(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1086,7 +1086,7 @@ class _PregnancySettingsSheetState extends State<PregnancySettingsSheet> {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,

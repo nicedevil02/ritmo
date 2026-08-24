@@ -424,7 +424,7 @@ class _HealthScreenState extends State<HealthScreen> {
                   child: _buildSkeletonLoading(),
                 )
               : SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

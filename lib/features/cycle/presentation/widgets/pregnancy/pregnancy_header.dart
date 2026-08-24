@@ -69,7 +69,7 @@ class PregnancyHeader extends StatelessWidget {
     final ga = GestationalAge(currentWeek, currentDayInWeek);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+      margin: const EdgeInsets.fromLTRB(14, 6, 14, 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.surfaceElevated,

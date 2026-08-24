@@ -351,7 +351,7 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
         child: RitmoTheme.glassCardLight(
           borderRadius: 28,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(
               mainAxisSize: MainAxisSize.min,

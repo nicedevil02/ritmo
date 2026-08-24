@@ -174,25 +174,19 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
               ),
             ),
             const SizedBox(height: RitmoSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: RitmoPrimaryButton(
-                    label: 'بازیابی پاسخ از مرورگر',
-                    icon: Icons.download_rounded,
-                    isLoading: _isHarvesting,
-                    onPressed: () => _handleHarvest(),
-                  ),
-                ),
-                const SizedBox(width: RitmoSpacing.sm),
-                Expanded(
-                  child: RitmoSecondaryButton(
-                    label: _isRebooting ? 'در حال راه‌اندازی…' : 'راه‌اندازی مجدد اجباری',
-                    icon: Icons.restart_alt_rounded,
-                    onPressed: _isRebooting ? null : () => _handleForceReboot(),
-                  ),
-                ),
-              ],
+            RitmoPrimaryButton(
+              label: 'بازیابی پاسخ از مرورگر',
+              icon: Icons.download_rounded,
+              isLoading: _isHarvesting,
+              fullWidth: true,
+              onPressed: () => _handleHarvest(),
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            RitmoSecondaryButton(
+              label: _isRebooting ? 'در حال راه‌اندازی…' : 'راه‌اندازی مجدد اجباری',
+              icon: Icons.restart_alt_rounded,
+              fullWidth: true,
+              onPressed: _isRebooting ? null : () => _handleForceReboot(),
             ),
             const SizedBox(height: RitmoSpacing.sm),
             RitmoSecondaryButton(

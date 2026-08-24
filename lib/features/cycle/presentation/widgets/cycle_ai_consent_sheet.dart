@@ -32,7 +32,7 @@ Future<void> showCycleAiConsentSheet(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border(top: BorderSide(color: colors.border, width: 1.5)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

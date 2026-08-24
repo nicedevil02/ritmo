@@ -175,7 +175,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
       children: [
         // Main Premium Solar Calendar Surface Card
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),

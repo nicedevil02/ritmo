@@ -108,7 +108,7 @@ class CyclePredictionDetailSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border.all(color: colors.border.withValues(alpha: 0.5)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
       child: SafeArea(
         top: false,
         child: Column(

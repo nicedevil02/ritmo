@@ -53,7 +53,7 @@ class CycleBurdenCard extends StatelessWidget {
         : (burden.level == 'MODERATE' ? 'بار بدنی متوسط' : 'بار بدنی متوازن');
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: badgeColor.withValues(alpha: 0.08),

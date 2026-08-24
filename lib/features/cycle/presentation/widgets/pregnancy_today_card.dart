@@ -33,7 +33,7 @@ class PregnancyTodayCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,

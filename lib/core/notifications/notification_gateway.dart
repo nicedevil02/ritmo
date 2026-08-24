@@ -54,8 +54,25 @@ abstract final class NotificationGateway {
 
     final effectiveScheduledTime = decision.isDeferred ? decision.deferUntil! : req.scheduledAt;
     final scheduledTimeMs = effectiveScheduledTime.millisecondsSinceEpoch;
+    final effectiveTitle = decision.isRedacted ? decision.redactedTitle! : req.title;
+    final isEssential = req.channel.isEssential;
 
-    // 3. Log into alarm_delivery_log
+    // 3. Delegate to platform FIRST
+    bool scheduledSuccess = false;
+    try {
+      final platform = sl<AlarmPlatform>();
+      scheduledSuccess = await platform.scheduleExactAlarm(
+        id: req.id,
+        timeMsUTC: scheduledTimeMs,
+        title: effectiveTitle,
+        isEssential: isEssential,
+      );
+    } catch (e, st) {
+      RitmoLog.error('NotificationGateway', 'Platform schedule failure for ${req.id}', e, st);
+      scheduledSuccess = false;
+    }
+
+    // 4. Log outcome into alarm_delivery_log
     try {
       final db = await DatabaseHelper.instance.database;
       await db.insert(
@@ -66,7 +83,9 @@ abstract final class NotificationGateway {
           'routineId': req.entityId,
           'expectedAt': scheduledTimeMs,
           'firedAt': null,
-          'outcome': decision.isDeferred ? 'deferred' : 'scheduled',
+          'outcome': scheduledSuccess
+              ? (decision.isDeferred ? 'deferred' : 'scheduled')
+              : 'failed',
           'createdAt': effectiveNow.millisecondsSinceEpoch,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
@@ -75,7 +94,11 @@ abstract final class NotificationGateway {
       debugPrint('NotificationGateway: Failed to record delivery log: $e');
     }
 
-    // 4. Push to Central Inbox
+    if (!scheduledSuccess) {
+      return false;
+    }
+
+    // 5. Push to Central Inbox ONLY upon successful platform schedule
     try {
       await CentralInboxService.push(
         category: InboxCategory.REMINDER,
@@ -86,6 +109,7 @@ abstract final class NotificationGateway {
         body: req.body,
         priority: req.channel.isEssential ? 2 : 0,
         linkEntityId: req.entityId,
+        dateBucket: '${req.id}_$scheduledTimeMs',
         payload: {
           'channel': req.channel.name,
           'privacy': req.privacy.name,
@@ -97,22 +121,7 @@ abstract final class NotificationGateway {
       debugPrint('NotificationGateway: Failed to push to central inbox: $e');
     }
 
-    // 5. Delegate to platform
-    final effectiveTitle = decision.isRedacted ? decision.redactedTitle! : req.title;
-    final isEssential = req.channel.isEssential;
-
-    try {
-      final platform = sl<AlarmPlatform>();
-      return await platform.scheduleExactAlarm(
-        id: req.id,
-        timeMsUTC: scheduledTimeMs,
-        title: effectiveTitle,
-        isEssential: isEssential,
-      );
-    } catch (e, st) {
-      RitmoLog.error('NotificationGateway', 'Platform schedule failure for ${req.id}', e, st);
-      return false;
-    }
+    return true;
   }
 
   /// Cancels a scheduled alarm by its unique [id].

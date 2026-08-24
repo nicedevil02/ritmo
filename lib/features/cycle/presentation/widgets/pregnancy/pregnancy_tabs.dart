@@ -60,7 +60,7 @@ class PregnancyCheckupsTab extends StatelessWidget {
     ];
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 32),
       itemCount: checkupWindows.length,
       itemBuilder: (ctx, idx) {
         final item = checkupWindows[idx];
@@ -131,7 +131,7 @@ class PregnancyKicksTab extends StatelessWidget {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -195,7 +195,7 @@ class PregnancyContractionsTab extends StatelessWidget {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -244,7 +244,7 @@ class PregnancySymptomsTab extends StatelessWidget {
     final colors = context.colors;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

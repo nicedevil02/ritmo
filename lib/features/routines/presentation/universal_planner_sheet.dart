@@ -366,7 +366,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                   Expanded(
                                     child: SingleChildScrollView(
                                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                        child: Column(
                                          crossAxisAlignment: CrossAxisAlignment.stretch,
                                          children: [
@@ -389,7 +389,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
                                   // Fixed Bottom section (Submit button for edit mode)
                                   if (_controller.isEditing)
                                     Padding(
-                                      padding: EdgeInsets.fromLTRB(24, 8, 24, 16 + MediaQuery.of(context).padding.bottom),
+                                      padding: EdgeInsets.fromLTRB(14, 8, 14, 16 + MediaQuery.of(context).padding.bottom),
                                       child: PlannerSubmitButton(controller: _controller),
                                     ),
                                 ],

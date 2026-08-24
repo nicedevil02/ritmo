@@ -19,7 +19,7 @@ class TaskInlineAddBar extends StatelessWidget {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         decoration: BoxDecoration(

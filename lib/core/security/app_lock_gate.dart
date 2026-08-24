@@ -24,6 +24,11 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
   String _enteredPin = '';
   String _pinErrorMessage = '';
   
+  // Rate limiting / Cooldown
+  int _failedAttempts = 0;
+  DateTime? _lockoutEndTime;
+  Timer? _cooldownTimer;
+
   // Cached lock configurations
   bool _lockEnabled = false;
   String? _lockPassword;
@@ -34,6 +39,43 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
   DateTime? _pausedAt;
   bool _isAuthenticating = false;
 
+  bool get _isCooldownActive =>
+      _lockoutEndTime != null && DateTime.now().isBefore(_lockoutEndTime!);
+
+  int get _cooldownRemainingSeconds {
+    if (!_isCooldownActive) return 0;
+    final diff = _lockoutEndTime!.difference(DateTime.now()).inSeconds;
+    return diff > 0 ? diff + 1 : 1;
+  }
+
+  int get _expectedPinLength {
+    final pass = _lockPassword ?? '';
+    if (pass.isNotEmpty && pass.length <= 6 && !pass.startsWith('v2:')) {
+      return pass.length;
+    }
+    return 4;
+  }
+
+  void _startCooldownTimer() {
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (!_isCooldownActive) {
+        timer.cancel();
+        setState(() {
+          _failedAttempts = 0;
+          _lockoutEndTime = null;
+          _pinErrorMessage = '';
+        });
+      } else {
+        setState(() {});
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +85,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -98,7 +141,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       }
       _pausedAt = null;
 
-      if (_isLocked && _lockEnabled && (_biometricEnabled || _useDeviceLock)) {
+      if (_isLocked && _lockEnabled && (_biometricEnabled || _useDeviceLock) && !_isCooldownActive) {
         unawaited(_authenticateDeviceLock());
       }
     } catch (e, st) {
@@ -126,7 +169,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
       if (shouldLock && (_biometricEnabled || _useDeviceLock) && !kIsWeb) {
         Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _isLocked) {
+          if (mounted && _isLocked && !_isCooldownActive) {
             unawaited(_authenticateDeviceLock());
           }
         });
@@ -151,8 +194,6 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
     });
 
     try {
-      // If the user set "useDeviceLock" but not Ritmo PIN, we allow fallbacks like phone passcode.
-      // If "biometricEnabled" is turned on, we also allow the OS biometric + passcode fallback.
       final success = await _lockService.authenticateWithDevice(
         reason: 'لطفاً برای ورود به برنامه احراز هویت کنید.',
         biometricOnly: _biometricEnabled && !_useDeviceLock, 
@@ -165,7 +206,10 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
             _isLocked = false;
             _enteredPin = '';
             _pinErrorMessage = '';
+            _failedAttempts = 0;
+            _lockoutEndTime = null;
           });
+          _cooldownTimer?.cancel();
         }
       } else {
         await HapticFeedback.heavyImpact();
@@ -187,9 +231,11 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
   }
 
   void _onPinKeyTapped(String key) {
+    if (_isCooldownActive) return;
     final correctPin = _lockPassword ?? '';
     if (correctPin.isEmpty) return;
-    if (_enteredPin.length >= 4) return;
+    final expectedLength = _expectedPinLength;
+    if (_enteredPin.length >= expectedLength) return;
     
     HapticFeedback.lightImpact();
     setState(() {
@@ -197,23 +243,38 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       _enteredPin += key;
     });
 
-    if (_enteredPin.length == 4) {
-      Future.delayed(const Duration(milliseconds: 200), () {
-        if (PinHasher.verifyPin(_enteredPin, correctPin)) {
-          HapticFeedback.mediumImpact();
+    if (_enteredPin.length == expectedLength) {
+      Future.delayed(const Duration(milliseconds: 200), () async {
+        final result = PinHasher.verifyAndUpgrade(_enteredPin, correctPin);
+        if (result.isValid) {
+          if (result.upgradedHash != null) {
+            await _lockService.setLockPassword(result.upgradedHash!);
+            _lockPassword = result.upgradedHash!;
+          }
+          await HapticFeedback.mediumImpact();
           if (mounted) {
             setState(() {
               _isLocked = false;
               _enteredPin = '';
               _pinErrorMessage = '';
+              _failedAttempts = 0;
+              _lockoutEndTime = null;
             });
+            _cooldownTimer?.cancel();
           }
         } else {
-          HapticFeedback.heavyImpact();
+          await HapticFeedback.heavyImpact();
           if (mounted) {
             setState(() {
               _enteredPin = '';
-              _pinErrorMessage = 'رمز عبور نادرست است. دوباره تلاش کنید.';
+              _failedAttempts++;
+              if (_failedAttempts >= 5) {
+                _lockoutEndTime = DateTime.now().add(const Duration(seconds: 30));
+                _startCooldownTimer();
+                _pinErrorMessage = 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً ۳۰ ثانیه صبر کنید.';
+              } else {
+                _pinErrorMessage = 'رمز عبور نادرست است. دوباره تلاش کنید.';
+              }
             });
           }
         }
@@ -222,12 +283,75 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
   }
 
   void _onBackspaceTapped() {
-    if (_enteredPin.isEmpty) return;
+    if (_isCooldownActive || _enteredPin.isEmpty) return;
     HapticFeedback.lightImpact();
     setState(() {
       _pinErrorMessage = '';
       _enteredPin = _enteredPin.substring(0, _enteredPin.length - 1);
     });
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final isSupported = await _lockService.isDeviceSupported();
+    final canCheck = await _lockService.canCheckBiometrics();
+    final useDeviceLock = await _lockService.useDeviceLock();
+
+    if (!isSupported && !canCheck && !useDeviceLock) {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'بازیابی رمز عبور',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          content: const Text(
+            'این دستگاه از قفل بیومتریک یا قفل سیستم‌عامل پشتیبانی نمی‌کند. در صورت فراموشی رمز عبور، برای حفظ امنیت داده‌ها، بازیابی فقط از طریق پاک‌سازی داده‌های برنامه یا نصب مجدد امکان‌پذیر است.',
+            style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 13, height: 1.6),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('متوجه شدم', style: TextStyle(fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    try {
+      final success = await _lockService.authenticateWithDevice(
+        reason: 'لطفاً برای بازنشانی و حذف رمز عبور برنامه، هویت خود را تایید کنید.',
+        biometricOnly: false,
+      );
+
+      if (success) {
+        await _lockService.setLockPassword('');
+        await _lockService.setLockEnabled(false);
+        if (mounted) {
+          setState(() {
+            _isLocked = false;
+            _enteredPin = '';
+            _pinErrorMessage = '';
+            _lockPassword = '';
+            _lockEnabled = false;
+            _failedAttempts = 0;
+            _lockoutEndTime = null;
+          });
+          _cooldownTimer?.cancel();
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _pinErrorMessage = 'احراز هویت دستگاه برای بازنشانی تایید نشد.';
+          });
+        }
+      }
+    } catch (e, st) {
+      RitmoLog.error('Settings', 'خطا در بازیابی رمز با قفل دستگاه', e, st);
+    }
   }
 
   String _toPersianDigits(String input) {
@@ -303,7 +427,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                           child: Text(
                             _useDeviceLock && !hasRitmoPin
                                 ? 'این برنامه با قفل امنیت گوشی شما محافظت می‌شود. لطفاً برای ورود دکمه زیر را فشار دهید.'
-                                : 'لطفاً برای ورود به برنامه، رمز عبور ۴ رقمی خود را وارد کنید.',
+                                : 'لطفاً برای ورود به برنامه، رمز عبور ${_toPersianDigits(_expectedPinLength.toString())} رقمی خود را وارد کنید.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -350,7 +474,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                           // Dot Indicators
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(4, (index) {
+                            children: List.generate(_expectedPinLength, (index) {
                               final isFilled = _enteredPin.length > index;
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 150),
@@ -370,7 +494,28 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                           ),
                           const SizedBox(height: 20),
 
-                          if (_pinErrorMessage.isNotEmpty)
+                          if (_isCooldownActive)
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(CupertinoIcons.hourglass, color: Colors.redAccent, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'لطفاً صبر کنید: ${_toPersianDigits(_cooldownRemainingSeconds.toString())} ثانیه',
+                                    style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (_pinErrorMessage.isNotEmpty)
                             Text(
                               _pinErrorMessage,
                               style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontFamily: 'Vazirmatn', fontWeight: FontWeight.bold),
@@ -403,7 +548,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                                   children: [
                                     // Fingerprint / Biometric Fallback Button
                                     if ((_biometricEnabled || _useDeviceLock) && !kIsWeb) InkWell(
-                                            onTap: _authenticateDeviceLock,
+                                            onTap: _isCooldownActive ? null : _authenticateDeviceLock,
                                             borderRadius: BorderRadius.circular(30),
                                             child: Container(
                                               height: 60,
@@ -433,6 +578,20 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                                   ],
                                 ),
                               ],
+                            ),
+                          ),
+
+                          // Forgot PIN Button
+                          TextButton(
+                            onPressed: _handleForgotPassword,
+                            child: const Text(
+                              'فراموشی رمز عبور',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                color: Color(0xff5B8AF5),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const Spacer(),

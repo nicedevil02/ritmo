@@ -791,7 +791,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
     final maxCount = weeklyValues.fold<int>(1, (prev, elem) => elem > prev ? elem : prev);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         color: isDark ? colors.surface : colors.surface,
@@ -1333,7 +1333,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
         isZahra ? _zahraPhrases[_zahraStep] : activePractice.title;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         color: isDark

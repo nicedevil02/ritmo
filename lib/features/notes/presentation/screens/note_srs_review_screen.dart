@@ -133,7 +133,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
             children: [
               // Top Luxury App Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -204,7 +204,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
               // Progress Bar
               if (!_isLoading && _dueNotes.isNotEmpty && !isDone)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: LinearProgressIndicator(
@@ -325,7 +325,7 @@ class _NoteSrsReviewScreenState extends State<NoteSrsReviewScreen> with SingleTi
     final style = NoteUiHelper.getKindStyle(context, isExp ? NoteKind.experience : note.kind);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

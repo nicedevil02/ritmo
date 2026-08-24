@@ -143,7 +143,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
             children: [
               // Top Luxury App Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -227,7 +227,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
 
               // Segmented Tab Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Container(
                   height: 44,
                   padding: const EdgeInsets.all(3),
@@ -314,7 +314,7 @@ class _NoteTrashArchiveScreenState extends State<NoteTrashArchiveScreen> with Si
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 40),
         itemCount: items.length,
         itemBuilder: (ctx, idx) {
           final note = items[idx];

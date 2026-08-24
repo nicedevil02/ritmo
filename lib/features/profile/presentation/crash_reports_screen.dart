@@ -77,7 +77,7 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
                     itemCount: _reports.length,
                     itemBuilder: (context, index) {
                       final file = _reports[index];

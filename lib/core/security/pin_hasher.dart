@@ -1,8 +1,13 @@
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
+import 'package:pointycastle/export.dart';
 
 class PinHasher {
-  static const String _salt = 'ritmo_pin_salt_v1_secure_2026';
+  static const String _legacySaltV1 = 'ritmo_pin_salt_v1_secure_2026';
+  static const int _pbkdf2Iterations = 100000;
+  static const int _derivedKeyLength = 32;
 
   static String _normalize(String pin) {
     const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
@@ -14,20 +19,87 @@ class PinHasher {
     return res;
   }
 
-  static String hashPin(String pin) {
-    final norm = _normalize(pin);
-    final bytes = utf8.encode('$_salt:$norm');
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+  /// Derives key using PBKDF2-HMAC-SHA256.
+  static Uint8List _pbkdf2Derive(String normalizedPin, Uint8List salt) {
+    final hmac = HMac(SHA256Digest(), 64);
+    final derivator = PBKDF2KeyDerivator(hmac);
+    final params = Pbkdf2Parameters(salt, _pbkdf2Iterations, _derivedKeyLength);
+    derivator.init(params);
+    return derivator.process(Uint8List.fromList(utf8.encode(normalizedPin)));
   }
 
+  /// Hashes a PIN using the hardened v2 format: v2:<salt_hex>:<hash_hex>
+  static String hashPin(String pin) {
+    final norm = _normalize(pin);
+    final random = Random.secure();
+    final saltBytes = Uint8List(16);
+    for (var i = 0; i < 16; i++) {
+      saltBytes[i] = random.nextInt(256);
+    }
+
+    final keyBytes = _pbkdf2Derive(norm, saltBytes);
+    final saltHex = saltBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final hashHex = keyBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return 'v2:$saltHex:$hashHex';
+  }
+
+  /// Checks whether a stored PIN hash is from a legacy format and needs upgrade to v2.
+  static bool needsUpgrade(String storedHash) {
+    if (storedHash.isEmpty) return false;
+    return !storedHash.startsWith('v2:');
+  }
+
+  /// Verifies a PIN against any of the 3 supported formats:
+  /// 1. v2: `v2:<salt_hex>:<hash_hex>` (PBKDF2-HMAC-SHA256)
+  /// 2. v1: 64-character SHA-256 with static salt
+  /// 3. Plaintext legacy (length <= 6)
   static bool verifyPin(String pin, String storedHash) {
     if (storedHash.isEmpty) return false;
     final norm = _normalize(pin);
-    // Backward compatibility with legacy unhashed PINs
-    if (storedHash.length <= 6 && (storedHash == norm || storedHash == pin)) {
-      return true;
+
+    // Format 1: Hardened v2 format
+    if (storedHash.startsWith('v2:')) {
+      final parts = storedHash.split(':');
+      if (parts.length != 3) return false;
+      final saltHex = parts[1];
+      final expectedHashHex = parts[2];
+
+      if (saltHex.length != 32 || expectedHashHex.length != 64) return false;
+
+      final saltBytes = Uint8List(16);
+      for (var i = 0; i < 16; i++) {
+        final byteStr = saltHex.substring(i * 2, i * 2 + 2);
+        final byteVal = int.tryParse(byteStr, radix: 16);
+        if (byteVal == null) return false;
+        saltBytes[i] = byteVal;
+      }
+
+      final derivedBytes = _pbkdf2Derive(norm, saltBytes);
+      final derivedHashHex = derivedBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+      return derivedHashHex == expectedHashHex;
     }
-    return hashPin(norm) == storedHash;
+
+    // Format 3: Plaintext legacy (length <= 6)
+    if (storedHash.length <= 6) {
+      return storedHash == norm || storedHash == pin;
+    }
+
+    // Format 2: Legacy v1 SHA-256 with static salt
+    final legacyBytes = utf8.encode('$_legacySaltV1:$norm');
+    final legacyDigest = sha256.convert(legacyBytes).toString();
+    return legacyDigest == storedHash;
+  }
+
+  /// Verifies PIN and returns an upgraded hash if verification was successful
+  /// and the stored hash is in an older format.
+  static ({bool isValid, String? upgradedHash}) verifyAndUpgrade(String pin, String storedHash) {
+    final valid = verifyPin(pin, storedHash);
+    if (!valid) {
+      return (isValid: false, upgradedHash: null);
+    }
+    if (needsUpgrade(storedHash)) {
+      return (isValid: true, upgradedHash: hashPin(pin));
+    }
+    return (isValid: true, upgradedHash: null);
   }
 }

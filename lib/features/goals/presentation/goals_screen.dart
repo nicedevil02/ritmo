@@ -354,7 +354,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
           children: [
             // 1. Custom Segmented switcher (Right: برنامه‌ها, Left: اهداف)
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               height: 42,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
@@ -422,7 +422,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
             // 2. Polaris Hero (Dynamic active goal vs empty templates - only on Goals tab: Index 1)
             if (_tabController.index == 1) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: isLoading
                     ? const RitmoSkeletonCard()
                     : _buildHeroSection(activeGoals, stepsByGoal, engineOutput, colors, isDarkMode),
@@ -430,8 +430,8 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
               Divider(
                 height: 16,
                 thickness: 1,
-                indent: 16,
-                endIndent: 16,
+                indent: 14,
+                endIndent: 14,
                 color: colors.border.withValues(alpha: 0.3),
               ),
             ],
@@ -440,7 +440,7 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
             Expanded(
               child: isLoading
                   ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 14),
                       child: RitmoSkeletonList(itemCount: 3),
                     )
                   : TabBarView(

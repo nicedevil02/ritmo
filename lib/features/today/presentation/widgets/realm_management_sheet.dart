@@ -354,7 +354,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
               child: _isLoading
                   ? const Center(child: CupertinoActivityIndicator())
                   : ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
                       children: [
                         // 1. ACTIVE REALM HERO BANNER
                         _buildActiveRealmBanner(colors),
@@ -462,7 +462,7 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'باقیمانده: ${state.remaining.inMinutes} دقیقه',
+                    'باقی‌مانده: ${state.remaining.inMinutes} دقیقه',
                     style: TextStyle(fontSize: 12, color: colors.textSecondary),
                   ),
                 ],

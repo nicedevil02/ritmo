@@ -656,7 +656,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         child: AnimatedContainer(
           duration: RitmoMotion.effective(context, RitmoMotion.state),
           curve: RitmoMotion.standard,
-          padding: const EdgeInsets.fromLTRB(20, RitmoSpacing.sm, 20, RitmoSpacing.sm),
+          padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.sm, 14, RitmoSpacing.sm),
           decoration: BoxDecoration(
             color: isScrolled
                 ? colors.background.withValues(alpha: 0.72)
@@ -695,7 +695,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           physics: NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 140),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 140),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -838,7 +838,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, RitmoSpacing.md, 20, 140),
+                padding: const EdgeInsets.fromLTRB(14, RitmoSpacing.md, 14, 140),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ۰. هشدارهای بحرانی — بالاتر از همه چیز
@@ -1149,7 +1149,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               isCritical ? 'هشدار مهم دارویی' : 'دوز داروی امروز هنوز کامل نشده',
           subtitle: isCritical
               ? 'نیازمند بررسی فوری تداخل یا سقف دوز'
-              : '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقیمانده',
+              : '${PersianDigits.convert(_pendingMedDoses.toString())} دوز باقی‌مانده',
           primaryCtaLabel: 'ثبت مصرف دارو',
           isMedicalAlert: true,
           onPrimaryTap: () => _openModuleScreen('medicine'),
@@ -1188,7 +1188,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
           final now = DateTime.now();
           final nowM = now.hour * 60 + now.minute;
           final remainingM = (endM - nowM).clamp(1, duration);
-          subtitleText = 'زمان: $timeLabel · ${PersianDigits.convert(remainingM.toString())} دقیقه باقیمانده از بازه';
+          subtitleText = 'زمان: $timeLabel · ${PersianDigits.convert(remainingM.toString())} دقیقه باقی‌مانده از بازه';
         } else if (decision.isOverdue) {
           subtitleText = 'عقب‌افتاده · $timeLabel';
         } else {

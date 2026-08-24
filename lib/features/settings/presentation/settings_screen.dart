@@ -359,33 +359,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       for (final section in sections) ...[
-                        // عنوان بخش با استایل اختصاصی iOS
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(start: 6, bottom: 8, top: 4),
-                          child: Row(
-                            children: [
-                              Icon(
-                                section.icon,
-                                size: 14,
-                                color: colors.primary.withValues(alpha: 0.8),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                section.title,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.textSecondary,
-                                  letterSpacing: -0.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
                         // کارت جزیره‌ای گروه‌بندی‌شده
                         Container(
-                          margin: const EdgeInsets.only(bottom: 16),
+                          margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
                             color: colors.card,
                             borderRadius: BorderRadius.circular(18),

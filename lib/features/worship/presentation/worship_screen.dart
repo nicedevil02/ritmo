@@ -213,7 +213,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 40),
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 40),
                 child: Column(
                   children: [
                     // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES

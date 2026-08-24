@@ -22,10 +22,11 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_text_field.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
-import 'package:ritmo/features/profile/presentation/widgets/ai_provider_preset_card.dart';
+import 'package:ritmo/features/profile/presentation/widgets/ai_provider_grid.dart';
 import 'package:ritmo/features/profile/presentation/widgets/ai_secret_field.dart';
 import 'package:ritmo/features/profile/presentation/widgets/ai_status_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AiConnectionScreen extends StatefulWidget {
   const AiConnectionScreen({super.key});
@@ -40,7 +41,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   late final TextEditingController _urlController;
   late final TextEditingController _keyController;
   late final TextEditingController _modelController;
-  late final TextEditingController _customModelController;
   late final TextEditingController _cloudflareAccountIdController;
 
   late final TextEditingController _backupUrlController;
@@ -75,7 +75,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     _urlController = TextEditingController();
     _keyController = TextEditingController();
     _modelController = TextEditingController();
-    _customModelController = TextEditingController();
     _cloudflareAccountIdController = TextEditingController();
 
     _backupUrlController = TextEditingController();
@@ -93,7 +92,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     _urlController.dispose();
     _keyController.dispose();
     _modelController.dispose();
-    _customModelController.dispose();
     _cloudflareAccountIdController.dispose();
 
     _backupUrlController.dispose();
@@ -106,47 +104,52 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final repo = AiConnectionRepository.instance;
-    final config = await repo.load(slot: AiSlot.assistant);
-    final featuresConfig = await repo.load(slot: AiSlot.features);
-    final mode = await repo.loadMode();
-    final lastTest = await repo.lastTest();
-    final chain = await repo.describeChain();
+    try {
+      final repo = AiConnectionRepository.instance;
+      final config = await repo.load(slot: AiSlot.assistant);
+      final featuresConfig = await repo.load(slot: AiSlot.features);
+      final mode = await repo.loadMode();
+      final lastTest = await repo.lastTest();
+      final chain = await repo.describeChain();
 
-    final prefs = await SharedPreferences.getInstance();
-    final consent = prefs.getBool('assistant_cloud_consent') ?? true;
+      final prefs = await SharedPreferences.getInstance();
+      final consent = prefs.getBool('assistant_cloud_consent') ?? true;
 
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    final quotaUsed = prefs.getInt('local_ai_quota_count_$todayStr') ?? 0;
-    final isPremium = PremiumService.instance.isPremium;
-    final limit = PremiumService.instance.limitFor(PremiumFeature.unlimitedAi);
+      final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      final quotaUsed = prefs.getInt('local_ai_quota_count_$todayStr') ?? 0;
+      final isPremium = PremiumService.instance.isPremium;
+      final limit = PremiumService.instance.limitFor(PremiumFeature.unlimitedAi);
 
-    setState(() {
-      _mode = mode;
-      _selectedPresetId = config.providerPresetId.isNotEmpty ? config.providerPresetId : 'zhipu';
-      _urlController.text = config.baseUrl;
-      _keyController.text = config.apiKey;
-      _modelController.text = config.model;
-      _timeoutMs = config.timeoutMs;
-      _backupUrlController.text = config.backupBaseUrl;
-      _backupKeyController.text = config.backupApiKey;
-      _cloudflareAccountIdController.text = config.cloudflareAccountId;
-      _separateFeaturesConfig = config.separateFeaturesConfig;
+      if (!mounted) return;
+      setState(() {
+        _mode = mode;
+        _selectedPresetId = config.providerPresetId.isNotEmpty ? config.providerPresetId : 'zhipu';
+        _urlController.text = config.baseUrl;
+        _keyController.text = config.apiKey;
+        _modelController.text = config.model;
+        _timeoutMs = config.timeoutMs;
+        _backupUrlController.text = config.backupBaseUrl;
+        _backupKeyController.text = config.backupApiKey;
+        _cloudflareAccountIdController.text = config.cloudflareAccountId;
+        _separateFeaturesConfig = config.separateFeaturesConfig;
 
-      _featuresUrlController.text = featuresConfig.baseUrl;
-      _featuresKeyController.text = featuresConfig.apiKey;
-      _featuresModelController.text = featuresConfig.model;
+        _featuresUrlController.text = featuresConfig.baseUrl;
+        _featuresKeyController.text = featuresConfig.apiKey;
+        _featuresModelController.text = featuresConfig.model;
 
-      _lastTestResult = lastTest;
-      _chainEntries = chain;
-      _cloudConsentGranted = consent;
+        _lastTestResult = lastTest;
+        _chainEntries = chain;
+        _cloudConsentGranted = consent;
 
-      _dailyQuotaUsed = quotaUsed;
-      _dailyQuotaLimit = limit;
-      _showDailyQuota = !isPremium;
+        _dailyQuotaUsed = quotaUsed;
+        _dailyQuotaLimit = limit;
+        _showDailyQuota = !isPremium;
 
-      _urlError = AiEndpointNormalizer.validate(_urlController.text);
-    });
+        _urlError = AiEndpointNormalizer.validate(_urlController.text);
+      });
+    } catch (e, st) {
+      debugPrint('Error in _loadInitialData: $e\n$st');
+    }
   }
 
   String get _statusSubtitle {
@@ -298,7 +301,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
           RitmoHaptics.tap();
           RitmoToast.show(
             context,
-            'اتصال به سرور ریتمو با موفقیت برقرار است',
+            'اتصال به سرور ریتمو با موفقیت برقرار است ✨',
             icon: Icons.check_circle_rounded,
             iconColor: context.colors.success,
           );
@@ -333,7 +336,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
         } else {
           RitmoToast.show(
             context,
-            'خطا در برقراری ارتباط با وب‌سایت ChatGPT. لطفاً اتصال اینترنت خود را بررسی کنید.',
+            'خطا در برقراری ارتباط با وب‌سایت ChatGPT. اتصال اینترنت را بررسی کنید.',
             icon: Icons.error_outline_rounded,
             iconColor: context.colors.warning,
           );
@@ -364,7 +367,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
         RitmoHaptics.tap();
         RitmoToast.show(
           context,
-          'اتصال با موفقیت برقرار است',
+          'اتصال با موفقیت برقرار است ✨',
           icon: Icons.check_circle_rounded,
           iconColor: context.colors.success,
         );
@@ -401,7 +404,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
         RitmoHaptics.tap();
         RitmoToast.show(
           context,
-          'کلید پشتیبان با موفقیت متصل شد',
+          'کلید پشتیبان با موفقیت متصل شد ✨',
           icon: Icons.check_circle_rounded,
           iconColor: context.colors.success,
         );
@@ -440,7 +443,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
         RitmoHaptics.tap();
         RitmoToast.show(
           context,
-          'اتصال سرویس‌دهندهٔ تحلیل‌ها با موفقیت برقرار شد',
+          'سرویس تحلیل‌ها با موفقیت متصل شد ✨',
           icon: Icons.check_circle_rounded,
           iconColor: context.colors.success,
         );
@@ -458,7 +461,9 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
   void _onPresetSelected(AiProviderPreset preset) {
     setState(() {
       _selectedPresetId = preset.id;
-      _urlController.text = preset.endpoint;
+      if (preset.endpoint.isNotEmpty) {
+        _urlController.text = preset.endpoint;
+      }
       if (preset.models.isNotEmpty) {
         _modelController.text = preset.models.first;
       }
@@ -487,9 +492,9 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                 padding: EdgeInsets.all(RitmoSpacing.md),
                 child: Column(
                   children: [
-                    RitmoSkeletonCard(height: 180),
+                    RitmoSkeletonCard(height: 160),
                     SizedBox(height: RitmoSpacing.md),
-                    RitmoSkeletonCard(height: 240),
+                    RitmoSkeletonCard(height: 220),
                   ],
                 ),
               );
@@ -499,9 +504,6 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
               (p) => p.id == _selectedPresetId,
               orElse: () => kAiProviderPresets.first,
             );
-
-            final modelIsOverridden = _modelController.text.isNotEmpty &&
-                _effectiveModelPreview != _modelController.text;
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -523,7 +525,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.md),
 
-                  // 2. Mode Selector (Premium Custom Cards)
+                  // 2. Mode Selector: Ritmo Server vs Personal Key
                   Row(
                     children: [
                       Expanded(
@@ -536,13 +538,13 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             await AiConnectionRepository.instance.saveMode(AiMode.ritmoServer);
                             await _saveConfig();
                           },
-                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 44,
-                                height: 44,
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
                                   color: (_mode == AiMode.ritmoServer ? colors.primary : colors.textSecondary).withValues(alpha: 0.12),
                                   shape: BoxShape.circle,
@@ -550,7 +552,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 child: Icon(
                                   Icons.cloud_done_rounded,
                                   color: _mode == AiMode.ritmoServer ? colors.primary : colors.textSecondary,
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                               const SizedBox(height: RitmoSpacing.sm),
@@ -560,16 +562,15 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: _mode == AiMode.ritmoServer ? colors.primary : colors.textPrimary,
-                                  ),
+                                ),
                               ),
-                              const SizedBox(height: RitmoSpacing.xs),
+                              const SizedBox(height: 2),
                               Text(
-                                'اتصال ابری، سریع و رایگان به هوش مصنوعی',
+                                'خودکار، پرسرعت و رایگان',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: colors.textSecondary,
-                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -587,13 +588,13 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                             await AiConnectionRepository.instance.saveMode(AiMode.personalKey);
                             await _saveConfig();
                           },
-                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 44,
-                                height: 44,
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
                                   color: (_mode == AiMode.personalKey ? colors.primary : colors.textSecondary).withValues(alpha: 0.12),
                                   shape: BoxShape.circle,
@@ -601,7 +602,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 child: Icon(
                                   Icons.vpn_key_rounded,
                                   color: _mode == AiMode.personalKey ? colors.primary : colors.textSecondary,
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                               const SizedBox(height: RitmoSpacing.sm),
@@ -611,16 +612,15 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: _mode == AiMode.personalKey ? colors.primary : colors.textPrimary,
-                                  ),
+                                ),
                               ),
-                              const SizedBox(height: RitmoSpacing.xs),
+                              const SizedBox(height: 2),
                               Text(
-                                'پیکربندی اختصاصی و کلیدهای شخصی شما',
+                                'سرویس‌ها و کلیدهای دلخواه',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: colors.textSecondary,
-                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -631,8 +631,9 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                   ),
                   const SizedBox(height: RitmoSpacing.md),
 
-                  // Ritmo Server Informational Card
+                  // 3. Primary Mode Views
                   if (_mode == AiMode.ritmoServer) ...[
+                    // Ritmo Server Informational Card
                     RitmoCard(
                       padding: const EdgeInsets.all(RitmoSpacing.md),
                       child: Column(
@@ -643,240 +644,393 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               Icon(Icons.shield_outlined, color: colors.primary, size: 20),
                               const SizedBox(width: RitmoSpacing.xs),
                               Text(
-                                'اتصال ابری امن ریتمو (سرویس سه لایه)',
+                                'اتصال ابری امن ریتمو (۳ لایه خودکار)',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: colors.textPrimary,
-                                  ),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           Text(
-                            '• اولویت اول: ژیپو (Zhipu AI) با مدل glm-4.7-flash (پاسخ‌دهی آنی و بدون نیاز به تحریم‌شکن، مهلت ۱۵ ثانیه)\n• اولویت دوم: Cloudflare Workers AI با مدل @cf/zai-org/glm-4.7-flash (در صورت وجود شناسه حساب، مهلت ۱۵ ثانیه)\n• اولویت سوم (پشتیبان): OpenCode با مدل deepseek-v4-flash-free (مهلت ۳۰ ثانیه)\n\nدر این حالت سیستم به صورت خودکار سریع‌ترین و پایدارترین مسیر را انتخاب کرده و نیازی به ثبت کلید API توسط شما نیست.',
+                            'ریتمو سریع‌ترین و پایدارترین مسیر هوش مصنوعی را به شکل هوشمند انتخاب می‌کند:\n'
+                            '• لایه ۱: ژیپو (Zhipu AI) با مدل پرسرعت glm-4.7-flash (بدون فیلترشکن)\n'
+                            '• لایه ۲: کلودفلر (Cloudflare Workers AI)\n'
+                            '• لایه ۳: سرور پشتیبان OpenCode\n\n'
+                            'نیازی به ثبت هیچ کلید یا تنظیمی توسط شما نیست و همه چیز آماده کار است.',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: colors.textSecondary,
                               height: 1.6,
-                              ),
+                            ),
+                          ),
+                          const SizedBox(height: RitmoSpacing.md),
+                          RitmoPrimaryButton(
+                            label: 'آزمایش اتصال سرور ریتمو',
+                            icon: Icons.bolt_rounded,
+                            isLoading: _isTesting,
+                            onPressed: _testPrimaryConnection,
                           ),
                         ],
                       ),
                     ),
                   ] else ...[
-                    // 3. Provider Presets List
+                    // Personal Key Mode: Provider Selector Grid
                     Text(
                       'انتخاب سرویس‌دهنده هوش مصنوعی',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
-                        ),
+                      ),
                     ),
                     const SizedBox(height: RitmoSpacing.sm),
-                    for (final preset in kAiProviderPresets)
-                      AiProviderPresetCard(
-                        preset: preset,
-                        isSelected: _selectedPresetId == preset.id,
-                        onSelect: () => _onPresetSelected(preset),
-                        hasApiKey: _keyController.text.isNotEmpty,
-                        accountIdController: _cloudflareAccountIdController,
-                        onAccountIdChanged: (_) => _saveConfig(),
-                      ),
-                    const SizedBox(height: RitmoSpacing.md),
-
-                    // 4. Credential Fields
-                    Text(
-                      'مشخصات اتصال و اعتبارنامه',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                        ),
-                    ),
-                    const SizedBox(height: RitmoSpacing.sm),
-                    RitmoTextField(
-                      label: 'آدرس سرویس‌دهنده (Endpoint URL)',
-                      icon: Icons.link_rounded,
-                      controller: _urlController,
-                      errorText: _urlError,
-                      keyboardType: TextInputType.url,
-                      onChanged: (val) {
-                        setState(() {
-                          _urlError = AiEndpointNormalizer.validate(val);
-                        });
-                        _saveConfig();
-                      },
-                    ),
-                    const SizedBox(height: RitmoSpacing.xs),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        'آدرس نهایی: ${AiEndpointNormalizer.normalize(_urlController.text)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textTertiary,
-                          ),
-                      ),
+                    AiProviderGrid(
+                      presets: kAiProviderPresets,
+                      selectedPresetId: _selectedPresetId,
+                      onSelect: _onPresetSelected,
                     ),
                     const SizedBox(height: RitmoSpacing.md),
 
+                    // Contextual Provider Action & Link
                     if (_selectedPresetId == 'chatgpt_web') ...[
                       RitmoCard(
                         padding: const EdgeInsets.all(RitmoSpacing.md),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.public_rounded, color: colors.primary, size: 24),
-                            const SizedBox(width: RitmoSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                'اتصال از طریق مرورگر مخفی با وب‌سایت chatgpt.com برقرار می‌شود و نیازی به کلید API نیست. در صورت درخواست تایید امنیتی کلودفلر، پنجره تایید به صورت خودکار برای شما باز خواهد شد.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textSecondary,
-                                  height: 1.5,
+                            Row(
+                              children: [
+                                Icon(Icons.public_rounded, color: colors.primary, size: 22),
+                                const SizedBox(width: RitmoSpacing.sm),
+                                Text(
+                                  'پل وب چت‌جی‌پی‌تی (ChatGPT Web)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: RitmoSpacing.xs),
+                            Text(
+                              'اتصال بدون کلید API و مستقیماً از طریق وب‌سایت chatgpt.com برقرار می‌شود.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                                height: 1.5,
                               ),
+                            ),
+                            const SizedBox(height: RitmoSpacing.md),
+                            RitmoSecondaryButton(
+                              label: 'مشاهدهٔ وضعیت و تشخیص پل وب',
+                              icon: Icons.monitor_heart_outlined,
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const WebBridgeDiagnosticsScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
-                      ),
-                      RitmoSecondaryButton(
-                        label: 'مشاهدهٔ وضعیت و تشخیص پل وب',
-                        icon: Icons.monitor_heart_outlined,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const WebBridgeDiagnosticsScreen(),
-                            ),
-                          );
-                        },
                       ),
                       const SizedBox(height: RitmoSpacing.md),
                     ] else ...[
-                      AiSecretField(
-                        label: 'کلید دسترسی (API Key)',
-                        controller: _keyController,
-                        hint: 'sk-... یا کلید سرویس‌دهنده',
-                        hasStoredKey: _keyController.text.isNotEmpty,
-                        onChanged: (_) => _saveConfig(),
-                        onDelete: () async {
-                          await AiConnectionRepository.instance.deleteKey(AiSlot.assistant);
-                          setState(() {
-                            _keyController.clear();
-                            _lastTestResult = null;
-                          });
-                          if (mounted && context.mounted) RitmoToast.show(context, 'کلید با موفقیت حذف شد');
-                        },
-                      ),
-                      const SizedBox(height: RitmoSpacing.md),
-                    ],
-
-                    // Model Selection
-                    DropdownButtonFormField<String>(
-                      initialValue: currentPreset.models.contains(_modelController.text)
-                          ? _modelController.text
-                          : (currentPreset.models.isNotEmpty ? currentPreset.models.first : null),
-                      items: [
-                        for (final m in currentPreset.models)
-                          DropdownMenuItem(
-                            value: m,
-                            child: Text(m, style: const TextStyle(fontSize: 13)),
-                          ),
-                        const DropdownMenuItem(
-                          value: '__custom__',
-                          child: Text('مدل دلخواه...', style: TextStyle(fontSize: 13)),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        if (val == '__custom__') {
-                          // keep current custom or clear
-                        } else if (val != null) {
-                          setState(() {
-                            _modelController.text = val;
-                          });
-                          _saveConfig();
-                        }
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'مدل هوش مصنوعی',
-                        filled: true,
-                        fillColor: colors.surfaceSunken,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(RitmoRadius.field),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                      ),
-                    ),
-                    if (!currentPreset.models.contains(_modelController.text) && _modelController.text.isNotEmpty) ...[
-                      const SizedBox(height: RitmoSpacing.sm),
-                      RitmoTextField(
-                        label: 'نام مدل دلخواه',
-                        icon: Icons.psychology_outlined,
-                        controller: _modelController,
-                        onChanged: (_) => _saveConfig(),
-                      ),
-                    ],
-                    if (modelIsOverridden) ...[
-                      const SizedBox(height: RitmoSpacing.xs),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
+                      // API Key & Model Card
+                      RitmoCard(
+                        padding: const EdgeInsets.all(RitmoSpacing.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline_rounded, color: colors.warning, size: 14),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                'این مدل با این سرویس‌دهنده سازگار نیست. ریتمو به‌جای آن «$_effectiveModelPreview» را می‌فرستد.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colors.warning,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'اطلاعات دسترسی · ${currentPreset.nameFa}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.textPrimary,
+                                    ),
                                   ),
+                                ),
+                                if (currentPreset.keyUrl.isNotEmpty) ...[
+                                  const SizedBox(width: RitmoSpacing.xs),
+                                  InkWell(
+                                    onTap: () async {
+                                      final uri = Uri.parse(currentPreset.keyUrl);
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(RitmoRadius.chip),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.open_in_new_rounded, size: 13, color: colors.primary),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'دریافت کلید',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: colors.primary,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: RitmoSpacing.sm),
+
+                            if (_selectedPresetId == 'custom') ...[
+                              // Custom Service: Base URL, API Key, Model Name
+                              RitmoTextField(
+                                label: 'آدرس سرویس‌دهنده (Base URL / Endpoint)',
+                                hint: 'https://api.openai.com/v1/chat/completions',
+                                icon: Icons.link_rounded,
+                                controller: _urlController,
+                                errorText: _urlError,
+                                keyboardType: TextInputType.url,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _urlError = AiEndpointNormalizer.validate(val);
+                                  });
+                                  _saveConfig();
+                                },
                               ),
+                              const SizedBox(height: RitmoSpacing.sm),
+                              AiSecretField(
+                                label: 'کلید دسترسی (API Key)',
+                                controller: _keyController,
+                                hint: 'sk-... (در صورت نیاز سرور)',
+                                hasStoredKey: _keyController.text.isNotEmpty,
+                                onChanged: (_) => _saveConfig(),
+                                onDelete: () async {
+                                  await AiConnectionRepository.instance.deleteKey(AiSlot.assistant);
+                                  setState(() {
+                                    _keyController.clear();
+                                    _lastTestResult = null;
+                                  });
+                                  if (mounted && context.mounted) RitmoToast.show(context, 'کلید با موفقیت حذف شد');
+                                },
+                              ),
+                              const SizedBox(height: RitmoSpacing.sm),
+                              RitmoTextField(
+                                label: 'نام مدل هوش مصنوعی (Model Name)',
+                                hint: 'gpt-4o, deepseek-chat, llama3.3, ...',
+                                icon: Icons.psychology_outlined,
+                                controller: _modelController,
+                                onChanged: (_) => _saveConfig(),
+                              ),
+                            ] else ...[
+                              if (currentPreset.needsAccountId) ...[
+                                RitmoTextField(
+                                  label: 'شناسهٔ حساب Cloudflare (Account ID)',
+                                  icon: Icons.account_circle_outlined,
+                                  controller: _cloudflareAccountIdController,
+                                  onChanged: (_) => _saveConfig(),
+                                ),
+                                const SizedBox(height: RitmoSpacing.sm),
+                              ],
+
+                              AiSecretField(
+                                label: 'کلید دسترسی (API Key)',
+                                controller: _keyController,
+                                hint: 'sk-... یا کلید سرویس‌دهنده',
+                                hasStoredKey: _keyController.text.isNotEmpty,
+                                onChanged: (_) => _saveConfig(),
+                                onDelete: () async {
+                                  await AiConnectionRepository.instance.deleteKey(AiSlot.assistant);
+                                  setState(() {
+                                    _keyController.clear();
+                                    _lastTestResult = null;
+                                  });
+                                  if (mounted && context.mounted) RitmoToast.show(context, 'کلید با موفقیت حذف شد');
+                                },
+                              ),
+                              const SizedBox(height: RitmoSpacing.md),
+
+                              // Model Selector for standard presets
+                              if (currentPreset.models.isNotEmpty) ...[
+                                DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  initialValue: currentPreset.models.contains(_modelController.text)
+                                      ? _modelController.text
+                                      : currentPreset.models.first,
+                                  items: [
+                                    for (final m in currentPreset.models)
+                                      DropdownMenuItem(
+                                        value: m,
+                                        child: Text(
+                                          m,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ),
+                                    const DropdownMenuItem(
+                                      value: '__custom__',
+                                      child: Text(
+                                        'مدل دلخواه...',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null && val != '__custom__') {
+                                      setState(() {
+                                        _modelController.text = val;
+                                      });
+                                      _saveConfig();
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    labelText: 'مدل هوش مصنوعی',
+                                    filled: true,
+                                    fillColor: colors.surfaceSunken,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                                      borderSide: BorderSide(color: colors.border),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(RitmoRadius.field),
+                                      borderSide: BorderSide(color: colors.border),
+                                    ),
+                                  ),
+                                ),
+                                if (!currentPreset.models.contains(_modelController.text) && _modelController.text.isNotEmpty) ...[
+                                  const SizedBox(height: RitmoSpacing.sm),
+                                  RitmoTextField(
+                                    label: 'نام مدل دلخواه',
+                                    hint: 'نام مدل را وارد کنید',
+                                    icon: Icons.edit_note_rounded,
+                                    controller: _modelController,
+                                    onChanged: (_) => _saveConfig(),
+                                  ),
+                                ],
+                              ],
+                            ],
+
+                            const SizedBox(height: RitmoSpacing.md),
+                            RitmoPrimaryButton(
+                              label: 'آزمایش اتصال اختصاصی',
+                              icon: Icons.bolt_rounded,
+                              isLoading: _isTesting,
+                              onPressed: _testPrimaryConnection,
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: RitmoSpacing.md),
                     ],
-                    const SizedBox(height: RitmoSpacing.md),
+                  ],
 
-                    // 5. Backup Key ExpansionTile (T-B6)
-                    Theme(
+                  // 4. Progressive Disclosure: Advanced Settings Expansion
+                  RitmoCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Theme(
                       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        title: Text(
-                          'کلید پشتیبان',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: ExpansionTile(
+                          leading: Icon(Icons.tune_rounded, color: colors.primary, size: 20),
+                          title: Text(
+                            'تنظیمات پیشرفته و سفارشی‌سازی',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
-                        ),
-                        subtitle: Text(
-                          'اختیاری · برای جابجایی خودکار در زمان اتمام سهمیه',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textSecondary,
+                          ),
+                          subtitle: Text(
+                            'ویرایش آدرس، تایم‌اوت، کلید پشتیبان و تفکیک تحلیل‌ها',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.textSecondary,
                             ),
-                        ),
-                        children: [
+                          ),
+                          children: [
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
+                            padding: const EdgeInsets.all(RitmoSpacing.md),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Custom Base URL
+                                RitmoTextField(
+                                  label: 'آدرس سرویس‌دهنده (Base URL / Endpoint)',
+                                  icon: Icons.link_rounded,
+                                  controller: _urlController,
+                                  errorText: _urlError,
+                                  keyboardType: TextInputType.url,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _urlError = AiEndpointNormalizer.validate(val);
+                                    });
+                                    _saveConfig();
+                                  },
+                                ),
+                                const SizedBox(height: RitmoSpacing.md),
+
+                                // Timeout Segmented Control
                                 Text(
-                                  'وقتی سهمیهٔ کلید اول تمام شود یا سرویس‌دهنده پاسخ ندهد، ریتمو خودکار سراغ این کلید می‌رود. لازم نیست از همان سرویس‌دهنده باشد.',
+                                  'مهلت پاسخ سرویس‌دهنده (Timeout)',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: RitmoSpacing.xs),
+                                RitmoSegmentedControl<int>(
+                                  segments: const {
+                                    15000: '۱۵ ثانیه',
+                                    30000: '۳۰ ثانیه',
+                                    60000: '۶۰ ثانیه',
+                                    120000: '۲ دقیقه',
+                                  },
+                                  selected: _timeoutMs,
+                                  onSelected: (timeout) {
+                                    setState(() {
+                                      _timeoutMs = timeout;
+                                    });
+                                    _saveConfig();
+                                  },
+                                ),
+                                const SizedBox(height: RitmoSpacing.lg),
+
+                                // Backup Key Failover
+                                Text(
+                                  'کلید پشتیبان (Failover Key)',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'در زمان اتمام سهمیه یا عدم پاسخ کلید اول، ریتمو خودکار سراغ این کلید می‌رود.',
+                                  style: TextStyle(
+                                    fontSize: 11,
                                     color: colors.textSecondary,
-                                    height: 1.5,
-                                    ),
+                                    height: 1.4,
+                                  ),
                                 ),
                                 const SizedBox(height: RitmoSpacing.sm),
                                 RitmoTextField(
@@ -885,7 +1039,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   controller: _backupUrlController,
                                   onChanged: (_) => _saveConfig(),
                                 ),
-                                const SizedBox(height: RitmoSpacing.md),
+                                const SizedBox(height: RitmoSpacing.sm),
                                 AiSecretField(
                                   label: 'کلید دسترسی پشتیبان (Backup API Key)',
                                   controller: _backupKeyController,
@@ -910,73 +1064,25 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   isLoading: _isTestingBackup,
                                   onPressed: _testBackupConnection,
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: RitmoSpacing.sm),
+                                const SizedBox(height: RitmoSpacing.lg),
 
-                    // 6. Advanced Settings ExpansionTile (T-B7)
-                    Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        title: Text(
-                          'تنظیمات پیشرفته',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                            ),
-                        ),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.sm),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'مهلت پاسخ سرویس‌دهنده (Timeout)',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                    ),
-                                ),
-                                const SizedBox(height: RitmoSpacing.xs),
-                                RitmoSegmentedControl<int>(
-                                  segments: const {
-                                    15000: '۱۵ ثانیه',
-                                    30000: '۳۰ ثانیه',
-                                    60000: '۶۰ ثانیه',
-                                    120000: '۲ دقیقه',
-                                  },
-                                  selected: _timeoutMs,
-                                  onSelected: (timeout) {
-                                    setState(() {
-                                      _timeoutMs = timeout;
-                                    });
-                                    _saveConfig();
-                                  },
-                                ),
-                                const SizedBox(height: RitmoSpacing.md),
+                                // Features Slot Split Config
                                 SwitchListTile(
                                   contentPadding: EdgeInsets.zero,
                                   title: Text(
-                                    'سرویس‌دهندهٔ جداگانه برای تحلیل‌ها',
+                                    'سرویس‌دهندهٔ جداگانه برای تحلیل‌های پس‌زمینه',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
-                                      ),
+                                    ),
                                   ),
                                   subtitle: Text(
-                                    '«دستیار» چت زنده است و به سرعت نیاز دارد. «تحلیل‌ها» کارهای سنگین‌تر پس‌زمینه مثل خلاصهٔ هفتگی است. می‌توانید برای هرکدام سرویس‌دهندهٔ متفاوتی بگذارید.',
+                                    'تفکیک مسیر دستیار زنده از کارهای سنگین پس‌زمینه مانند تحلیل‌های هفتگی',
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: colors.textSecondary,
-                                      ),
+                                    ),
                                   ),
                                   value: _separateFeaturesConfig,
                                   onChanged: (val) {
@@ -1007,7 +1113,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                   ),
                                   const SizedBox(height: RitmoSpacing.sm),
                                   RitmoPrimaryButton(
-                                    label: 'آزمایش سرویس‌دهنده تحلیل‌ها',
+                                    label: 'آزمایش سرویس تحلیل‌ها',
                                     icon: Icons.bolt_rounded,
                                     isLoading: _isTestingFeatures,
                                     onPressed: _testFeaturesConnection,
@@ -1015,15 +1121,15 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                                 ],
                               ],
                             ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
-
+                  ),
                   const SizedBox(height: RitmoSpacing.md),
 
-                  // 7. Connection Chain Panel (T-C1)
+                  // 5. Connection Chain Table
                   if (_chainEntries.isNotEmpty) ...[
                     RitmoCard(
                       padding: const EdgeInsets.all(RitmoSpacing.md),
@@ -1031,12 +1137,12 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'ترتیب تلاش (Connection Chain)',
+                            'ترتیب تلاش زنجیره (Connection Chain)',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              ),
+                            ),
                           ),
                           const SizedBox(height: RitmoSpacing.sm),
                           for (var i = 0; i < _chainEntries.length; i++) ...[
@@ -1044,56 +1150,64 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
-                                  Text(
-                                    '${toPersianDigits((i + 1).toString())} · ${_chainEntries[i].labelFa}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textPrimary,
-                                      ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    _chainEntries[i].host,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colors.textSecondary,
-                                      ),
-                                  ),
-                                  const SizedBox(width: RitmoSpacing.sm),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: colors.surfaceSunken,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
+                                  Expanded(
+                                    flex: 4,
                                     child: Text(
-                                      _chainEntries[i].model,
+                                      '${toPersianDigits((i + 1).toString())} · ${_chainEntries[i].labelFa}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: RitmoSpacing.xs),
+                                  Flexible(
+                                    flex: 3,
+                                    child: Text(
+                                      _chainEntries[i].host,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.end,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: colors.textTertiary,
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: RitmoSpacing.xs),
+                                  Flexible(
+                                    flex: 3,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceSunken,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _chainEntries[i].model,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: colors.textTertiary,
                                         ),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                          const SizedBox(height: RitmoSpacing.xs),
-                          Text(
-                            'اگر عضو اول جواب ندهد، ریتمو به‌ترتیب سراغ بعدی‌ها می‌رود.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textTertiary,
-                              ),
-                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: RitmoSpacing.md),
                   ],
 
-                  // 8. Daily Quota Usage Counter (T-C2)
+                  // 6. Daily Quota Counter (for non-premium)
                   if (_showDailyQuota) ...[
                     RitmoCard(
                       padding: const EdgeInsets.all(RitmoSpacing.md),
@@ -1107,12 +1221,11 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
-                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
                   ],
                 ],
               ),

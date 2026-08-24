@@ -1,6 +1,6 @@
 {
   "hardcodedColors": 1235,
-  "materialColors": 2064,
+  "materialColors": 2080,
   "oldOpacity": 0,
   "duplicateFont": 124,
   "scatteredBlur": 30,
@@ -14,6 +14,6 @@
   "coreDuplicateFont": 153,
   "coreScatteredBlur": 6,
   "coreManualShadow": 9,
-  "rawFontSize": 3646,
-  "rawGeometryLiteral": 4513
+  "rawFontSize": 3649,
+  "rawGeometryLiteral": 4518
 }

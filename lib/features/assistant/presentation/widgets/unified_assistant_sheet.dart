@@ -1131,8 +1131,8 @@ class _AssistantSheetState extends State<AssistantSheet> {
                 // Header with Glass Style & Avatar
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
+                    horizontal: 16,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
                     border: Border(bottom: BorderSide(color: colors.border)),
@@ -1140,7 +1140,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           color: colors.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
@@ -1148,34 +1148,43 @@ class _AssistantSheetState extends State<AssistantSheet> {
                         child: Icon(
                           CupertinoIcons.sparkles,
                           color: colors.primary,
-                          size: 18,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        widget.persona.displayName,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.persona.displayName,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 6),
                       const BridgeStatusChip(),
+                      const Spacer(),
                       IconButton(
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        padding: const EdgeInsets.all(4),
                         icon: Icon(
                           Icons.copy_all_rounded,
                           color: colors.textSecondary,
-                          size: 20,
+                          size: 18,
                         ),
                         tooltip: 'کپی گزارش تشخیصی و HTML چت‌جی‌پی‌تی',
                         onPressed: _copyChatGptDiagnosticSnapshot,
                       ),
                       IconButton(
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        padding: const EdgeInsets.all(4),
                         icon: Icon(
                           Icons.open_in_browser_rounded,
                           color: colors.textSecondary,
-                          size: 20,
+                          size: 18,
                         ),
                         tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
                         onPressed: () => ChatGptMiniPreview.show(context),
@@ -1185,18 +1194,20 @@ class _AssistantSheetState extends State<AssistantSheet> {
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.orange,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: 6,
+                              vertical: 2,
                             ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           icon: const Icon(
                             CupertinoIcons.arrow_counterclockwise,
-                            size: 16,
+                            size: 14,
                           ),
                           label: const Text(
-                            'لغو اقدام اخیر',
+                            'لغو اقدام',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1378,9 +1389,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
 
                 // Agent Confirmation Card Host
                 const AgentConfirmationHost(),
-
-                // Live Mini ChatGPT Preview Window
-                const ChatGptMiniPreview(),
 
                 // Chat Input Bar matching Main Assistant (Speech-to-Text mic + Glass Input + Circular Accent Send Button)
                 SafeArea(

@@ -122,7 +122,7 @@ class TaskAgendaSource implements AgendaSource {
         final placeholders = List.filled(taskIds.length, '?').join(',');
         final stepRows = await db.rawQuery('''
           SELECT taskId, 
-                 SUM(CASE WHEN isDone = 1 THEN 1 ELSE 0 END) as doneCount,
+                 SUM(CASE WHEN isCompleted = 1 THEN 1 ELSE 0 END) as doneCount,
                  COUNT(*) as totalCount
           FROM task_steps
           WHERE taskId IN ($placeholders)

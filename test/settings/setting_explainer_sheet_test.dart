@@ -55,8 +55,8 @@ void main() {
       final keys = [
         'gentleness_level',
         'daily_capacity_minutes',
-        'sleep_time',
-        'wake_time',
+        'sleep_target_bedtime',
+        'sleep_target_wake',
         'notif_quiet_enabled',
         'ai_local_processing_only',
       ];

@@ -472,6 +472,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
     final colors = context.colors;
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar(
         title: 'اتصال هوش مصنوعی',
         subtitle: _statusSubtitle,
@@ -504,10 +505,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                vertical: RitmoSpacing.md,
-                horizontal: RitmoSpacing.md,
-              ),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

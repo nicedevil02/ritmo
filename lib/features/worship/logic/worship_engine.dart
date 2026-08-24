@@ -292,7 +292,6 @@ class WorshipEngine {
     const keys = [
       'prayer_city_id',
       'prayer_calculation_method',
-      'ihtiyat_minutes',
       'show_asr_isha_prayers',
       'hijri_offset',
       'last_worship_sweep_date',
@@ -459,7 +458,6 @@ class WorshipEngine {
           isha: isha,
           midnightShari: midnightShari,
           calculationMethod: method,
-          ihtiyatMinutes: 0,
         );
       }
     }
@@ -496,7 +494,6 @@ class WorshipEngine {
       'date': _ds(date),
       'cityId': cityId,
       'calculationMethod': method,
-      'ihtiyatMinutes': 0,
       'fajr': times.fajrText,
       'sunrise': times.sunriseText,
       'dhuhr': times.dhuhrText,
@@ -530,7 +527,6 @@ class WorshipEngine {
       isha: times.isha,
       midnightShari: times.midnightShari,
       calculationMethod: method,
-      ihtiyatMinutes: 0,
       isFallbackLocation: fallback,
     );
   }
@@ -538,6 +534,20 @@ class WorshipEngine {
   Future<Map<String, double>?> _lookupCityLatLng(DatabaseExecutor db, String cityId) async {
     if (cityId.isEmpty) return null;
     try {
+      if (cityId.startsWith('CUSTOM_')) {
+        final customSettings = await db.query(
+          'app_settings',
+          where: "key IN ('prayer_custom_lat', 'prayer_custom_lng')",
+        );
+        double? lat, lon;
+        for (final r in customSettings) {
+          if (r['key'] == 'prayer_custom_lat') lat = double.tryParse(r['value']?.toString() ?? '');
+          if (r['key'] == 'prayer_custom_lng') lon = double.tryParse(r['value']?.toString() ?? '');
+        }
+        if (lat != null && lon != null) {
+          return {'lat': lat, 'lon': lon};
+        }
+      }
       final rows = await db.query(
         'iran_cities',
         where: 'id = ?',
@@ -601,7 +611,6 @@ class WorshipEngine {
           'date': _ds(d),
           'cityId': cityId,
           'calculationMethod': method,
-          'ihtiyatMinutes': 0,
           'fajr': times.fajrText,
           'sunrise': times.sunriseText,
           'dhuhr': times.dhuhrText,
@@ -1045,6 +1054,13 @@ class WorshipEngine {
             where: 'id = ? AND totalCount <= 0 AND remainingCount <= 0',
             whereArgs: [debtId],
           );
+
+          // Synchronize worship_debt_routine archive state when debts reach 0
+          final remainingDebts = await txn.query('worship_debts', where: 'isArchived = 0 AND remainingCount > 0', limit: 1);
+          if (remainingDebts.isEmpty) {
+            await txn.update('routines', {'isArchived': 1, 'updatedAt': nowMs}, where: "id = 'worship_debt_routine'");
+            await txn.delete('simple_tasks', where: "linkedRoutineId = 'worship_debt_routine' OR title = 'بدهی عبادی'");
+          }
         }
       });
 
@@ -1477,7 +1493,6 @@ class WorshipEngine {
       isha: isha,
       midnightShari: midnightShari,
       calculationMethod: method,
-      ihtiyatMinutes: 0,
     );
   }
 

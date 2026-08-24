@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/date_key.dart';
@@ -20,7 +21,11 @@ class MorningBrief {
     int todayCount = 0;
 
     for (final item in agenda.items) {
-      if (item.dateStr != dateStr || item.id.contains('overdue')) {
+      final isWorshipOrCycle = item.domain == AgendaDomain.prayer ||
+          item.domain == AgendaDomain.mustahab ||
+          item.domain == AgendaDomain.worshipDebt ||
+          item.domain == AgendaDomain.cycle;
+      if (!isWorshipOrCycle && (item.dateStr != dateStr || item.id.contains('overdue'))) {
         overdueCount++;
       } else {
         todayCount++;

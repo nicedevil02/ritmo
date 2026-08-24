@@ -7,9 +7,7 @@ import 'package:ritmo/core/domain/engines/context_engine.dart';
 import 'package:ritmo/core/domain/engines/reshuffle_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/temporary_event_create_sheet.dart';
 
 class ReshufflePreviewSheet extends StatefulWidget {

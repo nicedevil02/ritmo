@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layoutDirection="rtl"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_row_background"
+    android:padding="8dp"
+    android:layout_marginBottom="4dp">
+
+    <!-- Checkbox trigger image -->
+    <ImageView
+        android:id="@+id/item_check_btn"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:padding="3dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_checkbox_unchecked"
+        android:contentDescription="تیک انجام" />
+
+    <!-- Title of the task -->
+    <TextView
+        android:id="@+id/item_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="6dp"
+        android:text="عنوان کار"
+        android:textColor="#ECEEF3"
+        android:textSize="13sp"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Star indicator if important -->
+    <ImageView
+        android:id="@+id/item_star"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_widget_star"
+        android:visibility="gone"
+        android:contentDescription="مهم" />
+
+</LinearLayout>

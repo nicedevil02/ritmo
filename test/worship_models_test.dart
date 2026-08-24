@@ -34,7 +34,6 @@ void main() {
         isha: '20:30',
         midnightShari: '23:30',
         calculationMethod: 'TEHRAN_GEOPHYSICS',
-        ihtiyatMinutes: 10,
       );
 
       // Current time: 10:00 AM (before Dhuhr)

@@ -74,97 +74,146 @@ class _RitmoOrbState extends State<RitmoOrb> with TickerProviderStateMixin {
         ? const Color(0xff9B89FF) // Delicate Purple
         : const Color(0xffC084FC);
 
-    return AnimatedBuilder(
-      animation: Listenable.merge([_breathingAnimation, _heartbeatAnimation]),
-      builder: (context, child) {
-        final breath = _breathingAnimation.value;
-        final pulse = _heartbeatAnimation.value;
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_breathingAnimation, _heartbeatAnimation]),
+        builder: (context, child) {
+          final breath = _breathingAnimation.value;
+          final pulse = _heartbeatAnimation.value;
 
-        // Combined dynamic values
-        // Breathing scales by 5%, heartbeat spikes by 10%
-        final scale = 1.0 + (breath * 0.05) + (pulse * 0.10);
-        // Breathing shifts glow opacity, heartbeat spikes it
-        final outerGlowOpacity = 0.15 + (breath * 0.05) + (pulse * 0.25);
-        final innerGlowOpacity = 0.05 + (breath * 0.03) + (pulse * 0.30);
+          // Combined dynamic values
+          // Breathing scales by 5%, heartbeat spikes by 10%
+          final scale = 1.0 + (breath * 0.05) + (pulse * 0.10);
+          // Breathing shifts glow opacity, heartbeat spikes it
+          final outerGlowOpacity = 0.15 + (breath * 0.05) + (pulse * 0.25);
+          final innerGlowOpacity = 0.05 + (breath * 0.03) + (pulse * 0.30);
 
-        return Center(
-          child: SizedBox(
-            width: widget.size * 1.5,
-            height: widget.size * 1.5,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // ==========================================
-                // LAYER 1: OUTER AMBIENT GLOW
-                // ==========================================
-                Transform.scale(
-                  scale: scale * 1.2,
-                  child: Container(
-                    width: widget.size,
-                    height: widget.size,
+          return Center(
+            child: SizedBox(
+              width: widget.size * 1.5,
+              height: widget.size * 1.5,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // ==========================================
+                  // LAYER 1: PULSING AURORA / OUTER GLOW
+                  // ==========================================
+                  Container(
+                    width: widget.size * 1.35 * scale,
+                    height: widget.size * 1.35 * scale,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          glowColor.withValues(alpha: outerGlowOpacity),
-                          secondaryGlowColor.withValues(alpha: outerGlowOpacity * 0.5),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.45, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ==========================================
-                // LAYER 3: THE ANIMATED LOGO WITH GLOW
-                // ==========================================
-                Transform.scale(
-                  scale: scale,
-                  child: Container(
-                    width: widget.size,
-                    height: widget.size,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Inner heartbeat light pulse
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                glowColor.withValues(alpha: innerGlowOpacity),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: glowColor.withValues(alpha: outerGlowOpacity),
+                          blurRadius: 45 * scale,
+                          spreadRadius: 15 * scale,
                         ),
-                        // ==========================================
-                        // LAYER 4: APP LOGO
-                        // ==========================================
-                        SizedBox(
-                          width: widget.size * 0.75,
-                          height: widget.size * 0.75,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              'assets/images/app_logo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
+                        BoxShadow(
+                          color: secondaryGlowColor.withValues(alpha: outerGlowOpacity * 0.7),
+                          blurRadius: 35 * scale,
+                          spreadRadius: 5 * scale,
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  // ==========================================
+                  // LAYER 2: SHIMMERING HALO / CORE AMBIENT
+                  // ==========================================
+                  Container(
+                    width: widget.size * 1.15 * scale,
+                    height: widget.size * 1.15 * scale,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          glowColor.withValues(alpha: innerGlowOpacity + 0.15),
+                          secondaryGlowColor.withValues(alpha: innerGlowOpacity),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.6, 1.0],
+                      ),
+                    ),
+                  ),
+
+                  // ==========================================
+                  // LAYER 3: INNER LOGO CONTAINER / ORB
+                  // ==========================================
+                  Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: widget.size,
+                      height: widget.size,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDark ? const Color(0xff131722) : Colors.white,
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : glowColor.withValues(alpha: 0.20),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: glowColor.withValues(alpha: 0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Subtle internal glass gloss
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: widget.size * 0.5,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(widget.size / 2),
+                                ),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white.withValues(alpha: isDark ? 0.08 : 0.4),
+                                    Colors.white.withValues(alpha: 0.0),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // ==========================================
+                          // LAYER 4: APP LOGO
+                          // ==========================================
+                          SizedBox(
+                            width: widget.size * 0.75,
+                            height: widget.size * 0.75,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.asset(
+                                'assets/images/app_logo.png',
+                                cacheWidth: 256,
+                                cacheHeight: 256,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

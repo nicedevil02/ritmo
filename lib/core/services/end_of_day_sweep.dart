@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/domain/models/reminder_state.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
@@ -70,6 +72,7 @@ class EndOfDaySweep {
               title: 'آیتم ضروری فراموش‌شده',
               body: 'یکی از آیتم‌های مهم یا داروی شما دیروز انجام نشد.',
               payload: {'routineId': routineId, 'occurrenceId': occId},
+              executor: txn,
             );
           }
 
@@ -119,8 +122,8 @@ class EndOfDaySweep {
         "INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES ('last_worship_sweep_date', ?, ?)",
         [todayStr, DateTime.now().millisecondsSinceEpoch],
       );
-    } catch (e) {
-      debugPrint('EndOfDaySweep error: $e');
+    } catch (e, st) {
+      RitmoLog.error('EndOfDaySweep', 'EndOfDaySweep error', e, st);
     }
 
     return sweptCount;
@@ -134,6 +137,28 @@ class EndOfDaySweep {
     required bool suspended,
     required DateTime yesterdayDate,
   }) async {
+    final religionRows = await txn.query(
+      'app_settings',
+      where: "key = 'module_religion_enabled'",
+    );
+    final religionEnabled = religionRows.isNotEmpty &&
+        religionRows.first['value'] == 'true';
+    if (!religionEnabled) return;
+
+    final appStartRows = await txn.query(
+      'app_settings',
+      where: "key = 'app_start_date'",
+    );
+    if (appStartRows.isNotEmpty) {
+      final appStartStr = appStartRows.first['value'] as String?;
+      if (appStartStr != null && appStartStr.isNotEmpty) {
+        final parsedAppStart = DateKey.parse(appStartStr);
+        if (parsedAppStart != null && yesterdayDate.isBefore(parsedAppStart)) {
+          return;
+        }
+      }
+    }
+
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // Calculate end-of-yesterday cutoff: practices created AFTER this point
@@ -228,8 +253,8 @@ class EndOfDaySweep {
             }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
-      } catch (e) {
-        debugPrint('Worship sweep error for ${practice.id}: $e');
+      } catch (e, st) {
+        RitmoLog.error('EndOfDaySweep', 'Worship sweep error for ${practice.id}', e, st);
       }
     }
 

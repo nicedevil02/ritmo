@@ -46,11 +46,23 @@ $userPrompt
   if (window.__ritmo_early_hooks_injected) return;
   window.__ritmo_early_hooks_injected = true;
 
+  function safePostMessage(evtType, payload) {
+    try {
+      if (window.__RITMO_DISPOSED__) return;
+      if (!window.RitmoChatBridge || typeof window.RitmoChatBridge.postMessage !== 'function') return;
+      var data = (payload && typeof payload === 'object') ? payload : {};
+      if (evtType) data.type = evtType;
+      if (typeof data.source === 'undefined' || !data.source) data.source = 'lifecycle';
+      window.RitmoChatBridge.postMessage(JSON.stringify(data));
+    } catch(e) {}
+  }
+  window.__ritmo_safePostMessage = safePostMessage;
+
   function isConversationEndpoint(url) {
     if (typeof url !== 'string') return false;
     return /[\/\.-]backend-(?:api|anon)\/(?:conversation|lat\/r|f\/r|synthesize)/i.test(url)
         || /[\/\.-]backend-api\/conversation/i.test(url)
-        || /[\/\.-]unauth-mweb\/(?:conversation|sentinel|lat\/r)/i.test(url)
+        || /[\/\.-]unauth-mweb\/(?:conversation|sentinel|lat\/r|f\/r|synthesize)/i.test(url)
         || (/[\/\.-]conversation/i.test(url) && !/[\/\.-]conversation\/prepare/i.test(url));
   }
 
@@ -118,16 +130,7 @@ $userPrompt
     var buffer = '';
 
     function emitEvent(evtType, payload) {
-      try {
-        if (typeof notifyFlutter === 'function') {
-          notifyFlutter(evtType, payload);
-        } else if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-          var data = payload || {};
-          data.type = evtType;
-          if (!data.source) data.source = 'sse';
-          window.RitmoChatBridge.postMessage(JSON.stringify(data));
-        }
-      } catch (e) {}
+      safePostMessage(evtType, payload);
     }
 
     function pump() {
@@ -204,46 +207,35 @@ $userPrompt
       var isConvo = isConversationEndpoint(url);
       var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
 
-      if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-        try {
-          window.RitmoChatBridge.postMessage(JSON.stringify({
-            type: 'fetch_matched',
-            url: (typeof url === 'string') ? url.slice(0, 150) : '',
-            method: method,
-            isStream: isConvo,
-            requestId: activeReqId,
-            source: 'fetch_hook'
-          }));
-        } catch (e) {}
+      if (!activeReqId || !isConvo) {
+        return originalFetch.apply(this, args);
       }
 
+      safePostMessage('fetch_matched', {
+        url: (typeof url === 'string') ? url.slice(0, 150) : '',
+        method: method,
+        isStream: isConvo,
+        requestId: activeReqId,
+        source: 'fetch_hook'
+      });
+
       if (isConvo) {
-        try {
-          if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-            window.RitmoChatBridge.postMessage(JSON.stringify({
-              type: 'network_conversation_started',
-              url: url,
-              timestamp: Date.now(),
-              requestId: activeReqId,
-              source: 'fetch'
-            }));
-          }
-        } catch (e) {}
+        safePostMessage('network_conversation_started', {
+          url: url,
+          timestamp: Date.now(),
+          requestId: activeReqId,
+          source: 'fetch'
+        });
 
         try {
           return originalFetch.apply(this, args).then(function(response) {
             if (response && response.status === 200) {
               if (!response.body || typeof response.body.tee !== 'function') {
                 console.warn('[Ritmo] response.body.tee unavailable, falling back to DOM watcher only');
-                try {
-                  if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-                    window.RitmoChatBridge.postMessage(JSON.stringify({
-                      type: 'selector_health',
-                      issue: 'tee_unavailable',
-                      source: 'fetch'
-                    }));
-                  }
-                } catch (e) {}
+                safePostMessage('selector_health', {
+                  issue: 'tee_unavailable',
+                  source: 'fetch'
+                });
                 return response;
               }
               try {
@@ -286,8 +278,9 @@ $userPrompt
     window.XMLHttpRequest.prototype.send = function() {
       var url = this.__ritmo_url || '';
       var isConvo = isConversationEndpoint(url);
+      var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
 
-      if (isConvo) {
+      if (isConvo && activeReqId) {
         var xhr = this;
         var sseState = { accumulatedText: '', firstTokenEmitted: false, startTime: Date.now() };
         var lastIdx = 0;
@@ -300,9 +293,9 @@ $userPrompt
             for (var i = 0; i < lines.length; i++) {
               var trimmed = lines[i].trim();
               if (trimmed && typeof window.__ritmo_parseSSELine === 'function') {
-                var evt = window.__ritmo_parseSSELine(trimmed, sseState, window.__ritmo_active_req_id || '');
-                if (evt && window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-                  window.RitmoChatBridge.postMessage(JSON.stringify(evt));
+                var evt = window.__ritmo_parseSSELine(trimmed, sseState, activeReqId);
+                if (evt) {
+                  safePostMessage(evt.type, evt);
                 }
               }
             }
@@ -318,24 +311,26 @@ $userPrompt
     window.__ritmo_es_hooked = true;
     var OrigEventSource = window.EventSource;
     window.EventSource = function(url, options) {
-      var es = new OrigEventSource(url, options);
       var isConvo = isConversationEndpoint(url);
+      var activeReqId = window.__ritmo_active_req_id || (window.__ritmo_state && window.__ritmo_state.activeRequestId) || '';
 
-      if (isConvo) {
+      if (isConvo && activeReqId) {
+        var es = new OrigEventSource(url, options);
         var sseState = { accumulatedText: '', firstTokenEmitted: false, startTime: Date.now() };
         es.addEventListener('message', function(e) {
           try {
             if (e && e.data && typeof window.__ritmo_parseSSELine === 'function') {
               var line = 'data: ' + e.data;
-              var evt = window.__ritmo_parseSSELine(line, sseState, window.__ritmo_active_req_id || '');
-              if (evt && window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-                window.RitmoChatBridge.postMessage(JSON.stringify(evt));
+              var evt = window.__ritmo_parseSSELine(line, sseState, activeReqId);
+              if (evt) {
+                safePostMessage(evt.type, evt);
               }
             }
           } catch (esErr) {}
         });
+        return es;
       }
-      return es;
+      return new OrigEventSource(url, options);
     };
   }
 
@@ -365,6 +360,8 @@ $userPrompt
   // Safe PostMessage to Flutter JavascriptChannel 'RitmoChatBridge'.
   function notifyFlutter(type, payload) {
     try {
+      if (window.__RITMO_DISPOSED__) return;
+      if (!window.RitmoChatBridge || typeof window.RitmoChatBridge.postMessage !== 'function') return;
       var data = {};
       data.type = type;
       if (payload && typeof payload === 'object') {
@@ -378,11 +375,9 @@ $userPrompt
         data.source = 'lifecycle';
       }
       var jsonStr = JSON.stringify(data);
-      if (window.RitmoChatBridge && window.RitmoChatBridge.postMessage) {
-        window.RitmoChatBridge.postMessage(jsonStr);
-      }
+      window.RitmoChatBridge.postMessage(jsonStr);
     } catch(e) {
-      console.error('[Ritmo] Error posting to Flutter:', e);
+      // Discard errors during hot reload or disposal
     }
   }
 
@@ -660,6 +655,9 @@ $_bridgeScriptBody''';
   // --- Centralized RITMO Selector Table (A-27) ---
   var RITMO_SELECTORS = {
     composer: [
+      '#mobile-composer-prompt',
+      'textarea[id="mobile-composer-prompt"]',
+      '[data-mobile-composer-prompt]',
       '#prompt-textarea',
       'div[contenteditable="true"][id="prompt-textarea"]',
       'form div[contenteditable="true"]',
@@ -675,6 +673,7 @@ $_bridgeScriptBody''';
       'button[data-testid="fruitjuice-send-button"]',
       'button[aria-label*="Send" i]',
       'button[aria-label*="ارسال"]',
+      'button[aria-label="ارسال پیام"]',
       'form button[type="submit"]',
       'button.send-button',
       'button[data-testid*="send" i]',
@@ -687,10 +686,21 @@ $_bridgeScriptBody''';
       'button[data-testid="fruitjuice-stop-button"]',
       'button[aria-label*="Stop" i]',
       'button[aria-label*="توقف"]',
+      'button[aria-label="توقف تولید"]',
       'button[data-testid*="stop" i]',
       'button.stop-button',
       'button[aria-label="Stop generating"]',
       'button[aria-label="Stop streaming"]'
+    ].join(', '),
+
+    copyResponseButton: [
+      'button[aria-label*="کپی کردن پاسخ"]',
+      'button[aria-label="کپی کردن پاسخ"]',
+      'button[aria-label*="کپی پاسخ"]',
+      'button[aria-label*="کپی"]',
+      'button[aria-label*="Copy response" i]',
+      'button[aria-label*="Copy" i]',
+      'button[data-testid*="copy" i]'
     ].join(', '),
 
     assistantMessage: [
@@ -1095,18 +1105,34 @@ $_bridgeScriptBody''';
     var text = (el.innerText || el.textContent || '').trim().toLowerCase();
     if (!text) return true;
 
-    // Disclaimers & Footers
-    if (text.indexOf('make mistakes') !== -1 || text.indexOf('is ai and can') !== -1 || text.indexOf('important info') !== -1 || text.indexOf('اشتباه کند') !== -1 || text.indexOf('خطا کند') !== -1) {
+    // Disclaimers & Footers - Only reject small standalone disclaimer elements
+    if (text.length < 200 && (text.indexOf('make mistakes') !== -1 || text.indexOf('is ai and can') !== -1 || text.indexOf('important info') !== -1 || text.indexOf('اشتباه کند') !== -1 || text.indexOf('خطا کند') !== -1)) {
       return true;
     }
 
     // Login & Promo Banners
-    if (text.indexOf('smarter responses') !== -1 || text.indexOf('upload files') !== -1 || text.indexOf('sign up for free') !== -1 || text.indexOf('stay logged out') !== -1 || text === 'log in' || text === 'sign up' || text === 'terms' || text === 'privacy') {
+    if (text.indexOf('smarter responses') !== -1 ||
+        text.indexOf('upload files') !== -1 ||
+        text.indexOf('sign up for free') !== -1 ||
+        text.indexOf('stay logged out') !== -1 ||
+        text.indexOf('پاسخهای متناسب با خود را دریافت کنید') !== -1 ||
+        text.indexOf('پاسخ‌های متناسب با خود را دریافت کنید') !== -1 ||
+        text.indexOf('برای دریافت پاسخها بر اساس چتهای ذخیره شده') !== -1 ||
+        text.indexOf('برای دریافت پاسخ‌های بر اساس چت‌های ذخیره شده') !== -1 ||
+        text.indexOf('بارگذاری فایلها، وارد شوید') !== -1 ||
+        text.indexOf('بارگذاری فایل‌ها، وارد شوید') !== -1 ||
+        text === 'log in' ||
+        text === 'sign up' ||
+        text === 'terms' ||
+        text === 'privacy' ||
+        text === 'ورود' ||
+        text === 'ثبتنام کنید' ||
+        text === 'رایگان ثبتنام کنید') {
       return true;
     }
 
     // Composer & Placeholders
-    if (text === 'ask anything' || text === 'message chatgpt' || text === 'send message' || text.indexOf('پرسیدن هر سوالی') !== -1) {
+    if (text === 'ask anything' || text === 'message chatgpt' || text === 'send message' || text.indexOf('پرسیدن هر سوالی') !== -1 || text === 'ask chatgpt' || text === 'chat with chatgpt') {
       return true;
     }
 
@@ -1114,7 +1140,7 @@ $_bridgeScriptBody''';
     for (var i = 0; i < 5 && curr && curr !== document.body; i++) {
       if (curr.querySelector && (curr.querySelector('button[data-testid*="signup"], a[href*="signup"], button[data-testid*="login"], a[href*="login"]') || (curr.innerText && curr.innerText.indexOf('Sign up for free') !== -1))) {
         var cText = (curr.innerText || '').trim();
-        if (cText.length < 600 && (cText.indexOf('Sign up for free') !== -1 || cText.indexOf('Log in') !== -1 || cText.indexOf('smarter responses') !== -1)) {
+        if (cText.length < 600 && (cText.indexOf('Sign up for free') !== -1 || cText.indexOf('Log in') !== -1 || cText.indexOf('smarter responses') !== -1 || cText.indexOf('رایگان ثبتنام') !== -1 || cText.indexOf('وارد شوید') !== -1)) {
           return true;
         }
       }
@@ -1288,12 +1314,16 @@ $_bridgeScriptBody''';
       if (!rawText) return '';
 
       var lowerRaw = rawText.toLowerCase();
-      if (lowerRaw.indexOf('make mistakes') !== -1 || lowerRaw.indexOf('is ai and can') !== -1 || lowerRaw.indexOf('smarter responses') !== -1) {
+      if (rawText.length < 200 && (lowerRaw.indexOf('make mistakes') !== -1 || lowerRaw.indexOf('is ai and can') !== -1 || lowerRaw.indexOf('smarter responses') !== -1 || lowerRaw.indexOf('اشتباه کند') !== -1)) {
         return '';
       }
 
-      // 3. Strip unwanted system prefixes
-      rawText = rawText.replace(/^[•\-\*\s:]*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT:?|You\s*said:?|:You\s*said:?|Assistant\s*said:?)[\s:]*/gmi, '');
+      // 3. Strip unwanted system prefixes (English & Persian)
+      rawText = rawText.replace(/^[•\-\*\s:#>`]*(?:\[\d+\])?\s*(ChatGPT\s*said:?|:ChatGPT\s*said:?|ChatGPT\s*گفت:?|:ChatGPT\s*گفت:?|ChatGPT:?|You\s*said:?|:You\s*said:?|شما\s*گفتید:?|:شما\s*گفتید:?|Assistant\s*said:?)[\s:]*/gmi, '');
+      rawText = rawText.replace(/^(?:\*\*|\*|#+\s*)?(?:ChatGPT|چت‌جی‌پی‌تی|Assistant)\s*(?:گفت|said)?\s*[:：\-\*]*(?:\*\*|\*)?\s*/gmi, '');
+
+      // Strip trailing disclaimers (English & Persian)
+      rawText = rawText.replace(/ChatGPT\s*(?:هوش مصنوعی است و ممکن است اشتباه کند|ممکن است اشتباه کند|can make mistakes[^\n]*)\.?$/gmi, '');
 
       // 4. Strip CSS / data leakage artifacts
       if (rawText.indexOf('[data-conversation-') !== -1 || rawText.indexOf('--component-') !== -1) {
@@ -1320,6 +1350,22 @@ $_bridgeScriptBody''';
     try {
       var mainContainer = querySafe('main, [role="main"], div#app, div[class*="react-scroll-to-bottom"]') || document.body;
 
+      // Tier 0 (Mobile / Localized Copy Button Strategy):
+      // In localized and mobile web ChatGPT, each assistant answer has a copy button (aria-label="کپی کردن پاسخ" / "Copy response")
+      var copyButtons = queryAllSafe('button[aria-label*="کپی کردن پاسخ"], button[aria-label*="کپی پاسخ"], button[aria-label*="Copy response" i]');
+      for (var b = copyButtons.length - 1; b >= 0; b--) {
+        var copyBtn = copyButtons[b];
+        var turnParent = (copyBtn.closest && copyBtn.closest('[data-message-author-role="assistant"], article, div[class*="conversation-turn"], div[class*="agent-turn"], div.group, div.relative')) || (copyBtn.parentElement && copyBtn.parentElement.parentElement);
+        if (turnParent) {
+          var extracted = extractCleanText(turnParent);
+          if (extracted && extracted.length >= 2) {
+            if (extracted.indexOf('[درخواست جدید کاربر]') === -1 && extracted.indexOf('[دستورالعمل سیستم ریتمو]') === -1) {
+              return extracted;
+            }
+          }
+        }
+      }
+
       // Tier 1: Search for high-level assistant message turn containers (contains all paragraphs, lists, formatting)
       var turnContainers = mainContainer.querySelectorAll([
         '[data-message-author-role="assistant"]',
@@ -1341,14 +1387,16 @@ $_bridgeScriptBody''';
       for (var i = 0; i < turnContainers.length; i++) {
         var cEl = turnContainers[i];
         if (isNonMessageOrDisclaimer(cEl)) continue;
-        if (cEl.closest('#prompt-textarea') || cEl.closest('form') || cEl.closest('header') || cEl.closest('footer')) continue;
+        if (cEl.closest('#prompt-textarea') || cEl.closest('#mobile-composer-prompt') || cEl.closest('form') || cEl.closest('header') || cEl.closest('footer')) continue;
         if (cEl.querySelector(RITMO_SELECTORS.userMessage)) continue;
 
         var fullClean = extractCleanText(cEl);
         if (fullClean && fullClean.length >= 2) {
-          var lower = fullClean.toLowerCase();
-          if (lower.indexOf('make mistakes') !== -1 || lower.indexOf('is ai and can') !== -1 || lower.indexOf('smarter responses') !== -1) {
-            continue;
+          if (fullClean.length < 200) {
+            var lower = fullClean.toLowerCase();
+            if (lower.indexOf('make mistakes') !== -1 || lower.indexOf('is ai and can') !== -1 || lower.indexOf('smarter responses') !== -1 || lower.indexOf('اشتباه کند') !== -1) {
+              continue;
+            }
           }
           if (fullClean.indexOf('[درخواست جدید کاربر]') !== -1 || fullClean.indexOf('[دستورالعمل سیستم ریتمو]') !== -1) continue;
           if (window.__ritmo_last_user_prompt && (fullClean === window.__ritmo_last_user_prompt || fullClean.indexOf(window.__ritmo_last_user_prompt) !== -1)) continue;
@@ -1368,19 +1416,21 @@ $_bridgeScriptBody''';
       for (var j = 0; j < paragraphs.length; j++) {
         var p = paragraphs[j];
         if (isNonMessageOrDisclaimer(p)) continue;
-        if (p.closest('#prompt-textarea') || p.closest('form') || p.closest('header') || p.closest('footer')) continue;
+        if (p.closest('#prompt-textarea') || p.closest('#mobile-composer-prompt') || p.closest('form') || p.closest('header') || p.closest('footer')) continue;
 
         var pRaw = (p.innerText || p.textContent || '').trim();
         if (!pRaw || pRaw.length < 2) continue;
         if (pRaw.indexOf('[درخواست جدید کاربر]') !== -1 || pRaw.indexOf('[دستورالعمل سیستم ریتمو]') !== -1) continue;
         if (window.__ritmo_last_user_prompt && (pRaw === window.__ritmo_last_user_prompt || pRaw.indexOf(window.__ritmo_last_user_prompt) !== -1)) continue;
 
-        var pLower = pRaw.toLowerCase();
-        if (pLower.indexOf('make mistakes') !== -1 || pLower.indexOf('is ai and can') !== -1 || pLower.indexOf('smarter responses') !== -1) {
-          continue;
+        if (pRaw.length < 200) {
+          var pLower = pRaw.toLowerCase();
+          if (pLower.indexOf('make mistakes') !== -1 || pLower.indexOf('is ai and can') !== -1 || pLower.indexOf('smarter responses') !== -1 || pLower.indexOf('اشتباه کند') !== -1) {
+            continue;
+          }
         }
 
-        var turnParent = p.closest('div.group, div.relative, div[class*="min-h-"], div[class*="flex-1"], div[class*="space-y-"]') || p.parentElement;
+        var turnParent = (p.closest && p.closest('div.group, div.relative, div[class*="min-h-"], div[class*="flex-1"], div[class*="space-y-"]')) || p.parentElement;
         var parentClean = extractCleanText(turnParent);
         if (parentClean && parentClean.length >= pRaw.length) {
           var exists = false;
@@ -1642,6 +1692,19 @@ $_bridgeScriptBody''';
       var effectiveLen = (currentText.length > 0) ? currentText.length : lastLength;
       var idleMs = Date.now() - lastChangeTimestamp;
 
+      // Localized/Mobile completion signal: copy button present on response turn and text stable
+      var copyButton = querySafe(RITMO_SELECTORS.copyResponseButton);
+      if (copyButton && effectiveLen > 0 && idleMs >= 800) {
+        notifyFlutter('stream_completion_evaluated', {
+          reason: 'copy_button_present_and_silence_800ms',
+          idleMs: idleMs,
+          textLength: effectiveLen,
+          requestId: reqId,
+          source: 'dom'
+        });
+        return true;
+      }
+
       // Confirmed generating transition: stop button observed then disappeared (A-15, DET-33)
       if (sawGeneratingSignal && effectiveLen > 0 && idleMs >= 1200) {
         notifyFlutter('stream_completion_evaluated', {
@@ -1655,7 +1718,7 @@ $_bridgeScriptBody''';
       }
 
       // Steady state when stop button and streaming indicator are absent (allow adequate pause for long multi-paragraph responses)
-      if (effectiveLen > 0 && idleMs >= 3000) {
+      if (effectiveLen > 0 && idleMs >= 2000) {
         notifyFlutter('watcher_steady_done', {
           textLength: effectiveLen,
           idleMs: idleMs,

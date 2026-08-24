@@ -93,7 +93,6 @@ class SystemTables {
           midnightShari TEXT NOT NULL,
           sunset TEXT NOT NULL DEFAULT '',
           calculationMethod TEXT NOT NULL DEFAULT 'TEHRAN_GEOPHYSICS',
-          ihtiyatMinutes INTEGER NOT NULL DEFAULT 10,
           computedAt INTEGER NOT NULL,
           fajrIso TEXT,
           sunriseIso TEXT,

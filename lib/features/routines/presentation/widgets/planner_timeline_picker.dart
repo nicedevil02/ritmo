@@ -6,6 +6,7 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 
 class PlannerTimelinePicker extends StatefulWidget {
@@ -80,12 +81,12 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
 
                   if (isToday) {
                     line1 = 'امروز';
-                    line2 = jd.formatter.wN;
+                    line2 = ShamsiWeek.nameOf(jd.weekDay);
                   } else if (isTomorrow) {
                     line1 = 'فردا';
-                    line2 = jd.formatter.wN;
+                    line2 = ShamsiWeek.nameOf(jd.weekDay);
                   } else {
-                    line1 = jd.formatter.wN;
+                    line1 = ShamsiWeek.nameOf(jd.weekDay);
                     line2 = null;
                   }
 
@@ -94,10 +95,10 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                   return GestureDetector(
                     onTap: () => widget.controller.setDate(date),
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      width: 85,
-                      height: 90,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      width: 72,
+                      height: 76,
                       decoration: BoxDecoration(
                         gradient: isSelected
                             ? LinearGradient(
@@ -112,19 +113,19 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                         color: isSelected
                             ? null
                             : (isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75)),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xff8B5CF6).withValues(alpha: 0.5)
                               : colors.border.withValues(alpha: 0.1),
-                          width: isSelected ? 1.8 : 1.0,
+                          width: isSelected ? 1.6 : 1.0,
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
                                   color: const Color(0xff8B5CF6).withValues(alpha: 0.25),
-                                  blurRadius: 16,
-                                  spreadRadius: 2,
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
                                 )
                               ]
                             : null,
@@ -138,28 +139,28 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                           Text(
                             line1,
                             style: TextStyle(
-                              fontSize: 14.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: isSelected ? Colors.white : colors.textPrimary,
                             ),
                           ),
                           if (line2 != null) ...[
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               line2,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 color: isSelected
                                     ? Colors.white.withValues(alpha: 0.8)
                                     : colors.textSecondary.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 1),
                           Text(
                             line3,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               color: isSelected
                                   ? Colors.white.withValues(alpha: 0.9)
@@ -187,16 +188,16 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                     }
                   },
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    width: 54,
-                    height: 90,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 46,
+                    height: 76,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: colors.border.withValues(alpha: 0.1)),
                     ),
                     child: Center(
-                      child: Icon(Icons.calendar_today_rounded, color: colors.textPrimary.withValues(alpha: 0.85), size: 20),
+                      child: Icon(Icons.calendar_today_rounded, color: colors.textPrimary.withValues(alpha: 0.85), size: 18),
                     ),
                   ),
                 ),
@@ -204,7 +205,7 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
               ],
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 18),
 
           // 2. Sunrise / Time Picker / Sunset Row
           Row(
@@ -218,138 +219,141 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                   _minuteScrollController.animateToItem(sunrise.minute, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.amber.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color: Colors.amber.withValues(alpha: 0.15),
-                        blurRadius: 12,
-                        spreadRadius: 2,
+                        blurRadius: 8,
+                        spreadRadius: 1,
                       )
                     ],
                   ),
-                  child: Icon(Icons.wb_sunny_rounded, color: Colors.amber.shade500, size: 24),
+                  child: Icon(Icons.wb_sunny_rounded, color: Colors.amber.shade500, size: 18),
                 ),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
 
               // Hour / Minute Wheel Selector
               Container(
-                height: 180,
-                width: 220,
+                height: 136,
+                width: 160,
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: const Color(0xff8B5CF6).withValues(alpha: 0.15)),
                 ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Container(
-                      height: 48,
+                      height: 38,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [
-                            const Color(0xff8B5CF6).withValues(alpha: 0.25),
-                            const Color(0xff8B5CF6).withValues(alpha: 0.15),
+                            Color(0x408B5CF6),
+                            Color(0x268B5CF6),
                           ],
                         ),
                         border: Border.symmetric(
                           horizontal: BorderSide(
                             color: const Color(0xff8B5CF6).withValues(alpha: 0.5),
-                            width: 1.5,
+                            width: 1.2,
                           ),
                         ),
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Hours (00-23)
-                        Expanded(
-                          child: ListWheelScrollView.useDelegate(
-                            controller: _hourScrollController,
-                            itemExtent: 44,
-                            perspective: 0.006,
-                            physics: const FixedExtentScrollPhysics(),
-                            onSelectedItemChanged: (index) {
-                              widget.controller.setTime(TimeOfDay(
-                                hour: index % 24,
-                                minute: widget.controller.selectedTime.minute,
-                              ));
-                            },
-                            childDelegate: ListWheelChildBuilderDelegate(
-                              childCount: 24,
-                              builder: (context, index) {
-                                final isSelected = widget.controller.selectedTime.hour == index;
-                                return Center(
-                                  child: Text(
-                                    index.toString().padLeft(2, '0'),
-                                    style: TextStyle(
-                                      fontSize: isSelected ? 24 : 17,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : colors.textSecondary.withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                );
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Hours (00-23) - Always on Left
+                          Expanded(
+                            child: ListWheelScrollView.useDelegate(
+                              controller: _hourScrollController,
+                              itemExtent: 36,
+                              perspective: 0.006,
+                              physics: const FixedExtentScrollPhysics(),
+                              onSelectedItemChanged: (index) {
+                                widget.controller.setTime(TimeOfDay(
+                                  hour: index % 24,
+                                  minute: widget.controller.selectedTime.minute,
+                                ));
                               },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: 24,
+                                builder: (context, index) {
+                                  final isSelected = widget.controller.selectedTime.hour == index;
+                                  return Center(
+                                    child: Text(
+                                      index.toString().padLeft(2, '0'),
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 20 : 14,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : colors.textSecondary.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        
-                        // Colon Separator
-                        Text(
-                          ':',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        
-                        // Minutes (00-59)
-                        Expanded(
-                          child: ListWheelScrollView.useDelegate(
-                            controller: _minuteScrollController,
-                            itemExtent: 44,
-                            perspective: 0.006,
-                            physics: const FixedExtentScrollPhysics(),
-                            onSelectedItemChanged: (index) {
-                              widget.controller.setTime(TimeOfDay(
-                                hour: widget.controller.selectedTime.hour,
-                                minute: index % 60,
-                              ));
-                            },
-                            childDelegate: ListWheelChildBuilderDelegate(
-                              childCount: 60,
-                              builder: (context, index) {
-                                final isSelected = widget.controller.selectedTime.minute == index;
-                                return Center(
-                                  child: Text(
-                                    index.toString().padLeft(2, '0'),
-                                    style: TextStyle(
-                                      fontSize: isSelected ? 24 : 17,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : colors.textSecondary.withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                );
-                              },
+                          
+                          // Colon Separator
+                          Text(
+                            ':',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
                             ),
                           ),
-                        ),
-                      ],
+                          
+                          // Minutes (00-59) - Always on Right
+                          Expanded(
+                            child: ListWheelScrollView.useDelegate(
+                              controller: _minuteScrollController,
+                              itemExtent: 36,
+                              perspective: 0.006,
+                              physics: const FixedExtentScrollPhysics(),
+                              onSelectedItemChanged: (index) {
+                                widget.controller.setTime(TimeOfDay(
+                                  hour: widget.controller.selectedTime.hour,
+                                  minute: index % 60,
+                                ));
+                              },
+                              childDelegate: ListWheelChildBuilderDelegate(
+                                childCount: 60,
+                                builder: (context, index) {
+                                  final isSelected = widget.controller.selectedTime.minute == index;
+                                  return Center(
+                                    child: Text(
+                                      index.toString().padLeft(2, '0'),
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 20 : 14,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : colors.textSecondary.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
 
               // Sunset Shortcut
               GestureDetector(
@@ -359,18 +363,18 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
                   _minuteScrollController.animateToItem(sunset.minute, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
                     color: Colors.transparent,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.wb_twilight_rounded, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                  child: Icon(Icons.wb_twilight_rounded, color: colors.textSecondary.withValues(alpha: 0.5), size: 18),
                 ),
               ),
             ],
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           
           // Conflict warning
           _buildConflictWarning(colors),
@@ -378,23 +382,23 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
           // Suggested slots chips
           _buildSuggestions(colors),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Miniature 24h bar
           Text(
             'تراکم زمانی امروز (۲۴ ساعت)',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: colors.textSecondary.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
-            height: 20,
+            height: 14,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: CustomPaint(
               painter: TimeOccupancyPainter(
@@ -406,21 +410,21 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 '۰۰:۰۰',
-                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 9, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
               Text(
                 '۱۲:۰۰',
-                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 9, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
               Text(
                 '۲۴:۰۰',
-                style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 9, color: colors.textSecondary.withValues(alpha: 0.5)),
               ),
             ],
           ),
@@ -533,31 +537,32 @@ class _PlannerTimelinePickerState extends State<PlannerTimelinePicker> {
     if (widget.controller.suggestedTimeSlots.isEmpty) return const SizedBox.shrink();
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'زمان‌های پیشنهادی آزاد:',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: colors.textSecondary.withValues(alpha: 0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: widget.controller.suggestedTimeSlots.map((timeStr) {
                 return Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.only(left: 6),
                   child: ActionChip(
-                    avatar: Icon(Icons.check_circle_outline_rounded, size: 14, color: colors.primary),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    avatar: Icon(Icons.check_circle_outline_rounded, size: 13, color: colors.primary),
                     label: Text(
                       '${toPersianDigits(timeStr)} — وقت آزاد',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 10.5,
                         color: colors.textPrimary,
                       ),
                     ),

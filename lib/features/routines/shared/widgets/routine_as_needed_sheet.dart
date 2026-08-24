@@ -49,6 +49,12 @@ class _RoutineAsNeededSheetState extends State<RoutineAsNeededSheet> {
   final TextEditingController _noteController = TextEditingController();
   bool _isSaving = false;
 
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
   Future<void> _logNow() async {
     if (_isSaving) return;
     _isSaving = true;

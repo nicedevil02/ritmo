@@ -40,7 +40,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
           // ─── 3-Tab Strip ───
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(RitmoSpacing.xs),
+              padding: const EdgeInsets.all(1.5),
               decoration: BoxDecoration(
                 color: colors.surfaceSubtle,
                 borderRadius: BorderRadius.circular(RitmoRadius.field),
@@ -63,7 +63,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                         child: AnimatedContainer(
                           duration: RitmoMotion.state,
                           curve: RitmoMotion.enter,
-                          height: 40.0,
+                          height: 28.0,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
@@ -75,7 +75,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                                 ? [
                                     BoxShadow(
                                       color: colors.overlay.withValues(alpha: 0.08),
-                                      blurRadius: 4,
+                                      blurRadius: 3,
                                       offset: const Offset(0, 1),
                                     )
                                   ]
@@ -84,7 +84,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                           child: Text(
                             label,
                             style: TextStyle(
-                              fontSize: 14.0,
+                              fontSize: 12.0,
                               fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w600,
@@ -200,8 +200,8 @@ class _OverflowScaleButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: RitmoMotion.state,
           curve: RitmoMotion.enter,
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          height: 31,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: isActive
                 ? colors.primary.withValues(alpha: 0.12)
@@ -218,17 +218,16 @@ class _OverflowScaleButton extends StatelessWidget {
                   child: Text(
                     JourneyScaleSwitcher.scaleLabelFa(activeScale),
                     style: TextStyle(
-                      fontSize: 14.0,
+                      fontSize: 12.0,
                       fontWeight: FontWeight.w700,
                       color: colors.primary,
                     ),
                   ),
                 )
-              : Center(
+              : const Center(
                   child: Icon(
                     Icons.more_horiz_rounded,
-                    size: 20,
-                    color: colors.textSecondary,
+                    size: 16,
                   ),
                 ),
         ),

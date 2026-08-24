@@ -9,6 +9,44 @@ import 'package:pointycastle/export.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
+sealed class BackupException implements Exception {
+  final String message;
+  const BackupException(this.message);
+  @override
+  String toString() => message;
+}
+
+class UnsupportedPlatformBackupException extends BackupException {
+  const UnsupportedPlatformBackupException([
+    super.message = 'پشتیبان‌گیری در نسخه وب پشتیبانی نمی‌شود.',
+  ]);
+}
+
+class DatabaseNotFoundBackupException extends BackupException {
+  const DatabaseNotFoundBackupException([
+    super.message = 'پایگاه داده یافت نشد.',
+  ]);
+}
+
+class InvalidBackupFormatException extends BackupException {
+  const InvalidBackupFormatException([
+    super.message = 'فرمت فایل پشتیبان معتبر نیست.',
+  ]);
+}
+
+class UnsupportedBackupVersionException extends BackupException {
+  const UnsupportedBackupVersionException([
+    super.message =
+        'نسخه فایل پشتیبان جدیدتر از این نسخه اپلیکیشن است. لطفاً ریتمو را بروزرسانی کنید.',
+  ]);
+}
+
+class InvalidBackupPasscodeException extends BackupException {
+  const InvalidBackupPasscodeException([
+    super.message = 'رمز عبور نادرست است یا فایل پشتیبان مخدوش شده است.',
+  ]);
+}
+
 class BackupService {
   /// Exports the local database to an encrypted JSON backup string.
   static Future<String> exportBackup(
@@ -16,7 +54,7 @@ class BackupService {
     String? customDbPath,
   }) async {
     if (kIsWeb) {
-      throw Exception('پشتیبان‌گیری در نسخه وب پشتیبانی نمی‌شود.');
+      throw const UnsupportedPlatformBackupException();
     }
     // 1. Get database path
     final String path;
@@ -24,12 +62,12 @@ class BackupService {
       path = customDbPath;
     } else {
       final dbPath = await getDatabasesPath();
-      path = join(dbPath, 'ritmo_secure.db');
+      path = join(dbPath, 'ritmo.db');
     }
     final file = File(path);
 
     if (!await file.exists()) {
-      throw Exception('پایگاه داده یافت نشد.');
+      throw const DatabaseNotFoundBackupException();
     }
 
     // Read database bytes
@@ -75,21 +113,25 @@ class BackupService {
     String? customDbPath,
   }) async {
     if (kIsWeb) {
-      throw Exception('پشتیبان‌گیری در نسخه وب پشتیبانی نمی‌شود.');
+      throw const UnsupportedPlatformBackupException();
     }
     // 1. Parse JSON structure
-    final Map<String, dynamic> backupMap = json.decode(backupJson);
+    final Map<String, dynamic> backupMap;
+    try {
+      backupMap = json.decode(backupJson) as Map<String, dynamic>;
+    } catch (_) {
+      throw const InvalidBackupFormatException();
+    }
+
     if (!backupMap.containsKey('salt') ||
         !backupMap.containsKey('iv') ||
         !backupMap.containsKey('ciphertext')) {
-      throw Exception('فرمت فایل پشتیبان معتبر نیست.');
+      throw const InvalidBackupFormatException();
     }
 
     final backupVersion = (backupMap['version'] as num?)?.toInt() ?? 1;
     if (backupVersion > 2) {
-      throw Exception(
-        'نسخه فایل پشتیبان جدیدتر از این نسخه اپلیکیشن است. لطفاً ریتمو را بروزرسانی کنید.',
-      );
+      throw const UnsupportedBackupVersionException();
     }
 
     final saltBytes = base64.decode(backupMap['salt'] as String);
@@ -111,28 +153,38 @@ class BackupService {
         encrypter.decryptBytes(encrypted, iv: iv),
       );
     } catch (e) {
-      throw Exception('رمز عبور نادرست است یا فایل پشتیبان مخدوش شده است.');
+      throw const InvalidBackupPasscodeException();
     }
 
     // 4. Close database connection before replacing the file
-    // Only close if using the default database path (not custom/mock path)
     if (customDbPath == null) {
       await DatabaseHelper.instance.close();
     }
 
-    // 5. Replace database file
+    // 5. Replace database file and clean up WAL/SHM artifacts
     final String path;
     if (customDbPath != null) {
       path = customDbPath;
     } else {
       final dbPath = await getDatabasesPath();
-      path = join(dbPath, 'ritmo_secure.db');
+      path = join(dbPath, 'ritmo.db');
     }
     final file = File(path);
 
     if (await file.exists()) {
       await file.delete();
     }
+
+    final walFile = File('$path-wal');
+    if (await walFile.exists()) {
+      await walFile.delete();
+    }
+
+    final shmFile = File('$path-shm');
+    if (await shmFile.exists()) {
+      await shmFile.delete();
+    }
+
     await file.writeAsBytes(decryptedBytes);
 
     // Reopen database connection to verify schema/integrity

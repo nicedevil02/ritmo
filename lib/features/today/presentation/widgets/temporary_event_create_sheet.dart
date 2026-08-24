@@ -9,6 +9,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 class TemporaryEventCreateSheet extends StatefulWidget {
@@ -160,7 +161,7 @@ class _TemporaryEventCreateSheetState extends State<TemporaryEventCreateSheet> {
 
   String _formatJalaliDate(DateTime dt) {
     final j = Jalali.fromDateTime(dt);
-    return '${j.formatter.wN}، ${j.day} ${j.formatter.mN} ${j.year}'.toPersianDigits();
+    return '${ShamsiWeek.nameOf(j.weekDay)}، ${j.day} ${j.formatter.mN} ${j.year}'.toPersianDigits();
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/occurrence_override_repository.dart';
@@ -70,6 +71,8 @@ void main() {
               title TEXT NOT NULL,
               titleNormalized TEXT,
               note TEXT,
+              noteNormalized TEXT,
+              tagsJson TEXT,
               dueDate TEXT,
               dueTime TEXT,
               isDone INTEGER NOT NULL DEFAULT 0,
@@ -81,6 +84,7 @@ void main() {
               origin TEXT NOT NULL DEFAULT 'SIMPLE',
               isImportant INTEGER NOT NULL DEFAULT 0,
               importantAt INTEGER,
+              addedToMyDayAt INTEGER,
               createdAt INTEGER NOT NULL,
               updatedAt INTEGER NOT NULL
           );
@@ -254,7 +258,8 @@ void main() {
       // 5. Postpone item 1 by 2 days
       await controller.postponeItem(item1, days: 2);
       final postponedTask = await db.query('simple_tasks', where: 'id = ?', whereArgs: ['t1']);
-      expect(postponedTask.first['dueDate'], equals('2026-08-20'));
+      final expectedPostponedDate = DateKey.of(DateKey.addDays(DateTime.now(), 2));
+      expect(postponedTask.first['dueDate'], equals(expectedPostponedDate));
 
       // 6. Execute 3 consecutive undos
       expect(controller.canUndo, isTrue);

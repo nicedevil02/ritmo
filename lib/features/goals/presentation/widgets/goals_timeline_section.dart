@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
@@ -221,7 +222,7 @@ class GoalsTimelineSection extends StatelessWidget {
                         DateTime.parse(dateIso),
                       );
                       dayTitle =
-                          '${jalali.formatter.wN}، ${toPersianDigits(jalali.day)} ${jalali.formatter.mN}';
+                          '${ShamsiWeek.nameOf(jalali.weekDay)}، ${toPersianDigits(jalali.day)} ${jalali.formatter.mN}';
                     } catch (_) {
                       dayTitle = dateIso;
                     }

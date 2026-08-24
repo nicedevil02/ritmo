@@ -135,12 +135,16 @@ class IdentityHeroCard extends StatelessWidget {
                                       avatarPath,
                                       width: 90,
                                       height: 90,
+                                      cacheWidth: 200,
+                                      cacheHeight: 200,
                                       fit: BoxFit.cover,
                                     )
                                   : Image.file(
                                       File(avatarPath),
                                       width: 90,
                                       height: 90,
+                                      cacheWidth: 200,
+                                      cacheHeight: 200,
                                       fit: BoxFit.cover,
                                     ))
                               : Container(

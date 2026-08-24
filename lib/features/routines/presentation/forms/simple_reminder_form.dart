@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -452,6 +453,90 @@ class SimpleReminderForm extends StatelessWidget {
                       },
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Private / Confidential Switch
+              GestureDetector(
+                onTap: () {
+                  RitmoHaptics.selection();
+                  controller.isPrivate = !controller.isPrivate;
+                  controller.notifyListeners();
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: controller.isPrivate
+                        ? colors.primary.withValues(alpha: isDark ? 0.14 : 0.08)
+                        : (isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75)),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: controller.isPrivate
+                          ? colors.primary.withValues(alpha: 0.5)
+                          : colors.border.withValues(alpha: 0.1),
+                      width: controller.isPrivate ? 1.4 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: controller.isPrivate
+                              ? colors.primary.withValues(alpha: 0.18)
+                              : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          controller.isPrivate ? Icons.lock_rounded : Icons.lock_outline_rounded,
+                          size: 18,
+                          color: controller.isPrivate ? colors.primary : colors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'اعلان خصوصی و محرمانه',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: controller.isPrivate ? colors.primary : colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'مخفی‌سازی متن در اعلان + قفل با اثرانگشت/رمز',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: controller.isPrivate
+                                    ? colors.primary.withValues(alpha: 0.85)
+                                    : colors.textSecondary.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Switch.adaptive(
+                        value: controller.isPrivate,
+                        activeThumbColor: colors.primary,
+                        activeTrackColor: colors.primary.withValues(alpha: 0.35),
+                        onChanged: (val) {
+                          RitmoHaptics.selection();
+                          controller.isPrivate = val;
+                          controller.notifyListeners();
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),

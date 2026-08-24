@@ -110,4 +110,24 @@ class SnapshotHelper {
     };
     await prefs.setString('widget_agenda_snapshot', jsonEncode(data));
   }
+
+  /// Updates the snapshot of tasks for the Tasks App Widget (Phase 8).
+  /// Keys in SharedPreferences will be prefixed with 'flutter.' by the plugin.
+  /// In Kotlin, read: "flutter.widget_tasks_snapshot"
+  static Future<void> updateTasksWidgetSnapshot({
+    required String headerTitle,
+    required String remainingText,
+    required List<Map<String, dynamic>> tasks,
+  }) async {
+    if (kIsWeb) return;
+    final prefs = await SharedPreferences.getInstance();
+    final data = {
+      'schemaVersion': 1,
+      'headerTitle': headerTitle,
+      'remainingText': remainingText,
+      'tasks': tasks,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    };
+    await prefs.setString('widget_tasks_snapshot', jsonEncode(data));
+  }
 }

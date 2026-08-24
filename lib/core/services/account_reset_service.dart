@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:ritmo/core/backend/auth_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -8,6 +9,7 @@ import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 
 /// Full transactional account and user data reset service.
 class AccountResetService {
@@ -29,10 +31,14 @@ class AccountResetService {
       );
     }
 
-    // 1. Cancel active alarms & notifications
+    // 1. Cancel active alarms & notifications & Workmanager tasks
     try {
       final plugin = FlutterLocalNotificationsPlugin();
       await plugin.cancelAll();
+    } catch (_) {}
+
+    try {
+      await Workmanager().cancelAll();
     } catch (_) {}
 
     // 2. Open DB to get path, then close connection safely
@@ -117,9 +123,9 @@ class AccountResetService {
       );
     }
 
-    // 8. Re-initialize SettingsService in-memory cache to clean state
+    // 8. Re-load SettingsService in-memory cache to clean state from fresh DB
     try {
-      await SettingsService.instance.init();
+      await SettingsService.instance.reload();
     } catch (e, st) {
       RitmoLog.error(
         'AccountResetService',
@@ -129,7 +135,19 @@ class AccountResetService {
       );
     }
 
-    // 9. Re-load premium state
+    // 9. Reset local auth state to anonymous guest
+    try {
+      await AuthService.instance.continueAsGuest();
+    } catch (e, st) {
+      RitmoLog.error(
+        'AccountResetService',
+        'Error resetting auth state after wipe',
+        e,
+        st,
+      );
+    }
+
+    // 10. Re-load premium state
     try {
       await PremiumService.instance.loadEntitlement();
     } catch (e) {

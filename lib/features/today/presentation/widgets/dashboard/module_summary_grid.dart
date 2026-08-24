@@ -108,6 +108,7 @@ class _ImageCard extends StatelessWidget {
             // ── تصویر پس‌زمینه ──
             Image.asset(
               summary.backgroundImage!,
+              cacheWidth: 400,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => Container(
                 decoration: BoxDecoration(

@@ -5,7 +5,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
-class TimelineUntimedSection extends StatelessWidget {
+class TimelineUntimedSection extends StatefulWidget {
   const TimelineUntimedSection({
     super.key,
     required this.untimedItems,
@@ -18,10 +18,25 @@ class TimelineUntimedSection extends StatelessWidget {
   final ValueChanged<AgendaItem>? onUnscheduleItem;
 
   @override
+  State<TimelineUntimedSection> createState() => _TimelineUntimedSectionState();
+}
+
+class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
+  bool _isExpanded = false;
+
+  void _toggleExpanded() {
+    RitmoHapticsPolicy.selection();
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final untimedItems = widget.untimedItems;
 
     return DragTarget<AgendaItem>(
       onWillAcceptWithDetails: (details) {
@@ -29,7 +44,7 @@ class TimelineUntimedSection extends StatelessWidget {
       },
       onAcceptWithDetails: (details) {
         RitmoHapticsPolicy.success();
-        onUnscheduleItem?.call(details.data);
+        widget.onUnscheduleItem?.call(details.data);
       },
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
@@ -39,65 +54,141 @@ class TimelineUntimedSection extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        final canExpand = untimedItems.length > 2;
+
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: AnimatedContainer(
-            duration: RitmoMotion.state,
-            curve: RitmoMotion.enter,
-            margin: const EdgeInsets.symmetric(
-              horizontal: RitmoSpacing.lg,
-              vertical: RitmoSpacing.sm,
-            ),
-            padding: const EdgeInsets.all(RitmoSpacing.md),
-            decoration: BoxDecoration(
-              color: isHovered
-                  ? colorScheme.primaryContainer.withValues(alpha: 0.25)
-                  : (isDark
-                      ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.22)
-                      : theme.cardColor.withValues(alpha: 0.85)),
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(
-                color: isHovered
-                    ? colorScheme.primary
-                    : theme.dividerColor.withValues(alpha: 0.12),
-                width: isHovered ? 1.5 : 1.0,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      isHovered ? Icons.remove_circle_outline_rounded : Icons.wb_sunny_outlined,
-                      size: 16,
-                      color: isHovered ? colorScheme.primary : theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: RitmoSpacing.sm),
-                    Text(
-                      isHovered
-                          ? 'اینجا رها کن تا از زمان‌بندی خارج شود'
-                          : 'بدون زمانبندی (${toPersianDigits(untimedItems.length.toString())})',
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.w600,
-                        color: isHovered
-                            ? colorScheme.primary
-                            : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65),
-                      ),
-                    ),
-                  ],
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Main Bordered Container
+              AnimatedContainer(
+                duration: RitmoMotion.state,
+                curve: RitmoMotion.enter,
+                margin: const EdgeInsets.only(
+                  top: 9.0,
+                  left: RitmoSpacing.lg,
+                  right: RitmoSpacing.lg,
+                  bottom: RitmoSpacing.xs,
                 ),
-                if (hasUntimed) ...[
-                  const SizedBox(height: RitmoSpacing.sm),
-                  Wrap(
-                    spacing: RitmoSpacing.sm,
-                    runSpacing: RitmoSpacing.sm,
-                    children: untimedItems.map((item) => _buildChipItem(context, item, isDark)).toList(),
+                padding: const EdgeInsets.fromLTRB(8.0, 10.0, 8.0, 8.0),
+                decoration: BoxDecoration(
+                  color: isHovered
+                      ? colorScheme.primaryContainer.withValues(alpha: 0.25)
+                      : (isDark
+                          ? theme.colorScheme.surfaceContainerHigh.withValues(
+                              alpha: 0.20,
+                            )
+                          : theme.cardColor.withValues(alpha: 0.85)),
+                  borderRadius: BorderRadius.circular(14.0),
+                  border: Border.all(
+                    color: isHovered
+                        ? colorScheme.primary
+                        : theme.dividerColor.withValues(alpha: 0.15),
+                    width: isHovered ? 1.5 : 1.0,
                   ),
-                ],
-              ],
-            ),
+                ),
+                child: AnimatedSize(
+                  duration: RitmoMotion.state,
+                  curve: RitmoMotion.enter,
+                  alignment: Alignment.topRight,
+                  child: _isExpanded
+                      ? Wrap(
+                          spacing: RitmoSpacing.sm,
+                          runSpacing: RitmoSpacing.sm,
+                          children: untimedItems
+                              .map(
+                                (item) => _buildChipItem(context, item, isDark),
+                              )
+                              .toList(),
+                        )
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: untimedItems
+                                .map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: RitmoSpacing.sm,
+                                    ),
+                                    child: _buildChipItem(
+                                      context,
+                                      item,
+                                      isDark,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                ),
+              ),
+
+              // Notched Title Badge sitting directly on the top border line
+              Positioned(
+                top: 0,
+                right: RitmoSpacing.xl + 4,
+                child: GestureDetector(
+                  onTap: canExpand ? _toggleExpanded : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6.0,
+                      vertical: 1.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? (theme.scaffoldBackgroundColor)
+                          : (theme.cardColor),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isHovered
+                              ? Icons.remove_circle_outline_rounded
+                              : Icons.wb_sunny_outlined,
+                          size: 13,
+                          color: isHovered
+                              ? colorScheme.primary
+                              : theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isHovered
+                              ? 'رها کنید برای لغو زمان‌بندی'
+                              : 'بدون زمانبندی (${toPersianDigits(untimedItems.length.toString())})',
+                          style: TextStyle(
+                            fontSize: 11.0,
+                            fontWeight: FontWeight.w600,
+                            color: isHovered
+                                ? colorScheme.primary
+                                : theme.textTheme.bodySmall?.color?.withValues(
+                                    alpha: 0.75,
+                                  ),
+                          ),
+                        ),
+                        if (canExpand && !isHovered) ...[
+                          const SizedBox(width: 2),
+                          AnimatedRotation(
+                            turns: _isExpanded ? 0.5 : 0.0,
+                            duration: RitmoMotion.state,
+                            curve: RitmoMotion.enter,
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -111,7 +202,7 @@ class TimelineUntimedSection extends StatelessWidget {
     final schedulable = DirectManipulationEligibility.isSchedulable(item);
 
     final chipWidget = InkWell(
-      onTap: () => onItemTap?.call(item),
+      onTap: () => widget.onItemTap?.call(item),
       borderRadius: BorderRadius.circular(RitmoRadius.badge),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),

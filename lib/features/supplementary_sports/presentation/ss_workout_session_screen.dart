@@ -1736,9 +1736,14 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     border: Border.all(color: const Color(0xFF334155)),
                   ),
                   child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(muscleImage, fit: BoxFit.cover),
-                        ),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      muscleImage,
+                      cacheWidth: 100,
+                      cacheHeight: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

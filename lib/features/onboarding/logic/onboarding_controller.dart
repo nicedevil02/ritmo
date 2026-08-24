@@ -215,127 +215,149 @@ class OnboardingController extends ChangeNotifier {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     try {
-      final db = await DatabaseHelper.instance.database;
+      final db = await DatabaseHelper.instance.database.timeout(
+        const Duration(seconds: 10),
+      );
 
       var createdCount = 0;
       final expectedCount = selectedStarterRoutines.length;
 
-      // Perform all onboarding insertions atomically in one transaction
-      await db.transaction((txn) async {
-        // 1. Create starter routines with deterministic IDs to ensure idempotency
-        for (final t in selectedStarterRoutines) {
-          final rId = 'onboarding_routine_${t.id}';
-          
-          final existing = await txn.query('routines', where: 'id = ?', whereArgs: [rId], limit: 1);
-          if (existing.isNotEmpty) {
-            createdCount++;
-            continue;
-          }
+      // Perform all onboarding insertions atomically in one fast native batch
+      final batch = db.batch();
 
-          final duration = DurationBounds.sanitize(t.durationMinutes);
+      // 1. Create starter routines with deterministic IDs to ensure idempotency
+      for (final t in selectedStarterRoutines) {
+        final rId = 'onboarding_routine_${t.id}';
+        final duration = DurationBounds.sanitize(t.durationMinutes);
 
-          final routineData = {
-            'id': rId,
-            'title': t.titleFa,
-            'category': t.category.name,
-            'routineType': 'timeBased',
-            'notificationLevel': 'normal',
-            'isEssential': 0,
-            'energyRule': 'NONE',
-            'priority': 1.0,
-            'targetDurationMinutes': duration,
-            'displayOrder': 1,
-            'description': 'اولین روتین روتین ثبت‌شده در آنبوردینگ',
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          };
-
-          final rule = RecurrenceRule(
-            startDate: DateTime.now(),
-            weekdays: const [1, 2, 3, 4, 5, 6, 7],
-            reminderTimes: [t.defaultTime],
-          );
-
-          final scheduleData = {
-            'id': 'sched_$rId',
-            'routineId': rId,
-            'scheduleType': 'DAILY',
-            'timeOfDay': t.defaultTime,
-            'daysOfWeek': '1,2,3,4,5,6,7',
-            'recurrenceRule': jsonEncode(rule.toMap()),
-            'createdAt': nowMs,
-            'updatedAt': nowMs,
-          };
-
-          await txn.insert(
-            'routines',
-            routineData,
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-          await txn.insert(
-            'routine_schedules',
-            scheduleData,
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-          await RoutineOccurrenceGenerator.generateFutureOccurrences(
-            txn,
-            rId,
-            rule,
-          );
-          createdCount++;
-        }
-
-        // 2. Perform main onboarding completion settings update
-        final canCourses = PremiumService.instance.can(PremiumFeature.coursesModule);
-
-        final moduleStates = OnboardingModuleMap.resolveModuleStates(
-          chosenAreas: focusAreas,
-          isFemale: gender == 'FEMALE',
-          enableCycle: enableCycle,
-          canUseCourses: canCourses,
-        );
-
-        for (final entry in moduleStates.entries) {
-          await txn.insert(
-            'app_settings',
-            {
-              'key': entry.key,
-              'value': entry.value,
-              'updatedAt': nowMs,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
-
-        final focusCodes = focusAreas.map((a) => a.code).toList();
-        final settingsToSave = {
-          if (userName.isNotEmpty) 'user_name': userName,
-          'user_gender': gender,
-          'user_age': age.toString(),
-          'wake_time': wakeTime,
-          'sleep_time': sleepTime,
-          'primary_focus_areas': jsonEncode(focusCodes),
-          'energy_profile': energyProfile,
-          'default_energy_level': energyProfile,
-          'notif_permission_asked': 'true',
-          'notif_permission_granted': notifGranted ? 'true' : 'false',
-          'onboarding_skipped_steps': jsonEncode(skippedStepCodes.toList()),
+        final routineData = {
+          'id': rId,
+          'title': t.titleFa,
+          'category': t.category.name,
+          'routineType': 'timeBased',
+          'notificationLevel': 'normal',
+          'isEssential': 0,
+          'energyRule': 'NONE',
+          'priority': 1.0,
+          'targetDurationMinutes': duration,
+          'displayOrder': 1,
+          'description': 'اولین روتین روتین ثبت‌شده در آنبوردینگ',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
         };
 
-        for (final entry in settingsToSave.entries) {
-          await txn.insert(
-            'app_settings',
-            {
-              'key': entry.key,
-              'value': entry.value,
-              'updatedAt': nowMs,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+        final rule = RecurrenceRule(
+          startDate: DateTime.now(),
+          weekdays: const [1, 2, 3, 4, 5, 6, 7],
+          reminderTimes: [t.defaultTime],
+        );
+
+        final scheduleData = {
+          'id': 'sched_$rId',
+          'routineId': rId,
+          'scheduleType': 'DAILY',
+          'timeOfDay': t.defaultTime,
+          'daysOfWeek': '1,2,3,4,5,6,7',
+          'recurrenceRule': jsonEncode(rule.toMap()),
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        };
+
+        batch.insert(
+          'routines',
+          routineData,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        batch.insert(
+          'routine_schedules',
+          scheduleData,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        // Add future occurrences to batch
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        for (var i = 0; i < 30; i++) {
+          final targetDate = today.add(Duration(days: i));
+          final dateStr = targetDate.toIso8601String().substring(0, 10);
+          if (RoutineOccurrenceGenerator.shouldOccurOnDate(targetDate, rule)) {
+            final timeStr = rule.reminderTimes.isNotEmpty
+                ? rule.reminderTimes.first
+                : '08:00';
+            batch.insert('routine_occurrences', {
+              'routine_id': rId,
+              'date': dateStr,
+              'scheduled_time': timeStr,
+              'status': 'pending',
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          }
         }
 
-        await OnboardingGate.markCompleted(txn, version: OnboardingGate.currentVersion, userName: userName);
-      });
+        createdCount++;
+      }
+
+      // 2. Perform main onboarding completion settings update
+      final canCourses = PremiumService.instance.can(PremiumFeature.coursesModule);
+
+      final moduleStates = OnboardingModuleMap.resolveModuleStates(
+        chosenAreas: focusAreas,
+        isFemale: gender == 'FEMALE',
+        enableCycle: enableCycle,
+        canUseCourses: canCourses,
+      );
+
+      for (final entry in moduleStates.entries) {
+        batch.insert(
+          'app_settings',
+          {
+            'key': entry.key,
+            'value': entry.value,
+            'updatedAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      final btParts = sleepTime.split(':');
+      final wtParts = wakeTime.split(':');
+      final btMin = (int.tryParse(btParts[0]) ?? 23) * 60 + (int.tryParse(btParts.length > 1 ? btParts[1] : '0') ?? 0);
+      final wtMin = (int.tryParse(wtParts[0]) ?? 7) * 60 + (int.tryParse(wtParts.length > 1 ? wtParts[1] : '0') ?? 0);
+      var durationMins = wtMin - btMin;
+      if (durationMins <= 0) durationMins += 1440;
+
+      final focusCodes = focusAreas.map((a) => a.code).toList();
+      final settingsToSave = {
+        if (userName.isNotEmpty) 'user_name': userName,
+        'user_gender': gender,
+        'user_age': age.toString(),
+        'sleep_target_bedtime': sleepTime,
+        'sleep_target_wake': wakeTime,
+        'sleep_target_duration_minutes': durationMins.toString(),
+        'sleep_setup_done': 'true',
+        'module_sleep_enabled': 'true',
+        'primary_focus_areas': jsonEncode(focusCodes),
+        'energy_profile': energyProfile,
+        'default_energy_level': energyProfile,
+        'notif_permission_asked': 'true',
+        'notif_permission_granted': notifGranted ? 'true' : 'false',
+        'onboarding_skipped_steps': jsonEncode(skippedStepCodes.toList()),
+        'onboarding_completed': 'true',
+        'onboarding_version': OnboardingGate.currentVersion.toString(),
+      };
+
+      for (final entry in settingsToSave.entries) {
+        batch.insert(
+          'app_settings',
+          {
+            'key': entry.key,
+            'value': entry.value,
+            'updatedAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+
+      await batch.commit(noResult: true).timeout(const Duration(seconds: 15));
 
       if (createdCount < expectedCount) {
         isSaving = false;

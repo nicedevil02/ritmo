@@ -53,3 +53,6 @@ nul
 
 build.env
 *.env
+test_out.txt
+*.dll
+scratch/

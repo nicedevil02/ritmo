@@ -1,40 +1,17 @@
-// نوار ناوبری پرمیوم ریتمو — «ریل زنده»
-// یک کپسول شیشه‌ای شناور با نشانگر لغزان، برچسب فقط برای مقصد فعال،
-// رنگ هویت هر ماژول و دکمهٔ قهرمان مرکزی.
-//
-// قرارداد ارتفاع: ارتفاع رندرشده همیشه دقیقاً RitmoShellMetrics.navBarHeight است.
-// تست test/features/today/ritmo_nav_bar_height_test.dart این قرارداد را قفل می‌کند
-// چون جای دکمهٔ شناور صفحهٔ سفر از همین عدد حساب می‌شود.
-//
-// کل چیدمان مطلق است (Stack + PositionedDirectional) و پهناها محاسبه می‌شوند،
-// نه مذاکره؛ بنابراین سرریز RenderFlex در هیچ عرض و هیچ مقیاس متنی رخ نمی‌دهد.
+// نوار ناوبری فوق‌صیقلی و پرمیوم ریتمو با ارتفاع بهینه و قوس لغزان سیال
+// (Ultra-Polished Sleek Moving Notch Navigation Bar)
+
+import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 
-/// هندسهٔ داخلی ریل — تنها منبع حقیقت اندازه‌های نوار
-abstract final class _RailMetrics {
-  static const double slotBase = 48; // حداقل هدف لمسی هر مقصد
-  static const double centerSlot = 60; // پهنای خانهٔ دکمهٔ مرکزی
-  static const double centerButton = 46;
-  static const double iconSize = 21;
-  static const double labelGap = 6;
-  static const double pillInsetV = 6;
-  static const double pillInsetH = 2;
-  static const double activeLift = 1.5;
-  static const double activeScale = 1.08;
-  static const double minSlotWidth = 28;
-  static const double fallbackWidth = 360; // فقط وقتی عرض نامحدود باشد
-}
-
-/// یک مقصد ناوبری؛ ترتیب لیست‌ها همان ترتیب بصری راست‌به‌چپ است
-@immutable
-class _NavDestination {
-  const _NavDestination({
+/// مدل هر مقصد ناوبری
+class _NavItem {
+  const _NavItem({
     required this.index,
     required this.activeIcon,
     required this.inactiveIcon,
@@ -47,8 +24,8 @@ class _NavDestination {
   final String label;
 }
 
-/// نوار ناوبری پایین اپ — بدون هیچ دسترسی به State شل، تا مستقل تست شود
-class RitmoNavBar extends StatelessWidget {
+/// نوار ناوبری باریک، لوکس و متحرک ریتمو
+class RitmoNavBar extends StatefulWidget {
   const RitmoNavBar({
     super.key,
     required this.mode,
@@ -64,49 +41,32 @@ class RitmoNavBar extends StatelessWidget {
   final VoidCallback onCenterTap;
   final VoidCallback? onCenterLongPress;
 
-  /// حالت ساده: کارها(۰) · دکمه · تقویم(۱) · بیشتر(۲)
-  static const List<_NavDestination> _simpleDestinations = <_NavDestination>[
-    _NavDestination(
-      index: 0,
-      activeIcon: CupertinoIcons.check_mark_circled_solid,
-      inactiveIcon: CupertinoIcons.check_mark_circled,
-      label: 'کارها',
-    ),
-    _NavDestination(
-      index: 1,
-      activeIcon: CupertinoIcons.calendar_circle_fill,
-      inactiveIcon: CupertinoIcons.calendar,
-      label: 'تقویم',
-    ),
-    _NavDestination(
-      index: 2,
-      activeIcon: CupertinoIcons.square_grid_2x2_fill,
-      inactiveIcon: CupertinoIcons.square_grid_2x2,
-      label: 'بیشتر',
-    ),
-  ];
-
-  /// حالت کامل: تقویم(۴) · دستیار(۳) · دکمه · سیستم‌ها(۰) · بینش‌ها(۱)
-  static const List<_NavDestination> _fullDestinations = <_NavDestination>[
-    _NavDestination(
+  static const List<_NavItem> _fullDestinations = [
+    _NavItem(
       index: 4,
       activeIcon: CupertinoIcons.calendar_circle_fill,
       inactiveIcon: CupertinoIcons.calendar,
       label: 'تقویم',
     ),
-    _NavDestination(
+    _NavItem(
       index: 3,
       activeIcon: CupertinoIcons.sparkles,
       inactiveIcon: CupertinoIcons.sparkles,
       label: 'دستیار',
     ),
-    _NavDestination(
+    _NavItem(
+      index: 2,
+      activeIcon: CupertinoIcons.house_fill,
+      inactiveIcon: CupertinoIcons.house_fill,
+      label: 'خانه',
+    ),
+    _NavItem(
       index: 0,
       activeIcon: CupertinoIcons.square_grid_2x2_fill,
       inactiveIcon: CupertinoIcons.square_grid_2x2,
       label: 'سیستم‌ها',
     ),
-    _NavDestination(
+    _NavItem(
       index: 1,
       activeIcon: CupertinoIcons.lightbulb_fill,
       inactiveIcon: CupertinoIcons.lightbulb,
@@ -114,392 +74,233 @@ class RitmoNavBar extends StatelessWidget {
     ),
   ];
 
-  /// جدول رنگ هویت مقصد — فقط از هشت فیلد موجود RitmoModuleColors
-  Color _tintFor(BuildContext context, int index) {
-    final colors = context.colors;
-    if (mode == AppMode.simple) {
-      switch (index) {
-        case 0:
-          return colors.modules.routines;
-        case 1:
-          return colors.modules.planner;
-        default:
-          return colors.primary;
-      }
+  static const List<_NavItem> _simpleDestinations = [
+    _NavItem(
+      index: 0,
+      activeIcon: CupertinoIcons.check_mark_circled_solid,
+      inactiveIcon: CupertinoIcons.check_mark_circled,
+      label: 'کارها',
+    ),
+    _NavItem(
+      index: 1,
+      activeIcon: CupertinoIcons.house_fill,
+      inactiveIcon: CupertinoIcons.house_fill,
+      label: 'خانه',
+    ),
+    _NavItem(
+      index: 2,
+      activeIcon: CupertinoIcons.calendar_circle_fill,
+      inactiveIcon: CupertinoIcons.calendar,
+      label: 'تقویم',
+    ),
+  ];
+
+  @override
+  State<RitmoNavBar> createState() => _RitmoNavBarState();
+}
+
+class _RitmoNavBarState extends State<RitmoNavBar> {
+  List<_NavItem> get _destinations => widget.mode == AppMode.simple
+      ? RitmoNavBar._simpleDestinations
+      : RitmoNavBar._fullDestinations;
+
+  int _findSlotIndex(int targetIndex) {
+    final dests = _destinations;
+    for (var i = 0; i < dests.length; i++) {
+      if (dests[i].index == targetIndex) return i;
     }
-    switch (index) {
-      case 4:
-        return colors.modules.planner;
-      case 0:
-        return colors.modules.routines;
-      case 1:
-        return colors.modules.insights;
-      default:
-        return colors.primary;
-    }
+    return dests.length ~/ 2;
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isDark = context.isDark;
-    final reduceTransparency = context.behavior.reduceTransparency;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final destinations = _destinations;
+    final slotCount = destinations.length;
+    final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    final isSimple = mode == AppMode.simple;
-    final destinations = isSimple ? _simpleDestinations : _fullDestinations;
-    final centerSlot = isSimple ? 1 : 2;
-    final tints = <Color>[
-      for (final destination in destinations) _tintFor(context, destination.index),
-    ];
+    final barBgColor = isDark ? const Color(0xFF13181C) : const Color(0xFFFEFEFD);
+    final centerBtnColor = isDark ? const Color(0xFF1B2228) : const Color(0xFF1C2126);
 
-    return Container(
-      height: RitmoShellMetrics.navBarHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(RitmoRadius.sheet),
-        boxShadow: reduceTransparency
-            ? null
-            : <BoxShadow>[
-                // سایهٔ محیطی: کپسول را از محتوای پشتش جدا می‌کند
-                BoxShadow(
-                  color: colors.shadow.withValues(alpha: isDark ? 0.46 : 0.14),
-                  blurRadius: 26,
-                  spreadRadius: -6,
-                  offset: const Offset(0, 10),
-                ),
-                // سایهٔ نزدیک: لبه را تیز و ملموس نگه می‌دارد
-                BoxShadow(
-                  color: colors.shadow.withValues(alpha: isDark ? 0.26 : 0.07),
-                  blurRadius: 6,
-                  spreadRadius: -2,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      // بدون border سفارشی، تا مسیر جایگزین کاهش شفافیت و کنتراست بالای
-      // RitmoGlassSurface دست‌نخورده بماند.
-      child: RitmoGlassSurface(
-        blurSigma: 28,
-        borderRadius: BorderRadius.circular(RitmoRadius.sheet),
-        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xs),
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: _LivingRail(
-            key: ValueKey<AppMode>(mode),
-            destinations: destinations,
-            tints: tints,
-            centerSlot: centerSlot,
-            currentIndex: currentIndex,
-            isSimple: isSimple,
-            isHomeActive: !isSimple &&
-                currentIndex == RitmoShellMetrics.homeTabIndexFor(AppMode.full),
-            onSelectTab: onSelectTab,
-            onCenterTap: onCenterTap,
-            onCenterLongPress: onCenterLongPress,
-          ),
-        ),
-      ),
-    );
-  }
-}
+    return SizedBox(
+      height: RitmoShellMetrics.navBarHeight + bottomInset,
+      width: double.infinity,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalWidth = constraints.maxWidth;
+          final slotWidth = totalWidth / slotCount;
 
-/// ریل زنده — همهٔ حرکت نوار از یک عدد پیوسته تغذیه می‌شود
-class _LivingRail extends StatefulWidget {
-  const _LivingRail({
-    super.key,
-    required this.destinations,
-    required this.tints,
-    required this.centerSlot,
-    required this.currentIndex,
-    required this.isSimple,
-    required this.isHomeActive,
-    required this.onSelectTab,
-    required this.onCenterTap,
-    this.onCenterLongPress,
-  });
+          return TweenAnimationBuilder<double>(
+            tween: Tween<double>(
+              begin: activeSlot.toDouble(),
+              end: activeSlot.toDouble(),
+            ),
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutQuart,
+            builder: (context, currentSlotPosition, _) {
+              // محاسبه مرکز هلال در حالت RTL
+              final notchCenterX =
+                  totalWidth - (currentSlotPosition + 0.5) * slotWidth;
 
-  final List<_NavDestination> destinations;
-  final List<Color> tints;
-  final int centerSlot;
-  final int currentIndex;
-  final bool isSimple;
-  final bool isHomeActive;
-  final ValueChanged<int> onSelectTab;
-  final VoidCallback onCenterTap;
-  final VoidCallback? onCenterLongPress;
-
-  @override
-  State<_LivingRail> createState() => _LivingRailState();
-}
-
-class _LivingRailState extends State<_LivingRail> {
-  late double _railTarget;
-
-  int get _slotCount => widget.destinations.length + 1;
-
-  /// خانهٔ بصری هر مقصد، با در نظر گرفتن جای دکمهٔ مرکزی
-  int _slotOfDestination(int destinationOrder) =>
-      destinationOrder < widget.centerSlot ? destinationOrder : destinationOrder + 1;
-
-  /// خانهٔ مقصد فعال؛ اگر تب فعال مقصدی روی نوار نداشته باشد (خانه در حالت کامل)
-  /// نشانگر به سمت دکمهٔ مرکزی می‌رود و همان‌جا محو می‌شود.
-  double _resolveTarget() {
-    for (var i = 0; i < widget.destinations.length; i++) {
-      if (widget.destinations[i].index == widget.currentIndex) {
-        return _slotOfDestination(i).toDouble();
-      }
-    }
-    return widget.centerSlot.toDouble();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _railTarget = _resolveTarget();
-  }
-
-  @override
-  void didUpdateWidget(covariant _LivingRail oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _railTarget = _resolveTarget();
-  }
-
-  double _measureLabel(String text, TextStyle style, TextScaler scaler) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.rtl,
-      maxLines: 1,
-      textScaler: scaler,
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return width;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isDark = context.isDark;
-    final duration = RitmoMotion.effective(context, RitmoMotion.state);
-    final labelStyle = RitmoTextStyles.badge(colors.textPrimary)
-        .copyWith(fontWeight: FontWeight.w700);
-    final idleColor = colors.textSecondary;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final totalWidth = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : _RailMetrics.fallbackWidth;
-        final scaler = MediaQuery.textScalerOf(context);
-        final labelWidths = <double>[
-          for (final destination in widget.destinations)
-            _measureLabel(destination.label, labelStyle, scaler),
-        ];
-
-        return SizedBox(
-          width: totalWidth,
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: _railTarget, end: _railTarget),
-            duration: duration,
-            curve: RitmoMotion.enter,
-            builder: (context, position, _) {
-              // «فعال‌بودن» پیوستهٔ هر مقصد: ۱ وقتی نشانگر روی آن است، ۰ وقتی دور است
-              final activations = <double>[
-                for (var i = 0; i < widget.destinations.length; i++)
-                  (1 - (position - _slotOfDestination(i)).abs()).clamp(0.0, 1.0),
-              ];
-
-              // پهنای هر خانه: پایه به‌علاوهٔ فضایی که برچسب فعال باز می‌کند
-              final widths = List<double>.filled(_slotCount, 0.0);
-              var used = _RailMetrics.centerSlot;
-              widths[widget.centerSlot] = _RailMetrics.centerSlot;
-              for (var i = 0; i < widget.destinations.length; i++) {
-                final width = _RailMetrics.slotBase +
-                    activations[i] * (labelWidths[i] + _RailMetrics.labelGap);
-                widths[_slotOfDestination(i)] = width;
-                used += width;
-              }
-
-              // فضای باقی‌مانده بین همهٔ خانه‌ها پخش می‌شود تا نوار همیشه پر بماند
-              final share = (totalWidth - used) / _slotCount;
-              final starts = List<double>.filled(_slotCount, 0.0);
-              var cursor = 0.0;
-              for (var i = 0; i < _slotCount; i++) {
-                widths[i] =
-                    (widths[i] + share).clamp(_RailMetrics.minSlotWidth, totalWidth);
-                starts[i] = cursor;
-                cursor += widths[i];
-              }
-
-              // هندسهٔ نشانگر: بین دو خانهٔ مجاور هم می‌لغزد و هم کش می‌آید
-              final lower = position.floor().clamp(0, _slotCount - 1);
-              final upper = position.ceil().clamp(0, _slotCount - 1);
-              final fraction = position - position.floor();
-              final pillStart = starts[lower] +
-                  (starts[upper] - starts[lower]) * fraction +
-                  _RailMetrics.pillInsetH;
-              final pillWidth =
-                  (widths[lower] + (widths[upper] - widths[lower]) * fraction) -
-                      2 * _RailMetrics.pillInsetH;
-              final pillOpacity =
-                  activations.fold<double>(0, (best, value) => value > best ? value : best);
-              final pillTint = Color.lerp(
-                _tintOfSlot(lower, colors.primary),
-                _tintOfSlot(upper, colors.primary),
-                fraction,
-              )!;
+              final activeItem = destinations[activeSlot];
 
               return Stack(
                 clipBehavior: Clip.none,
-                children: <Widget>[
-                  if (pillOpacity > 0 && pillWidth > 0)
-                    PositionedDirectional(
-                      start: pillStart,
-                      top: _RailMetrics.pillInsetV,
-                      bottom: _RailMetrics.pillInsetV,
-                      width: pillWidth,
-                      child: IgnorePointer(
-                        child: Opacity(
-                          opacity: pillOpacity,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: pillTint.withValues(alpha: isDark ? 0.18 : 0.12),
-                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                              border: Border.all(
-                                color: pillTint.withValues(alpha: isDark ? 0.40 : 0.30),
-                              ),
-                              boxShadow: <BoxShadow>[
-                                BoxShadow(
-                                  color: pillTint.withValues(alpha: isDark ? 0.26 : 0.16),
-                                  blurRadius: 14,
-                                  spreadRadius: -4,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                          ),
+                children: [
+                  // 1. پس‌زمینهٔ صیقلی چسبیده به کف با هلال لغزان
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _DockedNotchedBarPainter(
+                        color: barBgColor,
+                        shadowColor: Colors.black.withValues(
+                          alpha: isDark ? 0.35 : 0.06,
                         ),
+                        borderColor: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFE8E6E0),
+                        notchCenterX: notchCenterX,
                       ),
                     ),
-                  for (var i = 0; i < widget.destinations.length; i++)
-                    PositionedDirectional(
-                      start: starts[_slotOfDestination(i)],
-                      top: 0,
-                      bottom: 0,
-                      width: widths[_slotOfDestination(i)],
-                      child: _DestinationSlot(
-                        destination: widget.destinations[i],
-                        activation: activations[i],
-                        tint: widget.tints[i],
-                        idleColor: idleColor,
-                        labelStyle: labelStyle,
-                        onTap: () {
-                          RitmoHapticsPolicy.selection();
-                          widget.onSelectTab(widget.destinations[i].index);
-                        },
-                      ),
-                    ),
-                  PositionedDirectional(
-                    start: starts[widget.centerSlot],
+                  ),
+
+                  // 2. تب‌های کناری با ترنزیشن محوشدگی نرم
+                  Positioned(
+                    left: 0,
+                    right: 0,
                     top: 0,
-                    bottom: 0,
-                    width: widths[widget.centerSlot],
-                    child: Center(
-                      child: _CenterHeroButton(
-                        isSimple: widget.isSimple,
-                        isHomeActive: widget.isHomeActive,
-                        onTap: widget.onCenterTap,
-                        onLongPress: widget.onCenterLongPress,
+                    height: RitmoShellMetrics.navBarHeight,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < slotCount; i++)
+                            Expanded(
+                              child: _StaticSlotItem(
+                                item: destinations[i],
+                                isActive: i == activeSlot,
+                                slotDistance: (currentSlotPosition - i).abs(),
+                                isDark: isDark,
+                                onTap: () {
+                                  if (destinations[i].index ==
+                                      RitmoShellMetrics.homeTabIndexFor(
+                                        widget.mode,
+                                      )) {
+                                    HapticFeedback.mediumImpact();
+                                    widget.onCenterTap();
+                                  } else {
+                                    HapticFeedback.selectionClick();
+                                    widget.onSelectTab(destinations[i].index);
+                                  }
+                                },
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
+                  ),
+
+                  // 3. دکمهٔ دایره‌ای شناور فوق‌لوکس با موقعیت هماهنگ با هلال
+                  Positioned(
+                    left: notchCenterX - 19,
+                    top: -5,
+                    width: 38,
+                    height: 38,
+                    child: _AnimatedFloatingButton(
+                      activeItem: activeItem,
+                      backgroundColor: centerBtnColor,
+                      isDark: isDark,
+                      onTap: () {
+                        if (activeItem.index ==
+                            RitmoShellMetrics.homeTabIndexFor(widget.mode)) {
+                          HapticFeedback.mediumImpact();
+                          widget.onCenterTap();
+                        } else {
+                          HapticFeedback.selectionClick();
+                          widget.onSelectTab(activeItem.index);
+                        }
+                      },
+                      onLongPress: widget.onCenterLongPress,
                     ),
                   ),
                 ],
               );
             },
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
-  }
-
-  Color _tintOfSlot(int slot, Color fallback) {
-    for (var i = 0; i < widget.destinations.length; i++) {
-      if (_slotOfDestination(i) == slot) {
-        return widget.tints[i];
-      }
-    }
-    return fallback;
   }
 }
 
-/// یک مقصد روی ریل — آیکون زنده به‌علاوهٔ برچسبی که فقط برای مقصد فعال باز می‌شود
-class _DestinationSlot extends StatelessWidget {
-  const _DestinationSlot({
-    required this.destination,
-    required this.activation,
-    required this.tint,
-    required this.idleColor,
-    required this.labelStyle,
+/// تب ثابت با محوشدگی هماهنگ
+class _StaticSlotItem extends StatelessWidget {
+  const _StaticSlotItem({
+    required this.item,
+    required this.isActive,
+    required this.slotDistance,
+    required this.isDark,
     required this.onTap,
   });
 
-  final _NavDestination destination;
-  final double activation;
-  final Color tint;
-  final Color idleColor;
-  final TextStyle labelStyle;
+  final _NavItem item;
+  final bool isActive;
+  final double slotDistance;
+  final bool isDark;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isActive = activation > 0.5;
+    final inactiveColor = isDark ? const Color(0xFF6B7880) : const Color(0xFF9AA4A8);
+
+    final iconOpacity = (slotDistance * 1.6).clamp(0.0, 1.0);
 
     return Semantics(
       button: true,
       selected: isActive,
-      label: destination.label,
+      label: item.label,
       onTap: onTap,
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Transform.translate(
-                offset: Offset(0, -_RailMetrics.activeLift * activation),
-                child: Transform.scale(
-                  scale: 1 + (_RailMetrics.activeScale - 1) * activation,
-                  child: Icon(
-                    isActive ? destination.activeIcon : destination.inactiveIcon,
-                    size: _RailMetrics.iconSize,
-                    color: Color.lerp(idleColor, tint, activation),
-                  ),
-                ),
-              ),
-              if (activation > 0)
-                ClipRect(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    widthFactor: activation,
-                    child: Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        start: _RailMetrics.labelGap,
-                      ),
-                      child: Opacity(
-                        opacity: activation,
-                        child: Text(
-                          destination.label,
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.clip,
-                          style: labelStyle.copyWith(color: tint),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Opacity(
+                opacity: iconOpacity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      item.inactiveIcon,
+                      size: 18,
+                      color: inactiveColor,
+                    ),
+                    if (!isActive) ...[
+                      const SizedBox(height: 1.5),
+                      Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        style: TextStyle(
+                          fontSize: 9.0,
+                          fontWeight: FontWeight.w600,
+                          color: inactiveColor,
+                          letterSpacing: -0.2,
+                          height: 1.0,
                         ),
                       ),
-                    ),
-                  ),
+                    ],
+                  ],
                 ),
-            ],
+              ),
+            ),
           ),
         ),
       ),
@@ -507,116 +308,268 @@ class _DestinationSlot extends StatelessWidget {
   }
 }
 
-/// دکمهٔ قهرمان مرکزی — گرادیان برند، هالهٔ نوری، افت مقیاس و مورف خانه به پلاس
-class _CenterHeroButton extends StatefulWidget {
-  const _CenterHeroButton({
-    required this.isSimple,
-    required this.isHomeActive,
+/// دکمهٔ دایره‌ای شناور صیقلی با لبهٔ Specular
+/// دکمهٔ دایره‌ای شناور صیقلی با انیمیشن تغییر آیکون خانه به +
+class _AnimatedFloatingButton extends StatefulWidget {
+  const _AnimatedFloatingButton({
+    required this.activeItem,
+    required this.backgroundColor,
+    required this.isDark,
     required this.onTap,
     this.onLongPress,
   });
 
-  final bool isSimple;
-  final bool isHomeActive;
+  final _NavItem activeItem;
+  final Color backgroundColor;
+  final bool isDark;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
   @override
-  State<_CenterHeroButton> createState() => _CenterHeroButtonState();
+  State<_AnimatedFloatingButton> createState() => _AnimatedFloatingButtonState();
 }
 
-class _CenterHeroButtonState extends State<_CenterHeroButton> {
+class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
   bool _isPressed = false;
+  bool _showPlusOnHome = false;
+  Timer? _homeMorphTimer;
+  Timer? _subMorphTimer;
+  Timer? _initialMorphTimer;
 
-  void _handleTap() {
-    RitmoHapticsPolicy.tap();
-    widget.onTap();
+  bool get _isHome => widget.activeItem.label == 'خانه';
+
+  @override
+  void initState() {
+    super.initState();
+    _setupHomeMorphing();
   }
 
-  void _handleLongPress() {
-    if (mounted) {
-      setState(() => _isPressed = false);
+  @override
+  void didUpdateWidget(covariant _AnimatedFloatingButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeItem.index != widget.activeItem.index ||
+        oldWidget.activeItem.label != widget.activeItem.label) {
+      _setupHomeMorphing();
     }
-    RitmoHapticsPolicy.selection();
-    widget.onLongPress?.call();
+  }
+
+  @override
+  void dispose() {
+    _homeMorphTimer?.cancel();
+    _subMorphTimer?.cancel();
+    _initialMorphTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setupHomeMorphing() {
+    _homeMorphTimer?.cancel();
+    _subMorphTimer?.cancel();
+    _initialMorphTimer?.cancel();
+
+    if (!_isHome) {
+      if (_showPlusOnHome) {
+        setState(() => _showPlusOnHome = false);
+      }
+      return;
+    }
+
+    // پس از رفتن به تب خانه، با یک انیمیشن نرم به + تبدیل می‌شود
+    _initialMorphTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted || !_isHome) return;
+      setState(() => _showPlusOnHome = true);
+      _startPeriodicMorphing();
+    });
+  }
+
+  void _startPeriodicMorphing() {
+    _homeMorphTimer?.cancel();
+    _subMorphTimer?.cancel();
+
+    // چرخهٔ ۷ ثانیه‌ای: ۵ ثانیه روی + و ۲ ثانیه روی خانه
+    _homeMorphTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
+      if (!mounted || !_isHome) {
+        timer.cancel();
+        return;
+      }
+      // به آیکون خانه تغییر می‌کند (۲ ثانیه)
+      setState(() => _showPlusOnHome = false);
+
+      // پس از ۲ ثانیه مجدداً به + تبدیل می‌شود (۵ ثانیه باقی‌مانده)
+      _subMorphTimer = Timer(const Duration(seconds: 2), () {
+        if (!mounted || !_isHome) return;
+        setState(() => _showPlusOnHome = true);
+      });
+    });
+  }
+
+  IconData get _currentIcon {
+    if (_isHome && _showPlusOnHome) {
+      return CupertinoIcons.add;
+    }
+    return widget.activeItem.activeIcon;
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final showPlus = widget.isSimple || widget.isHomeActive;
-    final label = widget.isSimple
-        ? 'افزودن کار'
-        : (widget.isHomeActive ? 'کار جدید' : 'خانه');
-
     return Semantics(
       button: true,
-      label: label,
-      onTap: _handleTap,
+      label: widget.activeItem.label,
+      onTap: widget.onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
-        onTap: _handleTap,
-        onLongPress: widget.onLongPress == null ? null : _handleLongPress,
+        onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
         child: AnimatedScale(
-          scale: _isPressed ? RitmoMotion.pressScale : 1.0,
-          duration: RitmoMotion.effective(context, RitmoMotion.press),
-          curve: RitmoMotion.enter,
+          scale: _isPressed ? 0.90 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
           child: Container(
-            width: _RailMetrics.centerButton,
-            height: _RailMetrics.centerButton,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: colors.brandGradient,
-              ),
-              boxShadow: <BoxShadow>[
+              color: widget.backgroundColor,
+              boxShadow: [
+                // سایهٔ نرم و لوکس زیر دکمه
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.42),
-                  blurRadius: 16,
-                  spreadRadius: -2,
-                  offset: const Offset(0, 5),
-                ),
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.16),
-                  blurRadius: 5,
-                  spreadRadius: 1,
+                  color: Colors.black.withValues(
+                    alpha: widget.isDark ? 0.45 : 0.18,
+                  ),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 3),
                 ),
               ],
+              border: Border.all(
+                color: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : Colors.white.withValues(alpha: 0.35),
+                width: 1.0,
+              ),
             ),
-            child: AnimatedSwitcher(
-              duration: RitmoMotion.effective(context, RitmoMotion.state),
-              switchInCurve: RitmoMotion.enter,
-              switchOutCurve: RitmoMotion.exit,
-              transitionBuilder: (child, animation) => ScaleTransition(
-                scale: animation,
-                child: RotationTransition(
-                  turns: Tween<double>(begin: -0.125, end: 0).animate(animation),
-                  child: child,
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 320),
+                switchInCurve: Curves.easeOutBack,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) => RotationTransition(
+                  turns: Tween<double>(begin: -0.2, end: 0.0).animate(animation),
+                  child: ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  ),
+                ),
+                child: Icon(
+                  _currentIcon,
+                  key: ValueKey<IconData>(_currentIcon),
+                  size: _currentIcon == CupertinoIcons.add ? 22 : 19,
+                  color: Colors.white,
                 ),
               ),
-              child: showPlus
-                  ? Icon(
-                      CupertinoIcons.add,
-                      key: const ValueKey<String>('nav_center_plus'),
-                      size: 23,
-                      color: colors.onPrimary,
-                    )
-                  : Icon(
-                      CupertinoIcons.house_fill,
-                      key: const ValueKey<String>('nav_center_home'),
-                      size: 20,
-                      color: colors.onPrimary,
-                    ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// نقاش پس‌زمینه با هلال مقعر متحرک و خط مرزی ظریف
+class _DockedNotchedBarPainter extends CustomPainter {
+  const _DockedNotchedBarPainter({
+    required this.color,
+    required this.shadowColor,
+    required this.borderColor,
+    required this.notchCenterX,
+  });
+
+  final Color color;
+  final Color shadowColor;
+  final Color borderColor;
+  final double notchCenterX;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = notchCenterX;
+    const notchHalfWidth = 44.0;
+    const notchDepth = 35.0;
+
+    Path buildNotchPath() {
+      final p = Path();
+      p.moveTo(0, 0);
+      p.lineTo(cx - notchHalfWidth, 0);
+
+      // ۱. قوس محدب شانه چپ (انحنای فوق‌العاده نرم از خط افقی به سمت پایین)
+      p.cubicTo(
+        cx - notchHalfWidth + 14.0, 0.0,
+        cx - notchHalfWidth * 0.55 - 3.0, notchDepth * 0.28,
+        cx - notchHalfWidth * 0.50, notchDepth * 0.44,
+      );
+
+      // ۲. قوس مقعر گودی چپ (رسیدن نرم به کف گرد هلال)
+      p.cubicTo(
+        cx - notchHalfWidth * 0.50 + 5.0, notchDepth * 0.62,
+        cx - 14.0, notchDepth,
+        cx, notchDepth,
+      );
+
+      // ۳. قوس مقعر گودی راست (خروج نرم از کف هلال)
+      p.cubicTo(
+        cx + 14.0, notchDepth,
+        cx + notchHalfWidth * 0.50 - 5.0, notchDepth * 0.62,
+        cx + notchHalfWidth * 0.50, notchDepth * 0.44,
+      );
+
+      // ۴. قوس محدب شانه راست (بازگشت کاملاً نرم و بی‌گوشه به خط افقی)
+      p.cubicTo(
+        cx + notchHalfWidth * 0.55 + 3.0, notchDepth * 0.28,
+        cx + notchHalfWidth - 14.0, 0.0,
+        cx + notchHalfWidth, 0.0,
+      );
+
+      return p;
+    }
+
+    final path = buildNotchPath();
+    path.lineTo(w, 0);
+    path.lineTo(w, h);
+    path.lineTo(0, h);
+    path.close();
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = shadowColor
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.save();
+    canvas.translate(0, -2);
+    canvas.drawPath(path, shadowPaint);
+    canvas.restore();
+
+    // Draw background
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    // Draw top border
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+    final topBorderPath = buildNotchPath();
+    topBorderPath.lineTo(w, 0);
+    canvas.drawPath(topBorderPath, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DockedNotchedBarPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.shadowColor != shadowColor ||
+        oldDelegate.borderColor != borderColor ||
+        oldDelegate.notchCenterX != notchCenterX;
   }
 }

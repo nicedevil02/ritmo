@@ -308,11 +308,29 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
 
   void _updateOptimistic(SimpleTask Function(SimpleTask) transform, String taskId) {
     setState(() {
+      final myDayIdx = _myDayTasks.indexWhere((t) => t.id == taskId);
+      if (myDayIdx != -1) {
+        _myDayTasks[myDayIdx] = transform(_myDayTasks[myDayIdx]);
+      }
+
       final allTasks = _buckets.values.expand((e) => e).toList();
       final idx = allTasks.indexWhere((t) => t.id == taskId);
       if (idx != -1) {
         allTasks[idx] = transform(allTasks[idx]);
-        _buckets = groupTasks(allTasks, now: DateTime.now());
+        var updatedBuckets = groupTasks(
+          allTasks,
+          now: DateTime.now(),
+          sortMode: _sortMode,
+          hideCompleted: _hideCompleted,
+        );
+
+        if (_selectedTag != null) {
+          updatedBuckets = {
+            for (final entry in updatedBuckets.entries)
+              entry.key: entry.value.where((t) => t.tags.contains(_selectedTag)).toList(),
+          };
+        }
+        _buckets = updatedBuckets;
       }
     });
   }
@@ -426,56 +444,69 @@ class _SimpleTasksScreenState extends State<SimpleTasksScreen> with WidgetsBindi
                 ),
               ),
             ],
+            if (_isLoading && totalTasks == 0)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (!_isLoading && totalTasks == 0 && _myDayTasks.isEmpty && _myDaySuggestions.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    TaskStrings.myDayEmptyAllClear,
+                    style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                  ),
+                ),
+              )
+            else ...[
+              const SizedBox(height: 8),
 
-            const SizedBox(height: 8),
-
-            // Main List View of Buckets & My Day
-            Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator(color: colors.primary))
-                  : CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: MyDaySection(
-                                tasks: _myDayTasks,
-                                suggestions: _myDaySuggestions,
-                                onToggleDone: _toggleDone,
-                                onTaskTap: _openTaskDetails,
-                                onAddToMyDay: _handleAddToMyDay,
-                                onRemoveFromMyDay: _handleRemoveFromMyDay,
-                                onNewTask: () {
-                                  _addFocusNode.requestFocus();
-                                },
-                                stepCounts: _stepCounts,
-                                attachmentCounts: _attachmentCounts,
-                              ),
+              // Main List View of Buckets & My Day
+              Expanded(
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator(color: colors.primary))
+                    : CustomScrollView(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: MyDaySection(
+                              tasks: _myDayTasks,
+                              suggestions: _myDaySuggestions,
+                              onToggleDone: _toggleDone,
+                              onToggleStar: _toggleStar,
+                              onTaskTap: _openTaskDetails,
+                              onAddToMyDay: _handleAddToMyDay,
+                              onRemoveFromMyDay: _handleRemoveFromMyDay,
+                              onNewTask: () {
+                                _addFocusNode.requestFocus();
+                              },
+                              stepCounts: _stepCounts,
+                              attachmentCounts: _attachmentCounts,
                             ),
-                            SliverPadding(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                              sliver: SliverMainAxisGroup(
-                                slivers: TaskBucket.values
-                                    .where((bucket) => (_buckets[bucket] ?? []).isNotEmpty)
-                                    .map((bucket) {
-                                  final tasks = _buckets[bucket] ?? [];
-                                  final isExpanded = _bucketExpandedState[bucket] ?? true;
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                            sliver: SliverMainAxisGroup(
+                              slivers: TaskBucket.values
+                                  .where((bucket) => (_buckets[bucket] ?? []).isNotEmpty)
+                                  .map((bucket) {
+                                final tasks = _buckets[bucket] ?? [];
+                                final isExpanded = _bucketExpandedState[bucket] ?? true;
 
-                                  return TaskBucketSection(
-                                    bucket: bucket,
-                                    tasks: tasks,
-                                    stepCounts: _stepCounts,
-                                    attachmentCounts: _attachmentCounts,
-                                    isExpanded: isExpanded,
-                                    onToggleExpand: () => _toggleBucketExpanded(bucket),
-                                    onTaskTap: _openTaskDetails,
-                                    onToggleDone: _toggleDone,
-                                    onToggleStar: _toggleStar,
-                                  );
-                                }).toList(),
-                              ),
+                                return TaskBucketSection(
+                                  bucket: bucket,
+                                  tasks: tasks,
+                                  stepCounts: _stepCounts,
+                                  attachmentCounts: _attachmentCounts,
+                                  isExpanded: isExpanded,
+                                  onToggleExpand: () => _toggleBucketExpanded(bucket),
+                                  onTaskTap: _openTaskDetails,
+                                  onToggleDone: _toggleDone,
+                                  onToggleStar: _toggleStar,
+                                );
+                              }).toList(),
                             ),
-                          ],
-                        ),
-            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ],
           ],
         ),
       ),

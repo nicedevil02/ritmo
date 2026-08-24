@@ -21,6 +21,7 @@ import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/qibla_compass_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/quran_dhikr_section.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_debts_section.dart';
+import 'package:ritmo/features/worship/presentation/widgets/worship_settings_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_solar_calendar.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -34,6 +35,7 @@ class WorshipScreen extends StatefulWidget {
 class _WorshipScreenState extends State<WorshipScreen> {
   WorshipDay? _worshipDay;
   bool _isLoading = true;
+  String _cityName = 'تهران';
   StreamSubscription<RitmoEvent>? _eventSub;
 
   @override
@@ -62,8 +64,25 @@ class _WorshipScreenState extends State<WorshipScreen> {
       final now = DateTime.now();
       final day = await WorshipEngine.instance.loadDay(now);
 
+      final db = await DatabaseHelper.instance.database;
+      final settings = await db.query('app_settings');
+      final settingsMap = {
+        for (final r in settings) r['key'] as String: r['value'] as String
+      };
+      final cityId = settingsMap['prayer_city_id'] ?? 'TEHRAN_TEHRAN';
+      String name = 'تهران';
+      if (cityId.startsWith('CUSTOM_') || cityId.startsWith('INTL_')) {
+        name = settingsMap['prayer_custom_city_name'] ?? 'موقعیت سفارشی';
+      } else {
+        final rows = await db.query('iran_cities', columns: ['city'], where: 'id = ?', whereArgs: [cityId], limit: 1);
+        if (rows.isNotEmpty) {
+          name = rows.first['city'] as String? ?? 'تهران';
+        }
+      }
+
       if (mounted) {
         setState(() {
+          _cityName = name;
           _worshipDay = day;
           _isLoading = false;
         });
@@ -152,9 +171,16 @@ class _WorshipScreenState extends State<WorshipScreen> {
       isScrollControlled: true,
       builder: (context) {
         return QiblaCompassSheet(
-          cityName: _worshipDay?.times.cityId ?? 'تهران',
+          cityName: _cityName,
         );
       },
+    );
+  }
+
+  void _openWorshipSettings() {
+    WorshipSettingsSheet.present(
+      context,
+      onChanged: _onDataChanged,
     );
   }
 
@@ -194,7 +220,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
                     RitmoModuleAppBar(
                       title: 'عبادت و معنویت',
                       subtitle: _worshipDay != null
-                          ? '${_worshipDay!.times.cityId} • ${_worshipDay!.hijri.formatted}'
+                          ? '$_cityName • ${_worshipDay!.hijri.formatted}'
                           : 'در حال بارگذاری...',
                       actions: [
                         IconButton(
@@ -209,8 +235,8 @@ class _WorshipScreenState extends State<WorshipScreen> {
                         ),
                         IconButton(
                           icon: Icon(CupertinoIcons.settings, color: colors.textSecondary),
-                          tooltip: 'تنظیمات محاسبه',
-                          onPressed: () => _openCityPicker(1),
+                          tooltip: 'تنظیمات عبادات',
+                          onPressed: _openWorshipSettings,
                         ),
                       ],
                     ),

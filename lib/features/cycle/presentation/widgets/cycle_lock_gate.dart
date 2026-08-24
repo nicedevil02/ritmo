@@ -719,10 +719,9 @@ class _CycleLockGateState extends State<CycleLockGate>
                                                   ),
                                                   child: Center(
                                                     child: Icon(
-                                                      CupertinoIcons
-                                                          .device_phone_portrait,
+                                                      Icons.fingerprint,
                                                       color: colors.primary,
-                                                      size: 24,
+                                                      size: 28,
                                                     ),
                                                   ),
                                                 ),

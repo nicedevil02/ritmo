@@ -118,8 +118,14 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
           item.completion == AgendaCompletion.skipped;
 
       if (dateOnly.isBefore(today)) {
-        // Past days — only undone items become overdue
-        if (!isDone) {
+        // Past days — only undone actionable items become overdue.
+        // Daily recurring prayers, mustahab practices, and cycle reminders are day-bound/informational
+        // and do not become live overdue items on today's agenda.
+        final isWorshipOrCycle = item.domain == AgendaDomain.prayer ||
+            item.domain == AgendaDomain.mustahab ||
+            item.domain == AgendaDomain.worshipDebt ||
+            item.domain == AgendaDomain.cycle;
+        if (!isDone && !isWorshipOrCycle) {
           result[AgendaBucket.overdue]!.add(item);
         }
       } else if (dateOnly.isAtSameMomentAs(today)) {

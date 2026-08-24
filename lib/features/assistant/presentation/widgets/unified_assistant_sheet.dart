@@ -33,6 +33,7 @@ import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
@@ -550,6 +551,35 @@ class _AssistantSheetState extends State<AssistantSheet> {
     }
 
     unawaited(_parseAndExecuteActions(fullResponse));
+  }
+
+  Future<void> _copyChatGptDiagnosticSnapshot() async {
+    try {
+      RitmoToast.show(
+        context,
+        'در حال استخراج کدهای صفحه چت‌جی‌پی‌تی...',
+        icon: Icons.hourglass_top_rounded,
+      );
+      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
+      await Clipboard.setData(ClipboardData(text: snapshot));
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در استخراج کدهای صفحه: $e',
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.error,
+        );
+      }
+    }
   }
 
   void _processMemoryOps(String rawAnswer) {
@@ -1132,6 +1162,15 @@ class _AssistantSheetState extends State<AssistantSheet> {
                       ),
                       const Spacer(),
                       const BridgeStatusChip(),
+                      IconButton(
+                        icon: Icon(
+                          Icons.copy_all_rounded,
+                          color: colors.textSecondary,
+                          size: 20,
+                        ),
+                        tooltip: 'کپی گزارش تشخیصی و HTML چت‌جی‌پی‌تی',
+                        onPressed: _copyChatGptDiagnosticSnapshot,
+                      ),
                       IconButton(
                         icon: Icon(
                           Icons.open_in_browser_rounded,

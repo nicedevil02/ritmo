@@ -37,8 +37,8 @@ class TaskInlineAddBar extends StatelessWidget {
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onSubmitted(),
                 decoration: InputDecoration(
-                  hintText: 'یک کار بنویس…',
-                  hintStyle: TextStyle(fontSize: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+                  hintText: 'افزودن کار جدید (تگ‌ها با #)...',
+                  hintStyle: TextStyle(fontSize: 13, color: colors.textSecondary.withValues(alpha: 0.6)),
                   border: InputBorder.none,
                 ),
               ),

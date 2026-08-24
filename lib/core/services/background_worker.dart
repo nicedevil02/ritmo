@@ -103,11 +103,11 @@ Future<bool> _runWeeklyBackup() async {
     if (passcode == null) return true;
 
     final driveService = GoogleDriveBackupService.instance;
-    final signedIn = await driveService.signIn();
+    final signedIn = await driveService.signIn(silentOnly: true);
     if (!signedIn) {
       RitmoLog.warning(
         'BgWorker',
-        'Weekly backup task aborted: not signed in to Google Drive.',
+        'Weekly backup task aborted: not signed in to Google Drive (silent auth expired).',
       );
       return true; // Not signed in, return true to avoid infinite backoff retry
     }

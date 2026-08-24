@@ -1001,6 +1001,8 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                 'assets/images/quran_icon.png',
                                 width: 195,
                                 height: 180,
+                                cacheWidth: 390,
+                                cacheHeight: 360,
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   width: 160,
@@ -1477,10 +1479,11 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                   DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: activePractice.id,
+                                      isExpanded: true,
                                       dropdownColor: colors.surfaceElevated,
                                       borderRadius: BorderRadius.circular(20),
                                       icon: Padding(
-                                        padding: const EdgeInsets.only(right: 6),
+                                        padding: const EdgeInsets.only(right: 4),
                                         child: Icon(
                                           Icons.keyboard_arrow_down_rounded,
                                           color: colors.accent,
@@ -1489,7 +1492,7 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                       ),
                                       isDense: true,
                                       style: TextStyle(
-                                        fontSize: 16.5,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w800,
                                         color: colors.textPrimary,
                                       ),
@@ -1498,8 +1501,10 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                                           value: d.id,
                                           child: Text(
                                             d.id == 'wp_dhikr_zahra' ? 'تسبیحات حضرت زهرا' : d.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              fontSize: 15.5,
+                                              fontSize: 15,
                                               fontWeight: FontWeight.w800,
                                               color: colors.textPrimary,
                                             ),

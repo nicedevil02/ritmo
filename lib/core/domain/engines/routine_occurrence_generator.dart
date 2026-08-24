@@ -114,6 +114,7 @@ class RoutineOccurrenceGenerator {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
+    final batch = db.batch();
     for (var i = 0; i < days; i++) {
       final targetDate = today.add(Duration(days: i));
       final dateStr = targetDate.toIso8601String().substring(0, 10);
@@ -143,7 +144,7 @@ class RoutineOccurrenceGenerator {
           timeStr = occurrence.toIso8601String().substring(11, 16);
         }
 
-        await db.insert('routine_occurrences', {
+        batch.insert('routine_occurrences', {
           'routine_id': routineId,
           'date': dateStr,
           'scheduled_time': timeStr,
@@ -151,6 +152,7 @@ class RoutineOccurrenceGenerator {
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     }
+    await batch.commit(noResult: true);
   }
 
   /// Regenerates occurrences starting from today. Preserves past occurrences.

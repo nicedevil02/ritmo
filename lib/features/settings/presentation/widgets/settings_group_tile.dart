@@ -52,42 +52,31 @@ class _SettingsGroupTileState extends State<SettingsGroupTile> {
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsetsDirectional.fromSTEB(14, 13, 14, 13),
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 11, 14, 11),
             decoration: BoxDecoration(
               color: _isPressed
-                  ? colors.primary.withValues(alpha: 0.06)
+                  ? colors.primary.withValues(alpha: 0.05)
                   : Colors.transparent,
             ),
             child: Row(
               children: [
-                // ─── آیکن مدرن iOS 26 با های‌لایت و گرادیان سه‌بعدی ───
+                // ─── آیکن گرد رنگی هماهنگ با سیستم‌عامل ───
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(11),
                     gradient: LinearGradient(
                       colors: widget.gradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      width: 0.8,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.gradient.first.withValues(alpha: 0.32),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3.5),
-                      ),
-                    ],
                   ),
                   child: Center(
                     child: Icon(
                       widget.icon,
                       color: Colors.white,
-                      size: 21,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -102,20 +91,20 @@ class _SettingsGroupTileState extends State<SettingsGroupTile> {
                       Text(
                         widget.title,
                         style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15.0,
+                          fontWeight: FontWeight.w600,
                           color: colors.textPrimary,
                           letterSpacing: -0.2,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                       Text(
                         widget.subtitle,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w400,
                           color: colors.textSecondary,
-                          height: 1.35,
+                          height: 1.3,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -123,36 +112,32 @@ class _SettingsGroupTileState extends State<SettingsGroupTile> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
 
                 // ─── کپسول شمارنده تعداد تنظیمات ───
                 if (widget.count > 0)
                   Container(
-                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 8, vertical: 3.5),
+                    padding: const EdgeInsetsDirectional.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
                       color: widget.gradient.first.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(
-                        color: widget.gradient.first.withValues(alpha: 0.18),
-                        width: 0.8,
-                      ),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${toPersianDigits(widget.count)} مورد',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: widget.gradient.first,
                       ),
                     ),
                   ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
 
-                // ─── نشانگر ناوبری iOS ───
+                // ─── نشانگر ناوبری ظریف ───
                 Icon(
                   CupertinoIcons.chevron_back, // جهت صحیح در زبان فارسی و RTL
-                  size: 15,
-                  color: colors.textTertiary.withValues(alpha: 0.7),
+                  size: 14,
+                  color: colors.textTertiary.withValues(alpha: 0.6),
                 ),
               ],
             ),

@@ -35,7 +35,7 @@ class CentralInboxService {
     }
 
     // 2. Rate limit check
-    if (!await InboxPolicy.withinRateLimit(category)) {
+    if (!await InboxPolicy.withinRateLimit(category, executor: executor)) {
       return;
     }
 

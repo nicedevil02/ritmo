@@ -1,4 +1,5 @@
 /// Fadhilat (First-time prayer window) logic — Section §9 (H-3)
+library;
 
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 

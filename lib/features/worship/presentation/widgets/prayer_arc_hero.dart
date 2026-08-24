@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
@@ -96,15 +97,29 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
       String cityName = 'تهران';
       
       if (cityId.isNotEmpty) {
-        final rows = await db.query(
-          'iran_cities',
-          columns: ['city'],
-          where: 'id = ?',
-          whereArgs: [cityId],
-          limit: 1,
-        );
-        if (rows.isNotEmpty) {
-          cityName = rows.first['city'] as String? ?? 'تهران';
+        if (cityId.startsWith('CUSTOM_') || cityId.startsWith('INTL_')) {
+          final customNameSetting = await db.query(
+            'app_settings',
+            where: 'key = ?',
+            whereArgs: ['prayer_custom_city_name'],
+            limit: 1,
+          );
+          if (customNameSetting.isNotEmpty) {
+            cityName = customNameSetting.first['value'] as String? ?? 'موقعیت سفارشی';
+          } else {
+            cityName = 'موقعیت سفارشی';
+          }
+        } else {
+          final rows = await db.query(
+            'iran_cities',
+            columns: ['city'],
+            where: 'id = ?',
+            whereArgs: [cityId],
+            limit: 1,
+          );
+          if (rows.isNotEmpty) {
+            cityName = rows.first['city'] as String? ?? 'تهران';
+          }
         }
       }
       
@@ -131,7 +146,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero> with SingleTickerProvider
 
     // ── Triple Date Formatting ──
     final jalali = Jalali.now();
-    final shamsiDate = '${jalali.formatter.wN}، ${jalali.day} ${jalali.formatter.mN} ${jalali.year}';
+    final shamsiDate = '${ShamsiWeek.nameOf(jalali.weekDay)}، ${jalali.day} ${jalali.formatter.mN} ${jalali.year}';
     final shamsiStr = toPersianDigits(shamsiDate);
 
     final monthsEn = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسمبر'];

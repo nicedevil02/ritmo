@@ -14,7 +14,6 @@ class PrayerTimes {
     required this.isha,
     required this.midnightShari,
     required this.calculationMethod,
-    required this.ihtiyatMinutes,
     this.isFallbackLocation = false,
   });
 
@@ -34,7 +33,6 @@ class PrayerTimes {
   final DateTime midnightShari;
 
   final String calculationMethod;
-  final int ihtiyatMinutes;
 
   /// True when city lookup failed and Tehran was used as fallback (W-14).
   final bool isFallbackLocation;
@@ -64,6 +62,5 @@ class PrayerTimes {
         isha: ishaText,
         midnightShari: midnightShariText,
         calculationMethod: calculationMethod,
-        ihtiyatMinutes: ihtiyatMinutes,
       );
 }

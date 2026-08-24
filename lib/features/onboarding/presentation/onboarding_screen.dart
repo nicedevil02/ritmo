@@ -134,6 +134,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _controller.notifGranted = true;
             _controller.next();
           },
+          onSkipped: () {
+            _controller.notifAsked = true;
+            _controller.notifGranted = false;
+            _controller.next();
+          },
         );
       case 'CELEBRATION':
         return StepCelebration(
@@ -251,7 +256,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         alignment: Alignment.topCenter,
                                         children: [
                                           ...previousChildren,
-                                          if (currentChild != null) currentChild,
+                                          ?currentChild,
                                         ],
                                       );
                                     },

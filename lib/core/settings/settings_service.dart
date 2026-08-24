@@ -176,6 +176,8 @@ class SettingsService {
           k.startsWith('energy_') ||
           k.startsWith('sports_') ||
           k.startsWith('medicine_') ||
+          k.startsWith('auth_') ||
+          k.startsWith('realm_') ||
           k.startsWith('ai_')) {
         return false;
       }
@@ -465,29 +467,25 @@ class SettingsService {
 
       if (key == 'app_mode') {
         final modeLower = normalized.toString().toLowerCase();
-        if (modeLower == 'simple') {
-          AppModeService.instance.syncFromSettings('simple');
-          if (get<bool>('show_advanced_settings') != false) {
-            await setChecked('show_advanced_settings', false, origin: origin);
-          }
-        } else if (modeLower == 'full') {
-          AppModeService.instance.syncFromSettings('full');
-          if (get<bool>('show_advanced_settings') != true) {
-            await setChecked('show_advanced_settings', true, origin: origin);
-          }
-        }
+        final shouldShowAdvanced = modeLower == 'full';
+        AppModeService.instance.syncFromSettings(modeLower);
+        _cache['show_advanced_settings'] = shouldShowAdvanced;
+        final db = await DatabaseHelper.instance.database;
+        await db.insert('app_settings', {
+          'key': 'show_advanced_settings',
+          'value': shouldShowAdvanced.toString(),
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } else if (key == 'show_advanced_settings') {
-        if (normalized == false) {
-          AppModeService.instance.syncFromSettings('simple');
-          if (get<String>('app_mode').toLowerCase() != 'simple') {
-            await setChecked('app_mode', 'simple', origin: origin);
-          }
-        } else if (normalized == true) {
-          AppModeService.instance.syncFromSettings('full');
-          if (get<String>('app_mode').toLowerCase() != 'full') {
-            await setChecked('app_mode', 'full', origin: origin);
-          }
-        }
+        final targetMode = (normalized == true) ? 'full' : 'simple';
+        AppModeService.instance.syncFromSettings(targetMode);
+        _cache['app_mode'] = targetMode;
+        final db = await DatabaseHelper.instance.database;
+        await db.insert('app_settings', {
+          'key': 'app_mode',
+          'value': targetMode,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 
       return const SettingWriteOk();

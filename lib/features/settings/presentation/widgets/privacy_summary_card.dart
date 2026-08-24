@@ -69,12 +69,8 @@ class PrivacySummaryCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: statusColor.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
+              color: colors.card,
+              borderRadius: BorderRadius.circular(18),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

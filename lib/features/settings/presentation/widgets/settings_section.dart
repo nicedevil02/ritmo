@@ -54,20 +54,17 @@ class SettingsSection extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.border,
-                width: 1,
-              ),
+              borderRadius: BorderRadius.circular(18),
             ),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
                 for (int i = 0; i < children.length; i++) ...[
                   if (i > 0)
                     Divider(
                       height: 1,
-                      thickness: 1,
-                      color: colors.border.withValues(alpha: 0.6),
+                      thickness: 0.7,
+                      color: colors.divider.withValues(alpha: 0.5),
                       indent: 16,
                       endIndent: 16,
                     ),

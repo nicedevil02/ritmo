@@ -6,8 +6,8 @@ import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 
 class AiMemoryManagementScreen extends StatefulWidget {
   const AiMemoryManagementScreen({super.key});
@@ -357,7 +357,6 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Group active memories by domain
     final groupedActive = <String, List<MemoryEntry>>{};
@@ -367,483 +366,462 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            'مدیریت حافظه دستیار 🧠',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: colors.textPrimary),
-          ),
-          leading: IconButton(
-            icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
+      child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
+        appBar: const RitmoModuleAppBar(
+          title: 'مدیریت حافظه دستیار',
         ),
-        body: Stack(
-          children: [
-            // Background Gradient
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isDarkMode
-                        ? [const Color(0xff08090C), const Color(0xff12141C)]
-                        : [const Color(0xffF2F5FA), const Color(0xffE5ECF6)],
-                  ),
-                ),
-              ),
-            ),
-
-            SafeArea(
-              child: _isLoading
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : ListView(
-                      padding: const EdgeInsets.all(16),
+        body: _isLoading
+            ? const Center(child: CupertinoActivityIndicator())
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
+                children: [
+                  // 1. Settings Switches
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 1. Settings Switches
-                        RitmoTheme.glassCardLight(
-                          borderRadius: 20,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        Text(
+                          'تنظیمات حریم خصوصی و یادگیری',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SwitchListTile(
+                          activeThumbColor: colors.primary,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('فعال‌سازی سیستم حافظه', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
+                          subtitle: Text('به دستیار اجازه می‌دهد داده‌های از پیش‌دانسته شما را در گفتگوها استفاده کند.', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
+                          value: _memoryEnabled,
+                          onChanged: (val) => _toggleSetting('ai_memory_enabled', val),
+                        ),
+                        Divider(color: colors.divider.withValues(alpha: 0.5)),
+                        SwitchListTile(
+                          activeThumbColor: colors.primary,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('یادگیری خودکار تدریجی', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
+                          subtitle: Text('استخراج خودکار علایق و محدودیت‌های شما در پس‌زمینه گفتگوها', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
+                          value: _implicitEnabled,
+                          onChanged: _memoryEnabled ? (val) => _toggleSetting('ai_memory_implicit_enabled', val) : null,
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.lock_outline, size: 16, color: colors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '🔒 حریم خصوصی: حافظه شناختی ریتمو به صورت کاملاً آفلاین و محلی بر روی دستگاه شما ذخیره می‌شود و با هیچ سرور ابری همگام‌سازی نخواهد شد.',
+                                  style: TextStyle(fontSize: 10, color: colors.textSecondary, height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Add manual Memory Entry
+                  if (_memoryEnabled) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'افزودن دستی فکت به حافظه دستیار',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _textController,
+                            maxLines: 2,
+                            style: TextStyle(color: colors.textPrimary, fontSize: 12.5),
+                            decoration: RitmoTheme.inputDecoration(
+                              context,
+                              label: 'مثال: به بادام‌زمینی آلرژی دارم یا کمردرد خفیف دارم.',
+                              icon: Icons.psychology,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Text(
+                                'حوزه مربوطه: ',
+                                style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceSunken,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedDomain,
+                                      dropdownColor: colors.card,
+                                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          setState(() => _selectedDomain = val);
+                                        }
+                                      },
+                                      items: _domainsList.map((d) {
+                                        return DropdownMenuItem<String>(
+                                          value: d['key'],
+                                          child: Text(d['label']!),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 40,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: _addManualMemory,
+                              child: const Text(
+                                'ذخیره حافظه جدید 💾',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // 3. Active Memories grouped by domain
+                  Text(
+                    'فهرست حافظه‌های فعال دستیار',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (_activeMemories.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'هنوز حافظه‌ای ثبت نشده است.',
+                          style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                        ),
+                      ),
+                    )
+                  else
+                    ...groupedActive.entries.map((group) {
+                      final domain = group.key;
+                      final list = group.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: colors.card,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: ExpansionTile(
+                            initiallyExpanded: true,
+                            title: Row(
                               children: [
+                                Icon(CupertinoIcons.folder, size: 16, color: colors.primary),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'تنظیمات حریم خصوصی و یادگیری',
+                                  _getDomainLabel(domain),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13.5,
+                                    fontSize: 13,
                                     color: colors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                SwitchListTile(
-                                  activeThumbColor: colors.primary,
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text('فعال‌سازی سیستم حافظه', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
-                                  subtitle: Text('به دستیار اجازه می‌دهد داده‌های از پیش‌دانسته شما را در گفتگوها استفاده کند.', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
-                                  value: _memoryEnabled,
-                                  onChanged: (val) => _toggleSetting('ai_memory_enabled', val),
-                                ),
-                                const Divider(color: Colors.white10),
-                                SwitchListTile(
-                                  activeThumbColor: colors.primary,
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text('یادگیری خودکار تدریجی', style: TextStyle(fontSize: 12.5, color: colors.textPrimary)),
-                                  subtitle: Text('استخراج خودکار علایق و محدودیت‌های شما در پس‌زمینه گفتگوها', style: TextStyle(fontSize: 10.5, color: colors.textSecondary)),
-                                  value: _implicitEnabled,
-                                  onChanged: _memoryEnabled ? (val) => _toggleSetting('ai_memory_implicit_enabled', val) : null,
-                                ),
-                                const SizedBox(height: 12),
+                                const SizedBox(width: 8),
                                 Container(
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: colors.primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.lock_outline, size: 16, color: colors.primary),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          '🔒 حریم خصوصی: حافظه شناختی ریتمو به صورت کاملاً آفلاین و محلی بر روی دستگاه شما ذخیره می‌شود و با هیچ سرور ابری همگام‌سازی نخواهد شد.',
-                                          style: TextStyle(fontSize: 10, color: colors.textSecondary, height: 1.4),
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    '${list.length} مورد',
+                                    style: TextStyle(fontSize: 10, color: colors.primary),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // 2. Add manual Memory Entry
-                        if (_memoryEnabled) ...[
-                          RitmoTheme.glassCardLight(
-                            borderRadius: 20,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'افزودن دستی فکت به حافظه دستیار',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.5,
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextField(
-                                    controller: _textController,
-                                    maxLines: 2,
-                                    style: TextStyle(color: colors.textPrimary, fontSize: 12.5),
-                                    decoration: RitmoTheme.inputDecoration(
-                                      context,
-                                      label: 'مثال: به بادام‌زمینی آلرژی دارم یا کمردرد خفیف دارم.',
-                                      icon: Icons.psychology,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        'حوزه مربوطه: ',
-                                        style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                          decoration: BoxDecoration(
-                                            color: colors.card,
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: colors.border),
-                                          ),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              value: _selectedDomain,
-                                              dropdownColor: colors.card,
-                                              style: TextStyle(fontSize: 12, color: colors.textPrimary),
-                                              onChanged: (val) {
-                                                if (val != null) {
-                                                  setState(() => _selectedDomain = val);
-                                                }
-                                              },
-                                              items: _domainsList.map((d) {
-                                                return DropdownMenuItem<String>(
-                                                  value: d['key'],
-                                                  child: Text(d['label']!),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 40,
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: colors.primary,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                      onPressed: _addManualMemory,
-                                      child: const Text(
-                                        'ذخیره حافظه جدید 💾',
-                                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // 3. Active Memories grouped by domain
-                        Text(
-                          'فهرست حافظه‌های فعال دستیار',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        if (_activeMemories.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: Text(
-                                'هنوز حافظه‌ای ثبت نشده است.',
-                                style: TextStyle(color: colors.textSecondary, fontSize: 12),
-                              ),
-                            ),
-                          )
-                        else
-                          ...groupedActive.entries.map((group) {
-                            final domain = group.key;
-                            final list = group.value;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: RitmoTheme.glassCardLight(
-                                borderRadius: 16,
-                                child: ExpansionTile(
-                                  initiallyExpanded: true,
-                                  title: Row(
-                                    children: [
-                                      Icon(CupertinoIcons.folder, size: 16, color: colors.primary),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _getDomainLabel(domain),
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: colors.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: colors.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          '${list.length} مورد',
-                                          style: TextStyle(fontSize: 10, color: colors.primary),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  children: list.map((m) {
-                                    return Container(
-                                      decoration: const BoxDecoration(
-                                        border: Border(top: BorderSide(color: Colors.white10)),
-                                      ),
-                                      child: ListTile(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                        title: Text(
-                                          m.content,
-                                          style: TextStyle(
-                                            fontSize: 12.5,
-                                            color: colors.textPrimary,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                        subtitle: Padding(
-                                          padding: const EdgeInsets.only(top: 8),
-                                          child: Wrap(
-                                            spacing: 6,
-                                            runSpacing: 4,
-                                            children: [
-                                              // Type badge
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white.withValues(alpha: 0.06),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  _getTypeLabel(m.type),
-                                                  style: TextStyle(fontSize: 9.5, color: colors.textSecondary),
-                                                ),
-                                              ),
-                                              // Source badge
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: m.source == MemorySource.explicit
-                                                      ? Colors.teal.withValues(alpha: 0.1)
-                                                      : Colors.blue.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  m.source == MemorySource.explicit ? 'صریح' : 'خودکار',
-                                                  style: TextStyle(
-                                                    fontSize: 9.5,
-                                                    color: m.source == MemorySource.explicit ? Colors.tealAccent : Colors.lightBlueAccent,
-                                                  ),
-                                                ),
-                                              ),
-                                              // Importance badge
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.orange.withValues(alpha: 0.1),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  'اهمیت: ${m.importance}',
-                                                  style: const TextStyle(fontSize: 9.5, color: Colors.orangeAccent),
-                                                ),
-                                              ),
-                                              if (m.sensitive)
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.redAccent.withValues(alpha: 0.1),
-                                                    borderRadius: BorderRadius.circular(6),
-                                                  ),
-                                                  child: const Text(
-                                                    'حساس 🔒',
-                                                    style: TextStyle(fontSize: 9.5, color: Colors.redAccent),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            // Pin/Unpin
-                                            IconButton(
-                                              icon: Icon(
-                                                m.pinned ? CupertinoIcons.pin_fill : CupertinoIcons.pin,
-                                                size: 16,
-                                                color: m.pinned ? Colors.amber : colors.textSecondary,
-                                              ),
-                                              onPressed: () => _togglePin(m),
-                                            ),
-                                            // Actions PopupMenu
-                                            PopupMenuButton<String>(
-                                              icon: Icon(Icons.more_vert, size: 18, color: colors.textSecondary),
-                                              color: colors.card,
-                                              onSelected: (action) {
-                                                if (action == 'edit') {
-                                                  _editMemory(m);
-                                                } else if (action == 'archive') {
-                                                  _archiveOrRestoreMemory(m, MemoryStatus.archived);
-                                                }
-                                              },
-                                              itemBuilder: (context) => [
-                                                PopupMenuItem(
-                                                  value: 'edit',
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(CupertinoIcons.pencil, size: 14, color: colors.textPrimary),
-                                                      const SizedBox(width: 8),
-                                                      Text('ویرایش', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
-                                                    ],
-                                                  ),
-                                                ),
-                                                PopupMenuItem(
-                                                  value: 'archive',
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(CupertinoIcons.archivebox, size: 14, color: colors.textPrimary),
-                                                      const SizedBox(width: 8),
-                                                      Text('بایگانی', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                            children: list.map((m) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  border: Border(top: BorderSide(color: colors.divider.withValues(alpha: 0.5), width: 0.8)),
                                 ),
-                              ),
-                            );
-                          }),
-
-                        const SizedBox(height: 16),
-
-                        // 4. Archived memories
-                        if (_archivedMemories.isNotEmpty) ...[
-                          RitmoTheme.glassCardLight(
-                            borderRadius: 16,
-                            child: ExpansionTile(
-                              title: Row(
-                                children: [
-                                  Icon(CupertinoIcons.archivebox, size: 16, color: colors.textSecondary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'حافظه‌های بایگانی‌شده',
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  title: Text(
+                                    m.content,
                                     style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                      fontSize: 12.5,
                                       color: colors.textPrimary,
+                                      height: 1.4,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: colors.textSecondary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '${_archivedMemories.length} مورد',
-                                      style: TextStyle(fontSize: 10, color: colors.textSecondary),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              children: _archivedMemories.map((m) {
-                                return Container(
-                                  decoration: const BoxDecoration(
-                                    border: Border(top: BorderSide(color: Colors.white10)),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                    title: Text(
-                                      m.content,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: colors.textSecondary,
-                                        decoration: TextDecoration.lineThrough,
-                                      ),
-                                    ),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'حوزه: ${_getDomainLabel(m.domain)}',
-                                        style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.6)),
-                                      ),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
                                       children: [
-                                        // Restore
-                                        IconButton(
-                                          icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16, color: Colors.tealAccent),
-                                          onPressed: () => _archiveOrRestoreMemory(m, MemoryStatus.active),
+                                        // Type badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: colors.textSecondary.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            _getTypeLabel(m.type),
+                                            style: TextStyle(fontSize: 9.5, color: colors.textSecondary),
+                                          ),
                                         ),
-                                        // Delete permanently
-                                        IconButton(
-                                          icon: const Icon(CupertinoIcons.trash, size: 16, color: Colors.redAccent),
-                                          onPressed: () => _deleteMemoryPermanently(m),
+                                        // Source badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: m.source == MemorySource.explicit
+                                                ? Colors.teal.withValues(alpha: 0.1)
+                                                : Colors.blue.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            m.source == MemorySource.explicit ? 'صریح' : 'خودکار',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              color: m.source == MemorySource.explicit ? Colors.tealAccent : Colors.lightBlueAccent,
+                                            ),
+                                          ),
                                         ),
+                                        // Importance badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'اهمیت: ${m.importance}',
+                                            style: const TextStyle(fontSize: 9.5, color: Colors.orangeAccent),
+                                          ),
+                                        ),
+                                        if (m.sensitive)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.redAccent.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text(
+                                              'حساس 🔒',
+                                              style: TextStyle(fontSize: 9.5, color: Colors.redAccent),
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Pin/Unpin
+                                      IconButton(
+                                        icon: Icon(
+                                          m.pinned ? CupertinoIcons.pin_fill : CupertinoIcons.pin,
+                                          size: 16,
+                                          color: m.pinned ? Colors.amber : colors.textSecondary,
+                                        ),
+                                        onPressed: () => _togglePin(m),
+                                      ),
+                                      // Actions PopupMenu
+                                      PopupMenuButton<String>(
+                                        icon: Icon(Icons.more_vert, size: 18, color: colors.textSecondary),
+                                        color: colors.card,
+                                        onSelected: (action) {
+                                          if (action == 'edit') {
+                                            _editMemory(m);
+                                          } else if (action == 'archive') {
+                                            _archiveOrRestoreMemory(m, MemoryStatus.archived);
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(CupertinoIcons.pencil, size: 14, color: colors.textPrimary),
+                                                const SizedBox(width: 8),
+                                                Text('ویرایش', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'archive',
+                                            child: Row(
+                                              children: [
+                                                Icon(CupertinoIcons.archivebox, size: 14, color: colors.textPrimary),
+                                                const SizedBox(width: 8),
+                                                Text('بایگانی', style: TextStyle(color: colors.textPrimary, fontSize: 12)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          const SizedBox(height: 24),
-                        ],
+                        ),
+                      );
+                    }),
 
-                        // 5. Reset button
-                        if (_activeMemories.isNotEmpty || _archivedMemories.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24),
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.redAccent, width: 1.2),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(height: 16),
+
+                  // 4. Archived memories
+                  if (_archivedMemories.isNotEmpty) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: ExpansionTile(
+                        title: Row(
+                          children: [
+                            Icon(CupertinoIcons.archivebox, size: 16, color: colors.textSecondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'حافظه‌های بایگانی‌شده',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: colors.textPrimary,
                               ),
-                              icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16),
-                              label: const Text(
-                                'پاک‌کردن کل حافظه دستیار',
-                                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12.5),
-                              ),
-                              onPressed: _clearAllMemories,
                             ),
-                          ),
-                      ],
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.textSecondary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${_archivedMemories.length} مورد',
+                                style: TextStyle(fontSize: 10, color: colors.textSecondary),
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: _archivedMemories.map((m) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border(top: BorderSide(color: colors.divider.withValues(alpha: 0.5), width: 0.8)),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              title: Text(
+                                m.content,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.textSecondary,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'حوزه: ${_getDomainLabel(m.domain)}',
+                                  style: TextStyle(fontSize: 10, color: colors.textSecondary.withValues(alpha: 0.6)),
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Restore
+                                  IconButton(
+                                    icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 16, color: Colors.tealAccent),
+                                    onPressed: () => _archiveOrRestoreMemory(m, MemoryStatus.active),
+                                  ),
+                                  // Delete permanently
+                                  IconButton(
+                                    icon: const Icon(CupertinoIcons.trash, size: 16, color: Colors.redAccent),
+                                    onPressed: () => _deleteMemoryPermanently(m),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-            ),
-          ],
-        ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // 5. Reset button
+                  if (_activeMemories.isNotEmpty || _archivedMemories.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.redAccent, width: 1.2),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16),
+                        label: const Text(
+                          'پاک‌کردن کل حافظه دستیار',
+                          style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12.5),
+                        ),
+                        onPressed: _clearAllMemories,
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }

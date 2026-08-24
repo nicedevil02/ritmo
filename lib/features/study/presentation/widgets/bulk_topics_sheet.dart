@@ -40,6 +40,12 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
   List<ParsedBulkTopic> _parsedTopics = [];
   bool _isPreview = false;
 
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
   void _parseInputText() {
     final rawLines = _textController.text.split('\n');
     final parsed = <ParsedBulkTopic>[];

@@ -18,7 +18,6 @@ void main() {
         isha: DateTime(2026, 8, 6, 20, 45),
         midnightShari: DateTime(2026, 8, 7, 0, 15),
         calculationMethod: 'TEHRAN_GEOPHYSICS',
-        ihtiyatMinutes: 10,
       );
 
       final sky = skyFor(now, times);

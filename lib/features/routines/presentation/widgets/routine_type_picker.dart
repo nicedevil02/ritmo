@@ -315,37 +315,37 @@ class RoutineTypePicker extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.tune_rounded, size: 18, color: colors.primary),
-              const SizedBox(width: RitmoSpacing.sm),
+              Icon(Icons.tune_rounded, size: 16, color: colors.primary),
+              const SizedBox(width: RitmoSpacing.xs),
               Text(
                 'مدل اجرای روتین',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             'نحوهٔ یادآوری، ردیابی و تکمیل این روتین را انتخاب کنید:',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: colors.textSecondary,
             ),
           ),
-          const SizedBox(height: RitmoSpacing.sm),
+          const SizedBox(height: 6),
           InkWell(
             onTap: () => _showDropdownSheet(context),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isDark
                     ? const Color(0xFF16192E).withValues(alpha: 0.5)
                     : Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: colors.border.withValues(alpha: 0.2),
                   width: 1.2,
@@ -354,18 +354,18 @@ class RoutineTypePicker extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: colors.primary.withValues(alpha: 0.15),
                     ),
                     child: Icon(
                       selectedOpt.icon,
-                      size: 20,
+                      size: 18,
                       color: colors.primary,
                     ),
                   ),
-                  const SizedBox(width: RitmoSpacing.md),
+                  const SizedBox(width: RitmoSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,14 +375,14 @@ class RoutineTypePicker extends StatelessWidget {
                             Text(
                               selectedOpt.titleFa,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: RitmoSpacing.sm),
+                            const SizedBox(width: RitmoSpacing.xs),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
                                 color: colors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -390,7 +390,7 @@ class RoutineTypePicker extends StatelessWidget {
                               child: Text(
                                 selectedOpt.badgeFa,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.w600,
                                   color: colors.primary,
                                 ),
@@ -398,11 +398,11 @@ class RoutineTypePicker extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           selectedOpt.subtitleFa,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10.5,
                             color: colors.textSecondary,
                           ),
                           maxLines: 1,
@@ -413,7 +413,7 @@ class RoutineTypePicker extends StatelessWidget {
                   ),
                   Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: 22,
+                    size: 20,
                     color: colors.primary,
                   ),
                 ],

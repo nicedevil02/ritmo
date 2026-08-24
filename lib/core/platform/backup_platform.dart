@@ -1,8 +1,8 @@
-﻿// lib/core/platform/backup_platform.dart
+// lib/core/platform/backup_platform.dart
 
 abstract interface class BackupPlatform {
   /// Signs in to the remote cloud storage platform.
-  Future<bool> signIn();
+  Future<bool> signIn({bool silentOnly = false});
 
   /// Signs out from the cloud storage platform.
   Future<void> signOut();

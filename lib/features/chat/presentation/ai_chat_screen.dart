@@ -15,6 +15,7 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_mini_preview.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/ai/web_bridge/cloudflare_challenge_modal.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
@@ -541,6 +542,35 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _copyChatGptDiagnosticSnapshot() async {
+    try {
+      RitmoToast.show(
+        context,
+        'در حال استخراج کدهای صفحه چت‌جی‌پی‌تی...',
+        icon: Icons.hourglass_top_rounded,
+      );
+      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
+      await Clipboard.setData(ClipboardData(text: snapshot));
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در استخراج کدهای صفحه: $e',
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.error,
+        );
+      }
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -1251,6 +1281,7 @@ $suggestedSteps''';
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -1278,6 +1309,11 @@ $suggestedSteps''';
             centerTitle: true,
             actions: [
               const BridgeStatusChip(),
+              IconButton(
+                icon: const Icon(Icons.copy_all_rounded, size: 20),
+                tooltip: 'کپی گزارش تشخیصی و HTML چت‌جی‌پی‌تی',
+                onPressed: _copyChatGptDiagnosticSnapshot,
+              ),
               IconButton(
                 icon: const Icon(Icons.open_in_browser_rounded, size: 20),
                 tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
@@ -1580,14 +1616,22 @@ $suggestedSteps''';
               // 2026 Floating Chat Input Bar
               Builder(
                 builder: (context) {
-                  final isKeyboardOpen =
-                      MediaQuery.of(context).viewInsets.bottom > 0;
-                  final effectiveBottomPadding = isKeyboardOpen
-                      ? 12.0
-                      : (widget.isTab ? 88.0 : 16.0);
+                  final keyboardInset =
+                      MediaQuery.viewInsetsOf(context).bottom;
+                  final rawViewInset =
+                      MediaQueryData.fromView(View.of(context))
+                          .viewInsets
+                          .bottom;
+                  final keyboardVisible =
+                      isKeyboardOpen || keyboardInset > 0 || rawViewInset > 0;
+                  final effectiveBottomPadding = keyboardVisible
+                      ? 8.0
+                      : (widget.isTab
+                          ? (RitmoShellMetrics.navBarHeight + 8.0)
+                          : 16.0);
 
                   return SafeArea(
-                    bottom: !widget.isTab && !isKeyboardOpen,
+                    bottom: !widget.isTab && !keyboardVisible,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         16,

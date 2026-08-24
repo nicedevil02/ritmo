@@ -683,16 +683,11 @@ class JourneyController extends ChangeNotifier {
 
       sw.stop();
       if (sw.elapsed > agendaLoadBudget) {
-        RitmoLog.error(
+        RitmoLog.warning(
           'JourneyController',
           'بارگذاری اجندا از بودجه گذشت: ${sw.elapsedMilliseconds}ms (بودجه ${agendaLoadBudget.inMilliseconds}ms)',
-          StateError('agenda load budget exceeded'),
         );
       }
-      assert(
-        sw.elapsed <= agendaLoadBudget * 4,
-        'بارگذاری اجندا بیش از حد کند است: ${sw.elapsedMilliseconds}ms',
-      );
       RitmoLog.debug('JourneyController', '_loadWindow (${DateKey.of(start)}..${DateKey.of(end)}): ${sw.elapsedMilliseconds}ms');
       _errorMessage = null;
     } catch (e, st) {

@@ -22,7 +22,6 @@ void main() {
         midnightShari: '23:45',
         sunset: '19:45',
         calculationMethod: 'TEHRAN',
-        ihtiyatMinutes: 10,
       );
 
       final date = DateTime(2026, 7, 26);
@@ -51,7 +50,6 @@ void main() {
         midnightShari: '23:45',
         sunset: '19:45',
         calculationMethod: 'TEHRAN',
-        ihtiyatMinutes: 10,
       );
 
       final now = DateTime(2026, 7, 26, 14, 0); // 14:00 PM
@@ -74,7 +72,6 @@ void main() {
         midnightShari: '23:45',
         sunset: '19:45',
         calculationMethod: 'TEHRAN',
-        ihtiyatMinutes: 10,
       );
 
       final now = DateTime(2026, 7, 26, 23, 50); // 23:50 PM
@@ -98,7 +95,6 @@ void main() {
         midnightShari: '23:45',
         sunset: '19:45',
         calculationMethod: 'TEHRAN',
-        ihtiyatMinutes: 10,
       );
 
       final date = DateTime(2026, 7, 26);

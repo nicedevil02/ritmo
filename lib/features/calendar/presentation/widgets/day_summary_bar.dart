@@ -37,8 +37,8 @@ class DaySummaryBar extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.xl,
-        vertical: RitmoSpacing.xs + 2,
+        horizontal: RitmoSpacing.md,
+        vertical: 3.0,
       ),
       decoration: BoxDecoration(
         color: colors.surfaceSubtle,
@@ -68,17 +68,19 @@ class DaySummaryBar extends StatelessWidget {
             onTap: onTapFreeGaps,
             borderRadius: BorderRadius.circular(RitmoRadius.badge),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
               child: Row(
                 children: [
-                  Icon(Icons.schedule_rounded,
-                      size: 13,
-                      color: colors.textSecondary),
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 12,
+                    color: colors.textSecondary,
+                  ),
                   const SizedBox(width: 3),
                   Text(
                     'آزاد: ${_formatFreeTime(_freeMinutes)}',
                     style: TextStyle(
-                      fontSize: 12.0,
+                      fontSize: 11.0,
                       fontWeight: FontWeight.w600,
                       color: colors.textSecondary,
                     ),
@@ -101,7 +103,7 @@ class _SummaryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(RitmoRadius.badge),
@@ -109,7 +111,7 @@ class _SummaryChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12.0,
+          fontSize: 11.0,
           fontWeight: FontWeight.w600,
           color: color,
         ),

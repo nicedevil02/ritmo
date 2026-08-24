@@ -177,73 +177,68 @@ class _NowPillState extends State<NowPill>
                           Expanded(
                             child: AnimatedSwitcher(
                               duration: RitmoMotion.state,
-                              child: Row(
+                              child: KeyedSubtree(
                                 key: ValueKey('${vm.statusLabel}_${vm.targetItem?.id}'),
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (showPrefix && vm.statusLabel.isNotEmpty) ...[
-                                    Text(
-                                      vm.isCurrent
-                                          ? 'الان: '
-                                          : (vm.statusLabel == 'NEXT' ? 'بعدی: ' : ''),
-                                      style: TextStyle(
-                                        fontSize: 14.0,
-                                        fontWeight: FontWeight.w600,
-                                        color: badgeColor,
-                                      ),
-                                    ),
-                                  ],
-                                  if (vm.targetItem != null) ...[
-                                    Flexible(
-                                      child: Text(
-                                        vm.targetItem!.title,
+                                child: RepaintBoundary(
+                                  child: ValueListenableBuilder<DateTime>(
+                                    valueListenable: _nowNotifier,
+                                    builder: (context, nowVal, _) {
+                                      final label = vm.timeLabel;
+                                      final timePrefix = (vm.targetItem != null && label.isNotEmpty) ? ' · ' : '';
+                                      final nextHint = (vm.nextItemTitle != null && width >= 380)
+                                          ? ' (بعدی: ${vm.nextItemTitle})'
+                                          : '';
+
+                                      return Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            if (showPrefix && vm.statusLabel.isNotEmpty)
+                                              TextSpan(
+                                                text: vm.isCurrent
+                                                    ? 'الان: '
+                                                    : (vm.statusLabel == 'NEXT' ? 'بعدی: ' : ''),
+                                                style: TextStyle(
+                                                  fontSize: 13.0,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: badgeColor,
+                                                ),
+                                              ),
+                                            if (vm.targetItem != null)
+                                              TextSpan(
+                                                text: vm.targetItem!.title,
+                                                style: TextStyle(
+                                                  fontSize: 13.0,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: colors.textPrimary,
+                                                ),
+                                              ),
+                                            if (label.isNotEmpty)
+                                              TextSpan(
+                                                text: '$timePrefix$label',
+                                                style: TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w400,
+                                                  color: vm.isOverdue
+                                                      ? badgeColor
+                                                      : colors.textSecondary,
+                                                ),
+                                              ),
+                                            if (nextHint.isNotEmpty)
+                                              TextSpan(
+                                                text: nextHint,
+                                                style: TextStyle(
+                                                  fontSize: 10.5,
+                                                  color: colors.textTertiary,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 14.0,
-                                          fontWeight: FontWeight.w700,
-                                          color: colors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-
-                                  // Scoped Live Relative Time Update
-                                  RepaintBoundary(
-                                    child: ValueListenableBuilder<DateTime>(
-                                      valueListenable: _nowNotifier,
-                                      builder: (context, nowVal, _) {
-                                        final label = vm.timeLabel;
-                                        final prefix = (vm.targetItem != null && label.isNotEmpty) ? ' · ' : '';
-                                        return Text(
-                                          '$prefix$label',
-                                          style: TextStyle(
-                                            fontSize: 12.0,
-                                            fontWeight: FontWeight.w400,
-                                            color: vm.isOverdue
-                                                ? badgeColor
-                                                : colors.textSecondary,
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                      );
+                                    },
                                   ),
-
-                                  // Next item title hint (CAL-51)
-                                  if (vm.nextItemTitle != null && width >= 380) ...[
-                                    Flexible(
-                                      child: Text(
-                                        ' (بعدی: ${vm.nextItemTitle})',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 11.0,
-                                          color: colors.textTertiary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
+                                ),
                               ),
                             ),
                           ),

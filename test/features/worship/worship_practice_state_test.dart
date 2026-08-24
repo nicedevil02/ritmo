@@ -10,6 +10,8 @@ void main() {
         practiceType: 'PRAYER',
         subType: 'FAJR',
         title: 'نماز صبح',
+        createdAt: 0,
+        updatedAt: 0,
         dailyDone: 1,
         dailyDoneDate: '2026-08-10',
       );
@@ -32,6 +34,8 @@ void main() {
         practiceType: 'PRAYER',
         subType: 'FAJR',
         title: 'نماز صبح',
+        createdAt: 0,
+        updatedAt: 0,
         dailyDone: 1,
         dailyDoneDate: '2026-08-10',
       );
@@ -53,6 +57,8 @@ void main() {
         practiceType: 'PRAYER',
         subType: 'FAJR',
         title: 'نماز صبح',
+        createdAt: 0,
+        updatedAt: 0,
         dailyDone: 0,
         dailyDoneDate: null,
       );
@@ -74,6 +80,8 @@ void main() {
         practiceType: 'PRAYER',
         subType: 'DHUHR',
         title: 'نماز ظهر',
+        createdAt: 0,
+        updatedAt: 0,
         dailyDone: -1,
         dailyDoneDate: '2026-08-10',
       );
@@ -96,6 +104,8 @@ void main() {
         practiceType: 'PRAYER',
         subType: 'ASR',
         title: 'نماز عصر',
+        createdAt: 0,
+        updatedAt: 0,
         dailyDone: 0,
         dailyDoneDate: null,
       );

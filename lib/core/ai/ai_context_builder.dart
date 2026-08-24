@@ -355,8 +355,7 @@ class AIContextBuilder {
             'default_energy_level',
             'max_grace_per_week',
             'max_grace_per_month',
-            'prayer_calculation_method',
-            'ihtiyat_minutes'
+            'prayer_calculation_method'
           ];
           final filteredSettings = settings.where((s) => allowedKeys.contains(s['key'])).toList();
           relevantData['settings'] = filteredSettings.map((s) => {

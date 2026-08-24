@@ -19,8 +19,8 @@ void main() {
       expect(RoutineType.values, contains(RoutineType.asNeeded));
     });
 
-    test('RoutineTypePicker options contain 6 full descriptors', () {
-      expect(RoutineTypePicker.options.length, 6);
+    test('RoutineTypePicker options contain full descriptors', () {
+      expect(RoutineTypePicker.options.length, 7);
       final types = RoutineTypePicker.options.map((o) => o.type).toList();
       expect(types, containsAll([
         RoutineType.timeBased,
@@ -38,7 +38,7 @@ void main() {
         onPageChanged: (_) {},
       );
 
-      expect(controller.routineType, RoutineType.timeBased);
+      expect(controller.routineType, RoutineType.asNeeded);
 
       // Set to countBased
       controller.setRoutineType(RoutineType.countBased);

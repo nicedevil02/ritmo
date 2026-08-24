@@ -183,9 +183,10 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
         appBar: const RitmoModuleAppBar(title: 'مرکز کنترل اعلان‌ها'),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

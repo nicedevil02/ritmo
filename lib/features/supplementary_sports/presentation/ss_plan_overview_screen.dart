@@ -665,6 +665,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                     SSMuscleImageResolver.resolve(day.muscleGroups, _userGender),
                     width: 48,
                     height: 48,
+                    cacheWidth: 100,
+                    cacheHeight: 100,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       width: 48,

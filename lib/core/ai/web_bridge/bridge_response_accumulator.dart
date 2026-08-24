@@ -27,15 +27,32 @@ class BridgeResponseAccumulator {
     _currentText = '';
   }
 
-  /// Sanitizes text, stripping ChatGPT UI prefixes.
+  /// Sanitizes text, stripping ChatGPT UI prefixes and disclaimers.
   static String sanitize(String text) {
     var clean = text.trim();
-    // Remove "ChatGPT said:" or "ChatGPT:" or "چت‌جی‌پی‌تی گفت:" prefixes
+    if (clean.isEmpty) return '';
+
+    // 1. Remove prefixes like "ChatGPT گفت:", ":ChatGPT گفت:", "ChatGPT said:", "چت‌جی‌پی‌تی گفت:", "ChatGPT:"
     final prefixRe = RegExp(
-      r'^(?:ChatGPT\s*(?:said)?:?|چت‌جی‌پی‌تی\s*(?:گفت)?:?)\s*',
+      r'^(?:[•\-\*#\s:>`]|\[\d+\])*(?:ChatGPT|چت‌جی‌پی‌تی|Assistant|You|شما)\s*(?:said|گفت|گفتید)?\s*[:：\-\*]*\s*',
       caseSensitive: false,
     );
-    clean = clean.replaceFirst(prefixRe, '').trim();
+    clean = clean.replaceAll(prefixRe, '').trim();
+
+    // 2. Remove markdown bold wrappers like **ChatGPT گفت:** or **ChatGPT said:** if still present
+    final markdownBoldPrefixRe = RegExp(
+      r'^(?:\*\*|\*|#+\s*)?(?:ChatGPT|چت‌جی‌پی‌تی|Assistant)\s*(?:گفت|said)?\s*[:：\-\*]*(?:\*\*|\*)?\s*',
+      caseSensitive: false,
+    );
+    clean = clean.replaceAll(markdownBoldPrefixRe, '').trim();
+
+    // 3. Strip trailing disclaimers (English & Persian)
+    final disclaimerRe = RegExp(
+      r'(?:\n\s*)?ChatGPT\s*(?:هوش مصنوعی است و ممکن است اشتباه کند|ممکن است اشتباه کند|can make mistakes[^\n]*)\.?\s*$',
+      caseSensitive: false,
+    );
+    clean = clean.replaceAll(disclaimerRe, '').trim();
+
     return clean;
   }
 

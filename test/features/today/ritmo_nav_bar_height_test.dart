@@ -80,18 +80,18 @@ void main() {
     });
   });
 
-  group('NAV2 — برچسب فقط برای مقصد فعال', () {
-    testWidgets('در حالت کامل فقط برچسب تب فعال دیده می‌شود', (tester) async {
+  group('NAV2 — برچسب فقط برای مقصد غیرفعال', () {
+    testWidgets('در حالت کامل برچسب مقصد فعال پنهان و بقیه آشکارند', (tester) async {
       await tester.pumpWidget(harness(AppMode.full, currentIndex: 3));
       await tester.pumpAndSettle();
 
-      expect(find.text('دستیار'), findsOneWidget);
-      expect(find.text('تقویم'), findsNothing);
-      expect(find.text('سیستم‌ها'), findsNothing);
-      expect(find.text('بینش‌ها'), findsNothing);
+      expect(find.text('دستیار'), findsNothing); // Active label is hidden
+      expect(find.text('تقویم'), findsOneWidget); // Inactive labels are shown
+      expect(find.text('سیستم‌ها'), findsOneWidget);
+      expect(find.text('بینش‌ها'), findsOneWidget);
     });
 
-    testWidgets('وقتی خانه فعال است هیچ برچسبی روی نوار نیست', (tester) async {
+    testWidgets('وقتی خانه فعال است، برچسب‌های دیگر نشان داده می‌شوند', (tester) async {
       await tester.pumpWidget(
         harness(
           AppMode.full,
@@ -100,10 +100,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('تقویم'), findsNothing);
-      expect(find.text('دستیار'), findsNothing);
-      expect(find.text('سیستم‌ها'), findsNothing);
-      expect(find.text('بینش‌ها'), findsNothing);
+      expect(find.text('خانه'), findsNothing); // Home active label is hidden
+      expect(find.text('تقویم'), findsOneWidget); // Other inactive labels are shown
+      expect(find.text('دستیار'), findsOneWidget);
+      expect(find.text('سیستم‌ها'), findsOneWidget);
+      expect(find.text('بینش‌ها'), findsOneWidget);
     });
   });
 

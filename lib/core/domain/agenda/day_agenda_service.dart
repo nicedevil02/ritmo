@@ -489,8 +489,6 @@ class DayAgendaService {
       if (lng is num) longitude = lng.toDouble();
     }
 
-    final ihtiyatMinutes =
-        int.tryParse(settingsMap['ihtiyat_minutes'] ?? '0') ?? 0;
     final calcMethodStr =
         settingsMap['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
@@ -561,7 +559,6 @@ class DayAgendaService {
       overridesByDate: overridesByDate,
       latitude: latitude,
       longitude: longitude,
-      ihtiyatMinutes: ihtiyatMinutes,
       calcMethodStr: calcMethodStr,
     );
   }
@@ -857,7 +854,6 @@ class _AgendaContext {
     required this.overridesByDate,
     required this.latitude,
     required this.longitude,
-    required this.ihtiyatMinutes,
     required this.calcMethodStr,
   });
   final Map<String, String> settingsMap;
@@ -888,7 +884,6 @@ class _AgendaContext {
 
   final double latitude;
   final double longitude;
-  final int ihtiyatMinutes;
   final String calcMethodStr;
 
   /// Prayer-times cache keyed by `cityId|date`.

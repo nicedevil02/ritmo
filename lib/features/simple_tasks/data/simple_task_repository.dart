@@ -6,8 +6,10 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
+import 'package:ritmo/core/utils/snapshot_helper.dart';
 import 'package:ritmo/features/simple_tasks/data/task_attachment_repository.dart';
 import 'package:ritmo/features/simple_tasks/data/task_step_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
@@ -200,6 +202,7 @@ class SimpleTaskRepository {
         );
         return updatedTask;
       }
+      unawaited(syncWidgetSnapshot());
       return task;
     });
   }
@@ -237,6 +240,7 @@ class SimpleTaskRepository {
       timestamp: now,
       payload: {'date': current.dueDate ?? '', 'taskId': id},
     ));
+    unawaited(syncWidgetSnapshot());
   }
 
   /// Toggle task completion status
@@ -257,6 +261,7 @@ class SimpleTaskRepository {
       'updatedAt': now.millisecondsSinceEpoch,
     }, where: 'id = ?', whereArgs: [id]);
     RitmoEventBus().fire(RitmoEvent(type: 'TaskUpdated', timestamp: now, payload: {'date': current.dueDate ?? '', 'taskId': id}));
+    unawaited(syncWidgetSnapshot());
   }
 
   Future<void> toggleImportant(String id) async {
@@ -275,6 +280,7 @@ class SimpleTaskRepository {
       'updatedAt': now.millisecondsSinceEpoch,
     }, where: 'id = ?', whereArgs: [id]);
     RitmoEventBus().fire(RitmoEvent(type: 'TaskUpdated', timestamp: now, payload: {'date': current.dueDate ?? '', 'taskId': id}));
+    unawaited(syncWidgetSnapshot());
   }
 
   Future<void> toggleMyDay(String id) async {
@@ -299,6 +305,49 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': task.dueDate ?? '', 'taskId': task.id},
     ));
+    unawaited(syncWidgetSnapshot());
+  }
+
+  /// Syncs tasks snapshot for the Android Home Screen Widget (Phase 8)
+  Future<void> syncWidgetSnapshot() async {
+    try {
+      final db = await _db;
+      final rows = await db.query(
+        'simple_tasks',
+        orderBy: 'isDone ASC, isImportant DESC, orderIndex ASC, createdAt ASC',
+      );
+      final allTasks = rows.map((m) => SimpleTask.fromMap(m)).toList();
+      final now = DateTime.now();
+      final todayStr = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      final todayTasks = allTasks.where((t) {
+        if (t.isInMyDay) return true;
+        if (t.dueDate == todayStr) return true;
+        if (!t.isDone && t.dueDate != null && t.dueDate!.compareTo(todayStr) < 0) return true;
+        return false;
+      }).toList();
+
+      final pendingCount = todayTasks.where((t) => !t.isDone).length;
+      final totalCount = todayTasks.length;
+      final remainingText = totalCount == 0
+          ? 'کاری برای امروز نیست'
+          : '${PersianDigits.toPersian(pendingCount)} کار مانده از ${PersianDigits.toPersian(totalCount)}';
+
+      final widgetList = todayTasks.take(15).map((t) => {
+        'id': t.id,
+        'title': t.title,
+        'isDone': t.isDone,
+        'isImportant': t.isImportant,
+      }).toList();
+
+      await SnapshotHelper.updateTasksWidgetSnapshot(
+        headerTitle: 'کارهای امروز',
+        remainingText: remainingText,
+        tasks: widgetList,
+      );
+    } catch (e, st) {
+      RitmoLog.warning('SimpleTaskRepository', 'Failed to sync tasks widget snapshot', e, st);
+    }
   }
 
   /// Returns a single task by ID
@@ -376,6 +425,7 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': snapshot.task.dueDate ?? '', 'taskId': snapshot.task.id},
     ));
+    unawaited(syncWidgetSnapshot());
   }
 
   /// Delete task + steps + attachments + cancel alarm
@@ -407,6 +457,7 @@ class SimpleTaskRepository {
       timestamp: DateTime.now(),
       payload: {'date': task.dueDate ?? '', 'taskId': task.id},
     ));
+    unawaited(syncWidgetSnapshot());
 
     return TaskSnapshot(task: task, steps: steps, attachments: attachments);
   }

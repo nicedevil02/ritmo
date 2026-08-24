@@ -5,9 +5,10 @@ import 'package:ritmo/core/services/backup_passcode_manager.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/restart_widget.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -535,23 +536,11 @@ class _BackupScreenState extends State<BackupScreen> {
 
   Widget _buildCard({required Widget child, Color? borderColor}) {
     final colors = context.colors;
-    final isDark = context.isDark;
 
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor ?? (isDark ? Colors.white.withValues(alpha: 0.1) : colors.border),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
       ),
       child: child,
     );
@@ -560,51 +549,19 @@ class _BackupScreenState extends State<BackupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = context.isDark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: colors.background,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: Text(
-            'پشتیبان‌گیری ابری ☁️',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-              color: colors.textPrimary,
-            ),
-          ),
-          leading: IconButton(
-            icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
-          ),
+      child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
+        appBar: const RitmoModuleAppBar(
+          title: 'پشتیبان‌گیری ابری',
         ),
         body: Stack(
           children: [
-            // Background Gradient
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isDarkMode
-                        ? [const Color(0xff08090C), const Color(0xff12141C)]
-                        : [colors.background, colors.surfaceSunken],
-                  ),
-                ),
-              ),
-            ),
-            
-            // Content Scroll
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
+            ListView(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
+              children: [
                   // 1. Google Account Status
                   _buildCard(
                     child: Padding(
@@ -873,7 +830,6 @@ class _BackupScreenState extends State<BackupScreen> {
                                     decoration: BoxDecoration(
                                       color: colors.surfaceSunken,
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: colors.border),
                                     ),
                                     child: Row(
                                       children: [
@@ -1002,7 +958,6 @@ class _BackupScreenState extends State<BackupScreen> {
                   const SizedBox(height: 20),
                 ],
               ),
-            ),
 
             // Loading overlay
             if (_isLoading)

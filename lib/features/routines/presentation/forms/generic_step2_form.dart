@@ -205,45 +205,45 @@ class GenericStep2Form extends StatelessWidget {
               TextFormField(
                 initialValue: controller.title,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   labelText: 'عنوان فعالیت *',
                   labelStyle: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: colors.primary,
                   ),
                   hintText: 'مثلاً: نوشیدن آب، تمرین یوگا، مطالعه کتاب...',
                   hintStyle: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     color: colors.textSecondary.withValues(alpha: 0.4),
                   ),
-                  prefixIcon: Icon(Icons.edit_note_rounded, size: 22, color: colors.primary),
+                  prefixIcon: Icon(Icons.edit_note_rounded, size: 19, color: colors.primary),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF16192E).withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.85),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: colors.border.withValues(alpha: 0.15)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: colors.border.withValues(alpha: 0.15)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: colors.primary, width: 1.8),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: colors.primary, width: 1.6),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
                 onChanged: (val) {
                   controller.title = val;
                   controller.inputController.text = val;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
 
               // 1. Routine Type Selector (مدل اجرای روتین)
               RoutineTypePicker(
@@ -257,7 +257,7 @@ class GenericStep2Form extends StatelessWidget {
                   controller.notifyListeners();
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
 
               // 2. Dynamic Type-Specific Configuration Sections
               ..._buildTypeSpecificSections(context, colors, isDark),
@@ -281,6 +281,8 @@ class GenericStep2Form extends StatelessWidget {
         _buildRecurrenceCard(context, colors, isDark),
         const SizedBox(height: 12),
         _buildReminderCard(context, colors, isDark),
+        const SizedBox(height: 12),
+        _buildPrivateReminderCard(context, colors, isDark),
       ];
     }
 
@@ -293,6 +295,8 @@ class GenericStep2Form extends StatelessWidget {
         _buildRecurrenceCard(context, colors, isDark),
         const SizedBox(height: 12),
         _buildReminderCard(context, colors, isDark),
+        const SizedBox(height: 12),
+        _buildPrivateReminderCard(context, colors, isDark),
       ];
     }
 
@@ -306,6 +310,8 @@ class GenericStep2Form extends StatelessWidget {
           _buildRecurrenceCard(context, colors, isDark),
           const SizedBox(height: 12),
           _buildReminderCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildPrivateReminderCard(context, colors, isDark),
         ];
 
       case RoutineType.countBased:
@@ -315,6 +321,8 @@ class GenericStep2Form extends StatelessWidget {
           _buildRecurrenceCard(context, colors, isDark),
           const SizedBox(height: 12),
           _buildReminderCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildPrivateReminderCard(context, colors, isDark),
         ];
 
       case RoutineType.progressive:
@@ -326,6 +334,8 @@ class GenericStep2Form extends StatelessWidget {
           _buildRecurrenceCard(context, colors, isDark),
           const SizedBox(height: 12),
           _buildReminderCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildPrivateReminderCard(context, colors, isDark),
         ];
 
       case RoutineType.intervalBased:
@@ -333,6 +343,8 @@ class GenericStep2Form extends StatelessWidget {
           _buildIntervalBasedSection(context, colors, isDark),
           const SizedBox(height: 12),
           _buildReminderCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildPrivateReminderCard(context, colors, isDark),
         ];
 
       case RoutineType.dependent:
@@ -340,6 +352,8 @@ class GenericStep2Form extends StatelessWidget {
           _buildDependentSection(context, colors, isDark),
           const SizedBox(height: 12),
           _buildDurationCard(context, colors, isDark),
+          const SizedBox(height: 12),
+          _buildPrivateReminderCard(context, colors, isDark),
         ];
 
       case RoutineType.asNeeded:
@@ -353,10 +367,10 @@ class GenericStep2Form extends StatelessWidget {
 
   Widget _buildDurationCard(BuildContext context, RitmoColors colors, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border.withValues(alpha: 0.1)),
       ),
       child: Row(
@@ -365,7 +379,7 @@ class GenericStep2Form extends StatelessWidget {
           Text(
             'مدت زمان',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13.5,
               fontWeight: FontWeight.bold,
               color: colors.textPrimary,
             ),
@@ -373,14 +387,14 @@ class GenericStep2Form extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E2235).withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.remove, size: 18),
+                  icon: const Icon(Icons.remove, size: 16),
                   onPressed: () => controller.adjustDuration(-15),
                   color: colors.textPrimary.withValues(alpha: 0.6),
                 ),
@@ -388,11 +402,11 @@ class GenericStep2Form extends StatelessWidget {
                   onTap: () => _showDurationManualDialog(context, colors),
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Text(
                       '${toPersianDigits(controller.targetDuration.toString())} دقیقه',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: colors.primary,
                         decoration: TextDecoration.underline,
@@ -401,7 +415,7 @@ class GenericStep2Form extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(Icons.add, size: 16),
                   onPressed: () => controller.adjustDuration(15),
                   color: colors.textPrimary.withValues(alpha: 0.6),
                 ),
@@ -419,10 +433,10 @@ class GenericStep2Form extends StatelessWidget {
         GestureDetector(
           onTap: () => _showRecurrencePicker(context, colors),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colors.border.withValues(alpha: 0.1)),
             ),
             child: Row(
@@ -431,7 +445,7 @@ class GenericStep2Form extends StatelessWidget {
                 Text(
                   'تکرار',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: colors.textPrimary,
                   ),
@@ -444,10 +458,10 @@ class GenericStep2Form extends StatelessWidget {
                           : (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY'
                               ? 'روزهای انتخابی'
                               : 'فقط یک‌بار'),
-                      style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                      style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.sync_rounded, size: 18, color: colors.textSecondary.withValues(alpha: 0.7)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.sync_rounded, size: 16, color: colors.textSecondary.withValues(alpha: 0.7)),
                   ],
                 ),
               ],
@@ -455,12 +469,12 @@ class GenericStep2Form extends StatelessWidget {
           ),
         ),
         if (controller.recurrenceType == 'CUSTOM_DAYS' || controller.recurrenceType == 'WEEKLY') ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colors.border.withValues(alpha: 0.08)),
             ),
             child: Column(
@@ -469,12 +483,12 @@ class GenericStep2Form extends StatelessWidget {
                 Text(
                   'روزهای تکرار در هفته:',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: colors.textSecondary.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 PlannerWeekdaysPicker(
                   selectedDays: controller.worshipSelectedDays,
                   onChanged: (days) {
@@ -494,10 +508,10 @@ class GenericStep2Form extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showReminderPicker(context, colors),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: colors.border.withValues(alpha: 0.1)),
         ),
         child: Row(
@@ -506,7 +520,7 @@ class GenericStep2Form extends StatelessWidget {
             Text(
               'یادآوری',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 13.5,
                 fontWeight: FontWeight.bold,
                 color: colors.textPrimary,
               ),
@@ -517,11 +531,96 @@ class GenericStep2Form extends StatelessWidget {
                   controller.reminderOffsetMinutes == 0
                       ? 'همزمان با شروع'
                       : '${toPersianDigits(controller.reminderOffsetMinutes.toString())} دقیقه قبل',
-                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                  style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+                const SizedBox(width: 6),
+                Icon(Icons.arrow_forward_ios_rounded, size: 13, color: colors.textSecondary.withValues(alpha: 0.6)),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrivateReminderCard(BuildContext context, RitmoColors colors, bool isDark) {
+    final isSelected = controller.isPrivate;
+    return GestureDetector(
+      onTap: () {
+        RitmoHaptics.selection();
+        controller.isPrivate = !controller.isPrivate;
+        controller.notifyListeners();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colors.primary.withValues(alpha: isDark ? 0.14 : 0.08)
+              : (isDark ? const Color(0xFF16192E).withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.75)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? colors.primary.withValues(alpha: 0.5)
+                : colors.border.withValues(alpha: 0.1),
+            width: isSelected ? 1.4 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colors.primary.withValues(alpha: 0.18)
+                    : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.04)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                isSelected ? Icons.lock_rounded : Icons.lock_outline_rounded,
+                size: 18,
+                color: isSelected ? colors.primary : colors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'اعلان خصوصی و محرمانه',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? colors.primary : colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'مخفی‌سازی متن در اعلان + قفل با اثرانگشت/رمز',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isSelected
+                          ? colors.primary.withValues(alpha: 0.85)
+                          : colors.textSecondary.withValues(alpha: 0.7),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Switch.adaptive(
+              value: isSelected,
+              activeThumbColor: colors.primary,
+              activeTrackColor: colors.primary.withValues(alpha: 0.35),
+              onChanged: (val) {
+                RitmoHaptics.selection();
+                controller.isPrivate = val;
+                controller.notifyListeners();
+              },
             ),
           ],
         ),

@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
+import 'package:ritmo/core/database/seed/mock_data_seeder.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/services/end_of_day_sweep.dart';
-import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -22,6 +22,9 @@ class DatabaseHelper {
   static Database? _database;
   static const int _dbVersion = 116;
   static int get dbVersionForTest => _dbVersion;
+
+  /// Optional decoupled warmup hooks registered by application features.
+  static final List<Future<void> Function()> warmupHooks = [];
 
   /// Hijri month number of Ramadan - the only month qada fasting is owed for.
   static const int _ramadanHijriMonth = 9;
@@ -43,29 +46,22 @@ class DatabaseHelper {
     final existing = _database;
     if (existing != null && existing.isOpen) return existing;
 
-    // Reset dead/closed database reference (P0-02)
-    if (existing != null && !existing.isOpen) {
-      _database = null;
-      _dbInitCompleter = null;
-    }
+    final completer = _dbInitCompleter;
+    if (completer != null) return completer.future;
 
-    final inFlight = _dbInitCompleter;
-    if (inFlight != null) return inFlight.future;
-
-    final completer = Completer<Database>();
-    _dbInitCompleter = completer;
-    completer.future.ignore();
+    final newCompleter = Completer<Database>();
+    _dbInitCompleter = newCompleter;
 
     try {
       final db = await _initDB('ritmo.db');
       _database = db;
-      completer.complete(db);
+      newCompleter.complete(db);
       return db;
     } catch (e, st) {
-      _dbInitCompleter = null;
-      _database = null;
-      completer.completeError(e, st);
+      newCompleter.completeError(e, st);
       rethrow;
+    } finally {
+      _dbInitCompleter = null;
     }
   }
 
@@ -78,8 +74,13 @@ class DatabaseHelper {
         await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
       } catch (_) {}
       await SeedService.seedSupplementarySports(db);
+      await MockDataSeeder.purgeIfLegacyMock(db);
       await _checkDailySweep(db);
-      unawaited(MovementReminderService.rescheduleWeekReminders());
+      for (final hook in warmupHooks) {
+        try {
+          unawaited(hook());
+        } catch (_) {}
+      }
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Warmup error', e, st);
     }
@@ -197,6 +198,9 @@ class DatabaseHelper {
     await db.rawQuery('PRAGMA journal_mode=WAL;');
     await db.rawQuery('PRAGMA synchronous=NORMAL;');
     try {
+      await db.rawQuery('PRAGMA cache_size = -2000;'); // Bound SQLite cache to ~2MB
+      await db.rawQuery('PRAGMA temp_store = MEMORY;');
+      await db.rawQuery('PRAGMA wal_autocheckpoint = 100;');
       await db.rawQuery('PRAGMA busy_timeout = 10000;');
     } catch (_) {}
   }

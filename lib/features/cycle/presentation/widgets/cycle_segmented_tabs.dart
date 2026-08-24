@@ -37,7 +37,7 @@ class CycleSegmentedTabs extends StatelessWidget {
           },
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 2),
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
             decoration: BoxDecoration(
               color: isActive
                   ? activeThemeColor.withValues(alpha: 0.12)
@@ -54,28 +54,34 @@ class CycleSegmentedTabs extends StatelessWidget {
                 width: 1.2,
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 13,
-                  color: isActive
-                      ? activeThemeColor
-                      : (isDark ? Colors.white54 : colors.textSecondary),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 13,
                     color: isActive
                         ? activeThemeColor
-                        : (isDark ? Colors.white70 : colors.textSecondary),
+                        : (isDark ? Colors.white54 : colors.textSecondary),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 3),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      color: isActive
+                          ? activeThemeColor
+                          : (isDark ? Colors.white70 : colors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

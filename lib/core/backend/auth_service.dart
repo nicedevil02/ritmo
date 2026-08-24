@@ -171,14 +171,15 @@ class AuthService extends ChangeNotifier {
       final user = result.data!;
       final phone = user.phone;
       final email = user.email;
-      final rawId = phone.isNotEmpty ? phone : (email.isNotEmpty ? email : user.name);
+      final rawId = email.isNotEmpty ? email : (phone.isNotEmpty ? phone : user.name);
       final masked = maskIdentifier(rawId);
+      final isGoogleUser = user.registration.isNotEmpty && (user.password?.isEmpty ?? true);
 
       await _saveStateToLocalDb(
         loggedIn: true,
-        provider: phone.isNotEmpty ? 'phone' : (email.isNotEmpty ? 'email' : 'google'),
+        provider: email.isNotEmpty ? 'email' : (phone.isNotEmpty ? 'phone' : 'google'),
         maskedIdentifier: masked,
-        isGoogleLinked: email.contains('@gmail.com') || _state.isGoogleLinked,
+        isGoogleLinked: isGoogleUser || _state.isGoogleLinked,
       );
     }
   }
@@ -193,67 +194,7 @@ class AuthService extends ChangeNotifier {
     );
   }
 
-  /// Flow 2: Request Phone OTP
-  Future<AuthResult<bool>> requestPhoneOtp(String rawPhone) async {
-    final normalized = normalizeIranianPhone(rawPhone);
-    if (normalized == null) {
-      return const AuthResult.failure(AuthErrorCode.invalidPhone);
-    }
-
-    final res = await _gateway.executeCoreFunction({
-      'action': 'otp/request',
-      'phone': normalized,
-    });
-    if (!res.isSuccess) return AuthResult.failure(res.errorCode, res.errorMessage);
-
-    return const AuthResult.success(true);
-  }
-
-  /// Flow 2: Verify Phone OTP
-  Future<AuthResult<bool>> verifyPhoneOtp(String rawPhone, String otpCode) async {
-    final normalized = normalizeIranianPhone(rawPhone);
-    if (normalized == null) {
-      return const AuthResult.failure(AuthErrorCode.invalidPhone);
-    }
-
-    if (otpCode.trim().length != 6) {
-      return const AuthResult.failure(AuthErrorCode.wrongOtp);
-    }
-
-    final res = await _gateway.executeCoreFunction({
-      'action': 'otp/verify',
-      'phone': normalized,
-      'code': otpCode.trim(),
-    });
-    if (!res.isSuccess) return AuthResult.failure(res.errorCode, res.errorMessage);
-
-    try {
-      final responseData = jsonDecode(res.data ?? '{}') as Map<String, dynamic>;
-      final userId = responseData['userId'] as String?;
-      final secret = responseData['secret'] as String?;
-
-      if (userId != null && secret != null) {
-        final sessionRes = await _gateway.createSessionWithToken(userId, secret);
-        if (!sessionRes.isSuccess) {
-          return AuthResult.failure(sessionRes.errorCode, sessionRes.errorMessage);
-        }
-      }
-
-      await _saveStateToLocalDb(
-        loggedIn: true,
-        provider: 'phone',
-        maskedIdentifier: maskIdentifier(normalized),
-        isGoogleLinked: _state.isGoogleLinked,
-      );
-
-      return const AuthResult.success(true);
-    } catch (e, st) {
-      RitmoLog.error('AuthService', 'OTP verify response parse error', e, st);
-      return const AuthResult.failure(AuthErrorCode.unknown);
-    }
-  }
-
-  /// Flow 3: Google Login
+  /// Flow 2: Google Login
   Future<AuthResult<bool>> loginWithGoogle() async {
     final res = await _gateway.loginWithGoogle();
     if (res.isSuccess) {
@@ -262,10 +203,10 @@ class AuthService extends ChangeNotifier {
     return res;
   }
 
-  /// Flow 4: Email OTP (Fallback)
+  /// Flow 3: Email OTP (Magic Token)
   Future<AuthResult<String>> requestEmailOtp(String email) async {
     if (!email.contains('@') || !email.contains('.')) {
-      return const AuthResult.failure(AuthErrorCode.invalidPhone, 'ایمیل واردشده معتبر نیست.');
+      return const AuthResult.failure(AuthErrorCode.unknown, 'ایمیل واردشده معتبر نیست.');
     }
     final res = await _gateway.createEmailToken('unique()', email.trim());
     if (!res.isSuccess || res.data == null) return AuthResult.failure(res.errorCode, res.errorMessage);

@@ -115,12 +115,6 @@ const Map<String, SettingSchema> kAiSettingsAllowlist = {
     ],
     humanLabel: 'فرمول محاسباتی اوقات شرعی',
   ),
-  'ihtiyat_minutes': SettingSchema(
-    type: 'int',
-    min: 0,
-    max: 60,
-    humanLabel: 'زمان احتیاط اوقات شرعی',
-  ),
 };
 
 // Security denylist & pattern checks

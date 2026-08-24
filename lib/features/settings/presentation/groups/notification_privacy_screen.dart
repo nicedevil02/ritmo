@@ -58,9 +58,10 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
+        padding: EdgeInsets.zero,
         appBar: const RitmoModuleAppBar(title: 'حریم خصوصی اعلان‌ها'),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -196,8 +197,7 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,8 +220,8 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(12),
+              color: colors.surfaceSunken,
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
               children: [

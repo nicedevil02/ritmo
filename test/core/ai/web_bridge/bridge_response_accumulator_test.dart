@@ -108,13 +108,45 @@ void main() {
       expect(accumulator.text, equals('بخش اول بخش دوم'));
     });
 
-    test('Case 8: Strips ChatGPT said: noise prefix', () {
-      final res = accumulator.applyFull(
+    test('Case 8: Strips ChatGPT said: and ChatGPT گفت: noise prefixes', () {
+      final res1 = accumulator.applyFull(
         'ChatGPT said:\nاین یک پاسخ واقعی است.',
         source: 'dom',
       );
-      expect(res, isNotNull);
-      expect(res!.fullText, equals('این یک پاسخ واقعی است.'));
+      expect(res1, isNotNull);
+      expect(res1!.fullText, equals('این یک پاسخ واقعی است.'));
+
+      accumulator.reset();
+      final res2 = accumulator.applyFull(
+        'ChatGPT گفت:\nسلام الی 🌱\nخوش اومدی!',
+        source: 'dom',
+      );
+      expect(res2, isNotNull);
+      expect(res2!.fullText, equals('سلام الی 🌱\nخوش اومدی!'));
+
+      accumulator.reset();
+      final res3 = accumulator.applyFull(
+        ':ChatGPT گفت:\nسلام الی',
+        source: 'dom',
+      );
+      expect(res3, isNotNull);
+      expect(res3!.fullText, equals('سلام الی'));
+
+      accumulator.reset();
+      final res4 = accumulator.applyFull(
+        '**ChatGPT گفت:**\nسلام الی',
+        source: 'dom',
+      );
+      expect(res4, isNotNull);
+      expect(res4!.fullText, equals('سلام الی'));
+
+      accumulator.reset();
+      final res5 = accumulator.applyFull(
+        'سلام الی\nChatGPT هوش مصنوعی است و ممکن است اشتباه کند.',
+        source: 'dom',
+      );
+      expect(res5, isNotNull);
+      expect(res5!.fullText, equals('سلام الی'));
     });
 
     test('reset clears accumulator text', () {

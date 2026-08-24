@@ -48,6 +48,7 @@ import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_session_repository.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/ss_session_repository_impl.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/movement_reminder_service.dart';
 
 final sl = GetIt.instance;
 
@@ -151,6 +152,11 @@ class AppBootstrapper {
 
       // 7. Register Backend Auth Services (BOOT-02: init deferred to non-critical path)
       sl.registerSingleton<AuthService>(AuthService.instance);
+
+      // 8. Register feature warmup hooks
+      if (!DatabaseHelper.warmupHooks.contains(MovementReminderService.rescheduleWeekReminders)) {
+        DatabaseHelper.warmupHooks.add(MovementReminderService.rescheduleWeekReminders);
+      }
 
       _initialized = true;
     } catch (e, st) {

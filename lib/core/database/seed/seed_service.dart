@@ -60,7 +60,6 @@ class SeedService {
       'app_lock_timeout_seconds': '300',
       'user_gender': 'UNSET',
       'prayer_calculation_method': 'TEHRAN_GEOPHYSICS',
-      'ihtiyat_minutes': '0',
       'home_city_id': 'TEHRAN_TEHRAN',
       'current_streak': '0',
       'longest_streak': '0',
@@ -641,6 +640,16 @@ class SeedService {
       await simBatch.commit(noResult: true);
       await _translateExistingSeededExercises(db);
 
+      if (shouldForceReseed) {
+        try {
+          await db.update(
+            'app_settings',
+            {'value': 'false'},
+            where: 'key = ?',
+            whereArgs: ['ss_reseed_v38'],
+          );
+        } catch (_) {}
+      }
     } catch (e) {
       debugPrint('Error seeding supplementary sports: $e');
     }

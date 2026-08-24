@@ -61,7 +61,7 @@ class GenericStrategy implements PlannerCategoryStrategy {
       'lightDurationMinutes': 0,
       'minimalDurationMinutes': 0,
       'isArchived': 0,
-      'isPrivate': 0,
+      'isPrivate': c.isPrivate ? 1 : 0,
       'displayOrder': 1,
       'createdAt': c.isEditing ? c.routineToEdit!['createdAt'] ?? now : now,
       'updatedAt': now,

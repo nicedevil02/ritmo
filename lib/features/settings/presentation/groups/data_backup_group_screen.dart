@@ -204,9 +204,10 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
     final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: const RitmoModuleAppBar(title: 'داده و پشتیبان'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
         child: Column(
           children: [
             if (showAdvanced)

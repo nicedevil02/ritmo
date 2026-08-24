@@ -1,5 +1,7 @@
 // ریپازیتوری تنظیمات تم — یکپارچه با SettingsService و مدیریت state دینامیک
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -14,7 +16,22 @@ class ThemeRepository {
     ThemeMode.system,
   );
 
+  StreamSubscription<String>? _settingsSubscription;
+
   Future<void> init() async {
+    _syncFromSettings();
+    await _settingsSubscription?.cancel();
+    _settingsSubscription = SettingsService.instance.changes.listen((key) {
+      if (key == 'theme_mode' ||
+          key == 'theme_palette' ||
+          key == 'theme_reduce_transparency' ||
+          key == 'theme_true_black') {
+        _syncFromSettings();
+      }
+    });
+  }
+
+  void _syncFromSettings() {
     try {
       final modeStr = SettingsService.instance.get<String>('theme_mode');
       final paletteStr = SettingsService.instance.get<String>('theme_palette');
@@ -43,6 +60,11 @@ class ThemeRepository {
         st,
       );
     }
+  }
+
+  void dispose() {
+    unawaited(_settingsSubscription?.cancel());
+    _settingsSubscription = null;
   }
 
   ThemeMode _parseThemeMode(String val) {

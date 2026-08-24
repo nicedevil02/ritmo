@@ -144,7 +144,6 @@ void main() {
         isha: '20:30',
         midnightShari: '23:30',
         calculationMethod: 'TEHRAN_GEOPHYSICS',
-        ihtiyatMinutes: 10,
       );
 
       // Current time is 11:58 (10 minutes before Dhuhr -> should be highlighted as urgent)
@@ -260,28 +259,21 @@ void main() {
       expect(await DatabaseHelper.instance.isUserMenstruating(), isTrue);
     });
 
-    test('6. Hijri Caching and Key Retrieval', () async {
+    test('6. Hijri Offline Calculation and Offset Retrieval', () async {
       final date = DateTime(2026, 6, 23);
-      const cacheKey = 'hijri_date_2026_06_23';
 
-      // Insert cached hijri mapping
-      final hijriMap = {
-        'day': 8,
-        'month': 12,
-        'year': 1447,
-        'monthName': 'ذوالحجه',
-        'formatted': '۸ ذوالحجه ۱۴۴۷',
-      };
-      
+      final hijriNormal = await HijriDate.getOrFetch(date, db);
+      expect(hijriNormal.day, equals(7));
+      expect(hijriNormal.year, equals(1448));
+
+      // With offset +1
       await db.insert('app_settings', {
-        'key': cacheKey,
-        'value': json.encode(hijriMap),
+        'key': 'hijri_offset',
+        'value': '1',
       });
 
-      final cached = await HijriDate.getOrFetch(date, db);
-      expect(cached, isNotNull);
-      expect(cached!.day, equals(8));
-      expect(cached.formatted, equals('۸ ذوالحجه ۱۴۴۷'));
+      final hijriShifted = await HijriDate.getOrFetch(date, db);
+      expect(hijriShifted.day, equals(8));
     });
   });
 }

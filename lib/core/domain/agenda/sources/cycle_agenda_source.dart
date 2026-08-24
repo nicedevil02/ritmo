@@ -1,7 +1,3 @@
-// C-36: CycleAgendaSource
-// Generates agenda items for both past/recorded periods and future prediction windows.
-// Respects female gender, cycle module enablement, dashboard consent, and pregnancy mode.
-// Uses RitmoEngineBus for cached engine evaluation and supports multiple simultaneous agenda items.
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/sources/agenda_source.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
@@ -10,6 +6,7 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
@@ -112,7 +109,7 @@ class CycleAgendaSource implements AgendaSource {
     final day = CycleDateContract.cleanDate(date);
     final items = <AgendaItem>[];
 
-    // 1. Check actual recorded/past periods from cycle_periods
+    // 1. Check actual recorded/past periods from cycle_periods (روزهای قاعدگی)
     for (final row in periodRows) {
       final start = CycleDateContract.parseDayKey(row['startDate']?.toString());
       if (start == null) continue;
@@ -130,7 +127,7 @@ class CycleAgendaSource implements AgendaSource {
               ),
               domain: AgendaDomain.cycle,
               sourceId: '${ctx.dateStr}_actual',
-              title: 'Natural Body Rhythm (Day $dayNum)',
+              title: 'دوره قاعدگی (روز ${toPersianDigits(dayNum)})',
               dateStr: ctx.dateStr,
               category: Category.personal,
               priority: 0.85,
@@ -156,7 +153,7 @@ class CycleAgendaSource implements AgendaSource {
               ),
               domain: AgendaDomain.cycle,
               sourceId: '${ctx.dateStr}_actual_open',
-              title: 'Natural Body Rhythm (Day $dayNum)',
+              title: 'دوره قاعدگی (روز ${toPersianDigits(dayNum)})',
               dateStr: ctx.dateStr,
               category: Category.personal,
               priority: 0.85,
@@ -171,7 +168,7 @@ class CycleAgendaSource implements AgendaSource {
       }
     }
 
-    // 2. Future prediction items
+    // 2. Future prediction items (پیش‌بینی قاعدگی بعدی و PMS — بدون پنجره باروری)
     final out = cycleOutput;
     if (out != null &&
         out.hasData &&
@@ -183,7 +180,7 @@ class CycleAgendaSource implements AgendaSource {
         return CycleDateContract.inWindow(day, s, e);
       }
 
-      // Next period prediction window
+      // Next period prediction window (پیش‌بینی قاعدگی بعدی)
       if (inFutureWindow(out.nextPeriodWindowStart, out.nextPeriodWindowEnd)) {
         items.add(
           AgendaItem(
@@ -194,7 +191,7 @@ class CycleAgendaSource implements AgendaSource {
             ),
             domain: AgendaDomain.cycle,
             sourceId: '${ctx.dateStr}_pred_period',
-            title: 'Period Prediction Window',
+            title: 'پیش‌بینی دوره قاعدگی بعدی',
             dateStr: ctx.dateStr,
             category: Category.personal,
             priority: 0.8,
@@ -206,7 +203,7 @@ class CycleAgendaSource implements AgendaSource {
         );
       }
 
-      // PMS window prediction
+      // PMS window prediction (پیش‌بینی PMS)
       if (inFutureWindow(out.pmsWindowStart, out.pmsWindowEnd)) {
         items.add(
           AgendaItem(
@@ -217,7 +214,7 @@ class CycleAgendaSource implements AgendaSource {
             ),
             domain: AgendaDomain.cycle,
             sourceId: '${ctx.dateStr}_pred_pms',
-            title: 'PMS Prediction Window',
+            title: 'پیش‌بینی سندروم پیش از قاعدگی (PMS)',
             dateStr: ctx.dateStr,
             category: Category.personal,
             priority: 0.75,
@@ -228,6 +225,9 @@ class CycleAgendaSource implements AgendaSource {
           ),
         );
       }
+
+      // NOTE: Fertile window (پنجره باروری) is deliberately excluded from the main calendar agenda,
+      // and remains visible exclusively within the private Cycle screen calendar.
     }
 
     return items;

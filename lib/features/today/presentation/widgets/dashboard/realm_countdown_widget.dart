@@ -111,14 +111,16 @@ class _RealmCountdownWidgetState extends State<RealmCountdownWidget> with Widget
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: _remainingSeconds,
-      builder: (context, seconds, child) {
-        return Text(
-          'باقی‌مانده: ${_formatDuration(seconds)}',
-          style: widget.style,
-        );
-      },
+    return RepaintBoundary(
+      child: ValueListenableBuilder<int>(
+        valueListenable: _remainingSeconds,
+        builder: (context, seconds, child) {
+          return Text(
+            'باقی‌مانده: ${_formatDuration(seconds)}',
+            style: widget.style,
+          );
+        },
+      ),
     );
   }
 }

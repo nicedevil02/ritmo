@@ -154,7 +154,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
 
                   final dayNumStr = toPersianDigits(jDay.day.toString());
 
-                  final semanticsLabel = '${jDay.formatter.wN} $dayNumStr ${jDay.formatter.mN}، ${toPersianDigits(items.length)} برنامه${isHoliday || isFriday ? '، تعطیل' : ''}';
+                  final semanticsLabel = '${ShamsiWeek.nameOf(jDay.weekDay)} $dayNumStr ${jDay.formatter.mN}، ${toPersianDigits(items.length)} برنامه${isHoliday || isFriday ? '، تعطیل' : ''}';
 
                   return DragTarget<AgendaItem>(
                     onWillAcceptWithDetails: (details) => DateKey.of(day) != details.data.dateStr,

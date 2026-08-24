@@ -1,5 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
+import 'package:sqflite/sqflite.dart';
 
 class InboxPolicy {
   static bool shouldPush({
@@ -23,9 +24,12 @@ class InboxPolicy {
     }
   }
 
-  static Future<bool> withinRateLimit(InboxCategory category) async {
+  static Future<bool> withinRateLimit(
+    InboxCategory category, {
+    DatabaseExecutor? executor,
+  }) async {
     try {
-      final db = await DatabaseHelper.instance.database;
+      final db = executor ?? await DatabaseHelper.instance.database;
       final startOfDay = DateTime(
         DateTime.now().year,
         DateTime.now().month,

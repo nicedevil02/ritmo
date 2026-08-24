@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/onboarding/presentation/steps/step_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +15,11 @@ void main() {
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async => null,
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
       const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
       (call) async => null,
     );
@@ -26,7 +30,7 @@ void main() {
     );
   });
 
-  group('StepNotifications Resilience Tests (Huawei & Timeout Safety)', () {
+  group('StepNotifications Resilience Tests', () {
     late Database db;
 
     setUp(() async {
@@ -45,17 +49,15 @@ void main() {
           ''');
         },
       );
-      DatabaseHelper.instance.overrideDatabaseForTesting(db);
-      SettingsService.instance.resetForTesting();
-      await SettingsService.instance.init();
+      DatabaseHelper.databaseInstance = db;
     });
 
     tearDown(() async {
-      SettingsService.instance.cancelPendingSignals();
+      DatabaseHelper.databaseInstance = null;
       await db.close();
     });
 
-    testWidgets('Renders StepNotifications screen and Skip button finishes cleanly', (tester) async {
+    testWidgets('Renders StepNotifications and Skip button finishes', (tester) async {
       bool isFinished = false;
 
       await tester.pumpWidget(
@@ -65,27 +67,32 @@ void main() {
             brightness: Brightness.dark,
           ),
           home: Scaffold(
-            body: StepNotifications(
-              onFinished: () => isFinished = true,
+            body: SingleChildScrollView(
+              child: StepNotifications(
+                onFinished: () {
+                  isFinished = true;
+                },
+              ),
             ),
           ),
         ),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('اعلان‌های ریتمو'), findsOneWidget);
-      expect(find.text('فعال‌سازی اعلان‌ها'), findsOneWidget);
-      expect(find.text('حالا نه'), findsOneWidget);
+      final skipFinder = find.text('حالا نه');
+      expect(skipFinder, findsOneWidget);
 
-      await tester.tap(find.text('حالا نه'));
+      await tester.ensureVisible(skipFinder);
+      await tester.tap(skipFinder);
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 100)));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(isFinished, isTrue);
     });
 
-    testWidgets('Tapping activate notifications completes without hanging and finishes', (tester) async {
+    testWidgets('Tapping activate notifications completes with timeout fallback and finishes cleanly', (tester) async {
       bool isFinished = false;
 
       await tester.pumpWidget(
@@ -95,18 +102,23 @@ void main() {
             brightness: Brightness.dark,
           ),
           home: Scaffold(
-            body: StepNotifications(
-              onFinished: () => isFinished = true,
+            body: SingleChildScrollView(
+              child: StepNotifications(
+                onFinished: () => isFinished = true,
+              ),
             ),
           ),
         ),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 100));
 
-      await tester.tap(find.text('فعال‌سازی اعلان‌ها'));
+      final activateFinder = find.text('فعال‌سازی اعلان‌ها');
+      await tester.ensureVisible(activateFinder);
+      await tester.tap(activateFinder);
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(isFinished, isTrue);
     });

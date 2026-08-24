@@ -8,9 +8,75 @@ import 'package:ritmo/features/worship/logic/worship_occasions_data.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/fullscreen_tasbih_sheet.dart';
 import 'package:ritmo/features/worship/presentation/widgets/worship_day_detail_panel.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:sqflite/sqflite.dart';
+
+class _MockWorshipDb implements Database {
+  @override
+  bool get isOpen => true;
+
+  final Map<String, List<Map<String, dynamic>>> tables = {
+    'worship_practices': [],
+    'app_settings': [],
+    'cycle_logs': [],
+    'cycle_periods': [],
+    'pending_reminders': [],
+    'worship_debts': [],
+    'worship_completions': [],
+  };
+
+  @override
+  Future<void> execute(String sql, [List<Object?>? arguments]) async {}
+
+  @override
+  Future<int> insert(
+    String table,
+    Map<String, Object?> values, {
+    String? nullColumnHack,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async {
+    tables[table] ??= [];
+    tables[table]!.add(Map<String, dynamic>.from(values));
+    return 1;
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> query(
+    String table, {
+    bool? distinct,
+    List<String>? columns,
+    String? where,
+    List<Object?>? whereArgs,
+    String? groupBy,
+    String? having,
+    String? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    return tables[table] ?? [];
+  }
+
+  @override
+  Future<int> update(
+    String table,
+    Map<String, Object?> values, {
+    String? where,
+    List<Object?>? whereArgs,
+    ConflictAlgorithm? conflictAlgorithm,
+  }) async => 1;
+
+  @override
+  Future<int> delete(String table, {String? where, List<Object?>? whereArgs}) async => 1;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
 
 void main() {
   group('Worship Calendar Logic & Conversion Tests', () {
+    setUp(() {
+      DatabaseHelper.databaseInstance = _MockWorshipDb();
+    });
     test('1. Saturday-indexed weekday alignment is correct', () {
       // 2026-08-08 is Saturday
       final sat = DateTime(2026, 8, 8);
@@ -101,7 +167,12 @@ void main() {
         MaterialApp(
           theme: RitmoTheme.darkTheme,
           home: Scaffold(
-            body: WorshipDayDetailPanel(selectedDay: satDay),
+            body: Directionality(
+              textDirection: TextDirection.rtl,
+              child: SingleChildScrollView(
+                child: WorshipDayDetailPanel(selectedDay: satDay),
+              ),
+            ),
           ),
         ),
       );

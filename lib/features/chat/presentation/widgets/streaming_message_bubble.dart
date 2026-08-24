@@ -192,13 +192,16 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
             alignment: Alignment.centerRight,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (showCopy) copyButton else const SizedBox(width: 28),
-                  userBubble,
-                ],
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (showCopy) copyButton else const SizedBox(width: 28),
+                    userBubble,
+                  ],
+                ),
               ),
             ),
           );
@@ -363,13 +366,16 @@ class _StreamingMessageBubbleState extends State<StreamingMessageBubble> {
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                assistantBubble,
-                if (showCopy) copyButton else const SizedBox(width: 28),
-              ],
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  assistantBubble,
+                  if (showCopy) copyButton else const SizedBox(width: 28),
+                ],
+              ),
             ),
           ),
         );

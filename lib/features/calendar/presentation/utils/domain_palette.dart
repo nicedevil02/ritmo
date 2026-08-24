@@ -178,7 +178,15 @@ String domainLabelFa(AgendaDomain domain, {AgendaItemKind? kind}) {
   }
 }
 
+Color domainIconColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+  if (domain == AgendaDomain.cycle) {
+    return const Color(0xFFEF4444);
+  }
+  return domainColor(context, domain, kind: kind);
+}
+
 IconData itemIcon(AgendaItem item) => domainIcon(item.domain, kind: item.kind);
 Color itemColor(BuildContext context, AgendaItem item) => domainColor(context, item.domain, kind: item.kind);
+Color itemIconColor(BuildContext context, AgendaItem item) => domainIconColor(context, item.domain, kind: item.kind);
 Color itemContainerColor(BuildContext context, AgendaItem item) => domainContainerColor(context, item.domain, kind: item.kind);
 String itemLabelFa(AgendaItem item) => domainLabelFa(item.domain, kind: item.kind);

@@ -22,7 +22,7 @@ class SplitDayRange {
     startMinutes: 0,
     endMinutes: CalendarGeometry.splitBoundaryMinutes,
     titleFa: 'صبح',
-    rangeLabel: '۰۰:۰۰ – ۱۲:۰۰',
+    rangeLabel: '۱۲:۰۰ – ۰۰:۰۰',
     icon: Icons.wb_twilight_rounded,
   );
 
@@ -30,7 +30,7 @@ class SplitDayRange {
     startMinutes: CalendarGeometry.splitBoundaryMinutes,
     endMinutes: 1440,
     titleFa: 'بعدازظهر',
-    rangeLabel: '۱۲:۰۰ – ۲۴:۰۰',
+    rangeLabel: '۲۴:۰۰ – ۱۲:۰۰',
     icon: Icons.wb_sunny_rounded,
   );
 }
@@ -73,15 +73,15 @@ class TimelineColumnHeader extends StatelessWidget {
 
     return AnimatedContainer(
       duration: RitmoMotion.state,
-      constraints: const BoxConstraints(minHeight: 52.0),
-      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+      constraints: const BoxConstraints(minHeight: 26.0),
+      margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
       padding: const EdgeInsets.symmetric(
-        horizontal: RitmoSpacing.sm + 4,
-        vertical: 6.0,
+        horizontal: 8.0,
+        vertical: 3.5,
       ),
       decoration: BoxDecoration(
         gradient: isActive ? activeGradient : inactiveGradient,
-        borderRadius: BorderRadius.circular(RitmoRadius.card),
+        borderRadius: BorderRadius.circular(10.0),
         border: Border.all(
           color: isActive
               ? colors.primary.withValues(alpha: 0.50)
@@ -92,7 +92,7 @@ class TimelineColumnHeader extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(6.0),
+            padding: const EdgeInsets.all(3.0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isActive
@@ -101,60 +101,43 @@ class TimelineColumnHeader extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              size: 18,
+              size: 13,
               color: isActive ? colors.primary : colors.textSecondary,
             ),
           ),
-          const SizedBox(width: RitmoSpacing.sm),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                          color: isActive ? colors.textPrimary : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    if (isActive) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colors.primary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  toPersianDigits(rangeLabel),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.0,
-                    height: 1.2,
-                    color: isActive
-                        ? colors.primary
-                        : colors.textTertiary,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-              ],
+          const SizedBox(width: 5.0),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: isActive ? colors.textPrimary : colors.textSecondary,
+            ),
+          ),
+          if (isActive) ...[
+            const SizedBox(width: 4),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors.primary,
+              ),
+            ),
+          ],
+          const Spacer(),
+          Text(
+            toPersianDigits(rangeLabel),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.0,
+              color: isActive
+                  ? colors.primary
+                  : colors.textTertiary,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],

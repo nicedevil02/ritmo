@@ -78,10 +78,9 @@ void main() {
         ),
       ));
 
+      expect(find.text('برنامه'), findsOneWidget);
       expect(find.text('روز'), findsOneWidget);
-      expect(find.text('هفته'), findsOneWidget);
       expect(find.text('ماه'), findsOneWidget);
-      expect(find.text('سال'), findsOneWidget);
 
       // Test JourneyWeekView
       await tester.pumpWidget(MaterialApp(
@@ -94,9 +93,9 @@ void main() {
         ),
       ));
 
-      expect(find.text('برنامه هفتگی'), findsOneWidget);
-      expect(find.text('شنبه'), findsWidgets);
-      expect(find.text('جمعه'), findsWidgets);
+      expect(find.textContaining('پیشرفت هفته'), findsOneWidget);
+      expect(find.text('ش'), findsWidgets);
+      expect(find.text('ج'), findsWidgets);
 
       // Test JourneyMonthView
       await tester.pumpWidget(MaterialApp(

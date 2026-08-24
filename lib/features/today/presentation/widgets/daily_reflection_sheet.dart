@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/ux/ritmo_pressable.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';

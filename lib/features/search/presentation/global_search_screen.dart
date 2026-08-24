@@ -5,13 +5,15 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/domain/registry_query.dart';
 import 'package:ritmo/features/registry/logic/registry_index.dart';
+import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
+import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 
 /// نتیجه‌ی جستجو — می‌تواند کار ساده یا آیتم registry باشد
 sealed class _SearchResult {}
@@ -28,10 +30,10 @@ class _RegistryResult extends _SearchResult {
 
 /// گروه نتایج جستجو
 class _ResultGroup {
-  const _ResultGroup({required this.label, required this.items, required this.icon});
+  _ResultGroup({required this.label, required this.icon, required this.items});
   final String label;
-  final List<_SearchResult> items;
   final IconData icon;
+  final List<_SearchResult> items;
 }
 
 class GlobalSearchScreen extends StatefulWidget {
@@ -48,12 +50,11 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   List<_ResultGroup> _groups = [];
   bool _isSearching = false;
   Timer? _debounce;
-  String _lastQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(_onTextChanged);
+    _controller.addListener(_onQueryChanged);
     // فوکوس اتوماتیک
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
@@ -68,34 +69,34 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     super.dispose();
   }
 
-  void _onTextChanged() {
-    final query = _controller.text.trim();
-    if (query == _lastQuery) return;
-    _lastQuery = query;
+  void _onQueryChanged() {
     _debounce?.cancel();
-
-    if (query.isEmpty) {
+    final q = _controller.text.trim();
+    if (q.isEmpty) {
       setState(() {
         _groups = [];
         _isSearching = false;
       });
       return;
     }
-
-    setState(() => _isSearching = true);
-    _debounce = Timer(const Duration(milliseconds: 300), () => _runSearch(query));
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      _performSearch(q);
+    });
   }
 
-  Future<void> _runSearch(String query) async {
+  Future<void> _performSearch(String query) async {
+    if (!mounted) return;
+    setState(() => _isSearching = true);
+
+    final results = await Future.wait([
+      _searchSimpleTasks(query),
+      _searchRegistry(query),
+    ]);
+
     if (!mounted) return;
 
-    // ۱. جستجو در کارهای ساده
-    final taskRows = await _searchSimpleTasks(query);
-
-    // ۲. جستجو در registry (روتین‌ها · اهداف · سایر)
-    final registryEntries = await _searchRegistry(query);
-
-    if (!mounted) return;
+    final taskRows = results[0] as List<SimpleTask>;
+    final registryEntries = results[1] as List<RegistryEntry>;
 
     final groups = <_ResultGroup>[];
 
@@ -154,17 +155,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
   Future<List<SimpleTask>> _searchSimpleTasks(String query) async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      final q = '%${query.trim()}%';
-      final rows = await db.query(
-        'simple_tasks',
-        where: 'title LIKE ? OR note LIKE ?',
-        whereArgs: [q, q],
-        orderBy: 'isDone ASC, updatedAt DESC',
-        limit: 10,
-      );
-      return rows.map((m) => SimpleTask.fromMap(m)).toList();
-    } catch (_) {
+      final results = await SimpleTaskRepository.instance.search(query);
+      return results.take(10).toList();
+    } catch (e, st) {
+      RitmoLog.error('GlobalSearchScreen', 'Error searching simple tasks', e, st);
       return [];
     }
   }
@@ -180,7 +174,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         const {},
       );
       return results;
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.error('GlobalSearchScreen', 'Error searching registry', e, st);
       return [];
     }
   }
@@ -401,7 +396,18 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => Navigator.pop(context), // ردیف کار: در این نسخه فقط بازگشت
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => TaskDetailSheet(
+              task: task,
+              onTaskUpdated: () => _performSearch(_controller.text),
+              onTaskDeleted: () => _performSearch(_controller.text),
+            ),
+          );
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
           child: Row(

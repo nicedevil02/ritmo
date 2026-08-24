@@ -16,7 +16,6 @@ import 'package:ritmo/core/navigation/ritmo_router.dart';
 import 'package:ritmo/core/observability/privacy_error_sink.dart';
 import 'package:ritmo/core/observability/ritmo_friendly_error_pane.dart';
 import 'package:ritmo/core/security/app_lock_gate.dart';
-import 'package:ritmo/core/services/account_reset_service.dart';
 import 'package:ritmo/core/services/background_worker.dart';
 import 'package:ritmo/core/services/notification_action_dispatcher.dart';
 import 'package:ritmo/core/services/sleep_winddown_reminder_service.dart';
@@ -38,6 +37,11 @@ import 'package:workmanager/workmanager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Memory optimization: Bound Flutter image cache to prevent RSS/VRAM bloat
+  PaintingBinding.instance.imageCache.maximumSize = 100;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 30 * 1024 * 1024; // 30 MB
+
   RitmoLog.addSink(PrivacyErrorSink.instance);
   await PrivacyErrorSink.instance.init();
 
@@ -382,12 +386,7 @@ class _RitmoAppState extends State<RitmoApp> {
                                 themeRepository: widget.themeRepository,
                                 localeRepository: widget.localeRepository,
                                 onLogout: () async {
-                                  await AccountResetService.wipeUserData();
-                                  setState(() {
-                                    _onboardingCompleted = false;
-                                    _showSplash = true;
-                                    _initializationFuture = _initialize();
-                                  });
+                                  await AuthService.instance.logout();
                                 },
                               )
                             : OnboardingScreen(

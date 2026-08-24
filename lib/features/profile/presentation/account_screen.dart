@@ -18,19 +18,16 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserver {
   final AuthService _auth = AuthService.instance;
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
   bool _isLoading = false;
   String? _errorMessage;
-  bool _isPhoneValid = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _auth.addListener(_onAuthChanged);
-    _phoneController.addListener(_validatePhoneInput);
 
     // Initial check for remote session on screen open
     _auth.checkRemoteSession();
@@ -40,8 +37,6 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _auth.removeListener(_onAuthChanged);
-    _phoneController.removeListener(_validatePhoneInput);
-    _phoneController.dispose();
     _emailController.dispose();
     super.dispose();
   }
@@ -56,65 +51,6 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
 
   void _onAuthChanged() {
     if (mounted) setState(() {});
-  }
-
-  void _validatePhoneInput() {
-    final normalized = AuthService.normalizeIranianPhone(_phoneController.text);
-    final isValid = normalized != null;
-    if (isValid != _isPhoneValid) {
-      setState(() => _isPhoneValid = isValid);
-    }
-  }
-
-  Future<void> _startPhoneLogin() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) {
-      setState(() => _errorMessage = 'لطفاً شماره تلفن همراه خود را وارد کنید.');
-      return;
-    }
-
-    final normalized = AuthService.normalizeIranianPhone(phone);
-    if (normalized == null) {
-      setState(() => _errorMessage = AuthErrorCode.invalidPhone.persianMessage);
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final res = await _auth.requestPhoneOtp(normalized);
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (res.isSuccess) {
-      unawaited(
-        OtpVerificationSheet.show(
-          context,
-          identifier: normalized,
-          onSuccess: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Row(
-                  children: [
-                    Icon(Icons.check_circle_outline, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('با موفقیت وارد حساب کاربری شدید.'),
-                  ],
-                ),
-                backgroundColor: const Color(0xff10B981),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      setState(() => _errorMessage = res.errorMessage ?? AuthErrorCode.unknown.persianMessage);
-    }
   }
 
   Future<void> _loginWithGoogle() async {
@@ -386,125 +322,27 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                 ),
                 const SizedBox(height: 12),
 
-                // Phone Input Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.phone_android_rounded, color: colors.primary, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'ورود با شماره تلفن همراه',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        textDirection: TextDirection.ltr,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9+۰-۹٠-٩\s-]')),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: '۰۹۱۲ ۳۴۵ ۶۷۸۹',
-                          hintTextDirection: TextDirection.rtl,
-                          filled: true,
-                          fillColor: colors.surfaceSunken,
-                          prefixIcon: _isPhoneValid
-                              ? const Icon(Icons.check_circle_rounded, color: Color(0xff10B981))
-                              : Icon(Icons.phone_iphone_rounded, color: colors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: colors.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: colors.primary, width: 1.5),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _startPhoneLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: colors.onPrimary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: _isLoading
-                              ? SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: colors.onPrimary,
-                                  ),
-                                )
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.sms_rounded, size: 20),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'ارسال کد تأیید پیامکی',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Google Login Button
+                // Primary Google Login Button
                 SizedBox(
-                  height: 52,
-                  child: OutlinedButton(
+                  height: 54,
+                  child: ElevatedButton(
                     onPressed: _isLoading ? null : _loginWithGoogle,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: colors.surface,
-                      side: BorderSide(color: colors.border),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.network(
-                          'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-                          width: 22,
-                          height: 22,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, color: Colors.red),
-                        ),
+                        const Icon(Icons.account_circle, size: 24),
                         const SizedBox(width: 10),
-                        Text(
+                        const Text(
                           'ورود سریع با حساب گوگل (OAuth)',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
                           ),
                         ),
                       ],
@@ -518,6 +356,9 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                 Container(
                   decoration: BoxDecoration(
                     color: colors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: colors.border),
+                  ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: colors.border),
                   ),

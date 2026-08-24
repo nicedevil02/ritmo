@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/security/app_lock_service.dart';
+import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/core/services/foreground_notification_updater.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 
@@ -20,14 +24,13 @@ class QuickSettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isCurrentlyDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
         final quiet = SettingsService.instance.get<bool>('notif_quiet_enabled');
         final persistent = SettingsService.instance.get<bool>('persistent_status_notification_enabled');
-        final themeMode = SettingsService.instance.get<String>('theme_mode');
-        final isDark = themeMode == 'dark';
         final oled = SettingsService.instance.get<bool>('theme_true_black');
         final biometric = SettingsService.instance.get<bool>('app_biometric_enabled');
         final haptic = SettingsService.instance.get<bool>('haptic_feedback_enabled');
@@ -95,7 +98,16 @@ class QuickSettingsSheet extends StatelessWidget {
                       activeColor: colors.primary,
                       onTap: () async {
                         RitmoHaptics.selection();
-                        await SettingsService.instance.set('notif_quiet_enabled', !quiet);
+                        final nextVal = !quiet;
+                        await SettingsService.instance.set('notif_quiet_enabled', nextVal);
+                        await AlarmSchedulerService.scheduleNextAlarms();
+                        if (context.mounted) {
+                          RitmoToast.show(
+                            context,
+                            nextVal ? 'ساعات سکوت فعال شد 🌙' : 'ساعات سکوت غیرفعال شد',
+                            icon: nextVal ? CupertinoIcons.moon_fill : CupertinoIcons.moon,
+                          );
+                        }
                       },
                     ),
                     _QuickTile(
@@ -106,18 +118,35 @@ class QuickSettingsSheet extends StatelessWidget {
                       activeColor: colors.success,
                       onTap: () async {
                         RitmoHaptics.selection();
-                        await SettingsService.instance.set('persistent_status_notification_enabled', !persistent);
+                        final nextVal = !persistent;
+                        await SettingsService.instance.set('persistent_status_notification_enabled', nextVal);
+                        await ForegroundNotificationUpdater.update();
+                        if (context.mounted) {
+                          RitmoToast.show(
+                            context,
+                            nextVal ? 'اعلان دائمی وضعیت فعال شد 🔔' : 'اعلان دائمی وضعیت غیرفعال شد',
+                            icon: nextVal ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
+                          );
+                        }
                       },
                     ),
                     _QuickTile(
                       keyName: 'quick_theme_tile',
-                      title: isDark ? 'حالت تیره' : 'حالت روشن',
-                      isActive: isDark,
-                      icon: isDark ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
+                      title: isCurrentlyDark ? 'حالت تیره' : 'حالت روشن',
+                      isActive: isCurrentlyDark,
+                      icon: isCurrentlyDark ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
                       activeColor: colors.warning,
                       onTap: () async {
                         RitmoHaptics.selection();
-                        await SettingsService.instance.set('theme_mode', isDark ? 'light' : 'dark');
+                        final nextMode = isCurrentlyDark ? 'light' : 'dark';
+                        await SettingsService.instance.set('theme_mode', nextMode);
+                        if (context.mounted) {
+                          RitmoToast.show(
+                            context,
+                            nextMode == 'dark' ? 'حالت تیره فعال شد 🌙' : 'حالت روشن فعال شد ☀️',
+                            icon: nextMode == 'dark' ? CupertinoIcons.moon_stars_fill : CupertinoIcons.sun_max_fill,
+                          );
+                        }
                       },
                     ),
                     _QuickTile(
@@ -128,7 +157,15 @@ class QuickSettingsSheet extends StatelessWidget {
                       activeColor: colors.textPrimary,
                       onTap: () async {
                         RitmoHaptics.selection();
-                        await SettingsService.instance.set('theme_true_black', !oled);
+                        final nextVal = !oled;
+                        await SettingsService.instance.set('theme_true_black', nextVal);
+                        if (context.mounted) {
+                          RitmoToast.show(
+                            context,
+                            nextVal ? 'حالت سیاه خالص (OLED) فعال شد 🖤' : 'حالت سیاه خالص (OLED) غیرفعال شد',
+                            icon: CupertinoIcons.circle_filled,
+                          );
+                        }
                       },
                     ),
                     _QuickTile(
@@ -139,7 +176,63 @@ class QuickSettingsSheet extends StatelessWidget {
                       activeColor: colors.accent,
                       onTap: () async {
                         RitmoHaptics.selection();
-                        await SettingsService.instance.set('app_biometric_enabled', !biometric);
+                        if (!biometric) {
+                          final supported = await AppLockService.instance.isDeviceSupported();
+                          final canCheck = await AppLockService.instance.canCheckBiometrics();
+                          if (!supported || !canCheck) {
+                            if (context.mounted) {
+                              RitmoToast.show(
+                                context,
+                                'دستگاه شما از حسگر اثر انگشت یا چهره پشتیبانی نمی‌کند.',
+                                icon: Icons.warning_amber_rounded,
+                              );
+                            }
+                            return;
+                          }
+                          final password = await AppLockService.instance.getLockPassword();
+                          if (password == null || password.isEmpty) {
+                            if (context.mounted) {
+                              RitmoToast.show(
+                                context,
+                                'لطفاً ابتدا در بخش «امنیت و قفل برنامه»، رمز عبور تعیین کنید.',
+                                icon: Icons.lock_outline_rounded,
+                              );
+                            }
+                            return;
+                          }
+                          final authenticated = await AppLockService.instance.authenticateWithDevice(
+                            reason: 'لطفاً برای فعال‌سازی قفل بیومتریک، هویت خود را تایید کنید',
+                            biometricOnly: true,
+                          );
+                          if (authenticated) {
+                            await SettingsService.instance.set('app_biometric_enabled', true);
+                            await SettingsService.instance.set('app_lock_enabled', true);
+                            if (context.mounted) {
+                              RitmoToast.show(
+                                context,
+                                'قفل اثرانگشت با موفقیت فعال شد 🔒',
+                                icon: CupertinoIcons.lock_shield_fill,
+                              );
+                            }
+                          } else {
+                            if (context.mounted) {
+                              RitmoToast.show(
+                                context,
+                                'احراز هویت بیومتریک ناموفق بود.',
+                                icon: Icons.error_outline_rounded,
+                              );
+                            }
+                          }
+                        } else {
+                          await SettingsService.instance.set('app_biometric_enabled', false);
+                          if (context.mounted) {
+                            RitmoToast.show(
+                              context,
+                              'قفل اثرانگشت غیرفعال شد',
+                              icon: CupertinoIcons.lock_shield,
+                            );
+                          }
+                        }
                       },
                     ),
                     _QuickTile(
@@ -149,8 +242,18 @@ class QuickSettingsSheet extends StatelessWidget {
                       icon: CupertinoIcons.waveform_path,
                       activeColor: colors.secondary,
                       onTap: () async {
-                        RitmoHaptics.selection();
-                        await SettingsService.instance.set('haptic_feedback_enabled', !haptic);
+                        final nextVal = !haptic;
+                        await SettingsService.instance.set('haptic_feedback_enabled', nextVal);
+                        if (nextVal) {
+                          RitmoHaptics.selection();
+                        }
+                        if (context.mounted) {
+                          RitmoToast.show(
+                            context,
+                            nextVal ? 'بازخورد لرزشی فعال شد 📳' : 'بازخورد لرزشی غیرفعال شد',
+                            icon: CupertinoIcons.waveform_path,
+                          );
+                        }
                       },
                     ),
                   ],

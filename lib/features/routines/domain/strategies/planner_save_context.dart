@@ -35,6 +35,7 @@ class PlannerSaveContext {
     required this.reminderOffsetMinutes,
     required this.priority,
     required this.energyRule,
+    this.isPrivate = false,
     required this.dependsOnRoutineId,
     required this.selectedZoneId,
     required this.worshipType,
@@ -103,6 +104,7 @@ class PlannerSaveContext {
   final int reminderOffsetMinutes;
   final double priority;
   final String energyRule;
+  final bool isPrivate;
   final String? dependsOnRoutineId;
   final String? selectedZoneId;
 

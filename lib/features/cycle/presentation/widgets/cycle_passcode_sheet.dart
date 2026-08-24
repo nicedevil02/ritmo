@@ -697,8 +697,8 @@ class _CyclePasscodeSheetState extends State<CyclePasscodeSheet>
                   ),
                   child: Center(
                     child: Icon(
-                      CupertinoIcons.device_phone_portrait,
-                      size: 24,
+                      Icons.fingerprint,
+                      size: 28,
                       color: colors.primary as Color,
                     ),
                   ),

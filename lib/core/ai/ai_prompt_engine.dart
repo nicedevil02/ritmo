@@ -63,7 +63,6 @@ ALLOWLISTED SETTING KEYS FOR updateSetting:
 - max_grace_per_week: integer (0..7)
 - max_grace_per_month: integer (0..30)
 - prayer_calculation_method: "UniversityOfTehran" | "IslamicSocietyOfNorthAmerica" | "MuslimWorldLeague" | "EgyptianGeneralAuthorityOfSurvey" | "UmmAlQuraUniversity" | "Karachi" | "Kuwait"
-- ihtiyat_minutes: integer (0..60)
 
 RESPONSE JSON SCHEMA:
 {

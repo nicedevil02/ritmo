@@ -171,7 +171,8 @@ class _FullscreenTasbihSheetState extends State<FullscreenTasbihSheet> {
     }
 
     if (_isZahra) {
-      final fatimaStages = _getFatimaStages(Theme.of(context).extension<RitmoColors>()!);
+      final colors = Theme.of(context).extension<RitmoColors>() ?? RitmoColors.dark;
+      final fatimaStages = _getFatimaStages(colors);
       final target = fatimaStages[_stageIndex].target;
       setState(() {
         _currentCount++;

@@ -64,26 +64,26 @@ class CycleBurdenCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.monitor_heart_outlined,
-                    size: 20,
-                    color: badgeColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'شاخص ریتم بدنی و تنظیم بار روزانه',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ],
+              Icon(
+                Icons.monitor_heart_outlined,
+                size: 20,
+                color: badgeColor,
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'شاخص ریتم بدنی و تنظیم بار روزانه',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(

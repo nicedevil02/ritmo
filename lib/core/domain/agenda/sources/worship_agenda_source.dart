@@ -190,6 +190,15 @@ class WorshipAgendaSource implements AgendaSource {
   List<AgendaItem> itemsForDate(AgendaDayContext ctx) {
     if (!religionEnabled) return const [];
 
+    // Guard against generating historical prayers before the app was installed/started
+    final appStartDateStr = settingsMap['app_start_date'];
+    if (appStartDateStr != null && appStartDateStr.isNotEmpty) {
+      final parsedAppStart = DateKey.parse(appStartDateStr);
+      if (parsedAppStart != null && ctx.date.isBefore(parsedAppStart)) {
+        return const [];
+      }
+    }
+
     final items = <AgendaItem>[];
     final worshipStatuses = statusesByDate[ctx.dateStr] ?? {};
 
@@ -290,7 +299,15 @@ class WorshipAgendaSource implements AgendaSource {
     final bySubType = <String, Map<String, dynamic>>{};
     final others = <Map<String, dynamic>>[];
 
+    final parsedDate = DateKey.parse(dateStr) ?? DateTime.tryParse(dateStr);
+
     for (final p in prayerPractices) {
+      if (parsedDate != null && p['createdAt'] is int) {
+        final practiceFloor = DateKey.dayOf(
+          DateTime.fromMillisecondsSinceEpoch(p['createdAt'] as int),
+        );
+        if (parsedDate.isBefore(practiceFloor)) continue;
+      }
       final subType = (p['subType'] as String? ?? '').toUpperCase();
       if (['FAJR', 'DHUHR', 'ASR', 'MAGHRIB', 'ISHA'].contains(subType)) {
         bySubType[subType] = p;
@@ -554,6 +571,13 @@ class WorshipAgendaSource implements AgendaSource {
       final id = p['id'] as String;
 
       try {
+        if (p['createdAt'] is int) {
+          final practiceFloor = DateKey.dayOf(
+            DateTime.fromMillisecondsSinceEpoch(p['createdAt'] as int),
+          );
+          if (parsedDate.isBefore(practiceFloor)) continue;
+        }
+
         // Filter by days of week or month if applicable
         final freq = p['reminderFrequency'] as String? ?? 'DAILY';
         if (freq == 'WEEKLY') {

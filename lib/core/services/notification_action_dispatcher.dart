@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -16,6 +17,7 @@ import 'package:sqflite/sqflite.dart';
 @pragma('vm:entry-point')
 void notificationActionDispatcher() {
   WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
 
   const channel = MethodChannel('com.ritmo.app/notif_action_bg');
 
@@ -44,6 +46,16 @@ void notificationActionDispatcher() {
               durationMinutes: 0,
             ),
           );
+        }
+      }
+      return true;
+    } else if (call.method == 'setTaskDoneDirect') {
+      final args = call.arguments as Map?;
+      if (args != null) {
+        final taskId = args['taskId'] as String?;
+        final done = args['done'] as bool? ?? true;
+        if (taskId != null && taskId.isNotEmpty) {
+          await SimpleTaskRepository.instance.setDone(taskId, done: done);
         }
       }
       return true;
@@ -176,6 +188,19 @@ class NotificationActionHandler {
           return;
         } else if (action == 'SNOOZE' || action == 'SNOOZE_1H') {
           await snoozeTask(taskId, SnoozePreset.oneHour);
+          return;
+        } else if (action == 'SNOOZE_10M') {
+          await snoozeTask(taskId, SnoozePreset.tenMinutes);
+          return;
+        } else if (action == 'SNOOZE_EVENING') {
+          try {
+            await snoozeTask(taskId, SnoozePreset.thisEvening);
+          } catch (_) {
+            await snoozeTask(taskId, SnoozePreset.tomorrowMorning);
+          }
+          return;
+        } else if (action == 'SNOOZE_TOMORROW') {
+          await snoozeTask(taskId, SnoozePreset.tomorrowMorning);
           return;
         }
       }

@@ -1219,6 +1219,7 @@ class _HolographicScannerWidgetState extends State<HolographicScannerWidget> wit
                     child: Image.asset(
                       bodyImagePath,
                       height: 105,
+                      cacheHeight: 250,
                       fit: BoxFit.contain,
                       colorBlendMode: BlendMode.screen,
                       color: const Color(0xFF0F172A),
@@ -2534,6 +2535,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
                       coverImage,
+                      cacheWidth: 300,
+                      cacheHeight: 300,
                       fit: BoxFit.cover,
                       errorBuilder: (ctx, err, stack) => const Icon(Icons.accessibility_new_rounded, size: 60, color: Color(0xFF0EA5E9)),
                     ),
@@ -2713,6 +2716,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
                       coverImage,
+                      cacheWidth: 300,
+                      cacheHeight: 300,
                       fit: BoxFit.cover,
                       errorBuilder: (ctx, err, stack) => const Icon(Icons.accessibility_new_rounded, size: 60, color: Color(0xFFEA580C)),
                     ),
@@ -2924,6 +2929,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               child: ClipOval(
                 child: Image.asset(
                   'assets/images/ai_robot_avatar.png',
+                  cacheWidth: 150,
+                  cacheHeight: 150,
                   fit: BoxFit.cover,
                   errorBuilder: (ctx, err, stack) => const Icon(Icons.android, size: 36, color: Color(0xFF06B6D4)),
                 ),
@@ -3335,6 +3342,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                               coverImage,
                               width: 88,
                               height: 88,
+                              cacheWidth: 180,
+                              cacheHeight: 180,
                               fit: BoxFit.cover,
                               errorBuilder: (ctx, err, stack) => Container(
                                 width: 88,

@@ -15,22 +15,6 @@ class PrayerTimeProvider {
     final db = await DatabaseHelper.instance.database;
     final dateStr = date.toIso8601String().substring(0, 10);
 
-    // 1. Fetch city coordinates
-    final cityResult = await db.query(
-      'iran_cities',
-      where: 'id = ?',
-      whereArgs: [cityId],
-      limit: 1,
-    );
-
-    var latitude = 35.6892; // default Tehran
-    var longitude = 51.3890;
-
-    if (cityResult.isNotEmpty) {
-      latitude = cityResult.first['latitude']! as double;
-      longitude = cityResult.first['longitude']! as double;
-    }
-
     final settingsResult = await db.query('app_settings');
     final settings = {
       for (final row in settingsResult)
@@ -40,6 +24,31 @@ class PrayerTimeProvider {
     final calcMethodStr =
         settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
 
+    // 1. Fetch coordinates: check for custom/GPS settings, otherwise query iran_cities
+    var latitude = 35.6892; // default Tehran
+    var longitude = 51.3890;
+
+    if (cityId.startsWith('CUSTOM_') || settings['prayer_location_mode'] == 'CUSTOM_COORDS') {
+      final customLat = double.tryParse(settings['prayer_custom_lat'] ?? '');
+      final customLng = double.tryParse(settings['prayer_custom_lng'] ?? '');
+      if (customLat != null && customLng != null) {
+        latitude = customLat;
+        longitude = customLng;
+      }
+    } else {
+      final cityResult = await db.query(
+        'iran_cities',
+        where: 'id = ?',
+        whereArgs: [cityId],
+        limit: 1,
+      );
+
+      if (cityResult.isNotEmpty) {
+        latitude = cityResult.first['latitude']! as double;
+        longitude = cityResult.first['longitude']! as double;
+      }
+    }
+
     // 2. Try online API first (if forced or not in SQLite cache)
     if (forceOnline) {
       final onlineTimes = await OnlinePrayerTimeService.instance
@@ -47,6 +56,7 @@ class PrayerTimeProvider {
             latitude: latitude,
             longitude: longitude,
             date: date,
+            calculationMethod: calcMethodStr,
           );
       if (onlineTimes != null) {
         return onlineTimes;
@@ -81,6 +91,7 @@ class PrayerTimeProvider {
           latitude: latitude,
           longitude: longitude,
           date: date,
+          calculationMethod: calcMethodStr,
         );
 
     if (onlineTimes != null) {
@@ -199,7 +210,6 @@ class PrayerTimeProvider {
       'midnightShari': times['midnightShari'],
       'sunset': times['sunset'],
       'calculationMethod': calcMethodStr,
-      'ihtiyatMinutes': 0,
       'computedAt': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
@@ -209,35 +219,46 @@ class PrayerTimeProvider {
     required DateTime from,
     required int days,
     bool forceOnline = false,
+    String? calculationMethod,
   }) async {
     final db = await DatabaseHelper.instance.database;
 
-    // 1. Fetch city coordinates ONCE
-    final cityResult = await db.query(
-      'iran_cities',
-      where: 'id = ?',
-      whereArgs: [cityId],
-      limit: 1,
-    );
-
-    var latitude = 35.6892;
-    var longitude = 51.3890;
-
-    if (cityResult.isNotEmpty) {
-      latitude = cityResult.first['latitude']! as double;
-      longitude = cityResult.first['longitude']! as double;
-    }
-
-    // 2. Fetch app_settings ONCE
+    // 1. Fetch app_settings ONCE
     final settingsResult = await db.query('app_settings');
     final settings = {
       for (final row in settingsResult)
         row['key']! as String: row['value']! as String,
     };
 
-    final calcMethodStr =
-        settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final calcMethodStr = calculationMethod ??
+        settings['prayer_calculation_method'] ??
+        'TEHRAN_GEOPHYSICS';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    // 2. Fetch coordinates
+    var latitude = 35.6892;
+    var longitude = 51.3890;
+
+    if (cityId.startsWith('CUSTOM_') || settings['prayer_location_mode'] == 'CUSTOM_COORDS') {
+      final customLat = double.tryParse(settings['prayer_custom_lat'] ?? '');
+      final customLng = double.tryParse(settings['prayer_custom_lng'] ?? '');
+      if (customLat != null && customLng != null) {
+        latitude = customLat;
+        longitude = customLng;
+      }
+    } else {
+      final cityResult = await db.query(
+        'iran_cities',
+        where: 'id = ?',
+        whereArgs: [cityId],
+        limit: 1,
+      );
+
+      if (cityResult.isNotEmpty) {
+        latitude = cityResult.first['latitude']! as double;
+        longitude = cityResult.first['longitude']! as double;
+      }
+    }
 
     // 3. Batch insert using db.batch() for blazing fast atomic I/O
     final batch = db.batch();
@@ -264,7 +285,6 @@ class PrayerTimeProvider {
         'midnightShari': times['midnightShari'],
         'sunset': times['sunset'],
         'calculationMethod': calcMethodStr,
-        'ihtiyatMinutes': 0,
         'computedAt': nowMs,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }

@@ -757,12 +757,13 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
 
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: const RitmoModuleAppBar(
         title: 'حساب و هویت',
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(18, 12, 18, 50),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 50),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

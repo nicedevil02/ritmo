@@ -24,6 +24,38 @@ import javax.crypto.SecretKey
 class MainActivity : FlutterFragmentActivity() {
     private val TAG = "MainActivity"
 
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Native Guard against webview_flutter InstanceManager / JavaScriptChannel race condition crashes on Main Looper
+        android.os.Handler(android.os.Looper.getMainLooper()).post {
+            while (true) {
+                try {
+                    android.os.Looper.loop()
+                } catch (e: Throwable) {
+                    val msg = e.message ?: ""
+                    val isPigeonInstanceManagerCrash = e is IllegalStateException && (
+                        msg.contains("Could not find identifier for") ||
+                        msg.contains("JavaScriptChannel") ||
+                        msg.contains("WebChromeClient") ||
+                        msg.contains("WebViewClient")
+                    )
+                    if (isPigeonInstanceManagerCrash) {
+                        android.util.Log.w(TAG, "Suppressed known webview_flutter race condition: $msg")
+                    } else {
+                        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+                        if (defaultHandler != null) {
+                            defaultHandler.uncaughtException(Thread.currentThread(), e)
+                        } else {
+                            throw e
+                        }
+                        break
+                    }
+                }
+            }
+        }
+    }
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 

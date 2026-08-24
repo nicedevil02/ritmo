@@ -501,7 +501,7 @@ class _UpcomingUniqueBanner extends StatelessWidget {
           const SizedBox(height: 8),
           Column(
             children: items.map((item) {
-              final color = domainColor(context, item.domain);
+              final iconColor = domainIconColor(context, item.domain);
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: InkWell(
@@ -515,7 +515,7 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: color,
+                            color: iconColor,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -587,6 +587,7 @@ class _RecurringGroupRow extends StatelessWidget {
     final theme = Theme.of(context);
     final rep = series.representative;
     final color = domainColor(context, rep.domain);
+    final iconColor = domainIconColor(context, rep.domain);
     final icon = domainIcon(rep.domain);
 
     return Padding(
@@ -624,7 +625,7 @@ class _RecurringGroupRow extends StatelessWidget {
                         color: color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(icon, size: 16, color: color),
+                      child: Icon(icon, size: 16, color: iconColor),
                     ),
                     const SizedBox(width: RitmoSpacing.sm),
 
@@ -842,6 +843,7 @@ class _AgendaRowState extends State<_AgendaRow> {
     final theme = Theme.of(context);
     final item = widget.item;
     final color = domainColor(context, item.domain);
+    final iconColor = domainIconColor(context, item.domain);
     final icon = domainIcon(item.domain);
     final isDone = _isDone;
 
@@ -866,7 +868,7 @@ class _AgendaRowState extends State<_AgendaRow> {
                 ),
                 child: Icon(icon,
                     size: 16,
-                    color: color.withValues(alpha: isDone ? 0.4 : 1.0)),
+                    color: iconColor.withValues(alpha: isDone ? 0.4 : 1.0)),
               ),
               const SizedBox(width: RitmoSpacing.sm),
 

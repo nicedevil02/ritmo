@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/search/presentation/global_search_screen.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -132,7 +133,8 @@ class DashboardHeader extends StatelessWidget {
     final String dateStr;
     if (locale.languageCode == 'fa') {
       final jalali = Jalali.now();
-      dateStr = '${jalali.formatter.wN} ${jalali.day} ${jalali.formatter.mN}';
+      dateStr =
+          '${ShamsiWeek.nameOf(jalali.weekDay)} ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
     } else {
       final now = DateTime.now();
       const weekdays = [
@@ -204,7 +206,11 @@ class DashboardHeader extends StatelessWidget {
                   color: colors.bg,
                   image: hasAvatarFile
                       ? DecorationImage(
-                          image: FileImage(File(avatarPath!)),
+                          image: ResizeImage(
+                            FileImage(File(avatarPath!)),
+                            width: 120,
+                            height: 120,
+                          ),
                           fit: BoxFit.cover,
                         )
                       : null,

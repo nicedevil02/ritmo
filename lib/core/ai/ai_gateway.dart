@@ -477,6 +477,40 @@ class AIGateway {
         if (i < chain.length - 1) continue;
         break;
       }
+
+      if (config.baseUrl.contains('chatgpt.com')) {
+        final userMessage = messages.lastWhere(
+          (m) => m['role'] == 'user',
+          orElse: () => {'content': ''},
+        )['content'] ?? '';
+        final systemMessage = messages.firstWhere(
+          (m) => m['role'] == 'system',
+          orElse: () => {'content': ''},
+        )['content'];
+
+        try {
+          final buffer = StringBuffer();
+          await for (final chunk in ChatGptWebBridgeManager.instance.sendPrompt(
+            prompt: userMessage,
+            personaSystemPrompt: systemMessage,
+          )) {
+            if (chunk.startsWith('error:')) {
+              throw Exception(chunk);
+            }
+            buffer.write(chunk);
+          }
+          final content = buffer.toString();
+          if (content.isNotEmpty) {
+            return _ChatOutcome.success(content);
+          }
+        } catch (e) {
+          debugPrint('ChatGptWebBridgeManager failed in _postWithFallback: $e');
+          last = _ChatOutcome.failure(exception: e.toString());
+          if (i < chain.length - 1) continue;
+          break;
+        }
+      }
+
       if (config.apiKey.isEmpty) {
         debugPrint('AIGateway: apiKey is empty for key ${i + 1}/${chain.length}');
         last = const _ChatOutcome.failure(errorBody: 'no_api_key', statusCode: 401);

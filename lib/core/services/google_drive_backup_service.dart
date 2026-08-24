@@ -19,16 +19,18 @@ class GoogleDriveBackupService implements BackupPlatform {
 
   // === Auth ===
   @override
-  Future<bool> signIn() async {
+  Future<bool> signIn({bool silentOnly = false}) async {
     try {
       // Initialize first (required in google_sign_in v7.x)
       await GoogleSignIn.instance.initialize();
       // Try silent sign in first
       _currentUser = await GoogleSignIn.instance
           .attemptLightweightAuthentication();
-      _currentUser ??= await GoogleSignIn.instance.authenticate(
-        scopeHint: _scopes,
-      );
+      if (!silentOnly && _currentUser == null) {
+        _currentUser = await GoogleSignIn.instance.authenticate(
+          scopeHint: _scopes,
+        );
+      }
       return _currentUser != null;
     } catch (e) {
       debugPrint('Google Drive Sign-in Error: $e');

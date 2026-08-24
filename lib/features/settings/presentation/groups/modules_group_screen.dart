@@ -228,11 +228,12 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
     }).toList();
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: const RitmoModuleAppBar(title: 'ماژول‌ها و بخش‌های برنامه'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
               child: SettingsSection(
                 title: 'انتخاب بخش‌های فعال',
                 footer: 'ماژول‌های غیرفعال از نوار پایین، داشبورد و اعلان‌های روزانه پنهان خواهند شد.',

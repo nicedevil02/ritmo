@@ -23,11 +23,17 @@ class RoutineTaskBridge {
     try {
       final db = await DatabaseHelper.instance.database;
 
-      // 2. Query unarchived active routines
+      // Clean up any historical orphaned worship debt simple tasks if no active debts exist
+      final activeDebts = await db.query('worship_debts', where: 'isArchived = 0 AND remainingCount > 0', limit: 1);
+      if (activeDebts.isEmpty) {
+        await db.delete('simple_tasks', where: "linkedRoutineId = 'worship_debt_routine' OR title = 'بدهی عبادی'");
+      }
+
+      // 2. Query unarchived active daily routines (excluding 'asNeeded' routines like worship debt / PRN meds)
       final routineRows = await db.query(
         'routines',
         columns: ['id', 'title'],
-        where: 'isArchived = 0',
+        where: "isArchived = 0 AND routineType != 'asNeeded'",
         orderBy: 'displayOrder ASC, createdAt ASC',
         limit: 20,
       );

@@ -1,4 +1,5 @@
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// Presentation formatting utilities for dates, times, and day headers.
@@ -13,7 +14,7 @@ class CalendarDateFormatter {
     bool includeYear = false,
   }) {
     final jalali = Jalali.fromDateTime(date);
-    final dayName = jalali.formatter.wN;
+    final dayName = ShamsiWeek.nameOf(jalali.weekDay);
     final monthName = jalali.formatter.mN;
     final dayNum = toPersianDigits(jalali.day.toString());
     final yearNum = toPersianDigits(jalali.year.toString());

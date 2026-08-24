@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -66,6 +67,35 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
     }
   }
 
+  Future<void> _copyDiagnosticSnapshot() async {
+    try {
+      RitmoToast.show(
+        context,
+        'در حال استخراج کدهای صفحه...',
+        icon: Icons.hourglass_top_rounded,
+      );
+      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
+      await Clipboard.setData(ClipboardData(text: snapshot));
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در استخراج کدهای صفحه: $e',
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.error,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -124,6 +154,11 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.copy_all_rounded, color: colors.textSecondary),
+                  tooltip: 'کپی گزارش تشخیصی و HTML صفحه',
+                  onPressed: _copyDiagnosticSnapshot,
                 ),
                 IconButton(
                   icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),

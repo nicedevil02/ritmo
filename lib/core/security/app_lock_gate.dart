@@ -135,6 +135,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       RitmoLog.error('Settings', 'خطا در بارگذاری تنظیمات گیت قفل برنامه', e, st);
       if (mounted) {
         setState(() {
+          _isLocked = true;
           _isLoading = false;
         });
       }
@@ -302,7 +303,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                           child: Text(
                             _useDeviceLock && !hasRitmoPin
                                 ? 'این برنامه با قفل امنیت گوشی شما محافظت می‌شود. لطفاً برای ورود دکمه زیر را فشار دهید.'
-                                : 'لطفاً برای ورود به برنامه، رمز عبور ${_toPersianDigits((_lockPassword?.length ?? 4).toString())} رقمی خود را وارد کنید.',
+                                : 'لطفاً برای ورود به برنامه، رمز عبور ۴ رقمی خود را وارد کنید.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -349,7 +350,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
                           // Dot Indicators
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(_lockPassword?.length ?? 4, (index) {
+                            children: List.generate(4, (index) {
                               final isFilled = _enteredPin.length > index;
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 150),

@@ -30,9 +30,10 @@ class CalendarGroupScreen extends StatelessWidget {
           final isWorshipEnabled = ModuleGate.instance.isEnabled('module_religion_enabled');
 
           return RitmoPageScaffold(
+            padding: EdgeInsets.zero,
             appBar: RitmoModuleAppBar(title: SettingsGroup.calendar.labelFa),
             body: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
               child: Column(
                 children: [
                   // ۱. نمای پیش‌فرض و نمایش تقویم

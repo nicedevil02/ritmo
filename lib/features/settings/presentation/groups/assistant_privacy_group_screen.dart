@@ -47,8 +47,8 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
       _assistantCanModify = SettingsService.instance.get<bool>('assistant_can_modify_settings');
       _gentleness = SettingsService.instance.get<String>('gentleness_level');
       _dailyCapacity = SettingsService.instance.get<int>('daily_capacity_minutes');
-      _wakeTime = SettingsService.instance.get<String>('wake_time');
-      _sleepTime = SettingsService.instance.get<String>('sleep_time');
+      _wakeTime = SettingsService.instance.get<String>('sleep_target_wake');
+      _sleepTime = SettingsService.instance.get<String>('sleep_target_bedtime');
       _showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
     });
   }
@@ -89,6 +89,17 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                       onPressed: () async {
                         final formatted = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
                         await _update(key, formatted);
+                        if (key == 'sleep_target_wake' || key == 'sleep_target_bedtime') {
+                          final curWake = key == 'sleep_target_wake' ? formatted : _wakeTime;
+                          final curBed = key == 'sleep_target_bedtime' ? formatted : _sleepTime;
+                          final btParts = curBed.split(':');
+                          final wtParts = curWake.split(':');
+                          final btMin = (int.tryParse(btParts[0]) ?? 23) * 60 + (int.tryParse(btParts.length > 1 ? btParts[1] : '0') ?? 0);
+                          final wtMin = (int.tryParse(wtParts[0]) ?? 7) * 60 + (int.tryParse(wtParts.length > 1 ? wtParts[1] : '0') ?? 0);
+                          var diff = wtMin - btMin;
+                          if (diff <= 0) diff += 1440;
+                          await SettingsService.instance.set('sleep_target_duration_minutes', diff);
+                        }
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
                     ),
@@ -117,9 +128,10 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
     final colors = context.colors;
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: const RitmoModuleAppBar(title: 'دستیار و حریم خصوصی'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
         child: Column(
           children: [
             const PrivacySummaryCard(),
@@ -287,12 +299,12 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
                 SettingsTile(
                   title: 'زمان معمول بیداری',
                   subtitle: toPersianDigits(_wakeTime),
-                  onTap: () => _pickTime('wake_time', _wakeTime, 'زمان بیداری'),
+                  onTap: () => _pickTime('sleep_target_wake', _wakeTime, 'زمان بیداری'),
                 ),
                 SettingsTile(
                   title: 'زمان معمول خواب',
                   subtitle: toPersianDigits(_sleepTime),
-                  onTap: () => _pickTime('sleep_time', _sleepTime, 'زمان خواب'),
+                  onTap: () => _pickTime('sleep_target_bedtime', _sleepTime, 'زمان خواب'),
                 ),
               ],
             ),

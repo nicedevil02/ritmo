@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -8,7 +9,6 @@ import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/progression_engine.dart';
 import 'package:ritmo/core/domain/engines/routine_occurrence_generator.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/domain/models/reminder_state.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
@@ -117,6 +117,17 @@ class AlarmSchedulerService {
       }
     }
 
+    // Batch prefetch to eliminate N+1 queries across date/routine loops
+    final allPendingReminders = await db.query('pending_reminders');
+    final pendingRemindersMap = {
+      for (final r in allPendingReminders) r['id'] as String: r,
+    };
+    final allMedicationLogs = await db.query('medication_logs');
+    final medicationLogsSet = {
+      for (final l in allMedicationLogs)
+        '${l['routineId']}_${l['scheduledTime']}',
+    };
+
     // Schedule next reminders for today and tomorrow (supports multi-dose routines)
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -132,6 +143,7 @@ class AlarmSchedulerService {
         final rId = r['id']! as String;
         final title = r['title']! as String;
         final isEssential = r['isEssential'] == 1;
+        final isPrivate = r['isPrivate'] == 1;
         final categoryStr = r['category'] as String? ?? '';
         final isMedical = categoryStr == 'medical' || categoryStr == 'health';
 
@@ -202,25 +214,19 @@ class AlarmSchedulerService {
               'rem_${rId}_${scheduleId}_${dateStr}_${timeStr.replaceAll(':', '')}';
 
           // Check if already completed / logged for this slot
-          if (isMedical) {
-            final logs = await db.query(
-              'medication_logs',
-              where: 'routineId = ? AND scheduledTime = ?',
-              whereArgs: [rId, targetTime.millisecondsSinceEpoch],
-            );
-            if (logs.isNotEmpty) continue;
+          if (isMedical &&
+              medicationLogsSet.contains(
+                '${rId}_${targetTime.millisecondsSinceEpoch}',
+              )) {
+            continue;
           }
 
           // Check existing reminder in pending_reminders
-          final existingReminder = await db.query(
-            'pending_reminders',
-            where: 'id = ?',
-            whereArgs: [reminderId],
-          );
+          final existingReminder = pendingRemindersMap[reminderId];
 
-          if (existingReminder.isNotEmpty) {
-            final remState = existingReminder.first['state']! as String;
-            final snoozeTime = existingReminder.first['snoozeUntil'] as int?;
+          if (existingReminder != null) {
+            final remState = existingReminder['state']! as String;
+            final snoozeTime = existingReminder['snoozeUntil'] as int?;
 
             if (remState == 'delayed' && snoozeTime != null) {
               if (snoozeTime > nowMs) {
@@ -233,14 +239,21 @@ class AlarmSchedulerService {
                     scheduledAt: DateTime.fromMillisecondsSinceEpoch(
                       scheduledMs,
                     ),
-                    title: title,
-                    privacy: isEssential
-                        ? NotificationPrivacy.redacted
-                        : NotificationPrivacy.none,
-                    redactedTitle: isEssential
-                        ? (isMedical
-                              ? 'ریتمو: زمان مصرف دارو 🌸'
-                              : 'ریتمو: یک یادآوری روتین دارید 🌸')
+                    title: isPrivate ? '🔒 یادآوری محرمانه' : title,
+                    privacy: isPrivate
+                        ? NotificationPrivacy.locked
+                        : (isEssential
+                              ? NotificationPrivacy.redacted
+                              : NotificationPrivacy.none),
+                    redactedTitle: isPrivate
+                        ? '🔒 یادآوری محرمانه'
+                        : (isEssential
+                              ? (isMedical
+                                    ? 'ریتمو: زمان مصرف دارو 🌸'
+                                    : 'ریتمو: یک یادآوری روتین دارید 🌸')
+                              : null),
+                    redactedBody: isPrivate
+                        ? 'جهت مشاهده جزئیات ضربه بزنید و هویت خود را تأیید کنید.'
                         : null,
                     sourceSystem: 'routines',
                     entityId: rId,
@@ -299,14 +312,21 @@ class AlarmSchedulerService {
               id: reminderId,
               channel: channel,
               scheduledAt: DateTime.fromMillisecondsSinceEpoch(scheduledMs),
-              title: title,
-              privacy: isEssential
-                  ? NotificationPrivacy.redacted
-                  : NotificationPrivacy.none,
-              redactedTitle: isEssential
-                  ? (isMedical
-                        ? 'ریتمو: زمان مصرف دارو 🌸'
-                        : 'ریتمو: یک یادآوری روتین دارید 🌸')
+              title: isPrivate ? '🔒 یادآوری محرمانه' : title,
+              privacy: isPrivate
+                  ? NotificationPrivacy.locked
+                  : (isEssential
+                        ? NotificationPrivacy.redacted
+                        : NotificationPrivacy.none),
+              redactedTitle: isPrivate
+                  ? '🔒 یادآوری محرمانه'
+                  : (isEssential
+                        ? (isMedical
+                              ? 'ریتمو: زمان مصرف دارو 🌸'
+                              : 'ریتمو: یک یادآوری روتین دارید 🌸')
+                        : null),
+              redactedBody: isPrivate
+                  ? 'جهت مشاهده جزئیات ضربه بزنید و هویت خود را تأیید کنید.'
                   : null,
               sourceSystem: 'routines',
               entityId: rId,
@@ -332,22 +352,6 @@ class AlarmSchedulerService {
             actionTaken: 'sent',
             notificationType: isMedical ? 'MEDICINE' : 'ROUTINE',
           );
-
-          await CentralInboxService.push(
-            category: InboxCategory.REMINDER,
-            sourceSystem: 'routines',
-            entityId: rId,
-            eventType: 'reminder',
-            title: title,
-            body: isMedical
-                ? 'زمان مصرف داروی شما فرا رسیده است'
-                : 'زمان انجام روتین فرا رسیده است',
-            priority: isEssential ? 2 : 0,
-            linkModule: isMedical ? 'health' : 'routines',
-            linkEntityId: rId,
-            linkAction: 'open_detail',
-            dateBucket: dateStr,
-          );
         }
       }
     }
@@ -370,8 +374,10 @@ class AlarmSchedulerService {
       if (periods.isNotEmpty) {
         final latestPeriod = periods.first;
         final start = DateTime.parse(latestPeriod['startDate']! as String);
-        final cycleLength =
-            int.tryParse(settingsMap['cycle_avg_length'] ?? '28') ?? 28;
+        final cycleLength = math.max(
+          10,
+          int.tryParse(settingsMap['cycle_avg_length'] ?? '28') ?? 28,
+        );
         final daysSinceStart = now.difference(start).inDays;
         final cyclesElapsed = (daysSinceStart / cycleLength).floor() + 1;
         final nextPeriodStart = start.add(

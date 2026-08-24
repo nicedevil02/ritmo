@@ -22,6 +22,13 @@ class AIResponseProcessor {
       }
     }
 
+    // Rule 0: Zero-leak check for cycle keywords
+    for (final kw in _cycleKeywords) {
+      if (sanitized.toLowerCase().contains(kw)) {
+        return AIFallbackEngine.getFallbackResponse();
+      }
+    }
+
     // Try parsing JSON block (extracting from markdown code fences if needed)
     try {
       if (sanitized.contains('```json')) {

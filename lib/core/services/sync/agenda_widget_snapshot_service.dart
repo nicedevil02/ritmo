@@ -3,6 +3,7 @@ import 'package:ritmo/core/ai/engines/helpers/sensitive_reflection_filter.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/utils/snapshot_helper.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -57,7 +58,7 @@ class AgendaWidgetSnapshotService {
 
       final jalali = Jalali.now();
       final formattedDate =
-          '${jalali.formatter.wN}، ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
+          '${ShamsiWeek.nameOf(jalali.weekDay)}، ${toPersianDigits(jalali.day.toString())} ${jalali.formatter.mN}';
 
       final completedCount = filteredItems.where((i) => i.isCompleted).length;
       final totalCount = filteredItems.length;

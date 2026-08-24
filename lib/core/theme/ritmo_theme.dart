@@ -4,6 +4,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_behavior.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
 import 'package:ritmo/core/theme/ritmo_module_colors.dart';
@@ -84,11 +85,29 @@ abstract final class RitmoMotion {
 
 /// هپتیک — یک قرارداد واحد (سند طراحی §۳.۸)
 abstract final class RitmoHapticsPolicy {
-  static void selection() => HapticFeedback.selectionClick();
-  static void tap() => HapticFeedback.lightImpact();
-  static void success() => HapticFeedback.mediumImpact();
-  static void warning() => HapticFeedback.heavyImpact();
-  static void error() => HapticFeedback.vibrate();
+  static bool get _isEnabled =>
+      !SettingsService.instance.isInitialized ||
+      SettingsService.instance.get<bool>('haptic_feedback_enabled');
+
+  static void selection() {
+    if (_isEnabled) HapticFeedback.selectionClick();
+  }
+
+  static void tap() {
+    if (_isEnabled) HapticFeedback.lightImpact();
+  }
+
+  static void success() {
+    if (_isEnabled) HapticFeedback.mediumImpact();
+  }
+
+  static void warning() {
+    if (_isEnabled) HapticFeedback.heavyImpact();
+  }
+
+  static void error() {
+    if (_isEnabled) HapticFeedback.vibrate();
+  }
 }
 
 abstract final class RitmoTextStyles {

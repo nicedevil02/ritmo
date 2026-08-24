@@ -283,7 +283,6 @@ class PrayerTime {
     required this.midnightShari,
     this.sunset = '',
     required this.calculationMethod,
-    required this.ihtiyatMinutes,
   });
 
   factory PrayerTime.fromMap(Map<String, dynamic> map) {
@@ -299,7 +298,6 @@ class PrayerTime {
       midnightShari: map['midnightShari'] as String? ?? '',
       sunset: map['sunset'] as String? ?? '',
       calculationMethod: map['calculationMethod'] as String? ?? 'TEHRAN_GEOPHYSICS',
-      ihtiyatMinutes: map['ihtiyatMinutes'] as int? ?? 10,
     );
   }
   final String date;
@@ -313,7 +311,6 @@ class PrayerTime {
   final String midnightShari;
   final String sunset;
   final String calculationMethod;
-  final int ihtiyatMinutes;
 
   MapEntry<String, DateTime> nextPrayer(DateTime now) {
     final slot = PrayerTimeline.next(this, now, includeAsrIsha: true);

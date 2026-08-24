@@ -364,7 +364,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                   shape: BoxShape.circle,
                   border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1.5),
                   image: const DecorationImage(
-                    image: AssetImage('assets/images/avatar_placeholder.png'),
+                    image: ResizeImage(
+                      AssetImage('assets/images/avatar_placeholder.png'),
+                      width: 120,
+                      height: 120,
+                    ),
                     fit: BoxFit.cover,
                     onError: _handleAvatarError,
                   ),
@@ -846,6 +850,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           // 🎨 Full Card Image
           Image.asset(
             imageAsset,
+            cacheWidth: 600,
             fit: BoxFit.cover,
           ),
 
@@ -1458,6 +1463,7 @@ class ParallaxImage extends StatelessWidget {
               offset: Offset(0, 6 * (1 - value)),
               child: Image.asset(
                 asset,
+                cacheWidth: 600,
                 fit: BoxFit.cover,
               ),
             );

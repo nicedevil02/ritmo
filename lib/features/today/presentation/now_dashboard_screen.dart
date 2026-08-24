@@ -25,6 +25,7 @@ import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
+import 'package:ritmo/core/security/app_lock_service.dart';
 import 'package:ritmo/core/services/ad_service.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/services/ritmo_timer_service.dart';
@@ -235,6 +236,13 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
             // G-9: هیدراسیون دستی ۳۰ خطی حذف شد — همان مسیر Routine.fromMap
             // که _resumeActiveTimer استفاده میکند، منبع واحد تبدیل ردیف است.
             final routine = Routine.fromMap(routines.first);
+            if (routine.isPrivate) {
+              final authenticated = await AppLockService.instance.authenticateWithDevice(
+                reason: 'تأیید هویت برای اجرای رویداد محرمانه',
+                biometricOnly: false,
+              );
+              if (!authenticated) return;
+            }
             if (mounted) {
               _startTimerFlow(routine, 'FULL');
             }
@@ -720,13 +728,21 @@ class _NowDashboardScreenState extends State<NowDashboardScreen> with WidgetsBin
               // نوار میانبرها
               Row(
                 children: [
-                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  Expanded(
+                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                  ),
                   SizedBox(width: RitmoSpacing.sm),
-                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  Expanded(
+                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                  ),
                   SizedBox(width: RitmoSpacing.sm),
-                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  Expanded(
+                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                  ),
                   SizedBox(width: RitmoSpacing.sm),
-                  RitmoSkeleton(width: 84, height: 88, borderRadius: 16),
+                  Expanded(
+                    child: RitmoSkeleton(width: double.infinity, height: 88, borderRadius: 16),
+                  ),
                 ],
               ),
               SizedBox(height: RitmoSpacing.xl),

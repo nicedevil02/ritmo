@@ -22,6 +22,7 @@ class WebBridgeDiagnosticsScreen extends StatefulWidget {
 class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen> {
   bool _isHarvesting = false;
   bool _isRebooting = false;
+  bool _isExtractingHtml = false;
   Timer? _refreshTimer;
 
   @override
@@ -192,6 +193,13 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: RitmoSpacing.sm),
+            RitmoSecondaryButton(
+              label: _isExtractingHtml ? 'در حال استخراج کدهای HTML...' : 'کپی کامل کدهای HTML و وضعیت صفحه',
+              icon: Icons.code_rounded,
+              fullWidth: true,
+              onPressed: _isExtractingHtml ? null : () => _handleCopyHtmlAndSnapshot(),
             ),
             const SizedBox(height: RitmoSpacing.lg),
 
@@ -424,6 +432,35 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     await Clipboard.setData(ClipboardData(text: text));
     if (mounted) {
       RitmoToast.show(context, 'گزارش ردیاب در حافظه کپی شد.');
+    }
+  }
+
+  Future<void> _handleCopyHtmlAndSnapshot() async {
+    setState(() => _isExtractingHtml = true);
+    try {
+      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot(
+        includeFullHtml: true,
+      );
+      await Clipboard.setData(ClipboardData(text: snapshot));
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'کدهای کامل HTML و گزارش تشخیصی با موفقیت کپی شد 📋',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در استخراج کدهای صفحه: $e',
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExtractingHtml = false);
     }
   }
 

@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:ritmo/core/ai/web_bridge/bridge_response_accumulator.dart';
 import 'package:ritmo/core/ai/web_bridge/bridge_trace_log.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_bridge_timeouts.dart';
+import 'package:ritmo/core/ai/web_bridge/chatgpt_dom_inspector.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 import 'package:ritmo/core/ai/web_bridge/web_bridge_event.dart';
 import 'package:ritmo/core/ai/web_bridge/web_bridge_exception.dart';
@@ -2105,19 +2106,30 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
   }
 
   /// Safely halts any ongoing native operations (network/JS/Chromium looper) on [controllerToDispose]
-  /// before releasing references, preventing Android WebChromeClient/WebViewClient
-  /// `IllegalStateException: Could not find identifier for WebChromeClient` crashes in InstanceManager.
+  /// before releasing references, preventing Android `IllegalStateException: Could not find identifier for JavaScriptChannel`
+  /// or WebChromeClient crashes in InstanceManager.
   Future<void> _safeDisposeController(WebViewController? controllerToDispose) async {
     if (controllerToDispose == null) return;
     try {
-      // 1. Remove JS channel to avoid callback delivery
-      await controllerToDispose.removeJavaScriptChannel('RitmoChatBridge');
-    } catch (e, st) {
-      RitmoLog.warning('ChatGptWebBridge', 'Could not remove channel during dispose: $e', e, st);
-    }
+      // 0. Disable JavaScript message posting and defuse any queued callbacks in JS
+      await controllerToDispose.runJavaScript('''
+        window.__RITMO_DISPOSED__ = true;
+        try {
+          if (window.RitmoChatBridge) {
+            window.RitmoChatBridge.postMessage = function() {};
+          }
+        } catch(_) {}
+      ''');
+    } catch (_) {}
+
+    // DO NOT call removeJavaScriptChannel('RitmoChatBridge') here:
+    // Calling removeJavaScriptChannel unregisters the channel from the Android InstanceManager immediately,
+    // which causes a fatal crash (IllegalStateException: Could not find identifier for JavaScriptChannel)
+    // if Chromium's IPC thread had already queued a postMessage callback in the Android Main Looper.
+    // Instead, loading about:blank destroys the JS context safely, and GC reclaims native objects.
 
     try {
-      // 2. Load blank page to abort in-flight resource loads in native Chromium immediately
+      // 1. Load blank page to abort in-flight resource loads and JS timers in native Chromium immediately
       await controllerToDispose.loadRequest(Uri.parse('about:blank'));
     } catch (e, st) {
       RitmoLog.warning('ChatGptWebBridge', 'Could not load blank page during dispose: $e', e, st);
@@ -2144,6 +2156,16 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     } catch (e, st) {
       RitmoLog.error('ChatGptWebBridge', 'Error clearing session cookies: $e', e, st);
     }
+  }
+
+  /// Captures a full diagnostic report including DOM structure and full HTML (A-39/A-40).
+  Future<String> captureDiagnosticSnapshot({bool includeFullHtml = true}) async {
+    return ChatGptDomInspector.captureSnapshot(
+      _controller,
+      currentStatus: _status.name,
+      lastError: _lastEmptyReasonDetail ?? (_lastRayId != null ? 'Cloudflare Ray ID: $_lastRayId' : null),
+      includeFullHtml: includeFullHtml,
+    );
   }
 
   @override

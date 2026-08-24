@@ -121,7 +121,7 @@ class MockBatch implements Batch {
 
   @override
   void insert(String table, Map<String, Object?> values, {String? nullColumnHack, ConflictAlgorithm? conflictAlgorithm}) {
-    db.insert(table, values);
+    db.insert(table, values, nullColumnHack: nullColumnHack, conflictAlgorithm: conflictAlgorithm);
   }
 
   @override

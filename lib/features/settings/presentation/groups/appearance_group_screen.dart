@@ -51,9 +51,10 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
       valueListenable: widget.themeRepository.preferencesNotifier,
       builder: (context, prefs, _) {
         return RitmoPageScaffold(
+          padding: EdgeInsets.zero,
           appBar: const RitmoModuleAppBar(title: 'ظاهر و زبان'),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 60),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
             child: Column(
               children: [
                 SettingsSection(

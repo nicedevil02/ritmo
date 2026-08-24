@@ -121,6 +121,12 @@ class _RealmEditFormSheetState extends State<RealmEditFormSheet> {
     _endTime = _parseTimeOfDay(sched?.endTime ?? '17:00');
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   TimeOfDay _parseTimeOfDay(String timeStr) {
     final parts = timeStr.split(':');
     if (parts.length == 2) {

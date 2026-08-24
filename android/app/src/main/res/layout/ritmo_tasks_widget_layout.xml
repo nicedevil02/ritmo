@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layoutDirection="rtl"
+    android:padding="12dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Header: Title & Counter + Quick Add Button + Refresh -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_tasks_header_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="کارهای امروز"
+                android:textColor="#ECEEF3"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_tasks_remaining_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="۰ کار مانده"
+                android:textColor="#9AA0AE"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/widget_tasks_add_btn"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_widget_add"
+            android:layout_marginEnd="6dp"
+            android:contentDescription="کار جدید" />
+
+        <ImageView
+            android:id="@+id/widget_tasks_refresh_btn"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_widget_refresh"
+            android:contentDescription="بروزرسانی" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="6dp"
+        android:background="#2C3147" />
+
+    <!-- Scrollable Task List + Empty state -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/tasks_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/widget_tasks_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="کاری برای امروز نمانده است"
+            android:textColor="#9AA0AE"
+            android:textSize="13sp" />
+    </FrameLayout>
+</LinearLayout>

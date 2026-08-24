@@ -12,6 +12,7 @@ class MyDaySection extends StatefulWidget {
     required this.tasks,
     required this.suggestions,
     required this.onToggleDone,
+    required this.onToggleStar,
     required this.onTaskTap,
     required this.onAddToMyDay,
     required this.onRemoveFromMyDay,
@@ -23,6 +24,7 @@ class MyDaySection extends StatefulWidget {
   final List<SimpleTask> tasks;
   final List<MyDaySuggestion> suggestions;
   final ValueChanged<SimpleTask> onToggleDone;
+  final ValueChanged<SimpleTask> onToggleStar;
   final ValueChanged<SimpleTask> onTaskTap;
   final ValueChanged<SimpleTask> onAddToMyDay;
   final ValueChanged<SimpleTask> onRemoveFromMyDay;
@@ -190,6 +192,9 @@ class _MyDaySectionState extends State<MyDaySection> {
 
   Widget _buildMyDayTaskRow(BuildContext context, SimpleTask task) {
     final colors = context.colors;
+    final stepInfo = widget.stepCounts[task.id];
+    final attachmentCount = widget.attachmentCounts[task.id] ?? 0;
+
     return Dismissible(
       key: ValueKey('my_day_${task.id}'),
       direction: DismissDirection.horizontal,
@@ -217,12 +222,69 @@ class _MyDaySectionState extends State<MyDaySection> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  task.title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: task.isDone ? colors.textSecondary : colors.textPrimary,
-                    decoration: task.isDone ? TextDecoration.lineThrough : null,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: task.isDone ? colors.textSecondary : colors.textPrimary,
+                        decoration: task.isDone ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                    if ((stepInfo != null && stepInfo.$2 > 0) || attachmentCount > 0 || task.tags.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Wrap(
+                        spacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (stepInfo != null && stepInfo.$2 > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(CupertinoIcons.list_bullet, size: 11, color: colors.textTertiary),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${toPersianDigits(stepInfo.$1)}/${toPersianDigits(stepInfo.$2)}',
+                                  style: TextStyle(fontSize: 10, color: colors.textTertiary),
+                                ),
+                              ],
+                            ),
+                          if (attachmentCount > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(CupertinoIcons.paperclip, size: 11, color: colors.textTertiary),
+                                const SizedBox(width: 2),
+                                Text(
+                                  toPersianDigits(attachmentCount),
+                                  style: TextStyle(fontSize: 10, color: colors.textTertiary),
+                                ),
+                              ],
+                            ),
+                          for (final tag in task.tags)
+                            Text(
+                              '#$tag',
+                              style: TextStyle(fontSize: 10, color: colors.primary.withValues(alpha: 0.8)),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => widget.onToggleStar(task),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    task.isImportant ? CupertinoIcons.star_fill : CupertinoIcons.star,
+                    size: 18,
+                    color: task.isImportant ? const Color(0xFFFFB800) : colors.textSecondary.withValues(alpha: 0.4),
                   ),
                 ),
               ),

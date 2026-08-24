@@ -18,7 +18,6 @@ void main() {
       isha: DateTime(2026, 8, 6, 20, 30),
       midnightShari: DateTime(2026, 8, 6, 23, 45),
       calculationMethod: 'TEHRAN',
-      ihtiyatMinutes: 0,
     );
 
     test('1. Maghrib prayer slot at 19:45 is in future relative to 18:00', () {

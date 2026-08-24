@@ -46,7 +46,6 @@ class DedicatedBuilderSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return ListenableBuilder(
       listenable: controller,
@@ -79,21 +78,21 @@ class DedicatedBuilderSheet extends StatelessWidget {
                     children: [
                       // Header
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
                         child: Row(
                           children: [
                             GestureDetector(
                               onTap: () => Navigator.pop(context),
                               child: Container(
-                                width: 44,
-                                height: 44,
+                                width: 36,
+                                height: 36,
                                 decoration: BoxDecoration(
                                   color: colors.card.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   Icons.close_rounded,
-                                  size: 22,
+                                  size: 18,
                                   color: colors.textPrimary,
                                 ),
                               ),
@@ -104,16 +103,16 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                   Text(
                                     title,
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14.5,
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 1),
                                   Text(
                                     subtitle,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 10.5,
                                       color: colors.textSecondary
                                           .withValues(alpha: 0.65),
                                     ),
@@ -121,11 +120,11 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 44),
+                            const SizedBox(width: 36),
                           ],
                         ),
                       ),
-                      const Divider(),
+                      const Divider(height: 1),
 
                       // Form Body
                       Expanded(
@@ -133,7 +132,7 @@ class DedicatedBuilderSheet extends StatelessWidget {
                           keyboardDismissBehavior:
                               ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                              horizontal: 18, vertical: 8),
                           child: formWidget,
                         ),
                       ),
@@ -141,10 +140,10 @@ class DedicatedBuilderSheet extends StatelessWidget {
                       // Submit Button
                       Padding(
                         padding: EdgeInsets.fromLTRB(
-                            24, 8, 24, 16 + MediaQuery.of(context).padding.bottom),
+                            18, 6, 18, 12 + MediaQuery.of(context).padding.bottom),
                         child: SizedBox(
                           width: double.infinity,
-                          height: 52,
+                          height: 46,
                           child: ElevatedButton(
                             onPressed: controller.title.trim().isEmpty || controller.isSaving
                                 ? null
@@ -163,13 +162,13 @@ class DedicatedBuilderSheet extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colors.primary,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                             child: controller.isSaving
                                 ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
+                                    width: 18,
+                                    height: 18,
                                     child: CircularProgressIndicator(
                                       color: Colors.white,
                                       strokeWidth: 2,
@@ -181,14 +180,14 @@ class DedicatedBuilderSheet extends StatelessWidget {
                                       Text(
                                         'ذخیره $title',
                                         style: const TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 13.5,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       const Icon(Icons.check_rounded,
-                                          color: Colors.white, size: 18),
+                                          color: Colors.white, size: 16),
                                     ],
                                   ),
                           ),

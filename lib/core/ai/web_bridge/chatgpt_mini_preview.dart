@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ChatGptMiniPreview extends StatefulWidget {
@@ -63,6 +65,35 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
   void initState() {
     super.initState();
     ChatGptWebBridgeManager.instance.attachViewer();
+  }
+
+  Future<void> _copyDiagnosticSnapshot() async {
+    try {
+      RitmoToast.show(
+        context,
+        'در حال استخراج کدهای صفحه...',
+        icon: Icons.hourglass_top_rounded,
+      );
+      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
+      await Clipboard.setData(ClipboardData(text: snapshot));
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
+          icon: Icons.check_circle_rounded,
+          iconColor: context.colors.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در استخراج کدهای صفحه: $e',
+          icon: Icons.error_outline_rounded,
+          iconColor: context.colors.error,
+        );
+      }
+    }
   }
 
   @override
@@ -130,6 +161,22 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                             ),
                           ),
                         ),
+                        Tooltip(
+                          message: 'کپی گزارش تشخیصی و HTML صفحه',
+                          child: InkWell(
+                            onTap: _copyDiagnosticSnapshot,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.copy_all_rounded,
+                                size: 16,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
                         Tooltip(
                           message: isGenerating
                               ? 'در حین تولید پاسخ نمی‌توان صفحه را نو کرد'

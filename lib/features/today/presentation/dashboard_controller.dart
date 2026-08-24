@@ -21,7 +21,6 @@ import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
-import 'package:ritmo/core/services/sync/sync_module_gate.dart';
 import 'package:ritmo/core/modules/routine_visibility.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
@@ -118,11 +117,6 @@ class DashboardController {
   String? peakPerformanceWindow;
   String? mostFatiguedWindow;
   String? mostProductiveWeekday;
-
-  // Check if a category module is enabled
-  bool _isModuleEnabled(Category category, Map<String, String> settings) {
-    return SyncModuleGate.isModuleEnabled(category, settings);
-  }
 
   // ─────────────────────────────────────────────────────────
   // POP v1.1 — Two-phase loading
@@ -674,8 +668,11 @@ class DashboardController {
       ));
     }
 
-    // چرخه — فاز فعلی از cycleEngineOutput (همان فیلدی که کنترلر در P1 پر میکند)
-    if (cycleEngineOutput != null) {
+    // چرخه — فاز فعلی از cycleEngineOutput (فقط با رعایت حریم خصوصی و فعال بودن ماژول)
+    final isCycleEnabled = ModuleGate.instance.isEnabledFrom(s, 'module_cycle_enabled');
+    final isFemale = CyclePrivacyGuard.isVisible(s);
+    final cycleConsent = s['cycle_consent_dashboard'] == 'true';
+    if (cycleEngineOutput != null && isCycleEnabled && isFemale && cycleConsent) {
       final p = cycleEngineOutput!.currentPhase;
       final label = p == CyclePhase.menstrual ? 'قاعدگی'
           : p == CyclePhase.follicular ? 'فولیکولار'
@@ -1114,9 +1111,19 @@ class DashboardController {
     if (_worshipDebtRoutineEnsured) return;
     _worshipDebtRoutineEnsured = true; // قبل از اولین await — ضد ورود مجدد
     try {
+      // Check if user actually has active remaining debts
+      final activeDebts = await db.query(
+        'worship_debts',
+        where: 'isArchived = 0 AND remainingCount > 0',
+        limit: 1,
+      );
+      final hasActiveDebts = activeDebts.isNotEmpty;
+
       final results = await db.query('routines', where: 'id = ?', whereArgs: ['worship_debt_routine']);
+      final now = DateTime.now().millisecondsSinceEpoch;
+
       if (results.isEmpty) {
-        final now = DateTime.now().millisecondsSinceEpoch;
+        // Only insert if user actually has debts, otherwise insert as archived
         await db.insert('routines', {
           'id': 'worship_debt_routine',
           'title': 'بدهی عبادی',
@@ -1126,12 +1133,25 @@ class DashboardController {
           'isEssential': 0,
           'energyRule': 'NONE',
           'priority': 1.0,
-          'isArchived': 0,
+          'isArchived': hasActiveDebts ? 0 : 1,
           'isPrivate': 0,
           'displayOrder': 999,
           'createdAt': now,
           'updatedAt': now,
         });
+      } else {
+        // Synchronize archive state with active debts
+        final isCurrentlyArchived = (results.first['isArchived'] as int? ?? 0) == 1;
+        if (hasActiveDebts && isCurrentlyArchived) {
+          await db.update('routines', {'isArchived': 0, 'updatedAt': now}, where: 'id = ?', whereArgs: ['worship_debt_routine']);
+        } else if (!hasActiveDebts && !isCurrentlyArchived) {
+          await db.update('routines', {'isArchived': 1, 'updatedAt': now}, where: 'id = ?', whereArgs: ['worship_debt_routine']);
+        }
+      }
+
+      // If no active debts, also clean up any orphaned tasks for worship debt
+      if (!hasActiveDebts) {
+        await db.delete('simple_tasks', where: "linkedRoutineId = 'worship_debt_routine' OR title = 'بدهی عبادی'");
       }
     } catch (e) {
       _worshipDebtRoutineEnsured = false; // فقط در خطای واقعی اجازهٔ تلاش مجدد

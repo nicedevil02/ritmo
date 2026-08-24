@@ -46,8 +46,12 @@ class ContextSnapshot {
 
   /// Helper to check if current time lies in the sleep range
   bool get isSleepTime {
-    final wakeTimeStr = appSettings['wake_time'] ?? '07:00';
-    final sleepTimeStr = appSettings['sleep_time'] ?? '23:00';
+    final wakeTimeStr =
+        appSettings['sleep_target_wake'] ?? appSettings['wake_time'] ?? '07:00';
+    final sleepTimeStr =
+        appSettings['sleep_target_bedtime'] ??
+        appSettings['sleep_time'] ??
+        '23:30';
     return ZoneEngine.isTimeWithinRange(
       time: now,
       startTimeStr: sleepTimeStr,

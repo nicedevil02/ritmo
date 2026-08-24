@@ -115,19 +115,15 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
       _errorMessage = null;
     });
 
-    final AuthResult<bool> res;
-    if (widget.isEmail) {
-      if (widget.emailUserId == null) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'شناسه تأیید ایمیل معتبر نیست. لطفاً مجدداً تلاش کنید.';
-        });
-        return;
-      }
-      res = await AuthService.instance.verifyEmailOtp(widget.emailUserId!, code);
-    } else {
-      res = await AuthService.instance.verifyPhoneOtp(widget.identifier, code);
+    if (widget.emailUserId == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'شناسه تأیید ایمیل معتبر نیست. لطفاً مجدداً تلاش کنید.';
+      });
+      return;
     }
+
+    final res = await AuthService.instance.verifyEmailOtp(widget.emailUserId!, code);
 
     if (!mounted) return;
 
@@ -151,12 +147,7 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
       _errorMessage = null;
     });
 
-    final AuthResult<dynamic> res;
-    if (widget.isEmail) {
-      res = await AuthService.instance.requestEmailOtp(widget.identifier);
-    } else {
-      res = await AuthService.instance.requestPhoneOtp(widget.identifier);
-    }
+    final res = await AuthService.instance.requestEmailOtp(widget.identifier);
 
     if (!mounted) return;
 

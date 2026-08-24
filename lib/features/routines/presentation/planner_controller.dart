@@ -130,6 +130,9 @@ class PlannerController extends ChangeNotifier {
   String reflectionLearnings = '';
   bool reflectionIsPrivate = false;
 
+  // Privacy & Confidentiality (Masking & Biometric/PIN Lock)
+  bool isPrivate = false;
+
   // B-FIX-EVENT-5: Event fields (eventDate, eventStartTime, eventEndTime, eventLocation)
   // removed in favor of canonical selectedDate, selectedTime, targetDuration.
 
@@ -336,6 +339,7 @@ class PlannerController extends ChangeNotifier {
     selectedZoneId = data['zoneId'] as String?;
     energyRule = data['energyRule'] as String? ?? 'NONE';
     reminderOffsetMinutes = data['reminderOffsetMinutes'] as int? ?? 15;
+    isPrivate = (data['isPrivate'] as int? ?? 0) == 1;
 
     // Routine type & behavioral fields
     final routineTypeStr = data['routineType'] as String?;
@@ -1397,6 +1401,7 @@ class PlannerController extends ChangeNotifier {
       reminderOffsetMinutes: reminderOffsetMinutes,
       priority: priority,
       energyRule: energyRule,
+      isPrivate: isPrivate,
       dependsOnRoutineId: dependsOnRoutineId,
       selectedZoneId: selectedZoneId,
       // Worship

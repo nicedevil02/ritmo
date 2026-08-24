@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:ritmo/core/logging/ritmo_logger.dart';
-
 import 'package:ritmo/core/ai/chat/chat_models.dart';
+import 'package:ritmo/core/ai/web_bridge/bridge_response_accumulator.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 
 class ParsedResponse {
   const ParsedResponse(this.cleanText, this.actions, {this.memoryOps});
@@ -58,7 +58,9 @@ class ChatActionParser {
             decoded.containsKey('reply') &&
             decoded['reply'] != null) {
           final replyVal = decoded['reply'].toString().trim();
-          if (replyVal.isNotEmpty) return replyVal;
+          if (replyVal.isNotEmpty) {
+            return BridgeResponseAccumulator.sanitize(replyVal);
+          }
         }
       } catch (e) {
         RitmoLog.debug(
@@ -82,7 +84,7 @@ class ChatActionParser {
           .replaceAll(r'\t', '\t')
           .replaceAll(r'\\', r'\');
       if (extracted.trim().isNotEmpty) {
-        return extracted.trim();
+        return BridgeResponseAccumulator.sanitize(extracted.trim());
       }
     }
 
@@ -97,15 +99,19 @@ class ChatActionParser {
           final quoteEnd = rest.indexOf('"');
           if (quoteEnd != -1) {
             final val = rest.substring(0, quoteEnd).trim();
-            if (val.isNotEmpty) return val;
+            if (val.isNotEmpty) {
+              return BridgeResponseAccumulator.sanitize(val);
+            }
           } else {
-            return rest.replaceAll(r'\"', '"').replaceAll(r'\n', '\n').trim();
+            return BridgeResponseAccumulator.sanitize(
+              rest.replaceAll(r'\"', '"').replaceAll(r'\n', '\n').trim(),
+            );
           }
         }
       }
     }
 
-    return clean;
+    return BridgeResponseAccumulator.sanitize(clean);
   }
 
   static ParsedResponse parse(String raw) {

@@ -199,45 +199,20 @@ class _IdentityHeaderState extends State<IdentityHeader>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
 
     if (_isLoading) {
       return _buildSkeleton(colors);
     }
 
     return Container(
-      // ─── حاشیه گرادیانی n-stroke: لایه بیرونی ───
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(
-          colors: [
-            colors.brandGradient.first.withValues(alpha: isDark ? 0.75 : 0.5),
-            colors.brandGradient.last.withValues(alpha: isDark ? 0.55 : 0.35),
-            colors.accent.withValues(alpha: isDark ? 0.4 : 0.2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primary.withValues(alpha: isDark ? 0.15 : 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
-            spreadRadius: -4,
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(18),
       ),
-      child: Container(
-        // ─── لایه داخلی: محتوای کارت شیشه‌ای ───
-        margin: const EdgeInsets.all(1.5),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(24.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: widget.onTap,
@@ -355,7 +330,6 @@ class _IdentityHeaderState extends State<IdentityHeader>
                 ),
               ],
             ),
-          ),
         );
       }
 
@@ -412,12 +386,16 @@ class _IdentityHeaderState extends State<IdentityHeader>
                               _avatarPath,
                               width: innerSize,
                               height: innerSize,
+                              cacheWidth: 200,
+                              cacheHeight: 200,
                               fit: BoxFit.cover,
                             )
                           : Image.file(
                               File(_avatarPath),
                               width: innerSize,
                               height: innerSize,
+                              cacheWidth: 200,
+                              cacheHeight: 200,
                               fit: BoxFit.cover,
                             ),
                     )

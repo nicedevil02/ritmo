@@ -3,6 +3,7 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/features/konkur/data/konkur_presets.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
@@ -341,7 +342,7 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
     var formattedDate = 'هنوز انتخاب نشده';
     if (_selectedExamDate != null) {
       final jalali = Jalali.fromDateTime(_selectedExamDate!);
-      formattedDate = '${jalali.formatter.wN} ${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
+      formattedDate = '${ShamsiWeek.nameOf(jalali.weekDay)} ${toPersianDigits(jalali.day)} ${jalali.formatter.mN} ${toPersianDigits(jalali.year)}';
     }
 
     return Column(

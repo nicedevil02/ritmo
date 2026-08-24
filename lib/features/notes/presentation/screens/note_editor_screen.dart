@@ -359,7 +359,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               InteractiveViewer(
-                child: Image.file(file, fit: BoxFit.contain),
+                child: Image.file(file, cacheWidth: 1080, fit: BoxFit.contain),
               ),
               Container(
                 color: Colors.black87,
@@ -1024,7 +1024,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                           if (path != null && File(path).existsSync())
                                             InkWell(
                                               onTap: () => _viewImageAttachment(att),
-                                              child: Image.file(File(path), fit: BoxFit.cover),
+                                              child: Image.file(File(path), cacheWidth: 200, cacheHeight: 200, fit: BoxFit.cover),
                                             )
                                           else
                                             const Center(child: Icon(CupertinoIcons.photo, size: 24)),

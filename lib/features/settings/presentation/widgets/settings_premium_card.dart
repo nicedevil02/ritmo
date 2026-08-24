@@ -15,18 +15,7 @@ class SettingsPremiumCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isPremium ? colors.primary : colors.warning).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(

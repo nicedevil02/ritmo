@@ -11,6 +11,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
 import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
+import 'package:ritmo/features/simple_tasks/logic/task_snooze.dart';
 
 class TaskScheduleRow extends StatelessWidget {
   const TaskScheduleRow({
@@ -85,6 +86,98 @@ class TaskScheduleRow extends StatelessWidget {
     }
   }
 
+  Future<void> _showSnoozeMenu(BuildContext context) async {
+    final colors = context.colors;
+    final now = DateTime.now();
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(CupertinoIcons.clock, color: colors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'تعویق یادآور',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(CupertinoIcons.stopwatch, size: 20),
+                  title: const Text('۱۰ دقیقه بعد', style: TextStyle(fontSize: 14)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await _applySnooze(context, SnoozePreset.tenMinutes, '۱۰ دقیقه');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(CupertinoIcons.timer, size: 20),
+                  title: const Text('۱ ساعت بعد', style: TextStyle(fontSize: 14)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await _applySnooze(context, SnoozePreset.oneHour, '۱ ساعت');
+                  },
+                ),
+                if (now.hour < 20)
+                  ListTile(
+                    leading: const Icon(CupertinoIcons.sunset_fill, size: 20),
+                    title: const Text('امشب ساعت ۲۰:۰۰', style: TextStyle(fontSize: 14)),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await _applySnooze(context, SnoozePreset.thisEvening, 'امشب ساعت ۲۰:۰۰');
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(CupertinoIcons.sunrise_fill, size: 20),
+                  title: const Text('فردا صبح ساعت ۰۹:۰۰', style: TextStyle(fontSize: 14)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await _applySnooze(context, SnoozePreset.tomorrowMorning, 'فردا صبح ساعت ۰۹:۰۰');
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _applySnooze(BuildContext context, SnoozePreset preset, String label) async {
+    try {
+      await snoozeTask(task.id, preset);
+      await AlarmSchedulerService.scheduleNextAlarms();
+      final fresh = await SimpleTaskRepository.instance.getById(task.id);
+      if (fresh != null) {
+        onTaskChanged(fresh);
+      }
+      if (context.mounted) {
+        RitmoToast.show(context, 'یادآور به $label تعویق افتاد', icon: CupertinoIcons.clock);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        RitmoToast.show(context, 'خطا در تعویق یادآور', icon: CupertinoIcons.exclamationmark_triangle);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -124,6 +217,11 @@ class TaskScheduleRow extends StatelessWidget {
             ActionChip(
               label: const Text('زمان دلخواه…', style: TextStyle(fontSize: 11)),
               onPressed: () => _pickCustomReminder(context),
+            ),
+            ActionChip(
+              avatar: const Icon(CupertinoIcons.clock, size: 14),
+              label: const Text('تعویق…', style: TextStyle(fontSize: 11)),
+              onPressed: () => _showSnoozeMenu(context),
             ),
             if (task.reminderAtMs != null)
               ActionChip(

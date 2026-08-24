@@ -8,6 +8,7 @@ import 'package:ritmo/core/domain/engines/hormonal_intelligence_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
@@ -156,7 +157,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
     final nextCycleDate = output?.nextCycleStartDate ?? DateTime.now();
     final jalali = Jalali.fromDateTime(nextCycleDate);
     final monthName = jalali.formatter.mN;
-    final weekdayLabel = jalali.formatter.wN;
+    final weekdayLabel = ShamsiWeek.nameOf(jalali.weekDay);
     final dateStr =
         '$weekdayLabel ${PersianDigits.toFa(jalali.day.toString())} $monthName';
     final daysToNext = nextCycleDate.difference(DateTime.now()).inDays;

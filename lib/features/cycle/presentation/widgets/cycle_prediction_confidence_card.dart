@@ -39,22 +39,22 @@ class CyclePredictionConfidenceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.verified_outlined, size: 18, color: badgeColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'اعتبار پیش‌بینی ریتم بدنی',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+              Icon(Icons.verified_outlined, size: 18, color: badgeColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'اعتبار پیش‌بینی ریتم بدنی',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
                   ),
-                ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(

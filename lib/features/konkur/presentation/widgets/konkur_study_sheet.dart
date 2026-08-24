@@ -304,20 +304,26 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
 
     final subTopics = widget.topics.where((t) => t.subjectId == _selectedSubject?.id).toList();
 
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
+
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 20,
-          ),
-          child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: RitmoTheme.glassCardLight(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              top: 20,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -630,6 +636,8 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
       ),
     ),
   ),
+),
+),
 );
 }
 

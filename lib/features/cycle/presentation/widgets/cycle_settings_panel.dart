@@ -224,26 +224,26 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.slider_horizontal_3,
-                        color: colors.primary,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'ویرایش و بازبینی راه‌اندازی چرخه',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    CupertinoIcons.slider_horizontal_3,
+                    color: colors.primary,
+                    size: 18,
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ویرایش و بازبینی راه‌اندازی چرخه',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Icon(
                     CupertinoIcons.chevron_left,
                     color: colors.textSecondary,
@@ -284,21 +284,21 @@ class _CycleSettingsPanelState extends State<CycleSettingsPanel> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Text('🔑', style: TextStyle(fontSize: 14)),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getPasscodeSubtitle(),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colors.textSecondary,
-                        ),
+                  const Text('🔑', style: TextStyle(fontSize: 14)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _getPasscodeSubtitle(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textSecondary,
                       ),
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Icon(
                     CupertinoIcons.chevron_left,
                     color: colors.textSecondary,

@@ -41,6 +41,12 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
     _loadTopics();
   }
 
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadTopics() async {
     if (_selectedSubjectId.isEmpty) return;
     final topics = await StudyRepository.instance.getTopics(subjectId: _selectedSubjectId);

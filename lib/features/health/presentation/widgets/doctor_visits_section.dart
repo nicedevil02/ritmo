@@ -260,6 +260,7 @@ class _DoctorVisitsSectionState extends State<DoctorVisitsSection> with SingleTi
                 borderRadius: BorderRadius.circular(16),
                 child: Image.file(
                   File(path),
+                  cacheWidth: 1080,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => Container(
                     padding: const EdgeInsets.all(32),
@@ -1028,6 +1029,7 @@ class _DoctorVisitFormState extends State<_DoctorVisitForm> {
                   child: Image.file(
                     File(_attachmentPath!),
                     height: 150,
+                    cacheHeight: 300,
                     fit: BoxFit.cover,
                   ),
                 ),

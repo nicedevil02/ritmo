@@ -258,6 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ];
 
     return RitmoPageScaffold(
+      padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar(
         title: 'پروفایل و تنظیمات',
         actions: [
@@ -326,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SettingsReadyGate(
         showDegradedBanner: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -384,21 +385,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                         // کارت جزیره‌ای گروه‌بندی‌شده
                         Container(
-                          margin: const EdgeInsets.only(bottom: 18),
+                          margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
                             color: colors.card,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: colors.border.withValues(alpha: 0.65),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.03),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(18),
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: Column(
@@ -407,10 +397,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (i > 0)
                                   Divider(
                                     height: 1,
-                                    thickness: 1,
-                                    color: colors.border.withValues(alpha: 0.45),
-                                    indent: 68,
-                                    endIndent: 16,
+                                    thickness: 0.7,
+                                    color: colors.divider.withValues(alpha: 0.6),
+                                    indent: 64,
+                                    endIndent: 14,
                                   ),
                                 Builder(
                                   builder: (context) {

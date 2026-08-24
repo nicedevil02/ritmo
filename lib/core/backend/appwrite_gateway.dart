@@ -101,20 +101,6 @@ class AppwriteGateway {
     });
   }
 
-  /// Execute core function for OTP request or verify.
-  Future<AuthResult<String>> executeCoreFunction(Map<String, dynamic> payload) async {
-    if (_functions == null) return const AuthResult.failure(AuthErrorCode.serverUnreachable);
-    return _safeCall(() async {
-      final execution = await _functions!.createExecution(
-        functionId: AppConfig.appwriteFunctionId,
-        body: jsonEncode(payload),
-      );
-      if (execution.status == 'failed') {
-        throw AppwriteException(execution.responseBody, 500);
-      }
-      return execution.responseBody;
-    });
-  }
 
   /// Create session from custom token returned by OTP verify function.
   Future<AuthResult<models.Session>> createSessionWithToken(String userId, String secret) async {

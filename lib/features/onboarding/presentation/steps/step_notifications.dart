@@ -1,16 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/onboarding/presentation/ritmo_orb.dart';
 import 'package:sqflite/sqflite.dart';
 
 class StepNotifications extends StatefulWidget {
 
-  const StepNotifications({super.key, required this.onFinished});
+  const StepNotifications({
+    super.key,
+    required this.onFinished,
+    this.onSkipped,
+  });
   final VoidCallback onFinished;
+  final VoidCallback? onSkipped;
 
   @override
   State<StepNotifications> createState() => _StepNotificationsState();
@@ -85,11 +91,6 @@ class _StepNotificationsState extends State<StepNotifications> {
 
       // 4. Save notification enabled state
       try {
-        await SettingsService.instance.set(
-          'persistent_status_notification_enabled',
-          'true',
-        ).timeout(const Duration(seconds: 2));
-      } catch (_) {
         final db = await DatabaseHelper.instance.database;
         final now = DateTime.now().millisecondsSinceEpoch;
         await db.insert(
@@ -101,7 +102,7 @@ class _StepNotificationsState extends State<StepNotifications> {
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-      }
+      } catch (_) {}
     } catch (e) {
       debugPrint('Error in _executePermissionFlow: $e');
     }
@@ -158,29 +159,10 @@ class _StepNotificationsState extends State<StepNotifications> {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () async {
-              await HapticFeedback.lightImpact();
-              try {
-                await SettingsService.instance.set(
-                  'persistent_status_notification_enabled',
-                  'false',
-                ).timeout(const Duration(seconds: 2));
-              } catch (e) {
-                try {
-                  final db = await DatabaseHelper.instance.database;
-                  final now = DateTime.now().millisecondsSinceEpoch;
-                  await db.insert(
-                    'app_settings',
-                    {
-                      'key': 'persistent_status_notification_enabled',
-                      'value': 'false',
-                      'updatedAt': now
-                    },
-                    conflictAlgorithm: ConflictAlgorithm.replace,
-                  );
-                } catch (_) {}
-              }
-              widget.onFinished();
+            onPressed: () {
+              HapticFeedback.lightImpact().ignore();
+              unawaited(_saveSkippedSetting());
+              (widget.onSkipped ?? widget.onFinished)();
             },
             style: TextButton.styleFrom(
               foregroundColor: colors.textSecondary,
@@ -190,11 +172,27 @@ class _StepNotificationsState extends State<StepNotifications> {
               'حالا نه',
               style: TextStyle(
                 fontSize: 13,
-                ),
+              ),
             ),
           ),
         ],
       ],
     );
+  }
+
+  static Future<void> _saveSkippedSetting() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.insert(
+        'app_settings',
+        {
+          'key': 'persistent_status_notification_enabled',
+          'value': 'false',
+          'updatedAt': now
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (_) {}
   }
 }

@@ -43,7 +43,6 @@ void main() {
             isha TEXT NOT NULL,
             midnightShari TEXT NOT NULL,
             calculationMethod TEXT,
-            ihtiyatMinutes INTEGER,
             computedAt INTEGER,
             fajrIso TEXT,
             sunriseIso TEXT,
@@ -88,10 +87,9 @@ void main() {
           'longitude': 51.3890,
         });
 
-        // Seed default settings with ihtiyat 0
+        // Seed default settings
         await db.insert('app_settings', {'key': 'prayer_city_id', 'value': 'TEHRAN_TEHRAN', 'updatedAt': 1});
         await db.insert('app_settings', {'key': 'prayer_calculation_method', 'value': 'TEHRAN_GEOPHYSICS', 'updatedAt': 1});
-        await db.insert('app_settings', {'key': 'ihtiyat_minutes', 'value': '0', 'updatedAt': 1});
       });
       DatabaseHelper.instance.overrideDatabaseForTesting(db);
     });
@@ -100,7 +98,7 @@ void main() {
       await db.close();
     });
 
-    test('computePrayerTimes returns exact Tehran Geophysics times when ihtiyat is 0', () async {
+    test('computePrayerTimes returns exact Tehran Geophysics times', () async {
       final date = DateTime(2026, 8, 6);
       final times = await PrayerTimeProvider.instance.getPrayerTimesForDate(
         cityId: 'TEHRAN_TEHRAN',
@@ -119,9 +117,7 @@ void main() {
       expect(timeRegExp.hasMatch(times['maghrib']!), isTrue);
     });
 
-    test('Self-healing converts legacy ihtiyat_minutes 10 to 0 and clears cache', () async {
-      // Set legacy ihtiyat_minutes = 10
-      await db.insert('app_settings', {'key': 'ihtiyat_minutes', 'value': '10', 'updatedAt': 1}, conflictAlgorithm: ConflictAlgorithm.replace);
+    test('WorshipEngine correctly retrieves cached and calculated prayer times', () async {
       await db.insert('prayer_times_cache', {
         'date': '2026-08-06',
         'cityId': 'TEHRAN_TEHRAN',
@@ -137,10 +133,7 @@ void main() {
 
       final times = await WorshipEngine.instance.prayerTimes(DateTime(2026, 8, 6));
       expect(times, isNotNull);
-
-      // Verify DB settings were healed to 0
-      final settings = await db.query('app_settings', where: "key = 'ihtiyat_minutes'");
-      expect(settings.first['value'], equals('0'));
+      expect(times.fajrText, isNotEmpty);
     });
   });
 }

@@ -19,7 +19,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/models.dart' hide EnergyLevel;
-import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
@@ -51,8 +50,18 @@ import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_day_shee
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_explanation_sheet.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_narrative_card.dart';
 import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_pulse_chart.dart';
+import 'package:ritmo/features/wellbeing/presentation/widgets/sleep_target_card.dart';
+import 'package:ritmo/features/wellbeing/presentation/widgets/wellbeing_quick_checkin_bar.dart';
 
-enum WellbeingSection { today, trend, mirror }
+enum WellbeingSection {
+  today,
+  sleep,
+  energy,
+  journal;
+
+  static const WellbeingSection trend = WellbeingSection.sleep;
+  static const WellbeingSection mirror = WellbeingSection.journal;
+}
 
 class WellbeingScreen extends StatefulWidget {
   const WellbeingScreen({
@@ -77,9 +86,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   late TabController _tabController;
 
-  bool _energyEnabled = false;
-  bool _sleepEnabled = false;
-
   WellbeingIndex? _wellbeing;
   EnergyAnalyticsOutput? _energyOutput;
   MoodEngineOutput? _moodOutput;
@@ -94,6 +100,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
   List<CheckinEntry> _checkins = [];
   List<WellbeingDailyRecord> _dailyRecords = [];
   SleepTarget _sleepTarget = SleepTarget.defaultTarget();
+  bool _isSleepTargetExpanded = true;
   List<WellbeingPulseDayData> _pulseDays = [];
   WellbeingInsightLoopState? _loopPrevious;
   WellbeingInsightSnapshot _insightSnapshotCache =
@@ -107,13 +114,27 @@ class _WellbeingScreenState extends State<WellbeingScreen>
 
   StreamSubscription? _eventSub;
 
+  MoodLog? get _latestMood =>
+      _rawMoodLogs.isNotEmpty ? _rawMoodLogs.first : null;
+  EnergyLog? get _latestEnergy =>
+      _rawEnergyLogs.isNotEmpty ? _rawEnergyLogs.first : null;
+  SleepLog? get _latestSleep =>
+      _rawSleepLogs.isNotEmpty ? _rawSleepLogs.first : null;
+  ReflectionEntry? get _todayReflection {
+    final todayStr = RitmoDate.dayKey(DateTime.now());
+    for (final r in _reflections) {
+      if (r.date == todayStr) return r;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
-      initialIndex: widget.initialSection.index,
+      initialIndex: widget.initialSection.index.clamp(0, 3),
     );
 
     RitmoEvents.routineChanges.addListener(_requestReload);
@@ -259,9 +280,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       ]);
 
       if (!mounted || token != _loadToken) return;
-
-      _energyEnabled = dbResults[0] as bool;
-      _sleepEnabled = dbResults[1] as bool;
 
       final targetRows = dbResults[2] as List<Map<String, dynamic>>;
       String bedtime = '23:30';
@@ -698,10 +716,13 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 unselectedLabelStyle: RitmoTextStyles.caption(
                   colors.textSecondary,
                 ),
+                isScrollable: true,
+                tabAlignment: TabAlignment.center,
                 tabs: const [
-                  Tab(text: 'امروزِ من'),
-                  Tab(text: 'روند من'),
-                  Tab(text: 'آینه'),
+                  Tab(text: 'امروز و تعادل'),
+                  Tab(text: 'خواب و استراحت'),
+                  Tab(text: 'انرژی و خلق'),
+                  Tab(text: 'دفتر بازتاب'),
                 ],
               ),
             ),
@@ -714,12 +735,53 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             controller: _tabController,
             children: [
               _WellbeingTabKeepAlive(child: _buildTodayTab(context)),
-              _WellbeingTabKeepAlive(child: _buildTrendTab(context)),
+              _WellbeingTabKeepAlive(child: _buildSleepTab(context)),
+              _WellbeingTabKeepAlive(child: _buildEnergyTab(context)),
               _WellbeingTabKeepAlive(child: _buildMirrorTab(context)),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _openQuickMoodSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'الان چه حسی داری؟ 🌈',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FrictionlessMoodBar(
+                onLogChanged: () {
+                  Navigator.pop(ctx);
+                  _requestReload();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -736,18 +798,35 @@ class _WellbeingScreenState extends State<WellbeingScreen>
           padding: const EdgeInsets.all(RitmoSpacing.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              _buildIndexHeroCard(context),
-              const SizedBox(height: RitmoSpacing.lg),
-              DynamicEnergyCard(
-                output: _energyOutput,
-                onLogTap: () {
+              WellbeingQuickCheckinBar(
+                latestMood: _latestMood,
+                latestEnergy: _latestEnergy,
+                latestSleep: _latestSleep,
+                todayReflection: _todayReflection,
+                onMoodTap: () => _openQuickMoodSelector(context),
+                onEnergyTap: () {
                   RitmoSheetScaffold.present(
                     context: context,
                     title: 'ثبت انرژی',
                     builder: (_) => QuickLogSheet(onSaved: _requestReload),
                   );
                 },
+                onSleepTap: () {
+                  RitmoSheetScaffold.present(
+                    context: context,
+                    title: 'ثبت خواب',
+                    builder: (_) => SleepLogSheet(
+                      onSaved: _requestReload,
+                      target: _sleepTarget,
+                    ),
+                  );
+                },
+                onReflectionTap: () {
+                  _tabController.animateTo(3);
+                },
               ),
+              const SizedBox(height: RitmoSpacing.lg),
+              _buildIndexHeroCard(context),
               const SizedBox(height: RitmoSpacing.lg),
               WellbeingNarrativeCard(
                 insight: snapshot.featured,
@@ -760,11 +839,20 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 onAction: _onInsightAction,
               ),
               const SizedBox(height: RitmoSpacing.lg),
-              _buildSleepProgramCard(context),
+              WellbeingPulseChart(
+                days: _pulseDays,
+                onDayTap: (day) => WellbeingDaySheet.show(
+                  context: context,
+                  day: day,
+                  sleepTarget: _sleepTarget,
+                  onLogChanged: _requestReload,
+                ),
+              ),
               const SizedBox(height: RitmoSpacing.lg),
-              FrictionlessMoodBar(onLogChanged: _requestReload),
-              const SizedBox(height: RitmoSpacing.lg),
-              _buildQuickActionsRow(context),
+              IndexTrendCard(
+                records: _dailyRecords,
+                horizonDays: _selectedHorizonDays,
+              ),
             ]),
           ),
         ),
@@ -810,7 +898,65 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  Widget _buildTrendTab(BuildContext context) {
+  Widget _buildSleepTab(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification) {
+          if (notification.metrics.axis == Axis.vertical) {
+            final pixels = notification.metrics.pixels;
+            if (pixels > 50 && _isSleepTargetExpanded) {
+              setState(() => _isSleepTargetExpanded = false);
+            } else if (pixels <= 10 && !_isSleepTargetExpanded) {
+              setState(() => _isSleepTargetExpanded = true);
+            }
+          }
+        }
+        return false;
+      },
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(RitmoSpacing.lg),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                SleepTargetCard(
+                  target: _sleepTarget,
+                  isExpanded: _isSleepTargetExpanded,
+                  onToggleExpand: () {
+                    setState(() => _isSleepTargetExpanded = !_isSleepTargetExpanded);
+                  },
+                  onEditTap: () {
+                    RitmoSheetScaffold.present(
+                      context: context,
+                      title: 'تنظیم هدف خواب',
+                      builder: (_) => SleepTargetSheet(
+                        currentTarget: _sleepTarget,
+                        onSaved: _requestReload,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: RitmoSpacing.lg),
+                _buildHorizonFilterRow(context),
+                const SizedBox(height: RitmoSpacing.md),
+                SleepOverviewCard(
+                  output: _sleepOutput,
+                  target: _sleepTarget,
+                  sleepLogCount: _rawSleepLogs.length,
+                ),
+                const SizedBox(height: RitmoSpacing.lg),
+                _buildSleepProgramCard(context),
+                const SizedBox(height: RitmoSpacing.lg),
+                _buildSleepBankCard(context),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnergyTab(BuildContext context) {
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -819,34 +965,24 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             delegate: SliverChildListDelegate([
               _buildHorizonFilterRow(context),
               const SizedBox(height: RitmoSpacing.md),
-              IndexTrendCard(
-                records: _dailyRecords,
-                horizonDays: _selectedHorizonDays,
-              ),
-              const SizedBox(height: RitmoSpacing.lg),
-              WellbeingPulseChart(
-                days: _pulseDays,
-                onDayTap: (day) => WellbeingDaySheet.show(
-                  context: context,
-                  day: day,
-                  sleepTarget: _sleepTarget,
-                  onLogChanged: _requestReload,
-                ),
+              DynamicEnergyCard(
+                output: _energyOutput,
+                onLogTap: () {
+                  RitmoSheetScaffold.present(
+                    context: context,
+                    title: 'ثبت انرژی',
+                    builder: (_) => QuickLogSheet(onSaved: _requestReload),
+                  );
+                },
               ),
               const SizedBox(height: RitmoSpacing.lg),
               DailyRhythmCard(output: _energyOutput),
               const SizedBox(height: RitmoSpacing.lg),
               MoodAnalyticsCard(output: _moodOutput),
               const SizedBox(height: RitmoSpacing.lg),
-              SleepOverviewCard(
-                output: _sleepOutput,
-                target: _sleepTarget,
-                sleepLogCount: _rawSleepLogs.length,
-              ),
+              FrictionlessMoodBar(onLogChanged: _requestReload),
               const SizedBox(height: RitmoSpacing.lg),
               _buildEffortDistributionCard(context),
-              const SizedBox(height: RitmoSpacing.lg),
-              _buildSleepBankCard(context),
             ]),
           ),
         ),
@@ -1258,220 +1394,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
       ),
     );
   }
-
-  Widget _buildQuickActionsRow(BuildContext context) {
-    final colors = context.colors;
-
-    if (!_energyEnabled || !_sleepEnabled) {
-      return Container(
-        padding: const EdgeInsets.all(RitmoSpacing.md),
-        decoration: BoxDecoration(
-          color: colors.primaryContainer.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                !_energyEnabled && !_sleepEnabled
-                    ? 'ماژول‌های انرژی و خواب غیرفعال هستند.'
-                    : (!_energyEnabled
-                          ? 'ماژول انرژی غیرفعال است.'
-                          : 'ماژول خواب غیرفعال است.'),
-                style: RitmoTextStyles.caption(colors.textPrimary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (!_energyEnabled) {
-                  await ModuleManagementService.instance.setModuleEnabled(
-                    'module_energy_enabled',
-                    true,
-                  );
-                }
-                if (!_sleepEnabled) {
-                  await ModuleManagementService.instance.setModuleEnabled(
-                    'module_sleep_enabled',
-                    true,
-                  );
-                }
-                _requestReload();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-              ),
-              child: Text(
-                'فعالسازی درجا',
-                style: RitmoTextStyles.label(colors.onPrimary),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(RitmoSpacing.sm),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(RitmoRadius.card),
-            border: Border.all(color: colors.border),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'انرژی الان:',
-                style: RitmoTextStyles.caption(colors.textSecondary),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _energyLevelChip(
-                      context,
-                      label: 'کم ⚡',
-                      level: 'LOW',
-                      color: colors.cautionAccent,
-                    ),
-                    _energyLevelChip(
-                      context,
-                      label: 'متوسط ⚡',
-                      level: 'MEDIUM',
-                      color: colors.primary,
-                    ),
-                    _energyLevelChip(
-                      context,
-                      label: 'زیاد ⚡',
-                      level: 'HIGH',
-                      color: colors.success,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _quickActionButton(
-                context,
-                label: 'ثبت جزئیات انرژی',
-                icon: Icons.bolt,
-                color: colors.energyAccent,
-                onTap: () {
-                  RitmoSheetScaffold.present(
-                    context: context,
-                    title: 'ثبت سطح انرژی',
-                    builder: (ctx) => QuickLogSheet(onSaved: _requestReload),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _quickActionButton(
-                context,
-                label: 'ثبت خواب دیشب',
-                icon: Icons.bedtime,
-                color: colors.sleepAccent,
-                onTap: () {
-                  RitmoSheetScaffold.present(
-                    context: context,
-                    title: 'ثبت خواب دیشب',
-                    builder: (ctx) => SleepLogSheet(
-                      onSaved: _requestReload,
-                      target: _sleepTarget,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _energyLevelChip(
-    BuildContext context, {
-    required String label,
-    required String level,
-    required Color color,
-  }) {
-    return InkWell(
-      onTap: () async {
-        RitmoHapticsPolicy.tap();
-        final energyLevel = level == 'HIGH'
-            ? EnergyLevel.high
-            : (level == 'LOW' ? EnergyLevel.low : EnergyLevel.medium);
-        await WellbeingLogGateway.instance.logEnergy(
-          level: energyLevel,
-          source: 'wellbeing_screen',
-        );
-        _requestReload();
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          label,
-          style: RitmoTextStyles.caption(color).copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _quickActionButton(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: () {
-        RitmoHapticsPolicy.tap();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(RitmoRadius.card),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(width: 6),
-            Text(label, style: RitmoTextStyles.label(color)),
-          ],
-        ),
-      ),
-    );
-  }
-
-
 
   Widget _buildEffortDistributionCard(BuildContext context) {
     final colors = context.colors;

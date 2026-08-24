@@ -129,6 +129,22 @@ final rules = <MetricRule>[
     onlyUnder: 'lib/core/',
     scope: 'lib/core/',
   ),
+  MetricRule(
+    key: 'rawFontSize',
+    name: 'Raw Font Size',
+    pattern: RegExp(r'fontSize:\s*\d'),
+    onlyUnder: 'lib/features/',
+    scope: 'lib/features/',
+  ),
+  MetricRule(
+    key: 'rawGeometryLiteral',
+    name: 'Raw Geometry Literals',
+    pattern: RegExp(
+      r'(EdgeInsets\.(all|symmetric|only)\(\s*\d)|(SizedBox\(\s*(height|width):\s*\d)',
+    ),
+    onlyUnder: 'lib/features/',
+    scope: 'lib/features/',
+  ),
 ];
 
 String stripComments(String code) {
@@ -187,7 +203,9 @@ void main(List<String> args) {
       for (final rule in rules) rule.key: counts[rule.key],
     };
     const encoder = JsonEncoder.withIndent('  ');
-    File('tool/theme_baseline.json').writeAsStringSync('${encoder.convert(map)}\n');
+    File(
+      'tool/theme_baseline.json',
+    ).writeAsStringSync('${encoder.convert(map)}\n');
     stdout.writeln('Baseline updated: tool/theme_baseline.json');
     exit(0);
   }
@@ -196,7 +214,8 @@ void main(List<String> args) {
   Map<String, dynamic> baseline = {};
   if (baselineFile.existsSync()) {
     try {
-      baseline = jsonDecode(baselineFile.readAsStringSync()) as Map<String, dynamic>;
+      baseline =
+          jsonDecode(baselineFile.readAsStringSync()) as Map<String, dynamic>;
     } catch (e) {
       stderr.writeln('Warning: Failed to parse tool/theme_baseline.json: $e');
     }
@@ -228,14 +247,17 @@ void main(List<String> args) {
       canLowerBaseline = true;
     }
 
-    tableRows.add('| ${rule.name} | `${rule.key}` | `${rule.scope}` | $current | $base | $status |');
+    tableRows.add(
+      '| ${rule.name} | `${rule.key}` | `${rule.scope}` | $current | $base | $status |',
+    );
     print('${rule.name.padRight(40)} : $current (Baseline: $base) -> $status');
 
     // Show top 5 worst offenders
-    final sortedFiles = (fileCounts[rule.key]!.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value)))
-        .take(5)
-        .toList();
+    final sortedFiles =
+        (fileCounts[rule.key]!.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value)))
+            .take(5)
+            .toList();
 
     if (sortedFiles.isNotEmpty && (!isCheckMode || current > base)) {
       print('   Top offenders:');
@@ -246,7 +268,9 @@ void main(List<String> args) {
   }
 
   if (canLowerBaseline) {
-    print('\n[TIP] One or more metrics improved! Lower baseline in tool/theme_baseline.json');
+    print(
+      '\n[TIP] One or more metrics improved! Lower baseline in tool/theme_baseline.json',
+    );
   }
 
   if (!isCheckMode) {
@@ -266,10 +290,11 @@ void main(List<String> args) {
     report.writeln();
 
     for (final rule in rules) {
-      final sortedFiles = (fileCounts[rule.key]!.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value)))
-          .take(5)
-          .toList();
+      final sortedFiles =
+          (fileCounts[rule.key]!.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value)))
+              .take(5)
+              .toList();
 
       report.writeln('### ${rule.name} (`${rule.key}`)');
       report.writeln('Total: ${counts[rule.key]} occurrences');
@@ -295,7 +320,9 @@ void main(List<String> args) {
   }
 
   if (isCheckMode && hasViolation) {
-    stderr.writeln('\n[FAILED] Design System Guard: Regression detected against baseline!');
+    stderr.writeln(
+      '\n[FAILED] Design System Guard: Regression detected against baseline!',
+    );
     exit(1);
   }
 }

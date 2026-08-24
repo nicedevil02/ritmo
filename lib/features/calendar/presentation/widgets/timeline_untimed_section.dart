@@ -33,6 +33,7 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
@@ -76,10 +77,10 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                   color: isHovered
                       ? colorScheme.primaryContainer.withValues(alpha: 0.25)
                       : (isDark
-                          ? theme.colorScheme.surfaceContainerHigh.withValues(
-                              alpha: 0.20,
-                            )
-                          : theme.cardColor.withValues(alpha: 0.85)),
+                            ? theme.colorScheme.surfaceContainerHigh.withValues(
+                                alpha: 0.20,
+                              )
+                            : theme.cardColor.withValues(alpha: 0.85)),
                   borderRadius: BorderRadius.circular(14.0),
                   border: Border.all(
                     color: isHovered
@@ -89,7 +90,9 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                   ),
                 ),
                 child: Row(
-                  crossAxisAlignment: _isExpanded ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                  crossAxisAlignment: _isExpanded
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: AnimatedSize(
@@ -102,7 +105,8 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                                 runSpacing: RitmoSpacing.sm,
                                 children: untimedItems
                                     .map(
-                                      (item) => _buildChipItem(context, item, isDark),
+                                      (item) =>
+                                          _buildChipItem(context, item, isDark),
                                     )
                                     .toList(),
                               )
@@ -134,7 +138,9 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: _toggleExpanded,
-                          borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                          borderRadius: BorderRadius.circular(
+                            RitmoRadius.badge,
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
                             child: AnimatedRotation(
@@ -168,9 +174,7 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                       vertical: 1.0,
                     ),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? (theme.scaffoldBackgroundColor)
-                          : (theme.cardColor),
+                      color: isDark ? colors.background : colors.surface,
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                     child: Row(
@@ -270,10 +274,7 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
     );
 
     if (!schedulable) {
-      return Opacity(
-        opacity: 0.55,
-        child: chipWidget,
-      );
+      return Opacity(opacity: 0.55, child: chipWidget);
     }
 
     return LongPressDraggable<AgendaItem>(
@@ -285,15 +286,9 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
         elevation: 8,
         borderRadius: BorderRadius.circular(RitmoRadius.badge),
         color: Colors.transparent,
-        child: Transform.scale(
-          scale: 1.08,
-          child: chipWidget,
-        ),
+        child: Transform.scale(scale: 1.08, child: chipWidget),
       ),
-      childWhenDragging: Opacity(
-        opacity: 0.3,
-        child: chipWidget,
-      ),
+      childWhenDragging: Opacity(opacity: 0.3, child: chipWidget),
       child: chipWidget,
     );
   }

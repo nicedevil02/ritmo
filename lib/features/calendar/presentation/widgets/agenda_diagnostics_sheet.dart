@@ -53,23 +53,37 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
       out.writeln('-- settings FAILED: $e');
     }
 
-    out.writeln('app_start_date = ${settingsMap['app_start_date'] ?? '(unset)'}');
-    out.writeln('onboarding_completed = ${settingsMap['onboarding_completed'] ?? '(unset)'}');
+    out.writeln(
+      'app_start_date = ${settingsMap['app_start_date'] ?? '(unset)'}',
+    );
+    out.writeln(
+      'onboarding_completed = ${settingsMap['onboarding_completed'] ?? '(unset)'}',
+    );
     out.writeln(
       'module_today_routines = ${settingsMap['module_today_routines'] ?? '(unset)'} '
       '=> gate=${ModuleGate.instance.isEnabledFrom(settingsMap, 'module_today_routines')}',
     );
-    out.writeln('calendar_show_tasks = ${settingsMap['calendar_show_tasks'] ?? '(unset)'}');
-    out.writeln('calendar_show_events = ${settingsMap['calendar_show_events'] ?? '(unset)'}');
-    out.writeln('calendar_show_worship_obligatory = ${settingsMap['calendar_show_worship_obligatory'] ?? '(unset)'}');
-    out.writeln('calendar_show_worship_mustahab = ${settingsMap['calendar_show_worship_mustahab'] ?? '(unset)'}');
+    out.writeln(
+      'calendar_show_tasks = ${settingsMap['calendar_show_tasks'] ?? '(unset)'}',
+    );
+    out.writeln(
+      'calendar_show_events = ${settingsMap['calendar_show_events'] ?? '(unset)'}',
+    );
+    out.writeln(
+      'calendar_show_worship_obligatory = ${settingsMap['calendar_show_worship_obligatory'] ?? '(unset)'}',
+    );
+    out.writeln(
+      'calendar_show_worship_mustahab = ${settingsMap['calendar_show_worship_mustahab'] ?? '(unset)'}',
+    );
     out.writeln('');
 
     // ---- 2. raw database --------------------------------------------------
     out.writeln('-- database');
     try {
       final total = await countOf('SELECT COUNT(*) FROM routines');
-      dbRoutines = await countOf('SELECT COUNT(*) FROM routines WHERE isArchived = 0');
+      dbRoutines = await countOf(
+        'SELECT COUNT(*) FROM routines WHERE isArchived = 0',
+      );
       out.writeln('routines total=$total notArchived=$dbRoutines');
     } catch (e) {
       out.writeln('routines FAILED: $e');
@@ -81,7 +95,9 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
       out.writeln('routine_schedules FAILED: $e');
     }
     try {
-      final occTotal = await countOf('SELECT COUNT(*) FROM routine_occurrences');
+      final occTotal = await countOf(
+        'SELECT COUNT(*) FROM routine_occurrences',
+      );
       dbOccToday = await countOf(
         'SELECT COUNT(*) FROM routine_occurrences WHERE date = ?',
         [todayStr],
@@ -90,28 +106,42 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
         'SELECT COUNT(*) FROM routine_occurrences WHERE date >= ? AND date <= ?',
         [todayStr, endStr],
       );
-      out.writeln('routine_occurrences total=$occTotal today=$dbOccToday range=$occRange');
+      out.writeln(
+        'routine_occurrences total=$occTotal today=$dbOccToday range=$occRange',
+      );
       final firstDate = await db.rawQuery(
         'SELECT MIN(date) a, MAX(date) b FROM routine_occurrences',
       );
       if (firstDate.isNotEmpty) {
-        out.writeln('occurrence dates: ${firstDate.first['a']} .. ${firstDate.first['b']}');
+        out.writeln(
+          'occurrence dates: ${firstDate.first['a']} .. ${firstDate.first['b']}',
+        );
       }
     } catch (e) {
       out.writeln('routine_occurrences FAILED: $e');
     }
     try {
-      out.writeln('simple_tasks=${await countOf('SELECT COUNT(*) FROM simple_tasks')}');
-      out.writeln('temporary_events=${await countOf('SELECT COUNT(*) FROM temporary_events')}');
-      out.writeln('routine_completions=${await countOf('SELECT COUNT(*) FROM routine_completions')}');
-      out.writeln('worship_day_exceptions=${await countOf('SELECT COUNT(*) FROM worship_day_exceptions')}');
+      out.writeln(
+        'simple_tasks=${await countOf('SELECT COUNT(*) FROM simple_tasks')}',
+      );
+      out.writeln(
+        'temporary_events=${await countOf('SELECT COUNT(*) FROM temporary_events')}',
+      );
+      out.writeln(
+        'routine_completions=${await countOf('SELECT COUNT(*) FROM routine_completions')}',
+      );
+      out.writeln(
+        'worship_day_exceptions=${await countOf('SELECT COUNT(*) FROM worship_day_exceptions')}',
+      );
     } catch (e) {
       out.writeln('tables count FAILED: $e');
     }
     out.writeln('');
 
     // ---- 3. per-source metrics & observability -----------------------------
-    out.writeln('-- Per-Source Agenda Metrics (${AgendaSourceRegistry.instance.entries.length} registered sources)');
+    out.writeln(
+      '-- Per-Source Agenda Metrics (${AgendaSourceRegistry.instance.entries.length} registered sources)',
+    );
     final failures = <String>[];
     final loadCtx = AgendaSourceLoadContext(
       db: db,
@@ -140,7 +170,9 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
       try {
         final source = await entry.loader(loadCtx);
         if (source == null) {
-          out.writeln('  [DISABLED] ${entry.id.padRight(14)} domains=${entry.domains.map((d) => d.name).join(',')}');
+          out.writeln(
+            '  [DISABLED] ${entry.id.padRight(14)} domains=${entry.domains.map((d) => d.name).join(',')}',
+          );
           continue;
         }
         loadedSourceCount++;
@@ -151,25 +183,36 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
           'domains=${entry.domains.map((d) => d.name).join(',')}',
         );
         for (final it in items.take(2)) {
-          out.writeln('       * ${it.title} [${it.domain.name} / ${it.kind.name}] @ ${it.timeOfDay ?? 'floating'}');
+          out.writeln(
+            '       * ${it.title} [${it.domain.name} / ${it.kind.name}] @ ${it.timeOfDay ?? 'floating'}',
+          );
         }
       } catch (e) {
         failures.add(entry.id);
         out.writeln('  [FAILED]   ${entry.id.padRight(14)} error=$e');
       }
     }
-    out.writeln('sources loaded: $loadedSourceCount, failed: ${failures.length}, totalItems: $totalSourceItems');
+    out.writeln(
+      'sources loaded: $loadedSourceCount, failed: ${failures.length}, totalItems: $totalSourceItems',
+    );
     out.writeln('');
 
     // ---- 4. routine source specific trace ---------------------------------
     out.writeln('-- RoutineAgendaSource Detailed Trace');
     try {
-      final source = await RoutineAgendaSource.load(db, settingsMap, todayStr, endStr);
+      final source = await RoutineAgendaSource.load(
+        db,
+        settingsMap,
+        todayStr,
+        endStr,
+      );
       final active = source.activeForDate(now);
       srcActive = active.length;
       final items = source.itemsForDate(dayCtx);
       srcItems = items.length;
-      out.writeln('activeForDate(today)=$srcActive, itemsForDate(today)=$srcItems');
+      out.writeln(
+        'activeForDate(today)=$srcActive, itemsForDate(today)=$srcItems',
+      );
 
       for (final r in source.routines.take(5)) {
         final id = r['id']?.toString() ?? '?';
@@ -180,10 +223,16 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
         final hasOcc = source.occurrences.any((o) {
           final oid = (o['routine_id'] ?? o['routineId'])?.toString();
           final od = o['date']?.toString();
-          return oid == id && od != null && od.length >= 10 && od.substring(0, 10) == todayStr;
+          return oid == id &&
+              od != null &&
+              od.length >= 10 &&
+              od.substring(0, 10) == todayStr;
         });
-        final isActive = active.any((a) =>
-            ((a['routine'] as Map<String, dynamic>?)?['id'])?.toString() == id);
+        final isActive = active.any(
+          (a) =>
+              ((a['routine'] as Map<String, dynamic>?)?['id'])?.toString() ==
+              id,
+        );
         out.writeln(
           '  - $id type=${r['itemType'] ?? '-'} archived=${r['isArchived'] ?? '-'} '
           'sched=${sched.isEmpty ? 'NONE' : (sched['daysOfWeek'] ?? 'set')} '
@@ -206,7 +255,8 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
       out.writeln('agendaForDate(today)=$svcDayItems');
       final domainCounts = <String, int>{};
       for (final item in day.items) {
-        domainCounts[item.domain.name] = (domainCounts[item.domain.name] ?? 0) + 1;
+        domainCounts[item.domain.name] =
+            (domainCounts[item.domain.name] ?? 0) + 1;
       }
       if (domainCounts.isNotEmpty) out.writeln('by domain: $domainCounts');
 
@@ -219,7 +269,9 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
         total += agenda.items.length;
       }
       svcRangeItems = total;
-      out.writeln('agendaForRange(today..+7) days=${range.length} items=$total');
+      out.writeln(
+        'agendaForRange(today..+7) days=${range.length} items=$total',
+      );
 
       final status = DayAgendaService.instance.lastLoadStatus;
       out.writeln(
@@ -242,15 +294,25 @@ Future<String> collectAgendaDiagnostics({DateTime? targetDate}) async {
   if (dbRoutines == 0) {
     out.writeln('DATA LAYER: no routines in the database at all.');
   } else if (dbSchedules == 0 && dbOccToday == 0) {
-    out.writeln('DATA LAYER: routines exist but have neither schedules nor occurrences.');
+    out.writeln(
+      'DATA LAYER: routines exist but have neither schedules nor occurrences.',
+    );
   } else if (srcActive == 0) {
-    out.writeln('RESOLUTION LAYER: activeForDate(today) is empty -> recurrence rule / occurrence matching.');
+    out.writeln(
+      'RESOLUTION LAYER: activeForDate(today) is empty -> recurrence rule / occurrence matching.',
+    );
   } else if (srcItems == 0) {
-    out.writeln('MAPPING LAYER: routines are active but itemsForDate returns nothing -> domain/medicine filter.');
+    out.writeln(
+      'MAPPING LAYER: routines are active but itemsForDate returns nothing -> domain/medicine filter.',
+    );
   } else if (svcDayItems == 0 || svcRangeItems == 0) {
-    out.writeln('SERVICE LAYER: source produces items but DayAgendaService drops them -> module gates / app_start_date / context.');
+    out.writeln(
+      'SERVICE LAYER: source produces items but DayAgendaService drops them -> module gates / app_start_date / context.',
+    );
   } else {
-    out.writeln('UI LAYER: the service returns items ($svcRangeItems in 8 days), so the calendar view is not rendering them.');
+    out.writeln(
+      'UI LAYER: the service returns items ($svcRangeItems in 8 days), so the calendar view is not rendering them.',
+    );
   }
 
   return out.toString();
@@ -263,13 +325,14 @@ class AgendaDiagnosticsSheet extends StatefulWidget {
   final VoidCallback? onRetry;
 
   static Future<void> show(BuildContext context, {VoidCallback? onRetry}) {
-    final theme = Theme.of(context);
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       builder: (ctx) => AgendaDiagnosticsSheet(onRetry: onRetry),
     );
@@ -293,121 +356,128 @@ class _AgendaDiagnosticsSheetState extends State<AgendaDiagnosticsSheet> {
     final colors = context.colors;
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
           ),
-        child: Padding(
-          padding: const EdgeInsets.all(RitmoSpacing.lg),
-          child: FutureBuilder<String>(
-            future: _future,
-            builder: (ctx, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final report = snap.hasError
-                  ? 'diagnostics crashed: ${snap.error}'
-                  : (snap.data ?? '');
+          child: Padding(
+            padding: const EdgeInsets.all(RitmoSpacing.lg),
+            child: FutureBuilder<String>(
+              future: _future,
+              builder: (ctx, snap) {
+                if (snap.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final report = snap.hasError
+                    ? 'diagnostics crashed: ${snap.error}'
+                    : (snap.data ?? '');
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.bug_report_outlined, size: 20, color: colors.textPrimary),
-                      const SizedBox(width: RitmoSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          'تشخیص خالی‌بودن برنامه',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.bug_report_outlined,
+                          size: 20,
+                          color: colors.textPrimary,
+                        ),
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            'تشخیص خالی‌بودن برنامه',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'کپی گزارش',
-                        icon: const Icon(Icons.copy_rounded, size: 18),
-                        onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: report));
-                          if (!ctx.mounted) return;
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            const SnackBar(content: Text('گزارش کپی شد')),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: RitmoSpacing.sm),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(RitmoSpacing.md),
-                        decoration: BoxDecoration(
-                          color: colors.textPrimary.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(RitmoRadius.card),
+                        IconButton(
+                          tooltip: 'کپی گزارش',
+                          icon: const Icon(Icons.copy_rounded, size: 18),
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: report),
+                            );
+                            if (!ctx.mounted) return;
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              const SnackBar(content: Text('گزارش کپی شد')),
+                            );
+                          },
                         ),
-                        child: Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: SelectableText(
-                            report,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              height: 1.5,
-                              fontFamily: 'monospace',
-                              color: colors.textPrimary,
+                      ],
+                    ),
+                    const SizedBox(height: RitmoSpacing.sm),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(RitmoSpacing.md),
+                          decoration: BoxDecoration(
+                            color: colors.textPrimary.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.card,
+                            ),
+                          ),
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: SelectableText(
+                              report,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                height: 1.5,
+                                fontFamily: 'monospace',
+                                color: colors.textPrimary,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: RitmoSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => setState(() {
-                            _future = collectAgendaDiagnostics();
-                          }),
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text('اجرای مجدد'),
-                        ),
-                      ),
-                      const SizedBox(width: RitmoSpacing.sm),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            DayAgendaService.instance.invalidateAll();
-                            Navigator.of(ctx).pop();
-                            widget.onRetry?.call();
-                          },
-                          icon: const Icon(Icons.sync_rounded, size: 18),
-                          label: const Text('پاک‌سازی و بازخوانی'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: colors.onPrimary,
+                    const SizedBox(height: RitmoSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => setState(() {
+                              _future = collectAgendaDiagnostics();
+                            }),
+                            icon: const Icon(Icons.refresh_rounded, size: 18),
+                            label: const Text('اجرای مجدد'),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
+                        const SizedBox(width: RitmoSpacing.sm),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              DayAgendaService.instance.invalidateAll();
+                              Navigator.of(ctx).pop();
+                              widget.onRetry?.call();
+                            },
+                            icon: const Icon(Icons.sync_rounded, size: 18),
+                            label: const Text('پاک‌سازی و بازخوانی'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),);
+    );
   }
 }

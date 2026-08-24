@@ -65,7 +65,10 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
     if (widget.isLoading) {
       return const Padding(
         padding: EdgeInsets.all(RitmoSpacing.md),
-        child: RitmoSkeletonList(itemCount: 6, itemHeight: CalendarGeometry.agendaRowHeight),
+        child: RitmoSkeletonList(
+          itemCount: 6,
+          itemHeight: CalendarGeometry.agendaRowHeight,
+        ),
       );
     }
 
@@ -90,7 +93,9 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
       return _EmptyAgendaState(onAddTap: widget.onAddTap);
     }
 
-    final compressEnabled = SettingsService.instance.get<bool>('calendar_compress_recurring');
+    final compressEnabled = SettingsService.instance.get<bool>(
+      'calendar_compress_recurring',
+    );
 
     // Find 2-3 closest incomplete unique items for the "Upcoming Unique Banner"
     final upcomingUniques = _findUpcomingUniqueItems(bucketed);
@@ -100,12 +105,14 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
 
     // 1. Upcoming Unique Banner at top (if banner has items)
     if (upcomingUniques.isNotEmpty) {
-      slivers.add(SliverToBoxAdapter(
-        child: _UpcomingUniqueBanner(
-          items: upcomingUniques,
-          onItemTap: widget.onItemTap,
+      slivers.add(
+        SliverToBoxAdapter(
+          child: _UpcomingUniqueBanner(
+            items: upcomingUniques,
+            onItemTap: widget.onItemTap,
+          ),
         ),
-      ));
+      );
     }
 
     // 2. Bucket slivers
@@ -114,30 +121,48 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
       final isOverdueBucket = bucket == AgendaBucket.overdue;
       final isCollapsed = isOverdueBucket && _isOverdueCollapsed;
 
-      final shouldCompress = compressEnabled &&
+      final shouldCompress =
+          compressEnabled &&
           (bucket == AgendaBucket.thisWeek ||
-           bucket == AgendaBucket.nextWeek ||
-           bucket == AgendaBucket.later);
+              bucket == AgendaBucket.nextWeek ||
+              bucket == AgendaBucket.later);
 
       if (shouldCompress) {
-        final daysInBucket = calculateDaysInBucket(bucket, now: widget.now, items: items);
-        final entries = collapseRecurringSeries(items, daysInBucket: daysInBucket);
+        final daysInBucket = calculateDaysInBucket(
+          bucket,
+          now: widget.now,
+          items: items,
+        );
+        final entries = collapseRecurringSeries(
+          items,
+          daysInBucket: daysInBucket,
+        );
 
-        final singles = entries.whereType<AgendaSingle>().map((e) => e.item).toList();
+        final singles = entries
+            .whereType<AgendaSingle>()
+            .map((e) => e.item)
+            .toList();
         final seriesList = entries.whereType<AgendaSeries>().toList();
 
-        final countText = _formatUnitCountText(singles.length, seriesList.length, items.length);
+        final countText = _formatUnitCountText(
+          singles.length,
+          seriesList.length,
+          items.length,
+        );
 
-        slivers.add(_BucketHeaderSliver(
-          bucket: bucket,
-          countText: countText,
-          isOverdue: isOverdueBucket,
-          isCollapsible: isOverdueBucket,
-          isCollapsed: isCollapsed,
-          onToggleCollapse: isOverdueBucket
-              ? () => setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
-              : null,
-        ));
+        slivers.add(
+          _BucketHeaderSliver(
+            bucket: bucket,
+            countText: countText,
+            isOverdue: isOverdueBucket,
+            isCollapsible: isOverdueBucket,
+            isCollapsed: isCollapsed,
+            onToggleCollapse: isOverdueBucket
+                ? () =>
+                      setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+                : null,
+          ),
+        );
 
         if (!isCollapsed) {
           // Render Singles grouped by date
@@ -147,73 +172,87 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
             for (final dateStr in sortedDates) {
               final dayItems = _sortItems(groupedSingles[dateStr]!);
               slivers.add(_DaySubGroupHeader(dateStr: dateStr));
-              slivers.add(_ItemsSliver(
-                items: dayItems,
-                onItemTap: widget.onItemTap,
-                onPostponeItem: widget.onPostponeItem,
-                onDoneItem: widget.onDoneItem,
-              ));
+              slivers.add(
+                _ItemsSliver(
+                  items: dayItems,
+                  onItemTap: widget.onItemTap,
+                  onPostponeItem: widget.onPostponeItem,
+                  onDoneItem: widget.onDoneItem,
+                ),
+              );
             }
           }
 
           // Render Series groups
           if (seriesList.isNotEmpty) {
-            slivers.add(SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    RitmoSpacing.xl, RitmoSpacing.md, RitmoSpacing.xl, 4),
-                child: Text(
-                  'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+            slivers.add(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    RitmoSpacing.xl,
+                    RitmoSpacing.md,
+                    RitmoSpacing.xl,
+                    4,
+                  ),
+                  child: Text(
+                    'تکرارهای ثابت (${toPersianDigits(seriesList.length)})',
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w700,
+                      color: context.colors.primary.withValues(alpha: 0.8),
+                    ),
                   ),
                 ),
               ),
-            ));
+            );
 
             for (final series in seriesList) {
               final seriesKey = series.representative.recurrenceKey;
               final isExpanded = _expandedSeriesKeys.contains(seriesKey);
 
-              slivers.add(SliverToBoxAdapter(
-                child: _RecurringGroupRow(
-                  key: ValueKey('series_$seriesKey'),
-                  series: series,
-                  isExpanded: isExpanded,
-                  onToggleExpand: () {
-                    setState(() {
-                      if (isExpanded) {
-                        _expandedSeriesKeys.remove(seriesKey);
-                      } else {
-                        _expandedSeriesKeys.add(seriesKey);
-                      }
-                    });
-                  },
-                  onItemTap: widget.onItemTap,
-                  onPostponeItem: widget.onPostponeItem,
-                  onDoneItem: widget.onDoneItem,
+              slivers.add(
+                SliverToBoxAdapter(
+                  child: _RecurringGroupRow(
+                    key: ValueKey('series_$seriesKey'),
+                    series: series,
+                    isExpanded: isExpanded,
+                    onToggleExpand: () {
+                      setState(() {
+                        if (isExpanded) {
+                          _expandedSeriesKeys.remove(seriesKey);
+                        } else {
+                          _expandedSeriesKeys.add(seriesKey);
+                        }
+                      });
+                    },
+                    onItemTap: widget.onItemTap,
+                    onPostponeItem: widget.onPostponeItem,
+                    onDoneItem: widget.onDoneItem,
+                  ),
                 ),
-              ));
+              );
             }
           }
         }
       } else {
         // Normal uncompressed bucket rendering
-        slivers.add(_BucketHeaderSliver(
-          bucket: bucket,
-          countText: toPersianDigits(items.length),
-          isOverdue: isOverdueBucket,
-          isCollapsible: isOverdueBucket,
-          isCollapsed: isCollapsed,
-          onToggleCollapse: isOverdueBucket
-              ? () => setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
-              : null,
-        ));
+        slivers.add(
+          _BucketHeaderSliver(
+            bucket: bucket,
+            countText: toPersianDigits(items.length),
+            isOverdue: isOverdueBucket,
+            isCollapsible: isOverdueBucket,
+            isCollapsed: isCollapsed,
+            onToggleCollapse: isOverdueBucket
+                ? () =>
+                      setState(() => _isOverdueCollapsed = !_isOverdueCollapsed)
+                : null,
+          ),
+        );
 
         if (!isCollapsed) {
-          final needsSubGroups = bucket == AgendaBucket.thisWeek ||
+          final needsSubGroups =
+              bucket == AgendaBucket.thisWeek ||
               bucket == AgendaBucket.nextWeek ||
               bucket == AgendaBucket.later;
 
@@ -223,59 +262,74 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
             for (final dateStr in sortedDates) {
               final dayItems = _sortItems(grouped[dateStr]!);
               slivers.add(_DaySubGroupHeader(dateStr: dateStr));
-              slivers.add(_ItemsSliver(
-                items: dayItems,
-                onItemTap: widget.onItemTap,
-                onPostponeItem: widget.onPostponeItem,
-                onDoneItem: widget.onDoneItem,
-              ));
+              slivers.add(
+                _ItemsSliver(
+                  items: dayItems,
+                  onItemTap: widget.onItemTap,
+                  onPostponeItem: widget.onPostponeItem,
+                  onDoneItem: widget.onDoneItem,
+                ),
+              );
             }
           } else {
             final sorted = _sortItems(items);
-            slivers.add(_ItemsSliver(
-              items: sorted,
-              onItemTap: widget.onItemTap,
-              onPostponeItem: widget.onPostponeItem,
-              onDoneItem: widget.onDoneItem,
-            ));
+            slivers.add(
+              _ItemsSliver(
+                items: sorted,
+                onItemTap: widget.onItemTap,
+                onPostponeItem: widget.onPostponeItem,
+                onDoneItem: widget.onDoneItem,
+              ),
+            );
           }
         }
       }
 
       // Display older overdue expansion banner if historical overdue items exist outside window and not collapsed
-      if (bucket == AgendaBucket.overdue && widget.olderOverdueCount > 0 && !isCollapsed) {
-        slivers.add(SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl, vertical: RitmoSpacing.sm),
-            padding: const EdgeInsets.all(RitmoSpacing.md),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
+      if (bucket == AgendaBucket.overdue &&
+          widget.olderOverdueCount > 0 &&
+          !isCollapsed) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.xl,
+                vertical: RitmoSpacing.sm,
               ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${toPersianDigits(widget.olderOverdueCount)} مورد قدیمی‌تر از ${toPersianDigits(widget.daysBack)} روز',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.error,
+              padding: const EdgeInsets.all(RitmoSpacing.md),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.error.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${toPersianDigits(widget.olderOverdueCount)} مورد قدیمی‌تر از ${toPersianDigits(widget.daysBack)} روز',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
-                ),
-                if (widget.onExpandOverdue != null)
-                  TextButton(
-                    onPressed: widget.onExpandOverdue,
-                    child: const Text('نمایش همه'),
-                  ),
-              ],
+                  if (widget.onExpandOverdue != null)
+                    TextButton(
+                      onPressed: widget.onExpandOverdue,
+                      child: const Text('نمایش همه'),
+                    ),
+                ],
+              ),
             ),
           ),
-        ));
+        );
       }
     }
 
@@ -285,7 +339,11 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
     );
   }
 
-  String _formatUnitCountText(int singlesCount, int seriesCount, int totalItems) {
+  String _formatUnitCountText(
+    int singlesCount,
+    int seriesCount,
+    int totalItems,
+  ) {
     if (seriesCount > 0 && singlesCount > 0) {
       return '${toPersianDigits(singlesCount)} کار یکتا + ${toPersianDigits(seriesCount)} تکرار';
     } else if (seriesCount > 0 && singlesCount == 0) {
@@ -296,7 +354,9 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
   }
 
   /// Collects up to 2-3 closest incomplete unique items from active buckets
-  List<AgendaItem> _findUpcomingUniqueItems(Map<AgendaBucket, List<AgendaItem>> bucketed) {
+  List<AgendaItem> _findUpcomingUniqueItems(
+    Map<AgendaBucket, List<AgendaItem>> bucketed,
+  ) {
     final futureBuckets = [
       AgendaBucket.today,
       AgendaBucket.tomorrow,
@@ -336,14 +396,18 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
   /// Done/skipped always last within their group.
   List<AgendaItem> _sortItems(List<AgendaItem> items) {
     final undone = items
-        .where((i) =>
-            i.completion != AgendaCompletion.done &&
-            i.completion != AgendaCompletion.skipped)
+        .where(
+          (i) =>
+              i.completion != AgendaCompletion.done &&
+              i.completion != AgendaCompletion.skipped,
+        )
         .toList();
     final done = items
-        .where((i) =>
-            i.completion == AgendaCompletion.done ||
-            i.completion == AgendaCompletion.skipped)
+        .where(
+          (i) =>
+              i.completion == AgendaCompletion.done ||
+              i.completion == AgendaCompletion.skipped,
+        )
         .toList();
 
     int compareUndone(AgendaItem a, AgendaItem b) {
@@ -425,14 +489,16 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final theme = Theme.of(context);
-    final labelColor = isOverdue
-        ? context.colors.warning
-        : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75);
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final colors = context.colors;
+    final labelColor = isOverdue ? colors.warning : colors.textPrimary;
+    final accentColor = isOverdue ? colors.warning : colors.primary;
 
     return Material(
-      color: theme.scaffoldBackgroundColor,
+      color: colors.background,
       child: InkWell(
         onTap: isCollapsible ? onToggleCollapse : null,
         child: Container(
@@ -455,8 +521,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
                 decoration: BoxDecoration(
-                  color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
-                      .withValues(alpha: 0.12),
+                  color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(RitmoRadius.badge),
                 ),
                 child: Text(
@@ -464,17 +529,19 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                   style: TextStyle(
                     fontSize: 11.0,
                     fontWeight: FontWeight.w600,
-                    color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                    color: accentColor,
                   ),
                 ),
               ),
               if (isCollapsible) ...[
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
-                    color: (isOverdue ? context.colors.warning : theme.colorScheme.primary)
-                        .withValues(alpha: 0.08),
+                    color: accentColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(RitmoRadius.chip),
                   ),
                   child: Row(
@@ -485,7 +552,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                         style: TextStyle(
                           fontSize: 11.0,
                           fontWeight: FontWeight.w600,
-                          color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                          color: accentColor,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -494,7 +561,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
                             ? Icons.keyboard_arrow_down_rounded
                             : Icons.keyboard_arrow_up_rounded,
                         size: 16,
-                        color: isOverdue ? context.colors.warning : theme.colorScheme.primary,
+                        color: accentColor,
                       ),
                     ],
                   ),
@@ -508,12 +575,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) =>
-      oldDelegate.bucket != bucket ||
-      oldDelegate.countText != countText ||
-      oldDelegate.isOverdue != isOverdue ||
-      oldDelegate.isCollapsible != isCollapsible ||
-      oldDelegate.isCollapsed != isCollapsed;
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) => true;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -521,17 +583,14 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
 // ────────────────────────────────────────────────────────────
 
 class _UpcomingUniqueBanner extends StatelessWidget {
-  const _UpcomingUniqueBanner({
-    required this.items,
-    required this.onItemTap,
-  });
+  const _UpcomingUniqueBanner({required this.items, required this.onItemTap});
 
   final List<AgendaItem> items;
   final void Function(AgendaItem) onItemTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
@@ -542,11 +601,9 @@ class _UpcomingUniqueBanner extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(RitmoSpacing.md),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
+        color: colors.primaryContainer.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(RitmoRadius.card),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,7 +614,7 @@ class _UpcomingUniqueBanner extends StatelessWidget {
               Icon(
                 Icons.bookmark_added_outlined,
                 size: 16,
-                color: theme.colorScheme.primary,
+                color: colors.primary,
               ),
               const SizedBox(width: 6),
               Text(
@@ -565,7 +622,7 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.0,
                   fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
+                  color: colors.primary,
                 ),
               ),
             ],
@@ -580,7 +637,10 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                   onTap: () => onItemTap(item),
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     child: Row(
                       children: [
                         Container(
@@ -600,22 +660,27 @@ class _UpcomingUniqueBanner extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14.0,
                               fontWeight: FontWeight.w500,
-                              color: theme.textTheme.bodyMedium?.color,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                            color: colors.surfaceSunken.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.badge,
+                            ),
                           ),
                           child: Text(
                             daySubGroupLabel(item.dateStr),
                             style: TextStyle(
                               fontSize: 11,
-                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.65),
+                              color: colors.textSecondary,
                             ),
                           ),
                         ),
@@ -656,7 +721,7 @@ class _RecurringGroupRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     final rep = series.representative;
     final color = domainColor(context, rep.domain);
     final iconColor = domainIconColor(context, rep.domain);
@@ -670,12 +735,10 @@ class _RecurringGroupRow extends StatelessWidget {
       child: Card(
         margin: EdgeInsets.zero,
         elevation: 0,
-        color: theme.colorScheme.surfaceContainerLow,
+        color: colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(RitmoRadius.card),
-          side: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.4),
-          ),
+          side: BorderSide(color: colors.border),
         ),
         child: Column(
           children: [
@@ -714,7 +777,7 @@ class _RecurringGroupRow extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14.0,
                               fontWeight: FontWeight.w600,
-                              color: theme.textTheme.bodyMedium?.color,
+                              color: colors.textPrimary,
                             ),
                           ),
                           if (series.completedCount > 0)
@@ -724,7 +787,7 @@ class _RecurringGroupRow extends StatelessWidget {
                                 '${toPersianDigits(series.completedCount)} از ${toPersianDigits(series.totalCount)} انجام شد',
                                 style: TextStyle(
                                   fontSize: 12.0,
-                                  color: theme.colorScheme.primary,
+                                  color: colors.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -741,16 +804,19 @@ class _RecurringGroupRow extends StatelessWidget {
                           toPersianDigits(rep.timeOfDay ?? ''),
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
 
                     // Recurrence Chip
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(RitmoRadius.badge),
                       ),
                       child: Text(
@@ -758,7 +824,7 @@ class _RecurringGroupRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
+                          color: colors.primary,
                         ),
                       ),
                     ),
@@ -770,7 +836,7 @@ class _RecurringGroupRow extends StatelessWidget {
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
                       size: 20,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                      color: colors.textTertiary,
                     ),
                   ],
                 ),
@@ -779,7 +845,7 @@ class _RecurringGroupRow extends StatelessWidget {
 
             // Expanded Child Instances List
             if (isExpanded) ...[
-              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.3)),
+              Divider(height: 1, color: colors.divider),
               Column(
                 children: series.instances.map((inst) {
                   final onPostpone = onPostponeItem;
@@ -794,14 +860,16 @@ class _RecurringGroupRow extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.45),
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
                       _AgendaRow(
                         item: inst,
                         onTap: () => onItemTap(inst),
-                        onPostpone: onPostpone != null ? () => onPostpone(inst) : null,
+                        onPostpone: onPostpone != null
+                            ? () => onPostpone(inst)
+                            : null,
                         onDone: onDone != null ? () => onDone(inst) : null,
                       ),
                     ],
@@ -816,7 +884,6 @@ class _RecurringGroupRow extends StatelessWidget {
   }
 }
 
-
 // ────────────────────────────────────────────────────────────
 // Day Sub-Group Header (non-sticky)
 // ────────────────────────────────────────────────────────────
@@ -827,17 +894,21 @@ class _DaySubGroupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = context.colors;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-            RitmoSpacing.xl, RitmoSpacing.sm, RitmoSpacing.xl, 2),
+          RitmoSpacing.xl,
+          RitmoSpacing.sm,
+          RitmoSpacing.xl,
+          2,
+        ),
         child: Text(
           daySubGroupLabel(dateStr),
           style: TextStyle(
             fontSize: 12.0,
             fontWeight: FontWeight.w600,
-            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.45),
+            color: colors.textTertiary,
           ),
         ),
       ),
@@ -869,7 +940,9 @@ class _ItemsSliver extends StatelessWidget {
         (ctx, i) => _AgendaRow(
           item: items[i],
           onTap: () => onItemTap(items[i]),
-          onPostpone: onPostponeItem != null ? () => onPostponeItem!(items[i]) : null,
+          onPostpone: onPostponeItem != null
+              ? () => onPostponeItem!(items[i])
+              : null,
           onDone: onDoneItem != null ? () => onDoneItem!(items[i]) : null,
         ),
         childCount: items.length,
@@ -938,9 +1011,11 @@ class _AgendaRowState extends State<_AgendaRow> {
                   color: color.withValues(alpha: isDone ? 0.06 : 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon,
-                    size: 16,
-                    color: iconColor.withValues(alpha: isDone ? 0.4 : 1.0)),
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: iconColor.withValues(alpha: isDone ? 0.4 : 1.0),
+                ),
               ),
               const SizedBox(width: RitmoSpacing.sm),
 
@@ -958,11 +1033,11 @@ class _AgendaRowState extends State<_AgendaRow> {
                         fontSize: 14.0,
                         fontWeight: FontWeight.w500,
                         color: isDone
-                            ? theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.35)
+                            ? theme.textTheme.bodyMedium?.color?.withValues(
+                                alpha: 0.35,
+                              )
                             : theme.textTheme.bodyMedium?.color,
-                        decoration:
-                            isDone ? TextDecoration.lineThrough : null,
+                        decoration: isDone ? TextDecoration.lineThrough : null,
                       ),
                     ),
                     if (item.subtitle != null && item.subtitle!.isNotEmpty)
@@ -972,8 +1047,9 @@ class _AgendaRowState extends State<_AgendaRow> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12.0,
-                          color: theme.textTheme.bodyMedium?.color
-                              ?.withValues(alpha: isDone ? 0.25 : 0.5),
+                          color: theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: isDone ? 0.25 : 0.5,
+                          ),
                         ),
                       ),
                   ],
@@ -988,8 +1064,9 @@ class _AgendaRowState extends State<_AgendaRow> {
                     toPersianDigits(item.timeOfDay ?? ''),
                     style: TextStyle(
                       fontSize: 12.0,
-                      color: theme.textTheme.bodyMedium?.color
-                          ?.withValues(alpha: isDone ? 0.25 : 0.55),
+                      color: theme.textTheme.bodyMedium?.color?.withValues(
+                        alpha: isDone ? 0.25 : 0.55,
+                      ),
                     ),
                   ),
                 ),
@@ -999,10 +1076,13 @@ class _AgendaRowState extends State<_AgendaRow> {
                   item.meta['isImportant'] == 1)
                 Padding(
                   padding: const EdgeInsets.only(right: 4),
-                  child: Icon(Icons.star_rounded,
-                      size: 16,
-                      color: theme.colorScheme.primary.withValues(
-                          alpha: isDone ? 0.25 : 0.75)),
+                  child: Icon(
+                    Icons.star_rounded,
+                    size: 16,
+                    color: theme.colorScheme.primary.withValues(
+                      alpha: isDone ? 0.25 : 0.75,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -1013,7 +1093,9 @@ class _AgendaRowState extends State<_AgendaRow> {
     // K23 — wrap in Dismissible for swipe gestures
     return Dismissible(
       key: ValueKey(item.id),
-      direction: _canPostpone ? DismissDirection.horizontal : DismissDirection.startToEnd,
+      direction: _canPostpone
+          ? DismissDirection.horizontal
+          : DismissDirection.startToEnd,
       // Left→right: mark done (all domains)
       background: _SwipeBackground(
         color: colors.success,
@@ -1116,7 +1198,9 @@ class _EmptyAgendaState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14.0,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.5,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -1167,10 +1251,7 @@ class _ActionButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(icon, size: 18),
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 14),
-        ),
+        label: Text(label, style: const TextStyle(fontSize: 14)),
         style: OutlinedButton.styleFrom(
           foregroundColor: isPrimary
               ? theme.colorScheme.primary
@@ -1236,7 +1317,9 @@ class _AgendaFailureCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13.0,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+                color: theme.textTheme.bodyMedium?.color?.withValues(
+                  alpha: 0.55,
+                ),
               ),
             ),
             if (kDebugMode && failedSources.isNotEmpty) ...[
@@ -1244,7 +1327,9 @@ class _AgendaFailureCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.25),
+                  color: theme.colorScheme.errorContainer.withValues(
+                    alpha: 0.25,
+                  ),
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
                 ),
                 child: Text(

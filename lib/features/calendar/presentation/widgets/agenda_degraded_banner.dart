@@ -53,15 +53,16 @@ class AgendaDegradedBanner extends StatelessWidget {
 
   void _showDetails(BuildContext context) {
     final colors = context.colors;
-    final theme = Theme.of(context);
 
     final domainNames = degradedDomains.map(domainToPersian).toList();
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -73,7 +74,11 @@ class AgendaDegradedBanner extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: colors.warning, size: 22),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: colors.warning,
+                      size: 22,
+                    ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Text(
                       'بارگذاری ناقص اطلاعات',
@@ -88,10 +93,7 @@ class AgendaDegradedBanner extends StatelessWidget {
                 const SizedBox(height: RitmoSpacing.md),
                 Text(
                   'اطلاعات بخش‌های زیر در این بازه به‌طور کامل دریافت نشد:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
                 ),
                 const SizedBox(height: RitmoSpacing.sm),
                 Wrap(
@@ -100,9 +102,14 @@ class AgendaDegradedBanner extends StatelessWidget {
                   children: [
                     for (final name in domainNames)
                       Chip(
-                        label: Text(name, style: TextStyle(fontSize: 12, color: colors.warning)),
+                        label: Text(
+                          name,
+                          style: TextStyle(fontSize: 12, color: colors.warning),
+                        ),
                         backgroundColor: colors.warning.withValues(alpha: 0.12),
-                        side: BorderSide(color: colors.warning.withValues(alpha: 0.3)),
+                        side: BorderSide(
+                          color: colors.warning.withValues(alpha: 0.3),
+                        ),
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                       ),
                   ],
@@ -174,7 +181,11 @@ class AgendaDegradedBanner extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.warning_amber_rounded, size: 14, color: colors.warning),
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 14,
+                color: colors.warning,
+              ),
               const SizedBox(width: 5),
               Text(
                 'بعضی بخش‌ها کامل بارگذاری نشد',

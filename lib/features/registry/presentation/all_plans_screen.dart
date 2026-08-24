@@ -21,13 +21,7 @@ import 'package:ritmo/features/registry/presentation/widgets/registry_row.dart';
 import 'package:ritmo/features/registry/presentation/widgets/registry_skeleton.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 
-enum PlanSortMode {
-  displayOrder,
-  closestDue,
-  time,
-  duration,
-  alphabetical,
-}
+enum PlanSortMode { displayOrder, closestDue, time, duration, alphabetical }
 
 class AllPlansScreen extends StatefulWidget {
   const AllPlansScreen({super.key});
@@ -100,8 +94,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     switch (_sortMode) {
       case PlanSortMode.closestDue:
         _entries.sort(
-          (a, b) =>
-              _getRemainingMinutes(a).compareTo(_getRemainingMinutes(b)),
+          (a, b) => _getRemainingMinutes(a).compareTo(_getRemainingMinutes(b)),
         );
         break;
       case PlanSortMode.time:
@@ -113,8 +106,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
         break;
       case PlanSortMode.duration:
         _entries.sort(
-          (a, b) => (b.agendaProxy.durationMinutes ?? 0)
-              .compareTo(a.agendaProxy.durationMinutes ?? 0),
+          (a, b) => (b.agendaProxy.durationMinutes ?? 0).compareTo(
+            a.agendaProxy.durationMinutes ?? 0,
+          ),
         );
         break;
       case PlanSortMode.alphabetical:
@@ -204,9 +198,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: isDark
-            ? theme.scaffoldBackgroundColor
-            : const Color(0xFFF8F9FA),
+        backgroundColor: context.colors.background,
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,16 +220,15 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               if (_query.lens == RegistryLens.items)
                 _buildDomainFilterChips(theme, isDark),
 
-              if (_query.lens == RegistryLens.items)
-                const SizedBox(height: 8),
+              if (_query.lens == RegistryLens.items) const SizedBox(height: 8),
 
               // ─── Main Content ───
               Expanded(
                 child: _isLoading
                     ? const RegistrySkeleton()
                     : _query.lens == RegistryLens.health
-                        ? _buildHealthLensList()
-                        : _buildItemsList(theme, isDark),
+                    ? _buildHealthLensList()
+                    : _buildItemsList(theme, isDark),
               ),
 
               // ─── Bulk Action Bar ───
@@ -297,26 +288,20 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      builder: (ctx) => UniversalPlannerSheet(
-                        onSaved: () => setState(() {}),
-                      ),
+                      builder: (ctx) =>
+                          UniversalPlannerSheet(onSaved: () => setState(() {})),
                     );
                   },
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 3,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      RitmoRadius.hero,
-                    ),
+                    borderRadius: BorderRadius.circular(RitmoRadius.hero),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 22),
                   label: const Text(
                     'افزودن برنامه',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               )
@@ -366,8 +351,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                     '${toPersianDigits(_entries.length.toString())} برنامه فعال',
                     style: TextStyle(
                       fontSize: 13,
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.55),
+                      color: theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.55,
+                      ),
                     ),
                   ),
               ],
@@ -396,8 +382,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: SizedBox(
         height: CalendarGeometry.searchBarHeight,
         child: TextField(
@@ -409,14 +394,12 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             hintText: 'جست‌وجو در برنامه‌ها',
             hintStyle: TextStyle(
               fontSize: 13.5,
-              color: theme.textTheme.bodySmall?.color
-                  ?.withValues(alpha: 0.4),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
               size: 20,
-              color: theme.textTheme.bodySmall?.color
-                  ?.withValues(alpha: 0.4),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
             ),
             suffixIcon: Row(
               mainAxisSize: MainAxisSize.min,
@@ -426,8 +409,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                     icon: Icon(
                       Icons.clear_rounded,
                       size: 18,
-                      color: theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.4),
+                      color: theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                     onPressed: () {
                       _searchController.clear();
@@ -441,11 +425,11 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                       icon: Icon(
                         Icons.tune_rounded,
                         size: 20,
-                        color:
-                            _sortMode != PlanSortMode.displayOrder
-                                ? theme.colorScheme.primary
-                                : theme.textTheme.bodySmall?.color
-                                    ?.withValues(alpha: 0.4),
+                        color: _sortMode != PlanSortMode.displayOrder
+                            ? theme.colorScheme.primary
+                            : theme.textTheme.bodySmall?.color?.withValues(
+                                alpha: 0.4,
+                              ),
                       ),
                       tooltip: 'مرتب‌سازی',
                       shape: RoundedRectangleBorder(
@@ -472,9 +456,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            toPersianDigits(
-                              _activeFilterCount.toString(),
-                            ),
+                            toPersianDigits(_activeFilterCount.toString()),
                             style: const TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
@@ -490,8 +472,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             ),
             filled: true,
             fillColor: isDark
-                ? theme.colorScheme.surfaceContainerHigh
-                    .withValues(alpha: 0.20)
+                ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.20)
                 : Colors.grey.shade100,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
@@ -518,11 +499,13 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     );
   }
 
-  List<PopupMenuEntry<PlanSortMode>> _buildSortMenuItems(
-    BuildContext ctx,
-  ) {
+  List<PopupMenuEntry<PlanSortMode>> _buildSortMenuItems(BuildContext ctx) {
     final theme = Theme.of(ctx);
-    PopupMenuEntry<PlanSortMode> item(PlanSortMode mode, IconData icon, String label) {
+    PopupMenuEntry<PlanSortMode> item(
+      PlanSortMode mode,
+      IconData icon,
+      String label,
+    ) {
       final isActive = _sortMode == mode;
       return PopupMenuItem(
         value: mode,
@@ -547,16 +530,23 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     }
 
     return [
-      item(PlanSortMode.displayOrder, Icons.dashboard_rounded,
-          'ترتیب پیش‌فرض'),
-      item(PlanSortMode.closestDue, Icons.hourglass_top_rounded,
-          'نزدیک‌ترین موعد'),
-      item(PlanSortMode.time, Icons.schedule_rounded,
-          'زمان اجرا (صبح تا شب)'),
-      item(PlanSortMode.duration, Icons.timer_rounded,
-          'مدت زمان (بلند به کوتاه)'),
-      item(PlanSortMode.alphabetical, Icons.sort_by_alpha_rounded,
-          'حروف الفبا'),
+      item(PlanSortMode.displayOrder, Icons.dashboard_rounded, 'ترتیب پیش‌فرض'),
+      item(
+        PlanSortMode.closestDue,
+        Icons.hourglass_top_rounded,
+        'نزدیک‌ترین موعد',
+      ),
+      item(PlanSortMode.time, Icons.schedule_rounded, 'زمان اجرا (صبح تا شب)'),
+      item(
+        PlanSortMode.duration,
+        Icons.timer_rounded,
+        'مدت زمان (بلند به کوتاه)',
+      ),
+      item(
+        PlanSortMode.alphabetical,
+        Icons.sort_by_alpha_rounded,
+        'حروف الفبا',
+      ),
     ];
   }
 
@@ -566,14 +556,12 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildLensSwitcher(ThemeData theme, bool isDark) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: isDark
-              ? theme.colorScheme.surfaceContainerHigh
-                  .withValues(alpha: 0.20)
+              ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.20)
               : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(14),
         ),
@@ -637,9 +625,10 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
         decoration: BoxDecoration(
           color: isActive
               ? (isDark
-                  ? theme.colorScheme.surfaceContainerHigh
-                      .withValues(alpha: 0.5)
-                  : Colors.white)
+                    ? theme.colorScheme.surfaceContainerHigh.withValues(
+                        alpha: 0.5,
+                      )
+                    : Colors.white)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           boxShadow: isActive
@@ -661,12 +650,12 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    isActive ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
                 color: isActive
                     ? theme.textTheme.bodyLarge?.color
-                    : theme.textTheme.bodyMedium?.color
-                        ?.withValues(alpha: 0.55),
+                    : theme.textTheme.bodyMedium?.color?.withValues(
+                        alpha: 0.55,
+                      ),
               ),
             ),
             if (badgeText != null) ...[
@@ -678,8 +667,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   fontWeight: FontWeight.bold,
                   color: isActive
                       ? theme.colorScheme.primary
-                      : theme.textTheme.bodySmall?.color
-                          ?.withValues(alpha: 0.4),
+                      : theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.4,
+                        ),
                 ),
               ),
             ],
@@ -709,9 +699,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
       height: CalendarGeometry.chipHeight,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: RitmoSpacing.lg,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
         children: [
           _buildFilterChip(
             theme,
@@ -727,8 +715,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           ),
           const SizedBox(width: 8),
           for (final d in RegistryDomain.values)
-            if (d.settingsKey.isEmpty ||
-                _settingsMap[d.settingsKey] == 'true')
+            if (d.settingsKey.isEmpty || _settingsMap[d.settingsKey] == 'true')
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: _buildFilterChip(
@@ -737,16 +724,16 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                   label: d.faLabel,
                   isSelected: _query.domainFilter.contains(d),
                   onTap: () {
-                    final nextFilter =
-                        Set<RegistryDomain>.from(_query.domainFilter);
+                    final nextFilter = Set<RegistryDomain>.from(
+                      _query.domainFilter,
+                    );
                     if (_query.domainFilter.contains(d)) {
                       nextFilter.remove(d);
                     } else {
                       nextFilter.add(d);
                     }
                     setState(() {
-                      _query =
-                          _query.copyWith(domainFilter: nextFilter);
+                      _query = _query.copyWith(domainFilter: nextFilter);
                     });
                     _refreshData();
                   },
@@ -787,12 +774,10 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            fontWeight:
-                isSelected ? FontWeight.bold : FontWeight.w500,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected
                 ? accentColor
-                : theme.textTheme.bodyMedium?.color
-                    ?.withValues(alpha: 0.55),
+                : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
           ),
         ),
       ),
@@ -812,8 +797,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             Icon(
               Icons.inbox_rounded,
               size: 48,
-              color: theme.textTheme.bodySmall?.color
-                  ?.withValues(alpha: 0.25),
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.25),
             ),
             const SizedBox(height: 12),
             Text(
@@ -823,8 +807,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: theme.textTheme.bodySmall?.color
-                    ?.withValues(alpha: 0.4),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.4),
               ),
             ),
             if (_query.searchText.isEmpty) ...[
@@ -833,8 +816,9 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                 'با دکمه «افزودن برنامه» شروع کنید.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: theme.textTheme.bodySmall?.color
-                      ?.withValues(alpha: 0.3),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.3,
+                  ),
                 ),
               ),
             ],
@@ -862,9 +846,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF64748B),
-              borderRadius: BorderRadius.circular(
-                RitmoRadius.hero,
-              ),
+              borderRadius: BorderRadius.circular(RitmoRadius.hero),
             ),
             child: const Row(
               children: [
@@ -905,10 +887,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
                     }
                   });
                 } else {
-                  ActionRouter.open(
-                    context,
-                    item: entry.agendaProxy,
-                  );
+                  ActionRouter.open(context, item: entry.agendaProxy);
                 }
               },
               onLongPress: () {
@@ -952,10 +931,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
             const SizedBox(height: 4),
             Text(
               'هیچ ناهنجاری یا مشکلی در دیتابیس برنامه‌ها یافت نشد.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -967,10 +943,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
       padding: const EdgeInsets.only(bottom: 40),
       itemBuilder: (context, index) {
         final issue = _healthIssues[index];
-        return RegistryHealthCard(
-          issue: issue,
-          onFixed: () => _refreshData(),
-        );
+        return RegistryHealthCard(issue: issue, onFixed: () => _refreshData());
       },
     );
   }

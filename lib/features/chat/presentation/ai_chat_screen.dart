@@ -544,35 +544,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
     super.dispose();
   }
 
-  Future<void> _copyChatGptDiagnosticSnapshot() async {
-    try {
-      RitmoToast.show(
-        context,
-        'در حال استخراج کدهای صفحه چت‌جی‌پی‌تی...',
-        icon: Icons.hourglass_top_rounded,
-      );
-      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
-      await Clipboard.setData(ClipboardData(text: snapshot));
-      if (mounted) {
-        RitmoToast.show(
-          context,
-          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
-          icon: Icons.check_circle_rounded,
-          iconColor: context.colors.success,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        RitmoToast.show(
-          context,
-          'خطا در استخراج کدهای صفحه: $e',
-          icon: Icons.error_outline_rounded,
-          iconColor: context.colors.error,
-        );
-      }
-    }
-  }
-
   Future<void> _loadMessages() async {
     if (_sessionId == null) return;
     setState(() => _isLoading = true);
@@ -1298,27 +1269,42 @@ $suggestedSteps''';
                     icon: RitmoIcons.back(context, color: colors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
-            title: Text(
-              'دستیار هوشمند',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+            title: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                ChatGptMiniPreview.show(context);
+              },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.sparkles,
+                      color: colors.primary,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'دستیار هوشمند',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
             ),
             centerTitle: true,
             actions: [
               const BridgeStatusChip(),
-              IconButton(
-                icon: const Icon(Icons.copy_all_rounded, size: 20),
-                tooltip: 'کپی گزارش تشخیصی و HTML چت‌جی‌پی‌تی',
-                onPressed: _copyChatGptDiagnosticSnapshot,
-              ),
-              IconButton(
-                icon: const Icon(Icons.open_in_browser_rounded, size: 20),
-                tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
-                onPressed: () => ChatGptMiniPreview.show(context),
-              ),
               IconButton(
                 icon: const Icon(CupertinoIcons.clock, size: 20),
                 tooltip: 'تغییرات اخیر',

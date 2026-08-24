@@ -12,9 +12,11 @@ class ChatGptMiniPreview extends StatefulWidget {
   const ChatGptMiniPreview({
     super.key,
     this.onClose,
+    this.initiallyMinimized = true,
   });
 
   final VoidCallback? onClose;
+  final bool initiallyMinimized;
 
   /// Displays the mini preview bottom sheet from anywhere (A-47).
   static Future<void> show(BuildContext context) async {
@@ -45,6 +47,7 @@ class ChatGptMiniPreview extends StatefulWidget {
                 ),
               ),
               ChatGptMiniPreview(
+                initiallyMinimized: false,
                 onClose: () => Navigator.of(ctx).pop(),
               ),
             ],
@@ -59,11 +62,13 @@ class ChatGptMiniPreview extends StatefulWidget {
 }
 
 class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
-  bool _isMinimized = false;
+  late bool _isMinimized;
+  bool _isMaximized = false;
 
   @override
   void initState() {
     super.initState();
+    _isMinimized = widget.initiallyMinimized;
     ChatGptWebBridgeManager.instance.attachViewer();
   }
 
@@ -201,6 +206,30 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                           ),
                         ),
                         const SizedBox(width: 4),
+                        Tooltip(
+                          message: _isMaximized ? 'اندازه معمولی' : 'بزرگ‌تر کردن مرورگر',
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _isMaximized = !_isMaximized;
+                                if (_isMinimized) _isMinimized = false;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                _isMaximized
+                                    ? Icons.fullscreen_exit_rounded
+                                    : Icons.fullscreen_rounded,
+                                size: 18,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
                         InkWell(
                           onTap: () {
                             setState(() {
@@ -234,8 +263,12 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
 
                   // WebView Body
                   if (!_isMinimized)
-                    SizedBox(
-                      height: 380,
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      height: _isMaximized
+                          ? (MediaQuery.of(context).size.height * 0.72).clamp(380.0, 750.0)
+                          : 280,
                       width: double.infinity,
                       child: controller != null
                           ? WebViewWidget(

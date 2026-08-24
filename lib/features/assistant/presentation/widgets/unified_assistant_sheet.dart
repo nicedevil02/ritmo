@@ -33,7 +33,6 @@ import 'package:ritmo/core/domain/commands/command_manifest.dart';
 import 'package:ritmo/core/domain/personas/assistant_persona.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/models/assistant_models.dart';
@@ -551,35 +550,6 @@ class _AssistantSheetState extends State<AssistantSheet> {
     }
 
     unawaited(_parseAndExecuteActions(fullResponse));
-  }
-
-  Future<void> _copyChatGptDiagnosticSnapshot() async {
-    try {
-      RitmoToast.show(
-        context,
-        'در حال استخراج کدهای صفحه چت‌جی‌پی‌تی...',
-        icon: Icons.hourglass_top_rounded,
-      );
-      final snapshot = await ChatGptWebBridgeManager.instance.captureDiagnosticSnapshot();
-      await Clipboard.setData(ClipboardData(text: snapshot));
-      if (mounted) {
-        RitmoToast.show(
-          context,
-          'گزارش و کدهای HTML چت‌جی‌پی‌تی با موفقیت کپی شد 📋',
-          icon: Icons.check_circle_rounded,
-          iconColor: context.colors.success,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        RitmoToast.show(
-          context,
-          'خطا در استخراج کدهای صفحه: $e',
-          icon: Icons.error_outline_rounded,
-          iconColor: context.colors.error,
-        );
-      }
-    }
   }
 
   void _processMemoryOps(String rawAnswer) {
@@ -1139,56 +1109,44 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          CupertinoIcons.sparkles,
-                          color: colors.primary,
-                          size: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.persona.displayName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onLongPress: () {
+                          HapticFeedback.mediumImpact();
+                          ChatGptMiniPreview.show(context);
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                CupertinoIcons.sparkles,
+                                color: colors.primary,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.persona.displayName,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 6),
                       const BridgeStatusChip(),
                       const Spacer(),
-                      IconButton(
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                        padding: const EdgeInsets.all(4),
-                        icon: Icon(
-                          Icons.copy_all_rounded,
-                          color: colors.textSecondary,
-                          size: 18,
-                        ),
-                        tooltip: 'کپی گزارش تشخیصی و HTML چت‌جی‌پی‌تی',
-                        onPressed: _copyChatGptDiagnosticSnapshot,
-                      ),
-                      IconButton(
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                        padding: const EdgeInsets.all(4),
-                        icon: Icon(
-                          Icons.open_in_browser_rounded,
-                          color: colors.textSecondary,
-                          size: 18,
-                        ),
-                        tooltip: 'مشاهدهٔ پنجرهٔ چت‌جی‌پی‌تی',
-                        onPressed: () => ChatGptMiniPreview.show(context),
-                      ),
                       if (_canUndoLast)
                         TextButton.icon(
                           style: TextButton.styleFrom(

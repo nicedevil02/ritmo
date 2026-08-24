@@ -105,7 +105,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   context: context,
                   title: 'حس‌وحال الان',
                   subtitle: _formatMoodSubtitle(),
-                  icon: _resolveMoodEmoji(),
+                  icon: _resolveMoodIcon(),
                   isRecorded: latestMood != null,
                   activeColor: const Color(0xffEC4899),
                   colors: colors,
@@ -118,7 +118,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   context: context,
                   title: 'سطح انرژی',
                   subtitle: _formatEnergySubtitle(),
-                  icon: '⚡',
+                  icon: CupertinoIcons.bolt_fill,
                   isRecorded: latestEnergy != null,
                   activeColor: const Color(0xffF59E0B),
                   colors: colors,
@@ -135,7 +135,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   context: context,
                   title: 'خواب دیشب',
                   subtitle: _formatSleepSubtitle(),
-                  icon: '🌙',
+                  icon: CupertinoIcons.moon_stars_fill,
                   isRecorded: latestSleep != null,
                   activeColor: const Color(0xff8B5CF6),
                   colors: colors,
@@ -150,7 +150,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   subtitle: todayReflection != null
                       ? 'ثبت شد ✓'
                       : 'نوشتن حس روز +',
-                  icon: '✍️',
+                  icon: Icons.edit_note_rounded,
                   isRecorded: todayReflection != null,
                   activeColor: const Color(0xff10B981),
                   colors: colors,
@@ -168,7 +168,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
     required BuildContext context,
     required String title,
     required String subtitle,
-    required String icon,
+    required IconData icon,
     required bool isRecorded,
     required Color activeColor,
     required RitmoColors colors,
@@ -199,8 +199,8 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: isRecorded
                       ? activeColor.withValues(alpha: 0.16)
@@ -213,9 +213,10 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   ),
                 ),
                 child: Center(
-                  child: Text(
+                  child: Icon(
                     icon,
-                    style: const TextStyle(fontSize: 16),
+                    size: 18,
+                    color: isRecorded ? activeColor : colors.textSecondary,
                   ),
                 ),
               ),
@@ -268,14 +269,14 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
     );
   }
 
-  String _resolveMoodEmoji() {
-    if (latestMood == null) return '🌈';
+  IconData _resolveMoodIcon() {
+    if (latestMood == null) return CupertinoIcons.heart_fill;
     final s = latestMood!.valence;
-    if (s <= 1) return '😫';
-    if (s == 2) return '🥱';
-    if (s == 3) return '😐';
-    if (s == 4) return '🙂';
-    return '😄';
+    if (s <= 1) return Icons.sentiment_very_dissatisfied_rounded;
+    if (s == 2) return Icons.sentiment_dissatisfied_rounded;
+    if (s == 3) return Icons.sentiment_neutral_rounded;
+    if (s == 4) return Icons.sentiment_satisfied_rounded;
+    return Icons.sentiment_very_satisfied_rounded;
   }
 
   String _formatMoodSubtitle() {
@@ -291,7 +292,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
   String _formatEnergySubtitle() {
     if (latestEnergy == null) return 'ثبت انرژی +';
     final lvl = latestEnergy!.energyLevel;
-    if (lvl == EnergyLevel.high) return 'انرژی بالا ⚡';
+    if (lvl == EnergyLevel.high) return 'انرژی بالا';
     if (lvl == EnergyLevel.medium) return 'انرژی متوسط';
     if (lvl == EnergyLevel.low) return 'انرژی پایین';
     return 'ثبت شد';

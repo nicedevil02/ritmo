@@ -762,7 +762,7 @@ class _WellbeingScreenState extends State<WellbeingScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'الان چه حسی داری؟ 🌈',
+                'الان چه حسی داری؟',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,

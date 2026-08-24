@@ -128,6 +128,34 @@ class BloodSugarLog { // epoch ms
     }
   }
 
+  Color get categoryColor {
+    switch (measurementType) {
+      case 'FASTING':
+        return const Color(0xFF06B6D4); // Cyan
+      case 'BEFORE_MEAL':
+        return const Color(0xFF6366F1); // Indigo
+      case 'AFTER_MEAL':
+        return const Color(0xFFF59E0B); // Amber/Orange
+      case 'BEDTIME':
+        return const Color(0xFF8B5CF6); // Purple
+      case 'RANDOM':
+      default:
+        return const Color(0xFFEC4899); // Pink
+    }
+  }
+
+  Map<String, int> targetRange(bool isDiabetic) {
+    return BloodSugarTargetRange.forCategory(measurementType, isDiabetic: isDiabetic).toMap();
+  }
+
+  String getStatus(bool isDiabetic) {
+    final range = BloodSugarTargetRange.forCategory(measurementType, isDiabetic: isDiabetic);
+    if (value < 70) return 'LOW';
+    if (value > range.max) return 'HIGH';
+    if (value < range.min) return 'LOW';
+    return 'NORMAL';
+  }
+
   bool isInRange(int minVal, int maxVal) {
     return value >= minVal && value <= maxVal;
   }
@@ -140,6 +168,126 @@ class BloodSugarLog { // epoch ms
       'note': note,
       'loggedAt': loggedAt,
     };
+  }
+}
+
+class BloodSugarTargetRange {
+  const BloodSugarTargetRange({required this.min, required this.max});
+
+  final int min;
+  final int max;
+
+  Map<String, int> toMap() => {'min': min, 'max': max};
+
+  static BloodSugarTargetRange forCategory(String category, {required bool isDiabetic}) {
+    if (isDiabetic) {
+      switch (category) {
+        case 'FASTING':
+        case 'BEFORE_MEAL':
+          return const BloodSugarTargetRange(min: 80, max: 130);
+        case 'AFTER_MEAL':
+          return const BloodSugarTargetRange(min: 80, max: 180);
+        case 'BEDTIME':
+          return const BloodSugarTargetRange(min: 100, max: 150);
+        case 'RANDOM':
+        default:
+          return const BloodSugarTargetRange(min: 80, max: 180);
+      }
+    } else {
+      switch (category) {
+        case 'FASTING':
+          return const BloodSugarTargetRange(min: 70, max: 100);
+        case 'BEFORE_MEAL':
+          return const BloodSugarTargetRange(min: 70, max: 110);
+        case 'AFTER_MEAL':
+          return const BloodSugarTargetRange(min: 70, max: 140);
+        case 'BEDTIME':
+          return const BloodSugarTargetRange(min: 100, max: 140);
+        case 'RANDOM':
+        default:
+          return const BloodSugarTargetRange(min: 70, max: 140);
+      }
+    }
+  }
+}
+
+class BloodSugarStats {
+  const BloodSugarStats({
+    required this.averageGlucose,
+    this.averageFasting,
+    required this.minGlucose,
+    required this.maxGlucose,
+    required this.totalCount,
+    required this.inRangePercentage,
+    required this.highPercentage,
+    required this.lowPercentage,
+    this.estimatedHbA1c,
+  });
+
+  final double averageGlucose;
+  final double? averageFasting;
+  final int minGlucose;
+  final int maxGlucose;
+  final int totalCount;
+  final double inRangePercentage;
+  final double highPercentage;
+  final double lowPercentage;
+  final double? estimatedHbA1c;
+
+  static BloodSugarStats? compute(List<BloodSugarLog> logs, {required bool isDiabetic}) {
+    if (logs.isEmpty) return null;
+
+    int sum = 0;
+    int minG = logs.first.value;
+    int maxG = logs.first.value;
+
+    int fastingSum = 0;
+    int fastingCount = 0;
+
+    int inRangeCount = 0;
+    int highCount = 0;
+    int lowCount = 0;
+
+    for (final log in logs) {
+      sum += log.value;
+      if (log.value < minG) minG = log.value;
+      if (log.value > maxG) maxG = log.value;
+
+      if (log.measurementType == 'FASTING') {
+        fastingSum += log.value;
+        fastingCount++;
+      }
+
+      final status = log.getStatus(isDiabetic);
+      if (status == 'NORMAL') {
+        inRangeCount++;
+      } else if (status == 'HIGH') {
+        highCount++;
+      } else {
+        lowCount++;
+      }
+    }
+
+    final avg = sum / logs.length;
+    final avgFasting = fastingCount > 0 ? (fastingSum / fastingCount) : null;
+    final inRangePct = (inRangeCount / logs.length) * 100;
+    final highPct = (highCount / logs.length) * 100;
+    final lowPct = (lowCount / logs.length) * 100;
+
+    // ADA eAG to HbA1c formula: HbA1c = (eAG + 46.7) / 28.7
+    final hba1c = (avg + 46.7) / 28.7;
+
+    return BloodSugarStats(
+      averageGlucose: avg,
+      averageFasting: avgFasting,
+      minGlucose: minG,
+      maxGlucose: maxG,
+      totalCount: logs.length,
+      inRangePercentage: inRangePct,
+      highPercentage: highPct,
+      lowPercentage: lowPct,
+      estimatedHbA1c: hba1c,
+    );
   }
 }
 

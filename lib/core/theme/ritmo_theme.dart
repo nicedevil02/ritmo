@@ -379,7 +379,7 @@ class RitmoTheme {
           disabledForegroundColor: colors.textTertiary,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.field),
+            borderRadius: BorderRadius.circular(m.radiusField),
           ),
           textStyle: const TextStyle(
             fontSize: 14,
@@ -397,7 +397,7 @@ class RitmoTheme {
           shadowColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.field),
+            borderRadius: BorderRadius.circular(m.radiusField),
             side: isDark ? BorderSide(color: colors.border) : BorderSide.none,
           ),
           textStyle: const TextStyle(
@@ -417,7 +417,7 @@ class RitmoTheme {
             fontFamily: 'Vazirmatn',
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.field),
+            borderRadius: BorderRadius.circular(m.radiusField),
           ),
           minimumSize: Size(m.touchTarget, m.touchTarget),
         ),
@@ -427,7 +427,7 @@ class RitmoTheme {
           foregroundColor: colors.textPrimary,
           side: BorderSide(color: colors.border),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.field),
+            borderRadius: BorderRadius.circular(m.radiusField),
           ),
           textStyle: const TextStyle(
             fontSize: 14,
@@ -443,7 +443,7 @@ class RitmoTheme {
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          borderRadius: BorderRadius.circular(m.radiusCard),
           side: isDark
               ? BorderSide(
                   color: colors.border,
@@ -456,24 +456,24 @@ class RitmoTheme {
         filled: true,
         fillColor: colors.surfaceSunken,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
           borderSide: BorderSide(color: colors.disabled.withValues(alpha: 0.3)),
         ),
         contentPadding: EdgeInsets.symmetric(
           horizontal: m.spaceLg,
-          vertical: m.spaceMd,
+          vertical: m.spaceMd + 2,
         ),
       ),
       dividerTheme: DividerThemeData(
@@ -488,7 +488,7 @@ class RitmoTheme {
         secondarySelectedColor: colors.primary,
         padding: EdgeInsets.symmetric(
           horizontal: m.spaceMd,
-          vertical: m.spaceSm,
+          vertical: m.spaceXs + 2,
         ),
         labelStyle: TextStyle(
           color: colors.textPrimary,
@@ -545,7 +545,7 @@ class RitmoTheme {
         actionTextColor: colors.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.field),
+          borderRadius: BorderRadius.circular(m.radiusField),
         ),
       ),
       tabBarTheme: TabBarThemeData(
@@ -593,7 +593,7 @@ class RitmoTheme {
         textColor: colors.textPrimary,
         iconColor: colors.textSecondary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(RitmoRadius.card),
+          borderRadius: BorderRadius.circular(m.radiusCard),
         ),
         contentPadding: EdgeInsets.symmetric(
           horizontal: m.spaceLg,

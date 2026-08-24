@@ -6,12 +6,14 @@ import 'package:ritmo/core/widgets/ritmo_swipeable_row.dart';
 void main() {
   Widget buildTestableWidget(Widget child) {
     return MaterialApp(
+      theme: RitmoTheme.build(
+        palette: RitmoPalette.jadeNoir,
+        brightness: Brightness.light,
+      ),
       home: Scaffold(
-        body: RitmoTheme(
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: child,
-          ),
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: child,
         ),
       ),
     );

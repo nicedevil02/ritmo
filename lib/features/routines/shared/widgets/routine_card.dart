@@ -34,12 +34,13 @@ class RoutineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: m.spaceXs + 2),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(m.radiusCard),
         child: RitmoSwipeableRow(
           itemId: routine.id,
           onSwipeComplete: onComplete ?? onTap,
@@ -52,7 +53,7 @@ class RoutineCard extends StatelessWidget {
                 color: isCompleted
                     ? colors.success.withValues(alpha: 0.08)
                     : colors.card.withValues(alpha: isDarkMode ? 0.04 : 0.65),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(m.radiusCard),
                 border: Border.all(
                   color: isCompleted
                       ? colors.success.withValues(alpha: 0.4)
@@ -60,7 +61,7 @@ class RoutineCard extends StatelessWidget {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceMd + 2),
                 child: Row(
                   children: [
                     // 1. Category vertical color indicator (pill)
@@ -74,39 +75,41 @@ class RoutineCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: m.spaceSm),
 
                     // 2. Emoji indicator
                     Text(
                       _getCategoryEmoji(routine.category.name, routine.customCategoryId),
                       style: const TextStyle(fontSize: 16),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: m.spaceSm),
 
                     // 3. Title & Time column (aligned to right, i.e. CrossAxisAlignment.start in RTL)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          routine.title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isCompleted ? colors.textSecondary : colors.textPrimary,
-                            decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            routine.title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isCompleted ? colors.textSecondary : colors.textPrimary,
+                              decoration: isCompleted ? TextDecoration.lineThrough : null,
                             ),
-                        ),
-                        Text(
-                          toPersianDigits(routine.timeOfDay ?? '۰۹:۰۰'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.textSecondary,
+                          ),
+                          Text(
+                            toPersianDigits(routine.timeOfDay ?? '۰۹:۰۰'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.textSecondary,
                             ),
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
 
-                    const Spacer(),
+                    SizedBox(width: m.spaceSm),
 
                     // 4. Badges (Energy and Essential)
                     if (routine.energyRule != EnergyRule.none) ...[

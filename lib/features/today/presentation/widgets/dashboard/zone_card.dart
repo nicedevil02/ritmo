@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/core/widgets/ritmo_adaptive_row.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_countdown_widget.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_management_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -158,17 +159,24 @@ class ZoneCard extends StatelessWidget {
                         // G-9: در حالت ثبتنشده حلقه خالی (صفر) رسم میشود.
                         percentage: currentEnergyPercent ?? 0,
                         colors: energyRingColors,
+                        strokeWidth: 5.0 * m.densityFactor,
                       ),
                       child: Center(
-                        child: Text(
-                          // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
-                          currentEnergyPercent == null
-                              ? '—'
-                              : toPersianDigits(
-                                  '${currentEnergyPercent!.toInt()}٪'),
-                          style: RitmoTextStyles.badge(
-                            colors.textPrimary,
-                          ).copyWith(fontWeight: FontWeight.w900),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text(
+                              // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
+                              currentEnergyPercent == null
+                                  ? '—'
+                                  : toPersianDigits(
+                                      '${currentEnergyPercent!.toInt()}٪'),
+                              style: RitmoTextStyles.badge(
+                                colors.textPrimary,
+                              ).copyWith(fontWeight: FontWeight.w900),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -399,46 +407,32 @@ class ZoneCard extends StatelessWidget {
       ),
     );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final canUseRow =
-            constraints.maxWidth >= (280 * m.densityFactor) &&
-            !context.isLargeTextScale;
-        if (canUseRow) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: energyCard),
-              SizedBox(width: m.spaceMd),
-              Expanded(child: realmCard),
-            ],
-          );
-        } else {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              energyCard,
-              SizedBox(height: m.spaceMd),
-              realmCard,
-            ],
-          );
-        }
-      },
+    return RitmoAdaptiveRow(
+      primary: energyCard,
+      secondary: realmCard,
+      spacing: m.spaceMd,
+      minWidthForRow: 280.0,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      expandSecondary: true,
     );
   }
 }
 
 class _EnergyRingPainter extends CustomPainter {
+  _EnergyRingPainter({
+    required this.percentage,
+    required this.colors,
+    this.strokeWidth = 5.0,
+  });
 
-  _EnergyRingPainter({required this.percentage, required this.colors});
   final double percentage;
   final List<Color> colors;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 4;
-    const strokeWidth = 5.0;
 
     final rect = Rect.fromCircle(center: center, radius: radius);
 
@@ -481,6 +475,8 @@ class _EnergyRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _EnergyRingPainter oldDelegate) {
-    return oldDelegate.percentage != percentage || oldDelegate.colors != colors;
+    return oldDelegate.percentage != percentage ||
+        oldDelegate.colors != colors ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

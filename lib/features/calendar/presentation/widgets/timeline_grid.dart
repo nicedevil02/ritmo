@@ -21,8 +21,8 @@ class TimelineGrid extends StatefulWidget {
     required this.isToday,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
-    this.pxPerMinute = CalendarGeometry.pxPerMinute,
-    this.hourAxisWidth = CalendarGeometry.hourAxisWidth,
+    this.pxPerMinute,
+    this.hourAxisWidth,
     this.maxLanes,
     this.axisSide = HourAxisSide.leading,
     this.scrollController,
@@ -46,8 +46,8 @@ class TimelineGrid extends StatefulWidget {
   final bool isToday;
   final int rangeStartMinutes;
   final int rangeEndMinutes;
-  final double pxPerMinute;
-  final double hourAxisWidth;
+  final double? pxPerMinute;
+  final double? hourAxisWidth;
   final int? maxLanes;
   final HourAxisSide axisSide;
   final ScrollController? scrollController;
@@ -126,12 +126,17 @@ class _TimelineGridState extends State<TimelineGrid> {
     super.dispose();
   }
 
+  double get _effectivePxPerMinute =>
+      widget.pxPerMinute ?? CalendarGeometry.effectivePxPerMinute(context);
+
+  double get _effectiveHourAxisWidth =>
+      widget.hourAxisWidth ?? CalendarGeometry.effectiveHourAxisWidth(context);
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final effectivePxPerMinute = widget.pxPerMinute == CalendarGeometry.pxPerMinute
-        ? CalendarGeometry.effectivePxPerMinute(context)
-        : widget.pxPerMinute;
+    final effectivePxPerMinute = _effectivePxPerMinute;
+    final effectiveHourAxisWidth = _effectiveHourAxisWidth;
 
     final layoutEngine = TimelineLayoutEngine(
       pxPerMinute: effectivePxPerMinute,
@@ -156,7 +161,7 @@ class _TimelineGridState extends State<TimelineGrid> {
         pxPerMinute: effectivePxPerMinute,
         rangeStartMinutes: widget.rangeStartMinutes,
         rangeEndMinutes: widget.rangeEndMinutes,
-        width: widget.hourAxisWidth,
+        width: effectiveHourAxisWidth,
         side: widget.axisSide,
         isToday: widget.isToday,
         now: _now,
@@ -205,7 +210,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                       onTapUp: (details) {
                         final tapY = details.localPosition.dy;
                         final rawMinutes =
-                            (tapY / widget.pxPerMinute).round() +
+                            (tapY / effectivePxPerMinute).round() +
                             widget.rangeStartMinutes;
                         final snapped = TimelineSnappingHelper.snapStartMinutes(
                           rawMinutes,
@@ -214,7 +219,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                       },
                       child: RepaintBoundary(
                         child: TimelineGridLines(
-                          pxPerMinute: widget.pxPerMinute,
+                          pxPerMinute: effectivePxPerMinute,
                           rangeStartMinutes: widget.rangeStartMinutes,
                           rangeEndMinutes: widget.rangeEndMinutes,
                         ),
@@ -239,7 +244,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                         top:
                             (effectiveDragStartMinutes -
                                 widget.rangeStartMinutes) *
-                            widget.pxPerMinute,
+                            effectivePxPerMinute,
                         left: draggingLayoutItem != null
                             ? (draggingLayoutItem.leftFraction * gridWidth)
                             : 2.0,
@@ -250,7 +255,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                         height: max(
                           (draggingLayoutItem?.durationMinutes ??
                                   effectiveDragDurationMinutes) *
-                              widget.pxPerMinute,
+                              effectivePxPerMinute,
                           28.0,
                         ),
                         child: IgnorePointer(
@@ -398,7 +403,7 @@ class _TimelineGridState extends State<TimelineGrid> {
     if (nowMinutes <= widget.rangeStartMinutes) return const SizedBox.shrink();
 
     final dimHeight = min(
-      (nowMinutes - widget.rangeStartMinutes) * widget.pxPerMinute,
+      (nowMinutes - widget.rangeStartMinutes) * _effectivePxPerMinute,
       totalHeight,
     );
 
@@ -449,11 +454,11 @@ class _TimelineGridState extends State<TimelineGrid> {
     final isCurrentlyResizing = _activeResizeItemId == item.id;
 
     final top = isCurrentlyDragging
-        ? (_dragStartMinutes - widget.rangeStartMinutes) * widget.pxPerMinute
+        ? (_dragStartMinutes - widget.rangeStartMinutes) * _effectivePxPerMinute
         : layoutItem.top;
 
     final height = isCurrentlyResizing
-        ? _resizeDurationMinutes * widget.pxPerMinute
+        ? _resizeDurationMinutes * _effectivePxPerMinute
         : layoutItem.height;
 
     final displayTime = isCurrentlyDragging
@@ -477,7 +482,7 @@ class _TimelineGridState extends State<TimelineGrid> {
       isResizing: isCurrentlyResizing,
       displayTimeOverride: displayTime,
       displayHeightOverride: displayDuration != null
-          ? displayDuration * widget.pxPerMinute
+          ? displayDuration * _effectivePxPerMinute
           : null,
       onTap: () => widget.onItemTap?.call(item),
       onResizeStart: isResizable
@@ -501,7 +506,7 @@ class _TimelineGridState extends State<TimelineGrid> {
                     .dy;
                 _resizeInitialTouchLocalY ??= localY;
                 final deltaY = localY - _resizeInitialTouchLocalY!;
-                final deltaMins = (deltaY / widget.pxPerMinute).round();
+                final deltaMins = (deltaY / _effectivePxPerMinute).round();
                 final rawDuration = _resizeInitialDurationMinutes + deltaMins;
                 final snapped = TimelineSnappingHelper.snapDurationMinutes(
                   rawDuration,
@@ -583,12 +588,12 @@ class _TimelineGridState extends State<TimelineGrid> {
             if (_touchOffsetInCardY == null) {
               final initialCardTopY =
                   (_dragInitialStartMinutes - widget.rangeStartMinutes) *
-                  widget.pxPerMinute;
+                  _effectivePxPerMinute;
               _touchOffsetInCardY = localOffset.dy - initialCardTopY;
             }
             final cardTopY = localOffset.dy - _touchOffsetInCardY!;
             final rawStart =
-                (cardTopY / widget.pxPerMinute).round() +
+                (cardTopY / _effectivePxPerMinute).round() +
                 widget.rangeStartMinutes;
             final snapped = TimelineSnappingHelper.snapStartMinutes(
               rawStart,
@@ -698,8 +703,8 @@ class _TimelineGridState extends State<TimelineGrid> {
       final visEnd = min(seg.endMinutes, widget.rangeEndMinutes);
       if (visStart >= visEnd) continue;
 
-      final top = (visStart - widget.rangeStartMinutes) * widget.pxPerMinute;
-      final height = (visEnd - visStart) * widget.pxPerMinute;
+      final top = (visStart - widget.rangeStartMinutes) * _effectivePxPerMinute;
+      final height = (visEnd - visStart) * _effectivePxPerMinute;
       if (height <= 0) continue;
 
       widgets.add(
@@ -714,7 +719,7 @@ class _TimelineGridState extends State<TimelineGrid> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Text(
                 'پنجره خواب',
-                style: TextStyle(fontSize: 11.0, color: colors.textTertiary),
+                style: RitmoTextStyles.badge(colors.textTertiary),
               ),
             ),
           ),

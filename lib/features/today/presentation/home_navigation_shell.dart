@@ -33,7 +33,8 @@ class HomeNavigationShell extends StatefulWidget {
   final ThemeRepository themeRepository;
   final LocaleRepository localeRepository;
 
-  static int calendarTabIndexFor(AppMode mode) => RitmoShellMetrics.calendarTabIndexFor(mode);
+  static int calendarTabIndexFor(AppMode mode) =>
+      RitmoShellMetrics.calendarTabIndexFor(mode);
 
   @override
   State<HomeNavigationShell> createState() => _HomeNavigationShellState();
@@ -106,7 +107,9 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
 
       final plugin = FlutterLocalNotificationsPlugin();
       final androidImplementation = plugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidImplementation != null) {
         final granted = await androidImplementation.areNotificationsEnabled();
         if (granted == false) {
@@ -114,7 +117,9 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
         }
       }
     } catch (e) {
-      debugPrint('Error requesting notifications permission at shell startup: $e');
+      debugPrint(
+        'Error requesting notifications permission at shell startup: $e',
+      );
     }
   }
 
@@ -214,7 +219,8 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
 
             final now = DateTime.now();
             if (_lastBackPressTime == null ||
-                now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+                now.difference(_lastBackPressTime!) >
+                    const Duration(seconds: 2)) {
               _lastBackPressTime = now;
               RitmoToast.show(
                 context,
@@ -244,9 +250,14 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
                   child: SafeArea(
                     bottom: false,
                     child: IndexedStack(
-                      index: _currentIndex < maxTabs ? _currentIndex : defaultTab,
+                      index: _currentIndex < maxTabs
+                          ? _currentIndex
+                          : defaultTab,
                       children: List.generate(maxTabs, (index) {
-                        return (index < _screens.length ? _screens[index] : null) ?? const SizedBox.shrink();
+                        return (index < _screens.length
+                                ? _screens[index]
+                                : null) ??
+                            const SizedBox.shrink();
                       }),
                     ),
                   ),
@@ -260,7 +271,9 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
                     bottom: 0,
                     child: RitmoNavBar(
                       mode: currentMode,
-                      currentIndex: _currentIndex < maxTabs ? _currentIndex : defaultTab,
+                      currentIndex: _currentIndex < maxTabs
+                          ? _currentIndex
+                          : defaultTab,
                       onSelectTab: (index) {
                         setState(() {
                           _currentIndex = index;
@@ -271,51 +284,62 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
                         if (currentMode == AppMode.simple) {
                           if (_currentIndex != 0) {
                             setState(() {
-                                _currentIndex = 0;
-                                _screens[0] ??= _buildScreen(0, AppMode.simple);
-                              });
-                            }
-                            _tasksFocusTrigger.value++;
-                          } else {
-                            final isHomeActive = _currentIndex == RitmoShellMetrics.homeTabIndexFor(AppMode.full);
-                            if (isHomeActive) {
-                              Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  opaque: false,
-                                  barrierDismissible: true,
-                                  pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                                    onSaved: _refreshCurrentScreen,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              setState(() {
-                                _currentIndex = RitmoShellMetrics.homeTabIndexFor(AppMode.full);
-                                _screens[RitmoShellMetrics.homeTabIndexFor(AppMode.full)] ??= _buildScreen(RitmoShellMetrics.homeTabIndexFor(AppMode.full), AppMode.full);
-                              });
-                            }
+                              _currentIndex = 0;
+                              _screens[0] ??= _buildScreen(0, AppMode.simple);
+                            });
                           }
-                        },
-                        onCenterLongPress: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              opaque: false,
-                              barrierDismissible: true,
-                              pageBuilder: (context, _, _) => UniversalPlannerSheet(
-                                onSaved: _refreshCurrentScreen,
+                          _tasksFocusTrigger.value++;
+                        } else {
+                          final isHomeActive =
+                              _currentIndex ==
+                              RitmoShellMetrics.homeTabIndexFor(AppMode.full);
+                          if (isHomeActive) {
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                opaque: false,
+                                barrierDismissible: true,
+                                pageBuilder: (context, _, _) =>
+                                    UniversalPlannerSheet(
+                                      onSaved: _refreshCurrentScreen,
+                                    ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          } else {
+                            setState(() {
+                              _currentIndex = RitmoShellMetrics.homeTabIndexFor(
+                                AppMode.full,
+                              );
+                              _screens[RitmoShellMetrics.homeTabIndexFor(
+                                AppMode.full,
+                              )] ??= _buildScreen(
+                                RitmoShellMetrics.homeTabIndexFor(AppMode.full),
+                                AppMode.full,
+                              );
+                            });
+                          }
+                        }
+                      },
+                      onCenterLongPress: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            opaque: false,
+                            barrierDismissible: true,
+                            pageBuilder: (context, _, _) =>
+                                UniversalPlannerSheet(
+                                  onSaved: _refreshCurrentScreen,
+                                ),
+                          ),
+                        );
+                      },
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          );
-        },
-      );
-    }
+          ),
+        );
+      },
+    );
   }
+}

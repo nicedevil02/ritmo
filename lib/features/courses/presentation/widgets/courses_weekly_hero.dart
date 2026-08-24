@@ -20,6 +20,7 @@ class CoursesWeeklyHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final progress = weeklyTargetSessions > 0
@@ -28,27 +29,27 @@ class CoursesWeeklyHero extends StatelessWidget {
 
     return RitmoTheme.glassCardLight(
       color: isDarkMode
-          ? const Color(0xff1D4ED8).withValues(alpha: 0.15)
-          : const Color(0xff3B82F6).withValues(alpha: 0.1),
+          ? colors.primary.withValues(alpha: 0.15)
+          : colors.primary.withValues(alpha: 0.1),
       border: Border.all(
-        color: const Color(0xff3B82F6).withValues(alpha: 0.3),
+        color: colors.primary.withValues(alpha: 0.3),
         width: 1.5,
       ),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(m.spaceLg),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(m.radiusHero),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDarkMode
                 ? [
-                    const Color(0xff1E3A8A).withValues(alpha: 0.4),
-                    const Color(0xff3B82F6).withValues(alpha: 0.1),
+                    colors.primary.withValues(alpha: 0.4),
+                    colors.primary.withValues(alpha: 0.1),
                   ]
                 : [
-                    const Color(0xffEFF6FF).withValues(alpha: 0.9),
-                    const Color(0xffDBEAFE).withValues(alpha: 0.9),
+                    colors.primary.withValues(alpha: 0.08),
+                    colors.card.withValues(alpha: 0.9),
                   ],
           ),
         ),
@@ -61,48 +62,42 @@ class CoursesWeeklyHero extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(m.spaceSm),
                       decoration: BoxDecoration(
-                        color: const Color(0xff3B82F6).withValues(alpha: 0.15),
+                        color: colors.primary.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         CupertinoIcons.book_fill,
-                        color: Color(0xff3B82F6),
-                        size: 20,
+                        color: colors.primary,
+                        size: m.iconMd,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: m.spaceSm),
                     Text(
                       'خلاصه وضعیت هفته',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
                     ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceXs),
                   decoration: BoxDecoration(
-                    color: const Color(0xff10A37F).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: colors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(m.radiusCard),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.flame_fill,
-                        color: Color(0xff10A37F),
-                        size: 14,
+                        color: colors.success,
+                        size: m.iconSm * 0.8,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: m.spaceXs),
                       Text(
                         '${toPersianDigits(studyStreakDays)} روز استریک',
-                        style: const TextStyle(
-                          fontSize: 11,
+                        style: RitmoTextStyles.badge(colors.success).copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xff10A37F),
                         ),
                       ),
                     ],
@@ -110,7 +105,7 @@ class CoursesWeeklyHero extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: m.spaceLg),
             Row(
               children: [
                 Expanded(
@@ -119,98 +114,88 @@ class CoursesWeeklyHero extends StatelessWidget {
                     children: [
                       Text(
                         'پیشرفت هدف هفتگی',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textSecondary,
-                        ),
+                        style: RitmoTextStyles.caption(colors.textSecondary),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        textBaseline: TextBaseline.alphabetic,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        children: [
-                          Text(
-                            toPersianDigits(weeklyDoneSessions),
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
+                      SizedBox(height: m.spaceXs),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          textBaseline: TextBaseline.alphabetic,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          children: [
+                            Text(
+                              toPersianDigits(weeklyDoneSessions),
+                              style: RitmoTextStyles.headlineMedium(colors.textPrimary).copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' / ${toPersianDigits(weeklyTargetSessions)} جلسه',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.textSecondary,
+                            Text(
+                              ' / ${toPersianDigits(weeklyTargetSessions)} جلسه',
+                              style: RitmoTextStyles.caption(colors.textSecondary),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  height: 40,
+                  height: 40 * m.densityFactor,
                   width: 1,
                   color: colors.border.withValues(alpha: 0.5),
                 ),
-                const SizedBox(width: 20),
+                SizedBox(width: m.spaceLg),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'کل زمان مطالعه',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textSecondary,
-                        ),
+                        style: RitmoTextStyles.caption(colors.textSecondary),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        textBaseline: TextBaseline.alphabetic,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        children: [
-                          Text(
-                            toPersianDigits(weeklyStudyMinutes),
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
+                      SizedBox(height: m.spaceXs),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Row(
+                          textBaseline: TextBaseline.alphabetic,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          children: [
+                            Text(
+                              toPersianDigits(weeklyStudyMinutes),
+                              style: RitmoTextStyles.headlineMedium(colors.textPrimary).copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' دقیقه',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.textSecondary,
+                            Text(
+                              ' دقیقه',
+                              style: RitmoTextStyles.caption(colors.textSecondary),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: m.spaceMd),
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(RitmoRadius.pill),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 8,
+                minHeight: 8 * m.densityFactor,
                 backgroundColor: colors.border.withValues(alpha: 0.5),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff3B82F6)),
+                valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
               ),
             ),
             if (weeklyDoneSessions >= weeklyTargetSessions && weeklyTargetSessions > 0) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: m.spaceSm),
               Text(
                 'هدف هفتگی محقق شد! عالیه 🎉💪',
-                style: TextStyle(
-                  fontSize: 11,
+                style: RitmoTextStyles.badge(colors.success).copyWith(
                   fontWeight: FontWeight.bold,
-                  color: colors.success,
                 ),
               ),
             ],

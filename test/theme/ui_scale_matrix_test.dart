@@ -49,6 +49,7 @@ void main() {
                   data: MediaQueryData(
                     size: Size(viewport.width, viewport.height * 2),
                     textScaler: TextScaler.linear(textScale),
+                    disableAnimations: true,
                   ),
                   child: Directionality(
                     textDirection: TextDirection.rtl,
@@ -158,7 +159,7 @@ void main() {
                             const Center(
                               child: RitmoProgressRing(
                                 key: ValueKey('progress_ring'),
-                                value: 0.8,
+                                value: 80.0,
                               ),
                             ),
                           ],

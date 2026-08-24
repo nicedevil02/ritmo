@@ -1,13 +1,13 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-25T01:11:42.603435
+Generated At: 2026-08-25T01:28:20.126724
 
 ## Audit Metrics Summary
 
 | Metric | Key | Scope | Current Count | Baseline | Status |
 |---|---|---|---|---|---|
-| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1292 | 1292 | OK |
-| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 1963 | 1979 | IMPROVED (1963 < 1979) |
+| Hardcoded Colors | `hardcodedColors` | `lib/features/` | 1270 | 1292 | IMPROVED (1270 < 1292) |
+| Material Colors (non-transparent) | `materialColors` | `lib/features/` | 1962 | 1963 | IMPROVED (1962 < 1963) |
 | Old Opacity withOpacity() | `oldOpacity` | `lib/` | 0 | 0 | OK |
 | Duplicate Local Font Family | `duplicateFont` | `lib/features/` | 158 | 158 | OK |
 | Scattered BackdropFilter | `scatteredBlur` | `lib/features/` | 32 | 32 | OK |
@@ -21,13 +21,13 @@ Generated At: 2026-08-25T01:11:42.603435
 | Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 149 | 149 | OK |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3550 | 3561 | IMPROVED (3550 < 3561) |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4396 | 4451 | IMPROVED (4396 < 4451) |
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3514 | 3550 | IMPROVED (3514 < 3550) |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4364 | 4396 | IMPROVED (4364 < 4396) |
 
 ## Top Offenders by Metric
 
 ### Hardcoded Colors (`hardcodedColors`)
-Total: 1292 occurrences
+Total: 1270 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -38,7 +38,7 @@ Total: 1292 occurrences
 | `lib/features/worship/presentation/theme/worship_sky_palette.dart` | 57 |
 
 ### Material Colors (non-transparent) (`materialColors`)
-Total: 1963 occurrences
+Total: 1962 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -186,7 +186,7 @@ Total: 9 occurrences
 | `lib/core/utils/ritmo_date_picker.dart` | 1 |
 
 ### Raw Font Size (`rawFontSize`)
-Total: 3550 occurrences
+Total: 3514 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -197,7 +197,7 @@ Total: 3550 occurrences
 | `lib/features/notes/presentation/screens/notebook_screen.dart` | 47 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4396 occurrences
+Total: 4364 occurrences
 
 | File | Occurrences |
 |---|---|

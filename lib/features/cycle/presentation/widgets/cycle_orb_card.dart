@@ -94,19 +94,20 @@ class CycleOrbCard extends StatelessWidget {
     final progress = totalDays > 0
         ? (currentDay / totalDays).clamp(0.05, 1.0)
         : 0.1;
+    final m = context.metrics;
 
     return RitmoTheme.glassCardLight(
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        padding: EdgeInsets.symmetric(vertical: m.spaceXl, horizontal: m.spaceLg),
         child: Column(
           children: [
             Stack(
               alignment: Alignment.center,
               children: [
                 Container(
-                  height: 146,
-                  width: 146,
+                  height: 146 * m.densityFactor,
+                  width: 146 * m.densityFactor,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -119,8 +120,8 @@ class CycleOrbCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
-                  height: 136,
-                  width: 136,
+                  height: 136 * m.densityFactor,
+                  width: 136 * m.densityFactor,
                   child: CustomPaint(
                     painter: CycleProgressRingPainter(
                       percentage: progress,
@@ -130,8 +131,8 @@ class CycleOrbCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  height: 104,
-                  width: 104,
+                  height: 104 * m.densityFactor,
+                  width: 104 * m.densityFactor,
                   decoration: BoxDecoration(
                     color: colors.surfaceElevated,
                     shape: BoxShape.circle,
@@ -153,22 +154,23 @@ class CycleOrbCard extends StatelessWidget {
                           phase == CyclePhase.menstrual
                               ? 'روز پریود'
                               : 'روز چرخه',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textSecondary,
-                          ),
+                          style: RitmoTextStyles.caption(colors.textSecondary),
                         ),
                         const SizedBox(height: 1),
-                        Text(
-                          PersianDigits.toFa(
-                            phase == CyclePhase.menstrual
-                                ? activePeriodDay.toString()
-                                : dayOfCycle.toString(),
-                          ),
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: phaseColor,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              PersianDigits.toFa(
+                                phase == CyclePhase.menstrual
+                                    ? activePeriodDay.toString()
+                                    : dayOfCycle.toString(),
+                              ),
+                              style: RitmoTextStyles.displayLarge(phaseColor).copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -177,12 +179,12 @@ class CycleOrbCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: m.spaceXl),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: m.spaceMd, vertical: m.spaceXs),
               decoration: BoxDecoration(
                 color: phaseColor.withValues(alpha: isDark ? 0.16 : 0.08),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(RitmoRadius.pill),
                 border: Border.all(
                   color: phaseColor.withValues(alpha: isDark ? 0.3 : 0.18),
                 ),
@@ -190,37 +192,29 @@ class CycleOrbCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(width: 6),
+                  Text(emoji, style: RitmoTextStyles.label(phaseColor)),
+                  SizedBox(width: m.spaceXs),
                   Text(
                     phaseText,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: RitmoTextStyles.bodyMedium(phaseColor).copyWith(
                       fontWeight: FontWeight.bold,
-                      color: phaseColor,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: m.spaceSm),
             Text(
               remainingText,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
-              ),
+              style: RitmoTextStyles.cardTitle(colors.textPrimary),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: m.spaceSm),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: m.spaceMd),
               child: Text(
                 statusTip,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textSecondary,
+                style: RitmoTextStyles.caption(colors.textSecondary).copyWith(
                   height: 1.5,
                 ),
               ),

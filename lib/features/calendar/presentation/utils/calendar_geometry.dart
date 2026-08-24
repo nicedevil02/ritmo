@@ -19,6 +19,10 @@ abstract final class CalendarGeometry {
   /// Width of the hour axis gutter in single-day view.
   static const double hourAxisWidth = 34.0;
 
+  /// Returns dynamic hour axis width based on text scale.
+  static double effectiveHourAxisWidth(BuildContext context) =>
+      34.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
+
   /// Width of the accent color bar indicator on the side of timeline cards.
   static const double accentBarWidth = 3.0;
 
@@ -39,6 +43,10 @@ abstract final class CalendarGeometry {
   /// Width of the hour axis in split two-column view.
   static const double hourAxisWidthSplit = 28.0;
 
+  /// Returns dynamic split hour axis width based on text scale.
+  static double effectiveHourAxisWidthSplit(BuildContext context) =>
+      28.0 * (context.textScale > 1.0 ? context.textScale : 1.0);
+
   /// Horizontal gap between the morning and afternoon columns.
   static const double columnGap = 4.0;
 
@@ -51,27 +59,59 @@ abstract final class CalendarGeometry {
   /// Height of the morning/afternoon column header widget.
   static const double columnHeaderHeight = 62.0;
 
+  /// Returns dynamic column header height based on density and text scale.
+  static double effectiveColumnHeaderHeight(BuildContext context) =>
+      62.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
+
   // ─── Agenda & Registry View Dimensions ───
   /// Fixed row height for agenda list items (prevents scroll jitter).
   static const double agendaRowHeight = 52.0;
 
+  /// Returns dynamic agenda row height using density tokens.
+  static double effectiveAgendaRowHeight(BuildContext context) =>
+      context.metrics.rowHeight;
+
   /// Height of the agenda section/bucket headers ("امروز", "فردا", ...).
   static const double agendaBucketHeaderHeight = 36.0;
+
+  /// Returns dynamic agenda bucket header height.
+  static double effectiveAgendaBucketHeaderHeight(BuildContext context) =>
+      36.0 * context.metrics.densityFactor;
 
   /// Height of individual plan cards in the registry list.
   static const double registryCardHeight = 92.0;
 
+  /// Returns dynamic registry card height based on density and text scale.
+  static double effectiveRegistryCardHeight(BuildContext context) =>
+      92.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
+
   /// Height of the calendar search bar.
   static const double searchBarHeight = 48.0;
+
+  /// Returns dynamic search bar height adhering to minimum touch target floor.
+  static double effectiveSearchBarHeight(BuildContext context) =>
+      context.metrics.touchTarget;
 
   /// Standard filter/module chip height.
   static const double chipHeight = 36.0;
 
+  /// Returns dynamic chip height adhering to Law 38 (Minimum 48dp Touch Target Floor).
+  static double effectiveChipHeight(BuildContext context) =>
+      context.metrics.touchTarget;
+
   /// Standard floating action button / quick add button height.
   static const double fabHeight = 54.0;
 
+  /// Returns dynamic FAB height adhering to density factor.
+  static double effectiveFabHeight(BuildContext context) =>
+      54.0 * context.metrics.densityFactor;
+
   /// Icon container size for square icon badges.
   static const double iconContainerSize = 40.0;
+
+  /// Returns dynamic icon container size based on density.
+  static double effectiveIconContainerSize(BuildContext context) =>
+      40.0 * context.metrics.densityFactor;
 
   // ─── Surface & Background Opacities ───
   /// Opacity for domain tinted background surfaces.

@@ -114,11 +114,26 @@ class _CycleHeroCardState extends State<CycleHeroCard>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
-    )..repeat();
+    );
 
     // ایجاد گلبرگ‌های اولیه
     for (var i = 0; i < 12; i++) {
       _petals.add(_PetalParticle.random(_random));
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnim = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    if (disableAnim) {
+      if (_animationController.isAnimating) {
+        _animationController.stop();
+      }
+    } else {
+      if (!_animationController.isAnimating) {
+        _animationController.repeat();
+      }
     }
   }
 
@@ -133,6 +148,7 @@ class _CycleHeroCardState extends State<CycleHeroCard>
     final colors = context.colors;
     final theme = PhaseDesignTheme.getTheme(widget.currentPhase, colors);
     final m = context.metrics;
+    final disableAnim = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -170,8 +186,9 @@ class _CycleHeroCardState extends State<CycleHeroCard>
                     return CustomPaint(
                       painter: _PetalsPainter(
                         petals: _petals,
-                        progress: _animationController.value,
+                        progress: disableAnim ? 0.5 : _animationController.value,
                         baseColor: theme.baseColor,
+                        disableAnim: disableAnim,
                       ),
                     );
                   },
@@ -333,10 +350,12 @@ class _PetalsPainter extends CustomPainter {
     required this.petals,
     required this.progress,
     required this.baseColor,
+    this.disableAnim = false,
   });
   final List<_PetalParticle> petals;
   final double progress;
   final Color baseColor;
+  final bool disableAnim;
   final math.Random _random = math.Random();
 
   @override
@@ -385,7 +404,10 @@ class _PetalsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _PetalsPainter oldDelegate) {
+    if (disableAnim) return false;
+    return oldDelegate.progress != progress || oldDelegate.baseColor != baseColor;
+  }
 }
 
 /// رسم‌کننده گل لوکس و چندلایه پرمیوم در گوشه کارت

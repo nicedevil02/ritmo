@@ -11,6 +11,7 @@ class RitmoAdaptiveRow extends StatelessWidget {
     this.minWidthForRow = 280.0,
     this.spacing = RitmoSpacing.sm,
     this.crossAxisAlignment = CrossAxisAlignment.center,
+    this.expandSecondary = false,
   });
 
   final Widget primary;
@@ -18,6 +19,7 @@ class RitmoAdaptiveRow extends StatelessWidget {
   final double minWidthForRow;
   final double spacing;
   final CrossAxisAlignment crossAxisAlignment;
+  final bool expandSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +36,7 @@ class RitmoAdaptiveRow extends StatelessWidget {
             children: [
               Expanded(child: primary),
               SizedBox(width: spacing),
-              secondary,
+              expandSecondary ? Expanded(child: secondary) : secondary,
             ],
           );
         } else {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
-import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class ChatBubble extends StatelessWidget {
   const ChatBubble({
@@ -14,14 +13,15 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
+    final m = context.metrics;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Alignment
     final alignment = isFromUser ? Alignment.centerRight : Alignment.centerLeft;
 
     // Colors
-    final userBgColor = SupplementarySportsTheme.getSuccessColor(context);
+    final userBgColor = colors.success;
     final userTextColor = isDark ? Colors.black : Colors.white;
 
     final aiBgColor = isDark
@@ -30,20 +30,20 @@ class ChatBubble extends StatelessWidget {
     final aiBorderColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.08);
-    final aiTextColor = SupplementarySportsTheme.getTextPrimary(context);
+    final aiTextColor = colors.textPrimary;
 
     // Padding
-    const bubblePadding = EdgeInsets.symmetric(
-      horizontal: SupplementarySportsTheme.spacing16,
-      vertical: SupplementarySportsTheme.spacing12,
+    final bubblePadding = EdgeInsets.symmetric(
+      horizontal: m.spaceLg,
+      vertical: m.spaceMd,
     );
 
     // Border Radius
     final borderRadius = BorderRadius.only(
-      topLeft: const Radius.circular(16),
-      topRight: const Radius.circular(16),
-      bottomLeft: Radius.circular(isFromUser ? 16 : 4),
-      bottomRight: Radius.circular(isFromUser ? 4 : 16),
+      topLeft: Radius.circular(m.radiusCard),
+      topRight: Radius.circular(m.radiusCard),
+      bottomLeft: Radius.circular(isFromUser ? m.radiusCard : 4),
+      bottomRight: Radius.circular(isFromUser ? 4 : m.radiusCard),
     );
 
     return LayoutBuilder(
@@ -51,8 +51,8 @@ class ChatBubble extends StatelessWidget {
         return Align(
           alignment: alignment,
           child: Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: SupplementarySportsTheme.spacing8,
+            margin: EdgeInsets.symmetric(
+              vertical: m.spaceSm,
             ),
             constraints: BoxConstraints(
               maxWidth: constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor,
@@ -75,8 +75,9 @@ class ChatBubble extends StatelessWidget {
             child: Text(
               message,
               textDirection: TextDirection.rtl,
-              style: SupplementarySportsTheme.body.copyWith(
-                color: isFromUser ? userTextColor : aiTextColor,
+              style: RitmoTextStyles.body(
+                isFromUser ? userTextColor : aiTextColor,
+              ).copyWith(
                 height: 1.5,
               ),
             ),

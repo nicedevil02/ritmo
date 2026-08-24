@@ -36,21 +36,22 @@ class KonkurHero extends StatelessWidget {
 
     final textColor = isDarkMode ? colors.textPrimary : Colors.white;
     final subtitleColor = isDarkMode ? colors.textSecondary : Colors.white.withValues(alpha: 0.85);
+    final m = context.metrics;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceSm),
       decoration: BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(m.radiusHero),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: isDarkMode ? 0.15 : 0.3),
+            color: colors.primary.withValues(alpha: isDarkMode ? 0.15 : 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(
-          color: const Color(0xFF8B5CF6).withValues(alpha: isDarkMode ? 0.3 : 0.5),
+          color: colors.primary.withValues(alpha: isDarkMode ? 0.3 : 0.5),
           width: 1.5,
         ),
       ),
@@ -59,7 +60,7 @@ class KonkurHero extends StatelessWidget {
         border: Border.all(color: Colors.transparent),
         shadows: const [],
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(m.spaceLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -72,36 +73,30 @@ class KonkurHero extends StatelessWidget {
                       children: [
                         Text(
                           'روزشمار کنکور',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: subtitleColor,
-                          ),
+                          style: RitmoTextStyles.caption(subtitleColor),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: m.spaceXs),
                         if (data.daysUntilExam >= 0) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                toPersianDigits(data.daysUntilExam),
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                  color: textColor,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  toPersianDigits(data.daysUntilExam),
+                                  style: RitmoTextStyles.displayLarge(textColor).copyWith(
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'روز تا آزمون سرنوشت‌ساز',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: textColor,
+                                SizedBox(width: m.spaceSm),
+                                Text(
+                                  'روز تا آزمون سرنوشت‌ساز',
+                                  style: RitmoTextStyles.caption(textColor),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ] else ...[
                           GestureDetector(
@@ -110,18 +105,18 @@ class KonkurHero extends StatelessWidget {
                               children: [
                                 Text(
                                   'تاریخ کنکور را تعیین کنید',
-                                  style: TextStyle(
-                                    fontSize: 16,
+                                  style: RitmoTextStyles.cardTitle(
+                                    isDarkMode ? colors.accent : colors.warning,
+                                  ).copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: isDarkMode ? const Color(0xFFA78BFA) : Colors.yellowAccent,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: m.spaceXs),
                                 Icon(
                                   Icons.calendar_month,
-                                  size: 16,
-                                  color: isDarkMode ? const Color(0xFFA78BFA) : Colors.yellowAccent,
+                                  size: m.iconSm,
+                                  color: isDarkMode ? colors.accent : colors.warning,
                                 ),
                               ],
                             ),
@@ -130,7 +125,7 @@ class KonkurHero extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildReadinessIndicator(data.overallReadiness, textColor),
+                  _buildReadinessIndicator(data.overallReadiness, textColor, m),
                 ],
               ),
               const Divider(color: Colors.white24, height: 24, thickness: 1),
@@ -143,6 +138,7 @@ class KonkurHero extends StatelessWidget {
                     value: formatDuration(data.studyMinutesThisWeek),
                     textColor: textColor,
                     subtitleColor: subtitleColor,
+                    m: m,
                   ),
                   _buildMetricItem(
                     icon: Icons.local_fire_department,
@@ -152,6 +148,7 @@ class KonkurHero extends StatelessWidget {
                         : 'شروع کن 💪',
                     textColor: textColor,
                     subtitleColor: subtitleColor,
+                    m: m,
                   ),
                 ],
               ),
@@ -162,7 +159,7 @@ class KonkurHero extends StatelessWidget {
     );
   }
 
-  Widget _buildReadinessIndicator(double readiness, Color textColor) {
+  Widget _buildReadinessIndicator(double readiness, Color textColor, RitmoMetrics m) {
     final percent = (readiness * 100).toInt();
     return Column(
       children: [
@@ -170,34 +167,28 @@ class KonkurHero extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 70,
-              height: 70,
+              width: 70 * m.densityFactor,
+              height: 70 * m.densityFactor,
               child: CircularProgressIndicator(
                 value: readiness,
                 backgroundColor: Colors.white24,
                 color: const Color(0xFF10B981),
-                strokeWidth: 6,
+                strokeWidth: 6 * m.densityFactor,
                 strokeCap: StrokeCap.round,
               ),
             ),
             Text(
               '${toPersianDigits(percent)}٪',
-              style: TextStyle(
-                fontSize: 16,
+              style: RitmoTextStyles.cardTitle(textColor).copyWith(
                 fontWeight: FontWeight.bold,
-                color: textColor,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: m.spaceXs),
         Text(
           'آمادگی کل',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: textColor.withValues(alpha: 0.9),
-          ),
+          style: RitmoTextStyles.caption(textColor.withValues(alpha: 0.9)),
         ),
       ],
     );
@@ -209,27 +200,23 @@ class KonkurHero extends StatelessWidget {
     required String value,
     required Color textColor,
     required Color subtitleColor,
+    required RitmoMetrics m,
   }) {
     return Row(
       children: [
-        Icon(icon, size: 24, color: textColor.withValues(alpha: 0.9)),
-        const SizedBox(width: 8),
+        Icon(icon, size: m.iconMd, color: textColor.withValues(alpha: 0.9)),
+        SizedBox(width: m.spaceSm),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                color: subtitleColor,
-              ),
+              style: RitmoTextStyles.badge(subtitleColor),
             ),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 13,
+              style: RitmoTextStyles.badge(textColor).copyWith(
                 fontWeight: FontWeight.bold,
-                color: textColor,
               ),
             ),
           ],

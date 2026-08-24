@@ -14,6 +14,29 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.density,
     this.preferredHeight,
   });
+
+  /// Factory constructor guaranteeing exact preferredSize pixel equality with BuildContext metrics.
+  factory RitmoModuleAppBar.fromContext({
+    Key? key,
+    required BuildContext context,
+    required String title,
+    String? subtitle,
+    Widget? statusBadge,
+    List<Widget>? actions,
+    VoidCallback? onBack,
+  }) {
+    final m = context.metrics;
+    return RitmoModuleAppBar(
+      key: key,
+      title: title,
+      subtitle: subtitle,
+      statusBadge: statusBadge,
+      actions: actions,
+      onBack: onBack,
+      preferredHeight: m.rowHeight + m.spaceSm,
+    );
+  }
+
   final String title;
   final String? subtitle;
   final Widget? statusBadge;
@@ -33,7 +56,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final m = context.metrics;
-    final effectiveHeight = m.rowHeight + m.spaceSm; // 60/64/72/78
+    final effectiveHeight = preferredHeight ?? (m.rowHeight + m.spaceSm); // 60/64/72/78
 
     return Directionality(
       textDirection: TextDirection.rtl,

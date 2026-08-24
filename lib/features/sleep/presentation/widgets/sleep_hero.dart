@@ -85,19 +85,20 @@ class _SleepHeroState extends State<SleepHero> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
     final lastLog = widget.lastNight;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceMd),
       child: RitmoTheme.glassCardLight(
         border: Border.all(
           color: _isWinddownActive
-              ? const Color(0xff8B5CF6).withValues(alpha: 0.5)
+              ? colors.accent.withValues(alpha: 0.5)
               : colors.glassBorder,
           width: _isWinddownActive ? 2.0 : 1.0,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(m.spaceLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -107,28 +108,25 @@ class _SleepHeroState extends State<SleepHero> {
                 children: [
                   Text(
                     'وضعیت خواب اخیر شما',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: colors.cardSubtitle,
-                    ),
+                    style: RitmoTextStyles.badge(
+                      colors.cardSubtitle,
+                    ).copyWith(fontWeight: FontWeight.bold),
                   ),
                   if (lastLog != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceXs),
                       decoration: BoxDecoration(
                         color: colors.cardFill,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(m.radiusCard),
                       ),
                       child: Row(
                         children: [
-                          Text(lastLog.quality.emoji, style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 4),
+                          Text(lastLog.quality.emoji, style: RitmoTextStyles.label(colors.cardTitle)),
+                          SizedBox(width: m.spaceXs),
                           Text(
                             lastLog.quality.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.cardTitle,
+                            style: RitmoTextStyles.badge(
+                              colors.cardTitle,
                             ),
                           ),
                         ],
@@ -136,51 +134,49 @@ class _SleepHeroState extends State<SleepHero> {
                     ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: m.spaceLg),
 
               // Main content - Duration
               if (lastLog != null) ...[
                 // Sleep registered
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '${lastLog.durationMinutes ~/ 60}',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        color: colors.cardTitle,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '${lastLog.durationMinutes ~/ 60}',
+                        style: RitmoTextStyles.displayLarge(
+                          colors.cardTitle,
+                        ).copyWith(fontWeight: FontWeight.w900),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'ساعت',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.cardSubtitle,
+                      SizedBox(width: m.spaceXs),
+                      Text(
+                        'ساعت',
+                        style: RitmoTextStyles.badge(
+                          colors.cardSubtitle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${lastLog.durationMinutes % 60}',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        color: colors.cardTitle,
+                      SizedBox(width: m.spaceSm),
+                      Text(
+                        '${lastLog.durationMinutes % 60}',
+                        style: RitmoTextStyles.displayLarge(
+                          colors.cardTitle,
+                        ).copyWith(fontWeight: FontWeight.w900),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'دقیقه',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: colors.cardSubtitle,
+                      SizedBox(width: m.spaceXs),
+                      Text(
+                        'دقیقه',
+                        style: RitmoTextStyles.badge(
+                          colors.cardSubtitle,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: m.spaceSm),
                 Row(
                   children: [
                     _buildTargetStatusChip(lastLog),
@@ -193,39 +189,36 @@ class _SleepHeroState extends State<SleepHero> {
                   children: [
                     Text(
                       'خواب دیشب ثبت نشده 🌙',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: colors.cardTitle,
-                      ),
+                      style: RitmoTextStyles.titleMedium(
+                        colors.cardTitle,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'برای سنجش بدهی خواب و تأثیر آن روی انرژی، وضعیت خواب خود را ثبت کنید.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
+                      style: RitmoTextStyles.caption(
+                        colors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ],
 
-              const SizedBox(height: 20),
+              SizedBox(height: m.spaceLg),
               Divider(color: colors.glassBorder),
-              const SizedBox(height: 12),
+              SizedBox(height: m.spaceMd),
 
               // Bedtime Countdown
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(m.spaceMd),
                 decoration: BoxDecoration(
                   color: _isWinddownActive
-                      ? const Color(0xff8B5CF6).withValues(alpha: 0.1)
+                      ? colors.accent.withValues(alpha: 0.1)
                       : colors.cardFill,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(m.radiusCard),
                   border: Border.all(
                     color: _isWinddownActive
-                        ? const Color(0xff8B5CF6).withValues(alpha: 0.2)
+                        ? colors.accent.withValues(alpha: 0.2)
                         : Colors.transparent,
                   ),
                 ),
@@ -233,17 +226,17 @@ class _SleepHeroState extends State<SleepHero> {
                   children: [
                     Icon(
                       _isWinddownActive ? CupertinoIcons.bell : CupertinoIcons.time,
-                      color: _isWinddownActive ? const Color(0xff8B5CF6) : colors.textSecondary,
-                      size: 18,
+                      color: _isWinddownActive ? colors.accent : colors.textSecondary,
+                      size: m.iconSm,
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: m.spaceSm),
                     Expanded(
                       child: Text(
                         _countdownText,
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: RitmoTextStyles.caption(
+                          _isWinddownActive ? colors.cardTitle : colors.textSecondary,
+                        ).copyWith(
                           fontWeight: _isWinddownActive ? FontWeight.bold : FontWeight.normal,
-                          color: _isWinddownActive ? colors.cardTitle : colors.textSecondary,
                         ),
                       ),
                     ),
@@ -251,26 +244,25 @@ class _SleepHeroState extends State<SleepHero> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: m.spaceLg),
 
               // Action button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff8B5CF6),
+                  backgroundColor: colors.accent,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: EdgeInsets.symmetric(vertical: m.spaceMd),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(m.radiusCard),
                   ),
                   elevation: 0,
                 ),
                 onPressed: _showLogSheet,
                 child: Text(
                   lastLog != null ? 'ثبت مجدد خواب دیشب' : 'ثبت خواب دیشب',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: RitmoTextStyles.badge(
+                    Colors.white,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -282,14 +274,15 @@ class _SleepHeroState extends State<SleepHero> {
 
   Widget _buildTargetStatusChip(SleepLog log) {
     final colors = context.colors;
+    final m = context.metrics;
     final diff = log.durationMinutes - widget.target.durationMinutes;
     final isOk = diff >= 0;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: m.spaceSm, vertical: m.spaceXs),
       decoration: BoxDecoration(
         color: isOk ? colors.success.withValues(alpha: 0.1) : colors.medicalRed.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(m.radiusCard),
         border: Border.all(
           color: isOk ? colors.success.withValues(alpha: 0.2) : colors.medicalRed.withValues(alpha: 0.2),
         ),
@@ -300,16 +293,14 @@ class _SleepHeroState extends State<SleepHero> {
           Icon(
             isOk ? CupertinoIcons.checkmark_alt_circle_fill : CupertinoIcons.exclamationmark_circle_fill,
             color: isOk ? colors.success : colors.medicalRed,
-            size: 14,
+            size: m.iconSm * 0.8,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: m.spaceXs),
           Text(
             isOk ? 'به هدف خواب رسیدی' : '${diff.abs()} دقیقه کمتر از هدف',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isOk ? colors.success : colors.medicalRed,
-            ),
+            style: RitmoTextStyles.badge(
+              isOk ? colors.success : colors.medicalRed,
+            ).copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),

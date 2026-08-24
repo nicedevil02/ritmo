@@ -11,9 +11,9 @@ class TimelineHourAxis extends StatelessWidget {
     this.pxPerMinute,
     this.rangeStartMinutes = 0,
     this.rangeEndMinutes = 1440,
-    this.width = CalendarGeometry.hourAxisWidth,
+    this.width,
     this.side = HourAxisSide.leading,
-    this.labelFontSize,
+    this.labelStyle,
     this.isToday = false,
     this.now,
   });
@@ -21,9 +21,9 @@ class TimelineHourAxis extends StatelessWidget {
   final double? pxPerMinute;
   final int rangeStartMinutes;
   final int rangeEndMinutes;
-  final double width;
+  final double? width;
   final HourAxisSide side;
-  final double? labelFontSize;
+  final TextStyle? labelStyle;
   final bool isToday;
   final DateTime? now;
 
@@ -31,6 +31,7 @@ class TimelineHourAxis extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final effectivePxPerMinute = pxPerMinute ?? CalendarGeometry.effectivePxPerMinute(context);
+    final effectiveWidth = width ?? CalendarGeometry.effectiveHourAxisWidth(context);
     final effectiveNow = now ?? DateTime.now();
     final nowHour = effectiveNow.hour;
     final startHour = (rangeStartMinutes / 60.0).ceil();
@@ -40,7 +41,7 @@ class TimelineHourAxis extends StatelessWidget {
     final isLeading = side == HourAxisSide.leading;
 
     return SizedBox(
-      width: width,
+      width: effectiveWidth,
       height: rangeHeight,
       child: Stack(
         children: [
@@ -55,18 +56,20 @@ class TimelineHourAxis extends StatelessWidget {
                     : Alignment.centerRight,
                 child: Text(
                   toPersianDigits('${h.toString().padLeft(2, '0')}:00'),
-                  style: TextStyle(
-                    fontSize: labelFontSize ?? 10.5,
+                  style: (labelStyle ??
+                          RitmoTextStyles.badge(
+                            isToday
+                                ? (h == nowHour
+                                      ? colors.primary
+                                      : (h < nowHour
+                                            ? colors.textTertiary
+                                            : colors.textSecondary))
+                                : colors.textTertiary,
+                          ))
+                      .copyWith(
                     fontWeight: (isToday && h == nowHour)
                         ? FontWeight.w700
                         : FontWeight.w500,
-                    color: isToday
-                        ? (h == nowHour
-                              ? colors.primary
-                              : (h < nowHour
-                                    ? colors.textTertiary
-                                    : colors.textSecondary))
-                        : colors.textTertiary,
                   ),
                 ),
               ),

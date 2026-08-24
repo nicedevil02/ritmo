@@ -123,12 +123,26 @@ abstract final class RitmoTextStyles {
     height: 1.1,
   );
 
+  static TextStyle displayLarge(Color color) => TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    color: color,
+    height: 1.3,
+  );
+
   static TextStyle pageTitle(Color color) => TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     color: color,
     fontFamily: 'Vazirmatn',
     height: 1.3,
+  );
+
+  static TextStyle headlineMedium(Color color) => TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    color: color,
+    height: 1.4,
   );
 
   static TextStyle sectionHeadline(Color color) => TextStyle(
@@ -161,6 +175,13 @@ abstract final class RitmoTextStyles {
     color: color,
     fontFamily: 'Vazirmatn',
     height: 1.6,
+  );
+
+  static TextStyle bodyMedium(Color color) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: color,
+    height: 1.4,
   );
 
   static TextStyle label(Color color) => TextStyle(

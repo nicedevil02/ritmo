@@ -47,15 +47,18 @@ class JourneyController extends ChangeNotifier {
     RitmoExecutionKernel? kernel,
     OccurrenceOverrideRepository? overrideRepo,
     DayMarkRepository? dayMarkRepo,
-  })  : _agendaService = agendaService ?? DayAgendaService.instance,
-        _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
-        _eventBus = eventBus ?? RitmoEventBus(),
-        _actionHandler = actionHandler ?? AgendaActionHandler.instance,
-        _kernel = kernel ?? RitmoExecutionKernel.instance,
-        _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
-        _dayMarkRepo = dayMarkRepo ?? DayMarkRepository.instance {
+  }) : _agendaService = agendaService ?? DayAgendaService.instance,
+       _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
+       _eventBus = eventBus ?? RitmoEventBus(),
+       _actionHandler = actionHandler ?? AgendaActionHandler.instance,
+       _kernel = kernel ?? RitmoExecutionKernel.instance,
+       _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
+       _dayMarkRepo = dayMarkRepo ?? DayMarkRepository.instance {
     _subscription = _eventBus.onEvents.listen(_handleEvent);
-    RitmoEvents.routineChangedNotifier.addListener(_onRoutineChangedNotification);
+    RitmoEvents.routineChangedNotifier.addListener(
+      _onRoutineChangedNotification,
+    );
   }
 
   final DayAgendaService _agendaService;
@@ -69,9 +72,11 @@ class JourneyController extends ChangeNotifier {
 
   bool _isDisposed = false;
   int _loadGeneration = 0;
+
   /// همیشه نیمه‌شب محلی. هیچ‌وقت ساعت را در _selectedDate نگه نداریم.
   DateTime _selectedDate = DateKey.dayOf(DateTime.now());
-  JourneyScale _activeScale = JourneyScale.agenda; // overridden by loadDefaultScale()
+  JourneyScale _activeScale =
+      JourneyScale.agenda; // overridden by loadDefaultScale()
   bool _isLoading = false;
   bool _isExecutingAction = false;
   DayAgendaSnapshot? _snapshot;
@@ -176,9 +181,9 @@ class JourneyController extends ChangeNotifier {
     (settingsService ?? SettingsService.instance)
         .setString('calendar_default_scale', scale.name)
         .catchError((e, st) {
-      RitmoLog.error('JourneyController', 'persist scale failed', e, st);
-      return false;
-    });
+          RitmoLog.error('JourneyController', 'persist scale failed', e, st);
+          return false;
+        });
     loadForActiveScale();
   }
 
@@ -251,7 +256,10 @@ class JourneyController extends ChangeNotifier {
 
     try {
       final range = _calculateDateRangeForScale(_activeScale, _selectedDate);
-      final daysMap = await _agendaService.agendaForRange(range.start, range.end);
+      final daysMap = await _agendaService.agendaForRange(
+        range.start,
+        range.end,
+      );
       if (_isDisposed || gen != _loadGeneration) return;
 
       final newSnapshots = <String, DayAgendaSnapshot>{};
@@ -270,10 +278,12 @@ class JourneyController extends ChangeNotifier {
       // Cleanup stale highlights or manipulation state if item no longer exists
       if (_snapshot != null) {
         final currentItemIds = _snapshot!.items.map((i) => i.id).toSet();
-        if (_highlightedItemId != null && !currentItemIds.contains(_highlightedItemId)) {
+        if (_highlightedItemId != null &&
+            !currentItemIds.contains(_highlightedItemId)) {
           _highlightedItemId = null;
         }
-        if (_manipulatingItemId != null && !currentItemIds.contains(_manipulatingItemId)) {
+        if (_manipulatingItemId != null &&
+            !currentItemIds.contains(_manipulatingItemId)) {
           _manipulatingItemId = null;
           _isDragging = false;
           _isResizing = false;
@@ -284,7 +294,12 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed || gen != _loadGeneration) return;
       _errorMessage = CalendarMessagesFa.load;
-      RitmoLog.error('JourneyController', 'loadForActiveScale failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'loadForActiveScale failed',
+        e,
+        stackTrace,
+      );
     } finally {
       if (!_isDisposed && gen == _loadGeneration) {
         _isLoading = false;
@@ -303,14 +318,19 @@ class JourneyController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final effectiveDuration = actualDurationMinutes ?? item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
+      final effectiveDuration =
+          actualDurationMinutes ??
+          item.durationMinutes ??
+          CalendarDefaults.fallbackDurationMinutes;
       if (item.domain == AgendaDomain.routine) {
-        await _kernel.execute(CompleteOccurrenceCommand(
-          routineId: item.sourceId,
-          dateStr: item.dateStr,
-          resultType: resultType,
-          durationMinutes: effectiveDuration,
-        ));
+        await _kernel.execute(
+          CompleteOccurrenceCommand(
+            routineId: item.sourceId,
+            dateStr: item.dateStr,
+            resultType: resultType,
+            durationMinutes: effectiveDuration,
+          ),
+        );
       } else {
         await _actionHandler.toggleAgendaItem(item: item, isDone: true);
       }
@@ -373,15 +393,9 @@ class JourneyController extends ChangeNotifier {
     try {
       final _CalendarCommand command;
       if (item.domain == AgendaDomain.routine) {
-        command = _SkipRoutineCommand(
-          item: item,
-          kernel: _kernel,
-        );
+        command = _SkipRoutineCommand(item: item, kernel: _kernel);
       } else {
-        command = _SkipItemCommand(
-          item: item,
-          overrideRepo: _overrideRepo,
-        );
+        command = _SkipItemCommand(item: item, overrideRepo: _overrideRepo);
       }
       await command.execute();
       CommandStack.instance.push(command);
@@ -420,12 +434,16 @@ class JourneyController extends ChangeNotifier {
     required int durationMinutes,
     required bool allowOverlap,
   }) {
-    if (startMinutes < 0 || startMinutes > 1439) return CalendarMessagesFa.invalidTime;
-    if (durationMinutes < CalendarDefaults.minDurationMinutes) return CalendarMessagesFa.invalidTime;
-    if (startMinutes + durationMinutes > 1440) return CalendarMessagesFa.invalidTime;
+    if (startMinutes < 0 || startMinutes > 1439)
+      return CalendarMessagesFa.invalidTime;
+    if (durationMinutes < CalendarDefaults.minDurationMinutes)
+      return CalendarMessagesFa.invalidTime;
+    if (startMinutes + durationMinutes > 1440)
+      return CalendarMessagesFa.invalidTime;
     if (!allowOverlap) {
-      final others = (_snapshot?.items ?? const <AgendaItem>[])
-          .where((o) => o.id != item.id && o.isTimed);
+      final others = (_snapshot?.items ?? const <AgendaItem>[]).where(
+        (o) => o.id != item.id && o.isTimed,
+      );
       for (final o in others) {
         final s = TimeOfDayMinutes.tryParse(o.timeOfDay);
         if (s == null) continue;
@@ -458,8 +476,16 @@ class JourneyController extends ChangeNotifier {
     }
 
     final dur = DurationBounds.sanitize(item.durationMinutes);
-    final snapped = TimelineSnappingHelper.snapStartMinutes(raw, durationMinutes: dur);
-    final boundsErr = _validatePlacement(item: item, startMinutes: snapped, durationMinutes: dur, allowOverlap: true);
+    final snapped = TimelineSnappingHelper.snapStartMinutes(
+      raw,
+      durationMinutes: dur,
+    );
+    final boundsErr = _validatePlacement(
+      item: item,
+      startMinutes: snapped,
+      durationMinutes: dur,
+      allowOverlap: true,
+    );
     if (boundsErr != null) {
       _errorMessage = boundsErr;
       _isExecutingAction = false;
@@ -468,7 +494,12 @@ class JourneyController extends ChangeNotifier {
       return;
     }
 
-    final overlapWarn = _validatePlacement(item: item, startMinutes: snapped, durationMinutes: dur, allowOverlap: false);
+    final overlapWarn = _validatePlacement(
+      item: item,
+      startMinutes: snapped,
+      durationMinutes: dur,
+      allowOverlap: false,
+    );
     if (overlapWarn != null) {
       _warningMessage = overlapWarn;
       final gaps = GapFinder.findFreeGaps(
@@ -499,7 +530,12 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = CalendarMessagesFa.move;
-      RitmoLog.error('JourneyController', 'commitItemDrag failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'commitItemDrag failed',
+        e,
+        stackTrace,
+      );
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -518,9 +554,14 @@ class JourneyController extends ChangeNotifier {
     _warningMessage = null;
     notifyListeners();
 
-    final start = TimeOfDayMinutes.tryParse(item.timeOfDay) ?? TimeOfDayMinutes.parse(CalendarDefaults.fallbackTimeOfDay);
+    final start =
+        TimeOfDayMinutes.tryParse(item.timeOfDay) ??
+        TimeOfDayMinutes.parse(CalendarDefaults.fallbackTimeOfDay);
     final sanitizedDur = DurationBounds.sanitize(newDurationMinutes);
-    final snappedDur = TimelineSnappingHelper.snapDurationMinutes(sanitizedDur, startMinutes: start);
+    final snappedDur = TimelineSnappingHelper.snapDurationMinutes(
+      sanitizedDur,
+      startMinutes: start,
+    );
 
     if (snappedDur == null) {
       _errorMessage = CalendarMessagesFa.invalidTime;
@@ -530,7 +571,12 @@ class JourneyController extends ChangeNotifier {
       return;
     }
 
-    final boundsErr = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: true);
+    final boundsErr = _validatePlacement(
+      item: item,
+      startMinutes: start,
+      durationMinutes: snappedDur,
+      allowOverlap: true,
+    );
     if (boundsErr != null) {
       _errorMessage = boundsErr;
       _isExecutingAction = false;
@@ -539,7 +585,12 @@ class JourneyController extends ChangeNotifier {
       return;
     }
 
-    final overlapWarn = _validatePlacement(item: item, startMinutes: start, durationMinutes: snappedDur, allowOverlap: false);
+    final overlapWarn = _validatePlacement(
+      item: item,
+      startMinutes: start,
+      durationMinutes: snappedDur,
+      allowOverlap: false,
+    );
     if (overlapWarn != null) {
       _warningMessage = overlapWarn;
       final gaps = GapFinder.findFreeGaps(
@@ -553,7 +604,8 @@ class JourneyController extends ChangeNotifier {
       _suggestedSlot = null;
     }
 
-    final oldDuration = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
+    final oldDuration =
+        item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
     try {
       final command = _ResizeItemCommand(
         actionHandler: _actionHandler,
@@ -568,7 +620,12 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = CalendarMessagesFa.resize;
-      RitmoLog.error('JourneyController', 'commitItemResize failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'commitItemResize failed',
+        e,
+        stackTrace,
+      );
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -637,13 +694,21 @@ class JourneyController extends ChangeNotifier {
 
   static JourneyScale _scaleFromString(String val) {
     switch (val.toLowerCase().trim()) {
-      case 'agenda': return JourneyScale.agenda;
-      case 'day':    return JourneyScale.day;
-      case 'week':   return JourneyScale.week;
-      case 'month':  return JourneyScale.month;
-      case 'year':   return JourneyScale.year;
+      case 'agenda':
+        return JourneyScale.agenda;
+      case 'day':
+        return JourneyScale.day;
+      case 'week':
+        return JourneyScale.week;
+      case 'month':
+        return JourneyScale.month;
+      case 'year':
+        return JourneyScale.year;
       default:
-        RitmoLog.error('JourneyController', 'Invalid calendar scale string in settings: "$val"');
+        RitmoLog.error(
+          'JourneyController',
+          'Invalid calendar scale string in settings: "$val"',
+        );
         return JourneyScale.agenda;
     }
   }
@@ -676,10 +741,15 @@ class JourneyController extends ChangeNotifier {
       for (final entry in daysMap.entries) {
         newSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(entry.value);
       }
-      _rangeSnapshots = Map<String, DayAgendaSnapshot>.from(_rangeSnapshots)..addAll(newSnapshots);
+      _rangeSnapshots = Map<String, DayAgendaSnapshot>.from(_rangeSnapshots)
+        ..addAll(newSnapshots);
       _snapshot = _snapshotForSelectedDate();
-      _windowStart = _windowStart == null ? start : (start.isBefore(_windowStart!) ? start : _windowStart);
-      _windowEnd = _windowEnd == null ? end : (end.isAfter(_windowEnd!) ? end : _windowEnd);
+      _windowStart = _windowStart == null
+          ? start
+          : (start.isBefore(_windowStart!) ? start : _windowStart);
+      _windowEnd = _windowEnd == null
+          ? end
+          : (end.isAfter(_windowEnd!) ? end : _windowEnd);
 
       sw.stop();
       if (sw.elapsed > agendaLoadBudget) {
@@ -688,7 +758,10 @@ class JourneyController extends ChangeNotifier {
           'بارگذاری اجندا از بودجه گذشت: ${sw.elapsedMilliseconds}ms (بودجه ${agendaLoadBudget.inMilliseconds}ms)',
         );
       }
-      RitmoLog.debug('JourneyController', '_loadWindow (${DateKey.of(start)}..${DateKey.of(end)}): ${sw.elapsedMilliseconds}ms');
+      RitmoLog.debug(
+        'JourneyController',
+        '_loadWindow (${DateKey.of(start)}..${DateKey.of(end)}): ${sw.elapsedMilliseconds}ms',
+      );
       _errorMessage = null;
     } catch (e, st) {
       if (_isDisposed || gen != _loadGeneration) return;
@@ -809,7 +882,8 @@ class JourneyController extends ChangeNotifier {
     final d = (payload['date'] ?? payload['dateStr']) as String?;
     if (d != null && _windowStart != null && _windowEnd != null) {
       final parsed = DateKey.parse(d);
-      if (parsed != null && (parsed.isBefore(_windowStart!) || parsed.isAfter(_windowEnd!))) {
+      if (parsed != null &&
+          (parsed.isBefore(_windowStart!) || parsed.isAfter(_windowEnd!))) {
         return; // Out of currently loaded window; skip expensive reload
       }
     }
@@ -821,7 +895,9 @@ class JourneyController extends ChangeNotifier {
     _isDisposed = true;
     _refreshDebounce?.cancel();
     _refreshDebounce = null;
-    RitmoEvents.routineChangedNotifier.removeListener(_onRoutineChangedNotification);
+    RitmoEvents.routineChangedNotifier.removeListener(
+      _onRoutineChangedNotification,
+    );
     _subscription?.cancel();
     _subscription = null;
     super.dispose();
@@ -830,14 +906,21 @@ class JourneyController extends ChangeNotifier {
   DayAgendaSnapshot _snapshotForSelectedDate() {
     final key = DateKey.of(_selectedDate);
     return _rangeSnapshots[key] ??
-        _snapshotBuilder.buildSnapshot(DayAgenda(dateStr: key, items: const []));
+        _snapshotBuilder.buildSnapshot(
+          DayAgenda(dateStr: key, items: const []),
+        );
   }
 
   @visibleForTesting
-  static ({DateTime start, DateTime end}) calculateDateRangeForScale(JourneyScale scale, DateTime date) =>
-      _calculateDateRangeForScale(scale, date);
+  static ({DateTime start, DateTime end}) calculateDateRangeForScale(
+    JourneyScale scale,
+    DateTime date,
+  ) => _calculateDateRangeForScale(scale, date);
 
-  static ({DateTime start, DateTime end}) _calculateDateRangeForScale(JourneyScale scale, DateTime date) {
+  static ({DateTime start, DateTime end}) _calculateDateRangeForScale(
+    JourneyScale scale,
+    DateTime date,
+  ) {
     final dateOnly = DateKey.dayOf(date);
     final j = Jalali.fromDateTime(dateOnly);
     switch (scale) {
@@ -862,7 +945,11 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
-  Future<void> scheduleItem(AgendaItem item, int startMinutes, int durationMinutes) async {
+  Future<void> scheduleItem(
+    AgendaItem item,
+    int startMinutes,
+    int durationMinutes,
+  ) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
     notifyListeners();
@@ -908,7 +995,12 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = CalendarMessagesFa.unschedule;
-      RitmoLog.error('JourneyController', 'unscheduleItem failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'unscheduleItem failed',
+        e,
+        stackTrace,
+      );
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -938,7 +1030,12 @@ class JourneyController extends ChangeNotifier {
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _errorMessage = 'خطا در انتقال رویداد به تاریخ دیگر';
-      RitmoLog.error('JourneyController', 'moveItemToDate failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'moveItemToDate failed',
+        e,
+        stackTrace,
+      );
     } finally {
       if (!_isDisposed) {
         _isExecutingAction = false;
@@ -947,7 +1044,10 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
-  Future<void> setDayMark(DayMarkKind kind, {DayMarkRepository? dayMarkRepo}) async {
+  Future<void> setDayMark(
+    DayMarkKind kind, {
+    DayMarkRepository? dayMarkRepo,
+  }) async {
     if (_isDisposed || _isExecutingAction) return;
     final dateStr = DateKey.of(_selectedDate);
     final prevKind = _currentDayMark;
@@ -981,7 +1081,10 @@ class JourneyController extends ChangeNotifier {
     }
   }
 
-  Future<DayTemplate?> saveCurrentDayAsTemplate(String templateName, {DayTemplateRepository? templateRepo}) async {
+  Future<DayTemplate?> saveCurrentDayAsTemplate(
+    String templateName, {
+    DayTemplateRepository? templateRepo,
+  }) async {
     if (_snapshot == null || _snapshot!.items.isEmpty) return null;
     final timedItems = _snapshot!.items.where((i) => i.isTimed).toList();
     if (timedItems.isEmpty) return null;
@@ -1024,13 +1127,23 @@ class JourneyController extends ChangeNotifier {
         return false;
       }
 
-      final mutations = <({AgendaItem item, String newTimeOfDay, int newDurationMinutes, _TemplateItemRestoreState restore})>[];
+      final mutations =
+          <
+            ({
+              AgendaItem item,
+              String newTimeOfDay,
+              int newDurationMinutes,
+              _TemplateItemRestoreState restore,
+            })
+          >[];
 
       for (final slot in template.slots) {
         AgendaItem? match;
         for (final i in currentItems) {
           if ((slot.sourceId != null && i.sourceId == slot.sourceId) ||
-              (i.title == slot.title && (slot.domainName == null || i.domain.name == slot.domainName))) {
+              (i.title == slot.title &&
+                  (slot.domainName == null ||
+                      i.domain.name == slot.domainName))) {
             match = i;
             break;
           }
@@ -1082,7 +1195,12 @@ class JourneyController extends ChangeNotifier {
       await refresh();
       return true;
     } catch (e, stackTrace) {
-      RitmoLog.error('JourneyController', 'applyTemplate failed', e, stackTrace);
+      RitmoLog.error(
+        'JourneyController',
+        'applyTemplate failed',
+        e,
+        stackTrace,
+      );
       _errorMessage = 'خطا در اعمال قالب روز';
       return false;
     } finally {
@@ -1099,7 +1217,8 @@ class JourneyController extends ChangeNotifier {
     _isDragging = false;
     _isResizing = true;
     _previewTimeOfDay = item.timeOfDay;
-    _previewDurationMinutes = item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
+    _previewDurationMinutes =
+        item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
     notifyListeners();
   }
 
@@ -1147,10 +1266,7 @@ class JourneyController extends ChangeNotifier {
   static UndoableCommand createSkipItemCommand({
     required AgendaItem item,
     OccurrenceOverrideRepository? overrideRepo,
-  }) => _SkipItemCommand(
-    item: item,
-    overrideRepo: overrideRepo,
-  );
+  }) => _SkipItemCommand(item: item, overrideRepo: overrideRepo);
 
   @visibleForTesting
   static UndoableCommand createPostponeItemCommand({
@@ -1169,9 +1285,7 @@ class JourneyController extends ChangeNotifier {
 enum CalendarEditScope { thisDayOnly, allFutureDays }
 
 abstract class _CalendarCommand implements UndoableCommand {
-  _CalendarCommand({
-    required this.item,
-  });
+  _CalendarCommand({required this.item});
 
   final AgendaItem item;
 
@@ -1214,7 +1328,8 @@ class _MoveItemCommand extends _CalendarCommand {
     required this.newTimeOfDay,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
-  }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
+  }) : _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
   final AgendaActionHandler actionHandler;
   final String oldTimeOfDay;
@@ -1287,7 +1402,11 @@ class _MoveItemCommand extends _CalendarCommand {
     if (scope == CalendarEditScope.thisDayOnly) {
       final before = _beforeSnapshot;
       if (before == null) {
-        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+        await _overrideRepo.remove(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
       } else {
         await _overrideRepo.restoreAll([before]);
       }
@@ -1311,7 +1430,8 @@ class _ResizeItemCommand extends _CalendarCommand {
     required this.newDuration,
     this.scope = CalendarEditScope.thisDayOnly,
     OccurrenceOverrideRepository? overrideRepo,
-  }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
+  }) : _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
   final AgendaActionHandler actionHandler;
   final int oldDuration;
@@ -1384,7 +1504,11 @@ class _ResizeItemCommand extends _CalendarCommand {
     if (scope == CalendarEditScope.thisDayOnly) {
       final before = _beforeSnapshot;
       if (before == null) {
-        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+        await _overrideRepo.remove(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
       } else {
         await _overrideRepo.restoreAll([before]);
       }
@@ -1463,10 +1587,7 @@ class _UnscheduleItemCommand extends _CalendarCommand {
 }
 
 class _SkipRoutineCommand extends _CalendarCommand {
-  _SkipRoutineCommand({
-    required super.item,
-    required this.kernel,
-  });
+  _SkipRoutineCommand({required super.item, required this.kernel});
 
   final RitmoExecutionKernel kernel;
 
@@ -1475,11 +1596,13 @@ class _SkipRoutineCommand extends _CalendarCommand {
 
   @override
   Future<void> applyForward() async {
-    await kernel.execute(SkipOccurrenceCommand(
-      routineId: item.sourceId,
-      dateStr: item.dateStr,
-      reason: 'Skipped via Calendar',
-    ));
+    await kernel.execute(
+      SkipOccurrenceCommand(
+        routineId: item.sourceId,
+        dateStr: item.dateStr,
+        reason: 'Skipped via Calendar',
+      ),
+    );
   }
 
   @override
@@ -1497,7 +1620,8 @@ class _SkipItemCommand extends _CalendarCommand {
   _SkipItemCommand({
     required super.item,
     OccurrenceOverrideRepository? overrideRepo,
-  }) : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository();
+  }) : _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository();
 
   final OccurrenceOverrideRepository _overrideRepo;
   OccurrenceOverride? _beforeSnapshot;
@@ -1546,8 +1670,9 @@ class _PostponeItemCommand extends _CalendarCommand {
     required this.days,
     OccurrenceOverrideRepository? overrideRepo,
     SimpleTaskRepository? taskRepo,
-  })  : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
-        _taskRepo = taskRepo ?? SimpleTaskRepository.instance;
+  }) : _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
+       _taskRepo = taskRepo ?? SimpleTaskRepository.instance;
 
   final int days;
   final OccurrenceOverrideRepository _overrideRepo;
@@ -1642,13 +1767,19 @@ class _PostponeItemCommand extends _CalendarCommand {
     if (item.domain == AgendaDomain.task) {
       final task = await _taskRepo.getById(item.sourceId);
       if (task != null) {
-        await _taskRepo.updateTask(task.copyWith(dueDate: _originalTaskDueDate));
+        await _taskRepo.updateTask(
+          task.copyWith(dueDate: _originalTaskDueDate),
+        );
       }
     } else {
       // Revert source day override
       final srcBefore = _sourceDayBeforeSnapshot;
       if (srcBefore == null) {
-        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+        await _overrideRepo.remove(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
       } else {
         await _overrideRepo.restoreAll([srcBefore]);
       }
@@ -1658,7 +1789,11 @@ class _PostponeItemCommand extends _CalendarCommand {
       if (targetDate != null) {
         final tgtBefore = _targetDayBeforeSnapshot;
         if (tgtBefore == null) {
-          await _overrideRepo.remove(item.domain.name, item.sourceId, targetDate);
+          await _overrideRepo.remove(
+            item.domain.name,
+            item.sourceId,
+            targetDate,
+          );
         } else {
           await _overrideRepo.restoreAll([tgtBefore]);
         }
@@ -1673,8 +1808,9 @@ class _MoveItemToDateCommand extends _CalendarCommand {
     required this.targetDate,
     OccurrenceOverrideRepository? overrideRepo,
     SimpleTaskRepository? taskRepo,
-  })  : _overrideRepo = overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
-        _taskRepo = taskRepo ?? SimpleTaskRepository.instance;
+  }) : _overrideRepo =
+           overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
+       _taskRepo = taskRepo ?? SimpleTaskRepository.instance;
 
   final DateTime targetDate;
   final OccurrenceOverrideRepository _overrideRepo;
@@ -1758,13 +1894,19 @@ class _MoveItemToDateCommand extends _CalendarCommand {
     if (item.domain == AgendaDomain.task) {
       final task = await _taskRepo.getById(item.sourceId);
       if (task != null) {
-        await _taskRepo.updateTask(task.copyWith(dueDate: _originalTaskDueDate));
+        await _taskRepo.updateTask(
+          task.copyWith(dueDate: _originalTaskDueDate),
+        );
       }
     } else {
       // Revert source day override
       final srcBefore = _sourceDayBeforeSnapshot;
       if (srcBefore == null) {
-        await _overrideRepo.remove(item.domain.name, item.sourceId, item.dateStr);
+        await _overrideRepo.remove(
+          item.domain.name,
+          item.sourceId,
+          item.dateStr,
+        );
       } else {
         await _overrideRepo.restoreAll([srcBefore]);
       }
@@ -1774,7 +1916,11 @@ class _MoveItemToDateCommand extends _CalendarCommand {
       if (targetDateStr != null) {
         final tgtBefore = _targetDayBeforeSnapshot;
         if (tgtBefore == null) {
-          await _overrideRepo.remove(item.domain.name, item.sourceId, targetDateStr);
+          await _overrideRepo.remove(
+            item.domain.name,
+            item.sourceId,
+            targetDateStr,
+          );
         } else {
           await _overrideRepo.restoreAll([tgtBefore]);
         }
@@ -1810,7 +1956,15 @@ class _ApplyDayTemplateCommand implements UndoableCommand {
   final OccurrenceOverrideRepository overrideRepo;
   final DayTemplate template;
   final String targetDateStr;
-  final List<({AgendaItem item, String newTimeOfDay, int newDurationMinutes, _TemplateItemRestoreState restore})> mutations;
+  final List<
+    ({
+      AgendaItem item,
+      String newTimeOfDay,
+      int newDurationMinutes,
+      _TemplateItemRestoreState restore,
+    })
+  >
+  mutations;
 
   @override
   String get description => 'اعمال قالب «${template.name}»';

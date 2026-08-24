@@ -362,20 +362,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       for (final section in sections) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8, bottom: 6, top: 8),
-                          child: Text(
-                            section.title,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ),
                         // کارت جزیره‌ای گروه‌بندی‌شده
                         Container(
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: const EdgeInsets.only(bottom: 6),
                           decoration: BoxDecoration(
                             color: colors.card,
                             borderRadius: BorderRadius.circular(18),

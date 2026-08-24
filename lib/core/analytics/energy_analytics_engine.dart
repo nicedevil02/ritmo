@@ -124,13 +124,14 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
       }
     }
 
-    final currentEnergy = calculateDynamicEnergyLocal(
+    final currentEnergy = calculateDynamicEnergy(
       baseLevel: baseLevel,
       lastManualTime: lastManualTime,
       validityMinutes: validityMinutes,
       now: now,
+      sleepDiagList: input.sleepDiagList,
       recentCompletions: recentCompletions,
-      explanations: explanations,
+      explanationList: explanations,
     );
 
     final sampleCount = input.energyLogs.length;
@@ -207,7 +208,7 @@ class EnergyAnalyticsEngine implements CachedEngine<EnergyAnalyticsEngineInput, 
   String fingerprint(EnergyAnalyticsEngineInput input) {
     final nowMs = (input.now ?? DateTime.fromMillisecondsSinceEpoch(0)).millisecondsSinceEpoch;
     final quarter = nowMs ~/ (15 * 60 * 1000);
-    return '$quarter|${input.energyLogs.length}|${input.routineCompletions.length}';
+    return '$quarter|${input.energyLogs.length}|${input.routineCompletions.length}|${input.sleepDiagList.length}';
   }
 
   @override
@@ -814,7 +815,7 @@ $formattedCompletions
       } else {
         basePercent = 60.0;
       }
-      explanationList.add('سطح پایه ثبت دستی: $basePercent٪');
+      explanationList.add('سطح پایه ثبت دستی: ${basePercent.toInt()}٪');
     } else {
       if (baseLevel == 'HIGH') {
         basePercent = 80.0;
@@ -823,7 +824,7 @@ $formattedCompletions
       } else {
         basePercent = 60.0;
       }
-      explanationList.add('سطح پایه پیش‌فرض: $basePercent٪');
+      explanationList.add('سطح پایه پیش‌فرض: ${basePercent.toInt()}٪');
     }
 
     const cycleModifier = 0.0;
@@ -893,9 +894,9 @@ $formattedCompletions
     if (workDrain < -10.0) workDrain = -10.0;
     if (missedPenalty < -15.0) missedPenalty = -15.0;
 
-    if (fitnessBoost > 0) explanationList.add('تقویت انرژی (ورزش اخیر): $fitnessBoost٪+');
-    if (workDrain < 0) explanationList.add('خستگی کار/تحصیل اخیر: ${workDrain.abs()}٪-');
-    if (missedPenalty < 0) explanationList.add('جریمه روتین‌های معوق/از دست رفته: ${missedPenalty.abs()}٪-');
+    if (fitnessBoost > 0) explanationList.add('تقویت انرژی (ورزش اخیر): ${fitnessBoost.toInt()}٪+');
+    if (workDrain < 0) explanationList.add('خستگی کار/تحصیل اخیر: ${workDrain.abs().toInt()}٪-');
+    if (missedPenalty < 0) explanationList.add('جریمه روتین‌های معوق/از دست رفته: ${missedPenalty.abs().toInt()}٪-');
 
     var finalVal = basePercent + cycleModifier + circadianMod + fitnessBoost + workDrain + missedPenalty - sleepPenalty;
 

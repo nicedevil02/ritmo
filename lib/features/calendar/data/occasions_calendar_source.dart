@@ -32,25 +32,34 @@ class OccasionsCalendarSource {
 
       // Add Friday as weekly holiday
       if (solar.weekDay == 7) {
-        result.add(const CalendarOccasion(
-          title: 'جمعه (تعطیل هفته)',
-          isHoliday: true,
-          category: 'تعطیلات',
-        ));
+        result.add(
+          const CalendarOccasion(
+            title: 'جمعه (تعطیل هفته)',
+            isHoliday: true,
+            category: 'تعطیلات',
+          ),
+        );
       }
 
       for (final occ in list) {
-        result.add(CalendarOccasion(
-          title: occ.title,
-          isHoliday: occ.isHoliday,
-          category: occ.category.name,
-          recommendedAmal: occ.recommendedAmal,
-        ));
+        result.add(
+          CalendarOccasion(
+            title: occ.title,
+            isHoliday: occ.isHoliday,
+            category: occ.category.name,
+            recommendedAmal: occ.recommendedAmal,
+          ),
+        );
       }
 
       return result;
     } catch (e, st) {
-      RitmoLog.error('OccasionsCalendarSource', 'getOccasions failed for $date', e, st);
+      RitmoLog.error(
+        'OccasionsCalendarSource',
+        'getOccasions failed for $date',
+        e,
+        st,
+      );
       return const [];
     }
   }

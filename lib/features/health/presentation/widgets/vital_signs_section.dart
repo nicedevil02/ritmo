@@ -300,6 +300,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: TextFormField(
@@ -310,6 +311,9 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                               context,
                               label: l10n.vitalSignsHeight,
                               icon: Icons.height,
+                            ).copyWith(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                             ),
                             onFieldSubmitted: (val) {
                               if (val.trim().isNotEmpty) {
@@ -322,18 +326,23 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             initialValue: _vitalType,
-                            style: TextStyle(color: colors.textPrimary, fontSize: 13),
+                            isDense: true,
+                            isExpanded: true,
+                            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
                             decoration: RitmoTheme.inputDecoration(
                               context,
                               label: 'نوع شاخص',
                               icon: Icons.category,
+                            ).copyWith(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                             ),
                             dropdownColor: colors.card,
                             items: [
-                              DropdownMenuItem(value: 'WEIGHT', child: Text(l10n.vitalSignsWeight)),
-                              DropdownMenuItem(value: 'TEMPERATURE', child: Text(l10n.vitalSignsTemperature)),
-                              DropdownMenuItem(value: 'SPO2', child: Text(l10n.vitalSignsSpo2)),
-                              DropdownMenuItem(value: 'WAIST', child: Text(l10n.vitalSignsWaist)),
+                              DropdownMenuItem(value: 'WEIGHT', child: Text(l10n.vitalSignsWeight, overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'TEMPERATURE', child: Text(l10n.vitalSignsTemperature, overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'SPO2', child: Text(l10n.vitalSignsSpo2, overflow: TextOverflow.ellipsis)),
+                              DropdownMenuItem(value: 'WAIST', child: Text(l10n.vitalSignsWaist, overflow: TextOverflow.ellipsis)),
                             ],
                             onChanged: (val) {
                               if (val != null) {
@@ -358,6 +367,9 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                               context,
                               label: '${l10n.vitalSignsValue} (${_getUnit(_vitalType)})',
                               icon: Icons.speed,
+                            ).copyWith(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                             ),
                             validator: (val) {
                               if (val == null || val.trim().isEmpty) {
@@ -380,6 +392,9 @@ class _VitalSignsSectionState extends State<VitalSignsSection> with SingleTicker
                         context,
                         label: 'یادداشت (اختیاری)',
                         icon: Icons.note_alt_outlined,
+                      ).copyWith(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                       ),
                     ),
                     const SizedBox(height: 12),

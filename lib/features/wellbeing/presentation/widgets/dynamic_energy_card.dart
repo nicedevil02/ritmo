@@ -28,7 +28,9 @@ class _DynamicEnergyCardState extends State<DynamicEnergyCard> {
     final colors = context.colors;
     final out = widget.output;
     final energy = out?.currentDynamicEnergy ?? 0.0;
-    final percent = (energy * 100).round().clamp(0, 100);
+    final percent = (energy <= 1.0 && energy > 0.0)
+        ? (energy * 100).round().clamp(0, 100)
+        : energy.round().clamp(0, 100);
     final explanations = out?.currentDynamicEnergyExplanations ?? const [];
 
     final energyColor = _getEnergyColor(percent, colors);

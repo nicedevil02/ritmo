@@ -33,10 +33,7 @@ class DeleteImpactDialog extends StatelessWidget {
         backgroundColor: isDark ? const Color(0xFF1E2235) : Colors.white,
         title: Text(
           'حذف «${entry.title}»؟',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -44,16 +41,15 @@ class DeleteImpactDialog extends StatelessWidget {
           children: [
             const Text(
               'با حذف کامل، این موارد از بین می‌روند:',
-              style: TextStyle(
-                fontSize: 13,
-
-              ),
+              style: TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
+                color: theme.colorScheme.surfaceContainerHigh.withValues(
+                  alpha: 0.5,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -90,7 +86,10 @@ class DeleteImpactDialog extends StatelessWidget {
               backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('بایگانی کن', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'بایگانی کن',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

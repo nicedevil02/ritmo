@@ -162,11 +162,13 @@ class _SleepLogSheetState extends State<SleepLogSheet> {
       final times = _calculateTimes();
       final duration = times['durationMinutes'] as int;
 
-      String? reason;
+      String reason;
       if (duration < widget.target.durationMinutes - 60) {
         reason = 'کمبود خواب نسبت به هدف';
       } else if (duration > widget.target.durationMinutes + 60) {
         reason = 'خواب بیش از حد نسبت به هدف';
+      } else {
+        reason = 'ثبت روتین خواب';
       }
 
       await db.insert(

@@ -44,9 +44,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.surfaceSubtle,
                 borderRadius: BorderRadius.circular(RitmoRadius.field),
-                border: Border.all(
-                  color: colors.borderSubtle,
-                ),
+                border: Border.all(color: colors.borderSubtle),
               ),
               child: Row(
                 children: _primaryScales.map((scale) {
@@ -70,14 +68,17 @@ class JourneyScaleSwitcher extends StatelessWidget {
                                 ? colors.surfaceElevated
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(
-                                RitmoRadius.iconButton),
+                              RitmoRadius.iconButton,
+                            ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: colors.overlay.withValues(alpha: 0.08),
+                                      color: colors.overlay.withValues(
+                                        alpha: 0.08,
+                                      ),
                                       blurRadius: 3,
                                       offset: const Offset(0, 1),
-                                    )
+                                    ),
                                   ]
                                 : null,
                           ),
@@ -173,7 +174,8 @@ class _OverflowScaleButton extends StatelessWidget {
         padding: EdgeInsets.zero,
         position: PopupMenuPosition.under,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(RitmoRadius.card)),
+          borderRadius: BorderRadius.circular(RitmoRadius.card),
+        ),
         color: colors.surfaceElevated,
         elevation: 4,
         offset: const Offset(0, 4),
@@ -224,12 +226,7 @@ class _OverflowScaleButton extends StatelessWidget {
                     ),
                   ),
                 )
-              : const Center(
-                  child: Icon(
-                    Icons.more_horiz_rounded,
-                    size: 16,
-                  ),
-                ),
+              : const Center(child: Icon(Icons.more_horiz_rounded, size: 16)),
         ),
       ),
     );

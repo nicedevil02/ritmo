@@ -62,6 +62,7 @@ class SleepLogCommand extends RitmoCommand {
 
     await ctx.txn.insert('bedtime_diagnostics', {
       'date': date,
+      'reason': 'ثبت دستی خواب',
       'durationMinutes': durationMinutes,
       'quality': quality,
       'createdAt': DateTime.now().millisecondsSinceEpoch,

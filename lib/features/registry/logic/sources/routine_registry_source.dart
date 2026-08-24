@@ -21,7 +21,9 @@ class RoutineRegistrySource implements RegistrySource {
     final where = includeArchived
         ? "itemType != 'MEDICINE'"
         : "itemType != 'MEDICINE' AND isArchived = 0";
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM routines WHERE $where');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM routines WHERE $where',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -36,7 +38,8 @@ class RoutineRegistrySource implements RegistrySource {
         ? "r.itemType != 'MEDICINE'"
         : "r.itemType != 'MEDICINE' AND r.isArchived = 0";
 
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT r.id, r.title, r.description, r.category, r.isEssential, r.isArchived,
              r.targetDurationMinutes, r.notificationLevel,
              s.timeOfDay, s.daysOfWeek, s.scheduleType
@@ -46,7 +49,9 @@ class RoutineRegistrySource implements RegistrySource {
       GROUP BY r.id
       ORDER BY r.displayOrder ASC, r.createdAt DESC
       LIMIT ? OFFSET ?
-    ''', [limit, offset]);
+    ''',
+      [limit, offset],
+    );
 
     final todayStr = DateTime.now().toIso8601String().split('T').first;
 

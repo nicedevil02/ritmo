@@ -30,8 +30,8 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
     final severityColor = widget.issue.severity == HealthSeverity.critical
         ? const Color(0xFFF43F5E)
         : (widget.issue.severity == HealthSeverity.warning
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFF3B82F6));
+              ? const Color(0xFFF59E0B)
+              : const Color(0xFF3B82F6));
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
@@ -46,11 +46,17 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
               decoration: BoxDecoration(
                 color: const Color(0xFF10B981).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: const Color(0xFF10B981), size: 20),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: const Color(0xFF10B981),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'مشکل با موفقیت برطرف شد 🎉',
@@ -72,7 +78,9 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isDark
-                    ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.6)
+                    ? theme.colorScheme.surfaceContainerHigh.withValues(
+                        alpha: 0.6,
+                      )
                     : theme.cardColor,
                 borderRadius: BorderRadius.circular(RitmoRadius.card),
                 border: Border.all(
@@ -89,8 +97,8 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                         widget.issue.severity == HealthSeverity.critical
                             ? Icons.error_rounded
                             : (widget.issue.severity == HealthSeverity.warning
-                                ? Icons.warning_amber_rounded
-                                : Icons.info_outline_rounded),
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.info_outline_rounded),
                         color: severityColor,
                         size: 20,
                       ),
@@ -112,7 +120,9 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                     widget.issue.description,
                     style: TextStyle(
                       fontSize: 12.5,
-                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
+                      color: theme.textTheme.bodyMedium?.color?.withValues(
+                        alpha: 0.75,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -145,7 +155,10 @@ class _RegistryHealthCardState extends State<RegistryHealthCard> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: severityColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),

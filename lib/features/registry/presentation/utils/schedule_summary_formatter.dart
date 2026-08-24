@@ -32,15 +32,17 @@ class ScheduleSummaryFormatter {
 
       if (days.length == 7) {
         parts.add('هر روز');
-      } else if (days.length == 5 &&
-          days.containsAll([6, 7, 1, 2, 3])) {
+      } else if (days.length == 5 && days.containsAll([6, 7, 1, 2, 3])) {
         parts.add('شنبه تا چهارشنبه');
       } else if (days.length == 2 && days.containsAll([4, 5])) {
         parts.add('پنج‌شنبه و جمعه');
       } else if (days.isNotEmpty) {
         // Sort in Persian order: 6, 7, 1, 2, 3, 4, 5
         const order = [6, 7, 1, 2, 3, 4, 5];
-        final sortedDays = order.where((d) => days.contains(d)).map((d) => _dayNames[d]!).toList();
+        final sortedDays = order
+            .where((d) => days.contains(d))
+            .map((d) => _dayNames[d]!)
+            .toList();
         parts.add(sortedDays.join('، '));
       }
     } else if (scheduleType == 'DAILY') {

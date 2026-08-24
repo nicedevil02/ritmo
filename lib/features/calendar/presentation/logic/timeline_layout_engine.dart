@@ -62,7 +62,10 @@ class TimelineLayoutEngine {
   double get totalTimelineHeight => rangeDurationMinutes * pxPerMinute;
 
   double _calculateSafeHeight(double rawHeight, double top) {
-    final maxHeight = (totalTimelineHeight - top).clamp(0.0, totalTimelineHeight);
+    final maxHeight = (totalTimelineHeight - top).clamp(
+      0.0,
+      totalTimelineHeight,
+    );
     return maxHeight <= minItemHeight
         ? maxHeight
         : max(rawHeight, minItemHeight).clamp(minItemHeight, maxHeight);
@@ -94,20 +97,23 @@ class TimelineLayoutEngine {
 
       final visibleDuration = visibleEnd - visibleStart;
       final renderDurM = min(visibleDuration, DurationBounds.maxRenderMinutes);
+
       /// true یعنی مدت واقعی از سقف رندر بیشتر بوده و کارت کوتاه‌تر کشیده شده.
       final isTruncated = durM > renderDurM;
 
-      rawEntries.add(_RawEntry(
-        item: item,
-        startMinutes: startM,
-        durationMinutes: durM,
-        renderDurationMinutes: renderDurM,
-        visibleStart: visibleStart,
-        visibleEnd: visibleEnd,
-        isClippedAtStart: isClippedAtStart,
-        isClippedAtEnd: isClippedAtEnd,
-        isTruncated: isTruncated,
-      ));
+      rawEntries.add(
+        _RawEntry(
+          item: item,
+          startMinutes: startM,
+          durationMinutes: durM,
+          renderDurationMinutes: renderDurM,
+          visibleStart: visibleStart,
+          visibleEnd: visibleEnd,
+          isClippedAtStart: isClippedAtStart,
+          isClippedAtEnd: isClippedAtEnd,
+          isTruncated: isTruncated,
+        ),
+      );
     }
 
     if (rawEntries.isEmpty) return [];
@@ -146,8 +152,11 @@ class TimelineLayoutEngine {
         var placed = false;
         for (var i = 0; i < lanes.length; i++) {
           final lane = lanes[i];
-          final hasOverlap = lane.any((other) =>
-              entry.visibleStart < other.visibleEnd && entry.visibleEnd > other.visibleStart);
+          final hasOverlap = lane.any(
+            (other) =>
+                entry.visibleStart < other.visibleEnd &&
+                entry.visibleEnd > other.visibleStart,
+          );
           if (!hasOverlap) {
             lane.add(entry);
             entry.laneIndex = i;
@@ -193,43 +202,49 @@ class TimelineLayoutEngine {
           final rawHeight = entry.renderDurationMinutes * pxPerMinute;
           final height = _calculateSafeHeight(rawHeight, top);
 
-          result.add(TimelineLayoutItem(
-            item: entry.item,
-            top: top,
-            height: height,
-            laneIndex: laneIdx,
-            totalLanes: totalLanes,
-            startMinutes: entry.startMinutes,
-            durationMinutes: entry.durationMinutes,
-            renderDurationMinutes: entry.renderDurationMinutes,
-            isTruncated: entry.isTruncated,
-            isClippedAtStart: entry.isClippedAtStart,
-            isClippedAtEnd: entry.isClippedAtEnd,
-          ));
+          result.add(
+            TimelineLayoutItem(
+              item: entry.item,
+              top: top,
+              height: height,
+              laneIndex: laneIdx,
+              totalLanes: totalLanes,
+              startMinutes: entry.startMinutes,
+              durationMinutes: entry.durationMinutes,
+              renderDurationMinutes: entry.renderDurationMinutes,
+              isTruncated: entry.isTruncated,
+              isClippedAtStart: entry.isClippedAtStart,
+              isClippedAtEnd: entry.isClippedAtEnd,
+            ),
+          );
         }
 
         if (overflowEntries.isNotEmpty) {
           final overflowItemsList = overflowEntries.map((e) => e.item).toList();
-          final minStart = overflowEntries.map((e) => e.visibleStart).reduce(min);
+          final minStart = overflowEntries
+              .map((e) => e.visibleStart)
+              .reduce(min);
           final maxEnd = overflowEntries.map((e) => e.visibleEnd).reduce(max);
 
           final top = (minStart - rangeStartMinutes) * pxPerMinute;
           final rawHeight = (maxEnd - minStart) * pxPerMinute;
           final height = _calculateSafeHeight(rawHeight, top);
 
-          result.add(TimelineLayoutItem(
-            item: overflowEntries.first.item,
-            top: top,
-            height: height,
-            laneIndex: maxLanes! - 1,
-            totalLanes: totalLanes,
-            startMinutes: minStart,
-            durationMinutes: maxEnd - minStart,
-            renderDurationMinutes: maxEnd - minStart,
-            isTruncated: false,
-            overflowCount: overflowEntries.length,
-            overflowItems: overflowItemsList,
-          ));
+          result.add(
+            TimelineLayoutItem(
+              item: overflowEntries.first.item,
+              top: top,
+              height: height,
+              laneIndex: maxLanes! - 1,
+              totalLanes: totalLanes,
+              startMinutes: minStart,
+              durationMinutes: maxEnd - minStart,
+              renderDurationMinutes: maxEnd - minStart,
+              isTruncated: false,
+              overflowCount: overflowEntries.length,
+              overflowItems: overflowItemsList,
+            ),
+          );
         }
       } else {
         final totalLanes = clusterLanesCount;
@@ -238,19 +253,21 @@ class TimelineLayoutEngine {
           final rawHeight = entry.renderDurationMinutes * pxPerMinute;
           final height = _calculateSafeHeight(rawHeight, top);
 
-          result.add(TimelineLayoutItem(
-            item: entry.item,
-            top: top,
-            height: height,
-            laneIndex: entry.laneIndex,
-            totalLanes: totalLanes,
-            startMinutes: entry.startMinutes,
-            durationMinutes: entry.durationMinutes,
-            renderDurationMinutes: entry.renderDurationMinutes,
-            isTruncated: entry.isTruncated,
-            isClippedAtStart: entry.isClippedAtStart,
-            isClippedAtEnd: entry.isClippedAtEnd,
-          ));
+          result.add(
+            TimelineLayoutItem(
+              item: entry.item,
+              top: top,
+              height: height,
+              laneIndex: entry.laneIndex,
+              totalLanes: totalLanes,
+              startMinutes: entry.startMinutes,
+              durationMinutes: entry.durationMinutes,
+              renderDurationMinutes: entry.renderDurationMinutes,
+              isTruncated: entry.isTruncated,
+              isClippedAtStart: entry.isClippedAtStart,
+              isClippedAtEnd: entry.isClippedAtEnd,
+            ),
+          );
         }
       }
     }

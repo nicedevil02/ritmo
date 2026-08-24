@@ -55,8 +55,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
                     height: 48,
                     alignment: Alignment.center,
                     child: Icon(
-                      Icons
-                          .arrow_forward_rounded, // Points right in RTL to go back
+                      Icons.arrow_back_rounded,
                       size: 22,
                       color: colors.textPrimary,
                     ),

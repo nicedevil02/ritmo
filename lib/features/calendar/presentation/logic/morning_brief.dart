@@ -21,11 +21,13 @@ class MorningBrief {
     int todayCount = 0;
 
     for (final item in agenda.items) {
-      final isWorshipOrCycle = item.domain == AgendaDomain.prayer ||
+      final isWorshipOrCycle =
+          item.domain == AgendaDomain.prayer ||
           item.domain == AgendaDomain.mustahab ||
           item.domain == AgendaDomain.worshipDebt ||
           item.domain == AgendaDomain.cycle;
-      if (!isWorshipOrCycle && (item.dateStr != dateStr || item.id.contains('overdue'))) {
+      if (!isWorshipOrCycle &&
+          (item.dateStr != dateStr || item.id.contains('overdue'))) {
         overdueCount++;
       } else {
         todayCount++;
@@ -37,7 +39,11 @@ class MorningBrief {
     }
 
     if (todayCount > 0) {
-      final timed = agenda.items.where((i) => i.dateStr == dateStr && i.isTimed && i.timeOfDay != null).toList();
+      final timed = agenda.items
+          .where(
+            (i) => i.dateStr == dateStr && i.isTimed && i.timeOfDay != null,
+          )
+          .toList();
       if (timed.isNotEmpty) {
         final first = timed.first;
         return '${toPersianDigits(todayCount)} برنامه برای امروز. اولین: ${first.title}، ساعت ${toPersianDigits(first.timeOfDay ?? "")}.';
@@ -55,7 +61,8 @@ class MorningBrief {
       final db = await DatabaseHelper.instance.database;
       final rows = await db.query(
         'app_settings',
-        where: "key IN ('calendar_morning_brief_enabled', 'calendar_morning_brief_time')",
+        where:
+            "key IN ('calendar_morning_brief_enabled', 'calendar_morning_brief_time')",
       );
       final map = <String, String>{};
       for (final r in rows) {
@@ -66,7 +73,10 @@ class MorningBrief {
       if (!enabled) return;
 
       final timeStr = map['calendar_morning_brief_time'] ?? '07:30';
-      RitmoLog.info('MorningBrief', 'Morning brief scheduled for $timeStr daily.');
+      RitmoLog.info(
+        'MorningBrief',
+        'Morning brief scheduled for $timeStr daily.',
+      );
     } catch (e, st) {
       RitmoLog.error('MorningBrief', 'Schedule error', e, st);
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -55,6 +56,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 
   bool _isLoading = true;
   bool _isFirstLoad = true;
+  bool _avatarFileExists = false;
   Map<String, String> _settingsMap = {};
   
   bool _isSearching = false;
@@ -185,6 +187,25 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       // 4. Load assistant and notes status
       _assistantStatus = SystemsHubLogic.determineGenericStatus(_assistantEnabled);
       _notesStatus = SystemsHubLogic.determineGenericStatus(_notesEnabled);
+
+      // 5. Check user avatar existence asynchronously
+      final avatarPath = _settingsMap['user_avatar_path'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        if (avatarPath.startsWith('http://') ||
+            avatarPath.startsWith('https://') ||
+            avatarPath.startsWith('blob:') ||
+            avatarPath.startsWith('data:')) {
+          _avatarFileExists = true;
+        } else {
+          try {
+            _avatarFileExists = await File(avatarPath).exists();
+          } catch (_) {
+            _avatarFileExists = false;
+          }
+        }
+      } else {
+        _avatarFileExists = false;
+      }
     } catch (e) {
       debugPrint('Error loading Systems Hub data: $e');
     }
@@ -218,40 +239,49 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(14, 24, 14, 120),
+          padding: const EdgeInsets.fromLTRB(14, 16, 14, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(colors),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               GestureDetector(
                 onTap: _showModulesManagementSheet,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    color: isDarkMode
+                        ? colors.card.withValues(alpha: 0.6)
+                        : colors.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.2),
-                      width: 1.5,
+                      color: colors.primary.withValues(alpha: isDarkMode ? 0.2 : 0.15),
+                      width: 1,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primary.withValues(alpha: isDarkMode ? 0.08 : 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                          color: colors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           CupertinoIcons.square_grid_2x2,
                           color: colors.primary,
-                          size: 20,
+                          size: 18,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,32 +289,32 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
                             Text(
                               'مدیریت ماژول‌های فعال',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
                                 color: colors.textPrimary,
-                                ),
+                              ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               'فعال یا غیرفعال‌سازی سیستم‌های کلی زندگی ریتمو',
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 10,
                                 color: colors.textSecondary,
-                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
                       Icon(
-                        CupertinoIcons.chevron_left,
-                        color: colors.textSecondary.withValues(alpha: 0.6),
-                        size: 14,
+                        Icons.arrow_back_ios_new_rounded,
+                        color: colors.textSecondary.withValues(alpha: 0.5),
+                        size: 13,
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               _buildModulesGrid(colors, isDarkMode),
             ],
           ),
@@ -337,44 +367,78 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       );
     }
 
+    final avatarPath = _settingsMap['user_avatar_path'];
+    final userName = _settingsMap['user_name'] ?? '';
+    final hasAvatarFile =
+        _avatarFileExists && avatarPath != null && avatarPath.isNotEmpty;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  CupertinoPageRoute(
-                    builder: (_) => SettingsScreen(
-                      onFactoryReset: widget.onLogout,
-                      themeRepository: widget.themeRepository,
-                      localeRepository: widget.localeRepository,
+            Semantics(
+              button: true,
+              label: 'پروفایل و تنظیمات',
+              child: GestureDetector(
+                onTap: () {
+                  RitmoHapticsPolicy.tap();
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (_) => SettingsScreen(
+                        onFactoryReset: widget.onLogout,
+                        themeRepository: widget.themeRepository,
+                        localeRepository: widget.localeRepository,
+                      ),
                     ),
+                  ).then((_) {
+                    if (mounted) _loadAllData();
+                  });
+                },
+                child: Container(
+                  height: 46,
+                  width: 46,
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(colors: colors.energyGradient),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.energyGradient.first.withValues(alpha: 0.28),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ).then((_) {
-                  if (mounted) _loadAllData();
-                });
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1.5),
-                  image: const DecorationImage(
-                    image: ResizeImage(
-                      AssetImage('assets/images/avatar_placeholder.png'),
-                      width: 120,
-                      height: 120,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.bg,
+                      image: hasAvatarFile
+                          ? DecorationImage(
+                              image: ResizeImage(
+                                FileImage(File(avatarPath)),
+                                width: 120,
+                                height: 120,
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
-                    fit: BoxFit.cover,
-                    onError: _handleAvatarError,
+                    child: hasAvatarFile
+                        ? null
+                        : Center(
+                            child: Text(
+                              userName.isNotEmpty ? userName[0] : '؟',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: colors.primary,
+                              ),
+                            ),
+                          ),
                   ),
-                ),
-                child: const Center(
-                  child: Icon(CupertinoIcons.person_crop_circle_fill, size: 30, color: Colors.grey),
                 ),
               ),
             ),
@@ -413,28 +477,33 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     );
   }
 
-  static void _handleAvatarError(dynamic exception, StackTrace? stackTrace) {}
-
-  Widget _buildCategoryHeader(String title, RitmoColors colors) {
+  Widget _buildCategoryHeader(String title, Color accentColor, RitmoColors colors) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 4,
-          height: 16,
+          width: 3.5,
+          height: 14,
           decoration: BoxDecoration(
-            color: const Color(0xffEC4899),
+            color: accentColor,
             borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.4),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 8),
         Text(
           title,
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
             color: colors.textPrimary,
-            ),
+          ),
         ),
       ],
     );
@@ -442,8 +511,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 
   Widget _buildSideBySideCategorySection({
     required String rightTitle,
+    required Color rightAccentColor,
     required List<Widget> rightCards,
     required String leftTitle,
+    required Color leftAccentColor,
     required List<Widget> leftCards,
     required RitmoColors colors,
   }) {
@@ -453,11 +524,21 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     if (!hasRight && !hasLeft) return const SizedBox.shrink();
 
     if (hasRight && !hasLeft) {
-      return _buildCategorySection(title: rightTitle, cards: rightCards, colors: colors);
+      return _buildCategorySection(
+        title: rightTitle,
+        accentColor: rightAccentColor,
+        cards: rightCards,
+        colors: colors,
+      );
     }
 
     if (!hasRight && hasLeft) {
-      return _buildCategorySection(title: leftTitle, cards: leftCards, colors: colors);
+      return _buildCategorySection(
+        title: leftTitle,
+        accentColor: leftAccentColor,
+        cards: leftCards,
+        colors: colors,
+      );
     }
 
     return LayoutBuilder(
@@ -466,9 +547,19 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildCategorySection(title: rightTitle, cards: rightCards, colors: colors),
-              const SizedBox(height: 24),
-              _buildCategorySection(title: leftTitle, cards: leftCards, colors: colors),
+              _buildCategorySection(
+                title: rightTitle,
+                accentColor: rightAccentColor,
+                cards: rightCards,
+                colors: colors,
+              ),
+              const SizedBox(height: 14),
+              _buildCategorySection(
+                title: leftTitle,
+                accentColor: leftAccentColor,
+                cards: leftCards,
+                colors: colors,
+              ),
             ],
           );
         }
@@ -479,20 +570,20 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCategoryHeader(rightTitle, colors),
-                  const SizedBox(height: 12),
-                  ...rightCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+                  _buildCategoryHeader(rightTitle, rightAccentColor, colors),
+                  const SizedBox(height: 8),
+                  ...rightCards.map((card) => AspectRatio(aspectRatio: 1.05, child: card)),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCategoryHeader(leftTitle, colors),
-                  const SizedBox(height: 12),
-                  ...leftCards.map((card) => AspectRatio(aspectRatio: 1.0, child: card)),
+                  _buildCategoryHeader(leftTitle, leftAccentColor, colors),
+                  const SizedBox(height: 8),
+                  ...leftCards.map((card) => AspectRatio(aspectRatio: 1.05, child: card)),
                 ],
               ),
             ),
@@ -504,6 +595,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
 
   Widget _buildCategorySection({
     required String title,
+    required Color accentColor,
     required List<Widget> cards,
     required RitmoColors colors,
   }) {
@@ -511,14 +603,14 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildCategoryHeader(title, colors),
-        const SizedBox(height: 12),
+        _buildCategoryHeader(title, accentColor, colors),
+        const SizedBox(height: 8),
         RitmoAdaptiveGrid(
           minTileWidth: 140,
-          spacing: 16,
+          spacing: 10,
           maxColumns: 2,
           children: cards.map((card) => AspectRatio(
-            aspectRatio: 1.0,
+            aspectRatio: 1.05,
             child: card,
           )).toList(),
         ),
@@ -778,14 +870,26 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildCategorySection(title: 'سلامت و بیولوژی', cards: healthCards, colors: colors),
-        const SizedBox(height: 24),
-        _buildCategorySection(title: 'رشد و برنامه‌ریزی', cards: growthCards, colors: colors),
-        const SizedBox(height: 24),
+        _buildCategorySection(
+          title: 'سلامت و بیولوژی',
+          accentColor: const Color(0xff10B981),
+          cards: healthCards,
+          colors: colors,
+        ),
+        const SizedBox(height: 14),
+        _buildCategorySection(
+          title: 'رشد و برنامه‌ریزی',
+          accentColor: const Color(0xff3B82F6),
+          cards: growthCards,
+          colors: colors,
+        ),
+        const SizedBox(height: 14),
         _buildSideBySideCategorySection(
           rightTitle: 'توازن و معنویت',
+          rightAccentColor: const Color(0xffF59E0B),
           rightCards: spiritualityCards,
           leftTitle: 'بستر هوشمند',
+          leftAccentColor: const Color(0xff06B6D4),
           leftCards: assistantCards,
           colors: colors,
         ),
@@ -842,173 +946,226 @@ class _SystemsHubScreenState extends State<SystemsHubScreen> with TickerProvider
       imageAsset = 'assets/images/cycle_card_top.png';
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 🎨 Full Card Image
-          Image.asset(
-            imageAsset,
-            cacheWidth: 600,
-            fit: BoxFit.cover,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.06),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.25 : 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-
-          // Subtle gradient overlay (iOS depth feel)
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.35),
-                ],
-              ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(19.2),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 🎨 Full Card Image
+            Image.asset(
+              imageAsset,
+              cacheWidth: 600,
+              fit: BoxFit.cover,
             ),
-          ),
 
-          // Floating Status Pill (Top-Left corner)
-          Positioned(
-            top: 10,
-            left: 10,
-            child: _buildStatusPill(status),
-          ),
-
-          // Floating Icon Badge (Top-Right corner)
-          Positioned(
-            top: 10,
-            right: 10,
-            child: Container(
-              padding: const EdgeInsets.all(5),
+            // Subtle gradient overlay (iOS depth feel)
+            Container(
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.75),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.15),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.35),
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ),
               ),
-              child: Icon(icon, size: 13, color: iconColor),
             ),
-          ),
 
-          // 🌫 Frosted Glass overlay on the bottom part of the card (shorter and cleaner)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? Colors.black.withValues(alpha: 0.45)
-                        : Colors.white.withValues(alpha: 0.55),
-                    border: Border(
-                      top: BorderSide(
-                        color: isDarkMode
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.white.withValues(alpha: 0.3),
+            // Floating Status Pill (Top-Left corner)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: _buildStatusPill(status, isDarkMode),
+            ),
+
+            // Floating Icon Badge (Top-Right corner)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.65),
+                      border: Border.all(
+                        color: iconColor.withValues(alpha: 0.3),
+                        width: 0.75,
                       ),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // TITLE
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDarkMode ? Colors.white : const Color(0xFF1C1C1E),
-                          ),
-                      ),
-                      const SizedBox(height: 1.5),
-                      // DESCRIPTION
-                      Text(
-                        description,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          color: isDarkMode
-                              ? Colors.white.withValues(alpha: 0.7)
-                              : Colors.black.withValues(alpha: 0.6),
-                          ),
-                      ),
-                    ],
+                    child: Icon(icon, size: 13, color: iconColor),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            // 🌫 Frosted Glass overlay on the bottom part of the card
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(19.2),
+                  bottomRight: Radius.circular(19.2),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? Colors.black.withValues(alpha: 0.48)
+                          : Colors.white.withValues(alpha: 0.6),
+                      border: Border(
+                        top: BorderSide(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.white.withValues(alpha: 0.4),
+                          width: 0.75,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // TITLE
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            color: isDarkMode ? Colors.white : const Color(0xFF1C1C1E),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        // DESCRIPTION
+                        Text(
+                          description,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.75)
+                                : Colors.black.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatusPill(ModuleStatus status) {
+  Widget _buildStatusPill(ModuleStatus status, bool isDarkMode) {
     Color color;
     String text;
 
     switch (status) {
       case ModuleStatus.active:
-        color = const Color(0xFF34C759); // iOS green
+        color = const Color(0xFF10B981); // Emerald green
         text = 'فعال';
       case ModuleStatus.inactive:
-        color = const Color(0xFF8E8E93);
+        color = const Color(0xFF9CA3AF);
         text = 'غیرفعال';
       case ModuleStatus.setupRequired:
-        color = const Color(0xFFFF9500);
-        text = 'نیاز به توجه';
+        color = const Color(0xFFF59E0B);
+        text = 'توجه';
       case ModuleStatus.locked:
-        color = const Color(0xFFFF3B30); // iOS red
-        text = 'قفل‌شده';
+        color = const Color(0xFFEF4444);
+        text = 'قفل';
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: color,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (status == ModuleStatus.locked) ...[
-            const Icon(CupertinoIcons.lock_fill, size: 10, color: Colors.white),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            color: (isDarkMode ? Colors.black : Colors.white).withValues(alpha: 0.65),
+            border: Border.all(
+              color: color.withValues(alpha: 0.45),
+              width: 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
+            ],
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 5.5,
+                height: 5.5,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.6),
+                      blurRadius: 3,
+                      spreadRadius: 0.5,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4.5),
+              if (status == ModuleStatus.locked) ...[
+                Icon(CupertinoIcons.lock_fill, size: 9, color: color),
+                const SizedBox(width: 3),
+              ],
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

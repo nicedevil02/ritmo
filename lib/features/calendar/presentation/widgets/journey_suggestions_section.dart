@@ -35,7 +35,11 @@ class JourneySuggestionsSection extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: colors.primary.withValues(alpha: 0.12),
               ),
-              child: Icon(Icons.check_circle_outline_rounded, size: 28, color: colors.primary),
+              child: Icon(
+                Icons.check_circle_outline_rounded,
+                size: 28,
+                color: colors.primary,
+              ),
             ),
             const SizedBox(height: RitmoSpacing.md),
             Text(
@@ -49,10 +53,7 @@ class JourneySuggestionsSection extends StatelessWidget {
             const SizedBox(height: RitmoSpacing.xs),
             Text(
               'هیچ تداخل یا هشداری در این روز وجود ندارد.',
-              style: TextStyle(
-                fontSize: 12.0,
-                color: colors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12.0, color: colors.textSecondary),
             ),
           ],
         ),
@@ -67,7 +68,11 @@ class JourneySuggestionsSection extends StatelessWidget {
           if (conflicts.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded, size: 18, color: colors.warning),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 18,
+                  color: colors.warning,
+                ),
                 const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'تداخل‌ها (${toPersianDigits(conflicts.length.toString())})',
@@ -89,7 +94,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.warning.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    border: Border.all(color: colors.warning.withValues(alpha: 0.25)),
+                    border: Border.all(
+                      color: colors.warning.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(RitmoRadius.card),
@@ -102,7 +109,10 @@ class JourneySuggestionsSection extends StatelessWidget {
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                              vertical: 10.0,
+                            ),
                             child: Row(
                               children: [
                                 Expanded(
@@ -115,10 +125,15 @@ class JourneySuggestionsSection extends StatelessWidget {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colors.warning,
-                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.badge,
+                                    ),
                                   ),
                                   child: Text(
                                     'رفع تداخل',
@@ -143,7 +158,11 @@ class JourneySuggestionsSection extends StatelessWidget {
           if (suggestions.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.lightbulb_outline_rounded, size: 18, color: colors.primary),
+                Icon(
+                  Icons.lightbulb_outline_rounded,
+                  size: 18,
+                  color: colors.primary,
+                ),
                 const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'پیشنهادها (${toPersianDigits(suggestions.length.toString())})',
@@ -162,7 +181,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
@@ -175,7 +196,10 @@ class JourneySuggestionsSection extends StatelessWidget {
                       ),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0,
+                            vertical: 10.0,
+                          ),
                           child: Row(
                             children: [
                               Expanded(
@@ -189,13 +213,20 @@ class JourneySuggestionsSection extends StatelessWidget {
                               ),
                               if (suggestion.suggestedTimeOfDay != null)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colors.primary,
-                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.badge,
+                                    ),
                                   ),
                                   child: Text(
-                                    toPersianDigits(suggestion.suggestedTimeOfDay ?? ''),
+                                    toPersianDigits(
+                                      suggestion.suggestedTimeOfDay ?? '',
+                                    ),
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: colors.onPrimary,

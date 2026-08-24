@@ -54,10 +54,7 @@ class RegistryIndex {
           typeStr == 'WorshipPracticeChanged') {
         invalidate({RegistryDomain.worship, RegistryDomain.worshipDebt});
       } else if (typeStr == 'WorkoutLogChanged') {
-        invalidate({
-          RegistryDomain.movementKind,
-          RegistryDomain.workoutPlan
-        });
+        invalidate({RegistryDomain.movementKind, RegistryDomain.workoutPlan});
       } else if (typeStr == 'CompletionRecorded') {
         // Clear only routine & goal cache
         invalidate({RegistryDomain.routine, RegistryDomain.goal});
@@ -105,7 +102,11 @@ class RegistryIndex {
       var items = _cache[src.domain];
       if (items == null) {
         try {
-          items = await src.fetch(limit: 50, offset: 0, includeArchived: query.showArchived);
+          items = await src.fetch(
+            limit: 50,
+            offset: 0,
+            includeArchived: query.showArchived,
+          );
         } catch (e) {
           items = <RegistryEntry>[];
         }
@@ -119,12 +120,16 @@ class RegistryIndex {
         if (_matchesQuery(updated, query)) {
           final titleKey = normalizeFa(updated.title);
           final isDuplicateId = seenIds.contains(updated.id);
-          final isDuplicateSource = updated.sourceId.isNotEmpty && seenSourceIds.contains(updated.sourceId);
-          final isDuplicateTitle = titleKey.isNotEmpty && seenTitleKeys.contains(titleKey);
+          final isDuplicateSource =
+              updated.sourceId.isNotEmpty &&
+              seenSourceIds.contains(updated.sourceId);
+          final isDuplicateTitle =
+              titleKey.isNotEmpty && seenTitleKeys.contains(titleKey);
 
           if (!isDuplicateId && !isDuplicateSource && !isDuplicateTitle) {
             seenIds.add(updated.id);
-            if (updated.sourceId.isNotEmpty) seenSourceIds.add(updated.sourceId);
+            if (updated.sourceId.isNotEmpty)
+              seenSourceIds.add(updated.sourceId);
             if (titleKey.isNotEmpty) seenTitleKeys.add(titleKey);
             results.add(updated);
           }
@@ -141,12 +146,15 @@ class RegistryIndex {
       final db = await DatabaseHelper.instance.database;
       final todayStr = DateTime.now().toIso8601String().split('T').first;
 
-      final rows = await db.rawQuery('''
+      final rows = await db.rawQuery(
+        '''
         SELECT routine_id, MIN(date) AS nextDate
         FROM routine_occurrences
         WHERE date >= ? AND status = 'pending'
         GROUP BY routine_id
-      ''', [todayStr]);
+      ''',
+        [todayStr],
+      );
 
       final map = <String, String>{};
       for (final r in rows) {

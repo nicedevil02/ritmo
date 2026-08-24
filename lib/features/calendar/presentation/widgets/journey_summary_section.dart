@@ -25,7 +25,11 @@ class JourneySummarySection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.analytics_outlined, size: 18, color: theme.colorScheme.primary),
+              Icon(
+                Icons.analytics_outlined,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: RitmoSpacing.sm),
               Text(
                 'خلاصه روز (${toPersianDigits(snapshot.dateStr)})',

@@ -35,7 +35,8 @@ class TimelineSplitDayView extends StatefulWidget {
   final void Function(AgendaItem item, int newStartMinutes)? onItemMove;
   final void Function(AgendaItem item, int newDurationMinutes)? onItemResize;
   final ValueChanged<int>? onSlotTap; // minute of day (0..1439)
-  final void Function(AgendaItem item, int startMinutes, int durationMinutes)? onScheduleUntimed;
+  final void Function(AgendaItem item, int startMinutes, int durationMinutes)?
+  onScheduleUntimed;
   final ValueChanged<AgendaItem>? onOverflowTap;
 
   @override
@@ -75,7 +76,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
   void scrollToMinutes(int minutes) {
     if (!_sharedScrollController.hasClients) {
       if (_singleColumnController.hasClients) {
-        final offset = ((minutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
+        final offset =
+            ((minutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
         final maxScroll = _singleColumnController.position.maxScrollExtent;
         _singleColumnController.animateTo(
           offset.clamp(0.0, maxScroll),
@@ -110,7 +112,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         );
       }
       if (_singleColumnController.hasClients) {
-        final offset = ((nowMinutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
+        final offset =
+            ((nowMinutes - 60).clamp(0, 1440)) * CalendarGeometry.pxPerMinute;
         final maxScroll = _singleColumnController.position.maxScrollExtent;
         _singleColumnController.animateTo(
           offset.clamp(0.0, maxScroll),
@@ -121,12 +124,22 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     } else {
       _scrollToFirstItemOrDefault(_sharedScrollController, 0, 1440);
       if (_singleColumnController.hasClients) {
-        _scrollToFirstItemOrDefault(_singleColumnController, 0, 1440, isSingle: true);
+        _scrollToFirstItemOrDefault(
+          _singleColumnController,
+          0,
+          1440,
+          isSingle: true,
+        );
       }
     }
   }
 
-  void _scrollToFirstItemOrDefault(ScrollController controller, int rangeStart, int rangeEnd, {bool isSingle = false}) {
+  void _scrollToFirstItemOrDefault(
+    ScrollController controller,
+    int rangeStart,
+    int rangeEnd, {
+    bool isSingle = false,
+  }) {
     if (!controller.hasClients) return;
     final timedItems = widget.items.where((i) => i.isTimed).toList();
     var firstMinute = rangeStart;
@@ -139,7 +152,9 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
       }
     }
 
-    final pxRate = isSingle ? CalendarGeometry.pxPerMinute : CalendarGeometry.pxPerMinuteSplit;
+    final pxRate = isSingle
+        ? CalendarGeometry.pxPerMinute
+        : CalendarGeometry.pxPerMinuteSplit;
     final offset = ((firstMinute - rangeStart - 30).clamp(0, 720)) * pxRate;
     final maxScroll = controller.position.maxScrollExtent;
     controller.animateTo(
@@ -170,14 +185,22 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     return DragTarget<AgendaItem>(
       onWillAcceptWithDetails: (details) => true,
       onMove: (details) {
-        final renderBox = gridKey.currentContext?.findRenderObject() as RenderBox?;
+        final renderBox =
+            gridKey.currentContext?.findRenderObject() as RenderBox?;
         if (renderBox == null) return;
         final localOffset = renderBox.globalToLocal(details.offset);
-        final rawMinutes = ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) + range.startMinutes).round();
+        final rawMinutes =
+            ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) +
+                    range.startMinutes)
+                .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
-        final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+        final snappedStart = TimelineSnappingHelper.snapStartMinutes(
+          rawMinutes,
+          durationMinutes: dur,
+        );
 
-        if (_previewStartMinutes != snappedStart || _draggingItemId != details.data.id) {
+        if (_previewStartMinutes != snappedStart ||
+            _draggingItemId != details.data.id) {
           setState(() {
             _draggingItemId = details.data.id;
             _previewStartMinutes = snappedStart;
@@ -186,13 +209,20 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         }
       },
       onAcceptWithDetails: (details) {
-        final renderBox = gridKey.currentContext?.findRenderObject() as RenderBox?;
+        final renderBox =
+            gridKey.currentContext?.findRenderObject() as RenderBox?;
         final localOffset = renderBox != null
             ? renderBox.globalToLocal(details.offset)
             : Offset.zero;
-        final rawMinutes = ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) + range.startMinutes).round();
+        final rawMinutes =
+            ((localOffset.dy / CalendarGeometry.pxPerMinuteSplit) +
+                    range.startMinutes)
+                .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
-        final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+        final snappedStart = TimelineSnappingHelper.snapStartMinutes(
+          rawMinutes,
+          durationMinutes: dur,
+        );
 
         setState(() {
           _draggingItemId = null;
@@ -259,7 +289,9 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 12.0,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -274,12 +306,17 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
 
   @override
   Widget build(BuildContext context) {
-    final paddingBottom = MediaQuery.paddingOf(context).bottom + kBottomNavigationBarHeight + 20.0;
+    final paddingBottom =
+        MediaQuery.paddingOf(context).bottom +
+        kBottomNavigationBarHeight +
+        20.0;
     final now = DateTime.now();
     final nowMinutes = (now.hour * 60) + now.minute;
 
-    final isMorningActive = widget.isToday && nowMinutes < CalendarGeometry.splitBoundaryMinutes;
-    final isAfternoonActive = widget.isToday && nowMinutes >= CalendarGeometry.splitBoundaryMinutes;
+    final isMorningActive =
+        widget.isToday && nowMinutes < CalendarGeometry.splitBoundaryMinutes;
+    final isAfternoonActive =
+        widget.isToday && nowMinutes >= CalendarGeometry.splitBoundaryMinutes;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -288,14 +325,21 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
           return DragTarget<AgendaItem>(
             onWillAcceptWithDetails: (details) => true,
             onMove: (details) {
-              final renderBox = _singleGridKey.currentContext?.findRenderObject() as RenderBox?;
+              final renderBox =
+                  _singleGridKey.currentContext?.findRenderObject()
+                      as RenderBox?;
               if (renderBox == null) return;
               final localOffset = renderBox.globalToLocal(details.offset);
-              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute).round();
+              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute)
+                  .round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
-              final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+              final snappedStart = TimelineSnappingHelper.snapStartMinutes(
+                rawMinutes,
+                durationMinutes: dur,
+              );
 
-              if (_previewStartMinutes != snappedStart || _draggingItemId != details.data.id) {
+              if (_previewStartMinutes != snappedStart ||
+                  _draggingItemId != details.data.id) {
                 setState(() {
                   _draggingItemId = details.data.id;
                   _previewStartMinutes = snappedStart;
@@ -304,13 +348,19 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               }
             },
             onAcceptWithDetails: (details) {
-              final renderBox = _singleGridKey.currentContext?.findRenderObject() as RenderBox?;
+              final renderBox =
+                  _singleGridKey.currentContext?.findRenderObject()
+                      as RenderBox?;
               final localOffset = renderBox != null
                   ? renderBox.globalToLocal(details.offset)
                   : Offset.zero;
-              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute).round();
+              final rawMinutes = (localOffset.dy / CalendarGeometry.pxPerMinute)
+                  .round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
-              final snappedStart = TimelineSnappingHelper.snapStartMinutes(rawMinutes, durationMinutes: dur);
+              final snappedStart = TimelineSnappingHelper.snapStartMinutes(
+                rawMinutes,
+                durationMinutes: dur,
+              );
 
               setState(() {
                 _draggingItemId = null;
@@ -431,9 +481,15 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Theme.of(context).dividerColor.withValues(alpha: 0.0),
-                                    Theme.of(context).dividerColor.withValues(alpha: 0.22),
-                                    Theme.of(context).dividerColor.withValues(alpha: 0.0),
+                                    Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.0),
+                                    Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.22),
+                                    Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.0),
                                   ],
                                 ),
                               ),

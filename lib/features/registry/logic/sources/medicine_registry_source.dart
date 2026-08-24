@@ -22,7 +22,9 @@ class MedicineRegistrySource implements RegistrySource {
     final where = includeArchived
         ? "itemType = 'MEDICINE'"
         : "itemType = 'MEDICINE' AND isArchived = 0";
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM routines WHERE $where');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM routines WHERE $where',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -37,7 +39,8 @@ class MedicineRegistrySource implements RegistrySource {
         ? "r.itemType = 'MEDICINE'"
         : "r.itemType = 'MEDICINE' AND r.isArchived = 0";
 
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT r.id, r.title, r.description, r.isArchived, r.medStockCount, r.medRefillThreshold,
              s.timeOfDay, s.daysOfWeek, s.scheduleType
       FROM routines r
@@ -45,7 +48,9 @@ class MedicineRegistrySource implements RegistrySource {
       WHERE $where
       ORDER BY r.createdAt DESC
       LIMIT ? OFFSET ?
-    ''', [limit, offset]);
+    ''',
+      [limit, offset],
+    );
 
     final todayStr = DateTime.now().toIso8601String().split('T').first;
 
@@ -68,7 +73,8 @@ class MedicineRegistrySource implements RegistrySource {
 
       var sub = description;
       if (stock > 0 && stock <= threshold) {
-        sub = '⚠️ موجودی کم: ${toPersianDigits(stock.toString())} عدد باقی مانده';
+        sub =
+            '⚠️ موجودی کم: ${toPersianDigits(stock.toString())} عدد باقی مانده';
       }
 
       return RegistryEntry(

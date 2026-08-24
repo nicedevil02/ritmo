@@ -18,7 +18,9 @@ class CourseRegistrySource implements RegistrySource {
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
     final whereClause = includeArchived ? '' : ' WHERE isArchived = 0';
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM courses$whereClause');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM courses$whereClause',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -72,28 +74,30 @@ class CourseRegistrySource implements RegistrySource {
           ? '$provider · $doneCount از $totalSessions جلسه'
           : '$doneCount از $totalSessions جلسه';
 
-      entries.add(RegistryEntry(
-        id: 'course:$id',
-        domain: RegistryDomain.course,
-        sourceId: id,
-        title: title,
-        subtitle: subtitle,
-        scheduleSummary: summary,
-        status: doneCount >= totalSessions && totalSessions > 0
-            ? RegistryStatus.completed
-            : RegistryStatus.active,
-        agendaProxy: AgendaItem(
+      entries.add(
+        RegistryEntry(
           id: 'course:$id',
-          domain: AgendaDomain.course,
+          domain: RegistryDomain.course,
           sourceId: id,
           title: title,
-          dateStr: todayStr,
-          timeOfDay: prefTime,
-          durationMinutes: sessionDur,
-          category: Category.learning,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.course, targetId: id),
+          subtitle: subtitle,
+          scheduleSummary: summary,
+          status: doneCount >= totalSessions && totalSessions > 0
+              ? RegistryStatus.completed
+              : RegistryStatus.active,
+          agendaProxy: AgendaItem(
+            id: 'course:$id',
+            domain: AgendaDomain.course,
+            sourceId: id,
+            title: title,
+            dateStr: todayStr,
+            timeOfDay: prefTime,
+            durationMinutes: sessionDur,
+            category: Category.learning,
+            deepLink: AgendaDeepLink(domain: AgendaDomain.course, targetId: id),
+          ),
         ),
-      ));
+      );
     }
 
     return entries;

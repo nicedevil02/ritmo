@@ -85,17 +85,15 @@ class WellbeingLogGateway {
       final id = 'sleep_$date';
 
       final row = <String, Object?>{
-        'id': id,
         'date': date,
         'reason': 'ثبت خواب',
         'durationMinutes': durationMinutes,
         'quality': quality,
         'awakenings': awakenings,
-        'bedtimeAt': ?bedtimeAt,
-        'wakeAt': ?wakeAt,
-        'note': ?note,
+        'bedtimeAt': bedtimeAt,
+        'wakeAt': wakeAt,
+        'note': note,
         'createdAt': nowMs,
-        'updatedAt': nowMs,
       };
 
       await db.insert(
@@ -149,12 +147,12 @@ class WellbeingLogGateway {
       final nowMs = effectiveNow.millisecondsSinceEpoch;
       final dateStr = RitmoDate.dayKey(effectiveNow);
 
-      // Check if a mood was logged within last 10 minutes from quick bar (B10)
+      // Check if a mood was logged within last 10 minutes (B10)
       final tenMinutesAgo = nowMs - (10 * 60 * 1000);
       final recentLogs = await db.query(
         'mood_logs',
-        where: 'source = ? AND loggedAt >= ?',
-        whereArgs: [source, tenMinutesAgo],
+        where: 'loggedAt >= ?',
+        whereArgs: [tenMinutesAgo],
         orderBy: 'loggedAt DESC',
         limit: 1,
       );
@@ -167,7 +165,7 @@ class WellbeingLogGateway {
           {
             'mood': score >= 4 ? 'HAPPY' : (score <= 2 ? 'SAD' : 'NEUTRAL'),
             'valence': score,
-            'note': ?note,
+            'note': note,
             'loggedAt': nowMs,
           },
           where: 'id = ?',
@@ -180,7 +178,6 @@ class WellbeingLogGateway {
           'mood': score >= 4 ? 'HAPPY' : (score <= 2 ? 'SAD' : 'NEUTRAL'),
           'valence': score,
           'note': note,
-          'source': source,
           'loggedAt': nowMs,
         };
         await db.insert(

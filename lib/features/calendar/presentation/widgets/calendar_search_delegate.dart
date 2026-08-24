@@ -13,10 +13,7 @@ import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 /// Grouped into: "امروز", "این هفته", "سایر تاریخ‌ها"
 /// Searches across current day items + global database via CalendarSearchRepository.
 class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
-  CalendarSearchDelegate({
-    required this.items,
-    this.onItemSelected,
-  });
+  CalendarSearchDelegate({required this.items, this.onItemSelected});
 
   final List<AgendaItem> items;
   final ValueChanged<AgendaItem>? onItemSelected;
@@ -40,7 +37,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_forward_rounded),
+      icon: const Icon(Icons.arrow_back_rounded),
       onPressed: () {
         close(context, null);
       },
@@ -76,10 +73,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
           return const Directionality(
             textDirection: TextDirection.rtl,
             child: Center(
-              child: Text(
-                'هیچ نتیجه‌ای یافت نشد.',
-                style: TextStyle(),
-              ),
+              child: Text('هیچ نتیجه‌ای یافت نشد.', style: TextStyle()),
             ),
           );
         }
@@ -87,7 +81,9 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
         final todayStr = DateKey.today();
         final todayHits = hits.where((h) => h.dateStr == todayStr).toList();
         final recurringHits = hits.where((h) => h.isRecurring).toList();
-        final otherHits = hits.where((h) => !h.isRecurring && h.dateStr != todayStr).toList();
+        final otherHits = hits
+            .where((h) => !h.isRecurring && h.dateStr != todayStr)
+            .toList();
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -103,9 +99,12 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
               ],
               if (recurringHits.isNotEmpty) ...[
                 _SearchSectionHeader(
-                  title: 'برنامه‌های تکرارشونده (${toPersianDigits(recurringHits.length)})',
+                  title:
+                      'برنامه‌های تکرارشونده (${toPersianDigits(recurringHits.length)})',
                 ),
-                ...recurringHits.map((h) => _HitTile(hit: h, onSelected: close)),
+                ...recurringHits.map(
+                  (h) => _HitTile(hit: h, onSelected: close),
+                ),
                 const SizedBox(height: 12),
               ],
               if (otherHits.isNotEmpty) ...[
@@ -125,10 +124,13 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
     final todayResults = q.isEmpty
         ? items
         : items
-            .where((i) =>
-                normalizeFa(i.title).contains(q) ||
-                (i.subtitle != null && normalizeFa(i.subtitle!).contains(q)))
-            .toList();
+              .where(
+                (i) =>
+                    normalizeFa(i.title).contains(q) ||
+                    (i.subtitle != null &&
+                        normalizeFa(i.subtitle!).contains(q)),
+              )
+              .toList();
 
     return Directionality(
       textDirection: TextDirection.rtl,

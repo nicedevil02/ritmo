@@ -21,16 +21,15 @@ void main() {
       onCreate: (d, v) async {
         await d.execute('''
           CREATE TABLE bedtime_diagnostics (
-            id TEXT PRIMARY KEY,
-            date TEXT,
-            durationMinutes INTEGER,
-            quality INTEGER,
-            awakenings INTEGER,
+            date TEXT PRIMARY KEY,
+            reason TEXT NOT NULL,
+            note TEXT,
+            createdAt INTEGER NOT NULL,
             bedtimeAt INTEGER,
             wakeAt INTEGER,
-            note TEXT,
-            createdAt INTEGER,
-            updatedAt INTEGER
+            durationMinutes INTEGER,
+            quality INTEGER NOT NULL DEFAULT 3,
+            awakenings INTEGER NOT NULL DEFAULT 0
           );
         ''');
         await d.execute('''
@@ -46,11 +45,10 @@ void main() {
         await d.execute('''
           CREATE TABLE mood_logs (
             id TEXT PRIMARY KEY,
-            mood TEXT,
-            valence INTEGER,
+            mood TEXT NOT NULL,
+            valence INTEGER NOT NULL DEFAULT 3,
             note TEXT,
-            source TEXT,
-            loggedAt INTEGER
+            loggedAt INTEGER NOT NULL
           );
         ''');
         await d.execute('''
@@ -100,7 +98,7 @@ void main() {
 
       expect(id, isNotNull);
 
-      final sleepRows = await db.query('bedtime_diagnostics', where: 'id = ?', whereArgs: [id]);
+      final sleepRows = await db.query('bedtime_diagnostics', where: 'date = ?', whereArgs: [dateStr]);
       expect(sleepRows.length, 1);
       expect(sleepRows.first['durationMinutes'], 480);
       expect(sleepRows.first['quality'], 4);

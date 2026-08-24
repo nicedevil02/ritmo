@@ -62,28 +62,23 @@ class EmptyDayView extends StatelessWidget {
             Text(
               'برای این روز چیزی ثبت نشده.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.0,
-                color: colors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14.0, color: colors.textSecondary),
             ),
             if (disabledModules.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: colors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(RitmoRadius.badge),
-                  border: Border.all(
-                    color: colors.borderSubtle,
-                  ),
+                  border: Border.all(color: colors.borderSubtle),
                 ),
                 child: Text(
                   'ماژول‌های غیرفعال: ${disabledModules.join("، ")}',
-                  style: TextStyle(
-                    fontSize: 11.0,
-                    color: colors.textTertiary,
-                  ),
+                  style: TextStyle(fontSize: 11.0, color: colors.textTertiary),
                 ),
               ),
             ],
@@ -279,21 +274,32 @@ class _SomedayTasksPickerSheet extends StatelessWidget {
                     return ListTile(
                       title: Text(
                         task.title,
-                        style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.textPrimary,
+                        ),
                       ),
                       trailing: TextButton(
                         onPressed: () async {
                           final updated = task.copyWith(dueDate: targetDateStr);
-                          await SimpleTaskRepository.instance.updateTask(updated);
+                          await SimpleTaskRepository.instance.updateTask(
+                            updated,
+                          );
                           if (context.mounted) {
                             Navigator.pop(context);
                           }
                           onScheduled();
                           if (parentContext.mounted) {
-                            RitmoToast.show(parentContext, 'کار به تاریخ انتخابی منتقل شد');
+                            RitmoToast.show(
+                              parentContext,
+                              'کار به تاریخ انتخابی منتقل شد',
+                            );
                           }
                         },
-                        child: const Text('افزودن به این روز', style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          'افزودن به این روز',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                     );
                   },

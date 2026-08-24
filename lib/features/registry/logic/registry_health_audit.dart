@@ -47,14 +47,20 @@ class RegistryHealthAudit {
           final txDb = await DatabaseHelper.instance.database;
           final now = DateTime.now().millisecondsSinceEpoch;
           for (final id in ids) {
-            await txDb.rawInsert('''
+            await txDb.rawInsert(
+              '''
               INSERT OR REPLACE INTO routine_schedules (id, routineId, type, preferredTimeOfDay, durationMinutes, createdAt)
               VALUES (?, ?, 'DAILY', '08:00', 30, ?)
-            ''', ['sched_$id', id, now]);
+            ''',
+              ['sched_$id', id, now],
+            );
           }
           RegistryIndex.instance.invalidate();
           if (context.mounted) {
-            RitmoToast.show(context, 'زمان‌بندی پیش‌فرض (۰۸:۰۰ صبح) برای روتین‌ها ایجاد شد.');
+            RitmoToast.show(
+              context,
+              'زمان‌بندی پیش‌فرض (۰۸:۰۰ صبح) برای روتین‌ها ایجاد شد.',
+            );
           }
         },
       );
@@ -90,7 +96,11 @@ class RegistryHealthAudit {
         fix: (context) async {
           final txDb = await DatabaseHelper.instance.database;
           for (final id in ids) {
-            await txDb.delete('pending_reminders', where: 'id = ?', whereArgs: [id]);
+            await txDb.delete(
+              'pending_reminders',
+              where: 'id = ?',
+              whereArgs: [id],
+            );
           }
           RegistryIndex.instance.invalidate();
           if (context.mounted) {
@@ -128,12 +138,21 @@ class RegistryHealthAudit {
           final txDb = await DatabaseHelper.instance.database;
           final nowMs = DateTime.now().millisecondsSinceEpoch;
           for (final id in ids) {
-            final routineRows = await txDb.query('routines', where: 'id = ?', whereArgs: [id]);
-            final title = routineRows.isNotEmpty ? (routineRows.first['title'] as String? ?? 'روتین') : 'روتین';
-            await txDb.rawInsert('''
+            final routineRows = await txDb.query(
+              'routines',
+              where: 'id = ?',
+              whereArgs: [id],
+            );
+            final title = routineRows.isNotEmpty
+                ? (routineRows.first['title'] as String? ?? 'روتین')
+                : 'روتین';
+            await txDb.rawInsert(
+              '''
               INSERT OR REPLACE INTO pending_reminders (id, routineId, title, scheduledTime, state)
               VALUES (?, ?, ?, ?, 'SCHEDULED')
-            ''', ['rem_$id', id, title, nowMs + (60 * 60 * 1000)]);
+            ''',
+              ['rem_$id', id, title, nowMs + (60 * 60 * 1000)],
+            );
           }
           RegistryIndex.instance.invalidate();
           if (context.mounted) {
@@ -153,10 +172,13 @@ class RegistryHealthAudit {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final cutoff = nowMs - (24 * 60 * 60 * 1000);
 
-      final rows = await db.rawQuery('''
+      final rows = await db.rawQuery(
+        '''
         SELECT id FROM pending_reminders
         WHERE state = 'unknown' AND scheduledTime < ?
-      ''', [cutoff]);
+      ''',
+        [cutoff],
+      );
 
       if (rows.isEmpty) return null;
 
@@ -171,10 +193,13 @@ class RegistryHealthAudit {
         affectedIds: ids,
         fix: (context) async {
           final txDb = await DatabaseHelper.instance.database;
-          await txDb.rawUpdate('''
+          await txDb.rawUpdate(
+            '''
             UPDATE pending_reminders SET state = 'expired'
             WHERE state = 'unknown' AND scheduledTime < ?
-          ''', [cutoff]);
+          ''',
+            [cutoff],
+          );
           RegistryIndex.instance.invalidate();
           if (context.mounted) {
             RitmoToast.show(context, 'حالت آلارم‌ها به‌روز شد.');
@@ -210,10 +235,13 @@ class RegistryHealthAudit {
         fix: (context) async {
           final txDb = await DatabaseHelper.instance.database;
           if (val == 'true') {
-            await txDb.rawUpdate('''
+            await txDb.rawUpdate(
+              '''
               INSERT OR REPLACE INTO app_settings (key, value, updatedAt)
               VALUES ('module_supplementary_sports_enabled', 'true', ?)
-            ''', [DateTime.now().millisecondsSinceEpoch]);
+            ''',
+              [DateTime.now().millisecondsSinceEpoch],
+            );
           }
           await txDb.delete(
             'app_settings',
@@ -234,10 +262,13 @@ class RegistryHealthAudit {
   Future<RegistryHealthIssue?> _inspectInvalidDuration() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final rows = await db.rawQuery('''
+      final rows = await db.rawQuery(
+        '''
         SELECT id, title, targetDurationMinutes FROM routines
         WHERE targetDurationMinutes > ? OR targetDurationMinutes <= 0
-      ''', [DurationBounds.maxMinutes]);
+      ''',
+        [DurationBounds.maxMinutes],
+      );
 
       if (rows.isEmpty) return null;
 

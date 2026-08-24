@@ -18,7 +18,9 @@ class WorshipRegistrySource implements RegistrySource {
   @override
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM worship_practices');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM worship_practices',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -42,7 +44,8 @@ class WorshipRegistrySource implements RegistrySource {
       final id = r['id'] as String;
       final title = r['title'] as String? ?? '';
       final type = r['practiceType'] as String? ?? 'OBLIGATORY';
-      final isSystem = type == 'OBLIGATORY' || id.startsWith('worship_default_');
+      final isSystem =
+          type == 'OBLIGATORY' || id.startsWith('worship_default_');
 
       final reminderTime = r['reminderTime'] as String?;
       final reminderDays = r['reminderDaysOfWeek'] as String?;
@@ -67,7 +70,9 @@ class WorshipRegistrySource implements RegistrySource {
         caps: caps,
         agendaProxy: AgendaItem(
           id: 'worship_$id',
-          domain: type == 'PRAYER' ? AgendaDomain.prayer : AgendaDomain.mustahab,
+          domain: type == 'PRAYER'
+              ? AgendaDomain.prayer
+              : AgendaDomain.mustahab,
           sourceId: id,
           title: title,
           dateStr: todayStr,

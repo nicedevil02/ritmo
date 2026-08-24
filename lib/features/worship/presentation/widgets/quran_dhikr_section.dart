@@ -847,70 +847,78 @@ class _QuranDhikrSectionState extends State<QuranDhikrSection> {
                 children: [
                   // 1. TOP HEADER: Title + Subtitle + Settings Target Pill
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Right: Book Icon + Quran Title
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: _showQuranSettingsSheet,
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: isGoalMet
-                                      ? [colors.success, colors.primary]
-                                      : [colors.primary, colors.primaryPressed],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: (isGoalMet ? colors.success : colors.primary)
-                                        .withValues(alpha: 0.35),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: _showQuranSettingsSheet,
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isGoalMet
+                                        ? [colors.success, colors.primary]
+                                        : [colors.primary, colors.primaryPressed],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                ],
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  isGoalMet
-                                      ? Icons.check_circle_rounded
-                                      : Icons.auto_stories_rounded,
-                                  color: colors.onPrimary,
-                                  size: 22,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (isGoalMet ? colors.success : colors.primary)
+                                          .withValues(alpha: 0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    isGoalMet
+                                        ? Icons.check_circle_rounded
+                                        : Icons.auto_stories_rounded,
+                                    color: colors.onPrimary,
+                                    size: 22,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'قرآن کریم',
-                                style: TextStyle(
-                                  color: colors.textPrimary,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'قرآن کریم',
+                                    style: TextStyle(
+                                      color: colors.textPrimary,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'تلاوت و انس روزانه با کلام الله',
+                                    style: TextStyle(
+                                      color: colors.textSecondary.withValues(alpha: 0.75),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'تلاوت و انس روزانه با کلام الله',
-                                style: TextStyle(
-                                  color: colors.textSecondary.withValues(alpha: 0.75),
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
 
                       // Left: Settings & Target Badge Pill (linked to settings)
                       InkWell(

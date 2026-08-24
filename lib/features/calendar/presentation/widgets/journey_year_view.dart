@@ -30,8 +30,18 @@ class JourneyYearView extends StatelessWidget {
     final jalaliNow = Jalali.fromDateTime(now);
 
     const jalaliMonthNames = [
-      'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
     ];
 
     return Directionality(
@@ -49,7 +59,11 @@ class JourneyYearView extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_rounded, size: 18, color: colors.primary),
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 18,
+                      color: colors.primary,
+                    ),
                     const SizedBox(width: RitmoSpacing.sm),
                     Text(
                       'نقشهٔ حرارتی و نمای سال $jalaliYearStr',
@@ -75,9 +89,14 @@ class JourneyYearView extends StatelessWidget {
                     RitmoWidthClass.expanded => 4,
                   };
                   const spacing = 10.0;
-                  final tileWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                  final tileWidth =
+                      (constraints.maxWidth - spacing * (columns - 1)) /
+                      columns;
                   final scale = context.textScale;
-                  final tileHeight = (tileWidth * 1.2).clamp(130.0 * scale, 220.0 * scale);
+                  final tileHeight = (tileWidth * 1.2).clamp(
+                    130.0 * scale,
+                    220.0 * scale,
+                  );
 
                   return GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -88,134 +107,152 @@ class JourneyYearView extends StatelessWidget {
                     ),
                     itemCount: 12,
                     itemBuilder: (context, index) {
-                  final monthIndex = index + 1;
-                  final isCurrentMonth = (jalaliYear == jalaliNow.year && monthIndex == jalaliNow.month);
-                  final isSelectedMonth = (jalaliYear == jalaliSelected.year && monthIndex == jalaliSelected.month);
+                      final monthIndex = index + 1;
+                      final isCurrentMonth =
+                          (jalaliYear == jalaliNow.year &&
+                          monthIndex == jalaliNow.month);
+                      final isSelectedMonth =
+                          (jalaliYear == jalaliSelected.year &&
+                          monthIndex == jalaliSelected.month);
 
-                  int monthTaskCount = 0;
-                  int monthCompletedCount = 0;
+                      int monthTaskCount = 0;
+                      int monthCompletedCount = 0;
 
-                  final monthLength = Jalali(jalaliYear, monthIndex, 1).monthLength;
-                  final daySnapshots = <int, DayAgendaSnapshot?>{};
+                      final monthLength = Jalali(
+                        jalaliYear,
+                        monthIndex,
+                        1,
+                      ).monthLength;
+                      final daySnapshots = <int, DayAgendaSnapshot?>{};
 
-                  for (int d = 1; d <= monthLength; d++) {
-                    final jDate = Jalali(jalaliYear, monthIndex, d);
-                    final gDate = jDate.toDateTime();
-                    final dateStr = DateKey.of(gDate);
-                    final snapshot = rangeSnapshots[dateStr];
-                    daySnapshots[d] = snapshot;
-                    if (snapshot != null) {
-                      monthTaskCount += snapshot.items.length;
-                      monthCompletedCount += snapshot.completedCount;
-                    }
-                  }
+                      for (int d = 1; d <= monthLength; d++) {
+                        final jDate = Jalali(jalaliYear, monthIndex, d);
+                        final gDate = jDate.toDateTime();
+                        final dateStr = DateKey.of(gDate);
+                        final snapshot = rangeSnapshots[dateStr];
+                        daySnapshots[d] = snapshot;
+                        if (snapshot != null) {
+                          monthTaskCount += snapshot.items.length;
+                          monthCompletedCount += snapshot.completedCount;
+                        }
+                      }
 
-                  final progressRatio = monthTaskCount > 0 ? (monthCompletedCount / monthTaskCount) : 0.0;
+                      final progressRatio = monthTaskCount > 0
+                          ? (monthCompletedCount / monthTaskCount)
+                          : 0.0;
 
-                  return InkWell(
-                    onTap: () {
-                      final firstDay = Jalali(jalaliYear, monthIndex, 1).toDateTime();
-                      onSelectMonth(firstDay);
-                    },
-                    borderRadius: BorderRadius.circular(RitmoRadius.card),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isSelectedMonth
-                            ? colors.primary.withValues(alpha: 0.10)
-                            : (isCurrentMonth
-                                ? colors.primary.withValues(alpha: 0.05)
-                                : colors.surfaceSubtle),
+                      return InkWell(
+                        onTap: () {
+                          final firstDay = Jalali(
+                            jalaliYear,
+                            monthIndex,
+                            1,
+                          ).toDateTime();
+                          onSelectMonth(firstDay);
+                        },
                         borderRadius: BorderRadius.circular(RitmoRadius.card),
-                        border: Border.all(
-                          color: isSelectedMonth
-                              ? colors.primary
-                              : (isCurrentMonth
-                                  ? colors.primary.withValues(alpha: 0.35)
-                                  : colors.borderSubtle),
-                          width: isSelectedMonth ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                jalaliMonthNames[index],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: isCurrentMonth || isSelectedMonth
-                                      ? colors.primary
-                                      : colors.textPrimary,
-                                ),
-                              ),
-                              if (isCurrentMonth)
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: BoxDecoration(
-                                    color: colors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-
-                          // Mini-heatmap grid of the days in the month
-                          Expanded(
-                            child: _buildMonthHeatmapGrid(
-                              context: context,
-                              jalaliYear: jalaliYear,
-                              monthIndex: monthIndex,
-                              monthLength: monthLength,
-                              daySnapshots: daySnapshots,
-                              colors: colors,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isSelectedMonth
+                                ? colors.primary.withValues(alpha: 0.10)
+                                : (isCurrentMonth
+                                      ? colors.primary.withValues(alpha: 0.05)
+                                      : colors.surfaceSubtle),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.card,
+                            ),
+                            border: Border.all(
+                              color: isSelectedMonth
+                                  ? colors.primary
+                                  : (isCurrentMonth
+                                        ? colors.primary.withValues(alpha: 0.35)
+                                        : colors.borderSubtle),
+                              width: isSelectedMonth ? 1.5 : 1.0,
                             ),
                           ),
-
-                          const SizedBox(height: 4),
-                          Row(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                monthTaskCount > 0
-                                    ? '${toPersianDigits((progressRatio * 100).round())}٪'
-                                    : '—',
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  fontWeight: FontWeight.w600,
-                                  color: monthTaskCount > 0
-                                      ? (isCurrentMonth || isSelectedMonth
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    jalaliMonthNames[index],
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isCurrentMonth || isSelectedMonth
                                           ? colors.primary
-                                          : colors.textSecondary)
-                                      : colors.textTertiary,
+                                          : colors.textPrimary,
+                                    ),
+                                  ),
+                                  if (isCurrentMonth)
+                                    Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: colors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+
+                              // Mini-heatmap grid of the days in the month
+                              Expanded(
+                                child: _buildMonthHeatmapGrid(
+                                  context: context,
+                                  jalaliYear: jalaliYear,
+                                  monthIndex: monthIndex,
+                                  monthLength: monthLength,
+                                  daySnapshots: daySnapshots,
+                                  colors: colors,
                                 ),
                               ),
-                              Text(
-                                monthTaskCount > 0
-                                    ? '${toPersianDigits(monthCompletedCount)}/${toPersianDigits(monthTaskCount)}'
-                                    : '',
-                                style: TextStyle(
-                                  fontSize: 9.0,
-                                  color: colors.textTertiary,
-                                ),
+
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    monthTaskCount > 0
+                                        ? '${toPersianDigits((progressRatio * 100).round())}٪'
+                                        : '—',
+                                    style: TextStyle(
+                                      fontSize: 10.0,
+                                      fontWeight: FontWeight.w600,
+                                      color: monthTaskCount > 0
+                                          ? (isCurrentMonth || isSelectedMonth
+                                                ? colors.primary
+                                                : colors.textSecondary)
+                                          : colors.textTertiary,
+                                    ),
+                                  ),
+                                  Text(
+                                    monthTaskCount > 0
+                                        ? '${toPersianDigits(monthCompletedCount)}/${toPersianDigits(monthTaskCount)}'
+                                        : '',
+                                    style: TextStyle(
+                                      fontSize: 9.0,
+                                      color: colors.textTertiary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
-        ),
+              ),
+            ),
             const SizedBox(height: RitmoSpacing.sm),
 
             // Heatmap Legend (راهنمای نقشهٔ حرارتی)
@@ -238,7 +275,10 @@ class JourneyYearView extends StatelessWidget {
       builder: (ctx, constraints) {
         final availableWidth = constraints.maxWidth;
         const cellSpacing = 2.0;
-        final cellSize = ((availableWidth - (6 * cellSpacing)) / 7).clamp(4.0, 16.0);
+        final cellSize = ((availableWidth - (6 * cellSpacing)) / 7).clamp(
+          4.0,
+          16.0,
+        );
 
         return Wrap(
           spacing: cellSpacing,
@@ -271,7 +311,11 @@ class JourneyYearView extends StatelessWidget {
               label: semanticsText,
               child: GestureDetector(
                 onTap: () {
-                  final gDate = Jalali(jalaliYear, monthIndex, dayNum).toDateTime();
+                  final gDate = Jalali(
+                    jalaliYear,
+                    monthIndex,
+                    dayNum,
+                  ).toDateTime();
                   onSelectDay?.call(gDate);
                 },
                 child: Container(
@@ -301,7 +345,10 @@ class JourneyYearView extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('فعالیت: کمتر', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+          Text(
+            'فعالیت: کمتر',
+            style: TextStyle(fontSize: 10, color: colors.textSecondary),
+          ),
           const SizedBox(width: 6),
           _buildLegendBox(colors.borderSubtle.withValues(alpha: 0.35), 'صفر'),
           const SizedBox(width: 3),
@@ -313,7 +360,10 @@ class JourneyYearView extends StatelessWidget {
           const SizedBox(width: 3),
           _buildLegendBox(colors.success, 'کامل'),
           const SizedBox(width: 6),
-          Text('بیشتر', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+          Text(
+            'بیشتر',
+            style: TextStyle(fontSize: 10, color: colors.textSecondary),
+          ),
         ],
       ),
     );

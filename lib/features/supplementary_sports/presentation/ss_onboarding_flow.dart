@@ -572,7 +572,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         backgroundColor: colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
           onPressed: _prevStep,
           tooltip: 'بازگشت',
         ),

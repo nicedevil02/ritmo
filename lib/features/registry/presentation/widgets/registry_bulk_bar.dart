@@ -59,13 +59,13 @@ class RegistryBulkBar extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF64748B),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 icon: const Icon(Icons.archive_rounded, size: 16),
-                label: const Text(
-                  'بایگانی',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: const Text('بایگانی', style: TextStyle(fontSize: 12)),
               ),
               const SizedBox(width: 8),
               ElevatedButton.icon(
@@ -73,13 +73,13 @@ class RegistryBulkBar extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF43F5E),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
                 icon: const Icon(Icons.delete_forever_rounded, size: 16),
-                label: const Text(
-                  'حذف',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: const Text('حذف', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),

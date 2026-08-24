@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
@@ -22,11 +23,23 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
   String? _lastLogTimeFa;
   int? _selectedValence;
   String? _justLoggedLabel;
+  StreamSubscription? _eventSub;
 
   @override
   void initState() {
     super.initState();
     _loadTodayStats();
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
+      if (event.type == RitmoEventType.moodLogged.code && mounted) {
+        _loadTodayStats();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTodayStats() async {
@@ -68,17 +81,7 @@ class _FrictionlessMoodBarState extends State<FrictionlessMoodBar> {
     );
 
     if (loggedId != null) {
-      final now = DateTime.now();
-      final hour = now.hour.toString().padLeft(2, '0');
-      final minute = now.minute.toString().padLeft(2, '0');
-
-      if (mounted) {
-        setState(() {
-          _todayLogCount += 1;
-          _lastLogTimeFa = RitmoNumber.fa('$hour:$minute');
-        });
-      }
-
+      await _loadTodayStats();
       widget.onLogChanged();
     }
   }

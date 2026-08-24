@@ -25,7 +25,11 @@ Color kindColor(BuildContext context, AgendaItemKind kind) {
   }
 }
 
-Color domainColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+Color domainColor(
+  BuildContext context,
+  AgendaDomain domain, {
+  AgendaItemKind? kind,
+}) {
   if (kind != null && domain == AgendaDomain.routine) {
     return kindColor(context, kind);
   }
@@ -57,7 +61,11 @@ Color domainColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? ki
   }
 }
 
-Color domainContainerColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+Color domainContainerColor(
+  BuildContext context,
+  AgendaDomain domain, {
+  AgendaItemKind? kind,
+}) {
   final baseColor = domainColor(context, domain, kind: kind);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final alpha = isDark ? 0.16 : 0.10;
@@ -178,7 +186,11 @@ String domainLabelFa(AgendaDomain domain, {AgendaItemKind? kind}) {
   }
 }
 
-Color domainIconColor(BuildContext context, AgendaDomain domain, {AgendaItemKind? kind}) {
+Color domainIconColor(
+  BuildContext context,
+  AgendaDomain domain, {
+  AgendaItemKind? kind,
+}) {
   if (domain == AgendaDomain.cycle) {
     return const Color(0xFFEF4444);
   }
@@ -186,7 +198,11 @@ Color domainIconColor(BuildContext context, AgendaDomain domain, {AgendaItemKind
 }
 
 IconData itemIcon(AgendaItem item) => domainIcon(item.domain, kind: item.kind);
-Color itemColor(BuildContext context, AgendaItem item) => domainColor(context, item.domain, kind: item.kind);
-Color itemIconColor(BuildContext context, AgendaItem item) => domainIconColor(context, item.domain, kind: item.kind);
-Color itemContainerColor(BuildContext context, AgendaItem item) => domainContainerColor(context, item.domain, kind: item.kind);
-String itemLabelFa(AgendaItem item) => domainLabelFa(item.domain, kind: item.kind);
+Color itemColor(BuildContext context, AgendaItem item) =>
+    domainColor(context, item.domain, kind: item.kind);
+Color itemIconColor(BuildContext context, AgendaItem item) =>
+    domainIconColor(context, item.domain, kind: item.kind);
+Color itemContainerColor(BuildContext context, AgendaItem item) =>
+    domainContainerColor(context, item.domain, kind: item.kind);
+String itemLabelFa(AgendaItem item) =>
+    domainLabelFa(item.domain, kind: item.kind);

@@ -17,7 +17,9 @@ class KonkurRegistrySource implements RegistrySource {
   @override
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM konkur_subjects');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM konkur_subjects',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -49,24 +51,26 @@ class KonkurRegistrySource implements RegistrySource {
       );
       final topicCount = Sqflite.firstIntValue(topicsRes) ?? 0;
 
-      entries.add(RegistryEntry(
-        id: 'konkur:$id',
-        domain: RegistryDomain.konkur,
-        sourceId: id,
-        title: title,
-        subtitle: topicCount > 0 ? '$topicCount سرفصل' : null,
-        scheduleSummary: 'برنامه مطالعه کنکور',
-        status: RegistryStatus.active,
-        agendaProxy: AgendaItem(
+      entries.add(
+        RegistryEntry(
           id: 'konkur:$id',
-          domain: AgendaDomain.konkur,
+          domain: RegistryDomain.konkur,
           sourceId: id,
           title: title,
-          dateStr: todayStr,
-          category: Category.konkur,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.konkur, targetId: id),
+          subtitle: topicCount > 0 ? '$topicCount سرفصل' : null,
+          scheduleSummary: 'برنامه مطالعه کنکور',
+          status: RegistryStatus.active,
+          agendaProxy: AgendaItem(
+            id: 'konkur:$id',
+            domain: AgendaDomain.konkur,
+            sourceId: id,
+            title: title,
+            dateStr: todayStr,
+            category: Category.konkur,
+            deepLink: AgendaDeepLink(domain: AgendaDomain.konkur, targetId: id),
+          ),
         ),
-      ));
+      );
     }
 
     return entries;

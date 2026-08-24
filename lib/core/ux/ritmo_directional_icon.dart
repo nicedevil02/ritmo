@@ -27,36 +27,32 @@ class RitmoDirectionalIcon extends StatelessWidget {
 
 class RitmoIcons {
   static Widget back(BuildContext context, {double? size, Color? color}) {
-    return RitmoDirectionalIcon(
-      ltrIcon: Icons.arrow_back,
-      rtlIcon: Icons.arrow_forward,
+    return Icon(
+      Icons.arrow_back_rounded,
       size: size,
       color: color,
     );
   }
 
   static Widget forward(BuildContext context, {double? size, Color? color}) {
-    return RitmoDirectionalIcon(
-      ltrIcon: Icons.arrow_forward,
-      rtlIcon: Icons.arrow_back,
+    return Icon(
+      Icons.arrow_forward_rounded,
       size: size,
       color: color,
     );
   }
 
   static Widget chevronBack(BuildContext context, {double? size, Color? color}) {
-    return RitmoDirectionalIcon(
-      ltrIcon: Icons.chevron_left,
-      rtlIcon: Icons.chevron_right,
+    return Icon(
+      Icons.chevron_left_rounded,
       size: size,
       color: color,
     );
   }
 
   static Widget chevronForward(BuildContext context, {double? size, Color? color}) {
-    return RitmoDirectionalIcon(
-      ltrIcon: Icons.chevron_right,
-      rtlIcon: Icons.chevron_left,
+    return Icon(
+      Icons.chevron_right_rounded,
       size: size,
       color: color,
     );

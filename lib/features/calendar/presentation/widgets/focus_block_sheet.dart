@@ -18,7 +18,8 @@ class FocusBlockSheet extends StatefulWidget {
   final Future<void> Function({
     required String resultType,
     required int actualDurationMinutes,
-  }) onComplete;
+  })
+  onComplete;
 
   static Future<void> show({
     required BuildContext context,
@@ -26,17 +27,15 @@ class FocusBlockSheet extends StatefulWidget {
     required Future<void> Function({
       required String resultType,
       required int actualDurationMinutes,
-    }) onComplete,
+    })
+    onComplete,
   }) {
     RitmoHapticsPolicy.selection();
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FocusBlockSheet(
-        item: item,
-        onComplete: onComplete,
-      ),
+      builder: (context) => FocusBlockSheet(item: item, onComplete: onComplete),
     ).then((_) {
       RitmoHapticsPolicy.selection();
     });
@@ -55,7 +54,8 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
   @override
   void initState() {
     super.initState();
-    final durMinutes = widget.item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
+    final durMinutes =
+        widget.item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
     _totalSeconds = durMinutes * 60;
     _remainingSeconds = _totalSeconds;
     _startTimer();
@@ -97,7 +97,10 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
     _timer?.cancel();
     RitmoHapticsPolicy.success();
     final elapsedMinutes = ((_totalSeconds - _remainingSeconds) / 60).ceil();
-    final actual = elapsedMinutes > 0 ? elapsedMinutes : (widget.item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes);
+    final actual = elapsedMinutes > 0
+        ? elapsedMinutes
+        : (widget.item.durationMinutes ??
+              CalendarDefaults.fallbackDurationMinutes);
     Navigator.of(context).pop();
     await widget.onComplete(
       resultType: OccurrenceResultType.full,
@@ -108,7 +111,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
   Future<void> _handlePartialComplete() async {
     _timer?.cancel();
     RitmoHapticsPolicy.selection();
-    final elapsedMinutes = ((_totalSeconds - _remainingSeconds) / 60).floor().clamp(1, 1440);
+    final elapsedMinutes = ((_totalSeconds - _remainingSeconds) / 60)
+        .floor()
+        .clamp(1, 1440);
     Navigator.of(context).pop();
     await widget.onComplete(
       resultType: OccurrenceResultType.partial,
@@ -123,10 +128,13 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
 
     final minutes = _remainingSeconds ~/ 60;
     final seconds = _remainingSeconds % 60;
-    final timeStr = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     final persianTimeStr = toPersianDigits(timeStr);
 
-    final progress = _totalSeconds > 0 ? (1.0 - (_remainingSeconds / _totalSeconds)).clamp(0.0, 1.0) : 0.0;
+    final progress = _totalSeconds > 0
+        ? (1.0 - (_remainingSeconds / _totalSeconds)).clamp(0.0, 1.0)
+        : 0.0;
     final isFinished = _remainingSeconds == 0;
 
     return Directionality(
@@ -134,7 +142,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(RitmoRadius.sheet),
+          ),
         ),
         padding: const EdgeInsets.all(RitmoSpacing.xl),
         child: Column(
@@ -178,7 +188,10 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(RitmoRadius.badge),
@@ -207,7 +220,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
                     value: progress,
                     strokeWidth: 8,
                     backgroundColor: colors.borderSubtle.withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation<Color>(isFinished ? colors.success : accent),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isFinished ? colors.success : accent,
+                    ),
                   ),
                 ),
                 Column(
@@ -229,7 +244,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
                           : (_isRunning ? 'در حال تمرکز...' : 'متوقف‌شده'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: isFinished ? colors.success : colors.textSecondary,
+                        color: isFinished
+                            ? colors.success
+                            : colors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -243,7 +260,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
             if (!isFinished)
               IconButton.filledTonal(
                 iconSize: 32,
-                icon: Icon(_isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded),
+                icon: Icon(
+                  _isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                ),
                 onPressed: _isRunning ? _pauseTimer : _startTimer,
                 style: IconButton.styleFrom(
                   backgroundColor: accent.withValues(alpha: 0.15),
@@ -276,7 +295,9 @@ class _FocusBlockSheetState extends State<FocusBlockSheet> {
                 Expanded(
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: isFinished ? colors.success : colors.primary,
+                      backgroundColor: isFinished
+                          ? colors.success
+                          : colors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: _handleFullComplete,

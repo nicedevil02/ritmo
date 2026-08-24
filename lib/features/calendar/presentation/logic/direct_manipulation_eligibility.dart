@@ -13,7 +13,9 @@ class DirectManipulationEligibility {
 
     // Fixed items (like prayers, fixed Shari'ah anchors) cannot be moved
     if (item.isFixed && item.domain == AgendaDomain.prayer) return false;
-    if (item.domain == AgendaDomain.cycle || item.domain == AgendaDomain.worshipDebt) return false;
+    if (item.domain == AgendaDomain.cycle ||
+        item.domain == AgendaDomain.worshipDebt)
+      return false;
 
     // Supported domains with safe time mutation paths
     switch (item.domain) {
@@ -25,7 +27,8 @@ class DirectManipulationEligibility {
       case AgendaDomain.task:
         return true;
       case AgendaDomain.mustahab:
-        return item.itemType == AgendaItemType.flexible || item.itemType == AgendaItemType.floating;
+        return item.itemType == AgendaItemType.flexible ||
+            item.itemType == AgendaItemType.floating;
       default:
         return false;
     }

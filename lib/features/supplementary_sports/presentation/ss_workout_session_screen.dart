@@ -1090,7 +1090,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           elevation: 0,
           leading: IconButton(
                      tooltip: 'بازگشت',
-            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(

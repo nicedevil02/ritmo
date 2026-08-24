@@ -19,11 +19,11 @@ class TodayCalendarConvergenceHelper {
     AgendaActionHandler? actionHandler,
     RitmoExecutionKernel? kernel,
     RitmoEventBus? eventBus,
-  })  : _agendaService = agendaService ?? DayAgendaService.instance,
-        _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
-        _actionHandler = actionHandler ?? AgendaActionHandler.instance,
-        _kernel = kernel ?? RitmoExecutionKernel.instance,
-        _eventBus = eventBus ?? RitmoEventBus();
+  }) : _agendaService = agendaService ?? DayAgendaService.instance,
+       _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
+       _actionHandler = actionHandler ?? AgendaActionHandler.instance,
+       _kernel = kernel ?? RitmoExecutionKernel.instance,
+       _eventBus = eventBus ?? RitmoEventBus();
 
   final DayAgendaService _agendaService;
   final DayAgendaSnapshotBuilder _snapshotBuilder;
@@ -39,7 +39,8 @@ class TodayCalendarConvergenceHelper {
   }
 
   /// Fetches a unified execution snapshot for today, shared between Today and Calendar.
-  Future<DayAgendaSnapshot> fetchTodaySnapshot({DateTime? now}) => getUnifiedSnapshot(date: now);
+  Future<DayAgendaSnapshot> fetchTodaySnapshot({DateTime? now}) =>
+      getUnifiedSnapshot(date: now);
 
   /// Opens the Calendar screen tab focused on a specific date and optional item.
   void openCalendarInContext(
@@ -56,62 +57,75 @@ class TodayCalendarConvergenceHelper {
     };
     if (itemId != null) payload['itemId'] = itemId;
 
-    _eventBus.fire(RitmoEvent(
-      type: 'navigate_tab',
-      timestamp: DateTime.now(),
-      payload: payload,
-    ));
+    _eventBus.fire(
+      RitmoEvent(
+        type: 'navigate_tab',
+        timestamp: DateTime.now(),
+        payload: payload,
+      ),
+    );
   }
 
   /// Navigates to the main Today Dashboard / Simple Tasks screen tab.
   void openTodayDashboard(BuildContext context) {
     final mode = AppModeService.instance.current;
     final homeIndex = RitmoShellMetrics.homeTabIndexFor(mode);
-    _eventBus.fire(RitmoEvent(
-      type: 'navigate_tab',
-      timestamp: DateTime.now(),
-      payload: {'index': homeIndex},
-    ));
+    _eventBus.fire(
+      RitmoEvent(
+        type: 'navigate_tab',
+        timestamp: DateTime.now(),
+        payload: {'index': homeIndex},
+      ),
+    );
   }
 
   /// Executes item completion uniformly from any surface and refreshes both Today and Calendar.
   Future<void> completeItem(AgendaItem item) async {
     if (item.domain == AgendaDomain.routine) {
-      await _kernel.execute(CompleteOccurrenceCommand(
-        routineId: item.sourceId,
-        dateStr: item.dateStr,
-        resultType: OccurrenceResultType.full,
-        durationMinutes: item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
-      ));
+      await _kernel.execute(
+        CompleteOccurrenceCommand(
+          routineId: item.sourceId,
+          dateStr: item.dateStr,
+          resultType: OccurrenceResultType.full,
+          durationMinutes:
+              item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
+        ),
+      );
     } else {
       await _actionHandler.toggleAgendaItem(item: item, isDone: true);
     }
 
     _agendaService.invalidateDate(item.dateStr);
-    _eventBus.fire(RitmoEvent(
-      type: 'AgendaItemToggled',
-      timestamp: DateTime.now(),
-      payload: {'id': item.id, 'date': item.dateStr, 'isDone': true},
-    ));
+    _eventBus.fire(
+      RitmoEvent(
+        type: 'AgendaItemToggled',
+        timestamp: DateTime.now(),
+        payload: {'id': item.id, 'date': item.dateStr, 'isDone': true},
+      ),
+    );
   }
 
   /// Executes item skip uniformly from any surface and refreshes both Today and Calendar.
   Future<void> skipItem(AgendaItem item) async {
     if (item.domain == AgendaDomain.routine) {
-      await _kernel.execute(SkipOccurrenceCommand(
-        routineId: item.sourceId,
-        dateStr: item.dateStr,
-        reason: 'Skipped via Quick Action',
-      ));
+      await _kernel.execute(
+        SkipOccurrenceCommand(
+          routineId: item.sourceId,
+          dateStr: item.dateStr,
+          reason: 'Skipped via Quick Action',
+        ),
+      );
     } else {
       await _actionHandler.toggleAgendaItem(item: item, isDone: false);
     }
 
     _agendaService.invalidateDate(item.dateStr);
-    _eventBus.fire(RitmoEvent(
-      type: 'AgendaItemToggled',
-      timestamp: DateTime.now(),
-      payload: {'id': item.id, 'date': item.dateStr, 'isDone': false},
-    ));
+    _eventBus.fire(
+      RitmoEvent(
+        type: 'AgendaItemToggled',
+        timestamp: DateTime.now(),
+        payload: {'id': item.id, 'date': item.dateStr, 'isDone': false},
+      ),
+    );
   }
 }

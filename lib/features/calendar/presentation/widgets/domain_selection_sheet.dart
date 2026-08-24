@@ -69,7 +69,11 @@ class DomainSelectionSheet extends StatelessWidget {
                       color: colors.primaryContainer.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.add_task_rounded, color: colors.primary, size: 22),
+                    child: Icon(
+                      Icons.add_task_rounded,
+                      color: colors.primary,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: RitmoSpacing.md),
                   Expanded(
@@ -85,7 +89,9 @@ class DomainSelectionSheet extends StatelessWidget {
                           children: [
                             Text(
                               'زمان انتخابی: ',
-                              style: RitmoTextStyles.caption(colors.textSecondary),
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
+                              ),
                             ),
                             RitmoTimeRange(
                               startMinutes: totalMinutes,
@@ -97,7 +103,10 @@ class DomainSelectionSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: colors.textSecondary,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -179,7 +188,8 @@ class DomainSelectionSheet extends StatelessWidget {
                 color: colors.warning,
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final subjects = await KonkurRepository.instance.getSubjects();
+                  final subjects = await KonkurRepository.instance
+                      .getSubjects();
                   final topics = await KonkurRepository.instance.getTopics();
                   if (context.mounted) {
                     unawaited(
@@ -292,7 +302,11 @@ class DomainSelectionSheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: colors.textTertiary),
+                Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 14,
+                  color: colors.textTertiary,
+                ),
               ],
             ),
           ),

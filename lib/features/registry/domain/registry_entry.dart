@@ -140,12 +140,12 @@ class RegistryCapabilities {
 
   /// Mandatory worship practices & system defaults: no action allowed except setting reminder
   const RegistryCapabilities.systemGenerated()
-      : canEdit = false,
-        canDelete = false,
-        canArchive = false,
-        canPause = false,
-        canToggleReminder = true,
-        canDuplicate = false;
+    : canEdit = false,
+      canDelete = false,
+      canArchive = false,
+      canPause = false,
+      canToggleReminder = true,
+      canDuplicate = false;
 }
 
 class RegistryEntry {

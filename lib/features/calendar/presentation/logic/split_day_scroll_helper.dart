@@ -9,8 +9,13 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dar
 }) {
   final clampedM = minutesOfDay.clamp(0, 1439);
   final columnIndex = clampedM < boundaryMinutes ? 0 : 1;
-  final minuteInColumn = clampedM < boundaryMinutes ? clampedM : clampedM - boundaryMinutes;
-  final effectiveMinute = (minuteInColumn - leadMinutes).clamp(0, boundaryMinutes);
+  final minuteInColumn = clampedM < boundaryMinutes
+      ? clampedM
+      : clampedM - boundaryMinutes;
+  final effectiveMinute = (minuteInColumn - leadMinutes).clamp(
+    0,
+    boundaryMinutes,
+  );
   final offset = effectiveMinute * pxPerMinute;
   return (columnIndex: columnIndex, offset: offset);
 }

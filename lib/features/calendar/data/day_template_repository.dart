@@ -82,7 +82,7 @@ class DayTemplate {
 
 class DayTemplateRepository {
   DayTemplateRepository({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+    : _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   final DatabaseHelper _dbHelper;
 

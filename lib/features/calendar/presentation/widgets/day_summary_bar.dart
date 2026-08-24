@@ -42,11 +42,7 @@ class DaySummaryBar extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.surfaceSubtle,
-        border: Border(
-          bottom: BorderSide(
-            color: colors.borderSubtle,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: colors.borderSubtle)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -41,23 +41,24 @@ class JourneyFreeGapsSection extends StatelessWidget {
               child: Icon(
                 Icons.event_busy_rounded,
                 size: 26,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.45,
+                ),
               ),
             ),
             const SizedBox(height: RitmoSpacing.md),
             const Text(
               'روز پرباری داری! 💪',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15.0,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.0),
             ),
             const SizedBox(height: RitmoSpacing.xs),
             Text(
               'زمان آزاد قابل توجهی در این روز باقی نمانده است.',
               style: TextStyle(
                 fontSize: 12.0,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.60),
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.60,
+                ),
               ),
             ),
           ],
@@ -72,7 +73,11 @@ class JourneyFreeGapsSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.event_available_rounded, size: 18, color: theme.colorScheme.primary),
+              Icon(
+                Icons.event_available_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: RitmoSpacing.sm),
               Text(
                 'بلاک‌های زمان آزاد (${toPersianDigits(gaps.length.toString())})',
@@ -88,7 +93,9 @@ class JourneyFreeGapsSection extends StatelessWidget {
           for (final gap in gaps)
             DragTarget<AgendaItem>(
               onWillAcceptWithDetails: (details) {
-                return DirectManipulationEligibility.isSchedulable(details.data);
+                return DirectManipulationEligibility.isSchedulable(
+                  details.data,
+                );
               },
               onAcceptWithDetails: (details) {
                 RitmoHapticsPolicy.success();
@@ -102,11 +109,18 @@ class JourneyFreeGapsSection extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: RitmoMotion.state,
                     margin: const EdgeInsets.only(bottom: RitmoSpacing.sm),
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14.0,
+                      vertical: 10.0,
+                    ),
                     decoration: BoxDecoration(
                       color: isHovered
-                          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.35)
-                          : theme.colorScheme.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+                          ? theme.colorScheme.primaryContainer.withValues(
+                              alpha: 0.35,
+                            )
+                          : theme.colorScheme.primary.withValues(
+                              alpha: isDark ? 0.12 : 0.06,
+                            ),
                       borderRadius: BorderRadius.circular(RitmoRadius.card),
                       border: Border.all(
                         color: isHovered
@@ -121,7 +135,9 @@ class JourneyFreeGapsSection extends StatelessWidget {
                         Row(
                           children: [
                             Icon(
-                              isHovered ? Icons.add_circle_outline_rounded : Icons.access_time_filled_rounded,
+                              isHovered
+                                  ? Icons.add_circle_outline_rounded
+                                  : Icons.access_time_filled_rounded,
                               size: 16,
                               color: theme.colorScheme.primary,
                             ),
@@ -129,11 +145,15 @@ class JourneyFreeGapsSection extends StatelessWidget {
                             Text(
                               isHovered
                                   ? 'رها کن برای شروع از ${toPersianDigits(gap.startTimeStr)}'
-                                  : toPersianDigits('از ${gap.startTimeStr} تا ${gap.endTimeStr}'),
+                                  : toPersianDigits(
+                                      'از ${gap.startTimeStr} تا ${gap.endTimeStr}',
+                                    ),
                               style: TextStyle(
                                 fontSize: 14.0,
                                 fontWeight: FontWeight.bold,
-                                color: isHovered ? theme.colorScheme.primary : null,
+                                color: isHovered
+                                    ? theme.colorScheme.primary
+                                    : null,
                               ),
                             ),
                           ],
@@ -141,16 +161,25 @@ class JourneyFreeGapsSection extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: isHovered ? theme.colorScheme.primary : theme.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                color: isHovered
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(
+                                  RitmoRadius.pill,
+                                ),
                               ),
                               child: Text(
                                 toPersianDigits('${gap.durationMinutes} دقیقه'),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isHovered ? theme.colorScheme.onPrimary : theme.colorScheme.onPrimaryContainer,
+                                  color: isHovered
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -159,7 +188,8 @@ class JourneyFreeGapsSection extends StatelessWidget {
                             Icon(
                               Icons.chevron_left_rounded,
                               size: 18,
-                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45),
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.45),
                             ),
                           ],
                         ),

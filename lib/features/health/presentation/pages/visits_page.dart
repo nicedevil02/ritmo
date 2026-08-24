@@ -35,10 +35,11 @@ class VisitsPage extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
@@ -48,28 +49,37 @@ class VisitsPage extends StatelessWidget {
                 ),
                 child: const Icon(CupertinoIcons.calendar_badge_plus, color: identityColor, size: 18),
               ),
-              const SizedBox(width: 10),
-              Text(
-                l10n.doctorVisits,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  fontSize: 16,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n.doctorVisits,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
           actions: [
             Padding(
-              padding: const EdgeInsets.only(left: 16),
+              padding: const EdgeInsets.only(left: 8),
               child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 onPressed: openDoctorVisitSummarySheet,
-                icon: const Icon(Icons.description_outlined, size: 16, color: Color(0xff10B981)),
+                icon: const Icon(Icons.description_outlined, size: 15, color: Color(0xff10B981)),
                 label: const Text(
                   'خلاصه برای پزشک',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 11.5,
                     color: Color(0xff10B981),
                   ),
                 ),

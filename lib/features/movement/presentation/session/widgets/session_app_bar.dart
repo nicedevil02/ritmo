@@ -35,7 +35,7 @@ class SessionAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_forward_rounded),
+        icon: const Icon(Icons.arrow_back_rounded),
         tooltip: 'بازگشت',
         onPressed: onBackPressed,
       ),

@@ -30,9 +30,18 @@ class JourneyWeekView extends StatefulWidget {
   final void Function(DateTime date, int slotMinutes)? onSlotTap;
   final void Function(AgendaItem item, DateTime targetDate)? onMoveItemToDate;
 
-  static const double pxPerMinute = 1.05; // 1440 * 1.05 = 1512.0 px total vertical scrollable height
+  static const double pxPerMinute =
+      1.05; // 1440 * 1.05 = 1512.0 px total vertical scrollable height
   static const double hourAxisWidth = 44.0;
-  static const List<String> weekDayShortFa = ['ش', '۱ش', '۲ش', '۳ش', '۴ش', '۵ش', 'ج'];
+  static const List<String> weekDayShortFa = [
+    'ش',
+    '۱ش',
+    '۲ش',
+    '۳ش',
+    '۴ش',
+    '۵ش',
+    'ج',
+  ];
 
   @override
   State<JourneyWeekView> createState() => _JourneyWeekViewState();
@@ -114,7 +123,9 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
         }
       }
     }
-    final weekRatio = weekTotal > 0 ? (weekCompleted / weekTotal).clamp(0.0, 1.0) : 0.0;
+    final weekRatio = weekTotal > 0
+        ? (weekCompleted / weekTotal).clamp(0.0, 1.0)
+        : 0.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -194,12 +205,16 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                       final isFriday = index == 6;
 
                       final jalaliDay = Jalali.fromDateTime(day);
-                      final dayNumStr = toPersianDigits(jalaliDay.day.toString());
+                      final dayNumStr = toPersianDigits(
+                        jalaliDay.day.toString(),
+                      );
 
                       final k = DateKey.of(day);
                       final snap = widget.rangeSnapshots[k];
                       final dayCompleted = snap?.completedCount ?? 0;
-                      final dayTotal = (snap?.completedCount ?? 0) + (snap?.remainingCount ?? 0);
+                      final dayTotal =
+                          (snap?.completedCount ?? 0) +
+                          (snap?.remainingCount ?? 0);
 
                       return Expanded(
                         child: GestureDetector(
@@ -212,22 +227,30 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                               color: isSelected
                                   ? colors.primary
                                   : (isToday
-                                      ? colors.primaryContainer.withValues(alpha: 0.35)
-                                      : colors.surface),
+                                        ? colors.primaryContainer.withValues(
+                                            alpha: 0.35,
+                                          )
+                                        : colors.surface),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
                                     ? colors.primary
-                                    : (isToday ? colors.primary : colors.border.withValues(alpha: 0.6)),
+                                    : (isToday
+                                          ? colors.primary
+                                          : colors.border.withValues(
+                                              alpha: 0.6,
+                                            )),
                                 width: (isToday || isSelected) ? 1.5 : 0.8,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: colors.primary.withValues(alpha: 0.3),
+                                        color: colors.primary.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
-                                      )
+                                      ),
                                     ]
                                   : null,
                             ),
@@ -241,7 +264,9 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                     fontWeight: FontWeight.w700,
                                     color: isSelected
                                         ? colors.onPrimary
-                                        : (isFriday ? colors.error : colors.textSecondary),
+                                        : (isFriday
+                                              ? colors.error
+                                              : colors.textSecondary),
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -252,7 +277,9 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                     fontWeight: FontWeight.w800,
                                     color: isSelected
                                         ? colors.onPrimary
-                                        : (isFriday ? colors.error : colors.textPrimary),
+                                        : (isFriday
+                                              ? colors.error
+                                              : colors.textPrimary),
                                   ),
                                 ),
                                 if (dayTotal > 0) ...[
@@ -264,7 +291,9 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                       shape: BoxShape.circle,
                                       color: isSelected
                                           ? colors.onPrimary
-                                          : (dayCompleted == dayTotal ? colors.success : colors.primary),
+                                          : (dayCompleted == dayTotal
+                                                ? colors.success
+                                                : colors.primary),
                                     ),
                                   ),
                                 ],
@@ -288,7 +317,9 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                 decoration: BoxDecoration(
                   color: colors.surfaceSubtle,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.4)),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -312,11 +343,15 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                           final day = weekDays[index];
                           final k = DateKey.of(day);
                           final snap = widget.rangeSnapshots[k];
-                          final untimedItems = (snap?.items ?? []).where((i) => !i.isTimed).toList();
+                          final untimedItems = (snap?.items ?? [])
+                              .where((i) => !i.isTimed)
+                              .toList();
 
                           return Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 1.5,
+                              ),
                               child: Column(
                                 children: [
                                   for (final item in untimedItems.take(2))
@@ -324,13 +359,26 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                       onTap: () => widget.onItemTap?.call(item),
                                       child: Container(
                                         width: double.infinity,
-                                        margin: const EdgeInsets.only(bottom: 2),
-                                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                                        margin: const EdgeInsets.only(
+                                          bottom: 2,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 3,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: domainColor(context, item.domain).withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(4),
+                                          color: domainColor(
+                                            context,
+                                            item.domain,
+                                          ).withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                           border: Border.all(
-                                            color: domainColor(context, item.domain).withValues(alpha: 0.5),
+                                            color: domainColor(
+                                              context,
+                                              item.domain,
+                                            ).withValues(alpha: 0.5),
                                             width: 0.7,
                                           ),
                                         ),
@@ -341,8 +389,12 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                           style: TextStyle(
                                             fontSize: 8.5,
                                             fontWeight: FontWeight.w700,
-                                            color: item.isCompleted ? colors.textTertiary : colors.textPrimary,
-                                            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                                            color: item.isCompleted
+                                                ? colors.textTertiary
+                                                : colors.textPrimary,
+                                            decoration: item.isCompleted
+                                                ? TextDecoration.lineThrough
+                                                : null,
                                           ),
                                         ),
                                       ),
@@ -375,12 +427,16 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.6),
+                  ),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
                   child: SizedBox(
                     height: 1440 * JourneyWeekView.pxPerMinute,
                     child: Row(
@@ -402,10 +458,16 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                                 children: List.generate(7, (index) {
                                   final day = weekDays[index];
                                   final isToday = _isSameDay(day, _now);
-                                  final isSelected = _isSameDay(day, widget.selectedDate);
+                                  final isSelected = _isSameDay(
+                                    day,
+                                    widget.selectedDate,
+                                  );
                                   final dateKey = DateKey.of(day);
-                                  final snapshot = widget.rangeSnapshots[dateKey];
-                                  final timedItems = (snapshot?.items ?? []).where((i) => i.isTimed).toList();
+                                  final snapshot =
+                                      widget.rangeSnapshots[dateKey];
+                                  final timedItems = (snapshot?.items ?? [])
+                                      .where((i) => i.isTimed)
+                                      .toList();
 
                                   return Expanded(
                                     child: _buildDayColumn(
@@ -442,7 +504,10 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
       decoration: BoxDecoration(
         color: colors.surfaceSubtle.withValues(alpha: 0.4),
         border: Border(
-          left: BorderSide(color: colors.border.withValues(alpha: 0.4), width: 0.8),
+          left: BorderSide(
+            color: colors.border.withValues(alpha: 0.4),
+            width: 0.8,
+          ),
         ),
       ),
       child: Stack(
@@ -519,7 +584,8 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
     final layoutItems = layoutEngine.calculateLayout(timedItems);
 
     return DragTarget<AgendaItem>(
-      onWillAcceptWithDetails: (details) => DateKey.of(day) != details.data.dateStr,
+      onWillAcceptWithDetails: (details) =>
+          DateKey.of(day) != details.data.dateStr,
       onAcceptWithDetails: (details) {
         widget.onMoveItemToDate?.call(details.data, day);
       },
@@ -530,10 +596,14 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
           decoration: BoxDecoration(
             color: isHovered
                 ? colors.primary.withValues(alpha: 0.18)
-                : (isSelected ? colors.primaryContainer.withValues(alpha: 0.08) : null),
+                : (isSelected
+                      ? colors.primaryContainer.withValues(alpha: 0.08)
+                      : null),
             border: Border(
               left: BorderSide(
-                color: isHovered ? colors.primary : colors.divider.withValues(alpha: 0.25),
+                color: isHovered
+                    ? colors.primary
+                    : colors.divider.withValues(alpha: 0.25),
                 width: isHovered ? 1.5 : 0.6,
               ),
             ),
@@ -550,7 +620,10 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                       behavior: HitTestBehavior.translucent,
                       onTapUp: (details) {
                         final localY = details.localPosition.dy;
-                        final minuteOfDay = (localY / JourneyWeekView.pxPerMinute).round().clamp(0, 1439);
+                        final minuteOfDay =
+                            (localY / JourneyWeekView.pxPerMinute)
+                                .round()
+                                .clamp(0, 1439);
                         final roundedMinute = (minuteOfDay ~/ 15) * 15;
                         widget.onSlotTap?.call(day, roundedMinute);
                       },
@@ -696,14 +769,18 @@ class _JourneyWeekViewState extends State<JourneyWeekView> {
                           color: item.isCompleted
                               ? colors.textTertiary
                               : colors.textPrimary,
-                          decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                          decoration: item.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
                           height: 1.15,
                         ),
                       ),
                     ),
                   ],
                 ),
-                if (!isCompact && item.timeOfDay != null && item.timeOfDay!.isNotEmpty) ...[
+                if (!isCompact &&
+                    item.timeOfDay != null &&
+                    item.timeOfDay!.isNotEmpty) ...[
                   const SizedBox(height: 1.5),
                   Text(
                     toPersianDigits(item.timeOfDay ?? ''),

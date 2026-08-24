@@ -25,13 +25,19 @@ class DeleteImpactReport {
       parts.add('${toPersianDigits(completionCount.toString())} ثبت انجام');
     }
     if (longestStreakDays > 0) {
-      parts.add('زنجیرهٔ ${toPersianDigits(longestStreakDays.toString())} روزه');
+      parts.add(
+        'زنجیرهٔ ${toPersianDigits(longestStreakDays.toString())} روزه',
+      );
     }
     if (activeReminderCount > 0) {
-      parts.add('${toPersianDigits(activeReminderCount.toString())} یادآور فعال');
+      parts.add(
+        '${toPersianDigits(activeReminderCount.toString())} یادآور فعال',
+      );
     }
     if (orphanedDependents.isNotEmpty) {
-      parts.add('${toPersianDigits(orphanedDependents.length.toString())} مورد وابسته بی‌سرپرست می‌شود');
+      parts.add(
+        '${toPersianDigits(orphanedDependents.length.toString())} مورد وابسته بی‌سرپرست می‌شود',
+      );
     }
     if (parts.isEmpty) {
       return 'هیچ سابقهٔ انجام یا یادآور فعالی ندارد.';

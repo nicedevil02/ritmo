@@ -51,7 +51,8 @@ class JourneySmartPanel extends StatefulWidget {
   State<JourneySmartPanel> createState() => _JourneySmartPanelState();
 }
 
-class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTickerProviderStateMixin {
+class _JourneySmartPanelState extends State<JourneySmartPanel>
+    with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   @override
@@ -80,126 +81,137 @@ class _JourneySmartPanelState extends State<JourneySmartPanel> with SingleTicker
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.75),
           ),
-        decoration: BoxDecoration(
-          color: colors.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
-          boxShadow: [
-            BoxShadow(
-              color: colors.overlay.withValues(alpha: 0.12),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(RitmoRadius.sheet),
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: RitmoSpacing.md),
-            // Top Drag Handle
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.borderSubtle,
-                  borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: colors.overlay.withValues(alpha: 0.12),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: RitmoSpacing.md),
+              // Top Drag Handle
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.borderSubtle,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: RitmoSpacing.md),
+              const SizedBox(height: RitmoSpacing.md),
 
-            // Segmented Tab Header Container
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.xl),
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.all(RitmoSpacing.xs),
-                decoration: BoxDecoration(
-                  color: colors.surfaceSubtle,
-                  borderRadius: BorderRadius.circular(RitmoRadius.field),
-                  border: Border.all(
-                    color: colors.borderSubtle,
-                  ),
+              // Segmented Tab Header Container
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: RitmoSpacing.xl,
                 ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: colors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.overlay.withValues(alpha: 0.08),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      )
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.all(RitmoSpacing.xs),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceSubtle,
+                    borderRadius: BorderRadius.circular(RitmoRadius.field),
+                    border: Border.all(color: colors.borderSubtle),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(
+                        RitmoRadius.iconButton,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.overlay.withValues(alpha: 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    labelColor: colors.primary,
+                    unselectedLabelColor: colors.textSecondary,
+                    labelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      const Tab(text: 'خلاصه'),
+                      Tab(
+                        text:
+                            'پیشنهادها (${toPersianDigits(widget.snapshot.suggestions.length.toString())})',
+                      ),
+                      Tab(
+                        text:
+                            'زمان آزاد (${toPersianDigits(widget.snapshot.freeGaps.length.toString())})',
+                      ),
                     ],
                   ),
-                  labelColor: colors.primary,
-                  unselectedLabelColor: colors.textSecondary,
-                  labelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  tabs: [
-                    const Tab(text: 'خلاصه'),
-                    Tab(text: 'پیشنهادها (${toPersianDigits(widget.snapshot.suggestions.length.toString())})'),
-                    Tab(text: 'زمان آزاد (${toPersianDigits(widget.snapshot.freeGaps.length.toString())})'),
+                ),
+              ),
+              const SizedBox(height: RitmoSpacing.sm),
+
+              // Tab Views
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(RitmoSpacing.xl),
+                      child: JourneySummarySection(
+                        snapshot: widget.snapshot,
+                        onSelectActivity: (item) {
+                          Navigator.maybePop(context);
+                          widget.onSelectActivity?.call(item);
+                        },
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(RitmoSpacing.xl),
+                      child: JourneySuggestionsSection(
+                        snapshot: widget.snapshot,
+                        onSelectConflict: (conflict) {
+                          Navigator.maybePop(context);
+                          widget.onSelectConflict?.call(conflict);
+                        },
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(RitmoSpacing.xl),
+                      child: JourneyFreeGapsSection(
+                        snapshot: widget.snapshot,
+                        onSelectFreeGap: (gap) {
+                          Navigator.maybePop(context);
+                          widget.onSelectFreeGap?.call(gap);
+                        },
+                        onDropItemOnGap: (item, gap) {
+                          Navigator.maybePop(context);
+                          widget.onDropItemOnGap?.call(item, gap);
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: RitmoSpacing.sm),
-
-            // Tab Views
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(RitmoSpacing.xl),
-                    child: JourneySummarySection(
-                      snapshot: widget.snapshot,
-                      onSelectActivity: (item) {
-                        Navigator.maybePop(context);
-                        widget.onSelectActivity?.call(item);
-                      },
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(RitmoSpacing.xl),
-                    child: JourneySuggestionsSection(
-                      snapshot: widget.snapshot,
-                      onSelectConflict: (conflict) {
-                        Navigator.maybePop(context);
-                        widget.onSelectConflict?.call(conflict);
-                      },
-                    ),
-                  ),
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(RitmoSpacing.xl),
-                    child: JourneyFreeGapsSection(
-                      snapshot: widget.snapshot,
-                      onSelectFreeGap: (gap) {
-                        Navigator.maybePop(context);
-                        widget.onSelectFreeGap?.call(gap);
-                      },
-                      onDropItemOnGap: (item, gap) {
-                        Navigator.maybePop(context);
-                        widget.onDropItemOnGap?.call(item, gap);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),),
+      ),
     );
   }
 }

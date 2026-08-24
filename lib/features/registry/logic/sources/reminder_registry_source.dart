@@ -32,7 +32,8 @@ class ReminderRegistrySource implements RegistrySource {
   }) async {
     final db = await DatabaseHelper.instance.database;
 
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT pr.id, pr.routineId, pr.scheduledTime, pr.state, pr.deferCount,
              COALESCE(r.title, 'کلاس: ' || c.title, pr.id) AS title,
              CASE WHEN r.id IS NULL AND cs.id IS NULL THEN 1 ELSE 0 END AS isOrphan
@@ -43,7 +44,9 @@ class ReminderRegistrySource implements RegistrySource {
       WHERE pr.state IN ('unknown','delayed','SCHEDULED')
       ORDER BY pr.scheduledTime ASC
       LIMIT ? OFFSET ?
-    ''', [limit, offset]);
+    ''',
+      [limit, offset],
+    );
 
     final todayStr = DateTime.now().toIso8601String().split('T').first;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
@@ -89,7 +92,10 @@ class ReminderRegistrySource implements RegistrySource {
           dateStr: todayStr,
           timeOfDay: timeStr,
           category: Category.personal,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.routine, targetId: routineId ?? id),
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.routine,
+            targetId: routineId ?? id,
+          ),
         ),
       );
     }).toList();

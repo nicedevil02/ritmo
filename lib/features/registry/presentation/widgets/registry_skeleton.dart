@@ -45,9 +45,7 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
             children: List.generate(widget.itemCount, (index) {
               return Padding(
                 padding: EdgeInsets.only(
-                  bottom: index < widget.itemCount - 1
-                      ? 10.0
-                      : 0,
+                  bottom: index < widget.itemCount - 1 ? 10.0 : 0,
                 ),
                 child: _buildSkeletonCard(context),
               );
@@ -70,14 +68,8 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
         : Colors.grey.shade100;
 
     final gradient = LinearGradient(
-      begin: Alignment(
-        -1.0 + 2.0 * _shimmerController.value,
-        0.0,
-      ),
-      end: Alignment(
-        1.0 + 2.0 * _shimmerController.value,
-        0.0,
-      ),
+      begin: Alignment(-1.0 + 2.0 * _shimmerController.value, 0.0),
+      end: Alignment(1.0 + 2.0 * _shimmerController.value, 0.0),
       colors: [baseColor, highlightColor, baseColor],
       stops: const [0.0, 0.5, 1.0],
     );
@@ -89,9 +81,7 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
             ? theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.15)
             : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(RitmoRadius.hero),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.04),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.04)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       child: Row(
@@ -100,9 +90,7 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: gradient,
-              borderRadius: BorderRadius.circular(
-                RitmoRadius.iconButton,
-              ),
+              borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
             ),
             child: const SizedBox(
               width: CalendarGeometry.iconContainerSize,

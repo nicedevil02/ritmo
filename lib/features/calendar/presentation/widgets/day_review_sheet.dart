@@ -63,7 +63,8 @@ class DayReviewSheet extends StatelessWidget {
     final done = snapshot.completedCount;
     final rem = snapshot.remainingCount;
     if (total == 0) return 'برای این روز هیچ برنامه‌ای ثبت نشده است.';
-    if (rem == 0) return '${toPersianDigits(done)} از ${toPersianDigits(total)} برنامه انجام شد.';
+    if (rem == 0)
+      return '${toPersianDigits(done)} از ${toPersianDigits(total)} برنامه انجام شد.';
     return '${toPersianDigits(done)} از ${toPersianDigits(total)} کار انجام شد. ${toPersianDigits(rem)} کار باقی مانده است.';
   }
 
@@ -74,9 +75,11 @@ class DayReviewSheet extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final uncompleted = snapshot.items
-        .where((i) =>
-            i.completion != AgendaCompletion.done &&
-            i.completion != AgendaCompletion.skipped)
+        .where(
+          (i) =>
+              i.completion != AgendaCompletion.done &&
+              i.completion != AgendaCompletion.skipped,
+        )
         .toList();
 
     int overdueCount = 0;
@@ -91,9 +94,12 @@ class DayReviewSheet extends StatelessWidget {
           maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surfaceContainerHigh : theme.cardColor,
+          color: isDark
+              ? theme.colorScheme.surfaceContainerHigh
+              : theme.cardColor,
           borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(RitmoRadius.sheet)),
+            top: Radius.circular(RitmoRadius.sheet),
+          ),
         ),
         padding: const EdgeInsets.all(RitmoSpacing.lg),
         child: SafeArea(
@@ -128,7 +134,10 @@ class DayReviewSheet extends StatelessWidget {
                   ),
                   // Rhythm Score Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(RitmoRadius.badge),
@@ -182,8 +191,12 @@ class DayReviewSheet extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.6)
-                      : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                      ? theme.colorScheme.surfaceContainerLow.withValues(
+                          alpha: 0.6,
+                        )
+                      : theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.4,
+                        ),
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
                 ),
                 child: Text(
@@ -213,11 +226,16 @@ class DayReviewSheet extends StatelessWidget {
                 ...snapshot.conflicts.map((conflict) {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.warning.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.warning.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -238,7 +256,10 @@ class DayReviewSheet extends StatelessWidget {
                             Navigator.pop(context);
                             onReviewed();
                           },
-                          child: const Text('رفع', style: TextStyle(fontSize: 12)),
+                          child: const Text(
+                            'رفع',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -291,7 +312,11 @@ class DayReviewSheet extends StatelessWidget {
 }
 
 class _StatBox extends StatelessWidget {
-  const _StatBox({required this.label, required this.value, required this.color});
+  const _StatBox({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final String value;
   final Color color;
@@ -316,13 +341,7 @@ class _StatBox extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 11, color: color)),
         ],
       ),
     );
@@ -345,7 +364,9 @@ class _ReviewTile extends StatelessWidget {
     final colors = context.colors;
     final helper = TodayCalendarConvergenceHelper();
 
-    final isTaskOrGoal = item.domain == AgendaDomain.task || item.domain == AgendaDomain.goalStep;
+    final isTaskOrGoal =
+        item.domain == AgendaDomain.task ||
+        item.domain == AgendaDomain.goalStep;
 
     return Container(
       padding: const EdgeInsets.all(10.0),
@@ -399,10 +420,16 @@ class _ReviewTile extends StatelessWidget {
                   color: colors.primary,
                   onTap: () async {
                     if (item.domain == AgendaDomain.task) {
-                      final tomStr = DateKey.of(DateKey.addDays(DateTime.now(), 1));
-                      final task = await SimpleTaskRepository.instance.getById(item.sourceId);
+                      final tomStr = DateKey.of(
+                        DateKey.addDays(DateTime.now(), 1),
+                      );
+                      final task = await SimpleTaskRepository.instance.getById(
+                        item.sourceId,
+                      );
                       if (task != null) {
-                        await SimpleTaskRepository.instance.updateTask(task.copyWith(dueDate: tomStr));
+                        await SimpleTaskRepository.instance.updateTask(
+                          task.copyWith(dueDate: tomStr),
+                        );
                       }
                     }
                     DayAgendaService.instance.invalidateDate(dateStr);
@@ -418,9 +445,13 @@ class _ReviewTile extends StatelessWidget {
                   color: colors.textSecondary,
                   onTap: () async {
                     if (item.domain == AgendaDomain.task) {
-                      final task = await SimpleTaskRepository.instance.getById(item.sourceId);
+                      final task = await SimpleTaskRepository.instance.getById(
+                        item.sourceId,
+                      );
                       if (task != null) {
-                        await SimpleTaskRepository.instance.updateTask(task.copyWith(dueDate: null));
+                        await SimpleTaskRepository.instance.updateTask(
+                          task.copyWith(dueDate: null),
+                        );
                       }
                     }
                     DayAgendaService.instance.invalidateDate(dateStr);

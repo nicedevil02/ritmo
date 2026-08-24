@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/wellbeing/logic/wellbeing_log_gateway.dart';
 
@@ -72,16 +73,13 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
       widget.onSaved();
 
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'وضعیت انرژی و حال شما با موفقیت ثبت شد ⚡',
-              style: TextStyle(),
-            ),
-            backgroundColor: context.colors.primary,
-          ),
+        RitmoToast.show(
+          context,
+          'وضعیت انرژی و حال شما با موفقیت ثبت شد ⚡',
+          icon: Icons.bolt_rounded,
+          iconColor: const Color(0xffD4A843),
         );
+        Navigator.pop(context);
       }
     } catch (e) {
       debugPrint('Error saving logs: $e');

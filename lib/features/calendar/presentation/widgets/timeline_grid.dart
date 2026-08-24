@@ -57,13 +57,15 @@ class TimelineGrid extends StatefulWidget {
   final String? previewDraggingItemId;
   final int? previewStartMinutes;
   final int? previewDurationMinutes;
-  final void Function(AgendaItem item, int startMinutes, int durationMinutes)? onDragStarted;
+  final void Function(AgendaItem item, int startMinutes, int durationMinutes)?
+  onDragStarted;
   final VoidCallback? onDragCanceled;
   final ValueChanged<AgendaItem>? onItemTap;
   final Function(AgendaItem item, int newStartMinutes)? onItemMove;
   final Function(AgendaItem item, int newDurationMinutes)? onItemResize;
   final ValueChanged<int>? onSlotTap; // minute of day (0..1439)
-  final void Function(AgendaItem item, int startMinutes, int durationMinutes)? onScheduleUntimed;
+  final void Function(AgendaItem item, int startMinutes, int durationMinutes)?
+  onScheduleUntimed;
   final ValueChanged<AgendaItem>? onOverflowTap;
 
   @override
@@ -137,7 +139,8 @@ class _TimelineGridState extends State<TimelineGrid> {
     final totalHeight = layoutEngine.totalTimelineHeight;
 
     final nowMinutes = (_now.hour * 60) + _now.minute;
-    final isNowInRange = widget.isToday &&
+    final isNowInRange =
+        widget.isToday &&
         nowMinutes >= widget.rangeStartMinutes &&
         nowMinutes < widget.rangeEndMinutes;
     final nowTop = (nowMinutes - widget.rangeStartMinutes) * widget.pxPerMinute;
@@ -168,9 +171,13 @@ class _TimelineGridState extends State<TimelineGrid> {
                 final gridWidth = constraints.maxWidth;
 
                 TimelineLayoutItem? draggingLayoutItem;
-                final effectiveDragItemId = widget.previewDraggingItemId ?? _activeDragItemId;
-                final effectiveDragStartMinutes = widget.previewStartMinutes ?? _dragStartMinutes;
-                final effectiveDragDurationMinutes = widget.previewDurationMinutes ?? CalendarDefaults.fallbackDurationMinutes;
+                final effectiveDragItemId =
+                    widget.previewDraggingItemId ?? _activeDragItemId;
+                final effectiveDragStartMinutes =
+                    widget.previewStartMinutes ?? _dragStartMinutes;
+                final effectiveDragDurationMinutes =
+                    widget.previewDurationMinutes ??
+                    CalendarDefaults.fallbackDurationMinutes;
 
                 if (effectiveDragItemId != null) {
                   for (final item in layoutItems) {
@@ -181,7 +188,8 @@ class _TimelineGridState extends State<TimelineGrid> {
                   }
                 }
 
-                final isGhostVisible = effectiveDragItemId != null &&
+                final isGhostVisible =
+                    effectiveDragItemId != null &&
                     effectiveDragStartMinutes >= widget.rangeStartMinutes &&
                     effectiveDragStartMinutes < widget.rangeEndMinutes;
 
@@ -192,8 +200,12 @@ class _TimelineGridState extends State<TimelineGrid> {
                       behavior: HitTestBehavior.opaque,
                       onTapUp: (details) {
                         final tapY = details.localPosition.dy;
-                        final rawMinutes = (tapY / widget.pxPerMinute).round() + widget.rangeStartMinutes;
-                        final snapped = TimelineSnappingHelper.snapStartMinutes(rawMinutes);
+                        final rawMinutes =
+                            (tapY / widget.pxPerMinute).round() +
+                            widget.rangeStartMinutes;
+                        final snapped = TimelineSnappingHelper.snapStartMinutes(
+                          rawMinutes,
+                        );
                         widget.onSlotTap?.call(snapped);
                       },
                       child: RepaintBoundary(
@@ -206,24 +218,44 @@ class _TimelineGridState extends State<TimelineGrid> {
                     ),
 
                     // Sleep block layer
-                    if (widget.sleepStartMinutes != null && widget.sleepEndMinutes != null)
-                      _buildSleepBlock(widget.sleepStartMinutes!, widget.sleepEndMinutes!),
+                    if (widget.sleepStartMinutes != null &&
+                        widget.sleepEndMinutes != null)
+                      _buildSleepBlock(
+                        widget.sleepStartMinutes!,
+                        widget.sleepEndMinutes!,
+                      ),
 
                     // Past dimmer for today
-                    if (widget.isToday) _buildPastDimmer(nowMinutes, totalHeight),
+                    if (widget.isToday)
+                      _buildPastDimmer(nowMinutes, totalHeight),
 
                     // Drop target preview ghost box during drag
                     if (isGhostVisible)
                       Positioned(
-                        top: (effectiveDragStartMinutes - widget.rangeStartMinutes) * widget.pxPerMinute,
-                        left: draggingLayoutItem != null ? (draggingLayoutItem.leftFraction * gridWidth) : 2.0,
-                        width: draggingLayoutItem != null ? ((draggingLayoutItem.widthFraction * gridWidth) - 4.0) : (gridWidth - 4.0),
-                        height: max((draggingLayoutItem?.durationMinutes ?? effectiveDragDurationMinutes) * widget.pxPerMinute, 28.0),
+                        top:
+                            (effectiveDragStartMinutes -
+                                widget.rangeStartMinutes) *
+                            widget.pxPerMinute,
+                        left: draggingLayoutItem != null
+                            ? (draggingLayoutItem.leftFraction * gridWidth)
+                            : 2.0,
+                        width: draggingLayoutItem != null
+                            ? ((draggingLayoutItem.widthFraction * gridWidth) -
+                                  4.0)
+                            : (gridWidth - 4.0),
+                        height: max(
+                          (draggingLayoutItem?.durationMinutes ??
+                                  effectiveDragDurationMinutes) *
+                              widget.pxPerMinute,
+                          28.0,
+                        ),
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
                               color: colors.primary.withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(RitmoRadius.card),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.card,
+                              ),
                               border: Border.all(
                                 color: colors.primary,
                                 width: 2.0,
@@ -234,13 +266,22 @@ class _TimelineGridState extends State<TimelineGrid> {
                               child: Align(
                                 alignment: Alignment.topRight,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: colors.primary,
-                                    borderRadius: BorderRadius.circular(RitmoRadius.badge),
+                                    borderRadius: BorderRadius.circular(
+                                      RitmoRadius.badge,
+                                    ),
                                   ),
                                   child: Text(
-                                    toPersianDigits(TimeOfDayMinutes.format(effectiveDragStartMinutes)),
+                                    toPersianDigits(
+                                      TimeOfDayMinutes.format(
+                                        effectiveDragStartMinutes,
+                                      ),
+                                    ),
                                     style: TextStyle(
                                       color: colors.onPrimary,
                                       fontSize: 11.0,
@@ -266,16 +307,22 @@ class _TimelineGridState extends State<TimelineGrid> {
                         right: 0,
                         child: RepaintBoundary(
                           child: Semantics(
-                            label: 'خط زمان کنونی: ${toPersianDigits('${_now.hour}:${_now.minute}')}',
+                            label:
+                                'خط زمان کنونی: ${toPersianDigits('${_now.hour}:${_now.minute}')}',
                             child: IgnorePointer(
                               child: Row(
                                 children: [
                                   if (isLeadingAxis) ...[
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 1.0,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: colors.accent,
-                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                        borderRadius: BorderRadius.circular(
+                                          RitmoRadius.pill,
+                                        ),
                                       ),
                                       child: Text(
                                         toPersianDigits(
@@ -290,22 +337,29 @@ class _TimelineGridState extends State<TimelineGrid> {
                                     ),
                                     Expanded(
                                       child: Container(
-                                        height: CalendarGeometry.nowLineThickness,
+                                        height:
+                                            CalendarGeometry.nowLineThickness,
                                         color: colors.accent,
                                       ),
                                     ),
                                   ] else ...[
                                     Expanded(
                                       child: Container(
-                                        height: CalendarGeometry.nowLineThickness,
+                                        height:
+                                            CalendarGeometry.nowLineThickness,
                                         color: colors.accent,
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                        vertical: 1.0,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: colors.accent,
-                                        borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                                        borderRadius: BorderRadius.circular(
+                                          RitmoRadius.pill,
+                                        ),
                                       ),
                                       child: Text(
                                         toPersianDigits(
@@ -351,17 +405,27 @@ class _TimelineGridState extends State<TimelineGrid> {
       height: dimHeight,
       child: IgnorePointer(
         child: Container(
-          color: Theme.of(context).disabledColor.withValues(alpha: CalendarGeometry.alphaPastDim),
+          color: Theme.of(
+            context,
+          ).disabledColor.withValues(alpha: CalendarGeometry.alphaPastDim),
         ),
       ),
     );
   }
 
-  Widget _buildPositionedItemCard(TimelineLayoutItem layoutItem, double gridWidth) {
+  Widget _buildPositionedItemCard(
+    TimelineLayoutItem layoutItem,
+    double gridWidth,
+  ) {
     if (layoutItem.overflowCount > 0) {
-      final cardWidth = ((layoutItem.widthFraction * gridWidth) - 4.0).clamp(44.0, gridWidth);
+      final cardWidth = ((layoutItem.widthFraction * gridWidth) - 4.0).clamp(
+        44.0,
+        gridWidth,
+      );
       return Positioned(
-        key: ValueKey('overflow_${layoutItem.startMinutes}_${layoutItem.laneIndex}'),
+        key: ValueKey(
+          'overflow_${layoutItem.startMinutes}_${layoutItem.laneIndex}',
+        ),
         top: layoutItem.top,
         left: layoutItem.leftFraction * gridWidth,
         width: cardWidth,
@@ -394,7 +458,10 @@ class _TimelineGridState extends State<TimelineGrid> {
 
     final displayDuration = isCurrentlyResizing ? _resizeDurationMinutes : null;
 
-    final cardWidth = ((layoutItem.widthFraction * gridWidth) - 4.0).clamp(44.0, gridWidth);
+    final cardWidth = ((layoutItem.widthFraction * gridWidth) - 4.0).clamp(
+      44.0,
+      gridWidth,
+    );
     final cardHeight = max(height, 28.0);
 
     final itemCard = TimelineItemCard(
@@ -405,7 +472,9 @@ class _TimelineGridState extends State<TimelineGrid> {
       isDragging: isCurrentlyDragging,
       isResizing: isCurrentlyResizing,
       displayTimeOverride: displayTime,
-      displayHeightOverride: displayDuration != null ? displayDuration * widget.pxPerMinute : null,
+      displayHeightOverride: displayDuration != null
+          ? displayDuration * widget.pxPerMinute
+          : null,
       onTap: () => widget.onItemTap?.call(item),
       onResizeStart: isResizable
           ? (_) {
@@ -423,7 +492,9 @@ class _TimelineGridState extends State<TimelineGrid> {
           ? (details) {
               final renderBox = context.findRenderObject() as RenderBox?;
               if (renderBox != null) {
-                final localY = renderBox.globalToLocal(details.globalPosition).dy;
+                final localY = renderBox
+                    .globalToLocal(details.globalPosition)
+                    .dy;
                 _resizeInitialTouchLocalY ??= localY;
                 final deltaY = localY - _resizeInitialTouchLocalY!;
                 final deltaMins = (deltaY / widget.pxPerMinute).round();
@@ -432,7 +503,9 @@ class _TimelineGridState extends State<TimelineGrid> {
                   rawDuration,
                   startMinutes: layoutItem.startMinutes,
                 );
-                if (snapped != null && snapped != _resizeDurationMinutes && mounted) {
+                if (snapped != null &&
+                    snapped != _resizeDurationMinutes &&
+                    mounted) {
                   setState(() {
                     _resizeDurationMinutes = snapped;
                   });
@@ -476,21 +549,19 @@ class _TimelineGridState extends State<TimelineGrid> {
               child: SizedBox(
                 width: cardWidth,
                 height: cardHeight,
-                child: TimelineItemCard(
-                  layoutItem: layoutItem,
-                  isGhost: true,
-                ),
+                child: TimelineItemCard(layoutItem: layoutItem, isGhost: true),
               ),
             ),
           ),
         ),
-        childWhenDragging: Opacity(
-          opacity: 0.25,
-          child: sizedItemCard,
-        ),
+        childWhenDragging: Opacity(opacity: 0.25, child: sizedItemCard),
         onDragStarted: () {
           RitmoHapticsPolicy.tap();
-          widget.onDragStarted?.call(item, layoutItem.startMinutes, layoutItem.durationMinutes);
+          widget.onDragStarted?.call(
+            item,
+            layoutItem.startMinutes,
+            layoutItem.durationMinutes,
+          );
           if (mounted) {
             setState(() {
               _activeDragItemId = item.id;
@@ -506,11 +577,15 @@ class _TimelineGridState extends State<TimelineGrid> {
           if (renderBox != null) {
             final localOffset = renderBox.globalToLocal(details.globalPosition);
             if (_touchOffsetInCardY == null) {
-              final initialCardTopY = (_dragInitialStartMinutes - widget.rangeStartMinutes) * widget.pxPerMinute;
+              final initialCardTopY =
+                  (_dragInitialStartMinutes - widget.rangeStartMinutes) *
+                  widget.pxPerMinute;
               _touchOffsetInCardY = localOffset.dy - initialCardTopY;
             }
             final cardTopY = localOffset.dy - _touchOffsetInCardY!;
-            final rawStart = (cardTopY / widget.pxPerMinute).round() + widget.rangeStartMinutes;
+            final rawStart =
+                (cardTopY / widget.pxPerMinute).round() +
+                widget.rangeStartMinutes;
             final snapped = TimelineSnappingHelper.snapStartMinutes(
               rawStart,
               durationMinutes: layoutItem.durationMinutes,
@@ -548,19 +623,20 @@ class _TimelineGridState extends State<TimelineGrid> {
     }
 
     return Positioned(
-      key: ValueKey('item_${layoutItem.item.id}_${widget.rangeStartMinutes}_${layoutItem.startMinutes}_${layoutItem.laneIndex}'),
+      key: ValueKey(
+        'item_${layoutItem.item.id}_${widget.rangeStartMinutes}_${layoutItem.startMinutes}_${layoutItem.laneIndex}',
+      ),
       top: top,
       left: layoutItem.leftFraction * gridWidth,
       width: cardWidth,
       height: cardHeight,
-      child: RepaintBoundary(
-        child: contentWidget,
-      ),
+      child: RepaintBoundary(child: contentWidget),
     );
   }
 
   void _handleAutoEdgeScroll(Offset globalPosition) {
-    final controller = widget.scrollController ?? PrimaryScrollController.maybeOf(context);
+    final controller =
+        widget.scrollController ?? PrimaryScrollController.maybeOf(context);
     if (controller == null || !controller.hasClients) return;
 
     final renderBox = context.findRenderObject() as RenderBox?;
@@ -574,18 +650,30 @@ class _TimelineGridState extends State<TimelineGrid> {
     const edgeMargin = 60.0;
 
     if (targetYInViewport < edgeMargin && scrollOffset > 0) {
-      final intensity = ((edgeMargin - targetYInViewport) / edgeMargin).clamp(0.1, 1.0);
+      final intensity = ((edgeMargin - targetYInViewport) / edgeMargin).clamp(
+        0.1,
+        1.0,
+      );
       final step = 40.0 * intensity;
-      final newOffset = (scrollOffset - step).clamp(0.0, controller.position.maxScrollExtent);
+      final newOffset = (scrollOffset - step).clamp(
+        0.0,
+        controller.position.maxScrollExtent,
+      );
       controller.animateTo(
         newOffset,
         duration: const Duration(milliseconds: 32),
         curve: Curves.linear,
       );
-    } else if (targetYInViewport > viewportHeight - edgeMargin && scrollOffset < controller.position.maxScrollExtent) {
-      final intensity = ((targetYInViewport - (viewportHeight - edgeMargin)) / edgeMargin).clamp(0.1, 1.0);
+    } else if (targetYInViewport > viewportHeight - edgeMargin &&
+        scrollOffset < controller.position.maxScrollExtent) {
+      final intensity =
+          ((targetYInViewport - (viewportHeight - edgeMargin)) / edgeMargin)
+              .clamp(0.1, 1.0);
       final step = 40.0 * intensity;
-      final newOffset = (scrollOffset + step).clamp(0.0, controller.position.maxScrollExtent);
+      final newOffset = (scrollOffset + step).clamp(
+        0.0,
+        controller.position.maxScrollExtent,
+      );
       controller.animateTo(
         newOffset,
         duration: const Duration(milliseconds: 32),
@@ -610,31 +698,33 @@ class _TimelineGridState extends State<TimelineGrid> {
       final height = (visEnd - visStart) * widget.pxPerMinute;
       if (height <= 0) continue;
 
-      widgets.add(Positioned(
-        top: top,
-        left: 0,
-        right: 0,
-        height: height,
-        child: IgnorePointer(
-          child: Container(
-            color: colors.surfaceSunken.withValues(alpha: 0.55),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Text(
-              'پنجره خواب',
-              style: TextStyle(
-                fontSize: 11.0,
-                color: colors.textTertiary,
+      widgets.add(
+        Positioned(
+          top: top,
+          left: 0,
+          right: 0,
+          height: height,
+          child: IgnorePointer(
+            child: Container(
+              color: colors.surfaceSunken.withValues(alpha: 0.55),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                'پنجره خواب',
+                style: TextStyle(fontSize: 11.0, color: colors.textTertiary),
               ),
             ),
           ),
         ),
-      ));
+      );
     }
 
     return Stack(children: widgets);
   }
 
-  List<({int startMinutes, int endMinutes})> _sleepSegmentsForDay(int startM, int endM) {
+  List<({int startMinutes, int endMinutes})> _sleepSegmentsForDay(
+    int startM,
+    int endM,
+  ) {
     if (startM == endM) return const [];
     final start = startM % 1440;
     final end = endM % 1440;

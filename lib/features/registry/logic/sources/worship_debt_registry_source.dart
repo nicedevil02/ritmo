@@ -50,7 +50,9 @@ class WorshipDebtRegistrySource implements RegistrySource {
         title: title,
         subtitle: '${toPersianDigits(remaining.toString())} باقی‌مانده',
         scheduleSummary: 'بدون زمان‌بندی',
-        status: remaining <= 0 ? RegistryStatus.completed : RegistryStatus.active,
+        status: remaining <= 0
+            ? RegistryStatus.completed
+            : RegistryStatus.active,
         agendaProxy: AgendaItem(
           id: 'worshipDebt:$id',
           domain: AgendaDomain.worshipDebt,
@@ -58,7 +60,10 @@ class WorshipDebtRegistrySource implements RegistrySource {
           title: title,
           dateStr: todayStr,
           category: Category.religious,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.worshipDebt, targetId: id),
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.worshipDebt,
+            targetId: id,
+          ),
         ),
       );
     }).toList();

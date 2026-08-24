@@ -21,7 +21,9 @@ class GoToDateDialog {
     final todayJ = Jalali.fromDateTime(todayOnly);
     // Jalali weekDay: 1=Saturday, 7=Friday
     final daysToNextSat = (8 - todayJ.weekDay) % 7;
-    final nextSat = todayOnly.add(Duration(days: daysToNextSat == 0 ? 7 : daysToNextSat));
+    final nextSat = todayOnly.add(
+      Duration(days: daysToNextSat == 0 ? 7 : daysToNextSat),
+    );
 
     // Calculate 1st of next Jalali month
     final nextMonthJ = todayJ.addMonths(1);
@@ -40,7 +42,11 @@ class GoToDateDialog {
           ),
           title: Text(
             'برو به تاریخ',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -62,11 +68,17 @@ class GoToDateDialog {
                     onPressed: () => Navigator.pop(ctx, todayOnly),
                   ),
                   ActionChip(
-                    label: const Text('شنبهٔ آینده', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'شنبهٔ آینده',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     onPressed: () => Navigator.pop(ctx, nextSat),
                   ),
                   ActionChip(
-                    label: const Text('اول ماه بعد', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'اول ماه بعد',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     onPressed: () => Navigator.pop(ctx, firstOfNextMonth),
                   ),
                 ],

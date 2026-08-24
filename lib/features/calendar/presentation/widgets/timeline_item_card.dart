@@ -54,7 +54,9 @@ class TimelineItemCard extends StatelessWidget {
     final isCompact = height < 36.0;
     final isExpanded = height > 64.0;
 
-    final cardOpacity = isDone ? 0.55 : (isDimmed ? 0.30 : (isGhost ? 0.85 : 1.0));
+    final cardOpacity = isDone
+        ? 0.55
+        : (isDimmed ? 0.30 : (isGhost ? 0.85 : 1.0));
 
     final borderRadius = BorderRadius.circular(RitmoRadius.card);
 
@@ -64,7 +66,8 @@ class TimelineItemCard extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Semantics(
-        label: '${item.title}، ${item.timeOfDay ?? "بدون زمان"}، ${domainLabelFa(item.domain)}',
+        label:
+            '${item.title}، ${item.timeOfDay ?? "بدون زمان"}، ${domainLabelFa(item.domain)}',
         child: Opacity(
           opacity: cardOpacity,
           child: InkWell(
@@ -82,8 +85,8 @@ class TimelineItemCard extends StatelessWidget {
                     color: isHighlighted
                         ? color
                         : (item.isEstimated
-                            ? color.withValues(alpha: 0.4)
-                            : colors.border.withValues(alpha: 0.15)),
+                              ? color.withValues(alpha: 0.4)
+                              : colors.border.withValues(alpha: 0.15)),
                     width: isHighlighted ? 2.0 : 1.0,
                   ),
                 ),
@@ -100,10 +103,32 @@ class TimelineItemCard extends StatelessWidget {
                           bottom: isCompact ? 1.0 : (isHighlighted ? 2.0 : 3.0),
                         ),
                         child: isCompact
-                            ? Center(child: _buildCompactTier(context, colors, color, isDone))
+                            ? Center(
+                                child: _buildCompactTier(
+                                  context,
+                                  colors,
+                                  color,
+                                  isDone,
+                                ),
+                              )
                             : (isExpanded
-                                ? _buildExpandedTier(context, colors, color, isDone, startMin, durMin)
-                                : _buildNormalTier(context, colors, color, isDone, startMin, durMin, height)),
+                                  ? _buildExpandedTier(
+                                      context,
+                                      colors,
+                                      color,
+                                      isDone,
+                                      startMin,
+                                      durMin,
+                                    )
+                                  : _buildNormalTier(
+                                      context,
+                                      colors,
+                                      color,
+                                      isDone,
+                                      startMin,
+                                      durMin,
+                                      height,
+                                    )),
                       ),
 
                       // Single-day override indicator chip
@@ -159,7 +184,12 @@ class TimelineItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactTier(BuildContext context, RitmoColors colors, Color color, bool isDone) {
+  Widget _buildCompactTier(
+    BuildContext context,
+    RitmoColors colors,
+    Color color,
+    bool isDone,
+  ) {
     final item = layoutItem.item;
     return Row(
       children: [
@@ -185,7 +215,15 @@ class TimelineItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildNormalTier(BuildContext context, RitmoColors colors, Color color, bool isDone, int startMin, int durMin, double height) {
+  Widget _buildNormalTier(
+    BuildContext context,
+    RitmoColors colors,
+    Color color,
+    bool isDone,
+    int startMin,
+    int durMin,
+    double height,
+  ) {
     final item = layoutItem.item;
     final showTime = item.isTimed && height >= 54.0;
     return Row(
@@ -229,7 +267,14 @@ class TimelineItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandedTier(BuildContext context, RitmoColors colors, Color color, bool isDone, int startMin, int durMin) {
+  Widget _buildExpandedTier(
+    BuildContext context,
+    RitmoColors colors,
+    Color color,
+    bool isDone,
+    int startMin,
+    int durMin,
+  ) {
     final item = layoutItem.item;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,20 +302,14 @@ class TimelineItemCard extends StatelessWidget {
                   item.subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.0,
-                    color: colors.textTertiary,
-                  ),
+                  style: TextStyle(fontSize: 11.0, color: colors.textTertiary),
                 ),
               const SizedBox(height: 2),
               if (item.isTimed)
                 RitmoTimeRange(
                   startMinutes: startMin,
                   endMinutes: startMin + durMin,
-                  style: TextStyle(
-                    fontSize: 11.0,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 11.0, color: colors.textSecondary),
                 ),
             ],
           ),

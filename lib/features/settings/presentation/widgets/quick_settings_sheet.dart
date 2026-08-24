@@ -392,7 +392,7 @@ class QuickSettingsSheet extends StatelessWidget {
                             ],
                             selected: {selectedOption},
                             showSelectedIcon: false,
-                            style: ButtonStyle(
+                            style: const ButtonStyle(
                               visualDensity: VisualDensity.standard,
                               minimumSize: WidgetStatePropertyAll(
                                 Size(0, RitmoBreakpoints.minTouchTarget),

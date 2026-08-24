@@ -6,7 +6,8 @@ import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dar
 class TimelineSnappingHelper {
   const TimelineSnappingHelper._();
 
-  static const int defaultSnapIntervalMinutes = CalendarDefaults.snapIntervalMinutes;
+  static const int defaultSnapIntervalMinutes =
+      CalendarDefaults.snapIntervalMinutes;
   static const int minDurationMinutes = CalendarDefaults.minDurationMinutes;
 
   /// Snaps [rawMinutes] to the nearest [intervalMinutes] (default 15 mins)
@@ -17,7 +18,9 @@ class TimelineSnappingHelper {
     int durationMinutes = CalendarDefaults.fallbackDurationMinutes,
   }) {
     final sanitizedDuration = DurationBounds.sanitize(durationMinutes);
-    final interval = intervalMinutes > 0 ? intervalMinutes : CalendarDefaults.snapIntervalMinutes;
+    final interval = intervalMinutes > 0
+        ? intervalMinutes
+        : CalendarDefaults.snapIntervalMinutes;
     final snapped = (rawMinutes / interval).round() * interval;
     final maxAllowed = (1440 - sanitizedDuration).clamp(0, 1440);
     return snapped.clamp(0, maxAllowed);
@@ -31,7 +34,9 @@ class TimelineSnappingHelper {
     int startMinutes = 0,
     int intervalMinutes = defaultSnapIntervalMinutes,
   }) {
-    final interval = intervalMinutes > 0 ? intervalMinutes : CalendarDefaults.snapIntervalMinutes;
+    final interval = intervalMinutes > 0
+        ? intervalMinutes
+        : CalendarDefaults.snapIntervalMinutes;
     final untilEndOfDay = 1440 - startMinutes;
     if (untilEndOfDay < minDurationMinutes) return null;
     final hardMax = min(untilEndOfDay, DurationBounds.maxMinutes);

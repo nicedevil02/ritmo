@@ -37,7 +37,8 @@ class AgendaSeries extends AgendaEntry {
 
   final AgendaItem representative;
   final List<AgendaItem> instances;
-  final String recurrenceLabel; // «هر روز» / «۵ روز از ۷» / «روزهای کاری» / «شنبه‌ها»
+  final String
+  recurrenceLabel; // «هر روز» / «۵ روز از ۷» / «روزهای کاری» / «شنبه‌ها»
 
   @override
   AgendaItem get anchor => representative;
@@ -108,20 +109,25 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
     final dateStr = entry.key;
     final date = DateKey.parse(dateStr);
     if (date == null) {
-      RitmoLog.error('AgendaBucketing', 'Invalid dateKey in snapshots: $dateStr');
+      RitmoLog.error(
+        'AgendaBucketing',
+        'Invalid dateKey in snapshots: $dateStr',
+      );
       continue;
     }
     final dateOnly = DateKey.dayOf(date);
 
     for (final item in entry.value.items) {
-      final isDone = item.completion == AgendaCompletion.done ||
+      final isDone =
+          item.completion == AgendaCompletion.done ||
           item.completion == AgendaCompletion.skipped;
 
       if (dateOnly.isBefore(today)) {
         // Past days — only undone actionable items become overdue.
         // Daily recurring prayers, mustahab practices, and cycle reminders are day-bound/informational
         // and do not become live overdue items on today's agenda.
-        final isWorshipOrCycle = item.domain == AgendaDomain.prayer ||
+        final isWorshipOrCycle =
+            item.domain == AgendaDomain.prayer ||
             item.domain == AgendaDomain.mustahab ||
             item.domain == AgendaDomain.worshipDebt ||
             item.domain == AgendaDomain.cycle;
@@ -135,8 +141,7 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
       } else if (!dateOnly.isBefore(thisWeekStart) &&
           !dateOnly.isAfter(thisFri)) {
         result[AgendaBucket.thisWeek]!.add(item);
-      } else if (!dateOnly.isBefore(nextSat) &&
-          !dateOnly.isAfter(nextFri)) {
+      } else if (!dateOnly.isBefore(nextSat) && !dateOnly.isAfter(nextFri)) {
         result[AgendaBucket.nextWeek]!.add(item);
       } else if (dateOnly.isAfter(nextFri)) {
         result[AgendaBucket.later]!.add(item);
@@ -177,7 +182,10 @@ int calculateDaysInBucket(
         if (d != null) {
           dates.add(DateKey.dayOf(d));
         } else {
-          RitmoLog.error('AgendaBucketing', 'Invalid item dateStr: ${item.dateStr}');
+          RitmoLog.error(
+            'AgendaBucketing',
+            'Invalid item dateStr: ${item.dateStr}',
+          );
         }
       }
       if (dates.isEmpty) return 7;
@@ -192,14 +200,18 @@ int calculateDaysInBucket(
 /// Computes Persian recurrence label for a series based on its occurrence dates and bucket days count.
 String calculateRecurrenceLabel(List<DateTime> dates, int daysInBucket) {
   if (dates.isEmpty) return '';
-  final uniqueDates = dates.map((d) => DateTime(d.year, d.month, d.day)).toSet().toList()
-    ..sort();
+  final uniqueDates =
+      dates.map((d) => DateTime(d.year, d.month, d.day)).toSet().toList()
+        ..sort();
   final n = uniqueDates.length;
   final m = daysInBucket > 0 ? daysInBucket : n;
 
   if (n > m) {
     // نمی‌تواند بیشتر از تعداد روزهای سطل باشد؛ داده‌ها ناسازگارند.
-    RitmoLog.error('AgendaBucketing', 'n=$n > m=$m in recurrence label: bucket span mismatch');
+    RitmoLog.error(
+      'AgendaBucketing',
+      'n=$n > m=$m in recurrence label: bucket span mismatch',
+    );
     return 'تکرارشونده';
   }
 
@@ -258,7 +270,10 @@ List<AgendaEntry> collapseRecurringSeries(
         if (d != null) {
           dates.add(DateKey.dayOf(d));
         } else {
-          RitmoLog.error('AgendaBucketing', 'Invalid dateKey in series instance: ${inst.dateStr}');
+          RitmoLog.error(
+            'AgendaBucketing',
+            'Invalid dateKey in series instance: ${inst.dateStr}',
+          );
         }
       }
 
@@ -267,13 +282,17 @@ List<AgendaEntry> collapseRecurringSeries(
         orElse: () => instances.first,
       );
 
-      final label = rep.recurrenceLabelFa ?? calculateRecurrenceLabel(dates, daysInBucket);
+      final label =
+          rep.recurrenceLabelFa ??
+          calculateRecurrenceLabel(dates, daysInBucket);
 
-      seriesList.add(AgendaSeries(
-        representative: rep,
-        instances: instances,
-        recurrenceLabel: label,
-      ));
+      seriesList.add(
+        AgendaSeries(
+          representative: rep,
+          instances: instances,
+          recurrenceLabel: label,
+        ),
+      );
     } else {
       for (final item in instances) {
         singles.add(AgendaSingle(item));
@@ -317,10 +336,12 @@ Map<String, List<AgendaItem>> groupByDate(List<AgendaItem> items) {
 String daySubGroupLabel(String dateStr) {
   final date = DateKey.parse(dateStr);
   if (date == null) {
-    RitmoLog.error('AgendaBucketing', 'Invalid dateStr for subGroup label: $dateStr');
+    RitmoLog.error(
+      'AgendaBucketing',
+      'Invalid dateStr for subGroup label: $dateStr',
+    );
     return toPersianDigits(dateStr);
   }
   final j = Jalali.fromDateTime(date);
   return '${ShamsiWeek.nameOf(j.weekDay)} ${toPersianDigits(j.day)} ${j.formatter.mN}';
 }
-

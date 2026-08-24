@@ -64,6 +64,7 @@ class RitmoEventBus {
   final _controller = StreamController<RitmoEvent>.broadcast();
 
   Stream<RitmoEvent> get onEvents => _controller.stream;
+  Stream<RitmoEvent> get events => _controller.stream;
 
   void publish(RitmoEvent event) => fire(event);
 

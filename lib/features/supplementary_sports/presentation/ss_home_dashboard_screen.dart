@@ -794,7 +794,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
           ),
           centerTitle: true,
           leading: IconButton(
-            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),

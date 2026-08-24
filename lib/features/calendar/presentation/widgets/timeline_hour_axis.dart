@@ -49,18 +49,22 @@ class TimelineHourAxis extends StatelessWidget {
               left: isLeading ? 1.0 : 0,
               right: isLeading ? 0 : 1.0,
               child: Align(
-                alignment: isLeading ? Alignment.centerLeft : Alignment.centerRight,
+                alignment: isLeading
+                    ? Alignment.centerLeft
+                    : Alignment.centerRight,
                 child: Text(
                   toPersianDigits('${h.toString().padLeft(2, '0')}:00'),
                   style: TextStyle(
                     fontSize: labelFontSize,
-                    fontWeight: (isToday && h == nowHour) ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: (isToday && h == nowHour)
+                        ? FontWeight.w700
+                        : FontWeight.w500,
                     color: isToday
                         ? (h == nowHour
-                            ? colors.primary
-                            : (h < nowHour
-                                ? colors.textTertiary
-                                : colors.textSecondary))
+                              ? colors.primary
+                              : (h < nowHour
+                                    ? colors.textTertiary
+                                    : colors.textSecondary))
                         : colors.textTertiary,
                   ),
                 ),
@@ -140,7 +144,11 @@ class _GridLinesPainter extends CustomPainter {
       if (h < endHour) {
         final halfY = y + (30 * pxPerMinute);
         if (halfY <= size.height) {
-          canvas.drawLine(Offset(0, halfY), Offset(size.width, halfY), halfPaint);
+          canvas.drawLine(
+            Offset(0, halfY),
+            Offset(size.width, halfY),
+            halfPaint,
+          );
         }
       }
     }

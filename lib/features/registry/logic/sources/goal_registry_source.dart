@@ -18,7 +18,9 @@ class GoalRegistrySource implements RegistrySource {
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
     final where = includeArchived ? '1=1' : 'isArchived = 0';
-    final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM goals WHERE $where');
+    final res = await db.rawQuery(
+      'SELECT COUNT(*) as cnt FROM goals WHERE $where',
+    );
     return Sqflite.firstIntValue(res) ?? 0;
   }
 
@@ -54,30 +56,37 @@ class GoalRegistrySource implements RegistrySource {
       final totalSteps = Sqflite.firstIntValue(stepsRes) ?? 0;
       final doneSteps = (stepsRes.first['done'] as num?)?.toInt() ?? 0;
 
-      final subtitle = totalSteps > 0 ? '$doneSteps از $totalSteps گام' : 'بدون گام';
+      final subtitle = totalSteps > 0
+          ? '$doneSteps از $totalSteps گام'
+          : 'بدون گام';
 
-      entries.add(RegistryEntry(
-        id: 'goal:$id',
-        domain: RegistryDomain.goal,
-        sourceId: id,
-        title: title,
-        subtitle: subtitle,
-        scheduleSummary: 'بدون زمان‌بندی',
-        status: isArchived
-            ? RegistryStatus.archived
-            : (doneSteps >= totalSteps && totalSteps > 0
-                ? RegistryStatus.completed
-                : RegistryStatus.active),
-        agendaProxy: AgendaItem(
+      entries.add(
+        RegistryEntry(
           id: 'goal:$id',
-          domain: AgendaDomain.goalStep,
+          domain: RegistryDomain.goal,
           sourceId: id,
           title: title,
-          dateStr: todayStr,
-          category: Category.personal,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.goalStep, targetId: id),
+          subtitle: subtitle,
+          scheduleSummary: 'بدون زمان‌بندی',
+          status: isArchived
+              ? RegistryStatus.archived
+              : (doneSteps >= totalSteps && totalSteps > 0
+                    ? RegistryStatus.completed
+                    : RegistryStatus.active),
+          agendaProxy: AgendaItem(
+            id: 'goal:$id',
+            domain: AgendaDomain.goalStep,
+            sourceId: id,
+            title: title,
+            dateStr: todayStr,
+            category: Category.personal,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.goalStep,
+              targetId: id,
+            ),
+          ),
         ),
-      ));
+      );
     }
 
     return entries;

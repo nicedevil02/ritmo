@@ -75,10 +75,7 @@ class TimelineColumnHeader extends StatelessWidget {
       duration: RitmoMotion.state,
       constraints: const BoxConstraints(minHeight: 26.0),
       margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8.0,
-        vertical: 3.5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.5),
       decoration: BoxDecoration(
         gradient: isActive ? activeGradient : inactiveGradient,
         borderRadius: BorderRadius.circular(10.0),
@@ -134,9 +131,7 @@ class TimelineColumnHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10.0,
-              color: isActive
-                  ? colors.primary
-                  : colors.textTertiary,
+              color: isActive ? colors.primary : colors.textTertiary,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),

@@ -288,63 +288,73 @@ class _NotebookScreenState extends State<NotebookScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Right side: Back Button & Screen Title
-                    Row(
-                      children: [
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              RitmoHapticsPolicy.tap();
-                              Navigator.pop(context);
-                            },
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: colors.surfaceSunken,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: colors.border,
-                                  width: 1,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                RitmoHapticsPolicy.tap();
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: colors.surfaceSunken,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: colors.border,
+                                    width: 1,
+                                  ),
                                 ),
-                              ),
-                              child: Icon(
-                                CupertinoIcons.arrow_right,
-                                size: 18,
-                                color: colors.textPrimary,
+                                child: Icon(
+                                  CupertinoIcons.arrow_right,
+                                  size: 18,
+                                  color: colors.textPrimary,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'دفترچه و تجارب',
-                              style: TextStyle(
-                                fontSize: 19.5,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.4,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                            if (totalActiveCount > 0)
-                              Text(
-                                '${PersianDigits.convert(totalActiveCount.toString())} یادداشت فعال',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: colors.textSecondary.withValues(
-                                    alpha: 0.7,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'دفترچه و تجارب',
+                                  style: TextStyle(
+                                    fontSize: 18.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.4,
+                                    color: colors.textPrimary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                          ],
-                        ),
-                      ],
+                                if (totalActiveCount > 0)
+                                  Text(
+                                    '${PersianDigits.convert(totalActiveCount.toString())} یادداشت فعال',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.textSecondary.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
 
                     // Left side: AI Assistant Badge
                     Material(
@@ -354,7 +364,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 10,
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
@@ -388,7 +398,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                               Text(
                                 'دستیار هوش مصنوعی',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: colors.primary,
                                 ),
@@ -429,6 +439,9 @@ class _NotebookScreenState extends State<NotebookScreen>
                   ),
                   child: TabBar(
                     controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 10),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
                     indicator: BoxDecoration(
@@ -453,17 +466,17 @@ class _NotebookScreenState extends State<NotebookScreen>
                       alpha: 0.7,
                     ),
                     labelStyle: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                     ),
                     unselectedLabelStyle: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                     ),
                     tabs: [
                       Tab(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(CupertinoIcons.doc_text_fill, size: 14),
                             const SizedBox(width: 5),
@@ -475,7 +488,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                       ),
                       Tab(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(CupertinoIcons.lightbulb_fill, size: 14),
                             const SizedBox(width: 5),
@@ -487,7 +500,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                       ),
                       Tab(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               CupertinoIcons.arrow_2_circlepath_circle_fill,

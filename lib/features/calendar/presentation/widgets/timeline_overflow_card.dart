@@ -21,7 +21,9 @@ class TimelineOverflowCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(RitmoRadius.sheet),
+        ),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -66,15 +68,15 @@ class TimelineOverflowCard extends StatelessWidget {
                         ),
                         title: Text(
                           item.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
                             fontSize: 14.0,
                           ),
                         ),
                         subtitle: timeLabel != null
                             ? Text(
                                 toPersianDigits(timeLabel),
-                                style: const TextStyle(fontSize: 12.0,
-                                ),
+                                style: const TextStyle(fontSize: 12.0),
                               )
                             : null,
                         trailing: const Icon(Icons.chevron_right_rounded),
@@ -104,10 +106,14 @@ class TimelineOverflowCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(RitmoRadius.card),
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.outlineVariant.withValues(alpha: CalendarGeometry.alphaDomainFill),
+          color: colorScheme.outlineVariant.withValues(
+            alpha: CalendarGeometry.alphaDomainFill,
+          ),
           borderRadius: BorderRadius.circular(RitmoRadius.card),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: CalendarGeometry.alphaCardBorder),
+            color: colorScheme.outlineVariant.withValues(
+              alpha: CalendarGeometry.alphaCardBorder,
+            ),
           ),
         ),
         alignment: Alignment.center,

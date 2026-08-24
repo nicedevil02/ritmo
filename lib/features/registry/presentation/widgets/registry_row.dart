@@ -75,11 +75,11 @@ class _RegistryRowState extends State<RegistryRow> {
             color: widget.isSelected
                 ? domainColor.withValues(alpha: 0.10)
                 : (isDark
-                    ? theme.colorScheme.surfaceContainerHigh
-                        .withValues(alpha: 0.25)
-                    : theme.cardColor),
-            borderRadius:
-                BorderRadius.circular(RitmoRadius.hero),
+                      ? theme.colorScheme.surfaceContainerHigh.withValues(
+                          alpha: 0.25,
+                        )
+                      : theme.cardColor),
+            borderRadius: BorderRadius.circular(RitmoRadius.hero),
             border: Border.all(
               color: widget.isSelected
                   ? domainColor.withValues(alpha: 0.5)
@@ -96,15 +96,9 @@ class _RegistryRowState extends State<RegistryRow> {
                 height: CalendarGeometry.iconContainerSize,
                 decoration: BoxDecoration(
                   color: domainColor.withValues(alpha: isDark ? 0.12 : 0.08),
-                  borderRadius: BorderRadius.circular(
-                    RitmoRadius.iconButton,
-                  ),
+                  borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
                 ),
-                child: Icon(
-                  entry.domain.icon,
-                  size: 20,
-                  color: domainColor,
-                ),
+                child: Icon(entry.domain.icon, size: 20, color: domainColor),
               ),
 
               const SizedBox(width: 12),
@@ -124,8 +118,9 @@ class _RegistryRowState extends State<RegistryRow> {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: isArchived
-                            ? theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.45)
+                            ? theme.textTheme.bodyMedium?.color?.withValues(
+                                alpha: 0.45,
+                              )
                             : theme.textTheme.bodyLarge?.color,
                       ),
                     ),
@@ -139,8 +134,9 @@ class _RegistryRowState extends State<RegistryRow> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.55),
+                        color: theme.textTheme.bodySmall?.color?.withValues(
+                          alpha: 0.55,
+                        ),
                         height: 1.4,
                       ),
                     ),
@@ -156,9 +152,7 @@ class _RegistryRowState extends State<RegistryRow> {
                           isUrgent: isUrgent,
                         ),
                         const SizedBox(width: 6),
-                        RegistryCountdownBadge(
-                          agendaItem: entry.agendaProxy,
-                        ),
+                        RegistryCountdownBadge(agendaItem: entry.agendaProxy),
                       ],
                     ),
                   ],
@@ -213,8 +207,7 @@ class _RegistryRowState extends State<RegistryRow> {
         background: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF64748B),
-            borderRadius:
-                BorderRadius.circular(RitmoRadius.hero),
+            borderRadius: BorderRadius.circular(RitmoRadius.hero),
           ),
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
@@ -252,9 +245,7 @@ class _RegistryRowState extends State<RegistryRow> {
         iconSize: 20,
         splashRadius: 18,
         position: PopupMenuPosition.under,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onSelected: (action) {
           switch (action) {
             case 'edit':
@@ -273,10 +264,7 @@ class _RegistryRowState extends State<RegistryRow> {
                 children: [
                   Icon(Icons.edit_rounded, size: 18),
                   SizedBox(width: 8),
-                  Text(
-                    'ویرایش',
-                    style: TextStyle(fontSize: 13),
-                  ),
+                  Text('ویرایش', style: TextStyle(fontSize: 13)),
                 ],
               ),
             ),
@@ -287,10 +275,7 @@ class _RegistryRowState extends State<RegistryRow> {
                 children: [
                   Icon(Icons.archive_rounded, size: 18),
                   SizedBox(width: 8),
-                  Text(
-                    'بایگانی',
-                    style: TextStyle(fontSize: 13),
-                  ),
+                  Text('بایگانی', style: TextStyle(fontSize: 13)),
                 ],
               ),
             ),

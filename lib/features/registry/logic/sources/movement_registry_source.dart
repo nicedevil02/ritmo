@@ -53,7 +53,10 @@ class MovementRegistrySource implements RegistrySource {
           title: k.titleFa,
           dateStr: todayStr,
           category: Category.fitness,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: k.code),
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.sport,
+            targetId: k.code,
+          ),
         ),
       );
     }).toList();

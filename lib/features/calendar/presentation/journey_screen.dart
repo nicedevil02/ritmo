@@ -46,11 +46,7 @@ import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dar
 import 'package:shamsi_date/shamsi_date.dart';
 
 class JourneyScreen extends StatefulWidget {
-  const JourneyScreen({
-    super.key,
-    this.initialDate,
-    this.initialItemId,
-  });
+  const JourneyScreen({super.key, this.initialDate, this.initialItemId});
 
   final DateTime? initialDate;
   final String? initialItemId;
@@ -59,9 +55,11 @@ class JourneyScreen extends StatefulWidget {
   State<JourneyScreen> createState() => _JourneyScreenState();
 }
 
-class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserver {
+class _JourneyScreenState extends State<JourneyScreen>
+    with WidgetsBindingObserver {
   late final JourneyController _controller;
-  final GlobalKey<TimelineSplitDayViewState> _splitDayKey = GlobalKey<TimelineSplitDayViewState>();
+  final GlobalKey<TimelineSplitDayViewState> _splitDayKey =
+      GlobalKey<TimelineSplitDayViewState>();
   StreamSubscription<RitmoEvent>? _eventSubscription;
 
   int _registryHealthCount = 0;
@@ -80,7 +78,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
 
     if (widget.initialItemId != null) {
       _controller.selectDate(startDate, scaleToSet: JourneyScale.day);
-      _controller.loadForActiveScale().then((_) => _focusItemById(widget.initialItemId));
+      _controller.loadForActiveScale().then(
+        (_) => _focusItemById(widget.initialItemId),
+      );
     } else {
       _controller.loadDefaultScale().then((_) {
         _controller.loadForActiveScale().then((_) => _autoScrollToNow());
@@ -131,16 +131,17 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
   }
 
   void _openAllPlans() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (ctx) => const AllPlansScreen()),
-    ).then((_) => _checkHealthIssues());
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => const AllPlansScreen()))
+        .then((_) => _checkHealthIssues());
   }
 
   void _handleNavigationEvent(RitmoEvent event) {
     if (!mounted) return;
     final mode = AppModeService.instance.current;
     final calendarIndex = RitmoShellMetrics.calendarTabIndexFor(mode);
-    if (event.type == 'navigate_tab' && event.payload['index'] == calendarIndex) {
+    if (event.type == 'navigate_tab' &&
+        event.payload['index'] == calendarIndex) {
       final dateStr = event.payload['date'] as String?;
       final itemId = event.payload['itemId'] as String?;
 
@@ -151,7 +152,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           if (targetDate != null) {
             _controller.selectDate(targetDate, scaleToSet: JourneyScale.day);
           } else {
-            RitmoLog.error('JourneyScreen', 'Invalid date in FOCUS_ITEM event: $dateStr');
+            RitmoLog.error(
+              'JourneyScreen',
+              'Invalid date in FOCUS_ITEM event: $dateStr',
+            );
           }
         }
 
@@ -220,7 +224,11 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
       _scrollToTimeString(item.timeOfDay);
     }
 
-    ActionRouter.open(context, item: item, onChanged: () => _controller.refresh());
+    ActionRouter.open(
+      context,
+      item: item,
+      onChanged: () => _controller.refresh(),
+    );
   }
 
   void _startFocusMode(AgendaItem item) {
@@ -250,38 +258,50 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
   Future<void> _openSmartPanel() async {
     var snapshot = _controller.snapshot;
     if (snapshot == null) {
-      final dateKey = '${_controller.selectedDate.year}-${_controller.selectedDate.month.toString().padLeft(2, '0')}-${_controller.selectedDate.day.toString().padLeft(2, '0')}';
+      final dateKey =
+          '${_controller.selectedDate.year}-${_controller.selectedDate.month.toString().padLeft(2, '0')}-${_controller.selectedDate.day.toString().padLeft(2, '0')}';
       snapshot = _controller.rangeSnapshots[dateKey];
     }
 
     if (snapshot == null) {
-      final dayAgenda = await DayAgendaService.instance.agendaForDate(_controller.selectedDate);
+      final dayAgenda = await DayAgendaService.instance.agendaForDate(
+        _controller.selectedDate,
+      );
       if (!mounted) return;
       snapshot = const DayAgendaSnapshotBuilder().buildSnapshot(dayAgenda);
     }
 
     if (!mounted) return;
 
-    unawaited(JourneySmartPanel.showAsBottomSheet(
-      context,
-      snapshot: snapshot,
-      onSelectActivity: _openItemDetails,
-      onSelectFreeGap: (gap) {
-        if (_controller.activeScale != JourneyScale.day) {
-          _controller.setScale(JourneyScale.day);
-        }
-        _scrollToTimeString(gap.startTimeStr);
-      },
-      onDropItemOnGap: (item, gap) async {
-        final dur = min(gap.durationMinutes, item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes);
-        await _controller.scheduleItem(item, gap.startMinutes, dur);
-      },
-    ));
+    unawaited(
+      JourneySmartPanel.showAsBottomSheet(
+        context,
+        snapshot: snapshot,
+        onSelectActivity: _openItemDetails,
+        onSelectFreeGap: (gap) {
+          if (_controller.activeScale != JourneyScale.day) {
+            _controller.setScale(JourneyScale.day);
+          }
+          _scrollToTimeString(gap.startTimeStr);
+        },
+        onDropItemOnGap: (item, gap) async {
+          final dur = min(
+            gap.durationMinutes,
+            item.durationMinutes ?? CalendarDefaults.fallbackDurationMinutes,
+          );
+          await _controller.scheduleItem(item, gap.startMinutes, dur);
+        },
+      ),
+    );
   }
 
   // Open the day review sheet for the given date.
-  Future<void> _openDayReview(DateTime date, DayAgendaSnapshot? existingSnapshot) async {
-    final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  Future<void> _openDayReview(
+    DateTime date,
+    DayAgendaSnapshot? existingSnapshot,
+  ) async {
+    final ds =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     DayAgendaSnapshot? snap = existingSnapshot;
     if (snap == null) {
       final dayAgenda = await DayAgendaService.instance.agendaForDate(date);
@@ -299,12 +319,14 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
 
   // Show bottom sheet to pick day mark (REST / TRAVEL / SPECIAL / NORMAL).
   Future<void> _showDayMarkMenu(BuildContext ctx, DateTime date) async {
-    final ds = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final ds =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final existing = await DayMarkRepository.instance.getMark(ds);
     if (!ctx.mounted) return;
     final kind = await showModalBottomSheet<DayMarkKind>(
       context: ctx,
-      builder: (_) => _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
+      builder: (_) =>
+          _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
     );
     if (kind == null || !mounted) return;
     await DayMarkRepository.instance.setMark(ds, kind);
@@ -325,7 +347,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
   }
 
   Future<void> _saveDayAsTemplate() async {
-    final controller = TextEditingController(text: 'قالب روز ${_controller.selectedDate.day}');
+    final controller = TextEditingController(
+      text: 'قالب روز ${_controller.selectedDate.day}',
+    );
     final name = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -357,7 +381,11 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     if (saved != null) {
       RitmoToast.show(context, 'قالب «${saved.name}» با موفقیت ذخیره شد.');
     } else {
-      RitmoToast.show(context, 'آیتم زمان‌داری برای ذخیره در این روز وجود ندارد.', icon: Icons.warning_amber_rounded);
+      RitmoToast.show(
+        context,
+        'آیتم زمان‌داری برای ذخیره در این روز وجود ندارد.',
+        icon: Icons.warning_amber_rounded,
+      );
     }
   }
 
@@ -367,7 +395,11 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
     if (!mounted) return;
 
     if (templates.isEmpty) {
-      RitmoToast.show(context, 'هنوز قالبی ذخیره نشده است.', icon: Icons.info_outline);
+      RitmoToast.show(
+        context,
+        'هنوز قالبی ذخیره نشده است.',
+        icon: Icons.info_outline,
+      );
       return;
     }
 
@@ -379,7 +411,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         return Container(
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.card)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(RitmoRadius.card),
+            ),
           ),
           padding: const EdgeInsets.all(RitmoSpacing.lg),
           child: Directionality(
@@ -388,7 +422,14 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('انتخاب قالب برای اعمال', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                Text(
+                  'انتخاب قالب برای اعمال',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: RitmoSpacing.md),
                 Flexible(
                   child: ListView.builder(
@@ -397,11 +438,27 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                     itemBuilder: (listCtx, i) {
                       final t = templates[i];
                       return ListTile(
-                        leading: Icon(Icons.dashboard_customize_outlined, color: colors.primary),
-                        title: Text(t.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                        subtitle: Text('${toPersianDigits(t.slots.length.toString())} بلاک زمانی', style: TextStyle(color: colors.textSecondary)),
+                        leading: Icon(
+                          Icons.dashboard_customize_outlined,
+                          color: colors.primary,
+                        ),
+                        title: Text(
+                          t.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${toPersianDigits(t.slots.length.toString())} بلاک زمانی',
+                          style: TextStyle(color: colors.textSecondary),
+                        ),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete_outline, color: colors.error, size: 20),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: colors.error,
+                            size: 20,
+                          ),
                           onPressed: () async {
                             await repo.deleteTemplate(t.id);
                             if (listCtx.mounted) {
@@ -428,7 +485,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('اعمال قالب «${selectedTemplate.name}»'),
-        content: Text('آیا می‌خواهید زمان‌بندی ${toPersianDigits(selectedTemplate.slots.length.toString())} آیتم این روز مطابق این قالب تنظیم شود؟'),
+        content: Text(
+          'آیا می‌خواهید زمان‌بندی ${toPersianDigits(selectedTemplate.slots.length.toString())} آیتم این روز مطابق این قالب تنظیم شود؟',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -446,9 +505,16 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
       final success = await _controller.applyTemplate(selectedTemplate);
       if (!mounted) return;
       if (success) {
-        RitmoToast.show(context, 'قالب «${selectedTemplate.name}» با موفقیت اعمال شد.');
+        RitmoToast.show(
+          context,
+          'قالب «${selectedTemplate.name}» با موفقیت اعمال شد.',
+        );
       } else {
-        RitmoToast.show(context, 'هیچ آیتم منطبقی برای اعمال این قالب در این روز یافت نشد.', icon: Icons.warning_amber_rounded);
+        RitmoToast.show(
+          context,
+          'هیچ آیتم منطبقی برای اعمال این قالب در این روز یافت نشد.',
+          icon: Icons.warning_amber_rounded,
+        );
       }
     }
   }
@@ -490,7 +556,9 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         if (mounted) {
           final desc = newKind == DayMarkKind.rest
               ? 'روز استراحت فعال شد'
-              : (newKind == DayMarkKind.travel ? 'روز سفر فعال شد' : 'وضعیت به روز عادی تغییر یافت');
+              : (newKind == DayMarkKind.travel
+                    ? 'روز سفر فعال شد'
+                    : 'وضعیت به روز عادی تغییر یافت');
           RitmoToast.show(
             context,
             desc,
@@ -503,7 +571,13 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           value: DayMarkKind.normal,
           child: Row(
             children: [
-              Icon(Icons.wb_sunny_outlined, size: 18, color: mark == DayMarkKind.normal ? colors.primary : colors.textSecondary),
+              Icon(
+                Icons.wb_sunny_outlined,
+                size: 18,
+                color: mark == DayMarkKind.normal
+                    ? colors.primary
+                    : colors.textSecondary,
+              ),
               const SizedBox(width: 8),
               const Text('عادی (همه‌چیز فعال)'),
             ],
@@ -513,7 +587,13 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           value: DayMarkKind.rest,
           child: Row(
             children: [
-              Icon(Icons.spa_rounded, size: 18, color: mark == DayMarkKind.rest ? colors.success : colors.textSecondary),
+              Icon(
+                Icons.spa_rounded,
+                size: 18,
+                color: mark == DayMarkKind.rest
+                    ? colors.success
+                    : colors.textSecondary,
+              ),
               const SizedBox(width: 8),
               const Text('استراحت (فقط ضروری)'),
             ],
@@ -523,7 +603,13 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           value: DayMarkKind.travel,
           child: Row(
             children: [
-              Icon(Icons.flight_takeoff_rounded, size: 18, color: mark == DayMarkKind.travel ? colors.warning : colors.textSecondary),
+              Icon(
+                Icons.flight_takeoff_rounded,
+                size: 18,
+                color: mark == DayMarkKind.travel
+                    ? colors.warning
+                    : colors.textSecondary,
+              ),
               const SizedBox(width: 8),
               const Text('سفر (فقط ضروری)'),
             ],
@@ -579,7 +665,8 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
         final untimedItems = allItems.where((i) => !i.isTimed).toList();
         final timedItems = allItems.where((i) => i.isTimed).toList();
 
-        final dateKey = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+        final dateKey =
+            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -619,14 +706,21 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                           Expanded(
                             child: InkWell(
                               onTap: () async {
-                                final picked = await GoToDateDialog.show(context, initialDate: selectedDate);
+                                final picked = await GoToDateDialog.show(
+                                  context,
+                                  initialDate: selectedDate,
+                                );
                                 if (picked != null && mounted) {
                                   _controller.selectDate(picked);
                                 }
                               },
-                              borderRadius: BorderRadius.circular(RitmoRadius.card),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.card,
+                              ),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -679,16 +773,30 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                     button: true,
                                     child: GestureDetector(
                                       onTap: () {
-                                        _controller.selectDate(DateTime.now(), scaleToSet: JourneyScale.day);
+                                        _controller.selectDate(
+                                          DateTime.now(),
+                                          scaleToSet: JourneyScale.day,
+                                        );
                                         _autoScrollToNow();
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
                                         margin: const EdgeInsets.only(left: 4),
                                         decoration: BoxDecoration(
-                                          color: colors.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                                          color: colors.primary.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            RitmoRadius.pill,
+                                          ),
+                                          border: Border.all(
+                                            color: colors.primary.withValues(
+                                              alpha: 0.3,
+                                            ),
+                                          ),
                                         ),
                                         child: Text(
                                           'امروز',
@@ -711,7 +819,8 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                               child: IconButton(
                                 padding: EdgeInsets.zero,
                                 icon: const Icon(Icons.undo_rounded, size: 18),
-                                tooltip: 'بازگردانی (${_controller.lastUndoDescription ?? ''})',
+                                tooltip:
+                                    'بازگردانی (${_controller.lastUndoDescription ?? ''})',
                                 color: colors.textPrimary,
                                 onPressed: _controller.undoLastAction,
                               ),
@@ -725,7 +834,8 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                               child: IconButton(
                                 padding: EdgeInsets.zero,
                                 icon: const Icon(Icons.redo_rounded, size: 18),
-                                tooltip: 'انجام مجدد (${_controller.lastRedoDescription ?? ''})',
+                                tooltip:
+                                    'انجام مجدد (${_controller.lastRedoDescription ?? ''})',
                                 color: colors.textPrimary,
                                 onPressed: _controller.redoLastAction,
                               ),
@@ -744,7 +854,8 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                               tooltip: 'جستجوی رویدادها',
                               color: colors.textPrimary,
                               onPressed: () {
-                                final items = _controller.snapshot?.items ?? allItems;
+                                final items =
+                                    _controller.snapshot?.items ?? allItems;
                                 showSearch(
                                   context: context,
                                   delegate: CalendarSearchDelegate(
@@ -765,7 +876,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                 height: 32,
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
-                                  icon: const Icon(Icons.tune_rounded, size: 20),
+                                  icon: const Icon(
+                                    Icons.tune_rounded,
+                                    size: 20,
+                                  ),
                                   tooltip: 'مدیریت و تنظیمات تقویم',
                                   color: colors.textPrimary,
                                   onPressed: () => CalendarManagementSheet.show(
@@ -774,8 +888,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                                     currentScale: activeScale,
                                     healthIssueCount: _registryHealthCount,
                                     onSelectScale: _controller.setScale,
-                                    onOpenDayReview: () => _openDayReview(selectedDate, snapshot),
-                                    onOpenDayMarkPicker: () => _showDayMarkMenu(context, selectedDate),
+                                    onOpenDayReview: () =>
+                                        _openDayReview(selectedDate, snapshot),
+                                    onOpenDayMarkPicker: () =>
+                                        _showDayMarkMenu(context, selectedDate),
                                     onOpenAllPlans: _openAllPlans,
                                     onRefresh: _controller.refresh,
                                     onSaveDayTemplate: _saveDayAsTemplate,
@@ -802,50 +918,67 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                       ),
 
                       // Subtitle Line: Dynamic Weekday - Occasion / Holiday banner
-                      Builder(builder: (ctx) {
-                        final occasions = OccasionsCalendarSource.occasionsForDate(selectedDate);
-                        final occasion = (activeScale == JourneyScale.day && occasions.isNotEmpty)
-                            ? occasions.first
-                            : null;
-                        final subTitle = _getSubContextTitle(activeScale, selectedDate);
-                        final fullSubTitle = occasion != null
-                            ? (subTitle.isNotEmpty
-                                ? '$subTitle - ${occasion.title}${occasion.isHoliday ? ' (تعطیل)' : ''}'
-                                : (occasion.isHoliday ? '${occasion.title} (تعطیل)' : occasion.title))
-                            : subTitle;
+                      Builder(
+                        builder: (ctx) {
+                          final occasions =
+                              OccasionsCalendarSource.occasionsForDate(
+                                selectedDate,
+                              );
+                          final occasion =
+                              (activeScale == JourneyScale.day &&
+                                  occasions.isNotEmpty)
+                              ? occasions.first
+                              : null;
+                          final subTitle = _getSubContextTitle(
+                            activeScale,
+                            selectedDate,
+                          );
+                          final fullSubTitle = occasion != null
+                              ? (subTitle.isNotEmpty
+                                    ? '$subTitle - ${occasion.title}${occasion.isHoliday ? ' (تعطیل)' : ''}'
+                                    : (occasion.isHoliday
+                                          ? '${occasion.title} (تعطیل)'
+                                          : occasion.title))
+                              : subTitle;
 
-                        if (fullSubTitle.isEmpty) return const SizedBox.shrink();
+                          if (fullSubTitle.isEmpty)
+                            return const SizedBox.shrink();
 
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 1, bottom: 2),
-                          child: Row(
-                            children: [
-                              if (occasion != null) ...[
-                                Icon(
-                                  occasion.isHoliday ? Icons.celebration_outlined : Icons.info_outline_rounded,
-                                  size: 11,
-                                  color: occasion.isHoliday ? colors.error : colors.textTertiary,
-                                ),
-                                const SizedBox(width: 4),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  fullSubTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11.0,
-                                    fontWeight: FontWeight.w600,
-                                    color: occasion?.isHoliday == true
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 1, bottom: 2),
+                            child: Row(
+                              children: [
+                                if (occasion != null) ...[
+                                  Icon(
+                                    occasion.isHoliday
+                                        ? Icons.celebration_outlined
+                                        : Icons.info_outline_rounded,
+                                    size: 11,
+                                    color: occasion.isHoliday
                                         ? colors.error
-                                        : colors.textSecondary,
+                                        : colors.textTertiary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    fullSubTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 11.0,
+                                      fontWeight: FontWeight.w600,
+                                      color: occasion?.isHoliday == true
+                                          ? colors.error
+                                          : colors.textSecondary,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
 
                       // Day mark badge (استراحت 🌴 / سفر ✈️ / خاص ⭐)
                       if (activeScale == JourneyScale.day)
@@ -853,23 +986,47 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                           future: _getDayMarkFuture(dateKey),
                           builder: (ctx, snap) {
                             final mark = snap.data;
-                            if (mark == null || mark.kind == DayMarkKind.normal) return const SizedBox.shrink();
+                            if (mark == null || mark.kind == DayMarkKind.normal)
+                              return const SizedBox.shrink();
                             final (label, icon) = switch (mark.kind) {
-                              DayMarkKind.rest   => ('روز استراحت 🌴', Icons.beach_access_outlined),
-                              DayMarkKind.travel => ('روز سفر ✈️',     Icons.flight_outlined),
-                              DayMarkKind.special => ('روز خاص ⭐',    Icons.star_outline),
-                              _                   => ('',               Icons.circle),
+                              DayMarkKind.rest => (
+                                'روز استراحت 🌴',
+                                Icons.beach_access_outlined,
+                              ),
+                              DayMarkKind.travel => (
+                                'روز سفر ✈️',
+                                Icons.flight_outlined,
+                              ),
+                              DayMarkKind.special => (
+                                'روز خاص ⭐',
+                                Icons.star_outline,
+                              ),
+                              _ => ('', Icons.circle),
                             };
                             if (label.isEmpty) return const SizedBox.shrink();
                             return GestureDetector(
-                              onTap: () => unawaited(_showDayMarkMenu(ctx, selectedDate)),
+                              onTap: () => unawaited(
+                                _showDayMarkMenu(ctx, selectedDate),
+                              ),
                               child: Container(
-                                margin: const EdgeInsets.only(top: 2, bottom: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                margin: const EdgeInsets.only(
+                                  top: 2,
+                                  bottom: 4,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: colors.primary.withValues(alpha: 0.10),
-                                  borderRadius: BorderRadius.circular(RitmoRadius.badge),
-                                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                                  borderRadius: BorderRadius.circular(
+                                    RitmoRadius.badge,
+                                  ),
+                                  border: Border.all(
+                                    color: colors.primary.withValues(
+                                      alpha: 0.25,
+                                    ),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -911,45 +1068,74 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                 // ─── Non-blocking Overlap Warning & Smart Gap Suggestion Banner (CAL-43) ───
                 if (_controller.warningMessage != null)
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: RitmoSpacing.md,
+                      vertical: 4,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: RitmoSpacing.md,
+                      vertical: RitmoSpacing.sm,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.warning.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(RitmoRadius.card),
-                      border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.warning.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 18, color: colors.warning),
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 18,
+                          color: colors.warning,
+                        ),
                         const SizedBox(width: RitmoSpacing.sm),
                         Expanded(
                           child: Text(
                             _controller.warningMessage!,
-                            style: TextStyle(fontSize: 12, color: colors.textPrimary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textPrimary,
+                            ),
                           ),
                         ),
                         if (_controller.suggestedSlot != null) ...[
                           const SizedBox(width: RitmoSpacing.sm),
                           TextButton(
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                             onPressed: () {
                               final slot = _controller.suggestedSlot!;
-                              final formattedTime = TimeOfDayMinutes.format(slot.startMinutes);
-                              final targetItem = _controller.snapshot?.items.firstWhere(
-                                (i) => i.isTimed,
-                                orElse: () => _controller.snapshot!.items.first,
+                              final formattedTime = TimeOfDayMinutes.format(
+                                slot.startMinutes,
                               );
+                              final targetItem = _controller.snapshot?.items
+                                  .firstWhere(
+                                    (i) => i.isTimed,
+                                    orElse: () =>
+                                        _controller.snapshot!.items.first,
+                                  );
                               if (targetItem != null) {
-                                _controller.commitItemDrag(targetItem, formattedTime);
+                                _controller.commitItemDrag(
+                                  targetItem,
+                                  formattedTime,
+                                );
                               }
                             },
                             child: Text(
                               'انتقال به ${toPersianDigits(TimeOfDayMinutes.format(_controller.suggestedSlot!.startMinutes))}',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colors.primary),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: colors.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -958,23 +1144,42 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                   ),
 
                 // ─── Day Mark Banner (CAL-49: REST / TRAVEL Day Banner) ───
-                if (_controller.currentDayMark == DayMarkKind.rest || _controller.currentDayMark == DayMarkKind.travel)
+                if (_controller.currentDayMark == DayMarkKind.rest ||
+                    _controller.currentDayMark == DayMarkKind.travel)
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.sm),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: RitmoSpacing.md,
+                      vertical: 4,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: RitmoSpacing.md,
+                      vertical: RitmoSpacing.sm,
+                    ),
                     decoration: BoxDecoration(
-                      color: (_controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning).withValues(alpha: 0.12),
+                      color:
+                          (_controller.currentDayMark == DayMarkKind.rest
+                                  ? colors.success
+                                  : colors.warning)
+                              .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(RitmoRadius.card),
                       border: Border.all(
-                        color: (_controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning).withValues(alpha: 0.35),
+                        color:
+                            (_controller.currentDayMark == DayMarkKind.rest
+                                    ? colors.success
+                                    : colors.warning)
+                                .withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          _controller.currentDayMark == DayMarkKind.rest ? Icons.spa_rounded : Icons.flight_takeoff_rounded,
+                          _controller.currentDayMark == DayMarkKind.rest
+                              ? Icons.spa_rounded
+                              : Icons.flight_takeoff_rounded,
                           size: 18,
-                          color: _controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning,
+                          color: _controller.currentDayMark == DayMarkKind.rest
+                              ? colors.success
+                              : colors.warning,
                         ),
                         const SizedBox(width: RitmoSpacing.sm),
                         Expanded(
@@ -982,22 +1187,33 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                             _controller.currentDayMark == DayMarkKind.rest
                                 ? 'روز استراحت — فقط موارد ضروری فعال هستند'
                                 : 'روز سفر — فقط موارد ضروری فعال هستند',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textPrimary),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textPrimary,
+                            ),
                           ),
                         ),
                         TextButton(
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          onPressed: () => _controller.setDayMark(DayMarkKind.normal),
+                          onPressed: () =>
+                              _controller.setDayMark(DayMarkKind.normal),
                           child: Text(
                             'تغییر به عادی',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: _controller.currentDayMark == DayMarkKind.rest ? colors.success : colors.warning,
+                              color:
+                                  _controller.currentDayMark == DayMarkKind.rest
+                                  ? colors.success
+                                  : colors.warning,
                             ),
                           ),
                         ),
@@ -1019,43 +1235,48 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                             ),
                           )
                         : _controller.errorMessage != null
-                            ? Center(
-                                key: const ValueKey('journey_error'),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text('خطا: ${_controller.errorMessage}', style: TextStyle(color: colors.error)),
-                                    const SizedBox(height: RitmoSpacing.md),
-                                    RitmoSecondaryButton(
-                                      onPressed: _controller.refresh,
-                                      label: 'تلاش دوباره',
-                                    ),
-                                  ],
+                        ? Center(
+                            key: const ValueKey('journey_error'),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'خطا: ${_controller.errorMessage}',
+                                  style: TextStyle(color: colors.error),
                                 ),
-                              )
-                            : GestureDetector(
-                                onHorizontalDragEnd: (details) {
-                                  if (details.primaryVelocity == null) return;
-                                  // RTL awareness: swipe left = next (period 1), swipe right = prev (period -1)
-                                  if (details.primaryVelocity! < -150) {
-                                    _controller.navigatePeriod(1);
-                                  } else if (details.primaryVelocity! > 150) {
-                                    _controller.navigatePeriod(-1);
-                                  }
-                                },
-                                behavior: HitTestBehavior.translucent,
-                                child: KeyedSubtree(
-                                  key: ValueKey('${activeScale.name}_${selectedDate.year}_${selectedDate.month}_${selectedDate.day}'),
-                                  child: _buildScaleContent(
-                                    activeScale: activeScale,
-                                    selectedDate: selectedDate,
-                                    snapshot: snapshot,
-                                    untimedItems: untimedItems,
-                                    timedItems: timedItems,
-                                    isToday: isToday,
-                                  ),
+                                const SizedBox(height: RitmoSpacing.md),
+                                RitmoSecondaryButton(
+                                  onPressed: _controller.refresh,
+                                  label: 'تلاش دوباره',
                                 ),
+                              ],
+                            ),
+                          )
+                        : GestureDetector(
+                            onHorizontalDragEnd: (details) {
+                              if (details.primaryVelocity == null) return;
+                              // RTL awareness: swipe left = next (period 1), swipe right = prev (period -1)
+                              if (details.primaryVelocity! < -150) {
+                                _controller.navigatePeriod(1);
+                              } else if (details.primaryVelocity! > 150) {
+                                _controller.navigatePeriod(-1);
+                              }
+                            },
+                            behavior: HitTestBehavior.translucent,
+                            child: KeyedSubtree(
+                              key: ValueKey(
+                                '${activeScale.name}_${selectedDate.year}_${selectedDate.month}_${selectedDate.day}',
                               ),
+                              child: _buildScaleContent(
+                                activeScale: activeScale,
+                                selectedDate: selectedDate,
+                                snapshot: snapshot,
+                                untimedItems: untimedItems,
+                                timedItems: timedItems,
+                                isToday: isToday,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -1202,7 +1423,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                       }
                     },
                     onItemResize: (item, newDurationMinutes) async {
-                      await _controller.commitItemResize(item, newDurationMinutes);
+                      await _controller.commitItemResize(
+                        item,
+                        newDurationMinutes,
+                      );
                       if (mounted) {
                         RitmoToast.show(
                           context,
@@ -1212,7 +1436,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                       }
                     },
                     onSlotTap: (slotMinutes) {
-                      final prefilledTime = TimeOfDay(hour: slotMinutes ~/ 60, minute: slotMinutes % 60);
+                      final prefilledTime = TimeOfDay(
+                        hour: slotMinutes ~/ 60,
+                        minute: slotMinutes % 60,
+                      );
                       UniversalPlannerSheet.show(
                         context: context,
                         prefilledTime: prefilledTime,
@@ -1220,7 +1447,11 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                       );
                     },
                     onScheduleUntimed: (item, startMinutes, durMinutes) async {
-                      await _controller.scheduleItem(item, startMinutes, durMinutes);
+                      await _controller.scheduleItem(
+                        item,
+                        startMinutes,
+                        durMinutes,
+                      );
                       if (mounted) {
                         final timeStr = TimeOfDayMinutes.format(startMinutes);
                         RitmoToast.show(
@@ -1235,7 +1466,6 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
                 ),
               ],
             ),
-
           ],
         );
 
@@ -1248,7 +1478,10 @@ class _JourneyScreenState extends State<JourneyScreen> with WidgetsBindingObserv
           },
           onItemTap: _openItemDetails,
           onSlotTap: (date, slotMinutes) {
-            final prefilledTime = TimeOfDay(hour: slotMinutes ~/ 60, minute: slotMinutes % 60);
+            final prefilledTime = TimeOfDay(
+              hour: slotMinutes ~/ 60,
+              minute: slotMinutes % 60,
+            );
             UniversalPlannerSheet.show(
               context: context,
               prefilledTime: prefilledTime,
@@ -1318,20 +1551,53 @@ class _DayMarkSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: RitmoSpacing.sm),
-            _markTile(context, DayMarkKind.normal, 'روز عادی', Icons.wb_sunny_outlined, colors),
-            _markTile(context, DayMarkKind.rest, 'روز استراحت 🌴', Icons.beach_access_outlined, colors),
-            _markTile(context, DayMarkKind.travel, 'روز سفر ✈️', Icons.flight_outlined, colors),
-            _markTile(context, DayMarkKind.special, 'روز خاص ⭐', Icons.star_outline, colors),
+            _markTile(
+              context,
+              DayMarkKind.normal,
+              'روز عادی',
+              Icons.wb_sunny_outlined,
+              colors,
+            ),
+            _markTile(
+              context,
+              DayMarkKind.rest,
+              'روز استراحت 🌴',
+              Icons.beach_access_outlined,
+              colors,
+            ),
+            _markTile(
+              context,
+              DayMarkKind.travel,
+              'روز سفر ✈️',
+              Icons.flight_outlined,
+              colors,
+            ),
+            _markTile(
+              context,
+              DayMarkKind.special,
+              'روز خاص ⭐',
+              Icons.star_outline,
+              colors,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _markTile(BuildContext context, DayMarkKind kind, String label, IconData icon, RitmoColors colors) {
+  Widget _markTile(
+    BuildContext context,
+    DayMarkKind kind,
+    String label,
+    IconData icon,
+    RitmoColors colors,
+  ) {
     final isSelected = kind == current;
     return ListTile(
-      leading: Icon(icon, color: isSelected ? colors.primary : colors.textSecondary),
+      leading: Icon(
+        icon,
+        color: isSelected ? colors.primary : colors.textSecondary,
+      ),
       title: Text(
         label,
         style: TextStyle(
@@ -1339,7 +1605,9 @@ class _DayMarkSheet extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      trailing: isSelected ? Icon(Icons.check_rounded, color: colors.primary) : null,
+      trailing: isSelected
+          ? Icon(Icons.check_rounded, color: colors.primary)
+          : null,
       onTap: () => Navigator.of(context).pop(kind),
     );
   }

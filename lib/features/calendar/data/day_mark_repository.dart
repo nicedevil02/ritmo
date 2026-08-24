@@ -5,11 +5,7 @@ import 'package:sqflite/sqflite.dart';
 enum DayMarkKind { normal, rest, travel, special }
 
 class DayMark {
-  const DayMark({
-    required this.dateStr,
-    required this.kind,
-    this.note,
-  });
+  const DayMark({required this.dateStr, required this.kind, this.note});
 
   final String dateStr;
   final DayMarkKind kind;
@@ -17,19 +13,27 @@ class DayMark {
 
   static DayMarkKind parseKind(String? val) {
     switch (val?.toUpperCase()) {
-      case 'REST':    return DayMarkKind.rest;
-      case 'TRAVEL':  return DayMarkKind.travel;
-      case 'SPECIAL': return DayMarkKind.special;
-      default:        return DayMarkKind.normal;
+      case 'REST':
+        return DayMarkKind.rest;
+      case 'TRAVEL':
+        return DayMarkKind.travel;
+      case 'SPECIAL':
+        return DayMarkKind.special;
+      default:
+        return DayMarkKind.normal;
     }
   }
 
   static String codeOf(DayMarkKind k) {
     switch (k) {
-      case DayMarkKind.rest:    return 'REST';
-      case DayMarkKind.travel:  return 'TRAVEL';
-      case DayMarkKind.special: return 'SPECIAL';
-      case DayMarkKind.normal:  return 'NORMAL';
+      case DayMarkKind.rest:
+        return 'REST';
+      case DayMarkKind.travel:
+        return 'TRAVEL';
+      case DayMarkKind.special:
+        return 'SPECIAL';
+      case DayMarkKind.normal:
+        return 'NORMAL';
     }
   }
 }
@@ -37,7 +41,8 @@ class DayMark {
 /// K43 — Repository for managing Day Marks (REST, TRAVEL, SPECIAL, NORMAL)
 /// in `day_marks` table.
 class DayMarkRepository {
-  DayMarkRepository({DatabaseHelper? dbHelper}) : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+  DayMarkRepository({DatabaseHelper? dbHelper})
+    : _dbHelper = dbHelper ?? DatabaseHelper.instance;
   static final DayMarkRepository instance = DayMarkRepository();
 
   final DatabaseHelper _dbHelper;
@@ -45,7 +50,12 @@ class DayMarkRepository {
   Future<DayMark?> getMark(String dateStr) async {
     try {
       final db = await _dbHelper.database;
-      final rows = await db.query('day_marks', where: 'date = ?', whereArgs: [dateStr], limit: 1);
+      final rows = await db.query(
+        'day_marks',
+        where: 'date = ?',
+        whereArgs: [dateStr],
+        limit: 1,
+      );
       if (rows.isEmpty) return null;
       final row = rows.first;
       return DayMark(
@@ -77,17 +87,13 @@ class DayMarkRepository {
         finalNote = existing?.note;
       }
 
-      await db.insert(
-        'day_marks',
-        {
-          'date': dateStr,
-          'kind': kindCode,
-          'note': finalNote,
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('day_marks', {
+        'date': dateStr,
+        'kind': kindCode,
+        'note': finalNote,
+        'createdAt': nowMs,
+        'updatedAt': nowMs,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       return true;
     } catch (e, st) {
       RitmoLog.error('DayMarkRepository', 'setMark failed for $dateStr', e, st);

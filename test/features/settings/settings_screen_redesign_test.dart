@@ -97,18 +97,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Verify Section 1 Header
-      expect(find.text('شخصی‌سازی و تجربه کاربری'), findsOneWidget);
-
-      // Verify Section 2 Header
-      expect(find.text('هسته هوشمند و قابلیت‌ها'), findsOneWidget);
-
-      // Verify Section 3 Header
-      expect(find.text('ارتباطات و اعلان‌ها'), findsOneWidget);
-
-      // Verify Section 4 Header
-      expect(find.text('امنیت و مدیریت داده‌ها'), findsOneWidget);
-
       // Verify group tiles are present
       expect(find.byType(SettingsGroupTile), findsNWidgets(8));
 

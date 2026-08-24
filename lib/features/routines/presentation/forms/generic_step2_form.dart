@@ -534,7 +534,7 @@ class GenericStep2Form extends StatelessWidget {
                   style: TextStyle(fontSize: 12.5, color: colors.textSecondary),
                 ),
                 const SizedBox(width: 6),
-                Icon(Icons.arrow_forward_ios_rounded, size: 13, color: colors.textSecondary.withValues(alpha: 0.6)),
+                Icon(Icons.arrow_back_ios_new_rounded, size: 13, color: colors.textSecondary.withValues(alpha: 0.6)),
               ],
             ),
           ],

@@ -144,7 +144,7 @@ class KonkurFieldPickerSheet extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_ios,
+                  Icons.arrow_back_ios_new_rounded,
                   size: 16,
                   color: colorHex,
                 ),

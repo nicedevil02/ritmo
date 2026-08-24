@@ -291,7 +291,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                       ),
                       const SizedBox(width: 6),
                       _buildNavBadge(
-                        icon: CupertinoIcons.chevron_forward,
+                        icon: CupertinoIcons.chevron_back,
                         tooltip: 'ماه بعد',
                         onTap: _goToNextMonth,
                         isDark: isDark,
@@ -299,7 +299,7 @@ class _WorshipSolarCalendarState extends State<WorshipSolarCalendar> {
                       ),
                       const SizedBox(width: 6),
                       _buildNavBadge(
-                        icon: CupertinoIcons.chevron_back,
+                        icon: CupertinoIcons.chevron_forward,
                         tooltip: 'ماه قبل',
                         onTap: _goToPrevMonth,
                         isDark: isDark,

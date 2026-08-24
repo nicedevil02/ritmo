@@ -209,15 +209,19 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                             value:
                                 '${RitmoUiScale.textLabelFor(prefs.textScalePercent)} ${prefs.textScalePercent} درصد',
                             child: Slider(
-                              value: prefs.textScalePercent.toDouble(),
-                              min: 85,
-                              max: 140,
-                              divisions: 5,
+                              value: RitmoUiScale.stepIndexFromPercent(
+                                prefs.textScalePercent,
+                              ).toDouble(),
+                              min: 0,
+                              max: (RitmoUiScale.textSteps.length - 1)
+                                  .toDouble(),
+                              divisions: RitmoUiScale.textSteps.length - 1,
                               activeColor: colors.primary,
                               onChanged: (val) {
-                                final stepped = RitmoUiScale.percentFromFactor(
-                                  RitmoUiScale.factorFromPercent(val.round()),
-                                );
+                                final stepped =
+                                    RitmoUiScale.percentFromStepIndex(
+                                      val.round(),
+                                    );
                                 if (stepped != prefs.textScalePercent) {
                                   RitmoHapticsPolicy.selection();
                                   widget.themeRepository.updateTextScalePercent(

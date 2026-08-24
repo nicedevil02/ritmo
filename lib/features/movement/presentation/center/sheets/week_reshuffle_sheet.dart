@@ -208,7 +208,7 @@ class _WeekReshuffleSheetState extends State<WeekReshuffleSheet> {
                               ),
                               const SizedBox(width: RitmoSpacing.sm),
                               Icon(
-                                Icons.arrow_forward_rounded,
+                                Icons.arrow_back_rounded,
                                 color: sportsColor,
                                 size: 14,
                               ),

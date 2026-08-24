@@ -398,7 +398,7 @@ class SimpleReminderForm extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
+                          Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: colors.textSecondary.withValues(alpha: 0.6)),
                         ],
                       ),
                     ],

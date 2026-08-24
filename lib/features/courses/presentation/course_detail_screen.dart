@@ -308,7 +308,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(CupertinoIcons.arrow_right_to_line_alt, color: colors.warning),
+                  leading: Icon(CupertinoIcons.arrow_left_to_line_alt, color: colors.warning),
                   title: const Text('عبور / رد کردن جلسه'),
                   onTap: () async {
                     Navigator.pop(context);

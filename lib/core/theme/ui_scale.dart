@@ -4,10 +4,26 @@ enum RitmoDensityLevel { compact, comfortable, spacious, xl }
 
 abstract final class RitmoUiScale {
   static const List<double> textSteps = [0.85, 0.925, 1.0, 1.10, 1.25, 1.40];
+  static const List<int> textPercents = [85, 93, 100, 110, 125, 140];
   static const int defaultTextPercent = 100;
   static const int minTextPercent = 85;
   static const int maxTextPercent = 140;
   static const RitmoDensityLevel defaultDensity = RitmoDensityLevel.comfortable;
+
+  /// درصد را به شاخص گسسته (۰ تا ۵) تبدیل می‌کند.
+  static int stepIndexFromPercent(int percent) {
+    final factor = factorFromPercent(percent);
+    for (var i = 0; i < textSteps.length; i++) {
+      if ((textSteps[i] - factor).abs() < 0.001) return i;
+    }
+    return 2; // پیش‌فرض ۱۰۰٪ (شاخص ۲)
+  }
+
+  /// شاخص گسسته (۰ تا ۵) را به درصد متناظر تبدیل می‌کند.
+  static int percentFromStepIndex(int index) {
+    final clamped = index.clamp(0, textSteps.length - 1);
+    return textPercents[clamped];
+  }
 
   /// درصد ذخیره‌شده در تنظیمات را به ضریب تبدیل و روی نزدیک‌ترین پله snap می‌کند.
   static double factorFromPercent(int percent) {

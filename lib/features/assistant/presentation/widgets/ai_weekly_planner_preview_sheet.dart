@@ -367,7 +367,7 @@ class _AiWeeklyPlannerPreviewSheetState
                                     ),
 
                                     Icon(
-                                      Icons.arrow_forward_ios,
+                                      Icons.arrow_back_ios_new_rounded,
                                       color: colors.textSecondary,
                                       size: 14,
                                     ),

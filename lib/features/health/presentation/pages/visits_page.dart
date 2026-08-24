@@ -35,7 +35,7 @@ class VisitsPage extends StatelessWidget {
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Row(

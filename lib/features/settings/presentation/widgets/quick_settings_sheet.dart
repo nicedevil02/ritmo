@@ -359,8 +359,8 @@ class QuickSettingsSheet extends StatelessWidget {
                           final currentScale = SettingsService.instance
                               .get<int>('ui_text_scale');
                           int selectedOption = 100;
-                          if (currentScale <= 92) {
-                            selectedOption = 92;
+                          if (currentScale <= 93) {
+                            selectedOption = 93;
                           } else if (currentScale >= 125) {
                             selectedOption = 125;
                           }
@@ -369,7 +369,7 @@ class QuickSettingsSheet extends StatelessWidget {
                           return SegmentedButton<int>(
                             segments: [
                               ButtonSegment(
-                                value: 92,
+                                value: 93,
                                 label: Text(
                                   'کوچک',
                                   style: context.t.labelSmall,

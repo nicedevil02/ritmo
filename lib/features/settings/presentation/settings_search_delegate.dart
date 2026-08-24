@@ -71,7 +71,7 @@ class SettingsSearchDelegate extends SearchDelegate<SettingDescriptor?> {
       label: 'بازگشت از جستجو',
       button: true,
       child: IconButton(
-        icon: const Icon(CupertinoIcons.back),
+        icon: const Icon(CupertinoIcons.forward),
         tooltip: 'بازگشت',
         onPressed: () => close(context, null),
       ),

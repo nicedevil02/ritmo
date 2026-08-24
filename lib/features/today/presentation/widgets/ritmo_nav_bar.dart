@@ -222,7 +222,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     left: 0,
                     right: 0,
                     top: 0,
-                    height: context.metrics.navBarHeight,
+                    height: RitmoShellMetrics.navBarHeight,
                     child: Directionality(
                       textDirection: TextDirection.rtl,
                       child: Row(

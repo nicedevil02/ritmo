@@ -162,98 +162,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    // ─── دسته‌بندی منطقی گزینه‌ها در بخش‌های جزیره‌ای مجزا (iOS 26 Inset Grouped) ───
-    final sections = [
-      _SettingsSectionData(
-        title: 'شخصی‌سازی و تجربه کاربری',
-        icon: CupertinoIcons.person_crop_circle,
-        items: [
-          _GroupItem(
-            group: SettingsGroup.identity,
-            title: SettingsGroup.identity.labelFa,
-            subtitle: SettingsGroup.identity.subtitleFa,
-            icon: SettingsGroup.identity.icon,
-            gradient: const [Color(0xFF00C9FF), Color(0xFF92FE9D)],
-            pageBuilder: () => const IdentityGroupScreen(),
-          ),
-          _GroupItem(
-            group: SettingsGroup.appearance,
-            title: SettingsGroup.appearance.labelFa,
-            subtitle: SettingsGroup.appearance.subtitleFa,
-            icon: SettingsGroup.appearance.icon,
-            gradient: const [Color(0xFFDA22FF), Color(0xFF9733EE)],
-            pageBuilder: () => AppearanceGroupScreen(
-              themeRepository: widget.themeRepository,
-              localeRepository: widget.localeRepository,
-            ),
-          ),
-        ],
+    // ─── فهرست یکپارچه گروه‌های تنظیمات ───
+    final groups = [
+      _GroupItem(
+        group: SettingsGroup.identity,
+        title: SettingsGroup.identity.labelFa,
+        subtitle: SettingsGroup.identity.subtitleFa,
+        icon: SettingsGroup.identity.icon,
+        gradient: const [Color(0xFF00C9FF), Color(0xFF92FE9D)],
+        pageBuilder: () => const IdentityGroupScreen(),
       ),
-      _SettingsSectionData(
-        title: 'هسته هوشمند و قابلیت‌ها',
-        icon: CupertinoIcons.sparkles,
-        items: [
-          _GroupItem(
-            group: SettingsGroup.modules,
-            title: SettingsGroup.modules.labelFa,
-            subtitle: SettingsGroup.modules.subtitleFa,
-            icon: SettingsGroup.modules.icon,
-            gradient: const [Color(0xFF6A11CB), Color(0xFF2575FC)],
-            pageBuilder: () => const ModulesGroupScreen(),
-          ),
-          _GroupItem(
-            group: SettingsGroup.assistant,
-            title: SettingsGroup.assistant.labelFa,
-            subtitle: SettingsGroup.assistant.subtitleFa,
-            icon: SettingsGroup.assistant.icon,
-            gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
-            pageBuilder: () => const AssistantPrivacyGroupScreen(),
-          ),
-          _GroupItem(
-            group: SettingsGroup.calendar,
-            title: SettingsGroup.calendar.labelFa,
-            subtitle: SettingsGroup.calendar.subtitleFa,
-            icon: SettingsGroup.calendar.icon,
-            gradient: const [Color(0xFF4568DC), Color(0xFFB06AB3)],
-            pageBuilder: () => const CalendarGroupScreen(),
-          ),
-        ],
+      _GroupItem(
+        group: SettingsGroup.appearance,
+        title: SettingsGroup.appearance.labelFa,
+        subtitle: SettingsGroup.appearance.subtitleFa,
+        icon: SettingsGroup.appearance.icon,
+        gradient: const [Color(0xFFDA22FF), Color(0xFF9733EE)],
+        pageBuilder: () => AppearanceGroupScreen(
+          themeRepository: widget.themeRepository,
+          localeRepository: widget.localeRepository,
+        ),
       ),
-      _SettingsSectionData(
-        title: 'ارتباطات و اعلان‌ها',
-        icon: CupertinoIcons.bell,
-        items: [
-          _GroupItem(
-            group: SettingsGroup.notifications,
-            title: SettingsGroup.notifications.labelFa,
-            subtitle: SettingsGroup.notifications.subtitleFa,
-            icon: SettingsGroup.notifications.icon,
-            gradient: const [Color(0xFFFF9966), Color(0xFFFF5E62)],
-            pageBuilder: () => const NotificationsGroupScreen(),
-          ),
-        ],
+      _GroupItem(
+        group: SettingsGroup.modules,
+        title: SettingsGroup.modules.labelFa,
+        subtitle: SettingsGroup.modules.subtitleFa,
+        icon: SettingsGroup.modules.icon,
+        gradient: const [Color(0xFF6A11CB), Color(0xFF2575FC)],
+        pageBuilder: () => const ModulesGroupScreen(),
       ),
-      _SettingsSectionData(
-        title: 'امنیت و مدیریت داده‌ها',
-        icon: CupertinoIcons.lock_shield,
-        items: [
-          _GroupItem(
-            group: SettingsGroup.security,
-            title: SettingsGroup.security.labelFa,
-            subtitle: SettingsGroup.security.subtitleFa,
-            icon: SettingsGroup.security.icon,
-            gradient: const [Color(0xFFFF416C), Color(0xFFFF4B2B)],
-            pageBuilder: () => const SecurityGroupScreen(),
-          ),
-          _GroupItem(
-            group: SettingsGroup.dataBackup,
-            title: SettingsGroup.dataBackup.labelFa,
-            subtitle: SettingsGroup.dataBackup.subtitleFa,
-            icon: SettingsGroup.dataBackup.icon,
-            gradient: const [Color(0xFF373B44), Color(0xFF4286F4)],
-            pageBuilder: () => DataBackupGroupScreen(onFactoryReset: widget.onFactoryReset),
-          ),
-        ],
+      _GroupItem(
+        group: SettingsGroup.assistant,
+        title: SettingsGroup.assistant.labelFa,
+        subtitle: SettingsGroup.assistant.subtitleFa,
+        icon: SettingsGroup.assistant.icon,
+        gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+        pageBuilder: () => const AssistantPrivacyGroupScreen(),
+      ),
+      _GroupItem(
+        group: SettingsGroup.calendar,
+        title: SettingsGroup.calendar.labelFa,
+        subtitle: SettingsGroup.calendar.subtitleFa,
+        icon: SettingsGroup.calendar.icon,
+        gradient: const [Color(0xFF4568DC), Color(0xFFB06AB3)],
+        pageBuilder: () => const CalendarGroupScreen(),
+      ),
+      _GroupItem(
+        group: SettingsGroup.notifications,
+        title: SettingsGroup.notifications.labelFa,
+        subtitle: SettingsGroup.notifications.subtitleFa,
+        icon: SettingsGroup.notifications.icon,
+        gradient: const [Color(0xFFFF9966), Color(0xFFFF5E62)],
+        pageBuilder: () => const NotificationsGroupScreen(),
+      ),
+      _GroupItem(
+        group: SettingsGroup.security,
+        title: SettingsGroup.security.labelFa,
+        subtitle: SettingsGroup.security.subtitleFa,
+        icon: SettingsGroup.security.icon,
+        gradient: const [Color(0xFFFF416C), Color(0xFFFF4B2B)],
+        pageBuilder: () => const SecurityGroupScreen(),
+      ),
+      _GroupItem(
+        group: SettingsGroup.dataBackup,
+        title: SettingsGroup.dataBackup.labelFa,
+        subtitle: SettingsGroup.dataBackup.subtitleFa,
+        icon: SettingsGroup.dataBackup.icon,
+        gradient: const [Color(0xFF373B44), Color(0xFF4286F4)],
+        pageBuilder: () => DataBackupGroupScreen(onFactoryReset: widget.onFactoryReset),
       ),
     ];
 
@@ -352,74 +328,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SettingsPremiumCard(),
               const SizedBox(height: 18),
 
-              // ─── بخش‌های جزیره‌ای تنظیمات تفکیک‌شده به سبک iOS 26 ───
+              // ─── فهرست گروه‌های تنظیمات ───
               AnimatedBuilder(
                 animation: SettingsService.instance.revision,
                 builder: (context, _) {
                   final showAdvanced = SettingsService.instance.get<bool>('show_advanced_settings');
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final section in sections) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8, bottom: 6, top: 8),
-                          child: Text(
-                            section.title,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textSecondary,
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (int i = 0; i < groups.length; i++) ...[
+                          if (i > 0)
+                            Divider(
+                              height: 1,
+                              thickness: 0.7,
+                              color: colors.divider.withValues(alpha: 0.6),
+                              indent: 64,
+                              endIndent: 14,
                             ),
+                          Builder(
+                            builder: (context) {
+                              final g = groups[i];
+                              final count = SettingsRegistry.userVisibleByGroup(
+                                g.group,
+                                includeAdvanced: showAdvanced,
+                              ).length;
+                              return SettingsGroupTile(
+                                title: g.title,
+                                subtitle: g.subtitle,
+                                icon: g.icon,
+                                gradient: g.gradient,
+                                count: count,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    Ios26PageRoute(builder: (_) => g.pageBuilder()),
+                                  );
+                                },
+                              );
+                            },
                           ),
-                        ),
-                        // کارت جزیره‌ای گروه‌بندی‌شده
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: colors.card,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Column(
-                            children: [
-                              for (int i = 0; i < section.items.length; i++) ...[
-                                if (i > 0)
-                                  Divider(
-                                    height: 1,
-                                    thickness: 0.7,
-                                    color: colors.divider.withValues(alpha: 0.6),
-                                    indent: 64,
-                                    endIndent: 14,
-                                  ),
-                                Builder(
-                                  builder: (context) {
-                                    final g = section.items[i];
-                                    final count = SettingsRegistry.userVisibleByGroup(
-                                      g.group,
-                                      includeAdvanced: showAdvanced,
-                                    ).length;
-                                    return SettingsGroupTile(
-                                      title: g.title,
-                                      subtitle: g.subtitle,
-                                      icon: g.icon,
-                                      gradient: g.gradient,
-                                      count: count,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          Ios26PageRoute(builder: (_) => g.pageBuilder()),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   );
                 },
               ),
@@ -461,18 +417,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-}
-
-class _SettingsSectionData {
-  const _SettingsSectionData({
-    required this.title,
-    required this.icon,
-    required this.items,
-  });
-
-  final String title;
-  final IconData icon;
-  final List<_GroupItem> items;
 }
 
 class _GroupItem {

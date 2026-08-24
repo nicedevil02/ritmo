@@ -40,7 +40,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back_rounded),
+      icon: const Icon(Icons.arrow_forward_rounded),
       onPressed: () {
         close(context, null);
       },

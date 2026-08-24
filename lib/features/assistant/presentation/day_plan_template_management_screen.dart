@@ -249,7 +249,7 @@ class _DayPlanTemplateManagementScreenState
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: colors.textPrimary),
+          icon: Icon(Icons.arrow_forward_ios_rounded, color: colors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),

@@ -173,7 +173,7 @@ class SkipSessionSheet extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_ios_rounded,
+                  Icons.arrow_back_ios_new_rounded,
                   color: colors.textSecondary.withValues(alpha: 0.4),
                   size: 14,
                 ),

@@ -468,7 +468,7 @@ class GoalsTimelineSection extends StatelessWidget {
                     },
                   )
                   : Icon(
-                    item.isDone ? Icons.check_circle : Icons.arrow_forward_ios,
+                    item.isDone ? Icons.check_circle : Icons.arrow_back_ios_new_rounded,
                     size: item.isDone ? 16 : 12,
                     color: item.isDone ? colors.success : colors.textSecondary,
                   ),

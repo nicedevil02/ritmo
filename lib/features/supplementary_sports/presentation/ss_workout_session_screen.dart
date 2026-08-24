@@ -1090,7 +1090,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           elevation: 0,
           leading: IconButton(
                      tooltip: 'بازگشت',
-            icon: Icon(Icons.arrow_back, color: colors.textPrimary),
+            icon: Icon(Icons.arrow_forward_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -2261,7 +2261,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             children: [
               // Prev Exercise
               _navArrowButton(
-                icon: Icons.arrow_back_ios_rounded,
+                icon: Icons.arrow_forward_ios_rounded,
                 enabled: _currentExerciseIndex > 0,
                 onTap: () => _dispatchIntent(const GoToPreviousExercise()),
               ),
@@ -2302,7 +2302,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
               // Next Exercise
               _navArrowButton(
-                icon: Icons.arrow_forward_ios_rounded,
+                icon: Icons.arrow_back_ios_rounded,
                 enabled: _currentExerciseIndex < _exercises.length - 1,
                 onTap: () => _dispatchIntent(const GoToNextExercise()),
               ),

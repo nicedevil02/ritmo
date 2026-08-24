@@ -106,5 +106,19 @@ void main() {
       expect(RitmoUiScale.densityLabelFor(RitmoDensityLevel.spacious), 'راحت');
       expect(RitmoUiScale.densityLabelFor(RitmoDensityLevel.xl), 'بزرگ');
     });
+
+    test('stepIndexFromPercent and percentFromStepIndex bijective mapping', () {
+      final expectedPercents = [85, 93, 100, 110, 125, 140];
+      for (var i = 0; i < expectedPercents.length; i++) {
+        final percent = expectedPercents[i];
+        expect(RitmoUiScale.stepIndexFromPercent(percent), i);
+        expect(RitmoUiScale.percentFromStepIndex(i), percent);
+      }
+      // Clamping and fallback verification
+      expect(RitmoUiScale.percentFromStepIndex(-1), 85);
+      expect(RitmoUiScale.percentFromStepIndex(10), 140);
+      expect(RitmoUiScale.stepIndexFromPercent(92), 1); // 92 snaps to step 1 (93)
+      expect(RitmoUiScale.stepIndexFromPercent(104), 2); // 104 snaps to step 2 (100)
+    });
   });
 }

@@ -97,14 +97,17 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
         borderRadius: radius,
         child: Stack(
           children: [
-            Positioned(top: -46, left: -34, child: _glow(tone, 150)),
+            Positioned(top: -36, left: -24, child: _glow(tone, 110)),
             Positioned(
-              bottom: -54,
-              right: -26,
-              child: _glow(colors.primary, 130),
+              bottom: -40,
+              right: -20,
+              child: _glow(colors.primary, 100),
             ),
             Padding(
-              padding: const EdgeInsets.all(RitmoSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.md + 2,
+                vertical: RitmoSpacing.md,
+              ),
               child: _content(context, colors, tone),
             ),
           ],
@@ -177,7 +180,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
               decoration: BoxDecoration(
                 color: tone.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -187,16 +190,16 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    height: 6,
-                    width: 6,
+                    height: 5.5,
+                    width: 5.5,
                     decoration:
                         BoxDecoration(color: tone, shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   Text(
                     _badgeText(data),
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: tone,
                     ),
@@ -206,42 +209,44 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
             ),
             const Spacer(),
             Container(
-              height: 34,
-              width: 34,
+              height: 28,
+              width: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: tone.withValues(alpha: 0.14),
                 shape: BoxShape.circle,
                 border: Border.all(color: tone.withValues(alpha: 0.26)),
               ),
-              child: Icon(_iconFor(data), size: 17, color: tone),
+              child: Icon(_iconFor(data), size: 14, color: tone),
             ),
           ],
         ),
-        const SizedBox(height: RitmoSpacing.md),
+        const SizedBox(height: RitmoSpacing.sm),
         Text(
           toPersianDigits(data.title),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 20,
-            height: 1.35,
+            fontSize: 17,
+            height: 1.28,
             fontWeight: FontWeight.w800,
             color: colors.textPrimary,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          toPersianDigits(data.subtitle),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12.5,
-            height: 1.5,
-            color: colors.textSecondary,
+        if (data.subtitle.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          Text(
+            toPersianDigits(data.subtitle),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: colors.textSecondary,
+            ),
           ),
-        ),
-        const SizedBox(height: RitmoSpacing.lg),
+        ],
+        const SizedBox(height: RitmoSpacing.md),
         Row(
           children: [
             Expanded(
@@ -249,7 +254,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 button: true,
                 label: data.primaryCtaLabel,
                 child: SizedBox(
-                  height: 54,
+                  height: 42,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: tone,
@@ -258,7 +263,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius:
-                            BorderRadius.circular(RitmoRadius.field + 2),
+                            BorderRadius.circular(RitmoRadius.field),
                       ),
                     ),
                     onPressed: () {
@@ -268,15 +273,15 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(_ctaIconFor(data), size: 18),
-                        const SizedBox(width: 8),
+                        Icon(_ctaIconFor(data), size: 16),
+                        const SizedBox(width: 6),
                         Flexible(
                           child: Text(
                             data.primaryCtaLabel,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 14.5,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -294,7 +299,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                 button: true,
                 label: data.secondaryCtaLabel,
                 child: SizedBox(
-                  height: 54,
+                  height: 42,
                   child: TextButton(
                     onPressed: () {
                       RitmoHaptics.tap();
@@ -303,7 +308,7 @@ class _HomeFocusHeroState extends State<HomeFocusHero>
                     child: Text(
                       data.secondaryCtaLabel!,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: colors.textSecondary,
                       ),

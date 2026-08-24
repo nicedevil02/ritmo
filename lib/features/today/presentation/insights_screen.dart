@@ -455,10 +455,11 @@ ${jsonEncode(digest.json)}
   }
 
   Widget _buildAIBriefingSection(RitmoColors colors, bool isDarkMode) {
+    final m = context.metrics;
     if (_briefing == null && !_isDeepAnalyzing && _deepAnalysisResult == null) {
       return RitmoTheme.glassCardLight(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(m.spaceLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -471,7 +472,7 @@ ${jsonEncode(digest.json)}
                 ),
                 textDirection: TextDirection.rtl,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: m.spaceSm),
               Text(
                 'هنوز هیچ تحلیلی ثبت نشده است. دکمه زیر را برای اجرای اولین تحلیل عمیق الگوهای رفتاری خود فشار دهید.',
                 style: TextStyle(
@@ -481,13 +482,13 @@ ${jsonEncode(digest.json)}
                 ),
                 textDirection: TextDirection.rtl,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: m.spaceLg),
               ElevatedButton.icon(
                 onPressed: _runDeepAnalysis,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xff06B6D4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(m.radiusField)),
+                  padding: EdgeInsets.symmetric(vertical: m.spaceMd),
                 ),
                 icon: const Icon(CupertinoIcons.sparkles, size: 16, color: Colors.white),
                 label: const Text(
@@ -503,7 +504,7 @@ ${jsonEncode(digest.json)}
 
     return RitmoTheme.glassCardLight(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(m.spaceLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -530,7 +531,7 @@ ${jsonEncode(digest.json)}
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: m.spaceMd),
 
             if (_briefing != null) ...[
               Text(
@@ -542,7 +543,7 @@ ${jsonEncode(digest.json)}
                 ),
                 textDirection: TextDirection.rtl,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: m.spaceSm),
               Text(
                 _briefing!.summary,
                 style: TextStyle(
@@ -552,16 +553,16 @@ ${jsonEncode(digest.json)}
                 ),
                 textDirection: TextDirection.rtl,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: m.spaceMd),
             ],
 
             if (_isDeepAnalyzing) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: m.spaceLg),
                Center(
                 child: Column(
                   children: [
                     const CircularProgressIndicator(color: Color(0xff06B6D4)),
-                    const SizedBox(height: 12),
+                    SizedBox(height: m.spaceMd),
                     Text(
                       'در حال تحلیل عمیق الگوهای رفتاری شما... لطفاً صبور باشید 🧐',
                       style: TextStyle(fontSize: 12, color: colors.textSecondary),
@@ -569,7 +570,7 @@ ${jsonEncode(digest.json)}
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: m.spaceLg),
             ] else if (_deepAnalysisResult != null) ...[
               Divider(color: colors.border, height: 16),
               const Text(
@@ -581,7 +582,7 @@ ${jsonEncode(digest.json)}
                 ),
                 textDirection: TextDirection.rtl,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: m.spaceSm),
               Container(
                 constraints: const BoxConstraints(maxHeight: 250),
                 decoration: BoxDecoration(

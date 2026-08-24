@@ -104,7 +104,7 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(
-            horizontal: RitmoSpacing.md + 2, vertical: RitmoSpacing.md),
+            horizontal: RitmoSpacing.md + 2, vertical: RitmoSpacing.sm + 4),
         decoration: BoxDecoration(
           borderRadius: radius,
           gradient: LinearGradient(
@@ -143,42 +143,16 @@ class _TodayPathProgressBannerState extends State<TodayPathProgressBanner> {
               isDark,
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             // نوار پیشرفت چندلایه با انیمیشن روان و مارکرهای مرحله‌ای
             _buildProgressBar(context, colors, accentColor, clamped, isDark),
 
-            // ردیف اطلاعاتی زیرین (خلاصهٔ آماری سریع)
-            if (widget.totalCount > 0) ...[
-              const SizedBox(height: 7),
-              Row(
-                children: [
-                  Text(
-                    toPersianDigits(
-                        '${widget.doneCount} از ${widget.totalCount} مورد تکمیل شده'),
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textTertiary,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (!isCompleted && widget.remainingCount > 0)
-                    Text(
-                      'گام‌به‌گام تا پایان روز',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: colors.textTertiary.withValues(alpha: 0.8),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-
             // بخش گسترش‌یافته: جزئیات کارهای مسیر امروز (اکنون، بعدی، سپس / وقت آزاد)
-            if (_isExpanded)
+            if (_isExpanded) ...[
+              const SizedBox(height: RitmoSpacing.md),
               _buildExpandedDetails(context, colors, accentColor, isDark),
+            ],
           ],
         ),
       ),

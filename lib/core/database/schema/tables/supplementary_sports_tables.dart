@@ -499,10 +499,15 @@ class SupplementarySportsTables {
           targetJson    TEXT,
           liveJson      TEXT,
           workoutLogId  TEXT,
+          overallFeeling INTEGER,
+          note          TEXT,
           createdAt     INTEGER NOT NULL,
           updatedAt     INTEGER NOT NULL
         );
       ''');
+
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'overallFeeling', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'note', 'TEXT');
 
       await db.execute('''
         CREATE UNIQUE INDEX IF NOT EXISTS idx_movement_sessions_active

@@ -17,7 +17,7 @@ class MvSession {
   final String? targetJson;
   final String? liveJson;
   final String? workoutLogId;
-  final MvSessionFeeling? overallFeeling;
+  final int? overallFeeling;
   final String? note;
   final int createdAt;
   final int updatedAt;
@@ -44,7 +44,8 @@ class MvSession {
 
   bool get isActive => status == MvSessionStatus.active;
   bool get isPaused => status == MvSessionStatus.paused;
-  bool get isFinished => status == MvSessionStatus.completed || status == MvSessionStatus.partial;
+  bool get isFinished =>
+      status == MvSessionStatus.completed || status == MvSessionStatus.partial;
 
   int get elapsedMs {
     final now = endedAt ?? DateTime.now().millisecondsSinceEpoch;
@@ -69,7 +70,7 @@ class MvSession {
     String? targetJson,
     String? liveJson,
     String? workoutLogId,
-    MvSessionFeeling? overallFeeling,
+    int? overallFeeling,
     String? note,
     int? createdAt,
     int? updatedAt,
@@ -110,6 +111,8 @@ class MvSession {
       'targetJson': targetJson,
       'liveJson': liveJson,
       'workoutLogId': workoutLogId,
+      'overallFeeling': overallFeeling,
+      'note': note,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -118,7 +121,7 @@ class MvSession {
   factory MvSession.fromMap(Map<String, dynamic> map) {
     return MvSession(
       id: map['id'] as String,
-      kindCode: (map['kindCode'] as String?) ?? 'bodyweight',
+      kindCode: (map['kindCode'] as String?) ?? 'BODYWEIGHT',
       routineId: map['routineId'] as String?,
       occurrenceId: map['occurrenceId'] as String?,
       prescriptionId: map['prescriptionId'] as String?,
@@ -130,8 +133,14 @@ class MvSession {
       targetJson: map['targetJson'] as String?,
       liveJson: map['liveJson'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      overallFeeling: (map['overallFeeling'] as num?)?.toInt(),
+      note: map['note'] as String?,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

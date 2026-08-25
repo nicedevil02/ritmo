@@ -62,6 +62,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v120_study_de
 import 'package:ritmo/core/database/migration/migrations/migration_v121_sports_unification.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v122_courses_hardening.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v123_worship_hardening.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v124_session_feedback_fields.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -187,6 +188,7 @@ class MigrationRunner {
     MigrationV121SportsUnification(), // Unified Sports & Movement: M1-M7 migrations
     MigrationV122CoursesHardening(), // Hardening courses schema & course_adaptive_snapshots
     MigrationV123WorshipHardening(), // Hardening worship schema, isFallbackLocation, and prayer_times_cache
+    MigrationV124SessionFeedbackFields(), // Movement sessions overallFeeling and note fields
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

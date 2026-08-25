@@ -9,11 +9,12 @@ class MvQuickLogUseCase {
   MvQuickLogUseCase({
     MvSessionRepository? sessionRepo,
     MvPrescriptionRepository? prescriptionRepo,
-  })  : _sessionRepo = sessionRepo ?? MvSessionRepository(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository();
+  }) : _sessionRepo = sessionRepo ?? MvSessionRepository(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository();
 
   /// Retrieves the most recent completed activity for quick re-log preset.
-  Future<MvSession?> getLastCompletedActivity() => _sessionRepo.getLastCompletedSession();
+  Future<MvSession?> getLastCompletedActivity() =>
+      _sessionRepo.getLastCompletedSession();
 
   /// Logs a quick activity in 2 taps.
   Future<MvSession> execute({
@@ -33,7 +34,7 @@ class MvQuickLogUseCase {
       status: MvSessionStatus.completed,
       startedAt: now - (durationMinutes * 60000),
       endedAt: now,
-      overallFeeling: feeling ?? MvSessionFeeling.good,
+      overallFeeling: feeling?.index ?? 1,
       note: note,
       createdAt: now,
       updatedAt: now,

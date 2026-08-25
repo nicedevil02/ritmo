@@ -56,7 +56,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
     final m = RitmoMetrics.of(prefs.density);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: m.spaceLg, vertical: m.spaceSm),
       child: RitmoCard(
         padding: EdgeInsets.all(m.spaceMd),
         borderRadius: BorderRadius.circular(m.radiusCard),
@@ -164,6 +164,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final m = context.metrics;
 
     return ValueListenableBuilder<ThemePreferences>(
       valueListenable: widget.themeRepository.preferencesNotifier,
@@ -175,7 +176,12 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
             title: 'ظاهر و زبان',
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
+            padding: EdgeInsetsDirectional.fromSTEB(
+              m.spaceLg,
+              m.spaceMd,
+              m.spaceLg,
+              m.navBarHeight + m.spaceSm,
+            ),
             child: Column(
               children: [
                 SettingsSection(
@@ -183,9 +189,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   children: [
                     _buildLivePreview(context, colors, prefs),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceSm,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,9 +250,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceMd,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -264,7 +270,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                       ) ??
                                       TextStyle(color: colors.textPrimary),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: m.spaceXs),
                                 Text(
                                   'اگر روشن باشد، اندازهٔ انتخابی شما در تنظیم سیستم دستگاه ضرب می‌شود.',
                                   style:
@@ -276,7 +282,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: m.spaceMd),
                           CupertinoSwitch(
                             value: prefs.followOsTextScale,
                             activeTrackColor: colors.primary,
@@ -291,9 +297,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceMd,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +313,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 ) ??
                                 TextStyle(color: colors.textPrimary),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: m.spaceXs),
                           Text(
                             'تنظیم فواصل، دکمه‌ها، آیکن‌ها و اهداف لمس در برنامه',
                             style:
@@ -316,7 +322,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 ) ??
                                 TextStyle(color: colors.textSecondary),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: m.spaceMd),
                           RitmoSegmentedControl<RitmoDensityLevel>(
                             selected: prefs.density,
                             segments: {
@@ -346,20 +352,20 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceSm,
                       ),
                       child: Center(
                         child: TextButton.icon(
-                          icon: const Icon(
+                          icon: Icon(
                             CupertinoIcons.arrow_counterclockwise,
-                            size: 16,
+                            size: m.iconSm,
                           ),
                           label: const Text('بازگردانی به پیش‌فرض'),
                           style: TextButton.styleFrom(
                             foregroundColor: colors.textSecondary,
-                            minimumSize: const Size(48, 48),
+                            minimumSize: Size(m.touchTarget, m.touchTarget),
                           ),
                           onPressed: () {
                             RitmoHapticsPolicy.selection();
@@ -375,7 +381,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   title: 'حالت روشنایی',
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(m.spaceLg),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -391,7 +397,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                   color: colors.textPrimary,
                                 ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: m.spaceMd),
                           RitmoSegmentedControl<ThemeMode>(
                             segments: const {
                               ThemeMode.system: 'هماهنگ با سیستم',
@@ -417,7 +423,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   title: 'پالت‌های رنگی اختصاصی',
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(m.spaceLg),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -433,11 +439,11 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                   color: colors.textPrimary,
                                 ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: m.spaceMd),
                           ...RitmoPalette.all.map((palette) {
                             final isSelected = palette.id == prefs.paletteId;
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
+                              padding: EdgeInsets.only(bottom: m.spaceMd),
                               child: _PalettePreviewCard(
                                 palette: palette,
                                 isSelected: isSelected,
@@ -480,9 +486,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   title: 'جلوه‌های بصری و نمایشگر',
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceMd,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -503,7 +509,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                         color: colors.textPrimary,
                                       ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: m.spaceXs),
                                 Text(
                                   'سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)',
                                   style:
@@ -515,7 +521,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: m.spaceMd),
                           CupertinoSwitch(
                             value: prefs.reduceTransparency,
                             activeTrackColor: colors.primary,
@@ -530,9 +536,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceLg,
+                        vertical: m.spaceMd,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -557,7 +563,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                             : colors.textPrimary,
                                       ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: m.spaceXs),
                                 Text(
                                   prefs.mode == ThemeMode.light
                                       ? 'فقط در حالت تاریک اثر دارد'
@@ -571,7 +577,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: m.spaceMd),
                           CupertinoSwitch(
                             value: prefs.trueBlack,
                             activeTrackColor: colors.primary,
@@ -593,7 +599,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                   title: 'زبان برنامه',
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(m.spaceLg),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -609,7 +615,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                   color: colors.textPrimary,
                                 ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: m.spaceMd),
                           RitmoSegmentedControl<String>(
                             selected: _locale,
                             segments: const {
@@ -619,7 +625,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                             onSelected: (val) => _changeLocale(val),
                           ),
                           if (_locale == 'en') ...[
-                            const SizedBox(height: 8),
+                            SizedBox(height: m.spaceSm),
                             Text(
                               'توجه: پشتیبانی از زبان انگلیسی در حال حاضر آزمایشی و در دست تکمیل است.',
                               style:
@@ -781,16 +787,20 @@ class _PalettePreviewCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    SizedBox(height: innerMetrics.spaceMd),
 
                     // 8 Module color circles
                     Row(
                       children: List.generate(8, (i) {
+                        final dotSize = (10.0 * innerMetrics.densityFactor)
+                            .roundToDouble();
                         return Padding(
-                          padding: const EdgeInsets.only(left: RitmoSpacing.xs),
+                          padding: EdgeInsetsDirectional.only(
+                            end: innerMetrics.spaceXs,
+                          ),
                           child: Container(
-                            width: 10,
-                            height: 10,
+                            width: dotSize,
+                            height: dotSize,
                             decoration: BoxDecoration(
                               color: innerColors.modules.bySlot(i),
                               shape: BoxShape.circle,
@@ -799,7 +809,7 @@ class _PalettePreviewCard extends StatelessWidget {
                         );
                       }),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    SizedBox(height: innerMetrics.spaceMd),
 
                     // Name & Tagline
                     Text(
@@ -826,9 +836,10 @@ class _ColorDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dotSize = (14.0 * context.metrics.densityFactor).roundToDouble();
     return Container(
-      width: 14,
-      height: 14,
+      width: dotSize,
+      height: dotSize,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,

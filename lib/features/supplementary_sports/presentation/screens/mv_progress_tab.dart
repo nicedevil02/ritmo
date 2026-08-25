@@ -93,31 +93,45 @@ class MvProgressTab extends StatelessWidget {
           SizedBox(height: metrics.spaceLg),
 
           // 2. Stats Grid
-          Row(
-            children: [
-              Expanded(
-                child: MvStatTile(
-                  title: 'کل جلسات',
-                  value: totalSessionsCount.toString(),
-                  unit: 'جلسه',
-                  icon: Icons.fitness_center_rounded,
+          if (totalSessionsCount == 0)
+            const MvInsufficientData(
+              title: 'آمار کل فعالیت',
+              requirementDescription:
+                  'هنوز فعالیتی ثبت نشده است. با ثبت اولین جلسه آمار نمایش داده می‌شود.',
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: MvStatTile(
+                    title: 'کل جلسات',
+                    value: totalSessionsCount.toString(),
+                    unit: 'جلسه',
+                    icon: Icons.fitness_center_rounded,
+                  ),
                 ),
-              ),
-              SizedBox(width: metrics.spaceMd),
-              Expanded(
-                child: MvStatTile(
-                  title: 'کل فعالیت',
-                  value: (totalMetMinutes / 60).toStringAsFixed(1),
-                  unit: 'ساعت',
-                  icon: Icons.timer_rounded,
+                SizedBox(width: metrics.spaceMd),
+                Expanded(
+                  child: MvStatTile(
+                    title: 'کل فعالیت',
+                    value: (totalMetMinutes / 60).toStringAsFixed(1),
+                    unit: 'ساعت',
+                    icon: Icons.timer_rounded,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           SizedBox(height: metrics.spaceLg),
 
           // 3. Body Map
-          MvBodyMap(distribution: bodyMapDistribution),
+          if (bodyMapDistribution.muscleSessionCounts.values.every((c) => c == 0))
+            const MvInsufficientData(
+              title: 'نقشهٔ عضلانی این هفته',
+              requirementDescription:
+                  'برای نمایش توزیع عضلانی، حداقل به ثبت یک جلسهٔ تمرینی نیاز است.',
+            )
+          else
+            MvBodyMap(distribution: bodyMapDistribution),
           SizedBox(height: metrics.spaceLg),
 
           // 4. Personal Records (PR) Section
@@ -131,21 +145,10 @@ class MvProgressTab extends StatelessWidget {
           SizedBox(height: metrics.spaceSm),
 
           if (personalRecords.isEmpty)
-            Container(
-              padding: EdgeInsets.all(metrics.spaceLg),
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(metrics.radiusCard),
-                border: Border.all(color: colors.border),
-              ),
-              child: Center(
-                child: Text(
+            const MvInsufficientData(
+              title: 'رکوردهای شخصی',
+              requirementDescription:
                   'با انجام اولین جلسهٔ تمرینی، رکوردهایت اینجا ثبت می‌شود.',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colors.textSecondary,
-                  ),
-                ),
-              ),
             )
           else
             ...personalRecords.map((pr) {

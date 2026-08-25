@@ -137,7 +137,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T5 — نمایش لنگر در تب هفته و تب امروز
+### - [x] S8-T5 — نمایش لنگرها در تب هفته و امروز — f5dc8023
 
 1. `MvWeekTab` پارامتر `List<MvCommitment> commitments` بگیرد.
 2. `MvDaySlotCard` برای اسلات لنگردار: آیکون قفل، ساعت، و نام محل زیر عنوان.
@@ -284,7 +284,7 @@ flutter test
 | S8-T2 | DONE | 47253578 | شیت ساخت و ویرایش لنگر (MvCommitmentEditSheet) با ۸ فیلد و توکن‌های طراحی |
 | S8-T3 | DONE | 0f6b9b85 | صفحهٔ مدیریت لنگرها (MvCommitmentsScreen) با حالت خالی و پر و FAB |
 | S8-T4 | DONE | 7ed80f4c | اتصال ۳ ورودی اجباری به صفحهٔ لنگر (هاب، تب هفته، تنظیمات) |
-| S8-T5 | | | |
+| S8-T5 | DONE | f5dc8023 | نمایش لنگرها در تب هفته (MvDaySlotCard) و بنر فردا در تب امروز (MvTodayTab) |
 | S8-T6 | | | |
 | S8-T7 | | | |
 | S8-T8 | | | |

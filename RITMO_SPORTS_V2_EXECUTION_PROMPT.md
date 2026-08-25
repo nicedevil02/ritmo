@@ -578,7 +578,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T4 — ساخت تعهد از شیت برنامهٔ روز
+### - [x] S2-T4 — ساخت تعهد از شیت برنامهٔ روز — 50d71ac9
 
 **فایل‌ها:** `presentation/sheets/mv_day_plan_sheet.dart`، فایل جدید `application/mv_save_commitment_use_case.dart`
 
@@ -1446,7 +1446,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
 | S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
 | S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
-| S2-T4 |  |  |  |
+| S2-T4 | DONE | 50d71ac9 | پیاده‌سازی ساخت تعهد از شیت برنامه روز و یوزکیس MvSaveCommitmentUseCase و تست‌های مربوطه |
 | S2-T5 |  |  |  |
 | S2-T6 |  |  |  |
 | S2-T7 |  |  |  |

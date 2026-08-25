@@ -1,6 +1,6 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-25T08:17:06.519047
+Generated At: 2026-08-25T08:18:11.182278
 
 ## Audit Metrics Summary
 
@@ -21,8 +21,8 @@ Generated At: 2026-08-25T08:17:06.519047
 | Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 146 | 146 | OK |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3493 | 3522 | IMPROVED (3493 < 3522) |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4395 | 4395 | OK |
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3493 | 3493 | OK |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4380 | 4395 | IMPROVED (4380 < 4395) |
 
 ## Top Offenders by Metric
 
@@ -197,7 +197,7 @@ Total: 3493 occurrences
 | `lib/features/notes/presentation/screens/notebook_screen.dart` | 47 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4395 occurrences
+Total: 4380 occurrences
 
 | File | Occurrences |
 |---|---|

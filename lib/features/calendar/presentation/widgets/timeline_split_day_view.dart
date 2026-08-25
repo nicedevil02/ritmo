@@ -170,8 +170,6 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
     required HourAxisSide side,
     required GlobalKey gridKey,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final pxSplit = CalendarGeometry.effectivePxPerMinuteSplit(context);
 
     final columnItems = widget.items.where((item) {
@@ -190,10 +188,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
             gridKey.currentContext?.findRenderObject() as RenderBox?;
         if (renderBox == null) return;
         final localOffset = renderBox.globalToLocal(details.offset);
-        final rawMinutes =
-            ((localOffset.dy / pxSplit) +
-                    range.startMinutes)
-                .round();
+        final rawMinutes = ((localOffset.dy / pxSplit) + range.startMinutes)
+            .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
         final snappedStart = TimelineSnappingHelper.snapStartMinutes(
           rawMinutes,
@@ -215,10 +211,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
         final localOffset = renderBox != null
             ? renderBox.globalToLocal(details.offset)
             : Offset.zero;
-        final rawMinutes =
-            ((localOffset.dy / pxSplit) +
-                    range.startMinutes)
-                .round();
+        final rawMinutes = ((localOffset.dy / pxSplit) + range.startMinutes)
+            .round();
         final dur = DurationBounds.sanitize(details.data.durationMinutes);
         final snappedStart = TimelineSnappingHelper.snapStartMinutes(
           rawMinutes,
@@ -246,7 +240,9 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               rangeStartMinutes: range.startMinutes,
               rangeEndMinutes: range.endMinutes,
               pxPerMinute: pxSplit,
-              hourAxisWidth: CalendarGeometry.effectiveHourAxisWidthSplit(context),
+              hourAxisWidth: CalendarGeometry.effectiveHourAxisWidthSplit(
+                context,
+              ),
               maxLanes: CalendarGeometry.maxLanesSplit,
               axisSide: side,
               scrollController: _sharedScrollController,
@@ -328,8 +324,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                       as RenderBox?;
               if (renderBox == null) return;
               final localOffset = renderBox.globalToLocal(details.offset);
-              final rawMinutes = (localOffset.dy / pxSingle)
-                  .round();
+              final rawMinutes = (localOffset.dy / pxSingle).round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(
                 rawMinutes,
@@ -352,8 +347,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               final localOffset = renderBox != null
                   ? renderBox.globalToLocal(details.offset)
                   : Offset.zero;
-              final rawMinutes = (localOffset.dy / pxSingle)
-                  .round();
+              final rawMinutes = (localOffset.dy / pxSingle).round();
               final dur = DurationBounds.sanitize(details.data.durationMinutes);
               final snappedStart = TimelineSnappingHelper.snapStartMinutes(
                 rawMinutes,
@@ -382,7 +376,9 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                   rangeStartMinutes: 0,
                   rangeEndMinutes: 1440,
                   pxPerMinute: pxSingle,
-                  hourAxisWidth: CalendarGeometry.effectiveHourAxisWidth(context),
+                  hourAxisWidth: CalendarGeometry.effectiveHourAxisWidth(
+                    context,
+                  ),
                   sleepStartMinutes: widget.sleepStartMinutes,
                   sleepEndMinutes: widget.sleepEndMinutes,
                   highlightedItemId: widget.highlightedItemId,

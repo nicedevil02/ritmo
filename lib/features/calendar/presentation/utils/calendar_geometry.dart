@@ -61,7 +61,9 @@ abstract final class CalendarGeometry {
 
   /// Returns dynamic column header height based on density and text scale.
   static double effectiveColumnHeaderHeight(BuildContext context) =>
-      32.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
+      32.0 *
+      context.metrics.densityFactor *
+      (context.textScale > 1.0 ? context.textScale : 1.0);
 
   // ─── Agenda & Registry View Dimensions ───
   /// Fixed row height for agenda list items (prevents scroll jitter).
@@ -83,7 +85,9 @@ abstract final class CalendarGeometry {
 
   /// Returns dynamic registry card height based on density and text scale.
   static double effectiveRegistryCardHeight(BuildContext context) =>
-      92.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
+      92.0 *
+      context.metrics.densityFactor *
+      (context.textScale > 1.0 ? context.textScale : 1.0);
 
   /// Height of the calendar search bar.
   static const double searchBarHeight = 48.0;

@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/agenda/models/day_agenda_snapshot.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_dialog.dart';
@@ -30,8 +31,7 @@ class EmptyDayView extends StatelessWidget {
   final VoidCallback onRefreshRequested;
   final DayAgendaSnapshot? snapshot;
 
-  String get _dateStr =>
-      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  String get _dateStr => DateKey.of(date);
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +156,7 @@ class EmptyDayView extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       RitmoHapticsPolicy.tap();
       final yesterday = date.subtract(const Duration(days: 1));
-      final yesterdayStr =
-          '${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}';
+      final yesterdayStr = DateKey.of(yesterday);
 
       final db = await DatabaseHelper.instance.database;
       final yesterdayTasks = await db.query(

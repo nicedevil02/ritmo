@@ -30,7 +30,7 @@ enum PrayerLogQuality {
     if (code == null) return PrayerLogQuality.inTime;
     final upper = code.toUpperCase();
     if (upper == 'ON_TIME' || upper == 'ONTIME' || upper == 'EARLY') return PrayerLogQuality.onTime;
-    if (upper == 'QADA' || upper == 'QADA_ADDED') return PrayerLogQuality.qada;
+    if (upper == 'QADA' || upper == 'QADA_ADDED' || upper == 'LATE' || upper == 'MISSED') return PrayerLogQuality.qada;
     return PrayerLogQuality.inTime;
   }
 }

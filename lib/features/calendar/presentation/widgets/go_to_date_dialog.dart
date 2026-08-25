@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/shamsi_week.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 /// K29 — Go To Date Dialog ("برو به تاریخ")
@@ -26,7 +27,7 @@ class GoToDateDialog {
     );
 
     // Calculate 1st of next Jalali month
-    final nextMonthJ = todayJ.addMonths(1);
+    final nextMonthJ = ShamsiWeek.addMonthsClamped(todayJ, 1);
     final firstOfNextMonthJ = Jalali(nextMonthJ.year, nextMonthJ.month, 1);
     final firstOfNextMonth = firstOfNextMonthJ.toDateTime();
 

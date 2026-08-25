@@ -37,6 +37,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
   bool _isLoading = true;
   String _cityName = 'تهران';
   StreamSubscription<RitmoEvent>? _eventSub;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -46,15 +47,19 @@ class _WorshipScreenState extends State<WorshipScreen> {
       if (event.type == 'WorshipUpdated' ||
           event.type == 'WorshipPracticeChanged' ||
           event.type == RitmoEventType.completionRecorded.code) {
-        if (mounted) {
-          _loadData();
-        }
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _loadData();
+          }
+        });
       }
     });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _eventSub?.cancel();
     super.dispose();
   }

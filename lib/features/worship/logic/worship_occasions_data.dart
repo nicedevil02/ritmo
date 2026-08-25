@@ -18,16 +18,16 @@ class WorshipOccasion {
     this.recommendedAmal,
     this.isReligiousHoliday = false,
     bool? isHoliday,
-  }) : _isHoliday = isHoliday;
+  }) : _customIsHoliday = isHoliday;
 
   final String title;
   final WorshipOccasionCategory category;
   final String? description;
   final String? recommendedAmal;
   final bool isReligiousHoliday;
-  final bool? _isHoliday;
+  final bool? _customIsHoliday;
 
-  bool get isHoliday => _isHoliday ?? isReligiousHoliday;
+  bool get isHoliday => _customIsHoliday ?? isReligiousHoliday;
 }
 
 class WorshipOccasionsData {

@@ -53,6 +53,9 @@ class WorshipRepository {
         cityId: cityId,
         date: date,
       );
+      if (_prayerTimesCache.length >= 300) {
+        _prayerTimesCache.remove(_prayerTimesCache.keys.first);
+      }
       _prayerTimesCache[cacheKey] = times;
       return times;
     } catch (e) {

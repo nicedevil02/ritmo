@@ -123,6 +123,7 @@ class WorshipTables {
         isTraveller INTEGER NOT NULL DEFAULT 0,
         fastingExempt INTEGER NOT NULL DEFAULT 0,
         prayerExempt INTEGER NOT NULL DEFAULT 0,
+        exemptPrayers TEXT,
         reason TEXT,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL
@@ -151,6 +152,20 @@ class WorshipTables {
 
   /// Self-healing schema validation to ensure worship tables exist.
   static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS worship_day_context (
+        date TEXT PRIMARY KEY,
+        isTraveller INTEGER NOT NULL DEFAULT 0,
+        fastingExempt INTEGER NOT NULL DEFAULT 0,
+        prayerExempt INTEGER NOT NULL DEFAULT 0,
+        exemptPrayers TEXT,
+        reason TEXT,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_day_context_date ON worship_day_context(date);');
+
     await db.execute('''
       CREATE TABLE IF NOT EXISTS worship_day_exceptions (
         id TEXT PRIMARY KEY,

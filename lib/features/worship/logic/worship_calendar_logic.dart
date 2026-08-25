@@ -67,7 +67,7 @@ class WorshipCalendarLogic {
   ];
 
   static const List<String> gregorianMonthNamesFa = [
-    'ژوئیه', // placeholder index 0
+    '', // 1-based index padding
     'ژانویه',
     'فوریه',
     'مارس',
@@ -151,17 +151,27 @@ class WorshipCalendarLogic {
     final startGMonth = gregorianMonthNamesFa[monthStartDt.month];
     final endGMonth = gregorianMonthNamesFa[monthEndDt.month];
 
-    final gRange = (startGMonth == endGMonth)
-        ? '${toPersianDigits(monthStartDt.day.toString())} تا ${toPersianDigits(monthEndDt.day.toString())} $startGMonth ${toPersianDigits(monthStartDt.year.toString())}'
-        : '${toPersianDigits(monthStartDt.day.toString())} $startGMonth - ${toPersianDigits(monthEndDt.day.toString())} $endGMonth ${toPersianDigits(monthStartDt.year.toString())}';
+    final String gRange;
+    if (monthStartDt.year == monthEndDt.year) {
+      gRange = (startGMonth == endGMonth)
+          ? '${toPersianDigits(monthStartDt.day.toString())} تا ${toPersianDigits(monthEndDt.day.toString())} $startGMonth ${toPersianDigits(monthStartDt.year.toString())}'
+          : '${toPersianDigits(monthStartDt.day.toString())} $startGMonth - ${toPersianDigits(monthEndDt.day.toString())} $endGMonth ${toPersianDigits(monthStartDt.year.toString())}';
+    } else {
+      gRange = '${toPersianDigits(monthStartDt.day.toString())} $startGMonth ${toPersianDigits(monthStartDt.year.toString())} - ${toPersianDigits(monthEndDt.day.toString())} $endGMonth ${toPersianDigits(monthEndDt.year.toString())}';
+    }
 
     // Hijri range calculation with user offset
     final startHijri = HijriCalendarCalculator.hijriFromGregorian(monthStartDt, offsetDays: hijriOffset);
     final endHijri = HijriCalendarCalculator.hijriFromGregorian(monthEndDt, offsetDays: hijriOffset);
 
-    final hRange = (startHijri.month == endHijri.month)
-        ? '${toPersianDigits(startHijri.day.toString())} تا ${toPersianDigits(endHijri.day.toString())} ${startHijri.monthName} ${toPersianDigits(startHijri.year.toString())}'
-        : '${toPersianDigits(startHijri.day.toString())} ${startHijri.monthName} - ${toPersianDigits(endHijri.day.toString())} ${endHijri.monthName} ${toPersianDigits(startHijri.year.toString())}';
+    final String hRange;
+    if (startHijri.year == endHijri.year) {
+      hRange = (startHijri.month == endHijri.month)
+          ? '${toPersianDigits(startHijri.day.toString())} تا ${toPersianDigits(endHijri.day.toString())} ${startHijri.monthName} ${toPersianDigits(startHijri.year.toString())}'
+          : '${toPersianDigits(startHijri.day.toString())} ${startHijri.monthName} - ${toPersianDigits(endHijri.day.toString())} ${endHijri.monthName} ${toPersianDigits(startHijri.year.toString())}';
+    } else {
+      hRange = '${toPersianDigits(startHijri.day.toString())} ${startHijri.monthName} ${toPersianDigits(startHijri.year.toString())} - ${toPersianDigits(endHijri.day.toString())} ${endHijri.monthName} ${toPersianDigits(endHijri.year.toString())}';
+    }
 
     final monthName = jalaliMonthNames[month - 1];
 

@@ -66,6 +66,7 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
   List<WorshipPractice> _activeMustahabs = [];
   Map<String, WorshipDayStatus> _mustahabStatuses = {};
   StreamSubscription<RitmoEvent>? _eventSub;
+  Timer? _debounceTimer;
 
   static const List<String> weekdayNamesFa = [
     'دوشنبه',   // 1
@@ -85,15 +86,19 @@ class _WorshipDayDetailPanelState extends State<WorshipDayDetailPanel> {
       if (event.type == 'WorshipUpdated' ||
           event.type == 'WorshipPracticeChanged' ||
           event.type == RitmoEventType.completionRecorded.code) {
-        if (mounted) {
-          _loadDayData();
-        }
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _loadDayData();
+          }
+        });
       }
     });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _eventSub?.cancel();
     super.dispose();
   }

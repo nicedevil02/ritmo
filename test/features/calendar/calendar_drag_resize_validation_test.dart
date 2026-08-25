@@ -111,7 +111,10 @@ void main() {
 
       await controller.commitItemDrag(item, 'invalid_time_str');
 
-      expect(controller.errorMessage, equals(CalendarMessagesFa.invalidTime));
+      expect(
+        controller.actionErrorMessage ?? controller.errorMessage,
+        equals(CalendarMessagesFa.invalidTime),
+      );
       expect(actionHandler.lastMovedTime, isNull);
     });
 

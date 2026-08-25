@@ -40,4 +40,28 @@ abstract final class ShamsiWeek {
 
   /// Returns the Friday (end) of the Jalali week containing [date] (local midnight).
   static DateTime fridayOf(DateTime date) => DateKey.addDays(saturdayOf(date), 6);
+
+  /// Adds [months] to [j] while clamping the day to the destination month's length.
+  /// Prevents DateException when moving from 31st of Farvardin-Shahrivar to Mehr-Esfand.
+  static Jalali addMonthsClamped(Jalali j, int months) {
+    var targetYear = j.year;
+    var targetMonth = j.month + months;
+    while (targetMonth > 12) {
+      targetYear++;
+      targetMonth -= 12;
+    }
+    while (targetMonth < 1) {
+      targetYear--;
+      targetMonth += 12;
+    }
+    final maxDay = Jalali(targetYear, targetMonth, 1).monthLength;
+    return Jalali(targetYear, targetMonth, j.day.clamp(1, maxDay));
+  }
+
+  /// Adds [years] to [j] while clamping the day to the destination month's length (e.g. leap year Esfand).
+  static Jalali addYearsClamped(Jalali j, int years) {
+    final targetYear = j.year + years;
+    final maxDay = Jalali(targetYear, j.month, 1).monthLength;
+    return Jalali(targetYear, j.month, j.day.clamp(1, maxDay));
+  }
 }

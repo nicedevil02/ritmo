@@ -44,8 +44,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
     _cachedMonth = jalaliSelected.month;
     _occasionsCache.clear();
     for (final day in days) {
-      final key =
-          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+      final key = DateKey.of(day);
       _occasionsCache[key] = OccasionsCalendarSource.occasionsForDate(day);
     }
   }
@@ -144,8 +143,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                       final isSelected = _isSameDay(day, widget.selectedDate);
                       final isFriday = (day.weekday == DateTime.friday);
 
-                      final key =
-                          '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+                      final key = DateKey.of(day);
                       final snapshot = widget.rangeSnapshots[key];
                       final items = snapshot?.items ?? [];
                       final distinctDomains = items

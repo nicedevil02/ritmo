@@ -85,13 +85,19 @@ class PrayerTimeline {
     }
   }
 
-  /// Next prayer slot after [now] using new PrayerTimes.
+  /// Next prayer slot after [now] using new PrayerTimes (Fixes M4).
   static PrayerSlot? nextFromTimes(PrayerTimes times, DateTime now, {bool includeAsrIsha = true, bool prayersOnly = true}) {
     for (final slot in slotsForTimes(times, includeAsrIsha: includeAsrIsha)) {
       if (prayersOnly && !slot.isPrayer) continue;
       if (slot.at.isAfter(now)) return slot;
     }
-    return null;
+    // If all slots for today have passed, next prayer is tomorrow's Fajr
+    return PrayerSlot(
+      key: 'FAJR',
+      titleFa: 'اذان صبح',
+      at: times.fajr.add(const Duration(days: 1)),
+      isPrayer: true,
+    );
   }
 
   /// Current active prayer window using new PrayerTimes.
@@ -105,6 +111,10 @@ class PrayerTimeline {
       if ((now.isAfter(cur.at) || now.isAtSameMomentAs(cur.at)) && now.isBefore(nextAt)) {
         return cur;
       }
+    }
+    // If now is before today's first slot (pre-dawn), return last slot of previous night
+    if (slots.isNotEmpty && now.isBefore(slots.first.at)) {
+      return slots.last;
     }
     return null;
   }

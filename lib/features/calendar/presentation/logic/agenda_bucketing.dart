@@ -120,7 +120,8 @@ Map<AgendaBucket, List<AgendaItem>> bucketRange(
     for (final item in entry.value.items) {
       final isDone =
           item.completion == AgendaCompletion.done ||
-          item.completion == AgendaCompletion.skipped;
+          item.completion == AgendaCompletion.skipped ||
+          item.completion == AgendaCompletion.partial;
 
       if (dateOnly.isBefore(today)) {
         // Past days — only undone actionable items become overdue.

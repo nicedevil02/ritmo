@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:ritmo/core/domain/agenda/agenda_load_status.dart';
 import 'package:ritmo/core/domain/agenda/agenda_source_registry.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -318,19 +318,47 @@ class DayAgendaService {
     return result;
   }
 
-  /// Counts uncompleted simple tasks with dueDate strictly before [cutoff].
+  /// Counts uncompleted actionable items with date strictly before [cutoff].
   Future<int> countOverdueBefore(DateTime cutoff) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final cutoffStr = DateKey.of(cutoff);
-      final res = await db.rawQuery(
+
+      // 1. Simple tasks overdue
+      final taskRes = await db.rawQuery(
         'SELECT COUNT(*) as cnt FROM simple_tasks WHERE isDone = 0 AND dueDate IS NOT NULL AND dueDate < ?',
         [cutoffStr],
       );
-      if (res.isNotEmpty) {
-        return (res.first['cnt'] as num?)?.toInt() ?? 0;
+      int taskCount = 0;
+      if (taskRes.isNotEmpty) {
+        taskCount = (taskRes.first['cnt'] as num?)?.toInt() ?? 0;
       }
-      return 0;
+
+      // 2. Study topics overdue for review
+      int studyCount = 0;
+      try {
+        final studyRes = await db.rawQuery(
+          "SELECT COUNT(*) as cnt FROM konkur_topics WHERE nextReviewDate IS NOT NULL AND nextReviewDate < ? AND isArchived = 0",
+          [cutoffStr],
+        );
+        if (studyRes.isNotEmpty) {
+          studyCount = (studyRes.first['cnt'] as num?)?.toInt() ?? 0;
+        }
+      } catch (_) {}
+
+      // 3. Course sessions overdue
+      int courseCount = 0;
+      try {
+        final courseRes = await db.rawQuery(
+          "SELECT COUNT(*) as cnt FROM course_sessions WHERE completionStatus = 'pending' AND plannedDate IS NOT NULL AND plannedDate < ?",
+          [cutoffStr],
+        );
+        if (courseRes.isNotEmpty) {
+          courseCount = (courseRes.first['cnt'] as num?)?.toInt() ?? 0;
+        }
+      } catch (_) {}
+
+      return taskCount + studyCount + courseCount;
     } catch (e, st) {
       RitmoLog.error('DayAgendaService', 'countOverdueBefore error', e, st);
       return 0;
@@ -736,10 +764,13 @@ class DayAgendaService {
         overrideMap[OccurrenceOverride.formatKey(ovr.sourceType, ovr.sourceId)] = ovr;
       }
 
+      final matchedKeys = <String>{};
       items = items.map((item) {
-        final ovr = overrideMap[OccurrenceOverride.formatKey(item.domain.name, item.sourceId)];
+        final key = OccurrenceOverride.formatKey(item.domain.name, item.sourceId);
+        final ovr = overrideMap[key];
         if (ovr == null) return item;
 
+        matchedKeys.add(key);
         var updated = item.copyWith(hasOverride: true);
         if (ovr.status == 'SKIPPED') {
           updated = updated.copyWith(completion: AgendaCompletion.skipped);
@@ -755,6 +786,49 @@ class DayAgendaService {
         }
         return updated;
       }).toList();
+
+      // Bug 2: Synthesize virtual occurrence for MOVED overrides without host base item
+      for (final ovr in dayOverrides) {
+        final key = OccurrenceOverride.formatKey(ovr.sourceType, ovr.sourceId);
+        if (ovr.status == 'MOVED' && !matchedKeys.contains(key)) {
+          String title = ovr.note ?? 'رویداد انتقال‌یافته';
+          int duration = ovr.durationMinutes ?? 30;
+          if (ovr.sourceType.toLowerCase() == 'routine') {
+            final rMatch = ctx.routineSource.routines.firstWhere(
+              (r) => r['id']?.toString() == ovr.sourceId,
+              orElse: () => const {},
+            );
+            if (rMatch.isNotEmpty && rMatch['title'] != null) {
+              title = rMatch['title'].toString();
+              if (ovr.durationMinutes == null && rMatch['targetDuration'] is num) {
+                duration = (rMatch['targetDuration'] as num).toInt();
+              }
+            }
+          }
+
+          final domain = AgendaDomain.values.firstWhere(
+            (d) => d.name.toLowerCase() == ovr.sourceType.toLowerCase(),
+            orElse: () => AgendaDomain.routine,
+          );
+          final virtualItem = AgendaItem(
+            id: 'moved_${ovr.sourceType}_${ovr.sourceId}_$dateStr',
+            domain: domain,
+            sourceId: ovr.sourceId,
+            title: title,
+            dateStr: dateStr,
+            timeOfDay: ovr.timeOfDay,
+            durationMinutes: duration,
+            category: Category.personal,
+            deepLink: AgendaDeepLink(domain: domain, targetId: ovr.sourceId),
+            itemType: (ovr.timeOfDay != null && ovr.timeOfDay!.isNotEmpty)
+                ? AgendaItemType.fixed
+                : AgendaItemType.flexible,
+            completion: AgendaCompletion.pending,
+            hasOverride: true,
+          );
+          items.add(virtualItem);
+        }
+      }
     }
 
     // K43: Apply REST/TRAVEL day effect — mark non-essential items as skipped.
@@ -762,7 +836,9 @@ class DayAgendaService {
     List<AgendaItem> finalItems = items;
     if (dayMark == 'REST' || dayMark == 'TRAVEL') {
       finalItems = items.map((item) {
-        if (!item.isEssential && item.completion == AgendaCompletion.none) {
+        if (!item.isEssential &&
+            (item.completion == AgendaCompletion.none ||
+             item.completion == AgendaCompletion.pending)) {
           return item.copyWith(completion: AgendaCompletion.skipped);
         }
         return item;

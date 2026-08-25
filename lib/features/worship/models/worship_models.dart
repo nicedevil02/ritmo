@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 
@@ -141,8 +143,8 @@ class WorshipPractice {
       reminderFrequency: map['reminderFrequency'] as String? ?? 'DAILY',
       notes: map['notes'] as String?,
       dailyDoneDate: map['dailyDoneDate'] as String?,
-      createdAt: map['createdAt'] as int,
-      updatedAt: map['updatedAt'] as int,
+      createdAt: map['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      updatedAt: map['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
     );
   }
   final String id;
@@ -460,65 +462,89 @@ class WorshipSeason {
   /// W-7: Hijri month number (1-12) for DAYS_OF_HIJRI_MONTH / NIGHTS_OF_HIJRI_MONTH
   final int? hijriMonth;
 
-  bool isActiveNow([HijriDate? todayHijri]) {
+  bool isActiveNow([HijriDate? todayHijri, DateTime? targetDate]) {
     if (!isActive) return false;
+    final now = targetDate ?? DateTime.now();
+    final h = todayHijri ?? HijriCalendarCalculator.hijriFromGregorian(now);
 
-    if (calendar.toUpperCase() == 'HIJRI') {
-      if (todayHijri == null) return false;
-      try {
-        final startParts = startDate.split('-');
-        final endParts = endDate.split('-');
-        final startM = int.parse(startParts[startParts.length - 2]);
-        final startD = int.parse(startParts.last);
-        final endM = int.parse(endParts[endParts.length - 2]);
-        final endD = int.parse(endParts.last);
-
-        final currentM = todayHijri.month;
-        final currentD = todayHijri.day;
-
-        if (endM > startM || (endM == startM && endD >= startD)) {
-          if (currentM > startM && currentM < endM) return true;
-          if (currentM == startM && currentM == endM) {
-            return currentD >= startD && currentD <= endD;
-          }
-          if (currentM == startM) return currentD >= startD;
-          if (currentM == endM) return currentD <= endD;
-          return false;
-        } else {
-          // Overlaps Hijri new year
-          if (currentM > startM || currentM < endM) return true;
-          if (currentM == startM) return currentD >= startD;
-          if (currentM == endM) return currentD <= endD;
+    switch (recurrence) {
+      case 'SOLAR_DATE_RANGE':
+        try {
+          final j = Jalali.fromDateTime(now);
+          final sp = startDate.split('-');
+          final ep = endDate.split('-');
+          final sm = int.parse(sp[sp.length - 2]), sd = int.parse(sp.last);
+          final em = int.parse(ep[ep.length - 2]), ed = int.parse(ep.last);
+          final jm = j.month, jd = j.day;
+          return (jm > sm || (jm == sm && jd >= sd)) && (jm < em || (jm == em && jd <= ed));
+        } catch (_) {
           return false;
         }
-      } catch (e) {
-        debugPrint('Error evaluating Hijri WorshipSeason active status ($startDate / $endDate): $e');
-        return false;
-      }
-    }
 
-    final now = DateTime.now();
+      case 'DAYS_OF_EVERY_HIJRI_MONTH':
+        final list = _parseDayListStatic(dayList);
+        return list.contains(h.day);
+
+      case 'DAYS_OF_HIJRI_MONTH':
+        final list = _parseDayListStatic(dayList);
+        return (hijriMonth == null || hijriMonth == h.month) && list.contains(h.day);
+
+      case 'NIGHTS_OF_HIJRI_MONTH':
+        final isAfterMaghrib = now.hour >= 19;
+        final effDate = isAfterMaghrib ? now.add(const Duration(days: 1)) : now;
+        final effH = HijriCalendarCalculator.hijriFromGregorian(effDate);
+        final list = _parseDayListStatic(dayList);
+        return (hijriMonth == null || hijriMonth == effH.month) && list.contains(effH.day);
+
+      default:
+        if (calendar.toUpperCase() == 'HIJRI') {
+          return _hijriInRangeStatic(h, startDate, endDate);
+        }
+        try {
+          final todayStr = now.toIso8601String().substring(0, 10);
+          if (startDate.length == 10 && endDate.length == 10) {
+            return todayStr.compareTo(startDate) >= 0 && todayStr.compareTo(endDate) <= 0;
+          }
+          final currentYear = now.year;
+          final start = DateTime.parse('$currentYear-$startDate');
+          final end = DateTime.parse('$currentYear-$endDate');
+          if (end.isBefore(start)) {
+            final nextYearEnd = DateTime.parse('${currentYear + 1}-$endDate');
+            final prevYearStart = DateTime.parse('${currentYear - 1}-$startDate');
+            return (now.isAfter(start) && now.isBefore(nextYearEnd)) || 
+                   (now.isAfter(prevYearStart) && now.isBefore(end));
+          }
+          return now.isAfter(start.subtract(const Duration(days: 1))) && 
+                 now.isBefore(end.add(const Duration(days: 1)));
+        } catch (e) {
+          debugPrint('Error evaluating WorshipSeason active status: $e');
+          return false;
+        }
+    }
+  }
+
+  static List<int> _parseDayListStatic(String? json) {
+    if (json == null) return [];
     try {
-      final todayStr = now.toIso8601String().substring(0, 10);
-      if (startDate.length == 10 && endDate.length == 10) {
-        return todayStr.compareTo(startDate) >= 0 && todayStr.compareTo(endDate) <= 0;
-      }
-      
-      final currentYear = now.year;
-      final start = DateTime.parse('$currentYear-$startDate');
-      final end = DateTime.parse('$currentYear-$endDate');
-      
-      if (end.isBefore(start)) {
-        final nextYearEnd = DateTime.parse('${currentYear + 1}-$endDate');
-        final prevYearStart = DateTime.parse('${currentYear - 1}-$startDate');
-        return (now.isAfter(start) && now.isBefore(nextYearEnd)) || 
-               (now.isAfter(prevYearStart) && now.isBefore(end));
-      }
-      
-      return now.isAfter(start.subtract(const Duration(days: 1))) && 
-             now.isBefore(end.add(const Duration(days: 1)));
-    } catch (e) {
-      debugPrint('Error evaluating WorshipSeason active status: $e');
+      return (jsonDecode(json) as List<dynamic>).cast<int>();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static bool _hijriInRangeStatic(HijriDate h, String start, String end) {
+    try {
+      final sp = start.split('-');
+      final ep = end.split('-');
+      final sm = int.parse(sp[sp.length - 2]), sd = int.parse(sp.last);
+      final em = int.parse(ep[ep.length - 2]), ed = int.parse(ep.last);
+      final cm = h.month, cd = h.day;
+
+      final afterStart = cm > sm || (cm == sm && cd >= sd);
+      final beforeEnd = cm < em || (cm == em && cd <= ed);
+      if (em > sm || (em == sm && ed >= sd)) return afterStart && beforeEnd;
+      return afterStart || beforeEnd;
+    } catch (_) {
       return false;
     }
   }
@@ -535,6 +561,10 @@ class WorshipSeason {
       'isActive': isActive ? 1 : 0,
       'priority_weight': priorityWeight,
       'createdAt': createdAt,
+      'recurrence': recurrence,
+      'dayList': dayList,
+      'hijriMonth': hijriMonth,
+      'recommendedAmal': recommendedAmal,
     };
   }
 }

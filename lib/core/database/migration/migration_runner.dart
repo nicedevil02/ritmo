@@ -61,6 +61,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v119_konkur_s
 import 'package:ritmo/core/database/migration/migrations/migration_v120_study_deadlines_and_pomodoro.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v121_sports_unification.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v122_courses_hardening.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v123_worship_hardening.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -185,6 +186,7 @@ class MigrationRunner {
     MigrationV120StudyDeadlinesAndPomodoro(), // Study exams, assignments, deadlines table & pomodoro active session fields
     MigrationV121SportsUnification(), // Unified Sports & Movement: M1-M7 migrations
     MigrationV122CoursesHardening(), // Hardening courses schema & course_adaptive_snapshots
+    MigrationV123WorshipHardening(), // Hardening worship schema, isFallbackLocation, and prayer_times_cache
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

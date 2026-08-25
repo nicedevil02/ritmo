@@ -197,8 +197,13 @@ void main() {
       final hMinus1 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: -1);
       final hPlus2 = HijriCalendarCalculator.hijriFromGregorian(baseDate, offsetDays: 2);
 
-      expect(hPlus1.day, equals(h0.day + 1 <= HijriCalendarCalculator.daysInMonth(h0.year, h0.month) ? h0.day + 1 : 1));
-      expect(hMinus1.day, equals(h0.day - 1 >= 1 ? h0.day - 1 : 30));
+      final expectedNextDay = h0.day + 1 <= HijriCalendarCalculator.daysInMonth(h0.year, h0.month) ? h0.day + 1 : 1;
+      final prevMonth = h0.month > 1 ? h0.month - 1 : 12;
+      final prevYear = h0.month > 1 ? h0.year : h0.year - 1;
+      final expectedPrevDay = h0.day > 1 ? h0.day - 1 : HijriCalendarCalculator.daysInMonth(prevYear, prevMonth);
+
+      expect(hPlus1.day, equals(expectedNextDay));
+      expect(hMinus1.day, equals(expectedPrevDay));
       expect(hPlus2.formatted, isNotEmpty);
     });
 

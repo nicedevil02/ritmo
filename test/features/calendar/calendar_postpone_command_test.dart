@@ -209,7 +209,10 @@ void main() {
 
       await controller.postponeItem(item);
 
-      expect(controller.errorMessage, equals(CalendarMessagesFa.notSupported));
+      expect(
+        controller.actionErrorMessage ?? controller.errorMessage,
+        equals(CalendarMessagesFa.notSupported),
+      );
     });
   });
 }

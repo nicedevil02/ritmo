@@ -93,6 +93,7 @@ class SystemTables {
           midnightShari TEXT NOT NULL,
           sunset TEXT NOT NULL DEFAULT '',
           calculationMethod TEXT NOT NULL DEFAULT 'TEHRAN_GEOPHYSICS',
+          isFallbackLocation INTEGER NOT NULL DEFAULT 0,
           computedAt INTEGER NOT NULL,
           fajrIso TEXT,
           sunriseIso TEXT,
@@ -102,7 +103,7 @@ class SystemTables {
           sunsetIso TEXT,
           ishaIso TEXT,
           midnightShariIso TEXT,
-          PRIMARY KEY (date, cityId),
+          PRIMARY KEY (date, cityId, calculationMethod),
           FOREIGN KEY(cityId) REFERENCES iran_cities(id) ON DELETE CASCADE
       );
     ''');

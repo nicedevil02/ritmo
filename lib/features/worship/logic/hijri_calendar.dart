@@ -19,39 +19,63 @@ class HijriCalendarCalculator {
     return 29; // Even months have 29 days
   }
 
-  /// Converts Julian Day Number to HijriDate
-  static HijriDate hijriFromGregorian(DateTime date, {int offsetDays = 0}) {
-    final effectiveDate = DateTime(date.year, date.month, date.day + offsetDays);
-    final year = effectiveDate.year;
-    final month = effectiveDate.month;
-    final day = effectiveDate.day;
-
-    // Convert Gregorian to Julian Day Number
+  static int _gregorianToJdn(int year, int month, int day) {
     final a = ((14 - month) / 12).floor();
     final y = year + 4800 - a;
     final m = month + 12 * a - 3;
-    final jdn = day + ((153 * m + 2) / 5).floor() + 365 * y + (y / 4).floor() - (y / 100).floor() + (y / 400).floor() - 32045;
+    return day + ((153 * m + 2) / 5).floor() + 365 * y + (y / 4).floor() - (y / 100).floor() + (y / 400).floor() - 32045;
+  }
 
-    // Convert JDN to Hijri
-    var l = jdn - 1948440 + 10632;
-    final n = ((l - 1) / 10631).floor();
-    l = l - 10631 * n + 354;
-    final j = (((10985 - l) / 5316).floor()) * (((50 * l) / 17719).floor()) + ((l / 5670).floor()) * (((43 * l) / 15238).floor());
-    l = l - (((30 - j) / 15).floor()) * (((17719 * j) / 50).floor()) - ((j / 16).floor()) * (((15238 * j) / 43).floor()) + 29;
+  static DateTime _jdnToGregorian(int jdn) {
+    final l0 = jdn + 68569;
+    final n = ((4 * l0) / 146097).floor();
+    final l1 = l0 - ((146097 * n + 3) / 4).floor();
+    final i = ((4000 * (l1 + 1)) / 1464001).floor();
+    final l2 = l1 - ((1461 * i) / 4).floor() + 31;
+    final j = ((80 * l2) / 2447).floor();
+    final day = l2 - ((2447 * j) / 80).floor();
+    final l3 = (j / 11).floor();
+    final month = j + 2 - 12 * l3;
+    final year = 100 * (n - 49) + i + l3;
+    return DateTime(year, month, day);
+  }
 
-    var hMonth = ((24 * l) / 709).floor();
-    var hDay = l - ((709 * hMonth) / 24).floor();
-    final hYear = 30 * n + j - 30;
+  /// Converts Gregorian DateTime to HijriDate using exact 30-year tabular algorithm
+  static HijriDate hijriFromGregorian(DateTime date, {int offsetDays = 0}) {
+    final effectiveDate = DateTime(date.year, date.month, date.day + offsetDays);
+    final jdn = _gregorianToJdn(effectiveDate.year, effectiveDate.month, effectiveDate.day);
 
-    if (hMonth > 12) {
-      hMonth = 12;
+    // Tabular Islamic Calendar conversion
+    final daysSinceEpoch = jdn - 1948439;
+    final cycle = (daysSinceEpoch / 10631).floor();
+    final dayInCycle = daysSinceEpoch - (cycle * 10631);
+
+    var yearInCycle = 1;
+    while (yearInCycle <= 30) {
+      final daysToEndOfYear = ((11 * yearInCycle + 3) / 30).floor() + 354 * yearInCycle;
+      if (daysToEndOfYear >= dayInCycle) {
+        break;
+      }
+      yearInCycle++;
     }
-    if (hMonth < 1) {
-      hMonth = 1;
+    yearInCycle = yearInCycle.clamp(1, 30);
+
+    final hYear = cycle * 30 + yearInCycle;
+    final startOfYearDays = ((11 * (yearInCycle - 1) + 3) / 30).floor() + 354 * (yearInCycle - 1);
+    var dayInYear = dayInCycle - startOfYearDays;
+    if (dayInYear <= 0) dayInYear = 1;
+
+    var hMonth = 1;
+    while (hMonth <= 12) {
+      final daysInM = daysInMonth(hYear, hMonth);
+      if (dayInYear <= daysInM) {
+        break;
+      }
+      dayInYear -= daysInM;
+      hMonth++;
     }
-    final maxDays = daysInMonth(hYear, hMonth);
-    if (hDay > maxDays) hDay = maxDays;
-    if (hDay < 1) hDay = 1;
+    if (hMonth > 12) hMonth = 12;
+    final hDay = dayInYear.clamp(1, daysInMonth(hYear, hMonth));
 
     final mName = hijriMonthsFa[hMonth] ?? 'محرم';
     final formatted = '${toPersianDigits(hDay.toString())} $mName ${toPersianDigits(hYear.toString())}';
@@ -65,23 +89,21 @@ class HijriCalendarCalculator {
     );
   }
 
-  /// Converts Hijri to Gregorian DateTime
+  /// Converts Hijri to Gregorian DateTime using exact 30-year tabular algorithm
   static DateTime gregorianFromHijri(int hy, int hm, int hd, {int offsetDays = 0}) {
-    final jdn = ((11 * hy + 3) / 30).floor() + 354 * hy + 30 * hm - ((hm - 1) / 2).floor() + hd + 1948440 - 385;
+    final cycle = ((hy - 1) / 30).floor();
+    final yearInCycle = hy - cycle * 30;
 
-    // Convert JDN to Gregorian
-    final l0 = jdn + 68569;
-    final n = ((4 * l0) / 146097).floor();
-    final l1 = l0 - ((146097 * n + 3) / 4).floor();
-    final i = ((4000 * (l1 + 1)) / 1464001).floor();
-    final l2 = l1 - ((1461 * i) / 4).floor() + 31;
-    final j = ((80 * l2) / 2447).floor();
-    final day = l2 - ((2447 * j) / 80).floor();
-    final l3 = (j / 11).floor();
-    final month = j + 2 - 12 * l3;
-    final year = 100 * (n - 49) + i + l3;
+    final daysToYear = ((11 * (yearInCycle - 1) + 3) / 30).floor() + 354 * (yearInCycle - 1);
+    var daysToMonth = 0;
+    for (var m = 1; m < hm; m++) {
+      daysToMonth += daysInMonth(hy, m);
+    }
 
-    final rawG = DateTime(year, month, day);
+    final daysSinceEpoch = cycle * 10631 + daysToYear + daysToMonth + hd;
+    final jdn = 1948439 + daysSinceEpoch;
+    final rawG = _jdnToGregorian(jdn);
+
     return DateTime(rawG.year, rawG.month, rawG.day - offsetDays);
   }
 }

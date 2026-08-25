@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
-import 'package:ritmo/core/domain/agenda/action_feedback.dart';
 import 'package:ritmo/core/domain/agenda/action_router.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -17,7 +16,6 @@ import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
-import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_button.dart';
 import 'package:ritmo/features/calendar/data/day_mark_repository.dart';
 import 'package:ritmo/features/calendar/data/day_template_repository.dart';
@@ -29,7 +27,6 @@ import 'package:ritmo/features/calendar/presentation/widgets/calendar_search_del
 import 'package:ritmo/features/calendar/presentation/widgets/day_review_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/day_summary_bar.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/agenda_degraded_banner.dart';
-import 'package:ritmo/features/calendar/presentation/widgets/focus_block_sheet.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/go_to_date_dialog.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_agenda_view.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/journey_month_view.dart';
@@ -73,6 +70,7 @@ class _JourneyScreenState extends State<JourneyScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _controller = JourneyController();
+    _controller.addListener(_onControllerChanged);
 
     final startDate = widget.initialDate ?? DateTime.now();
 
@@ -83,7 +81,11 @@ class _JourneyScreenState extends State<JourneyScreen>
       );
     } else {
       _controller.loadDefaultScale().then((_) {
-        _controller.loadForActiveScale().then((_) => _autoScrollToNow());
+        if (_controller.snapshot == null && _controller.rangeSnapshots.isEmpty) {
+          _controller.loadForActiveScale().then((_) => _autoScrollToNow());
+        } else {
+          _autoScrollToNow();
+        }
       });
     }
 
@@ -99,10 +101,30 @@ class _JourneyScreenState extends State<JourneyScreen>
     });
   }
 
+  void _onControllerChanged() {
+    if (!mounted) return;
+    if (_controller.actionErrorMessage != null) {
+      final msg = _controller.actionErrorMessage!;
+      _controller.clearActionError();
+      RitmoToast.show(
+        context,
+        msg,
+        icon: Icons.error_outline_rounded,
+        iconColor: context.colors.error,
+      );
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _controller.refresh();
+      final now = DateTime.now();
+      if (_controller.activeScale == JourneyScale.day &&
+          _isSameDay(_controller.selectedDate, DateKey.addDays(now, -1))) {
+        _controller.selectDate(now);
+      } else {
+        _controller.refresh();
+      }
       _autoScrollToNow();
     }
   }
@@ -185,12 +207,15 @@ class _JourneyScreenState extends State<JourneyScreen>
 
   void _autoScrollToNow() {
     if (!mounted) return;
-    final now = DateTime.now();
-    final isToday = _isSameDay(_controller.selectedDate, now);
-    if (isToday && _controller.activeScale == JourneyScale.day) {
-      final nowMinutes = (now.hour * 60) + now.minute;
-      _scrollToMinutesValue(nowMinutes);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final now = DateTime.now();
+      final isToday = _isSameDay(_controller.selectedDate, now);
+      if (isToday && _controller.activeScale == JourneyScale.day) {
+        final nowMinutes = (now.hour * 60) + now.minute;
+        _scrollToMinutesValue(nowMinutes);
+      }
+    });
   }
 
   void _scrollToMinutesValue(int minutes) {
@@ -231,35 +256,10 @@ class _JourneyScreenState extends State<JourneyScreen>
     );
   }
 
-  void _startFocusMode(AgendaItem item) {
-    FocusBlockSheet.show(
-      context: context,
-      item: item,
-      onComplete: ({required resultType, required actualDurationMinutes}) async {
-        await _controller.completeItem(
-          item,
-          resultType: resultType,
-          actualDurationMinutes: actualDurationMinutes,
-        );
-        if (mounted) {
-          final desc = resultType == OccurrenceResultType.partial
-              ? 'انجام جزئی به مدت ${toPersianDigits(actualDurationMinutes.toString())} دقیقه ثبت شد'
-              : 'رویداد به صورت کامل ثبت شد';
-          RitmoToast.show(
-            context,
-            desc,
-            onUndo: () => _controller.undoLastAction(),
-          );
-        }
-      },
-    );
-  }
-
   Future<void> _openSmartPanel() async {
     var snapshot = _controller.snapshot;
     if (snapshot == null) {
-      final dateKey =
-          '${_controller.selectedDate.year}-${_controller.selectedDate.month.toString().padLeft(2, '0')}-${_controller.selectedDate.day.toString().padLeft(2, '0')}';
+      final dateKey = DateKey.of(_controller.selectedDate);
       snapshot = _controller.rangeSnapshots[dateKey];
     }
 
@@ -319,8 +319,7 @@ class _JourneyScreenState extends State<JourneyScreen>
 
   // Show bottom sheet to pick day mark (REST / TRAVEL / SPECIAL / NORMAL).
   Future<void> _showDayMarkMenu(BuildContext ctx, DateTime date) async {
-    final ds =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final ds = DateKey.of(date);
     final existing = await DayMarkRepository.instance.getMark(ds);
     if (!ctx.mounted) return;
     final kind = await showModalBottomSheet<DayMarkKind>(
@@ -329,14 +328,14 @@ class _JourneyScreenState extends State<JourneyScreen>
           _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
     );
     if (kind == null || !mounted) return;
-    await DayMarkRepository.instance.setMark(ds, kind);
     _invalidateDayMarkCache();
-    unawaited(_controller.refresh());
+    await _controller.setDayMark(kind);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _controller.removeListener(_onControllerChanged);
     _eventSubscription?.cancel();
     _controller.dispose();
     super.dispose();
@@ -347,8 +346,9 @@ class _JourneyScreenState extends State<JourneyScreen>
   }
 
   Future<void> _saveDayAsTemplate() async {
+    final j = Jalali.fromDateTime(_controller.selectedDate);
     final controller = TextEditingController(
-      text: 'قالب روز ${_controller.selectedDate.day}',
+      text: 'قالب روز ${toPersianDigits(j.day.toString())} ${j.formatter.mN}',
     );
     final name = await showDialog<String>(
       context: context,
@@ -665,8 +665,7 @@ class _JourneyScreenState extends State<JourneyScreen>
         final untimedItems = allItems.where((i) => !i.isTimed).toList();
         final timedItems = allItems.where((i) => i.isTimed).toList();
 
-        final dateKey =
-            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+        final dateKey = DateKey.of(selectedDate);
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -1116,13 +1115,20 @@ class _JourneyScreenState extends State<JourneyScreen>
                               final formattedTime = TimeOfDayMinutes.format(
                                 slot.startMinutes,
                               );
-                              final targetItem = _controller.snapshot?.items
-                                  .firstWhere(
+                              final targetId =
+                                  _controller.pendingSuggestionItemId;
+                              final allItems = _controller.snapshot?.items ??
+                                  _controller.rangeSnapshots.values
+                                      .expand((s) => s.items)
+                                      .toList();
+                              if (allItems.isNotEmpty) {
+                                final targetItem = allItems.firstWhere(
+                                  (i) => i.id == targetId,
+                                  orElse: () => allItems.firstWhere(
                                     (i) => i.isTimed,
-                                    orElse: () =>
-                                        _controller.snapshot!.items.first,
-                                  );
-                              if (targetItem != null) {
+                                    orElse: () => allItems.first,
+                                  ),
+                                );
                                 _controller.commitItemDrag(
                                   targetItem,
                                   formattedTime,
@@ -1139,6 +1145,17 @@ class _JourneyScreenState extends State<JourneyScreen>
                             ),
                           ),
                         ],
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: Icon(
+                            Icons.close_rounded,
+                            size: 16,
+                            color: colors.textSecondary,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: _controller.clearWarningMessage,
+                        ),
                       ],
                     ),
                   ),
@@ -1229,39 +1246,67 @@ class _JourneyScreenState extends State<JourneyScreen>
                       await _controller.refresh();
                     },
                     child: _controller.isLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: colors.primary,
-                            ),
+                        ? LayoutBuilder(
+                            builder: (context, constraints) =>
+                                SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  child: SizedBox(
+                                    height: constraints.maxHeight,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: colors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                           )
-                        : _controller.errorMessage != null
-                        ? Center(
-                            key: const ValueKey('journey_error'),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'خطا: ${_controller.errorMessage}',
-                                  style: TextStyle(color: colors.error),
+                        : _controller.loadErrorMessage != null
+                        ? LayoutBuilder(
+                            builder: (context, constraints) =>
+                                SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  child: SizedBox(
+                                    height: constraints.maxHeight,
+                                    child: Center(
+                                      key: const ValueKey('journey_error'),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'خطا: ${_controller.loadErrorMessage}',
+                                            style: TextStyle(
+                                              color: colors.error,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: RitmoSpacing.md,
+                                          ),
+                                          RitmoSecondaryButton(
+                                            onPressed: _controller.refresh,
+                                            label: 'تلاش دوباره',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: RitmoSpacing.md),
-                                RitmoSecondaryButton(
-                                  onPressed: _controller.refresh,
-                                  label: 'تلاش دوباره',
-                                ),
-                              ],
-                            ),
                           )
                         : GestureDetector(
-                            onHorizontalDragEnd: (details) {
-                              if (details.primaryVelocity == null) return;
-                              // RTL awareness: swipe left = next (period 1), swipe right = prev (period -1)
-                              if (details.primaryVelocity! < -150) {
-                                _controller.navigatePeriod(1);
-                              } else if (details.primaryVelocity! > 150) {
-                                _controller.navigatePeriod(-1);
-                              }
-                            },
+                            onHorizontalDragEnd:
+                                activeScale == JourneyScale.agenda
+                                ? null
+                                : (details) {
+                                    if (details.primaryVelocity == null) return;
+                                    // RTL awareness: swipe left = next (period 1), swipe right = prev (period -1)
+                                    if (details.primaryVelocity! < -150) {
+                                      _controller.navigatePeriod(1);
+                                    } else if (details.primaryVelocity! > 150) {
+                                      _controller.navigatePeriod(-1);
+                                    }
+                                  },
                             behavior: HitTestBehavior.translucent,
                             child: KeyedSubtree(
                               key: ValueKey(

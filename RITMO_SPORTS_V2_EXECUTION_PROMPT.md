@@ -718,7 +718,7 @@ CREATE TABLE IF NOT EXISTS mv_kind_profile (
 
 ---
 
-### - [ ] S3-T2 — `MvKindProfileRepository`
+### - [x] S3-T2 — `MvKindProfileRepository` — 0ee12ae5
 
 **فایل جدید:** `data/repositories/mv_kind_profile_repository.dart`
 
@@ -1452,7 +1452,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S2-T7 | DONE | ff7a21e8 | پیاده‌سازی اکشن این هفته لغو شد، ثبت در movement_slot_overrides، جبران دقایق، و پیشنهاد غیرفعالسازی |
 | S2-T8 | DONE | 1df734f2 | پیاده‌سازی ۶ تست حیاتی لنگر و تعهدات شامل بازه ۴ هفته، انجماد انعطاف‌ناپذیر، پنجره جابجایی، استراحت بعد از جلسه دوگانه، پاکسازی آینده و انقضا |
 | S3-T1 | DONE | ca53f5c2 | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
-| S3-T2 |  |  |  |
+| S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
 | S3-T3 |  |  |  |
 | S3-T4 |  |  |  |
 | S3-T5 |  |  |  |

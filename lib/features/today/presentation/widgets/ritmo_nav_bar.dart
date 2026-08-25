@@ -252,7 +252,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                           ),
                   ),
 
-                  // ─── 3. تورفتگی سه‌بعدی روی نوار دور دکمه (از ساعت ۲ تا ۱۰ با شعاع ۲۷ پیکسل) ───
+                  // ─── 3. تورفتگی نرم پارچه‌ای روی نوار دور دکمه (از ساعت ۲ تا ۱۰ با شعاع ۲۸ پیکسل) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -262,7 +262,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                       painter: _SunkenCraterPainter(
                         centerX: ncx,
                         centerY: -2.0 + _kCenterBtnSize / 2,
-                        radius: 27.0,
+                        radius: 28.0,
                         isDark: isDark,
                       ),
                     ),
@@ -481,42 +481,46 @@ class _SunkenCraterPainter extends CustomPainter {
     const startAngle = -math.pi / 6;
     const sweepAngle = math.pi * 4 / 3;
 
-    // ۱. سایه فرورفتگی داخلی لبه (Inner Depth Shadow)
+    // ۱. سایه عمقی، نرم و پخش‌شده پارچه‌ای (Soft Velvet Fabric Crease Shadow)
     final innerShadowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
+      ..strokeWidth = 3.6
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.4)
       ..shader = ui.Gradient.linear(
         Offset(center.dx, center.dy - radius),
         Offset(center.dx, center.dy + radius),
         [
-          (isDark ? Colors.black : const Color(0xFF828F9F))
-              .withValues(alpha: isDark ? 0.40 : 0.28),
+          (isDark ? Colors.black : const Color(0xFF707D8F))
+              .withValues(alpha: isDark ? 0.45 : 0.30),
+          (isDark ? Colors.black : const Color(0xFF94A0B0))
+              .withValues(alpha: isDark ? 0.20 : 0.12),
           Colors.transparent,
         ],
-        [0.0, 1.0],
+        [0.0, 0.6, 1.0],
       );
 
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 1.0),
+      Rect.fromCircle(center: center, radius: radius - 1.2),
       startAngle,
       sweepAngle,
       false,
       innerShadowPaint,
     );
 
-    // ۲. بازتاب نوری لبه پایینی تورفتگی (Bottom Specular Rim)
+    // ۲. هایلایت مات، مخملی و ملایم لبه فرورفتگی پارچه‌ای (Velvety Specular Ambient Catch)
     final rimHighlightPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
+      ..strokeWidth = 2.2
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.4)
       ..shader = ui.Gradient.linear(
         Offset(center.dx, center.dy - radius),
         Offset(center.dx, center.dy + radius),
         [
           Colors.transparent,
           (isDark ? Colors.white : Colors.white)
-              .withValues(alpha: isDark ? 0.22 : 0.95),
+              .withValues(alpha: isDark ? 0.18 : 0.70),
         ],
-        [0.3, 1.0],
+        [0.35, 1.0],
       );
 
     canvas.drawArc(

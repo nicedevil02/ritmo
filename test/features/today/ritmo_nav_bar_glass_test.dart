@@ -65,7 +65,7 @@ void main() {
       expect(find.text('تقویم'), findsOneWidget);
       expect(find.text('دستیار'), findsOneWidget);
       expect(find.text('سیستم‌ها'), findsOneWidget);
-      expect(find.text('بینش‌ها'), findsOneWidget);
+      expect(find.text('پروفایل'), findsOneWidget);
       expect(find.byType(BackdropFilter), findsWidgets);
     });
 

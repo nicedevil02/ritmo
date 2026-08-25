@@ -84,9 +84,9 @@ class RitmoNavBar extends StatefulWidget {
     ),
     _NavItem(
       index: 1,
-      activeIcon: CupertinoIcons.lightbulb_fill,
-      inactiveIcon: CupertinoIcons.lightbulb,
-      label: 'بینش‌ها',
+      activeIcon: CupertinoIcons.person_crop_circle_fill,
+      inactiveIcon: CupertinoIcons.person_crop_circle,
+      label: 'پروفایل',
     ),
   ];
 

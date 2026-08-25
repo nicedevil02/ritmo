@@ -29,6 +29,7 @@ import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:ritmo/features/settings/presentation/groups/modules_group_screen.dart';
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/notebook_screen.dart';
+import 'package:ritmo/features/today/presentation/insights_screen.dart';
 
 import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
@@ -99,6 +100,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     'konkur',
     'religion',
     'assistant',
+    'insights',
     'wellbeing',
     'sports',
     'medicine',
@@ -1208,6 +1210,26 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       );
     }
 
+    // 11. Insights & Analytics Module
+    if (_matchesSearch('بینش‌ها و تحلیل', 'نمودارها و تحلیل روند پیشرفت، خواب و عادات') ||
+        _matchesSearch('بینش‌ها', 'گزارش و آمار هوشمند ریتمو')) {
+      allItemsMap['insights'] = _SystemModuleItem(
+        key: 'insights',
+        icon: CupertinoIcons.chart_bar_alt_fill,
+        iconColor: const Color(0xff187A56),
+        title: 'بینش‌ها و تحلیل',
+        description: 'نمودارها و تحلیل روند پیشرفت، خواب و عادات',
+        status: ModuleStatus.active,
+        illustrationAsset: 'assets/images/insights_card_top.png',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const InsightsScreen()),
+          );
+        },
+      );
+    }
+
     // --- CASE A: Ungrouped Custom Drag-and-Drop View ---
     if (!_groupingEnabled && _searchQuery.isEmpty) {
       final orderedItems = <_SystemModuleItem>[];
@@ -1250,12 +1272,15 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['konkur']!, colors, isDarkMode));
     }
 
-    // Spirituality & Assistant
+    // Spirituality & Assistant / Insights
     if (allItemsMap.containsKey('religion')) {
       spiritualityCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['religion']!, colors, isDarkMode));
     }
     if (allItemsMap.containsKey('assistant')) {
       assistantCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['assistant']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('insights')) {
+      assistantCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['insights']!, colors, isDarkMode));
     }
 
     // Health & Biology: Wellbeing -> Sports -> Medicine -> Cycle

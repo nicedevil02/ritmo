@@ -92,7 +92,7 @@ void main() {
       expect(find.text('دستیار'), findsNothing); // Active label is hidden
       expect(find.text('تقویم'), findsOneWidget); // Inactive labels are shown
       expect(find.text('سیستم‌ها'), findsOneWidget);
-      expect(find.text('بینش‌ها'), findsOneWidget);
+      expect(find.text('پروفایل'), findsOneWidget);
     });
 
     testWidgets('وقتی خانه فعال است، برچسب خانه پنهان و بقیه نشان داده می‌شوند', (tester) async {
@@ -108,7 +108,7 @@ void main() {
       expect(find.text('تقویم'), findsOneWidget); // Other labels are shown
       expect(find.text('دستیار'), findsOneWidget);
       expect(find.text('سیستم‌ها'), findsOneWidget);
-      expect(find.text('بینش‌ها'), findsOneWidget);
+      expect(find.text('پروفایل'), findsOneWidget);
     });
   });
 

@@ -14,9 +14,9 @@ import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
 import 'package:ritmo/features/calendar/presentation/calendar_screen.dart';
+import 'package:ritmo/features/profile/presentation/profile_screen.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/simple_tasks/presentation/simple_tasks_screen.dart';
-import 'package:ritmo/features/today/presentation/insights_screen.dart';
 import 'package:ritmo/features/today/presentation/now_dashboard_screen.dart';
 import 'package:ritmo/features/today/presentation/systems_hub_screen.dart';
 
@@ -148,7 +148,11 @@ class _HomeNavigationShellState extends State<HomeNavigationShell> {
             localeRepository: widget.localeRepository,
           );
         case 1:
-          return const InsightsScreen();
+          return ProfileScreen(
+            onLogout: widget.onLogout,
+            themeRepository: widget.themeRepository,
+            localeRepository: widget.localeRepository,
+          );
         case 2:
           return NowDashboardScreen(
             onLogout: widget.onLogout,

@@ -1142,7 +1142,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T5 — فعال‌سازی `station_bundles`
+### - [x] S5-T5 — فعال‌سازی `station_bundles` — BLOCKED (نیاز به دادهٔ seed) — cf8e5f53
 
 **فایل‌ها:** `data/repositories/mv_station_bundle_repository.dart` (جدید)، `domain/models/mv_station_bundle.dart` (موجود)، `presentation/sheets/mv_exercise_substitution_sheet.dart`
 
@@ -1473,7 +1473,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S5-T2 | DONE | 715cabf0 | پیاده‌سازی CampaignEngine با دوره‌بندی معکوس ۳ مرحله‌ای و بارگذاری پله‌ای وزن کوله و تست جدولی |
 | S5-T3 | DONE | 7418187b | پیاده‌سازی رکوردهای شخصی به تفکیک نوع ورزش در MvPrRepository و ProgressionEngine و MvFinishSessionUseCase |
 | S5-T4 | DONE | bf4f18a6 | پیاده‌سازی ۵ کارت تب پیشرفت با دو ارز سلامت، بار تمرینی ACWR، توزیع ورزش‌ها، رکوردهای تفکیکی و زبان فرضیه‌ای |
-| S5-T5 |  |  |  |
+| S5-T5 | BLOCKED | cf8e5f53 | ایجاد مخزن MvStationBundleRepository و تست‌های مربوطه؛ اتصال مسدود به دلیل نبود seed در اسکیما |
 | S5-T6 |  |  |  |
 | S5-T7 |  |  |  |
 | S6-T1 |  |  |  |
@@ -1535,7 +1535,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 | کد تسک | نوع (BLOCKED / DEVIATION) | چه چیزی طبق پرامپت ممکن نشد | دلیل فنی | چه تصمیمی از کاربر لازم است |
 | --- | --- | --- | --- | --- |
-|  |  |  |  |  |
+| S5-T5 | BLOCKED | پیشنهاد بسته‌های تمرینی آماده در محدودیت تجهیزات شیت جایگزینی | جدول `station_bundles` در دیتابیس وجود دارد اما هیچ دادهٔ seed در پروژه برای آن تعریف نشده است (طبق قرارداد: «داده اختراع نکن — BLOCKED کن»). مخزن `MvStationBundleRepository` ساخته شد. | تعریف داده‌های استاندارد seed برای بسته‌های ایستگاهی (station bundles) در صورت نیاز به این فیچر. |
 
 ---
 

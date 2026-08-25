@@ -411,7 +411,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T5 — شیت انتخاب نوع ورزش
+### - [x] S1-T5 — شیت انتخاب نوع ورزش — f3120fbd
 
 **فایل جدید:** `presentation/sheets/mv_kind_picker_sheet.dart`
 
@@ -1438,7 +1438,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
 | S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
 | S1-T4 | DONE | 347ced07 | افزودن sport و outdoor به MvSlotType و شرط اجباری بودن kindCode |
-| S1-T5 |  |  |  |
+| S1-T5 | DONE | f3120fbd | شیت انتخاب کامل ۴۹ ورزش با جستجوی ۲۵۰ میلی‌ثانیه و بخش فصلی |
 | S1-T6 |  |  |  |
 | S1-T7 |  |  |  |
 | S1-T8 |  |  |  |

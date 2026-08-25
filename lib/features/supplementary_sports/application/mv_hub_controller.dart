@@ -148,8 +148,28 @@ class MvHubController extends ChangeNotifier {
       profile: _profile,
     );
 
-    // Calculate MET-min progress
-    final weekSessions = await _sessionRepo.getRecentSessions(limit: 20);
+    // Calculate MET-min progress (week-bounded from Saturday 00:00 to Friday 23:59:59)
+    final weekStart = DateTime(
+      weekStartSat.year,
+      weekStartSat.month,
+      weekStartSat.day,
+      0,
+      0,
+      0,
+    );
+    final weekEnd = DateTime(
+      weekStartSat.year,
+      weekStartSat.month,
+      weekStartSat.day + 6,
+      23,
+      59,
+      59,
+      999,
+    );
+    final weekSessions = await _sessionRepo.getCompletedSessionsBetween(
+      weekStart,
+      weekEnd,
+    );
     _budgetProgress = _budgetEngine
         .calculateWeeklyProgress(
           profile: _profile,

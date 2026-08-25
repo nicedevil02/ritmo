@@ -171,7 +171,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T8 — اتصال `InsightEngine` به تب پیشرفت (رفع E-06 بخش دوم)
+### - [x] S8-T8 — اتصال `InsightEngine` به تب پیشرفت (رفع E-06 بخش دوم) — 15fe6ce2
 
 1. در `MvHubController` فیلد `List<MvInsight> insights = const []` اضافه کن و از `InsightEngine` پر کن.
 2. `MvProgressTab` آن را بگیرد و زیر کارت‌ها رندر کند.
@@ -286,7 +286,7 @@ flutter test
 | S8-T5 | DONE | f5dc8023 | نمایش لنگرها در تب هفته (MvDaySlotCard) و بنر فردا در تب امروز (MvTodayTab) |
 | S8-T6 | DONE | b9dce612 | اتصال انتخابگر حرکت و جزئیات ورزش در MvDayPlanSheet |
 | S8-T7 | DONE | 786cbdcc | اتصال LoadEngine به تب پیشرفت با محاسبه ACWR و مدیریت داده ناکافی |
-| S8-T8 | | | |
+| S8-T8 | DONE | 15fe6ce2 | اتصال InsightEngine به تب پیشرفت با رندر بینش‌های معتبر |
 | S8-T9 | | | |
 | S8-T10 | | | |
 | S8-T11 | | | |

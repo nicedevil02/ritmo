@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/supplementary_sports/application/mv_hub_controller.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import '../components/components.dart';
+import 'mv_commitments_screen.dart';
 
 /// Screen 5: "تنظیمات ورزش و حرکت" (Section 5.5).
 /// Single source of truth settings for sports, equipment, apartment mode, and cycle consent.
@@ -9,12 +11,14 @@ class MvSettingsScreen extends StatefulWidget {
   final MvUserProfile initialProfile;
   final ValueChanged<MvUserProfile> onProfileSaved;
   final VoidCallback? onRegenerateProgram;
+  final dynamic controller;
 
   const MvSettingsScreen({
     super.key,
     required this.initialProfile,
     required this.onProfileSaved,
     this.onRegenerateProgram,
+    this.controller,
   });
 
   @override
@@ -86,6 +90,51 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
       body: ListView(
         padding: EdgeInsets.all(metrics.spaceLg),
         children: [
+          // 0. Fixed Sports (Anchors) Section (S8-T4)
+          _buildSectionHeader('ورزش‌های ثابت (لنگر)'),
+          _buildCard(
+            children: [
+              ListTile(
+                key: const ValueKey('mv_settings_commitments_tile'),
+                leading: Icon(
+                  Icons.lock_clock,
+                  color: colors.accent,
+                  size: metrics.iconMd,
+                ),
+                title: Text(
+                  'مدیریت ورزش‌های ثابت هفتگی',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'تعریف جلسات فوتسال، شنا، کوهنوردی یا کلاس‌های ثابت',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: metrics.iconSm,
+                  color: colors.textSecondary,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MvCommitmentsScreen(
+                        controller: widget.controller is MvHubController
+                            ? widget.controller as MvHubController
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: metrics.spaceLg),
+
           // 1. Program & Goal
           _buildSectionHeader('برنامه و اهداف'),
           _buildCard(

@@ -712,46 +712,6 @@ class _WellbeingScreenState extends State<WellbeingScreen>
     );
   }
 
-  void _openQuickMoodSelector(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final colors = ctx.colors;
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'الان چه حسی داری؟',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              FrictionlessMoodBar(
-                onLogChanged: () {
-                  Navigator.pop(ctx);
-                  _requestReload();
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildTodayTab(BuildContext context) {
     if (_loadFailed) {
       return _buildErrorCard(context);
@@ -770,11 +730,10 @@ class _WellbeingScreenState extends State<WellbeingScreen>
                 latestEnergy: _latestEnergy,
                 latestSleep: _latestSleep,
                 todayReflection: _todayReflection,
-                onMoodTap: () => _openQuickMoodSelector(context),
-                onEnergyTap: () {
+                onMoodEnergyTap: () {
                   RitmoSheetScaffold.present(
                     context: context,
-                    title: 'ثبت انرژی',
+                    title: 'ثبت حال روحی و انرژی',
                     builder: (_) => QuickLogSheet(onSaved: _requestReload),
                   );
                 },

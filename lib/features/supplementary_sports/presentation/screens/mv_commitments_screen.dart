@@ -35,22 +35,34 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
   @override
   void initState() {
     super.initState();
-    _commitmentRepo = widget.commitmentRepo ?? MvCommitmentRepositoryImpl();
-    _kindRepo = widget.kindRepo ?? MvKindRepository();
+    _commitmentRepo = widget.commitmentRepo ??
+        widget.controller?.commitmentRepo ??
+        MvCommitmentRepositoryImpl();
+    _kindRepo = widget.kindRepo ??
+        widget.controller?.kindRepo ??
+        MvKindRepository();
     _loadData();
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final list = await _commitmentRepo.getAll(onlyActive: false);
-    final allKinds = await _kindRepo.getAll();
-    if (!mounted) return;
+    try {
+      final list = await _commitmentRepo.getAll(onlyActive: false);
+      final allKinds = await _kindRepo.getAll();
+      if (!mounted) return;
 
-    setState(() {
-      _commitments = list;
-      _kindsMap = {for (final k in allKinds) k.code: k};
-      _isLoading = false;
-    });
+      setState(() {
+        _commitments = list;
+        _kindsMap = {for (final k in allKinds) k.code: k};
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   String _dayLabel(int sat0) {

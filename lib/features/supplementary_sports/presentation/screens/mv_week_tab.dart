@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
+import 'mv_commitments_screen.dart';
 
 /// Tab 2: "هفته" (Section 5.2).
 /// Displays 7 day cards for the week and cycle progress.
@@ -10,16 +11,20 @@ class MvWeekTab extends StatelessWidget {
   final List<MvSlot> weekSlots;
   final int cycleWeek;
   final bool isDeloadWeek;
+  final List<MvCommitment> commitments;
   final ValueChanged<MvSlot> onSlotUpdated;
   final VoidCallback onRegenerateWeek;
+  final VoidCallback? onOpenCommitments;
 
   const MvWeekTab({
     super.key,
     required this.weekSlots,
     required this.cycleWeek,
     this.isDeloadWeek = false,
+    this.commitments = const [],
     required this.onSlotUpdated,
     required this.onRegenerateWeek,
+    this.onOpenCommitments,
   });
 
   @override
@@ -80,6 +85,70 @@ class MvWeekTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceLg),
 
+          // Anchor CTA Card if no commitments (S8-T4)
+          if (commitments.isEmpty) ...[
+            InkWell(
+              key: const ValueKey('mv_week_anchor_cta'),
+              onTap: onOpenCommitments ??
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MvCommitmentsScreen(),
+                      ),
+                    );
+                  },
+              borderRadius: BorderRadius.circular(metrics.radiusCard),
+              child: Container(
+                padding: EdgeInsets.all(metrics.spaceMd),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(metrics.radiusCard),
+                  border: Border.all(
+                    color: colors.accent.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_clock,
+                      color: colors.accent,
+                      size: metrics.iconMd,
+                    ),
+                    SizedBox(width: metrics.spaceMd),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'تعریف ورزش ثابت هفتگی',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: metrics.spaceXs),
+                          Text(
+                            'روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: metrics.iconSm,
+                      color: colors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: metrics.spaceMd),
+          ],
+
           // Back-to-Back Conflict Banner (S2-T6, ADJ-6)
           if (_hasBackToBackAnchors(weekSlots)) ...[
             Container(
@@ -97,7 +166,7 @@ class MvWeekTab extends StatelessWidget {
                   Icon(
                     Icons.info_outline_rounded,
                     color: colors.warning,
-                    size: 20,
+                    size: metrics.iconSm,
                   ),
                   SizedBox(width: metrics.spaceSm),
                   Expanded(

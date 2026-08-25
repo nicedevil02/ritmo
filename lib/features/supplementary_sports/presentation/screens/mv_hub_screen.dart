@@ -11,6 +11,7 @@ import 'mv_progress_tab.dart';
 import 'mv_settings_screen.dart';
 import 'mv_today_tab.dart';
 import 'mv_week_tab.dart';
+import 'mv_commitments_screen.dart';
 
 /// Screen 1: "هاب ورزشی ریتمو" (Section 4, 5.1, 5.2, 5.3).
 /// Unified hub hosting the 3 tabs (امروز، هفته، پیشرفت) and direct actions.
@@ -159,10 +160,26 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 MaterialPageRoute(
                   builder: (_) => MvSettingsScreen(
                     initialProfile: _controller.profile,
+                    controller: _controller,
                     onProfileSaved: (p) async {
                       await _controller.saveProfile(p);
                     },
                     onRegenerateProgram: _controller.regenerateWeek,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const ValueKey('mv_open_commitments'),
+            icon: const Icon(Icons.lock_clock),
+            tooltip: 'ورزش‌های ثابت',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MvCommitmentsScreen(
+                    controller: _controller,
                   ),
                 ),
               );
@@ -209,9 +226,20 @@ class _MvHubScreenState extends State<MvHubScreen> {
           // Tab 1: هفته
           MvWeekTab(
             weekSlots: _controller.weekSlots,
-            cycleWeek: 1,
+            cycleWeek: _controller.cycleWeek,
+            commitments: _controller.commitments,
             onSlotUpdated: _controller.updateSlot,
             onRegenerateWeek: _controller.regenerateWeek,
+            onOpenCommitments: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MvCommitmentsScreen(
+                    controller: _controller,
+                  ),
+                ),
+              );
+            },
           ),
 
           // Tab 2: پیشرفت

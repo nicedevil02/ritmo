@@ -9,7 +9,7 @@ import 'package:ritmo/features/energy/models/energy_mood_models.dart';
 import 'package:ritmo/features/reflection/models/reflection_models.dart';
 import 'package:ritmo/features/sleep/models/sleep_models.dart';
 
-/// Instant 4-Pillar Check-in Bar for Wellbeing (Mood, Energy, Sleep, Reflection).
+/// Instant 3-Pillar Check-in Bar for Wellbeing (Mood & Energy, Sleep, Reflection).
 class WellbeingQuickCheckinBar extends StatelessWidget {
   const WellbeingQuickCheckinBar({
     super.key,
@@ -17,21 +17,25 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
     required this.latestEnergy,
     required this.latestSleep,
     required this.todayReflection,
-    required this.onMoodTap,
-    required this.onEnergyTap,
+    VoidCallback? onMoodEnergyTap,
+    this.onMoodTap,
+    this.onEnergyTap,
     required this.onSleepTap,
     required this.onReflectionTap,
-  });
+  }) : _onMoodEnergyTap = onMoodEnergyTap;
 
   final MoodLog? latestMood;
   final EnergyLog? latestEnergy;
   final SleepLog? latestSleep;
   final ReflectionEntry? todayReflection;
 
-  final VoidCallback onMoodTap;
-  final VoidCallback onEnergyTap;
+  final VoidCallback? _onMoodEnergyTap;
+  final VoidCallback? onMoodTap;
+  final VoidCallback? onEnergyTap;
   final VoidCallback onSleepTap;
   final VoidCallback onReflectionTap;
+
+  VoidCallback get onMoodEnergyTap => _onMoodEnergyTap ?? onMoodTap ?? onEnergyTap ?? () {};
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +91,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                 ],
               ),
               Text(
-                '۴ ستون تعادل',
+                '۳ ستون تعادل',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -98,37 +102,20 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // 2x2 Grid of Quick Check-in Tiles
-          Row(
-            children: [
-              Expanded(
-                child: _buildPillarTile(
-                  context: context,
-                  title: 'حس‌وحال الان',
-                  subtitle: _formatMoodSubtitle(),
-                  icon: _resolveMoodIcon(),
-                  isRecorded: latestMood != null,
-                  activeColor: const Color(0xffEC4899),
-                  colors: colors,
-                  onTap: onMoodTap,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildPillarTile(
-                  context: context,
-                  title: 'سطح انرژی',
-                  subtitle: _formatEnergySubtitle(),
-                  icon: CupertinoIcons.bolt_fill,
-                  isRecorded: latestEnergy != null,
-                  activeColor: const Color(0xffF59E0B),
-                  colors: colors,
-                  onTap: onEnergyTap,
-                ),
-              ),
-            ],
+          // 1. Unified Mood & Energy Pillar (Full-Width Card)
+          _buildPillarTile(
+            context: context,
+            title: 'حال روحی و انرژی',
+            subtitle: _formatMoodEnergySubtitle(),
+            icon: _resolveMoodEnergyIcon(),
+            isRecorded: latestMood != null || latestEnergy != null,
+            activeColor: const Color(0xffEC4899),
+            colors: colors,
+            onTap: onMoodEnergyTap,
           ),
           const SizedBox(height: 10),
+
+          // 2. Sleep & Reflection Pillars (Side-by-Side)
           Row(
             children: [
               Expanded(
@@ -184,7 +171,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
             color: isRecorded
                 ? activeColor.withValues(alpha: 0.08)
@@ -221,7 +208,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,13 +241,13 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
               if (isRecorded)
                 Icon(
                   CupertinoIcons.checkmark_circle_fill,
-                  size: 14,
+                  size: 16,
                   color: activeColor,
                 )
               else
                 Icon(
                   CupertinoIcons.plus_circle,
-                  size: 14,
+                  size: 16,
                   color: colors.textSecondary.withValues(alpha: 0.4),
                 ),
             ],
@@ -270,33 +257,64 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
     );
   }
 
-  IconData _resolveMoodIcon() {
-    if (latestMood == null) return CupertinoIcons.heart_fill;
-    final s = latestMood!.valence;
-    if (s <= 1) return Icons.sentiment_very_dissatisfied_rounded;
-    if (s == 2) return Icons.sentiment_dissatisfied_rounded;
-    if (s == 3) return Icons.sentiment_neutral_rounded;
-    if (s == 4) return Icons.sentiment_satisfied_rounded;
-    return Icons.sentiment_very_satisfied_rounded;
+  IconData _resolveMoodEnergyIcon() {
+    if (latestMood != null) {
+      final s = latestMood!.valence;
+      if (s <= 1) return Icons.sentiment_very_dissatisfied_rounded;
+      if (s == 2) return Icons.sentiment_dissatisfied_rounded;
+      if (s == 3) return Icons.sentiment_neutral_rounded;
+      if (s == 4) return Icons.sentiment_satisfied_rounded;
+      return Icons.sentiment_very_satisfied_rounded;
+    }
+    if (latestEnergy != null) {
+      return CupertinoIcons.bolt_fill;
+    }
+    return CupertinoIcons.heart_fill;
   }
 
-  String _formatMoodSubtitle() {
-    if (latestMood == null) return 'ثبت حس الان +';
-    final s = latestMood!.valence;
-    if (s <= 1) return 'خیلی بد';
-    if (s == 2) return 'کمی خسته';
-    if (s == 3) return 'معمولی';
-    if (s == 4) return 'خوب و آرام';
-    return 'عالی و پرانرژی';
-  }
+  String _formatMoodEnergySubtitle() {
+    final hasMood = latestMood != null;
+    final hasEnergy = latestEnergy != null;
 
-  String _formatEnergySubtitle() {
-    if (latestEnergy == null) return 'ثبت انرژی +';
-    final lvl = latestEnergy!.energyLevel;
-    if (lvl == EnergyLevel.high) return 'انرژی بالا';
-    if (lvl == EnergyLevel.medium) return 'انرژی متوسط';
-    if (lvl == EnergyLevel.low) return 'انرژی پایین';
-    return 'ثبت شد';
+    if (!hasMood && !hasEnergy) return 'ثبت خلق و انرژی الان +';
+
+    String moodPart = '';
+    if (hasMood) {
+      final s = latestMood!.valence;
+      if (s <= 1) {
+        moodPart = 'دلگیر';
+      } else if (s == 2) {
+        moodPart = 'بی‌حوصله';
+      } else if (s == 3) {
+        moodPart = 'معمولی';
+      } else if (s == 4) {
+        moodPart = 'خوب و آرام';
+      } else {
+        moodPart = 'عالی و شاداب';
+      }
+    }
+
+    String energyPart = '';
+    if (hasEnergy) {
+      final lvl = latestEnergy!.energyLevel;
+      if (lvl == EnergyLevel.high) {
+        energyPart = 'انرژی بالا ⚡';
+      } else if (lvl == EnergyLevel.medium) {
+        energyPart = 'انرژی متوسط';
+      } else if (lvl == EnergyLevel.low) {
+        energyPart = 'انرژی پایین 🔋';
+      } else {
+        energyPart = 'ثبت شد';
+      }
+    }
+
+    if (hasMood && hasEnergy) {
+      return '$moodPart • $energyPart';
+    } else if (hasMood) {
+      return moodPart;
+    } else {
+      return energyPart;
+    }
   }
 
   String _formatSleepSubtitle() {

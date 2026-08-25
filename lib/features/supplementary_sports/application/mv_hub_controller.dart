@@ -17,6 +17,10 @@ class MvHubController extends ChangeNotifier {
   final MvExerciseRepository _exerciseRepo;
   final MvPrRepository _prRepo;
   final MvCommitmentRepository _commitmentRepo;
+  final MvKindRepository _kindRepo;
+
+  MvCommitmentRepository get commitmentRepo => _commitmentRepo;
+  MvKindRepository get kindRepo => _kindRepo;
 
   // Use Cases
   final MvStartSessionUseCase startSessionUseCase;
@@ -76,6 +80,7 @@ class MvHubController extends ChangeNotifier {
     MvExerciseRepository? exerciseRepo,
     MvPrRepository? prRepo,
     MvCommitmentRepository? commitmentRepo,
+    MvKindRepository? kindRepo,
     MvDailyCheckinRepository? checkinRepo,
     SelectionEngine? selectionEngine,
     ProgressionEngine? progressionEngine,
@@ -90,6 +95,7 @@ class MvHubController extends ChangeNotifier {
        _exerciseRepo = exerciseRepo ?? MvExerciseRepository(),
        _prRepo = prRepo ?? MvPrRepository(),
        _commitmentRepo = commitmentRepo ?? MvCommitmentRepositoryImpl(),
+       _kindRepo = kindRepo ?? MvKindRepository(),
        startSessionUseCase = MvStartSessionUseCase(
          sessionRepo: sessionRepo,
          exerciseRepo: exerciseRepo,
@@ -116,6 +122,7 @@ class MvHubController extends ChangeNotifier {
        weekRegenUseCase = MvWeekRegenUseCase(
          prescriptionRepo: prescriptionRepo,
          commitmentRepo: commitmentRepo,
+         kindRepo: kindRepo,
          planEngine: planEngine,
        ),
        _budgetEngine = budgetEngine ?? const BudgetEngine(),

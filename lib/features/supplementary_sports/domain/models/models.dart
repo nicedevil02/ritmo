@@ -1,5 +1,6 @@
 export 'mv_calendar.dart';
 export 'mv_campaign.dart';
+export 'mv_commitment.dart';
 export 'mv_daily_checkin.dart';
 export 'mv_decision.dart';
 export 'mv_enums.dart';

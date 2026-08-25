@@ -53,6 +53,14 @@ class CycleDateContract {
     return null;
   }
 
+  /// Normalizes any parseable date string into strict 10-character canonical `YYYY-MM-DD`.
+  /// Returns `null` if [s] is null, empty, or unparseable.
+  static String? normalizeDayKey(String? s) {
+    final dt = parseDayKey(s);
+    if (dt == null) return null;
+    return toDayKey(dt);
+  }
+
   /// Calculates the number of calendar days between [from] and [to] (to - from).
   /// Uses UTC calendar dates to be completely immune to Daylight Saving Time (DST) transitions.
   static int daysBetween(DateTime from, DateTime to) {
@@ -89,5 +97,44 @@ class CycleDateContract {
     final cleanStart = DateTime.utc(start.year, start.month, start.day);
     final cleanEnd = DateTime.utc(end.year, end.month, end.day);
     return !cleanTarget.isBefore(cleanStart) && !cleanTarget.isAfter(cleanEnd);
+  }
+
+  /// Checks whether inclusive interval [aStart, aEnd] overlaps with inclusive interval [bStart, bEnd].
+  /// Standard calendar overlap: aStart <= bEnd AND bStart <= aEnd.
+  static bool overlaps(
+    DateTime aStart,
+    DateTime aEnd,
+    DateTime bStart,
+    DateTime bEnd,
+  ) {
+    final cleanAStart = DateTime.utc(aStart.year, aStart.month, aStart.day);
+    final cleanAEnd = DateTime.utc(aEnd.year, aEnd.month, aEnd.day);
+    final cleanBStart = DateTime.utc(bStart.year, bStart.month, bStart.day);
+    final cleanBEnd = DateTime.utc(bEnd.year, bEnd.month, bEnd.day);
+    return !cleanAStart.isAfter(cleanBEnd) && !cleanBStart.isAfter(cleanAEnd);
+  }
+
+  /// Calculates the effective end date for a period.
+  /// If [end] is provided, returns clean [end].
+  /// If [end] is null (open period), returns max(cleanStart, min(cleanToday, cleanStart + maxPlausibleDays - 1)).
+  static DateTime effectiveEnd({
+    required DateTime start,
+    DateTime? end,
+    required DateTime today,
+    int maxPlausibleDays = 15,
+  }) {
+    final cleanStart = cleanDate(start);
+    if (end != null) {
+      final cleanEnd = cleanDate(end);
+      return cleanEnd.isBefore(cleanStart) ? cleanStart : cleanEnd;
+    }
+    final cleanToday = cleanDate(today);
+    final maxBiologicalEnd = cleanStart.add(
+      Duration(days: maxPlausibleDays - 1),
+    );
+    final candidate = cleanToday.isBefore(maxBiologicalEnd)
+        ? cleanToday
+        : maxBiologicalEnd;
+    return candidate.isBefore(cleanStart) ? cleanStart : candidate;
   }
 }

@@ -23,6 +23,8 @@ class CycleConfirmationRequest {
     this.answer,
     this.answeredAt,
     this.lastAskedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -32,6 +34,8 @@ class CycleConfirmationRequest {
   final CycleConfirmationAnswer? answer;
   final DateTime? answeredAt;
   final DateTime? lastAskedAt;
+  final int? createdAt;
+  final int? updatedAt;
 
   bool get isAnswered => answer != null;
 
@@ -39,6 +43,7 @@ class CycleConfirmationRequest {
       '${kind.name}_${CycleDateContract.toDayKey(targetDate)}';
 
   Map<String, dynamic> toMap() {
+    final nowMs = CycleClock.nowMillisecondsSinceEpoch;
     return {
       'id': id,
       'kind': kind.name,
@@ -47,8 +52,8 @@ class CycleConfirmationRequest {
       'answeredAt': answeredAt?.millisecondsSinceEpoch,
       'askCount': askCount,
       'lastAskedAt': lastAskedAt?.millisecondsSinceEpoch,
-      'createdAt': targetDate.millisecondsSinceEpoch,
-      'updatedAt': CycleClock.nowMillisecondsSinceEpoch,
+      'createdAt': createdAt ?? nowMs,
+      'updatedAt': updatedAt ?? nowMs,
     };
   }
 
@@ -77,6 +82,12 @@ class CycleConfirmationRequest {
     final lastAskedAtMs = map['lastAskedAt'] is int
         ? map['lastAskedAt'] as int
         : int.tryParse(map['lastAskedAt']?.toString() ?? '');
+    final createdAtMs = map['createdAt'] is int
+        ? map['createdAt'] as int
+        : int.tryParse(map['createdAt']?.toString() ?? '');
+    final updatedAtMs = map['updatedAt'] is int
+        ? map['updatedAt'] as int
+        : int.tryParse(map['updatedAt']?.toString() ?? '');
 
     return CycleConfirmationRequest(
       id: map['id']?.toString() ?? buildId(kind, targetDate),
@@ -94,6 +105,8 @@ class CycleConfirmationRequest {
       lastAskedAt: lastAskedAtMs != null
           ? DateTime.fromMillisecondsSinceEpoch(lastAskedAtMs)
           : null,
+      createdAt: createdAtMs,
+      updatedAt: updatedAtMs,
     );
   }
 }

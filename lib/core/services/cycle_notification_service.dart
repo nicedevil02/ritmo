@@ -170,8 +170,8 @@ class CycleNotificationService {
   static Future<void> cancelAll() async {
     try {
       await NotificationGateway.cancelForEntity('cycle', 'cycle_period');
-      // Cancel lead reminder IDs
-      for (var c = 0; c < 5; c++) {
+      // Cancel lead reminder IDs and confirmation IDs across all lookahead cycles
+      for (var c = 0; c < 15; c++) {
         for (final d in [1, 2, 3, 5, 7, 10, 14]) {
           await NotificationGateway.cancel('cycle_lead_c${c}_d$d');
           await NotificationGateway.cancel(
@@ -182,6 +182,7 @@ class CycleNotificationService {
         await NotificationGateway.cancel(
           NotificationIds.startConfirm(c).toString(),
         );
+        await NotificationGateway.cancel('cycle_end_confirm_c$c');
         await NotificationGateway.cancel('cycle_period_t2_c$c');
         await NotificationGateway.cancel('cycle_period_t1_c$c');
       }

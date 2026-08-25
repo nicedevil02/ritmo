@@ -887,6 +887,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     }
 
     // Phase determination (Section 3.3)
+    final currentDayInCycle = isStartDueToday ? L : ((daysSinceStart % L) + 1);
     CyclePhase phase;
     if (needsUserAttention) {
       phase = CyclePhase.dataStale;
@@ -896,7 +897,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       // فقط زمانی که موعد گذشته و کاربر چیزی ثبت نکرده (daysSinceStart > L):
       phase = CyclePhase.dataStale;
     } else {
-      final currentDayInCycle = (daysSinceStart % L) + 1;
       final ovulationDayNum = L - lutealDays;
       if (currentDayInCycle < ovulationDayNum - 1) {
         phase = CyclePhase.follicular;
@@ -909,7 +909,6 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     }
 
     // C-19: Phase conflict check
-    final currentDayInCycle = (daysSinceStart % L) + 1;
     final hasPhaseConflict =
         isBleeding && currentDayInCycle >= (L - lutealDays - 1);
 

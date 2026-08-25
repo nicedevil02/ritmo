@@ -2,6 +2,7 @@
 // Inspects cycle data integrity across cycle_periods, cycle_day_logs, legacy cycle_logs, and app_settings.
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
+import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 import 'package:sqflite/sqflite.dart';
 
 class CycleDataDiagnosis {
@@ -99,7 +100,7 @@ class CycleDataDoctor {
         } else {
           // Open period (endDate is null)
           final daysOpen = CycleDateContract.daysBetween(start, cleanToday);
-          if (daysOpen > 15) {
+          if (daysOpen > CycleSettings.maxPlausiblePeriodDays) {
             staleOpenPeriodsCount++;
           }
         }
@@ -113,18 +114,21 @@ class CycleDataDoctor {
           final p1 = parsedList[i];
           final p2 = parsedList[j];
 
-          // Effective end of p1
-          final p1End = p1.end ?? p1.start.add(const Duration(days: 10));
-          final p2End = p2.end ?? p2.start.add(const Duration(days: 10));
+          // Effective end of p1 and p2 using contract
+          final p1End = CycleDateContract.effectiveEnd(
+            start: p1.start,
+            end: p1.end,
+            today: cleanToday,
+            maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+          );
+          final p2End = CycleDateContract.effectiveEnd(
+            start: p2.start,
+            end: p2.end,
+            today: cleanToday,
+            maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+          );
 
-          final p1StartKey = CycleDateContract.toDayKey(p1.start);
-          final p1EndKey = CycleDateContract.toDayKey(p1End);
-          final p2StartKey = CycleDateContract.toDayKey(p2.start);
-          final p2EndKey = CycleDateContract.toDayKey(p2End);
-
-          // Overlap condition: start1 <= end2 AND start2 <= end1
-          if (p1StartKey.compareTo(p2EndKey) <= 0 &&
-              p2StartKey.compareTo(p1EndKey) <= 0) {
+          if (CycleDateContract.overlaps(p1.start, p1End, p2.start, p2End)) {
             overlappingPeriodsCount++;
           }
         }
@@ -174,38 +178,53 @@ class CycleDataDoctor {
             s['key'].toString(): s['value']?.toString() ?? '',
       };
 
-      // Check cycle length out of sync
-      final canonCycle = settings['cycle_avg_length'];
-      final legacyCycle1 = settings['cycle_length_days'];
+      // Check cycle length out of sync: canonical is keyCycleLength ('cycle_length_days')
+      final canonCycle = settings[CycleSettings.keyCycleLength];
+      final legacyCycle1 = settings['cycle_avg_length'];
       final legacyCycle2 = settings['user_cycle_length'];
       if ((legacyCycle1 != null &&
               legacyCycle1.isNotEmpty &&
+              canonCycle != null &&
               legacyCycle1 != canonCycle) ||
           (legacyCycle2 != null &&
               legacyCycle2.isNotEmpty &&
+              canonCycle != null &&
               legacyCycle2 != canonCycle)) {
         outOfSyncSettingsCount++;
       }
 
-      // Check period duration out of sync
-      final canonPeriod = settings['cycle_avg_period'];
-      final legacyPeriod1 = settings['period_duration_days'];
-      final legacyPeriod2 = settings['user_period_length'];
+      // Check period duration out of sync: canonical is keyPeriodDuration ('period_duration_days')
+      final canonPeriod = settings[CycleSettings.keyPeriodDuration];
+      final legacyPeriod1 = settings['cycle_avg_period'];
+      final legacyPeriod2 = settings['period_avg_duration'];
+      final legacyPeriod3 = settings['user_period_duration'];
       if ((legacyPeriod1 != null &&
               legacyPeriod1.isNotEmpty &&
+              canonPeriod != null &&
               legacyPeriod1 != canonPeriod) ||
           (legacyPeriod2 != null &&
               legacyPeriod2.isNotEmpty &&
-              legacyPeriod2 != canonPeriod)) {
+              canonPeriod != null &&
+              legacyPeriod2 != canonPeriod) ||
+          (legacyPeriod3 != null &&
+              legacyPeriod3.isNotEmpty &&
+              canonPeriod != null &&
+              legacyPeriod3 != canonPeriod)) {
         outOfSyncSettingsCount++;
       }
 
-      // Check pregnancy mode out of sync
-      final canonPreg = settings['cycle_pregnancy_mode'];
-      final legacyPreg = settings['cycle_is_pregnant'];
-      if (legacyPreg != null &&
-          legacyPreg.isNotEmpty &&
-          legacyPreg != canonPreg) {
+      // Check pregnancy mode out of sync: canonical is keyPregnancyMode ('cycle_pregnancy_mode')
+      final canonPreg = settings[CycleSettings.keyPregnancyMode];
+      final legacyPreg1 = settings['pregnancy_mode'];
+      final legacyPreg2 = settings['cycle_is_pregnant'];
+      if ((legacyPreg1 != null &&
+              legacyPreg1.isNotEmpty &&
+              canonPreg != null &&
+              legacyPreg1 != canonPreg) ||
+          (legacyPreg2 != null &&
+              legacyPreg2.isNotEmpty &&
+              canonPreg != null &&
+              legacyPreg2 != canonPreg)) {
         outOfSyncSettingsCount++;
       }
     }

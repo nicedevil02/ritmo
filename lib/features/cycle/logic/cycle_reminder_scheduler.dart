@@ -18,7 +18,7 @@ class CycleReminderScheduler {
 
   /// Re-evaluates cycle predictions and reschedules notifications across all lookahead cycles.
   static Future<void> rescheduleAll({
-    Database? dbExecutor,
+    DatabaseExecutor? dbExecutor,
     Map<String, String>? appSettings,
     DateTime? now,
   }) async {

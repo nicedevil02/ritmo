@@ -15,7 +15,30 @@ class CycleWorshipPolicy {
   const CycleWorshipPolicy._();
 
   /// Fiqh maximum duration for menstrual bleeding (10 consecutive days).
-  static const int maxFiqhBleedingDays = 10;
+  static const int maxFiqhBleedingDays = CycleSettings.maxFiqhBleedingDays;
+
+  /// Helper to calculate if [targetDate] falls within bleeding days of [start] (and [end]),
+  /// bounded by [ceilingDays] (10 for fiqh worship suspension, 15 for biology/engine).
+  static bool isPeriodDayOnDate({
+    required DateTime targetDate,
+    required DateTime start,
+    DateTime? end,
+    int ceilingDays = maxFiqhBleedingDays,
+  }) {
+    final cleanTarget = CycleDateContract.cleanDate(targetDate);
+    final cleanStart = CycleDateContract.cleanDate(start);
+    if (end != null) {
+      final cleanEnd = CycleDateContract.cleanDate(end);
+      if (CycleDateContract.inWindow(cleanTarget, cleanStart, cleanEnd)) {
+        final days = CycleDateContract.daysBetween(cleanStart, cleanTarget) + 1;
+        return days <= ceilingDays;
+      }
+      return false;
+    } else {
+      final daysDiff = CycleDateContract.daysBetween(cleanStart, cleanTarget);
+      return daysDiff >= 0 && daysDiff < ceilingDays;
+    }
+  }
 
   /// Checks whether Islamic worship (Salah / Fasting) is currently suspended.
   /// Returns `false` if:
@@ -25,7 +48,7 @@ class CycleWorshipPolicy {
   /// - Pregnancy mode is active
   /// - No active bleeding within the 10-day fiqh window
   static Future<bool> isWorshipSuspended({
-    Database? dbExecutor,
+    DatabaseExecutor? dbExecutor,
     Map<String, String>? appSettings,
     DateTime? targetDate,
   }) async {
@@ -67,23 +90,14 @@ class CycleWorshipPolicy {
       for (final p in periods) {
         final start = CycleDateContract.parseDayKey(p['startDate']?.toString());
         if (start == null) continue;
-
         final end = CycleDateContract.parseDayKey(p['endDate']?.toString());
-        if (end != null) {
-          // Closed period: check within [start..end]
-          if (CycleDateContract.inWindow(effectiveDate, start, end)) {
-            final bleedingDays =
-                CycleDateContract.daysBetween(start, effectiveDate) + 1;
-            if (bleedingDays <= maxFiqhBleedingDays) {
-              return true;
-            }
-          }
-        } else {
-          // Open period: check if within maxFiqhBleedingDays
-          final daysDiff = CycleDateContract.daysBetween(start, effectiveDate);
-          if (daysDiff >= 0 && daysDiff < maxFiqhBleedingDays) {
-            return true;
-          }
+        if (isPeriodDayOnDate(
+          targetDate: effectiveDate,
+          start: start,
+          end: end,
+          ceilingDays: maxFiqhBleedingDays,
+        )) {
+          return true;
         }
       }
     } catch (e, st) {

@@ -7,12 +7,12 @@ import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
 class CyclePeriodStatus {
   const CyclePeriodStatus._();
 
-  /// دورهٔ باز (endDate == null) — فقط یکی می‌تواند وجود داشته باشد.
+  /// دورهٔ باز (endDate == null) — در صورت وجود چند مورد، جدیدترین بازگردانده می‌شود.
   static CyclePeriod? openPeriod(List<CyclePeriod> periods) {
-    for (final p in periods) {
-      if (p.isOpen) return p;
-    }
-    return null;
+    final openList = periods.where((p) => p.isOpen).toList();
+    if (openList.isEmpty) return null;
+    openList.sort((a, b) => b.startDate.compareTo(a.startDate));
+    return openList.first;
   }
 
   /// دورهٔ بازی که از آستانهٔ forgottenOpenPeriodDays گذشته.

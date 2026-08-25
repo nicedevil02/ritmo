@@ -68,6 +68,7 @@ class CycleState {
     CycleEngineOutput? engineOutput,
     Map<String, String>? settings,
     String? errorMessage,
+    bool clearErrorMessage = false,
     int? horizonCycles,
     DataQualityReport? dataQuality,
     List<SymptomForecast>? symptomForecasts,
@@ -87,7 +88,9 @@ class CycleState {
       periods: periods ?? this.periods,
       engineOutput: engineOutput ?? this.engineOutput,
       settings: settings ?? this.settings,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : (errorMessage ?? this.errorMessage),
       horizonCycles: horizonCycles ?? this.horizonCycles,
       dataQuality: dataQuality ?? this.dataQuality,
       symptomForecasts: symptomForecasts ?? this.symptomForecasts,
@@ -277,30 +280,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
               );
             }
 
-            engineOutput = CycleEngineOutput(
-              currentPhase: engineOutput.currentPhase,
-              dayOfCycle: engineOutput.dayOfCycle,
-              dayOfPeriod: engineOutput.dayOfPeriod,
-              isIrregular: engineOutput.isIrregular,
-              stats: engineOutput.stats,
-              dataMaturity: engineOutput.dataMaturity,
-              hasData: engineOutput.hasData,
-              regularityScore: engineOutput.regularityScore,
-              trendPoints: engineOutput.trendPoints,
-              regularityLevel: engineOutput.regularityLevel,
-              disclaimerCode: engineOutput.disclaimerCode,
-              isOverdue: engineOutput.isOverdue,
-              daysOverdue: engineOutput.daysOverdue,
-              missedCycles: engineOutput.missedCycles,
-              needsUserAttention: engineOutput.needsUserAttention,
-              hasPhaseConflict: engineOutput.hasPhaseConflict,
-              hasImplausiblePeriodData: engineOutput.hasImplausiblePeriodData,
-              isProjected: engineOutput.isProjected,
-              discardedOutliers: engineOutput.discardedOutliers,
-              cycleLengthSd: engineOutput.cycleLengthSd,
-              forecastAnchor: engineOutput.forecastAnchor,
-              forecast: adjustedForecast,
-            );
+            engineOutput = engineOutput.copyWith(forecast: adjustedForecast);
           }
         }
       }

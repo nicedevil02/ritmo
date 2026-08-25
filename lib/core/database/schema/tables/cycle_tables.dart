@@ -33,10 +33,13 @@ class CycleTables {
           flowIntensity TEXT DEFAULT 'MEDIUM',
           isPredicted INTEGER DEFAULT 0,
           note TEXT,
+          autoClosed INTEGER NOT NULL DEFAULT 0,
           createdAt INTEGER,
           updatedAt INTEGER
       );
     ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_cycle_periods_startDate ON cycle_periods(startDate);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_cycle_periods_endDate ON cycle_periods(endDate);');
 
     // V14 cycle_day_logs table
     await db.execute('''

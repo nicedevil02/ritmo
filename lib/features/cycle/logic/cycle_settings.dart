@@ -48,6 +48,12 @@ class CycleSettings {
   /// قبلاً همین مفهوم در سه فایل با سه عملگر متفاوت (>=12، >12، <12) پیاده شده بود.
   static const int forgottenOpenPeriodDays = 12;
 
+  /// سقف معقول زیستی طول قاعدگی در موتور محاسبات
+  static const int maxPlausiblePeriodDays = 15;
+
+  /// سقف فقهی احکام تعلیق عبادت (۱۰ روز متوالی)
+  static const int maxFiqhBleedingDays = 10;
+
   /// مهلت اضافه پیش از پرسیدن «هنوز ادامه دارد؟»
   static const int prolongedBleedingGraceDays = 2;
 

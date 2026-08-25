@@ -45,7 +45,7 @@ class CycleDayLog {
     };
   }
 
-  factory CycleDayLog.fromMap(Map<String, dynamic> map) {
+  static CycleDayLog? tryFromMap(Map<String, dynamic> map) {
     List<String> parsedSymptoms = [];
     final rawSymptoms = map['symptomsJson'] ?? map['symptoms'];
     if (rawSymptoms is String && rawSymptoms.isNotEmpty) {
@@ -67,7 +67,11 @@ class CycleDayLog {
     }
 
     final dateStr = map['logDate']?.toString() ?? map['date']?.toString();
-    final parsedDate = CycleDateContract.parseDayKey(dateStr) ?? CycleClock.now;
+    final parsedDate = CycleDateContract.parseDayKey(dateStr);
+    if (parsedDate == null) {
+      RitmoLogger.error('[CycleDayLog] Corrupt or missing logDate: $dateStr');
+      return null;
+    }
 
     return CycleDayLog(
       id: map['id']?.toString() ?? 'cdl_${parsedDate.millisecondsSinceEpoch}',
@@ -80,6 +84,16 @@ class CycleDayLog {
       createdAt: map['createdAt'] as int? ?? 0,
       updatedAt: map['updatedAt'] as int? ?? 0,
     );
+  }
+
+  factory CycleDayLog.fromMap(Map<String, dynamic> map) {
+    return tryFromMap(map) ??
+        CycleDayLog(
+          id: '',
+          logDate: CycleClock.now,
+          createdAt: 0,
+          updatedAt: 0,
+        );
   }
 
   CycleDayLog copyWith({
@@ -126,6 +140,27 @@ class CycleDayLogsRepository {
     'mood_swings': 'Mood Swings',
     'joint_pain': 'Joint Pain',
   };
+
+  /// Fetches all logged day records sorted newest first.
+  Future<List<CycleDayLog>> getAllLogs(DatabaseExecutor db) async {
+    try {
+      final rows = await db.query(
+        'cycle_day_logs',
+        orderBy: 'logDate DESC',
+      );
+      return rows
+          .map((r) => CycleDayLog.tryFromMap(r))
+          .whereType<CycleDayLog>()
+          .toList();
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleDayLogsRepository] getAllLogs failed',
+        error: e,
+        stack: st,
+      );
+      return const [];
+    }
+  }
 
   /// Gets log for a specific calendar date.
   Future<CycleDayLog?> getLogForDate(

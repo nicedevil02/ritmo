@@ -13,6 +13,7 @@ class CyclePeriodContract {
   static const String colFlowIntensity = 'flowIntensity';
   static const String colIsPredicted = 'isPredicted';
   static const String colNote = 'note';
+  static const String colAutoClosed = 'autoClosed';
   static const String colCreatedAt = 'createdAt';
   static const String colUpdatedAt = 'updatedAt';
 
@@ -23,6 +24,7 @@ class CyclePeriodContract {
     colFlowIntensity,
     colIsPredicted,
     colNote,
+    colAutoClosed,
     colCreatedAt,
     colUpdatedAt,
   ];

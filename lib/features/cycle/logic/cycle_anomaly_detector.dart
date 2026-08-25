@@ -42,9 +42,12 @@ class CycleAnomalyDetector {
   }) {
     final anomalies = <CycleAnomaly>[];
 
-    // 1. Check for Late or Missed Period
+    // 1. Check for Late or Missed Period (Guarded against due day: daysSinceStart == L)
     if (engineOutput != null) {
-      if (engineOutput.daysOverdue >= 7 || engineOutput.missedCycles >= 1) {
+      if (!engineOutput.isStartDueToday &&
+          (engineOutput.daysOverdue >= 7 ||
+              (engineOutput.missedCycles >= 1 &&
+                  engineOutput.daysOverdue >= 1))) {
         final isSevere =
             engineOutput.daysOverdue >= 30 || engineOutput.missedCycles >= 2;
         anomalies.add(
@@ -56,6 +59,20 @@ class CycleAnomalyDetector {
             paramValue: engineOutput.daysOverdue,
             referenceValue: engineOutput.missedCycles,
             isMild: !isSevere,
+          ),
+        );
+      }
+
+      // Check for High Variability Trend
+      if (engineOutput.regularityLevel == RegularityLevel.irregular &&
+          engineOutput.stats.completedCycles >= 3) {
+        anomalies.add(
+          CycleAnomaly(
+            type: CycleAnomalyType.highVariabilityTrend,
+            severity: CycleAnomalySeverity.watch,
+            paramValue: (engineOutput.cycleLengthSd ?? 0).round(),
+            referenceValue: 5,
+            isMild: true,
           ),
         );
       }
@@ -149,22 +166,26 @@ class CycleAnomalyDetector {
     }
 
     // 4. Check for unusually long bleeding duration (> 8 days)
-    if (periodDurations.isNotEmpty) {
-      final lastDuration = periodDurations.last;
-      if (lastDuration > 8) {
-        final isSevere = lastDuration > 10;
-        anomalies.add(
-          CycleAnomaly(
-            type: CycleAnomalyType.unusuallyLongBleeding,
-            severity: isSevere
-                ? CycleAnomalySeverity.consultClinician
-                : CycleAnomalySeverity.watch,
-            paramValue: lastDuration,
-            referenceValue: 8,
-            isMild: !isSevere,
-          ),
-        );
-      }
+    int? currentBleedingDuration;
+    if (engineOutput != null && engineOutput.openPeriodDayCount > 0) {
+      currentBleedingDuration = engineOutput.openPeriodDayCount;
+    } else if (periodDurations.isNotEmpty) {
+      currentBleedingDuration = periodDurations.last;
+    }
+
+    if (currentBleedingDuration != null && currentBleedingDuration > 8) {
+      final isSevere = currentBleedingDuration > 10;
+      anomalies.add(
+        CycleAnomaly(
+          type: CycleAnomalyType.unusuallyLongBleeding,
+          severity: isSevere
+              ? CycleAnomalySeverity.consultClinician
+              : CycleAnomalySeverity.watch,
+          paramValue: currentBleedingDuration,
+          referenceValue: 8,
+          isMild: !isSevere,
+        ),
+      );
     }
 
     return anomalies;

@@ -30,6 +30,9 @@ class ToolScopeRequirement {
   final bool isUniversal;
 }
 
+/// فلگ کنترل فعال بودن محدودسازی ابزارها بر اساس پرسونا
+bool kAiPersonaScopeEnforced = false;
+
 /// محدوده اختیارات ابزار بر اساس پرسونا (فاز ۵ · P5-1)
 ///
 /// مسئله‌ای که حل می‌کند: تا امروز همه ـ ۲۳ ـ ابزار به هر دستیاری تزریق
@@ -63,7 +66,7 @@ class AgentToolScope {
     // ورزش
     'get_sports_history': ToolScopeRequirement.read(DataDomain.sports),
     'get_sports_plan': ToolScopeRequirement.read(DataDomain.sports),
-    'log_sports_session': ToolScopeRequirement.command('sports.logSession'),
+    'log_sports_session': ToolScopeRequirement.command('routine.create'),
 
     // روتین
     'get_routines_overview': ToolScopeRequirement.read(DataDomain.routines),
@@ -92,7 +95,7 @@ class AgentToolScope {
     // مطالعه و عبادت
     'get_study_progress_summary': ToolScopeRequirement.read(DataDomain.konkur),
     'get_worship_practices': ToolScopeRequirement.read(DataDomain.worship),
-    'create_worship_practice': ToolScopeRequirement.read(DataDomain.worship),
+    'create_worship_practice': ToolScopeRequirement.command('worship.create'),
 
     // سیستم
     'navigate_to_app_screen': ToolScopeRequirement.command('app.openPage'),
@@ -113,15 +116,18 @@ class AgentToolScope {
   }
 
   /// نام ابزارهای مجاز این پرسونا.
-  ///
-  /// راهبرد fail-open عمدی: اگر پرسونا ثبت نشده باشد (مثلا رجیستری
-  /// هنوز مقداردهی نشده)، همه ابزارها باز می‌مانند و فقط هشدار لاگ می‌شود.
-  /// بستن همه ابزارها در این حالت، دستیار را بی‌صدا فلج می‌کرد. در عوض
-  /// مرز واقعی نوشتن همچنان در PersonaGate و AgentPolicyGate پابرجاست.
   Set<String> allowedToolNames(String personaId) {
     final all = AgentToolRegistry.instance.allTools;
     final persona = _persona(personaId);
     if (persona == null) {
+      if (kAiPersonaScopeEnforced) {
+        debugPrint(
+            '[AgentScope] persona "$personaId" is not registered -> fail-closed (universal tools only)');
+        return all
+            .where((t) => requirements[t.name]?.isUniversal ?? false)
+            .map((t) => t.name)
+            .toSet();
+      }
       debugPrint(
           '[AgentScope] persona "$personaId" is not registered -> fail-open (${all.length} tools)');
       return all.map((t) => t.name).toSet();
@@ -138,7 +144,14 @@ class AgentToolScope {
   List<AgentTool> allowedTools(String personaId) {
     final persona = _persona(personaId);
     final all = AgentToolRegistry.instance.allTools;
-    if (persona == null) return all;
+    if (persona == null) {
+      if (kAiPersonaScopeEnforced) {
+        return all
+            .where((t) => requirements[t.name]?.isUniversal ?? false)
+            .toList();
+      }
+      return all;
+    }
     return all.where((t) => _isToolAllowed(t, persona)).toList();
   }
 

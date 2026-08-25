@@ -22,21 +22,28 @@ class MemoryConsolidator {
 
       final db = await DatabaseHelper.instance.database;
 
-      // 2. Idempotency check: verify if session is already consolidated
-      final checkKey = 'memory_consolidated_$sessionId';
-      final consolidatedQuery = await db.query(
-        'app_settings',
-        where: 'key = ?',
-        whereArgs: [checkKey],
-      );
-      if (consolidatedQuery.isNotEmpty && consolidatedQuery.first['value'].toString() == 'true') {
+      // 2. Load messages and verify minimum user messages count (>= 4 user turns)
+      final messages = await ChatRepository.instance.getMessages(sessionId);
+      final userMessages =
+          messages.where((m) => m.role == ChatRole.user).toList();
+      final userMsgCount = userMessages.length;
+      if (userMsgCount < 4) {
         return;
       }
 
-      // 3. Load messages and verify minimum user messages count (>= 4 user turns)
-      final messages = await ChatRepository.instance.getMessages(sessionId);
-      final userMessages = messages.where((m) => m.role == ChatRole.user).toList();
-      if (userMessages.length < 4) {
+      // Check consolidated message count in settings
+      final countKey = 'memory_consolidated_count_$sessionId';
+      final consolidatedQuery = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: [countKey],
+      );
+      final lastCount = consolidatedQuery.isNotEmpty
+          ? int.tryParse(consolidatedQuery.first['value'].toString()) ?? 0
+          : 0;
+
+      // Consolidate every 4 new user messages
+      if (lastCount > 0 && (userMsgCount - lastCount < 4)) {
         return;
       }
 
@@ -112,12 +119,12 @@ $existingMemoriesStr
         }
       }
 
-      // Mark session as consolidated in settings (idempotent tag)
+      // Mark session consolidation count in settings
       await db.insert(
         'app_settings',
         {
-          'key': checkKey,
-          'value': 'true',
+          'key': countKey,
+          'value': userMsgCount.toString(),
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,

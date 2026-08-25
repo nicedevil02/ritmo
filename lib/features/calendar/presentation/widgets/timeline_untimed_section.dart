@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/features/calendar/presentation/utils/domain_palette.dart';
 
 class TimelineUntimedSection extends StatefulWidget {
@@ -226,6 +227,9 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
       onTap: () => widget.onItemTap?.call(item),
       borderRadius: BorderRadius.circular(RitmoRadius.badge),
       child: Container(
+        constraints: BoxConstraints(
+          minHeight: CalendarGeometry.effectiveChipHeight(context) * 0.7,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
         decoration: BoxDecoration(
           color: isDone
@@ -259,12 +263,12 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
               ),
             Text(
               item.title,
-              style: TextStyle(
-                fontSize: 12.0,
+              style: RitmoTextStyles.badge(
+                isDone
+                    ? context.colors.textTertiary
+                    : context.colors.textPrimary,
+              ).copyWith(
                 fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
-                color: isDone
-                    ? theme.textTheme.bodySmall?.color?.withValues(alpha: 0.45)
-                    : theme.textTheme.bodyLarge?.color,
                 decoration: isDone ? TextDecoration.lineThrough : null,
               ),
             ),

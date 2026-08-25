@@ -94,7 +94,7 @@ class AgentToolRegistry {
     metric.callCount++;
 
     try {
-      debugPrint('[AgentToolRegistry] Executing tool: $name with args: $args');
+      debugPrint('[AgentToolRegistry] Executing tool: $name with args: ${_redactArgs(args)}');
       final result = await tool.execute(args);
       stopwatch.stop();
       metric.totalDurationMs += stopwatch.elapsedMilliseconds;
@@ -142,5 +142,22 @@ class AgentToolRegistry {
     });
 
     return buffer.toString();
+  }
+
+  static Map<String, dynamic> _redactArgs(Map<String, dynamic> args) {
+    final clean = <String, dynamic>{};
+    for (final entry in args.entries) {
+      final k = entry.key.toLowerCase();
+      if (k.contains('password') || k.contains('token') || k.contains('secret')) {
+        clean[entry.key] = '***';
+      } else if ((k.contains('content') || k.contains('note') || k.contains('text')) &&
+          entry.value is String &&
+          (entry.value as String).length > 25) {
+        clean[entry.key] = '${(entry.value as String).substring(0, 25)}…';
+      } else {
+        clean[entry.key] = entry.value;
+      }
+    }
+    return clean;
   }
 }

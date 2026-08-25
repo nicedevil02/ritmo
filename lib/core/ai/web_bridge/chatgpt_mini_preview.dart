@@ -34,23 +34,26 @@ class ChatGptMiniPreview extends StatefulWidget {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              ChatGptMiniPreview(
-                initiallyMinimized: false,
-                onClose: () => Navigator.of(ctx).pop(),
-              ),
-            ],
+                ChatGptMiniPreview(
+                  initiallyMinimized: false,
+                  onClose: () => Navigator.of(ctx).pop(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -207,6 +210,44 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                         ),
                         const SizedBox(width: 4),
                         Tooltip(
+                          message: 'اسکرول به بالا',
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              ChatGptWebBridgeManager.instance.scrollToTop();
+                            },
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.arrow_upward_rounded,
+                                size: 16,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: 'اسکرول به پایین',
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              ChatGptWebBridgeManager.instance.scrollToBottom();
+                            },
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.arrow_downward_rounded,
+                                size: 16,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Tooltip(
                           message: _isMaximized ? 'اندازه معمولی' : 'بزرگ‌تر کردن مرورگر',
                           child: InkWell(
                             onTap: () {
@@ -263,50 +304,76 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
 
                   // WebView Body
                   if (!_isMinimized)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                      height: _isMaximized
-                          ? (MediaQuery.of(context).size.height * 0.72).clamp(380.0, 750.0)
-                          : 280,
-                      width: double.infinity,
-                      child: controller != null
-                          ? WebViewWidget(
-                              key: const ValueKey('chatgpt_mini_preview_webview'),
-                              controller: controller,
-                              gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{
-                                Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
-                              },
-                            )
-                          : Center(
-                              child: InkWell(
-                                onTap: () => ChatGptWebBridgeManager.instance.attachViewer(),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isError) ...[
-                                        Icon(Icons.error_outline_rounded, color: colors.error, size: 28),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'خطا در برقراری ارتباط با وب‌سایت. لمس برای تلاش مجدد',
-                                          textAlign: TextAlign.center,
-                                          style: textTheme.bodySmall?.copyWith(color: colors.error),
-                                        ),
-                                      ] else ...[
-                                        const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
-                                          style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-                                        ),
-                                      ],
-                                    ],
+                    Builder(
+                      builder: (ctx) {
+                        final mediaQuery = MediaQuery.of(ctx);
+                        final keyboardHeight = mediaQuery.viewInsets.bottom;
+                        final screenHeight = mediaQuery.size.height;
+                        final availableHeight = (screenHeight - keyboardHeight - mediaQuery.padding.top - mediaQuery.padding.bottom - 100.0).clamp(160.0, 1200.0);
+
+                        final double calculatedHeight = _isMaximized
+                            ? (availableHeight * 0.95).clamp(240.0, 750.0)
+                            : (keyboardHeight > 0
+                                ? (availableHeight * 0.85).clamp(180.0, 320.0)
+                                : (screenHeight * 0.48).clamp(280.0, 500.0));
+
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          height: calculatedHeight,
+                          width: double.infinity,
+                          child: controller != null
+                              ? WebViewWidget(
+                                  key: const ValueKey(
+                                      'chatgpt_mini_preview_webview'),
+                                  controller: controller,
+                                  gestureRecognizers: const <
+                                      Factory<OneSequenceGestureRecognizer>>{
+                                    Factory<VerticalDragGestureRecognizer>(
+                                        VerticalDragGestureRecognizer.new),
+                                    Factory<HorizontalDragGestureRecognizer>(
+                                        HorizontalDragGestureRecognizer.new),
+                                    Factory<PanGestureRecognizer>(
+                                        PanGestureRecognizer.new),
+                                    Factory<ScaleGestureRecognizer>(
+                                        ScaleGestureRecognizer.new),
+                                    Factory<TapGestureRecognizer>(
+                                        TapGestureRecognizer.new),
+                                    Factory<EagerGestureRecognizer>(
+                                        EagerGestureRecognizer.new),
+                                  },
+                                )
+                              : Center(
+                                  child: InkWell(
+                                    onTap: () => ChatGptWebBridgeManager.instance.attachViewer(),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isError) ...[
+                                            Icon(Icons.error_outline_rounded, color: colors.error, size: 28),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'خطا در برقراری ارتباط با وب‌سایت. لمس برای تلاش مجدد',
+                                              textAlign: TextAlign.center,
+                                              style: textTheme.bodySmall?.copyWith(color: colors.error),
+                                            ),
+                                          ] else ...[
+                                            const CircularProgressIndicator.adaptive(strokeWidth: 2.5),
+                                            const SizedBox(height: 10),
+                                            Text(
+                                              'در حال اتصال به مرورگر چت‌جی‌پی‌تی...',
+                                              style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
+                        );
+                      },
                     ),
                 ],
               ),

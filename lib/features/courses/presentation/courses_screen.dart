@@ -201,7 +201,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: RitmoModuleAppBar(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
           title: 'دوره‌های آموزشی',
           subtitle: 'مدیریت دروس و جلسات مطالعاتی',
           statusBadge: Container(

@@ -758,7 +758,8 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
 
     return RitmoPageScaffold(
       padding: EdgeInsets.zero,
-      appBar: const RitmoModuleAppBar(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
         title: 'حساب و هویت',
       ),
       body: SingleChildScrollView(

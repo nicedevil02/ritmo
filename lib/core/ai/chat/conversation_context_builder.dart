@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/chat/chat_models.dart';
 import 'package:ritmo/core/ai/chat/chat_repository.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
@@ -101,32 +102,30 @@ class ConversationContextBuilder {
     required String userText,
     required Map<String, dynamic> retrievedData,
     String memoryDomain = 'core',
+    ConsentProfile? consent,
   }) async {
+    final effectiveConsent = consent ?? await ConsentProfile.loadFromDb();
     // 1) Fetch recent turns (limit: 10)
     final recentTurns = await ChatRepository.instance.getRecentTurns(sessionId);
 
     // 2) Fetch prior summaries (limit: 4, skip current, select up to 3 non-null)
     final allSessions = await ChatRepository.instance.listSessions(limit: 4);
     final priorSummaries = allSessions
-        .where(
-          (s) =>
-              s.id != sessionId &&
-              s.summary != null &&
-              s.summary!.trim().isNotEmpty,
-        )
-        .map((s) => s.summary!)
+        .where((s) => s.id != sessionId && s.summary != null)
         .take(3)
+        .map((s) => s.summary!)
         .toList();
 
-    // 3) Fetch user profile from app_settings
+    // 3) Query app_settings table for user profile settings
     final userProfile = <String, dynamic>{};
     try {
       final db = await DatabaseHelper.instance.database;
-      final settings = await db.query(
+      final rows = await db.query(
         'app_settings',
-        where: "key IN ('user_name', 'user_gender', 'gentleness_level')",
+        where: 'key LIKE ?',
+        whereArgs: ['user_%'],
       );
-      for (final row in settings) {
+      for (final row in rows) {
         final key = row['key']! as String;
         final value = row['value']! as String;
         userProfile[key] = value;
@@ -142,6 +141,7 @@ class ConversationContextBuilder {
     final retrievedMemories = await AiMemoryService.instance.retrieve(
       domain: memoryDomain,
       query: userText,
+      consent: effectiveConsent,
     );
 
     return ConversationContext(

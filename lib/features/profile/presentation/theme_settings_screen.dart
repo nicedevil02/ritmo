@@ -29,7 +29,8 @@ class ThemeSettingsScreen extends StatelessWidget {
       valueListenable: themeRepository.preferencesNotifier,
       builder: (context, prefs, _) {
         return RitmoPageScaffold(
-          appBar: const RitmoModuleAppBar(
+          appBar: RitmoModuleAppBar.fromContext(
+            context: context,
             title: 'ظاهر و تم',
           ),
           body: SingleChildScrollView(

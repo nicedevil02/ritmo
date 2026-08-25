@@ -75,7 +75,7 @@ class BridgeStatusChip extends StatelessWidget {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
           child: Material(
             color: chipColor.withValues(alpha: 0.12),
             shape: RoundedRectangleBorder(
@@ -112,21 +112,26 @@ class BridgeStatusChip extends StatelessWidget {
               },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       iconData,
-                      size: 13,
+                      size: 12,
                       color: chipColor,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      label,
-                      style: textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: chipColor,
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: textTheme.labelSmall?.copyWith(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: chipColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

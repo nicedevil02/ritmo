@@ -30,6 +30,7 @@ class StreamingChatService {
     required String sessionId,
     required String userText,
     required ConsentProfile consent,
+    String personaId = 'global',
   }) async* {
     // 1) Retrieve RAG & Privacy check
     final rag = await ConversationRAG().retrieve(
@@ -54,7 +55,8 @@ class StreamingChatService {
         id: 'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}',
         sessionId: sessionId,
         role: ChatRole.assistant,
-        content: rag.blockMessage!,
+        content: rag.blockMessage ??
+            'دسترسی به اطلاعات این بخش نیازمند مجوز در تنظیمات برنامه است.',
         timestamp: DateTime.now(),
       );
       await ChatRepository.instance.addMessage(assistantMsg);
@@ -77,6 +79,7 @@ class StreamingChatService {
       sessionId: sessionId,
       userText: userText,
       retrievedData: rag.data,
+      consent: consent,
     );
 
     final messages = ctx.toMessages(
@@ -134,7 +137,7 @@ class StreamingChatService {
           AiMemoryService.memoryInstruction();
       final agentStream = AgentLoopRunner.instance.runAgent(
         prompt: userText,
-        personaId: 'global',
+        personaId: personaId,
         personaSystemPrompt: systemPrompt,
         contextSummary: contextLines.isNotEmpty
             ? contextLines.join('\n')
@@ -143,27 +146,31 @@ class StreamingChatService {
         slot: AiSlot.assistant,
       );
 
+      var isTruncated = false;
       await for (final event in agentStream) {
         if (event is AgentTokenStreamEvent) {
-          accumulated = event.accumulated;
-          if (accumulated.characters.length > maxAssistantResponseChars) {
-            accumulated = accumulated.characters
-                .take(maxAssistantResponseChars)
-                .toString();
-            if (isChatGptWeb) {
-              ChatGptWebBridgeManager.instance.cancelCurrentStream();
+          if (!isTruncated) {
+            accumulated = event.accumulated;
+            if (accumulated.characters.length > maxAssistantResponseChars) {
+              isTruncated = true;
+              accumulated = accumulated.characters
+                  .take(maxAssistantResponseChars)
+                  .toString();
+              if (isChatGptWeb) {
+                ChatGptWebBridgeManager.instance.cancelCurrentStream();
+              }
+              yield ChatChunk(
+                '\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]',
+                accumulated,
+              );
+            } else {
+              yield ChatChunk(event.delta, accumulated);
             }
-            yield ChatChunk(
-              '\n\n[پاسخ بیش از حد طولانی بود و کوتاه شد.]',
-              accumulated,
-            );
-            break;
           }
-          yield ChatChunk(event.delta, accumulated);
         } else if (event is AgentCompletedEvent) {
           rawAnswer = event.rawAnswer;
           final finalText = event.finalAnswer;
-          if (finalText.isNotEmpty) {
+          if (finalText.isNotEmpty && !isTruncated) {
             final capped =
                 finalText.characters.length > maxAssistantResponseChars
                 ? finalText.characters
@@ -301,9 +308,10 @@ class StreamingChatService {
     // Run explicit remember safety net
     await AiMemoryService.instance.processExplicitSafetyNet(
       userText: userText,
-      assistantResponse: finalText,
+      assistantResponse: rawAnswer.trim().isNotEmpty ? rawAnswer : finalText,
       domain: 'core',
       sessionId: sessionId,
+      modelProducedMemoryOps: parsed.memoryOps != null && parsed.memoryOps!.trim().isNotEmpty,
     );
 
     final assistantMsg = ChatMessage(

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
@@ -183,6 +185,14 @@ class _ChatGptAuthModalState extends State<ChatGptAuthModal> {
                     child: WebViewWidget(
                       key: const ValueKey('chatgpt_auth_modal_webview'),
                       controller: controller,
+                      gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{
+                        Factory<VerticalDragGestureRecognizer>(VerticalDragGestureRecognizer.new),
+                        Factory<HorizontalDragGestureRecognizer>(HorizontalDragGestureRecognizer.new),
+                        Factory<PanGestureRecognizer>(PanGestureRecognizer.new),
+                        Factory<ScaleGestureRecognizer>(ScaleGestureRecognizer.new),
+                        Factory<TapGestureRecognizer>(TapGestureRecognizer.new),
+                        Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+                      },
                     ),
                   )
                 : Center(

@@ -246,7 +246,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
               rangeStartMinutes: range.startMinutes,
               rangeEndMinutes: range.endMinutes,
               pxPerMinute: pxSplit,
-              hourAxisWidth: CalendarGeometry.hourAxisWidthSplit,
+              hourAxisWidth: CalendarGeometry.effectiveHourAxisWidthSplit(context),
               maxLanes: CalendarGeometry.maxLanesSplit,
               axisSide: side,
               scrollController: _sharedScrollController,
@@ -288,11 +288,8 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                       child: Text(
                         'برنامه‌ای در این بازه نیست',
                         textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 12.0,
-                          color: colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.5,
-                          ),
+                        style: RitmoTextStyles.caption(
+                          context.colors.textTertiary,
                         ),
                       ),
                     ),
@@ -385,7 +382,7 @@ class TimelineSplitDayViewState extends State<TimelineSplitDayView> {
                   rangeStartMinutes: 0,
                   rangeEndMinutes: 1440,
                   pxPerMinute: pxSingle,
-                  hourAxisWidth: CalendarGeometry.hourAxisWidth,
+                  hourAxisWidth: CalendarGeometry.effectiveHourAxisWidth(context),
                   sleepStartMinutes: widget.sleepStartMinutes,
                   sleepEndMinutes: widget.sleepEndMinutes,
                   highlightedItemId: widget.highlightedItemId,

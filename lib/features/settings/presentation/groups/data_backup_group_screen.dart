@@ -205,7 +205,10 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
 
     return RitmoPageScaffold(
       padding: EdgeInsets.zero,
-      appBar: const RitmoModuleAppBar(title: 'داده و پشتیبان'),
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
+        title: 'داده و پشتیبان',
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
         child: Column(

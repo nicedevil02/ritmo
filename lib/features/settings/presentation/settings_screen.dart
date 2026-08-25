@@ -259,7 +259,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return RitmoPageScaffold(
       padding: EdgeInsets.zero,
-      appBar: RitmoModuleAppBar(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
         title: 'پروفایل و تنظیمات',
         actions: [
           IconButton(

@@ -1,8 +1,7 @@
-// lib/features/assistant/logic/day_plan_composer.dart
-
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -43,9 +42,11 @@ class DayPlanComposer {
     try {
       // 1. Retrieve relevant cognitive memories to enrich context (respects privacy settings)
       onProgress?.call('🧠 در حال تحلیل حافظه شناختی و ترجیحات شما...');
+      final consent = await ConsentProfile.loadFromDb();
       final memories = await AiMemoryService.instance.retrieve(
         domain: 'core',
         query: query,
+        consent: consent,
       );
       final memoryContext = AiMemoryService.instance.buildPromptBlock(memories);
 

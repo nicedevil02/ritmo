@@ -11,6 +11,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/routine_snooze_bottom_sheet.dart';
 import 'package:ritmo/features/routines/shared/routine_actions.dart';
@@ -586,7 +587,10 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
         item.domain == AgendaDomain.mustahab;
 
     final Widget card = Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      constraints: BoxConstraints(
+        minHeight: CalendarGeometry.effectiveRegistryCardHeight(context) * 0.7,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: colors.card,
@@ -610,22 +614,17 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
               children: [
                 Text(
                   item.title,
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontSize: 13,
+                  style: RitmoTextStyles.label(
+                    colors.textPrimary,
+                  ).copyWith(
                     fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
                     decoration: isDone ? TextDecoration.lineThrough : null,
                   ),
                 ),
                 if (item.subtitle != null && item.subtitle!.isNotEmpty)
                   Text(
                     item.subtitle!,
-                    style: TextStyle(
-                      fontFamily: 'Vazirmatn',
-                      fontSize: 11,
-                      color: colors.textSecondary,
-                    ),
+                    style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
               ],
             ),
@@ -633,11 +632,7 @@ class DefaultAgendaRenderer extends AgendaTileRenderer {
           if (item.hasValidTimeOfDay) ...[
             Text(
               item.timeOfDay!,
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 11,
-                color: colors.textSecondary,
-              ),
+              style: RitmoTextStyles.caption(colors.textSecondary),
             ),
             const SizedBox(width: 8),
           ],

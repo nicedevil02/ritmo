@@ -307,6 +307,24 @@ class AgentPolicyGate {
     return AgentGateDecision.allow(isWrite: true);
   }
 
+  /// ارزیابی امنیتی مستقل بدون درخواست مجدد کارت تایید (برای آرگومان‌های ویرایش‌شده کاربر)
+  AgentGateDecision evaluateSecurityOnly({
+    required AgentTool tool,
+    required Map<String, dynamic> args,
+  }) {
+    if (tool.policy == ToolPolicy.readOnly) {
+      return AgentGateDecision.allow(isWrite: false);
+    }
+
+    final suspicious = _suspiciousArgKey(args);
+    if (suspicious != null) {
+      return AgentGateDecision.deny(
+          'مقدار پارامتر "$suspicious" شامل عبارات یا تگ‌های تزریق سیستمی است، پس این تغییر رد شد.');
+    }
+
+    return AgentGateDecision.allow(isWrite: true);
+  }
+
   /// متن کارت تایید: کاربر باید دقیقا ببیند قرار است چه چیزی ثبت شود
   String buildPreviewFa(AgentTool tool, Map<String, dynamic> args) {
     final b = StringBuffer();

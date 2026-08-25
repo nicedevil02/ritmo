@@ -73,7 +73,9 @@ class TimelineColumnHeader extends StatelessWidget {
 
     return AnimatedContainer(
       duration: RitmoMotion.state,
-      constraints: const BoxConstraints(minHeight: 26.0),
+      constraints: BoxConstraints(
+        minHeight: CalendarGeometry.effectiveColumnHeaderHeight(context),
+      ),
       margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.5),
       decoration: BoxDecoration(
@@ -107,11 +109,9 @@ class TimelineColumnHeader extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
-              color: isActive ? colors.textPrimary : colors.textSecondary,
-            ),
+            style: RitmoTextStyles.badge(
+              isActive ? colors.textPrimary : colors.textSecondary,
+            ).copyWith(fontWeight: FontWeight.bold),
           ),
           if (isActive) ...[
             const SizedBox(width: 4),
@@ -129,9 +129,9 @@ class TimelineColumnHeader extends StatelessWidget {
             toPersianDigits(rangeLabel),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 10.0,
-              color: isActive ? colors.primary : colors.textTertiary,
+            style: RitmoTextStyles.badge(
+              isActive ? colors.primary : colors.textTertiary,
+            ).copyWith(
               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             ),
           ),

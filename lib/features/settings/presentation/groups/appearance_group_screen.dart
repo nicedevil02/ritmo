@@ -64,96 +64,102 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(previewScale)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'پیش‌نمایش زنده',
-                  style:
-                      context.t.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ) ??
-                      TextStyle(
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: m.spaceSm,
-                    vertical: m.spaceXs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(RitmoRadius.pill),
-                  ),
-                  child: Text(
-                    'چیپ نمونه',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'پیش‌نمایش زنده',
                     style:
-                        context.t.labelSmall?.copyWith(color: colors.primary) ??
-                        TextStyle(color: colors.primary),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: m.spaceSm),
-            Text(
-              'این یک متن نمونه برای مشاهدهٔ تأثیر تغییرات اندازهٔ قلم و فاصله در رابط کاربری است.',
-              style:
-                  context.t.bodySmall?.copyWith(color: colors.textSecondary) ??
-                  TextStyle(color: colors.textSecondary),
-            ),
-            SizedBox(height: m.spaceMd),
-            Row(
-              children: [
-                Icon(
-                  CupertinoIcons.checkmark_circle_fill,
-                  size: m.iconMd,
-                  color: colors.success,
-                ),
-                SizedBox(width: m.spaceSm),
-                Expanded(
-                  child: Text(
-                    'ردیف لیست با هدف لمس استاندارد',
-                    style:
-                        context.t.bodyMedium?.copyWith(
-                          color: colors.textPrimary,
+                        context.t.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
                         ) ??
-                        TextStyle(color: colors.textPrimary),
+                        TextStyle(
+                          color: colors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: m.spaceMd),
-            SizedBox(
-              width: double.infinity,
-              height: m.touchTarget,
-              child: FilledButton(
-                onPressed: () {},
-                style: FilledButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(m.radiusField),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: m.spaceSm,
+                      vertical: m.spaceXs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primaryContainer,
+                      borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                    ),
+                    child: Text(
+                      'چیپ نمونه',
+                      style:
+                          context.t.labelSmall?.copyWith(
+                            color: colors.primary,
+                          ) ??
+                          TextStyle(color: colors.primary),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'دکمهٔ تعاملی نمونه',
-                  style:
-                      context.t.labelLarge?.copyWith(color: colors.onPrimary) ??
-                      TextStyle(color: colors.onPrimary),
+                ],
+              ),
+              SizedBox(height: m.spaceSm),
+              Text(
+                'این یک متن نمونه برای مشاهدهٔ تأثیر تغییرات اندازهٔ قلم و فاصله در رابط کاربری است.',
+                style:
+                    context.t.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ) ??
+                    TextStyle(color: colors.textSecondary),
+              ),
+              SizedBox(height: m.spaceMd),
+              Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.checkmark_circle_fill,
+                    size: m.iconMd,
+                    color: colors.success,
+                  ),
+                  SizedBox(width: m.spaceSm),
+                  Expanded(
+                    child: Text(
+                      'ردیف لیست با هدف لمس استاندارد',
+                      style:
+                          context.t.bodyMedium?.copyWith(
+                            color: colors.textPrimary,
+                          ) ??
+                          TextStyle(color: colors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: m.spaceMd),
+              SizedBox(
+                width: double.infinity,
+                height: m.touchTarget,
+                child: FilledButton(
+                  onPressed: () {},
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(m.radiusField),
+                    ),
+                  ),
+                  child: Text(
+                    'دکمهٔ تعاملی نمونه',
+                    style:
+                        context.t.labelLarge?.copyWith(
+                          color: colors.onPrimary,
+                        ) ??
+                        TextStyle(color: colors.onPrimary),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +170,10 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
       builder: (context, prefs, _) {
         return RitmoPageScaffold(
           padding: EdgeInsets.zero,
-          appBar: const RitmoModuleAppBar(title: 'ظاهر و زبان'),
+          appBar: RitmoModuleAppBar.fromContext(
+            context: context,
+            title: 'ظاهر و زبان',
+          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
             child: Column(
@@ -392,7 +401,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                             selected: prefs.mode,
                             onSelected: (mode) async {
                               RitmoHapticsPolicy.selection();
-                              await widget.themeRepository.updateThemeMode(mode);
+                              await widget.themeRepository.updateThemeMode(
+                                mode,
+                              );
                             },
                           ),
                         ],
@@ -432,7 +443,8 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 isSelected: isSelected,
                                 onTap: () async {
                                   final oldPalette = prefs.paletteId;
-                                  final success = await widget.themeRepository.updatePalette(palette.id);
+                                  final success = await widget.themeRepository
+                                      .updatePalette(palette.id);
                                   if (success && context.mounted) {
                                     RitmoToast.show(
                                       context,
@@ -440,7 +452,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                       icon: Icons.palette_rounded,
                                       iconColor: palette.dark.primary,
                                       onUndo: () {
-                                        widget.themeRepository.updatePalette(oldPalette);
+                                        widget.themeRepository.updatePalette(
+                                          oldPalette,
+                                        );
                                       },
                                     );
                                   } else if (!success && context.mounted) {
@@ -507,7 +521,9 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                             activeTrackColor: colors.primary,
                             onChanged: (val) {
                               RitmoHapticsPolicy.selection();
-                              widget.themeRepository.updateReduceTransparency(val);
+                              widget.themeRepository.updateReduceTransparency(
+                                val,
+                              );
                             },
                           ),
                         ],
@@ -646,10 +662,12 @@ class _PalettePreviewCard extends StatelessWidget {
       data: RitmoTheme.build(
         palette: palette,
         brightness: activeBrightness,
+        density: context.metrics.density,
       ),
       child: Builder(
         builder: (innerContext) {
           final innerColors = innerContext.colors;
+          final innerMetrics = innerContext.metrics;
 
           return Semantics(
             label: 'پالت ${palette.nameFa}',
@@ -663,16 +681,16 @@ class _PalettePreviewCard extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: RitmoMotion.state,
-                padding: const EdgeInsets.all(RitmoSpacing.lg),
+                padding: EdgeInsets.all(innerMetrics.spaceLg),
                 decoration: BoxDecoration(
                   color: innerColors.surface,
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
+                  borderRadius: BorderRadius.circular(innerMetrics.radiusCard),
                   border: Border.all(
                     color: isSelected
                         ? innerColors.primary
                         : (activeBrightness == Brightness.dark
-                            ? innerColors.border
-                            : innerColors.divider),
+                              ? innerColors.border
+                              : innerColors.divider),
                     width: isSelected ? 2.0 : 1.0,
                   ),
                   boxShadow: activeBrightness == Brightness.dark
@@ -680,33 +698,45 @@ class _PalettePreviewCard extends StatelessWidget {
                       : RitmoElevation.cardLight,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Header row with 3 dots & checkmark
+                    // Header with name and radio
                     Row(
                       children: [
-                        _ColorDot(color: innerColors.primary),
-                        const SizedBox(width: RitmoSpacing.xs),
-                        _ColorDot(color: innerColors.accent),
-                        const SizedBox(width: RitmoSpacing.xs),
-                        _ColorDot(color: innerColors.surfaceElevated),
-                        const Spacer(),
+                        _PaletteColorStrips(
+                          palette: palette,
+                          brightness: activeBrightness,
+                        ),
+                        SizedBox(width: innerMetrics.spaceSm),
+                        Expanded(
+                          child: Text(
+                            palette.nameFa,
+                            style: innerContext.t.titleMedium?.copyWith(
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? innerColors.primary
+                                  : innerColors.textPrimary,
+                            ),
+                          ),
+                        ),
                         if (isSelected)
                           Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: EdgeInsets.all(innerMetrics.spaceXxs),
                             decoration: BoxDecoration(
                               color: innerColors.primary,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.check_rounded,
-                              size: 14,
+                              size: innerMetrics.iconSm,
                               color: innerColors.onPrimary,
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    SizedBox(height: innerMetrics.spaceMd),
 
                     // Sample Title & Subtitle
                     Text(
@@ -716,21 +746,26 @@ class _PalettePreviewCard extends StatelessWidget {
                         color: innerColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: innerMetrics.spaceXxs),
                     Text(
                       'این پیش‌نمایش نحوه رندر رنگ‌های پالت را نشان می‌دهد',
                       style: innerContext.t.bodySmall?.copyWith(
                         color: innerColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: RitmoSpacing.md),
+                    SizedBox(height: innerMetrics.spaceMd),
 
                     // Sample button
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: innerMetrics.spaceMd,
+                        vertical: innerMetrics.spaceSm,
+                      ),
                       decoration: BoxDecoration(
                         color: innerColors.primary,
-                        borderRadius: BorderRadius.circular(RitmoRadius.field),
+                        borderRadius: BorderRadius.circular(
+                          innerMetrics.radiusField,
+                        ),
                       ),
                       child: Text(
                         'دکمه نمونه',
@@ -791,7 +826,10 @@ class _ColorDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.black12, width: 0.5),
+        border: Border.all(
+          color: context.colors.border.withValues(alpha: 0.15),
+          width: 0.5,
+        ),
       ),
     );
   }

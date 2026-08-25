@@ -57,11 +57,11 @@ abstract final class CalendarGeometry {
   static const double splitMinScreenWidth = 340.0;
 
   /// Height of the morning/afternoon column header widget.
-  static const double columnHeaderHeight = 62.0;
+  static const double columnHeaderHeight = 32.0;
 
   /// Returns dynamic column header height based on density and text scale.
   static double effectiveColumnHeaderHeight(BuildContext context) =>
-      62.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
+      32.0 * context.metrics.densityFactor * (context.textScale > 1.0 ? context.textScale : 1.0);
 
   // ─── Agenda & Registry View Dimensions ───
   /// Fixed row height for agenda list items (prevents scroll jitter).

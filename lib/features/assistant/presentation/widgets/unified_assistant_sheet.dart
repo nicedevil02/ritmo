@@ -1110,45 +1110,51 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   ),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onLongPress: () {
-                          HapticFeedback.mediumImpact();
-                          ChatGptMiniPreview.show(context);
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onLongPress: () {
+                            HapticFeedback.mediumImpact();
+                            ChatGptMiniPreview.show(context);
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.sparkles,
+                                  color: colors.primary,
+                                  size: 15,
+                                ),
                               ),
-                              child: Icon(
-                                CupertinoIcons.sparkles,
-                                color: colors.primary,
-                                size: 16,
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  widget.persona.displayName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.persona.displayName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
+                              const SizedBox(width: 4),
+                              const Flexible(
+                                child: BridgeStatusChip(),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      const BridgeStatusChip(),
-                      const Spacer(),
-                      if (_canUndoLast)
+                      if (_canUndoLast) ...[
+                        const SizedBox(width: 4),
                         TextButton.icon(
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.orange,
@@ -1172,10 +1178,15 @@ class _AssistantSheetState extends State<AssistantSheet> {
                           ),
                           onPressed: () => unawaited(_undoLastAction()),
                         ),
+                      ],
+                      const SizedBox(width: 4),
                       IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                         icon: Icon(
                           CupertinoIcons.xmark_circle_fill,
                           color: colors.textSecondary.withValues(alpha: 0.6),
+                          size: 24,
                         ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),

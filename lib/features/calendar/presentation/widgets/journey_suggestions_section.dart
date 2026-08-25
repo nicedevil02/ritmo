@@ -44,16 +44,14 @@ class JourneySuggestionsSection extends StatelessWidget {
             const SizedBox(height: RitmoSpacing.md),
             Text(
               'برنامه‌ات ایده‌آله 🎯',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15.0,
-                color: colors.textPrimary,
-              ),
+              style: RitmoTextStyles.body(
+                colors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: RitmoSpacing.xs),
             Text(
               'هیچ تداخل یا هشداری در این روز وجود ندارد.',
-              style: TextStyle(fontSize: 12.0, color: colors.textSecondary),
+              style: RitmoTextStyles.caption(colors.textSecondary),
             ),
           ],
         ),
@@ -76,11 +74,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                 const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'تداخل‌ها (${toPersianDigits(conflicts.length.toString())})',
-                  style: TextStyle(
-                    fontSize: 15.0,
-                    fontWeight: FontWeight.bold,
-                    color: colors.warning,
-                  ),
+                  style: RitmoTextStyles.body(
+                    colors.warning,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -118,9 +114,8 @@ class JourneySuggestionsSection extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     conflict.description,
-                                    style: TextStyle(
-                                      fontSize: 14.0,
-                                      color: colors.textPrimary,
+                                    style: RitmoTextStyles.bodyMedium(
+                                      colors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -137,11 +132,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                                   ),
                                   child: Text(
                                     'رفع تداخل',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.onPrimary,
-                                    ),
+                                    style: RitmoTextStyles.badge(
+                                      colors.onPrimary,
+                                    ).copyWith(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -166,11 +159,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                 const SizedBox(width: RitmoSpacing.sm),
                 Text(
                   'پیشنهادها (${toPersianDigits(suggestions.length.toString())})',
-                  style: TextStyle(
-                    fontSize: 15.0,
-                    fontWeight: FontWeight.bold,
-                    color: colors.primary,
-                  ),
+                  style: RitmoTextStyles.body(
+                    colors.primary,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -205,9 +196,8 @@ class JourneySuggestionsSection extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   suggestion.message,
-                                  style: TextStyle(
-                                    fontSize: 14.0,
-                                    color: colors.textPrimary,
+                                  style: RitmoTextStyles.bodyMedium(
+                                    colors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -227,11 +217,9 @@ class JourneySuggestionsSection extends StatelessWidget {
                                     toPersianDigits(
                                       suggestion.suggestedTimeOfDay ?? '',
                                     ),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: colors.onPrimary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: RitmoTextStyles.badge(
+                                      colors.onPrimary,
+                                    ).copyWith(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                             ],

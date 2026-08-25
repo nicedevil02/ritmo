@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/chat/chat_action_parser.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_consolidator.dart';
@@ -11,12 +12,15 @@ class AssistantMemoryBinding {
   static Future<String> getSystemPromptSuffix({
     required String domain,
     required String query,
+    ConsentProfile? consent,
   }) async {
     if (!await AiMemoryService.instance.isMemoryEnabled()) return '';
-    
+    final effectiveConsent = consent ?? await ConsentProfile.loadFromDb();
+
     final memories = await AiMemoryService.instance.retrieve(
       domain: domain,
       query: query,
+      consent: effectiveConsent,
     );
     final memoryBlock = AiMemoryService.instance.buildPromptBlock(memories);
     return '$memoryBlock\n${AiMemoryService.memoryInstruction()}';

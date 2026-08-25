@@ -47,7 +47,8 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
     final manager = ChatGptWebBridgeManager.instance;
 
     return RitmoPageScaffold(
-      appBar: RitmoModuleAppBar(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
         title: 'تشخیص پل هوش مصنوعی وب',
         actions: [
           IconButton(

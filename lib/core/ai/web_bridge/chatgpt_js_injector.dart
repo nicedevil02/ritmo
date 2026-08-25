@@ -347,6 +347,22 @@ $userPrompt
       window.OnetrustActiveGroups = ',C0001,C0002,C0003,C0004,';
     }
   } catch (cookieEarlyErr) {}
+
+  // 5. Touch & Smooth Scrolling Optimization (Prevents Huawei/Android drag cancel)
+  try {
+    var scrollStyleId = '__ritmo_scroll_touch_css';
+    if (!document.getElementById(scrollStyleId)) {
+      var scrollSt = document.createElement('style');
+      scrollSt.id = scrollStyleId;
+      scrollSt.textContent = 'html, body, #__next, div#app, main, [role="main"], div[class*="react-scroll-to-bottom"], div[class*="overflow-y-auto"], div.overflow-y-auto { -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; overscroll-behavior-y: contain !important; -webkit-user-drag: none !important; }';
+      (document.head || document.documentElement).appendChild(scrollSt);
+    }
+    window.addEventListener('dragstart', function(e) {
+      if (e.target && !e.target.draggable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  } catch (scErr) {}
 })();
 ''';
 

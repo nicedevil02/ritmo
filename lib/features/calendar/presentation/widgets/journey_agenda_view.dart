@@ -63,11 +63,11 @@ class _JourneyAgendaViewState extends State<JourneyAgendaView> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(RitmoSpacing.md),
+      return Padding(
+        padding: const EdgeInsets.all(RitmoSpacing.md),
         child: RitmoSkeletonList(
           itemCount: 6,
-          itemHeight: CalendarGeometry.agendaRowHeight,
+          itemHeight: CalendarGeometry.effectiveAgendaRowHeight(context),
         ),
       );
     }
@@ -460,6 +460,7 @@ class _BucketHeaderSliver extends StatelessWidget {
         isCollapsible: isCollapsible,
         isCollapsed: isCollapsed,
         onToggleCollapse: onToggleCollapse,
+        headerHeight: CalendarGeometry.effectiveAgendaBucketHeaderHeight(context),
       ),
     );
   }
@@ -470,6 +471,7 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.bucket,
     required this.countText,
     required this.isOverdue,
+    required this.headerHeight,
     this.isCollapsible = false,
     this.isCollapsed = false,
     this.onToggleCollapse,
@@ -478,14 +480,15 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final AgendaBucket bucket;
   final String countText;
   final bool isOverdue;
+  final double headerHeight;
   final bool isCollapsible;
   final bool isCollapsed;
   final VoidCallback? onToggleCollapse;
 
   @override
-  double get minExtent => CalendarGeometry.agendaBucketHeaderHeight;
+  double get minExtent => headerHeight;
   @override
-  double get maxExtent => CalendarGeometry.agendaBucketHeaderHeight;
+  double get maxExtent => headerHeight;
 
   @override
   Widget build(
@@ -511,11 +514,9 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
             children: [
               Text(
                 bucketLabelFa(bucket),
-                style: TextStyle(
-                  fontSize: 13.0,
-                  fontWeight: FontWeight.w700,
-                  color: labelColor,
-                ),
+                style: RitmoTextStyles.caption(
+                  labelColor,
+                ).copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(width: 6),
               Container(
@@ -993,7 +994,7 @@ class _AgendaRowState extends State<_AgendaRow> {
     final isDone = _isDone;
 
     final Widget row = SizedBox(
-      height: CalendarGeometry.agendaRowHeight,
+      height: CalendarGeometry.effectiveAgendaRowHeight(context),
       child: InkWell(
         onTap: widget.onTap,
         child: Padding(

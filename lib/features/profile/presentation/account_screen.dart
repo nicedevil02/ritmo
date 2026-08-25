@@ -359,9 +359,6 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: colors.border),
                   ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: colors.border),
-                  ),
                   child: ExpansionTile(
                     shape: const Border(),
                     leading: Icon(Icons.email_outlined, color: colors.textSecondary),

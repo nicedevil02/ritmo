@@ -71,41 +71,43 @@ class ChatActionParser {
     }
 
     // 4. Attempt regex extraction for streaming / unclosed / partial JSON: "reply": "..."
-    final replyRegex = RegExp(
-      r'"reply"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)',
-      dotAll: true,
-    );
-    final match = replyRegex.firstMatch(clean);
-    if (match != null && match.groupCount >= 1) {
-      var extracted = match.group(1) ?? '';
-      extracted = extracted
-          .replaceAll(r'\"', '"')
-          .replaceAll(r'\n', '\n')
-          .replaceAll(r'\t', '\t')
-          .replaceAll(r'\\', r'\');
-      if (extracted.trim().isNotEmpty) {
-        return BridgeResponseAccumulator.sanitize(extracted.trim());
+    if (clean.startsWith('{')) {
+      final replyRegex = RegExp(
+        r'"reply"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)',
+        dotAll: true,
+      );
+      final match = replyRegex.firstMatch(clean);
+      if (match != null && match.groupCount >= 1) {
+        var extracted = match.group(1) ?? '';
+        extracted = extracted
+            .replaceAll(r'\"', '"')
+            .replaceAll(r'\n', '\n')
+            .replaceAll(r'\t', '\t')
+            .replaceAll(r'\\', r'\');
+        if (extracted.trim().isNotEmpty) {
+          return BridgeResponseAccumulator.sanitize(extracted.trim());
+        }
       }
-    }
 
-    // 5. Fallback: If clean contains "reply" but regex/decode failed, string slice
-    if (clean.contains('"reply"')) {
-      final keyIdx = clean.indexOf('"reply"');
-      final colonIdx = clean.indexOf(':', keyIdx);
-      if (colonIdx != -1) {
-        final quoteStart = clean.indexOf('"', colonIdx + 1);
-        if (quoteStart != -1) {
-          final rest = clean.substring(quoteStart + 1);
-          final quoteEnd = rest.indexOf('"');
-          if (quoteEnd != -1) {
-            final val = rest.substring(0, quoteEnd).trim();
-            if (val.isNotEmpty) {
-              return BridgeResponseAccumulator.sanitize(val);
+      // 5. Fallback: If clean is JSON and contains "reply" but regex/decode failed, string slice
+      if (clean.contains('"reply"')) {
+        final keyIdx = clean.indexOf('"reply"');
+        final colonIdx = clean.indexOf(':', keyIdx);
+        if (colonIdx != -1) {
+          final quoteStart = clean.indexOf('"', colonIdx + 1);
+          if (quoteStart != -1) {
+            final rest = clean.substring(quoteStart + 1);
+            final quoteEnd = rest.indexOf('"');
+            if (quoteEnd != -1) {
+              final val = rest.substring(0, quoteEnd).trim();
+              if (val.isNotEmpty) {
+                return BridgeResponseAccumulator.sanitize(val);
+              }
+            } else {
+              return BridgeResponseAccumulator.sanitize(
+                rest.replaceAll(r'\"', '"').replaceAll(r'\n', '\n').trim(),
+              );
             }
-          } else {
-            return BridgeResponseAccumulator.sanitize(
-              rest.replaceAll(r'\"', '"').replaceAll(r'\n', '\n').trim(),
-            );
           }
         }
       }

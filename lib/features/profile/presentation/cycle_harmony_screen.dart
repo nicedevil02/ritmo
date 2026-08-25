@@ -140,7 +140,10 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
         },
       );
       if (confirm ?? false) {
-        await CyclePeriodRepository.instance.startPeriod(DateTime.now(), dbExecutor: db);
+        await CyclePeriodRepository.instance.startPeriod(
+          db: db,
+          startDate: DateTime.now(),
+        );
       }
     } else {
       final confirm = await showDialog<bool>(
@@ -173,9 +176,13 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
         },
       );
       if (confirm ?? false) {
-        final activePeriod = await CyclePeriodRepository.instance.getActivePeriod(db);
+        final activePeriod = await CyclePeriodRepository.instance.getOpenPeriod(db);
         if (activePeriod != null) {
-          await CyclePeriodRepository.instance.endPeriod(activePeriod.id!, DateTime.now(), dbExecutor: db);
+          await CyclePeriodRepository.instance.endPeriod(
+            db: db,
+            id: activePeriod.id,
+            endDate: DateTime.now(),
+          );
           await DatabaseHelper.instance.addFastingDebtIfNeeded(db, todayStr);
         }
       }
@@ -311,7 +318,7 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           await CyclePeriodRepository.instance.endPeriod(
                             db: db,
                             id: newId,
-                            endDate: endDate,
+                            endDate: endDate!,
                           );
                         }
                       }
@@ -845,7 +852,6 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                       );
 
                       if (_onboardingLastStartDate != null) {
-                        final startStr = _onboardingLastStartDate!.toIso8601String().substring(0, 10);
                         final daysAgo = DateTime.now().difference(_onboardingLastStartDate!).inDays;
                         
                         String? endStr;
@@ -853,22 +859,16 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                           endStr = _onboardingLastStartDate!.add(Duration(days: _onboardingPeriodDuration - 1)).toIso8601String().substring(0, 10);
                         }
 
-                        await CyclePeriodRepository.instance.startPeriod(
-                          _onboardingLastStartDate!,
-                          dbExecutor: db,
+                        final newId = await CyclePeriodRepository.instance.startPeriod(
+                          db: db,
+                          startDate: _onboardingLastStartDate!,
                         );
                         if (endStr != null) {
-                          final active = await CyclePeriodRepository.instance.getActivePeriod(db);
-                          if (active != null) {
-                            await CyclePeriodRepository.instance.endPeriod(
-                              active.id!,
-                              _onboardingLastStartDate!.add(Duration(days: _onboardingPeriodDuration - 1)),
-                              dbExecutor: db,
-                            );
-                          }
-                        }
-
-                        if (endStr != null) {
+                          await CyclePeriodRepository.instance.endPeriod(
+                            db: db,
+                            id: newId,
+                            endDate: _onboardingLastStartDate!.add(Duration(days: _onboardingPeriodDuration - 1)),
+                          );
                           await DatabaseHelper.instance.addFastingDebtIfNeeded(db, endStr);
                         }
                       }
@@ -1253,7 +1253,11 @@ class _CycleHarmonyScreenState extends State<CycleHarmonyScreen> {
                                 );
                                 if (confirm ?? false) {
                                   if (log['id'] != null) {
-                                    await CyclePeriodRepository.instance.deletePeriod(log['id'] as int);
+                                    final db = await DatabaseHelper.instance.database;
+                                    await CyclePeriodRepository.instance.deletePeriod(
+                                      db: db,
+                                      id: log['id'].toString(),
+                                    );
                                   }
                                   RitmoEvents.notifyRoutineChanged();
                                   await _loadData();

@@ -78,5 +78,12 @@ void main() {
       expect(parsed.actions.length, equals(1));
       expect(parsed.actions.first.label, equals('مشاهده'));
     });
+
+    test('H-12: does not truncate normal text containing the word reply', () {
+      const raw = 'پاسخ شما در reply ایمیل داده شد و پیگیری صورت گرفت.';
+      final clean = ChatActionParser.extractCleanReplyText(raw);
+      expect(clean, equals(raw));
+    });
   });
 }
+

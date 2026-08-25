@@ -303,14 +303,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
         final avgActual = list.reduce((a, b) => a + b) ~/ list.length;
         final target = targetsByTitle[title]!;
-
         if ((avgActual - target).abs() >= 15) {
           final cleanTitle = title.trim();
-          final fact = 'کار "$cleanTitle" معمولاً $avgActual دقیقه طول می‌کشد';
-
+          final fact = 'کاربر معمولاً برای «$cleanTitle» به جای $target دقیقه، حدود $avgActual دقیقه زمان صرف می‌کند.';
+          final consent = await ConsentProfile.loadFromDb();
           final existing = await AiMemoryService.instance.retrieve(
             domain: 'core',
             query: cleanTitle,
+            consent: consent,
           );
           final hasFact = existing.any(
             (m) =>

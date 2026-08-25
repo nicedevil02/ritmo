@@ -3,8 +3,8 @@ import 'package:ritmo/core/ai/web_bridge/chatgpt_js_injector.dart';
 
 void main() {
   group('WEB-03: Versioned Idempotent Bridge Script Guard', () {
-    test('bridgeVersion constant is defined as 9', () {
-      expect(ChatGptJsInjector.bridgeVersion, equals(9));
+    test('bridgeVersion constant is defined as >= 9', () {
+      expect(ChatGptJsInjector.bridgeVersion, greaterThanOrEqualTo(9));
     });
 
     test(

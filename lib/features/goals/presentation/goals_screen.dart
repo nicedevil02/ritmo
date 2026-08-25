@@ -224,7 +224,8 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
         textDirection: TextDirection.rtl,
         child: Scaffold(
           backgroundColor: colors.bg,
-          appBar: const RitmoModuleAppBar(
+          appBar: RitmoModuleAppBar.fromContext(
+            context: context,
             title: 'اهداف و دستاوردها',
             subtitle: 'نقشه راه رشد و گام‌های عملی',
           ),
@@ -287,7 +288,8 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: RitmoModuleAppBar(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
           title: 'اهداف و دستاوردها',
           subtitle: 'نقشه راه رشد و گام‌های عملی',
           statusBadge: Container(

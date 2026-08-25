@@ -291,11 +291,9 @@ class _TimelineGridState extends State<TimelineGrid> {
                                         effectiveDragStartMinutes,
                                       ),
                                     ),
-                                    style: TextStyle(
-                                      color: colors.onPrimary,
-                                      fontSize: 11.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: RitmoTextStyles.badge(
+                                      colors.onPrimary,
+                                    ).copyWith(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
@@ -337,10 +335,10 @@ class _TimelineGridState extends State<TimelineGrid> {
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: TextStyle(
-                                          fontSize: 11.0,
+                                        style: RitmoTextStyles.badge(
+                                          colors.onPrimary,
+                                        ).copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: colors.onPrimary,
                                         ),
                                       ),
                                     ),
@@ -374,10 +372,10 @@ class _TimelineGridState extends State<TimelineGrid> {
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: TextStyle(
-                                          fontSize: 11.0,
+                                        style: RitmoTextStyles.badge(
+                                          colors.onPrimary,
+                                        ).copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: colors.onPrimary,
                                         ),
                                       ),
                                     ),

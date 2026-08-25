@@ -204,6 +204,7 @@ Future<bool> applySettingChange(String key, String value) async {
     await db.insert('app_settings', {
       'key': key,
       'value': normalized,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
     // Save to audit log

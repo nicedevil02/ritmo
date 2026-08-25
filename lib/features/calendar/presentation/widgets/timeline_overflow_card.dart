@@ -68,15 +68,16 @@ class TimelineOverflowCard extends StatelessWidget {
                         ),
                         title: Text(
                           item.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14.0,
+                          style: RitmoTextStyles.label(
+                            context.colors.textPrimary,
                           ),
                         ),
                         subtitle: timeLabel != null
                             ? Text(
                                 toPersianDigits(timeLabel),
-                                style: const TextStyle(fontSize: 12.0),
+                                style: RitmoTextStyles.caption(
+                                  context.colors.textSecondary,
+                                ),
                               )
                             : null,
                         trailing: const Icon(Icons.chevron_right_rounded),

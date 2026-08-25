@@ -368,7 +368,8 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
         padding: EdgeInsets.zero,
-        appBar: const RitmoModuleAppBar(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
           title: 'مدیریت حافظه دستیار',
         ),
         body: _isLoading

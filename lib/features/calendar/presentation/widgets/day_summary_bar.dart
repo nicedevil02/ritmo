@@ -75,11 +75,9 @@ class DaySummaryBar extends StatelessWidget {
                   const SizedBox(width: 3),
                   Text(
                     'آزاد: ${_formatFreeTime(_freeMinutes)}',
-                    style: TextStyle(
-                      fontSize: 11.0,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textSecondary,
-                    ),
+                    style: RitmoTextStyles.badge(
+                      colors.textSecondary,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -106,11 +104,9 @@ class _SummaryChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11.0,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        style: RitmoTextStyles.badge(
+          color,
+        ).copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }

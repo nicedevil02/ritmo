@@ -1,6 +1,5 @@
-// lib/features/assistant/logic/duration_estimator.dart
-
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -79,9 +78,14 @@ class DurationEstimator {
 
     // 3. Cognitive memory (facts like "رفت‌وآمد تا سرکار ۳۰ دقیقه است")
     try {
+      final consent = await ConsentProfile.loadFromDb();
       final memories =
           preloadedMemories ??
-          await AiMemoryService.instance.retrieve(domain: 'core', query: title);
+          await AiMemoryService.instance.retrieve(
+            domain: 'core',
+            query: title,
+            consent: consent,
+          );
       final memoryDuration = _getDurationFromMemories(title, memories);
       if (memoryDuration != null) {
         return (duration: memoryDuration, source: 'memory');

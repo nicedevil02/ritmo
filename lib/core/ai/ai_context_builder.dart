@@ -17,6 +17,19 @@ class ConsentProfile {
     },
   });
 
+  const ConsentProfile.denySensitive()
+      : cloudConsent = true,
+        readableDomains = const {
+          DataDomain.routines,
+          DataDomain.goals,
+          DataDomain.energy,
+          DataDomain.sleep,
+          DataDomain.worship,
+          DataDomain.konkur,
+          DataDomain.courses,
+          DataDomain.sports,
+        };
+
   final bool cloudConsent;
   final Set<DataDomain> readableDomains;
 
@@ -24,8 +37,12 @@ class ConsentProfile {
   bool get goalsConsent => readableDomains.contains(DataDomain.goals);
   bool get energyConsent => readableDomains.contains(DataDomain.energy);
   bool get sleepConsent => readableDomains.contains(DataDomain.sleep);
-  bool get planningConsent => readableDomains.contains(DataDomain.goals) || readableDomains.contains(DataDomain.routines);
+  bool get planningConsent =>
+      readableDomains.contains(DataDomain.goals) ||
+      readableDomains.contains(DataDomain.routines);
   bool get cycleConsentChat => readableDomains.contains(DataDomain.cycle);
+  bool get allowCycle => readableDomains.contains(DataDomain.cycle);
+  bool get allowHealth => readableDomains.contains(DataDomain.medical);
 
   static Future<ConsentProfile> loadFromDb() async {
     try {

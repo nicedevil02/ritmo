@@ -9,6 +9,7 @@ import 'package:ritmo/core/widgets/ritmo/ritmo_list_row.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_progress.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_segmented_control.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_text_field.dart';
+import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/cycle/cycle_hero_card.dart';
 import '../support/responsive_harness.dart';
 
@@ -31,7 +32,10 @@ void main() {
               'Density: ${density.name} | TextScale: ${(textScale * 100).toInt()}%';
 
           testWidgets(label, (tester) async {
-            tester.view.physicalSize = Size(viewport.width, viewport.height * 2);
+            tester.view.physicalSize = Size(
+              viewport.width,
+              viewport.height * 2,
+            );
             tester.view.devicePixelRatio = 1.0;
             addTearDown(tester.view.resetPhysicalSize);
 
@@ -53,118 +57,129 @@ void main() {
                   ),
                   child: Directionality(
                     textDirection: TextDirection.rtl,
-                    child: Scaffold(
-                      body: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            RitmoPrimaryButton(
-                              key: const ValueKey('primary_btn'),
-                              label: 'دکمه اصلی ریتمو',
-                              icon: Icons.check,
-                              onPressed: () {},
-                            ),
-                            const SizedBox(height: 12),
-                            RitmoSecondaryButton(
-                              key: const ValueKey('secondary_btn'),
-                              label: 'دکمه ثانویه',
-                              icon: Icons.refresh,
-                              onPressed: () {},
-                            ),
-                            const SizedBox(height: 12),
-                            Center(
-                              child: RitmoIconButton(
-                                key: const ValueKey('icon_btn'),
-                                icon: Icons.add,
-                                onPressed: () {},
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            RitmoSegmentedControl<int>(
-                              key: const ValueKey('seg_ctrl'),
-                              segments: const {
-                                0: 'روزانه',
-                                1: 'هفتگی',
-                                2: 'ماهانه',
-                              },
-                              selected: 0,
-                              onSelected: (_) {},
-                            ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                    child: Builder(
+                      builder: (scaffoldContext) {
+                        return Scaffold(
+                          appBar: RitmoModuleAppBar.fromContext(
+                            key: const ValueKey('matrix_app_bar'),
+                            context: scaffoldContext,
+                            title: 'عنوان ماژول ریتمو',
+                            subtitle: 'زیرعنوان برای پایش چگالی و ارتفاع واقعی',
+                          ),
+                          body: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                RitmoChip(
-                                  key: const ValueKey('chip_1'),
-                                  label: 'برچسب فعال',
-                                  isSelected: true,
-                                  icon: Icons.star,
+                                RitmoPrimaryButton(
+                                  key: const ValueKey('primary_btn'),
+                                  label: 'دکمه اصلی ریتمو',
+                                  icon: Icons.check,
+                                  onPressed: () {},
+                                ),
+                                const SizedBox(height: 12),
+                                RitmoSecondaryButton(
+                                  key: const ValueKey('secondary_btn'),
+                                  label: 'دکمه ثانویه',
+                                  icon: Icons.refresh,
+                                  onPressed: () {},
+                                ),
+                                const SizedBox(height: 12),
+                                Center(
+                                  child: RitmoIconButton(
+                                    key: const ValueKey('icon_btn'),
+                                    icon: Icons.add,
+                                    onPressed: () {},
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                RitmoSegmentedControl<int>(
+                                  key: const ValueKey('seg_ctrl'),
+                                  segments: const {
+                                    0: 'روزانه',
+                                    1: 'هفتگی',
+                                    2: 'ماهانه',
+                                  },
+                                  selected: 0,
+                                  onSelected: (_) {},
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    RitmoChip(
+                                      key: const ValueKey('chip_1'),
+                                      label: 'برچسب فعال',
+                                      isSelected: true,
+                                      icon: Icons.star,
+                                      onTap: () {},
+                                    ),
+                                    RitmoChip(
+                                      key: const ValueKey('chip_2'),
+                                      label: 'برچسب عادی',
+                                      isSelected: false,
+                                      onTap: () {},
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                const RitmoCard(
+                                  key: ValueKey('card'),
+                                  child: Text('محتوای کارت استاندارد ریتمو'),
+                                ),
+                                const SizedBox(height: 12),
+                                const RitmoHeroCard(
+                                  key: ValueKey('hero_card'),
+                                  moduleColor: Colors.teal,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('کارت هیرو'),
+                                      Text('توضیحات تکمیلی برای کارت هیرو'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const CycleHeroCard(
+                                  key: ValueKey('cycle_hero_card'),
+                                  currentPhase: CyclePhase.follicular,
+                                  currentDay: 5,
+                                  totalDaysInPhase: 9,
+                                ),
+                                const SizedBox(height: 12),
+                                RitmoListRow(
+                                  key: const ValueKey('list_row'),
+                                  title: 'ردیف لیست ریتمو',
+                                  subtitle: 'زیرعنوان و توضیحات ردیف',
+                                  leading: const Icon(Icons.settings),
                                   onTap: () {},
                                 ),
-                                RitmoChip(
-                                  key: const ValueKey('chip_2'),
-                                  label: 'برچسب عادی',
-                                  isSelected: false,
-                                  onTap: () {},
+                                const SizedBox(height: 12),
+                                const RitmoTextField(
+                                  key: ValueKey('text_field'),
+                                  label: 'نام کاربری',
+                                  hint: 'نام خود را وارد کنید',
+                                  icon: Icons.person,
+                                ),
+                                const SizedBox(height: 12),
+                                const RitmoProgressBar(
+                                  key: ValueKey('progress_bar'),
+                                  progress: 0.65,
+                                ),
+                                const SizedBox(height: 12),
+                                const Center(
+                                  child: RitmoProgressRing(
+                                    key: ValueKey('progress_ring'),
+                                    value: 80.0,
+                                  ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            const RitmoCard(
-                              key: ValueKey('card'),
-                              child: Text('محتوای کارت استاندارد ریتمو'),
-                            ),
-                            const SizedBox(height: 12),
-                            const RitmoHeroCard(
-                              key: ValueKey('hero_card'),
-                              moduleColor: Colors.teal,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('کارت هیرو'),
-                                  Text('توضیحات تکمیلی برای کارت هیرو'),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const CycleHeroCard(
-                              key: ValueKey('cycle_hero_card'),
-                              currentPhase: CyclePhase.follicular,
-                              currentDay: 5,
-                              totalDaysInPhase: 9,
-                            ),
-                            const SizedBox(height: 12),
-                            RitmoListRow(
-                              key: const ValueKey('list_row'),
-                              title: 'ردیف لیست ریتمو',
-                              subtitle: 'زیرعنوان و توضیحات ردیف',
-                              leading: const Icon(Icons.settings),
-                              onTap: () {},
-                            ),
-                            const SizedBox(height: 12),
-                            const RitmoTextField(
-                              key: ValueKey('text_field'),
-                              label: 'نام کاربری',
-                              hint: 'نام خود را وارد کنید',
-                              icon: Icons.person,
-                            ),
-                            const SizedBox(height: 12),
-                            const RitmoProgressBar(
-                              key: ValueKey('progress_bar'),
-                              progress: 0.65,
-                            ),
-                            const SizedBox(height: 12),
-                            const Center(
-                              child: RitmoProgressRing(
-                                key: ValueKey('progress_ring'),
-                                value: 80.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -172,6 +187,18 @@ void main() {
             );
 
             await expectNoOverflow(tester, label: label);
+
+            // Verify RitmoModuleAppBar dynamic preferredSize across all 64 states
+            final appBarWidget = tester.widget<RitmoModuleAppBar>(
+              find.byKey(const ValueKey('matrix_app_bar')),
+            );
+            final m = RitmoMetrics.of(density);
+            expect(
+              appBarWidget.preferredSize.height,
+              equals(m.rowHeight + m.spaceSm),
+              reason:
+                  'RitmoModuleAppBar preferredSize.height must match m.rowHeight + m.spaceSm for $density',
+            );
 
             // Verify touch targets >= 48.0 (Law 38: Minimum Touch Target Floor 48dp across ALL densities)
             const expectedTouchTarget = 48.0;
@@ -194,8 +221,14 @@ void main() {
             final iconBtnSize = tester.getSize(
               find.byKey(const ValueKey('icon_btn')),
             );
-            expect(iconBtnSize.width, greaterThanOrEqualTo(expectedTouchTarget));
-            expect(iconBtnSize.height, greaterThanOrEqualTo(expectedTouchTarget));
+            expect(
+              iconBtnSize.width,
+              greaterThanOrEqualTo(expectedTouchTarget),
+            );
+            expect(
+              iconBtnSize.height,
+              greaterThanOrEqualTo(expectedTouchTarget),
+            );
           });
         }
       }

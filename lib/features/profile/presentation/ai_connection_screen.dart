@@ -478,7 +478,8 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
     return RitmoPageScaffold(
       padding: EdgeInsets.zero,
-      appBar: RitmoModuleAppBar(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
         title: 'اتصال هوش مصنوعی',
         subtitle: _statusSubtitle,
       ),

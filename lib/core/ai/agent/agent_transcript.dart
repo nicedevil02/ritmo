@@ -22,7 +22,15 @@ class AgentTranscript {
   /// (شامل پل وب) قابل اعتماد است.
   static const String toolResultRole = 'user';
 
+  int _primaryUserIndex = 1;
+
   void addUser(String text) => _add('user', text);
+
+  /// شروع نوبت با سؤال اصلی کاربر
+  void start(String userPrompt) {
+    _primaryUserIndex = _messages.length;
+    _add('user', userPrompt);
+  }
 
   /// پاسخ خام مدل (شامل تگ tool_call) باید دقیقاً همان‌طور که بوده ذخیره
   /// شود؛ مدل باید فراخوانی خودش را در تاریخچه ببیند.
@@ -72,12 +80,20 @@ class AgentTranscript {
       );
 
   /// اگر مکالمه از سقف کاراکتر عبور کرد، پیام‌های میانی حذف می‌شوند.
-  /// پیام سیستمی (ایندکس ۰) و سؤال اولیه کاربر (ایندکس ۱) غیرقابل‌حذف (pinned) هستند.
+  /// پیام سیستمی (ایندکس ۰) و سؤال اصلی کاربر غیرقابل‌حذف (pinned) هستند.
   bool trimToBudget(int maxChars, {int keepTail = 4}) {
     var trimmed = false;
     while (charCount > maxChars && _messages.length > (2 + keepTail)) {
-      _messages.removeAt(2);
-      trimmed = true;
+      if (_primaryUserIndex > 1) {
+        _messages.removeAt(1);
+        _primaryUserIndex--;
+        trimmed = true;
+      } else if (_messages.length > _primaryUserIndex + 1 + keepTail) {
+        _messages.removeAt(_primaryUserIndex + 1);
+        trimmed = true;
+      } else {
+        break;
+      }
     }
     return trimmed;
   }

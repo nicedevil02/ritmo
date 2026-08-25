@@ -51,5 +51,49 @@ void main() {
       final customBudget = AgentBudget(maxWrites: 5);
       expect(customBudget.maxWrites, 5);
     });
+
+    test('C-5: pauseClock and resumeClock with reentrancy depth pause wallClock', () async {
+      final budget = AgentBudget(wallClock: const Duration(milliseconds: 50));
+      budget.pauseClock();
+      budget.pauseClock(); // Depth 2
+      await Future<void>.delayed(const Duration(milliseconds: 70));
+      expect(budget.isTimedOut, isFalse);
+
+      budget.resumeClock(); // Depth 1, still paused
+      expect(budget.isTimedOut, isFalse);
+
+      budget.resumeClock(); // Depth 0, resumed
+      expect(budget.isTimedOut, isFalse);
+    });
+
+    test('C-6: unadmit refunds toolCalls and removes signature', () {
+      final budget = AgentBudget(maxToolCalls: 2);
+      final admission1 = budget.admit('tool_a', {'k': 'v'});
+      expect(admission1.allowed, isTrue);
+      expect(budget.toolCallsUsed, 1);
+
+      // Repeat admission should be denied
+      final admission2 = budget.admit('tool_a', {'k': 'v'});
+      expect(admission2.allowed, isFalse);
+
+      // Unadmit
+      budget.unadmit('tool_a', {'k': 'v'});
+      expect(budget.toolCallsUsed, 0);
+
+      // Now admission should be allowed again
+      final admission3 = budget.admit('tool_a', {'k': 'v'});
+      expect(admission3.allowed, isTrue);
+      expect(budget.toolCallsUsed, 1);
+    });
+
+    test('C-6: clearReadSignatures allows re-inspection of read-only tools', () {
+      final budget = AgentBudget();
+      budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true);
+      expect(budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true).allowed, isFalse);
+
+      budget.clearReadSignatures();
+      expect(budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true).allowed, isTrue);
+    });
   });
 }
+

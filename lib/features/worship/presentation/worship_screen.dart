@@ -217,7 +217,8 @@ class _WorshipScreenState extends State<WorshipScreen> {
                 child: Column(
                   children: [
                     // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES
-                    RitmoModuleAppBar(
+                    RitmoModuleAppBar.fromContext(
+                      context: context,
                       title: 'عبادت و معنویت',
                       subtitle: _worshipDay != null
                           ? '$_cityName • ${_worshipDay!.hijri.formatted}'

@@ -31,7 +31,10 @@ class CalendarGroupScreen extends StatelessWidget {
 
           return RitmoPageScaffold(
             padding: EdgeInsets.zero,
-            appBar: RitmoModuleAppBar(title: SettingsGroup.calendar.labelFa),
+            appBar: RitmoModuleAppBar.fromContext(
+              context: context,
+              title: SettingsGroup.calendar.labelFa,
+            ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
               child: Column(

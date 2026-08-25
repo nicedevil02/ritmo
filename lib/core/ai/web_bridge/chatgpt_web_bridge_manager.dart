@@ -2168,6 +2168,68 @@ if (typeof window.__ritmo_forceHarvest === 'function') {
     );
   }
 
+  /// Smoothly scrolls the ChatGPT conversation to the bottom.
+  Future<void> scrollToBottom() async {
+    try {
+      await _controller?.runJavaScript(r'''
+(function() {
+  var selectors = [
+    'main',
+    '[role="main"]',
+    'div[class*="react-scroll-to-bottom"]',
+    'div[class*="overflow-y-auto"]',
+    'div.overflow-y-auto',
+    'div.overflow-auto',
+    '#__next',
+    'div#app',
+    'body',
+    'html'
+  ];
+  for (var i = 0; i < selectors.length; i++) {
+    var els = document.querySelectorAll(selectors[i]);
+    for (var j = 0; j < els.length; j++) {
+      var el = els[j];
+      if (el && (el.scrollHeight > el.clientHeight)) {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      }
+    }
+  }
+  window.scrollTo({ top: Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0), behavior: 'smooth' });
+})();
+''');
+    } catch (_) {}
+  }
+
+  /// Smoothly scrolls the ChatGPT conversation to the top.
+  Future<void> scrollToTop() async {
+    try {
+      await _controller?.runJavaScript(r'''
+(function() {
+  var selectors = [
+    'main',
+    '[role="main"]',
+    'div[class*="react-scroll-to-bottom"]',
+    'div[class*="overflow-y-auto"]',
+    'div.overflow-y-auto',
+    'div.overflow-auto',
+    '#__next',
+    'div#app',
+    'body',
+    'html'
+  ];
+  for (var i = 0; i < selectors.length; i++) {
+    var els = document.querySelectorAll(selectors[i]);
+    for (var j = 0; j < els.length; j++) {
+      var el = els[j];
+      if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+})();
+''');
+    } catch (_) {}
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/ai/agent/agent_tool.dart';
 import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
 
@@ -160,7 +161,12 @@ class RememberFactTool extends AgentTool {
     var verified = false;
     try {
       final probe = content.length > 40 ? content.substring(0, 40) : content;
-      final entries = await service.retrieve(domain: domain, query: probe);
+      final consent = await ConsentProfile.loadFromDb();
+      final entries = await service.retrieve(
+        domain: domain,
+        query: probe,
+        consent: consent,
+      );
       verified = entries.any((m) => m.content == content);
     } catch (e) {
       debugPrint('[MemoryTool] verification read failed: $e');
@@ -256,7 +262,12 @@ class RecallFactsTool extends AgentTool {
 
     List<MemoryEntry> entries;
     try {
-      entries = await service.retrieve(domain: domain, query: query);
+      final consent = await ConsentProfile.loadFromDb();
+      entries = await service.retrieve(
+        domain: domain,
+        query: query,
+        consent: consent,
+      );
     } catch (e) {
       return AgentToolResult.failure(
         toolName: name,

@@ -177,9 +177,12 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
   Widget build(BuildContext context) {
     // بازرس تنظیمات فقط در حالت kDebugMode در دسترس است
     if (!kDebugMode) {
-      return const RitmoPageScaffold(
-        appBar: RitmoModuleAppBar(title: 'دسترسی محدود'),
-        body: Center(
+      return RitmoPageScaffold(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
+          title: 'دسترسی محدود',
+        ),
+        body: const Center(
           child: Text('این بخش فقط در نسخهٔ توسعه و عیب‌یابی در دسترس است.'),
         ),
       );
@@ -198,7 +201,8 @@ class _SettingsInspectorScreenState extends State<SettingsInspectorScreen> {
     }).toList();
 
     return RitmoPageScaffold(
-      appBar: RitmoModuleAppBar(
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
         title: 'بازرس تنظیمات (Debug)',
         actions: [
           IconButton(

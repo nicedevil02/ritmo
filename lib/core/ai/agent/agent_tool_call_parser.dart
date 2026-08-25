@@ -56,7 +56,9 @@ class AgentToolCallParser {
   /// فقط وقتی اسکن کن که نشانهٔ واقعی فراخوانی ابزار در متن باشد (A-10, A-78).
   static bool shouldScanForToolCalls(String soFar) {
     return soFar.contains('<tool_call') ||
+        soFar.contains('<tool') ||
         soFar.contains('<ritmo-tool') ||
+        soFar.contains('<ritmo_tool') ||
         soFar.contains('<actions') ||
         soFar.contains('<memory_ops') ||
         soFar.contains('<function') ||
@@ -69,7 +71,7 @@ class AgentToolCallParser {
   }
 
   static final RegExp _blockRe = RegExp(
-      r'<(?:tool_call|tool)>([\s\S]*?)<\/(?:tool_call|tool)>|\[TOOL_CALL\]([\s\S]*?)\[\/TOOL_CALL\]|\[TOOL\]([\s\S]*?)\[\/TOOL\]',
+      r'<(?:tool_call|tool|ritmo_tool|ritmo-tool)>([\s\S]*?)<\/(?:tool_call|tool|ritmo_tool|ritmo-tool)>|\[TOOL_CALL\]([\s\S]*?)\[\/TOOL_CALL\]|\[TOOL\]([\s\S]*?)\[\/TOOL\]',
       caseSensitive: false);
   static final RegExp _functionTagRe = RegExp(
       r'<(?:function|tool)=([a-zA-Z0-9_\-]+)>([\s\S]*?)<\/(?:function|tool)>',
@@ -78,15 +80,15 @@ class AgentToolCallParser {
       r'```(?:ritmo_tool|tool_call|tool)\s*(\{[\s\S]*?\})\s*```',
       caseSensitive: false);
   static final RegExp _danglingToolRe = RegExp(
-      r'<(?:tool_call|tool)>[\s\S]*$|\[TOOL_CALL\][\s\S]*$|\[TOOL\][\s\S]*$',
+      r'<(?:tool_call|ritmo_tool|ritmo-tool)>[\s\S]*$|<tool>\s*[\{\<\n][\s\S]*$|\[TOOL_CALL\][\s\S]*$|\[TOOL\]\s*[\{\<\n][\s\S]*$',
       caseSensitive: false);
   static final RegExp _actionsRe = RegExp(r'<actions>[\s\S]*?<\/actions>', caseSensitive: false);
   static final RegExp _memOpsRe = RegExp(r'<memory_ops>[\s\S]*?<\/memory_ops>', caseSensitive: false);
   static final RegExp _danglingTagRe = RegExp(
-      r'<(actions|memory_ops|memory|tool_call|function|tool)[^>]*>[\s\S]*$|\[(actions|memory_ops|memory|TOOL_CALL|TOOL)\][\s\S]*$',
+      r'<(?:actions|memory_ops|memory|tool_call|function|ritmo_tool|ritmo-tool)[^>]*>[\s\S]*$|<tool>\s*[\{\<\n][\s\S]*$|\[TOOL_CALL\][\s\S]*$|\[TOOL\]\s*[\{\<\n][\s\S]*$',
       caseSensitive: false);
   static final RegExp _partialTagRe = RegExp(
-      r'<\/?(action|tool|memory|actions|tool_call|memory_ops|function)[^>]*$|\[\/?(action|tool|memory|actions|TOOL_CALL|TOOL)[^\]]*$',
+      r'<\/?(?:actions|tool_call|memory_ops|function|ritmo-tool|ritmo_tool)[^>\s]*$|\[\/?(?:TOOL_CALL|tool_call|TOOL)[^\]\s]*$',
       caseSensitive: false);
   static final RegExp _fenceOpenRe = RegExp(r'^\s*```[a-zA-Z0-9_-]*\s*');
   static final RegExp _fenceCloseRe = RegExp(r'\s*```\s*$');
@@ -542,7 +544,9 @@ class AgentToolCallParser {
       final tagName = match.group(1)!.trim();
       if (ignoreTags.contains(tagName.toLowerCase())) continue;
       final val = match.group(2)!.trim();
-      final numVal = num.tryParse(val);
+      final startsWithZero =
+          val.length > 1 && val.startsWith('0') && !val.startsWith('0.');
+      final numVal = startsWithZero ? null : num.tryParse(val);
       if (numVal != null) {
         result[tagName] = numVal is int ? numVal.toInt() : numVal;
       } else if (val.toLowerCase() == 'true') {

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 
@@ -9,6 +10,53 @@ class AiMemoryService {
   static final AiMemoryService instance = AiMemoryService._privateConstructor();
 
   static const double _lambda = 0.0041258; // Exp decay for 7-day half-life (hours)
+
+  static final List<String> sensitiveKeywords = [
+    'پریود',
+    'قاعدگی',
+    'سیکل',
+    'خونریزی',
+    'بارداری',
+    'سقط',
+    'دارو',
+    'قرص',
+    'کپسول',
+    'آمپول',
+    'دوز',
+    'بیماری',
+    'پزشک',
+    'دکتر',
+    'درمان',
+    'آزمایش',
+    'سونوگرافی',
+    'کلینیک',
+    'بیمارستان',
+    'دیابت',
+    'فشار خون',
+    'قلب',
+    'آلرژی',
+    'حساسیت',
+    'افسردگی',
+    'اضطراب',
+    'روانپزشک',
+    'period',
+    'menstrual',
+    'pregnancy',
+    'medicine',
+    'medication',
+    'dose',
+    'disease',
+    'doctor',
+  ];
+
+  /// بررسی حساسیت محتوا بر مبنای کلیدواژه‌های سلامت و چرخه
+  static bool isContentSensitive(String content) {
+    final lower = content.toLowerCase();
+    for (final kw in sensitiveKeywords) {
+      if (lower.contains(kw.toLowerCase())) return true;
+    }
+    return false;
+  }
 
   // Stop words for Persian tokenization
   static const Set<String> _stopWords = {
@@ -35,30 +83,36 @@ class AiMemoryService {
     required String assistantResponse,
     required String domain,
     String? sessionId,
+    bool modelProducedMemoryOps = false,
   }) async {
     try {
       if (!await isMemoryEnabled()) return;
+      if (modelProducedMemoryOps) return;
 
       // Check if user text has explicit remember keywords and response does not contain <memory_ops>
-      if (explicitRememberRegex.hasMatch(userText) && !assistantResponse.contains('<memory_ops>')) {
+      if (explicitRememberRegex.hasMatch(userText) &&
+          !assistantResponse.contains('<memory_ops>')) {
         // Clean user text of keywords to extract the core memory statement
         var content = userText
             .replaceAll(explicitRememberRegex, '')
             .replaceAll(RegExp('[،,.:!؟?()]+'), ' ')
             .trim();
-        
+
         if (content.length > 300) {
           content = content.substring(0, 300);
         }
 
         if (content.isNotEmpty) {
+          final isSensitive = domain == 'cycle' ||
+              domain == 'health' ||
+              isContentSensitive(content);
           final op = MemoryOp(
             op: 'ADD',
             content: content,
             type: MemoryType.preference,
             domain: domain,
             importance: 10,
-            sensitive: domain == 'cycle' || domain == 'health',
+            sensitive: isSensitive,
           );
           await applyOperations([op]);
         }
@@ -94,6 +148,7 @@ class AiMemoryService {
   Future<List<MemoryEntry>> retrieve({
     required String domain,
     required String query,
+    required ConsentProfile consent,
   }) async {
     if (!await isMemoryEnabled()) return [];
 
@@ -110,10 +165,18 @@ class AiMemoryService {
 
       final allMemories = rows.map(MemoryEntry.fromMap).toList();
 
-      // 2. Filter based on Privacy check: sensitive memories only returned if domain matches or domain is 'core'
+      // 2. Filter based on Privacy check: sensitive memories only returned with explicit consent
       final allowedMemories = allMemories.where((m) {
         if (m.sensitive) {
-          return m.domain == domain || domain == 'core';
+          if (m.domain == 'health' || m.domain == 'medical' || isContentSensitive(m.content)) {
+            if (!consent.allowHealth) return false;
+          }
+          if (m.domain == 'cycle' || isContentSensitive(m.content)) {
+            if (m.domain == 'cycle' && !consent.allowCycle) return false;
+          }
+          if (m.domain == 'health' || m.domain == 'medical') return consent.allowHealth;
+          if (m.domain == 'cycle') return consent.allowCycle;
+          return m.domain == domain;
         }
         return true;
       }).toList();
@@ -268,6 +331,10 @@ class AiMemoryService {
               // Generate unique ID
               final id = 'mem_${now}_${math.Random().nextInt(99999)}';
               final isExplicit = op.importance == 10;
+              final isSensitive = op.sensitive ||
+                  op.domain == 'cycle' ||
+                  op.domain == 'health' ||
+                  isContentSensitive(finalContent);
               await txn.insert('ai_memory', {
                 'id': id,
                 'content': finalContent,
@@ -276,7 +343,7 @@ class AiMemoryService {
                 'source': isExplicit ? MemorySource.explicit.name : MemorySource.implicit.name,
                 'importance': op.importance,
                 'pinned': isExplicit ? 1 : 0,
-                'sensitive': op.sensitive ? 1 : 0,
+                'sensitive': isSensitive ? 1 : 0,
                 'status': MemoryStatus.active.name,
                 'createdAt': now,
                 'updatedAt': now,
@@ -287,6 +354,10 @@ class AiMemoryService {
 
             case 'UPDATE':
               if (op.id == null) continue;
+              final isSensitive = op.sensitive ||
+                  op.domain == 'cycle' ||
+                  op.domain == 'health' ||
+                  isContentSensitive(finalContent);
               await txn.update(
                 'ai_memory',
                 {
@@ -294,7 +365,7 @@ class AiMemoryService {
                   'type': op.type.name,
                   'domain': op.domain,
                   'importance': op.importance,
-                  'sensitive': op.sensitive ? 1 : 0,
+                  'sensitive': isSensitive ? 1 : 0,
                   'updatedAt': now,
                   'expiresAt': op.expiresAt?.millisecondsSinceEpoch,
                 },
@@ -335,25 +406,45 @@ class AiMemoryService {
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
 
-      // 1. Forget memories with importance <= 4 that haven't been accessed in 60 days (5184000 seconds)
+      // 1. Forget memories with importance <= 4 that were created over 60 days ago
       final sixtyDaysAgoMs = now - (60 * 24 * 3600 * 1000);
       await db.update(
         'ai_memory',
         {'status': MemoryStatus.archived.name, 'updatedAt': now},
-        where: "pinned = 0 AND status = 'active' AND importance <= 4 AND lastAccessedAt < ?",
+        where:
+            "pinned = 0 AND status = 'active' AND importance <= 4 AND createdAt < ?",
         whereArgs: [sixtyDaysAgoMs],
       );
 
-      // 2. Enforce limits: max 30 active unpinned memories for 'core', max 15 for any other domain
-      final domains = ['core', 'health', 'cycle', 'worship', 'wellbeing', 'goals', 'konkur', 'courses', 'sports'];
-      for (final d in domains) {
+      // 2. Enforce limits across all dynamic active domains (max 30 for 'core', max 15 for any other domain)
+      final domainRows = await db.rawQuery(
+        "SELECT DISTINCT domain FROM ai_memory WHERE status = 'active'",
+      );
+      final activeDomains = domainRows
+          .map((r) => r['domain']?.toString() ?? '')
+          .where((d) => d.isNotEmpty)
+          .toSet();
+      activeDomains.addAll(const [
+        'core',
+        'health',
+        'cycle',
+        'worship',
+        'wellbeing',
+        'goals',
+        'konkur',
+        'courses',
+        'sports',
+      ]);
+
+      for (final d in activeDomains) {
         final limit = d == 'core' ? 30 : 15;
-        
+
         final List<Map<String, dynamic>> activeUnpinned = await db.query(
           'ai_memory',
           where: "status = 'active' AND pinned = 0 AND domain = ?",
           whereArgs: [d],
-          orderBy: 'importance ASC, lastAccessedAt ASC', // Prune least important and oldest first
+          orderBy:
+              'importance ASC, createdAt ASC', // Prune least important and oldest first
         );
 
         if (activeUnpinned.length > limit) {
@@ -373,6 +464,41 @@ class AiMemoryService {
       }
     } catch (e) {
       debugPrint('[MEMORY] Error pruning memories: $e');
+    }
+  }
+
+  /// تصحیح رکوردهای قبلی که فاقد برچسب حساس هستند (Backfill)
+  Future<int> backfillSensitiveFlags() async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'ai_memory',
+        where: "status = 'active' AND sensitive = 0",
+      );
+      var count = 0;
+      final batch = db.batch();
+      for (final row in rows) {
+        final content = row['content']?.toString() ?? '';
+        final domain = row['domain']?.toString() ?? '';
+        if (domain == 'health' ||
+            domain == 'cycle' ||
+            isContentSensitive(content)) {
+          batch.update(
+            'ai_memory',
+            {'sensitive': 1},
+            where: 'id = ?',
+            whereArgs: [row['id']],
+          );
+          count++;
+        }
+      }
+      if (count > 0) {
+        await batch.commit(noResult: true);
+      }
+      return count;
+    } catch (e) {
+      debugPrint('[MEMORY] Error in backfillSensitiveFlags: $e');
+      return 0;
     }
   }
 }

@@ -917,11 +917,14 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                 child: TextFormField(
                   controller: _sysController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'Vazirmatn'),
                   decoration: RitmoTheme.inputDecoration(
                     context,
                     label: 'سیستول (SYS)',
                     icon: CupertinoIcons.heart_fill,
+                  ).copyWith(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) return 'اجباری';
@@ -935,11 +938,14 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                 child: TextFormField(
                   controller: _diaController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'Vazirmatn'),
                   decoration: RitmoTheme.inputDecoration(
                     context,
                     label: 'دیاستول (DIA)',
                     icon: CupertinoIcons.drop_fill,
+                  ).copyWith(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) return 'اجباری';
@@ -957,11 +963,14 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
                 child: TextFormField(
                   controller: _pulseController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: colors.textPrimary),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
                   decoration: RitmoTheme.inputDecoration(
                     context,
                     label: 'ضربان (Pulse)',
                     icon: CupertinoIcons.waveform_path_ecg,
+                  ).copyWith(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   ),
                 ),
               ),
@@ -969,16 +978,21 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   initialValue: _arm,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 13),
+                  isDense: true,
+                  isExpanded: true,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
                   decoration: RitmoTheme.inputDecoration(
                     context,
                     label: l10n.bloodPressureArm,
                     icon: Icons.accessibility_new,
+                  ).copyWith(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   ),
                   dropdownColor: colors.surface,
                   items: [
-                    DropdownMenuItem(value: 'LEFT', child: Text(l10n.bloodPressureArmLeft)),
-                    DropdownMenuItem(value: 'RIGHT', child: Text(l10n.bloodPressureArmRight)),
+                    DropdownMenuItem(value: 'LEFT', child: Text(l10n.bloodPressureArmLeft, overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(value: 'RIGHT', child: Text(l10n.bloodPressureArmRight, overflow: TextOverflow.ellipsis)),
                   ],
                   onChanged: (val) {
                     if (val != null) setState(() => _arm = val);
@@ -990,17 +1004,22 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: _position,
-            style: TextStyle(color: colors.textPrimary, fontSize: 13),
+            isDense: true,
+            isExpanded: true,
+            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
             decoration: RitmoTheme.inputDecoration(
               context,
               label: l10n.bloodPressurePosition,
               icon: Icons.airline_seat_recline_normal,
+            ).copyWith(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             ),
             dropdownColor: colors.surface,
             items: [
-              DropdownMenuItem(value: 'SITTING', child: Text(l10n.bloodPressurePositionSitting)),
-              DropdownMenuItem(value: 'STANDING', child: Text(l10n.bloodPressurePositionStanding)),
-              DropdownMenuItem(value: 'LYING', child: Text(l10n.bloodPressurePositionLying)),
+              DropdownMenuItem(value: 'SITTING', child: Text(l10n.bloodPressurePositionSitting, overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(value: 'STANDING', child: Text(l10n.bloodPressurePositionStanding, overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(value: 'LYING', child: Text(l10n.bloodPressurePositionLying, overflow: TextOverflow.ellipsis)),
             ],
             onChanged: (val) {
               if (val != null) setState(() => _position = val);
@@ -1055,11 +1074,14 @@ class _BloodPressureSectionState extends State<BloodPressureSection> {
 
           TextFormField(
             controller: _noteController,
-            style: TextStyle(color: colors.textPrimary),
+            style: TextStyle(color: colors.textPrimary, fontSize: 13, fontFamily: 'Vazirmatn'),
             decoration: RitmoTheme.inputDecoration(
               context,
               label: 'یادداشت دلخواه (اختیاری)',
               icon: Icons.note_alt_outlined,
+            ).copyWith(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
             ),
           ),
           const SizedBox(height: 12),

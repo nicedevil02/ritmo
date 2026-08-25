@@ -70,7 +70,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: context.colors.bgPrimary,
+        backgroundColor: context.colors.bg,
         body: Center(
           child: CircularProgressIndicator(color: context.colors.primary),
         ),
@@ -81,7 +81,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
     final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: colors.bgPrimary,
+      backgroundColor: colors.bg,
       body: CycleLockGate(
         child: Stack(
           children: [
@@ -92,7 +92,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [colors.bgPrimary, colors.bgSecondary],
+                    colors: [colors.bg, colors.surfaceSubtle],
                   ),
                 ),
               ),
@@ -362,11 +362,14 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             CycleDateContract.parseDayKey(rawStart);
                         final parsedEnd = CycleDateContract.parseDayKey(rawEnd);
 
-                        final startStr = parsedStart != null
-                            ? Jalali.fromDateTime(parsedStart).formatCompactDate()
+                        final startJ = parsedStart != null ? Jalali.fromDateTime(parsedStart) : null;
+                        final endJ = parsedEnd != null ? Jalali.fromDateTime(parsedEnd) : null;
+
+                        final startStr = startJ != null
+                            ? '${startJ.year}/${startJ.month}/${startJ.day}'
                             : (rawStart ?? '-');
-                        final endStr = parsedEnd != null
-                            ? Jalali.fromDateTime(parsedEnd).formatCompactDate()
+                        final endStr = endJ != null
+                            ? '${endJ.year}/${endJ.month}/${endJ.day}'
                             : 'درحال انجام';
 
                         return Padding(

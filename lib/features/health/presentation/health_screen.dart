@@ -395,7 +395,8 @@ class _HealthScreenState extends State<HealthScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: colors.bg,
-        appBar: RitmoModuleAppBar(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
           title: 'دارو و سلامت',
           subtitle: 'پایش داروها، سنجش‌های حیاتی و پرونده پزشکی',
           statusBadge: Container(

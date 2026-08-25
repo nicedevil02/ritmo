@@ -102,6 +102,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
@@ -122,14 +123,16 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ],
                     ),
                     if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: RitmoTextStyles.badge(
-                          colors.textSecondary.withValues(alpha: 0.7),
+                      const SizedBox(height: 1),
+                      Flexible(
+                        child: Text(
+                          subtitle!,
+                          style: RitmoTextStyles.badge(
+                            colors.textSecondary.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],

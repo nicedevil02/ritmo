@@ -554,7 +554,8 @@ class _BackupScreenState extends State<BackupScreen> {
       textDirection: TextDirection.rtl,
       child: RitmoPageScaffold(
         padding: EdgeInsets.zero,
-        appBar: const RitmoModuleAppBar(
+        appBar: RitmoModuleAppBar.fromContext(
+          context: context,
           title: 'پشتیبان‌گیری ابری',
         ),
         body: Stack(

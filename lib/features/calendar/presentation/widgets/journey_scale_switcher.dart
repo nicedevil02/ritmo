@@ -61,7 +61,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
                         child: AnimatedContainer(
                           duration: RitmoMotion.state,
                           curve: RitmoMotion.enter,
-                          height: 28.0,
+                          height: 28.0 * context.metrics.densityFactor,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
@@ -84,14 +84,12 @@ class JourneyScaleSwitcher extends StatelessWidget {
                           ),
                           child: Text(
                             label,
-                            style: TextStyle(
-                              fontSize: 12.0,
+                            style: RitmoTextStyles.badge(
+                              isSelected ? colors.primary : colors.textSecondary,
+                            ).copyWith(
                               fontWeight: isSelected
                                   ? FontWeight.w700
                                   : FontWeight.w600,
-                              color: isSelected
-                                  ? colors.primary
-                                  : colors.textSecondary,
                             ),
                           ),
                         ),
@@ -185,14 +183,12 @@ class _OverflowScaleButton extends StatelessWidget {
                 value: scale,
                 child: Text(
                   JourneyScaleSwitcher.scaleLabelFa(scale),
-                  style: TextStyle(
-                    fontSize: 14.0,
+                  style: RitmoTextStyles.label(
+                    scale == activeScale ? colors.primary : colors.textPrimary,
+                  ).copyWith(
                     fontWeight: scale == activeScale
                         ? FontWeight.w700
                         : FontWeight.w500,
-                    color: scale == activeScale
-                        ? colors.primary
-                        : colors.textPrimary,
                   ),
                 ),
               ),
@@ -202,7 +198,7 @@ class _OverflowScaleButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: RitmoMotion.state,
           curve: RitmoMotion.enter,
-          height: 31,
+          height: 31 * context.metrics.densityFactor,
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: isActive
@@ -219,11 +215,9 @@ class _OverflowScaleButton extends StatelessWidget {
               ? Center(
                   child: Text(
                     JourneyScaleSwitcher.scaleLabelFa(activeScale),
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.w700,
-                      color: colors.primary,
-                    ),
+                    style: RitmoTextStyles.badge(
+                      colors.primary,
+                    ).copyWith(fontWeight: FontWeight.w700),
                   ),
                 )
               : const Center(child: Icon(Icons.more_horiz_rounded, size: 16)),

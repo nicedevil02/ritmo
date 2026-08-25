@@ -11,6 +11,7 @@ import 'package:ritmo/core/ai/agent/agent_tool_protocol.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_registry.dart';
 import 'package:ritmo/core/ai/agent/agent_tool_scope.dart';
 import 'package:ritmo/core/ai/agent/agent_transcript.dart';
+import 'package:ritmo/core/ai/agent/catalog/agent_tools_initializer.dart';
 import 'package:ritmo/core/ai/agent/catalog/kernel_command_tool.dart';
 import 'package:ritmo/core/ai/agent/intent/agent_intent_router.dart';
 import 'package:ritmo/core/ai/ai_connection_models.dart';
@@ -59,6 +60,15 @@ class AgentLoopRunner {
     final steps = <AgentStep>[];
     final allResults = <AgentToolResult>[];
 
+    // 0. تضمین رجیستری ابزارها (H-13)
+    if (AgentToolRegistry.instance.allTools.isEmpty) {
+      initializeAllAgentTools();
+      RitmoLog.warning(
+        'AgentLoopRunner',
+        'AgentToolRegistry was empty; auto-initialized tools.',
+      );
+    }
+
     /// شناسه این اجرا: کلید پیدا کردن عملیات قابل بازگشت در ژورنال
     final sessionId = 'agent_${DateTime.now().microsecondsSinceEpoch}';
 
@@ -101,7 +111,7 @@ class AgentLoopRunner {
         final args = prefetch.toolArgs[r.toolName] ?? const <String, dynamic>{};
         final cacheKey = _cacheKey(r.toolName, args);
         toolCache[cacheKey] = r;
-        budget.admit(r.toolName, args);
+        budget.registerExecuted(r.toolName, args, isReadOnly: true);
       }
     }
 
@@ -125,12 +135,12 @@ class AgentLoopRunner {
     if (contextSummary != null && contextSummary.trim().isNotEmpty) {
       system.writeln(
           '\n[خلاصه داده‌های بازیابی‌شده از پروفایل و تاریخچه کاربر]:');
-      system.writeln(contextSummary.trim());
+      system.writeln(AgentToolProtocol.sanitize(contextSummary.trim()));
     }
     final systemPrompt = system.toString();
 
-    // ۳. مسیر انتقال
-    final config = await AiConnectionRepository.instance.load(slot: slot);
+    // ۳. مسیر انتقال (H-1: استفاده از effectiveSlot)
+    final config = await AiConnectionRepository.instance.load(slot: effectiveSlot);
     final isChatGptWeb = config.providerPresetId == 'chatgpt_web' ||
         config.baseUrl.contains('chatgpt.com');
     final wireFormat =
@@ -430,7 +440,11 @@ class AgentLoopRunner {
           continue;
         }
 
-        final admission = budget.admit(tool.name, validatedArgs);
+        final admission = budget.admit(
+          tool.name,
+          validatedArgs,
+          isReadOnly: tool.policy == ToolPolicy.readOnly,
+        );
         if (!admission.allowed) {
           turnResults.add(AgentToolResult.failure(
             toolName: tool.name,
@@ -449,7 +463,7 @@ class AgentLoopRunner {
             toolName: tool.name,
             titleFa: tool.titleFa,
             previewFa: decision.previewFa ?? tool.titleFa,
-            parameters: call.parameters,
+            parameters: validatedArgs,
           );
           interactiveAction = <String, dynamic>{
             'type': 'tool_confirmation',
@@ -457,7 +471,7 @@ class AgentLoopRunner {
             'tool': tool.name,
             'titleFa': tool.titleFa,
             'previewFa': request.previewFa,
-            'parameters': call.parameters,
+            'parameters': validatedArgs,
           };
 
           yield AgentStatusChangedEvent(
@@ -467,7 +481,14 @@ class AgentLoopRunner {
           );
           yield AgentAwaitingConfirmationEvent(request);
 
-          final response = await AgentConfirmationBroker.instance.ask(request);
+          AgentConfirmationResponse response;
+          budget.pauseClock();
+          try {
+            response = await AgentConfirmationBroker.instance.ask(request);
+          } finally {
+            budget.resumeClock();
+          }
+
           yield AgentConfirmationResolvedEvent(
             requestId: request.id,
             toolName: tool.name,
@@ -476,6 +497,8 @@ class AgentLoopRunner {
           );
 
           if (!response.approved) {
+            interactiveAction = null;
+            budget.unadmit(tool.name, validatedArgs);
             if (response.timedOut) {
               yield AgentConfirmationTimedOutEvent(
                 requestId: request.id,
@@ -497,7 +520,38 @@ class AgentLoopRunner {
 
           final edited = response.editedArgs;
           if (edited != null && edited.isNotEmpty) {
-            effectiveArgs = edited;
+            final valRes = AgentToolArgumentValidator.validate(tool, edited);
+            if (!valRes.isValid) {
+              final errReason =
+                  valRes.errorMessageFa ?? 'پارامترهای ویرایش‌شده نامعتبر هستند.';
+              turnResults
+                  .add(AgentPolicyGate.instance.refusalResult(tool, errReason));
+              interactiveAction = null;
+              budget.unadmit(tool.name, validatedArgs);
+              RitmoLog.warning('Agent', 'edited args invalid: $errReason');
+              continue;
+            }
+
+            final secDecision = AgentPolicyGate.instance.evaluateSecurityOnly(
+              tool: tool,
+              args: valRes.sanitizedArgs,
+            );
+            if (secDecision.isDenied) {
+              turnResults.add(AgentPolicyGate.instance.refusalResult(
+                tool,
+                secDecision.reasonFa ??
+                    'پارامترهای ویرایش‌شده از نظر امنیتی تایید نشدند.',
+              ));
+              interactiveAction = null;
+              budget.unadmit(tool.name, validatedArgs);
+              RitmoLog.warning(
+                'Agent',
+                'edited args security violation: ${secDecision.reasonFa}',
+              );
+              continue;
+            }
+
+            effectiveArgs = valRes.sanitizedArgs;
           }
           interactiveAction = null;
         }
@@ -528,7 +582,14 @@ class AgentLoopRunner {
           );
           yield AgentAwaitingQuestionEvent(qReq);
 
-          final qRes = await AgentQuestionBroker.instance.ask(qReq);
+          AgentQuestionResponse qRes;
+          budget.pauseClock();
+          try {
+            qRes = await AgentQuestionBroker.instance.ask(qReq);
+          } finally {
+            budget.resumeClock();
+          }
+
           yield AgentQuestionResolvedEvent(
             requestId: qReq.id,
             answered: qRes.answered,
@@ -591,6 +652,7 @@ class AgentLoopRunner {
             mutationCache[mutationKey] = result;
             // بی‌اعتبارسازی کش ابزارهای خواندنی برای دریافت وضعیت تازه
             toolCache.clear();
+            budget.clearReadSignatures();
           }
         } else if (result.isSuccess) {
           toolCache[cacheKey] = result;
@@ -646,8 +708,12 @@ class AgentLoopRunner {
           'Agent',
           'empty model answer -> deterministic fallback from ${allResults.length} result(s)');
     } else {
-      // اگر ابزار تغییردهنده‌ای در دیتابیس با موفقیت اجرا شده ولی هنوز متنش در خروجی نیامده، اضافه کن
-      final writeResults = allResults.where((r) => r.isSuccess && r.summaryFa.trim().isNotEmpty).toList();
+      // اگر ابزار تغییردهنده‌ای در دیتابیس با موفقیت اجرا شده ولی هنوز متنش در خروجی نیامده، اضافه کن (H-2: فقط ابزارهای تغییردهنده)
+      final writeResults = allResults.where((r) {
+        if (!r.isSuccess || r.summaryFa.trim().isEmpty) return false;
+        final tool = AgentToolRegistry.instance.getTool(r.toolName);
+        return tool != null && tool.policy != ToolPolicy.readOnly;
+      }).toList();
       for (final wr in writeResults) {
         final shortSummary = wr.summaryFa.trim();
         if (shortSummary.isNotEmpty && !finalAnswer.contains(shortSummary)) {
@@ -664,8 +730,9 @@ class AgentLoopRunner {
 
     interactiveAction ??= _parseFirstAction(finalRaw);
 
-    // A-11: تور ایمنی نهایی — اگر متن نهایی هنوز به UI نرسیده، فلاش کن
-    final cleanFinalAnswer = AgentToolCallParser.cleanForDisplay(finalAnswer);
+    // A-11: تور ایمنی نهایی — اگر متن نهایی هنوز به UI نرسیده، فلاش کن (H-3: با knownToolNames)
+    final cleanFinalAnswer =
+        AgentToolCallParser.cleanForDisplay(finalAnswer, knownToolNames: knownToolNames);
     if (cleanFinalAnswer.isNotEmpty && cleanFinalAnswer != displayed) {
       final delta = cleanFinalAnswer.startsWith(displayed) && displayed.isNotEmpty
           ? cleanFinalAnswer.substring(displayed.length)

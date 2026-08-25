@@ -149,5 +149,34 @@ void main() {
         );
       },
     );
+
+    test('H-10: supports <ritmo-tool> and <ritmo_tool> tags in scanner', () {
+      const raw1 = '<ritmo-tool>{"tool": "verify_state", "parameters": {"check": "sleep"}}</ritmo-tool>';
+      final scan1 = AgentToolCallParser.scan(raw1);
+      expect(scan1.hasCalls, isTrue);
+      expect(scan1.calls.first.toolName, 'verify_state');
+
+      const raw2 = '<ritmo_tool>{"tool": "verify_state", "parameters": {"check": "goals"}}</ritmo_tool>';
+      final scan2 = AgentToolCallParser.scan(raw2);
+      expect(scan2.hasCalls, isTrue);
+      expect(scan2.calls.first.toolName, 'verify_state');
+    });
+
+    test('H-11: cleanForDisplay does not truncate natural Persian sentences mentioning tool or brackets', () {
+      const natural1 = 'توضیح: تگ <tool> برای اجرای ابزار است.';
+      expect(AgentToolCallParser.cleanForDisplay(natural1), natural1);
+
+      const natural2 = 'مقایسه [TOOL] و عملکرد دستیار در ایمیل';
+      expect(AgentToolCallParser.cleanForDisplay(natural2), natural2);
+    });
+
+    test('M-8: XML extraction preserves leading zero strings', () {
+      const raw = '<tool_call><name>update_app_preference</name><phone>09123456789</phone><code>01</code></tool_call>';
+      final scan = AgentToolCallParser.scan(raw);
+      expect(scan.hasCalls, isTrue);
+      expect(scan.calls.first.parameters['phone'], '09123456789');
+      expect(scan.calls.first.parameters['code'], '01');
+    });
   });
 }
+

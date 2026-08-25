@@ -229,7 +229,10 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
 
     return RitmoPageScaffold(
       padding: EdgeInsets.zero,
-      appBar: const RitmoModuleAppBar(title: 'ماژول‌ها و بخش‌های برنامه'),
+      appBar: RitmoModuleAppBar.fromContext(
+        context: context,
+        title: 'ماژول‌ها و بخش‌های برنامه',
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

@@ -49,8 +49,13 @@ class AgentBudget {
 
   final DateTime _startedAt = DateTime.now();
   final Set<String> _signatures = <String>{};
+  final Set<String> _readSignatures = <String>{};
   int _turns = 0;
   int _toolCalls = 0;
+
+  DateTime? _pausedAt;
+  Duration _pausedDuration = Duration.zero;
+  int _pauseDepth = 0;
 
   int get turnsUsed => _turns;
 
@@ -60,19 +65,71 @@ class AgentBudget {
 
   bool get canRunMoreTools => _toolCalls < maxToolCalls;
 
-  Duration get elapsed => DateTime.now().difference(_startedAt);
+  Duration get elapsed {
+    final total = DateTime.now().difference(_startedAt);
+    final currentPause =
+        (_pausedAt != null) ? DateTime.now().difference(_pausedAt!) : Duration.zero;
+    final net = total - _pausedDuration - currentPause;
+    return net.isNegative ? Duration.zero : net;
+  }
 
   bool get isTimedOut => elapsed > wallClock;
 
   void countTurn() => _turns++;
 
+  /// متوقف کردن ساعت زمان انتظار (مثلاً در زمان تایید یا پاسخ کاربر)
+  void pauseClock() {
+    _pauseDepth++;
+    if (_pauseDepth == 1) {
+      _pausedAt = DateTime.now();
+    }
+  }
+
+  /// ازسرگیری ساعت زمان انتظار
+  void resumeClock() {
+    if (_pauseDepth > 0) {
+      _pauseDepth--;
+      if (_pauseDepth == 0 && _pausedAt != null) {
+        _pausedDuration += DateTime.now().difference(_pausedAt!);
+        _pausedAt = null;
+      }
+    }
+  }
+
+  /// پاک کردن امضاهای فقط‌خواندنی جهت مجاز شدن بازرسی وضعیت پس از تغییرات
+  void clearReadSignatures() {
+    _signatures.removeAll(_readSignatures);
+    _readSignatures.clear();
+  }
+
+  /// بازگردانی بودجه و امضا در صورت انصراف کاربر، رد شدن کارت یا تایم‌اوت
+  void unadmit(String toolName, Map<String, dynamic> args) {
+    final sig = signature(toolName, args);
+    if (_signatures.remove(sig)) {
+      if (_toolCalls > 0) _toolCalls--;
+    }
+    _readSignatures.remove(sig);
+  }
+
   /// ثبت فراخوانی‌هایی که بیرون از حلقه (مثلاً پیش‌واکشی خودکار) اجرا شده‌اند
-  void registerExecuted(String toolName, Map<String, dynamic> args) {
-    _signatures.add(signature(toolName, args));
+  void registerExecuted(
+    String toolName,
+    Map<String, dynamic> args, {
+    bool isReadOnly = false,
+  }) {
+    final sig = signature(toolName, args);
+    _signatures.add(sig);
+    if (isReadOnly) {
+      _readSignatures.add(sig);
+    }
   }
 
   /// بررسی مجوز اجرا. در صورت تایید، شمارنده‌ها همان‌جا به‌روز می‌شوند.
-  ToolAdmission admit(String toolName, Map<String, dynamic> args) {
+  ToolAdmission admit(
+    String toolName,
+    Map<String, dynamic> args, {
+    bool isReadOnly = false,
+  }) {
     if (isTimedOut) {
       return const ToolAdmission.deny(
         'زمان مجاز پردازش تمام شد؛ با همین داده‌های موجود پاسخ نهایی را بنویس.',
@@ -93,6 +150,9 @@ class AgentBudget {
     }
 
     _signatures.add(sig);
+    if (isReadOnly) {
+      _readSignatures.add(sig);
+    }
     _toolCalls++;
     return const ToolAdmission.allow();
   }

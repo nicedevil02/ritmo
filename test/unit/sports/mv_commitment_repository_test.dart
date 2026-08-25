@@ -131,5 +131,52 @@ void main() {
       final thuActiveAfterToggle = await repo.getForDay(5, onlyActive: true);
       expect(thuActiveAfterToggle, isEmpty);
     });
+
+    test('deactivate sets isActive to 0 without deleting row, getActive returns only active', () async {
+      final cId = await repo.insert(
+        MvCommitment(
+          kindCode: 'VOLLEYBALL',
+          dayOfWeekSat0: 3,
+          startTime: '19:00',
+          durationMinutes: 60,
+          isActive: true,
+        ),
+      );
+
+      expect((await repo.getActive()).length, equals(1));
+
+      // Deactivate
+      await repo.deactivate(cId);
+
+      // Verify not deleted
+      final retrieved = await repo.getById(cId);
+      expect(retrieved, isNotNull);
+      expect(retrieved!.isActive, isFalse);
+
+      // Verify excluded from getActive
+      expect(await repo.getActive(), isEmpty);
+    });
+
+    test('upsert inserts new commitment or updates existing one', () async {
+      final newCommitment = MvCommitment(
+        kindCode: 'PADEL',
+        dayOfWeekSat0: 4,
+        startTime: '17:00',
+        durationMinutes: 90,
+      );
+
+      // 1. Insert via upsert
+      final created = await repo.upsert(newCommitment);
+      expect(created.id, isNotNull);
+
+      // 2. Update via upsert
+      final modified = created.copyWith(durationMinutes: 120);
+      final updated = await repo.upsert(modified);
+      expect(updated.id, equals(created.id));
+      expect(updated.durationMinutes, equals(120));
+
+      final fromDb = await repo.getById(created.id!);
+      expect(fromDb!.durationMinutes, equals(120));
+    });
   });
 }

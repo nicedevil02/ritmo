@@ -5,12 +5,15 @@ import 'package:sqflite/sqflite.dart';
 /// مخزن تعهدهای ورزشی ثابت (mv_commitments)
 abstract class MvCommitmentRepository {
   Future<List<MvCommitment>> getAll({bool onlyActive = true});
+  Future<List<MvCommitment>> getActive();
   Future<List<MvCommitment>> getForDay(int dayOfWeekSat0, {bool onlyActive = true});
   Future<MvCommitment?> getById(int id);
   Future<int> insert(MvCommitment commitment);
   Future<void> update(MvCommitment commitment);
+  Future<MvCommitment> upsert(MvCommitment commitment);
   Future<void> delete(int id);
   Future<void> toggleActive(int id, bool isActive);
+  Future<void> deactivate(int id);
 }
 
 class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
@@ -34,6 +37,9 @@ class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
     );
     return rows.map((r) => MvCommitment.fromMap(r)).toList();
   }
+
+  @override
+  Future<List<MvCommitment>> getActive() => getAll(onlyActive: true);
 
   @override
   Future<List<MvCommitment>> getForDay(
@@ -93,6 +99,17 @@ class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
   }
 
   @override
+  Future<MvCommitment> upsert(MvCommitment commitment) async {
+    if (commitment.id != null) {
+      await update(commitment);
+      return (await getById(commitment.id!)) ?? commitment;
+    } else {
+      final newId = await insert(commitment);
+      return commitment.copyWith(id: newId);
+    }
+  }
+
+  @override
   Future<void> delete(int id) async {
     final db = await _db;
     await db.delete(
@@ -116,4 +133,7 @@ class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
       whereArgs: [id],
     );
   }
+
+  @override
+  Future<void> deactivate(int id) => toggleActive(id, false);
 }

@@ -10,3 +10,4 @@ export 'mv_profile_repository.dart';
 export 'mv_route_repository.dart';
 export 'mv_session_repository.dart';
 export 'mv_slot_override_repository.dart';
+export 'mv_station_bundle_repository.dart';

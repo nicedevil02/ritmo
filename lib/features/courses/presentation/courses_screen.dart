@@ -113,7 +113,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       builder: (context) => CreateCourseSheet(
         onCourseCreated: _loadAllData,
       ),
-    ).then((_) => _loadAllData());
+    );
   }
 
   void _openAiAssistantSheet() {
@@ -136,7 +136,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         builder: (context) => AiSyllabusSheet(
           onImported: _loadAllData,
         ),
-      ).then((_) => _loadAllData()),
+      ),
     );
   }
 
@@ -273,6 +273,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                             weeklyTargetSessions: _engineOutput!.weeklyTargetSessions,
                             weeklyStudyMinutes: _engineOutput!.weeklyStudyMinutes,
                             studyStreakDays: _engineOutput!.studyStreakDays,
+                            estimatedMinutesIncluded: _engineOutput!.estimatedMinutesIncluded,
                           ),
 
                         const SizedBox(height: 16),

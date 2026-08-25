@@ -10,6 +10,7 @@ abstract final class CourseLimits {
   static const int maxSessionsPerDay = 3;
   static const int maxScheduleHorizonDays = 730;
   static const int maxTimerSeconds = 28800; // 8 hours
+  static const int suggestedSkipOverdueThreshold = 10;
 }
 
 abstract final class CourseDefaults {
@@ -76,6 +77,7 @@ extension CourseEnergyLevelExtension on CourseEnergyLevel {
 
 enum CourseEnergyRule {
   all,
+  offerLight,
   mediumOrHigh,
   highOnly,
   skipLow,
@@ -86,6 +88,8 @@ extension CourseEnergyRuleExtension on CourseEnergyRule {
     switch (this) {
       case CourseEnergyRule.all:
         return 'ALL';
+      case CourseEnergyRule.offerLight:
+        return 'OFFER_LIGHT';
       case CourseEnergyRule.mediumOrHigh:
         return 'MEDIUM_OR_HIGH';
       case CourseEnergyRule.highOnly:
@@ -95,13 +99,58 @@ extension CourseEnergyRuleExtension on CourseEnergyRule {
     }
   }
 
+  String get label {
+    switch (this) {
+      case CourseEnergyRule.all:
+        return 'بدون محدودیت انرژی';
+      case CourseEnergyRule.offerLight:
+        return 'پیشنهاد نسخه سبک در انرژی پایین';
+      case CourseEnergyRule.mediumOrHigh:
+        return 'فقط انرژی متوسط یا بالا';
+      case CourseEnergyRule.highOnly:
+        return 'فقط در انرژی بالا (تمرکز عمیق)';
+      case CourseEnergyRule.skipLow:
+        return 'رد کردن خودکار در انرژی پایین';
+    }
+  }
+
+  String get labelFa => label;
+
+  String get description {
+    switch (this) {
+      case CourseEnergyRule.all:
+        return 'در تمام سطوح انرژی (پایین، متوسط، بالا) در برنامه نمایش داده می‌شود.';
+      case CourseEnergyRule.offerLight:
+        return 'در روزهای کم‌انرژی، مدت زمان پیشنهادی نصف و درجه سختی سبک می‌شود.';
+      case CourseEnergyRule.mediumOrHigh:
+        return 'در روزهای کم‌انرژی پیشنهاد نمی‌شود تا خستگی تشدید نشود.';
+      case CourseEnergyRule.highOnly:
+        return 'فقط زمانی که انرژی بالاست پیشنهاد می‌شود و دکمه شروع در خستگی غیرفعال است.';
+      case CourseEnergyRule.skipLow:
+        return 'در تراز انرژی پایین به صورت خودکار رد کردن جلسه پیشنهاد می‌شود.';
+    }
+  }
+
   static CourseEnergyRule fromString(String? value) {
-    switch (value?.toUpperCase()) {
+    final clean = value?.toUpperCase().trim();
+    switch (clean) {
+      case 'OFFER_LIGHT':
+      case 'OFFERLIGHT':
+      case 'OFFER-LIGHT':
+        return CourseEnergyRule.offerLight;
       case 'MEDIUM_OR_HIGH':
+      case 'MEDIUMORHIGH':
+      case 'MEDIUM_HIGH':
+      case 'MEDIUMHIGH':
         return CourseEnergyRule.mediumOrHigh;
       case 'HIGH_ONLY':
+      case 'HIGHONLY':
+      case 'HIGH_ENERGY_ONLY':
+      case 'HIGHENERGYONLY':
         return CourseEnergyRule.highOnly;
       case 'SKIP_LOW':
+      case 'SKIPLOW':
+      case 'SKIP':
         return CourseEnergyRule.skipLow;
       case 'ALL':
       case 'NONE':
@@ -126,8 +175,6 @@ extension CourseTypeExtension on CourseType {
         return 'CUSTOM';
     }
   }
-
-  String get name => dbValue;
 
   String get label {
     switch (this) {
@@ -168,8 +215,8 @@ extension CourseTypeExtension on CourseType {
     }
   }
 
-  static CourseType fromString(String value) {
-    switch (value.toUpperCase()) {
+  static CourseType fromString(String? value) {
+    switch (value?.toUpperCase().trim()) {
       case 'VIDEO':
         return CourseType.video;
       case 'BOOK':
@@ -285,7 +332,7 @@ class Course {
     this.activityType = 'STUDY',
     this.zoneId,
     this.isArchived = false,
-    this.energyRule = 'NONE',
+    this.energyRule = CourseEnergyRule.all,
     required this.createdAt,
     required this.updatedAt,
     required this.courseType,
@@ -325,10 +372,10 @@ class Course {
       activityType: map['activityType'] as String? ?? 'STUDY',
       zoneId: map['zoneId'] as String?,
       isArchived: (map['isArchived'] as int? ?? 0) == 1,
-      energyRule: map['energyRule'] as String? ?? 'NONE',
+      energyRule: CourseEnergyRuleExtension.fromString(map['energyRule'] as String?),
       createdAt: map['createdAt'] as int,
       updatedAt: map['updatedAt'] as int,
-      courseType: CourseTypeExtension.fromString(map['courseType'] as String? ?? 'VIDEO'),
+      courseType: CourseTypeExtension.fromString(map['courseType'] as String?),
       unitLabel: map['unitLabel'] as String?,
       emoji: map['emoji'] as String?,
       colorHex: map['colorHex'] as String?,
@@ -355,7 +402,7 @@ class Course {
   final String activityType; // e.g., 'STUDY'
   final String? zoneId;
   final bool isArchived;
-  final String energyRule; // NONE, skip, offerLight, highEnergyOnly
+  final CourseEnergyRule energyRule;
   final int createdAt;
   final int updatedAt;
 
@@ -385,7 +432,7 @@ class Course {
     String? activityType,
     String? zoneId,
     bool? isArchived,
-    String? energyRule,
+    CourseEnergyRule? energyRule,
     int? createdAt,
     int? updatedAt,
     CourseType? courseType,
@@ -477,10 +524,10 @@ class Course {
       'activityType': activityType,
       'zoneId': zoneId,
       'isArchived': isArchived ? 1 : 0,
-      'energyRule': energyRule,
+      'energyRule': energyRule.dbValue,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
-      'courseType': courseType.name,
+      'courseType': courseType.dbValue,
       'unitLabel': unitLabel,
       'emoji': emoji,
       'colorHex': colorHex,

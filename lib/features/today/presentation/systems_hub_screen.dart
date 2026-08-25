@@ -25,8 +25,7 @@ import 'package:ritmo/features/settings/presentation/groups/modules_group_screen
 import 'package:ritmo/features/settings/presentation/settings_screen.dart';
 import 'package:ritmo/features/notes/presentation/screens/notebook_screen.dart';
 
-import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
+import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 
@@ -1376,8 +1375,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
             context,
             MaterialPageRoute(
               builder: (context) => hasCompletedOnboarding
-                  ? const SSHomeDashboardScreen()
-                  : const SSIntroScreen(),
+                  ? const MvHubScreen()
+                  : MvOnboardingScreen(onComplete: (_) async => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MvHubScreen()))),
             ),
           ).then((_) => _loadAllData()),
         );
@@ -1415,8 +1414,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                 context,
                 MaterialPageRoute(
                   builder: (context) => hasCompletedOnboarding
-                      ? const SSHomeDashboardScreen()
-                      : const SSIntroScreen(),
+                      ? const MvHubScreen()
+                      : MvOnboardingScreen(onComplete: (_) async => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MvHubScreen()))),
                 ),
               ).then((_) => _loadAllData()),
             );

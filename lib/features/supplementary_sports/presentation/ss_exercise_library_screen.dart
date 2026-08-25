@@ -598,7 +598,7 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, index) => const SizedBox(width: 8),
               itemBuilder: (context, idx) {
                 final cat = _categories[idx];
                 return _CategoryChip(

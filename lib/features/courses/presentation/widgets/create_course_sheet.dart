@@ -37,7 +37,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
 
   CourseType _selectedType = CourseType.video;
   int _weeklyTarget = 3;
-  String _energyRule = 'NONE';
+  CourseEnergyRule _energyRule = CourseEnergyRule.all;
 
   // Saturday=6, Sunday=0, Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5
   final List<int> _preferredDays = [];
@@ -58,13 +58,6 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
     {'name': 'چهارشنبه', 'value': 3},
     {'name': 'پنجشنبه', 'value': 4},
     {'name': 'جمعه', 'value': 5},
-  ];
-
-  final List<Map<String, String>> _energyRules = [
-    {'label': 'بدون قانون خاص', 'value': 'NONE'},
-    {'label': 'رد کردن در انرژی پایین', 'value': 'skip'},
-    {'label': 'پیشنهاد نسخه سبک در انرژی پایین', 'value': 'offerLight'},
-    {'label': 'فقط در انرژی بالا انجام شود', 'value': 'highEnergyOnly'},
   ];
 
   @override
@@ -101,7 +94,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
         _weeklyTarget = iv?['weeklyTargetSessions'] as int;
       }
       if (iv?['energyRule'] != null) {
-        _energyRule = iv?['energyRule'] as String;
+        _energyRule = CourseEnergyRuleExtension.fromString(iv?['energyRule'] as String?);
       }
       if (iv?['preferredDays'] != null) {
         final days = iv?['preferredDays'] as List<dynamic>;
@@ -648,15 +641,15 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                               border: Border.all(color: colors.border),
                             ),
                             child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
+                              child: DropdownButton<CourseEnergyRule>(
                                 value: _energyRule,
                                 isExpanded: true,
                                 dropdownColor: isDarkMode ? const Color(0xff1A1D29) : Colors.white,
-                                items: _energyRules.map((rule) {
-                                  return DropdownMenuItem<String>(
-                                    value: rule['value'],
+                                items: CourseEnergyRule.values.map((rule) {
+                                  return DropdownMenuItem<CourseEnergyRule>(
+                                    value: rule,
                                     child: Text(
-                                      rule['label']!,
+                                      rule.labelFa,
                                       style: TextStyle(fontSize: 12.5, color: colors.textPrimary),
                                     ),
                                   );

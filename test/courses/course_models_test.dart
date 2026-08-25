@@ -12,7 +12,7 @@ void main() {
         activityType: 'STUDY',
         zoneId: null,
         isArchived: false,
-        energyRule: 'offerLight',
+        energyRule: CourseEnergyRule.offerLight,
         createdAt: 1700000000000,
         updatedAt: 1700000005000,
         courseType: CourseType.video,
@@ -43,7 +43,7 @@ void main() {
       expect(restored.sessionDurationMinutes, equals(course.sessionDurationMinutes));
       expect(restored.zoneId, isNull);
       expect(restored.isArchived, isFalse);
-      expect(restored.energyRule, equals('offerLight'));
+      expect(restored.energyRule, equals(CourseEnergyRule.offerLight));
       expect(restored.courseType, equals(CourseType.video));
       expect(restored.unitLabel, isNull);
       expect(restored.emoji, equals('📱'));

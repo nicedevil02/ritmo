@@ -14,7 +14,7 @@ import 'package:ritmo/features/goals/models/goal_models.dart';
 import 'package:ritmo/features/goals/presentation/widgets/goals_formatters.dart';
 import 'package:ritmo/features/konkur/presentation/konkur_screen.dart';
 import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
+import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 
 class GoalStepInput {
@@ -478,7 +478,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       return _buildBanner('کنکور', colors, const KonkurScreen());
     }
     if (clean.contains('ورزش') || clean.contains('باشگاه') || clean.contains('تمرین') || clean.contains('بدنسازی')) {
-      return _buildBanner('حرکت', colors, const SSHomeDashboardScreen());
+      return _buildBanner('حرکت', colors, const MvHubScreen());
     }
     if (clean.contains('نماز') || clean.contains('قرآن') || clean.contains('عبادت') || clean.contains('دعا') || clean.contains('روزه')) {
       return _buildBanner('عبادت', colors, const WorshipScreen());

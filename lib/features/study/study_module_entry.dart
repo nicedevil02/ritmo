@@ -31,7 +31,18 @@ class StudyModuleEntry {
   }) async {
     await StudySettingsRepository.instance.setKonkurMode(konkur);
     if (!context.mounted) return;
-    Navigator.of(context).pop();
-    await open(context);
+
+    final Widget root = konkur
+        ? KonkurScreen(
+            onSwitchToStudyMode: () => switchMode(context, konkur: false),
+          )
+        : const StudyHomeScreen();
+
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => root,
+        settings: const RouteSettings(name: '/study'),
+      ),
+    );
   }
 }

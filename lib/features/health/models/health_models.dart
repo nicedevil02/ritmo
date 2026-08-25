@@ -113,6 +113,11 @@ class BloodSugarLog { // epoch ms
   final String? note;
   final int loggedAt;
 
+  /// بررسی اعتبارسنجی فیزیولوژیک قند خون بر حسب میلی‌گرم بر دسی‌لیتر (mg/dL)
+  static bool isPhysiologicallyValid(num val) {
+    return val >= 20 && val <= 1200;
+  }
+
   String get categoryLabel {
     switch (measurementType) {
       case 'FASTING':
@@ -334,6 +339,19 @@ class BloodPressureLog { // epoch ms
   final String position; // 'SITTING' | 'LYING' | 'STANDING'
   final String? note;
   final int loggedAt;
+
+  /// بررسی اعتبارسنجی فیزیولوژیک فشار خون و نبض
+  static bool isPhysiologicallyValid({
+    required int systolic,
+    required int diastolic,
+    int? pulse,
+  }) {
+    if (systolic < 50 || systolic > 300) return false;
+    if (diastolic < 30 || diastolic > 200) return false;
+    if (systolic <= diastolic) return false;
+    if (pulse != null && (pulse < 30 || pulse > 250)) return false;
+    return true;
+  }
 
   BloodPressureCategory get category {
     if (systolic >= 180 || diastolic >= 120) {
@@ -659,6 +677,22 @@ class VitalSignLog { // epoch ms
   final String unit;
   final String? note;
   final int loggedAt;
+
+  /// بررسی اعتبارسنجی فیزیولوژیک علائم حیاتی
+  static bool isPhysiologicallyValid(String vitalType, double val) {
+    switch (vitalType.toUpperCase().trim()) {
+      case 'WEIGHT':
+        return val >= 2.0 && val <= 500.0;
+      case 'TEMPERATURE':
+        return val >= 30.0 && val <= 45.0;
+      case 'SPO2':
+        return val >= 50.0 && val <= 100.0;
+      case 'WAIST':
+        return val >= 20.0 && val <= 250.0;
+      default:
+        return val > 0;
+    }
+  }
 
   String get formattedValue => '$value $unit';
 

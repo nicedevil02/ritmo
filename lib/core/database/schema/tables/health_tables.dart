@@ -167,6 +167,7 @@ class HealthTables {
     ''');
     await db.execute('CREATE INDEX idx_medlog_routine ON medication_logs(routineId);');
     await db.execute('CREATE INDEX idx_medlog_time ON medication_logs(scheduledTime);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_medlog_routine_time ON medication_logs(routineId, scheduledTime, takenTime);');
 
   await db.execute('''
       CREATE TABLE IF NOT EXISTS wellbeing_daily (

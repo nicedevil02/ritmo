@@ -1,6 +1,6 @@
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 
-enum OverdoseResult { safe, warningUnderInterval, warningMaxLimitExceeded }
+enum OverdoseResult { safe, warningUnderInterval, warningMaxLimitExceeded, warningBoth }
 
 class MedicalEngine {
   /// Pure function to evaluate medication overdose risk.
@@ -24,12 +24,16 @@ class MedicalEngine {
     );
 
     final diffHours = (now - lastTaken).toDouble() / (1000 * 60 * 60);
+    final intervalViolated = minIntervalHours > 0 && diffHours < minIntervalHours;
+    final maxLimitViolated = maxDosesPerDay > 0 && prnLogs24h.length >= maxDosesPerDay;
 
-    if (minIntervalHours > 0 && diffHours < minIntervalHours) {
+    if (intervalViolated && maxLimitViolated) {
+      return OverdoseResult.warningBoth;
+    }
+    if (intervalViolated) {
       return OverdoseResult.warningUnderInterval;
     }
-
-    if (maxDosesPerDay > 0 && prnLogs24h.length >= maxDosesPerDay) {
+    if (maxLimitViolated) {
       return OverdoseResult.warningMaxLimitExceeded;
     }
 
@@ -38,15 +42,13 @@ class MedicalEngine {
 
   /// Pure function to evaluate whether medication refill is needed.
   ///
-  /// MED-14: the previous implementation required `stockCount >= 1`, which made
-  /// the refill banner disappear at exactly the moment the medication ran out.
-  /// Zero stock is the strongest possible refill signal, so it must be included.
+  /// Supports both integer and floating-point stock amounts (e.g. 0.5 tablets).
   ///
   /// A [warningThreshold] of zero or less means the user never enabled stock
   /// tracking for this medication, so no refill warning is produced.
   static bool isRefillNeeded({
-    required int stockCount,
-    required int warningThreshold,
+    required num stockCount,
+    required num warningThreshold,
   }) {
     if (warningThreshold <= 0) return false;
     return stockCount <= warningThreshold;
@@ -56,7 +58,7 @@ class MedicalEngine {
   ///
   /// Callers should render this as a distinct, stronger state than
   /// [isRefillNeeded] ("تمام شده" versus "رو به اتمام").
-  static bool isOutOfStock({required int stockCount}) => stockCount <= 0;
+  static bool isOutOfStock({required num stockCount}) => stockCount <= 0;
 }
 
 class MedicineEngineInput {
@@ -72,8 +74,8 @@ class MedicineEngineInput {
   final List<int> prnLogs24h;
   final int minIntervalHours;
   final int maxDosesPerDay;
-  final int stockCount;
-  final int warningThreshold;
+  final num stockCount;
+  final num warningThreshold;
 }
 
 class MedicineEngineOutput {
@@ -113,7 +115,7 @@ class MedicineEngine
 
   @override
   String fingerprint(MedicineEngineInput input) =>
-      '${input.now}|${input.stockCount}|${input.prnLogs24h.length}';
+      '${input.now}|${input.stockCount}|${input.warningThreshold}|${input.minIntervalHours}|${input.maxDosesPerDay}|${input.prnLogs24h.length}';
 
   @override
   void invalidate() {}

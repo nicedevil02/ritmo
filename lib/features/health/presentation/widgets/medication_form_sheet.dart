@@ -34,6 +34,7 @@ class MedicationFormData {
     required this.intervalDays,
     required this.startDate,
     this.trackStock = false,
+    this.isPrivate = false,
     this.packageSize,
     this.packageUnit,
     this.stockCount,
@@ -58,6 +59,7 @@ class MedicationFormData {
   final String? activeIngredient;
   final FoodRelation foodRelation;
   final bool isChronic;
+  final bool isPrivate;
   final int? durationDays;
   final DateTime? endDate;
   final String type; // 'FIXED' | 'PRN'
@@ -199,6 +201,7 @@ class MedicationSaveHelper {
       routineType: data.type == 'FIXED' ? 'timeBased' : 'asNeeded',
       isEssential: true,
       isArchived: false,
+      isPrivate: data.isPrivate,
       minIntervalHours: data.type == 'PRN' ? data.minInterval : 0,
       maxDosesPerDay: data.type == 'PRN' ? data.maxDoses : 0,
       createdAt: data.isEdit && data.existingMedication != null

@@ -28,6 +28,15 @@ enum MedicationForm {
     return MedicationForm.TABLET;
   }
 
+  static MedicationForm? fromStringOrNull(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final upper = value.trim().toUpperCase();
+    for (final form in MedicationForm.values) {
+      if (form.name == upper) return form;
+    }
+    return null;
+  }
+
   String get labelFa {
     switch (this) {
       case MedicationForm.TABLET:
@@ -293,6 +302,15 @@ enum DoseUnit {
       if (unit.name == upper) return unit;
     }
     return fallback;
+  }
+
+  static DoseUnit? fromStringOrNull(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final upper = value.trim().toUpperCase();
+    for (final unit in DoseUnit.values) {
+      if (unit.name == upper) return unit;
+    }
+    return null;
   }
 
   String get labelFa {
@@ -675,6 +693,7 @@ class Medication {
     this.routineType = 'timeBased',
     this.isEssential = true,
     this.isArchived = false,
+    this.isPrivate = false,
     this.minIntervalHours = 0,
     this.maxDosesPerDay = 0,
     required this.createdAt,
@@ -690,6 +709,7 @@ class Medication {
   final String routineType; // 'timeBased' | 'asNeeded'
   final bool isEssential;
   final bool isArchived;
+  final bool isPrivate;
   final int minIntervalHours;
   final int maxDosesPerDay;
   final int createdAt;
@@ -771,6 +791,7 @@ class Medication {
       isEssential:
           routine['isEssential'] == 1 || routine['isEssential'] == true,
       isArchived: routine['isArchived'] == 1 || routine['isArchived'] == true,
+      isPrivate: routine['isPrivate'] == 1 || routine['isPrivate'] == true,
       minIntervalHours: (routine['minIntervalHours'] as num?)?.toInt() ?? 0,
       maxDosesPerDay: (routine['maxDosesPerDay'] as num?)?.toInt() ?? 0,
       createdAt:
@@ -920,16 +941,36 @@ enum DropApplicationSite {
 
 /// راهنما و نکات بالینی ایمنی اشکال دارویی غیرقرصی
 class ClinicalFormHelper {
-  static String? getClinicalEducationNote(MedicationForm form) {
+  static String? getClinicalEducationNote(
+    MedicationForm form, {
+    MedicationRoute? route,
+    DropApplicationSite? dropSite,
+  }) {
     switch (form) {
       case MedicationForm.INSULIN:
         return 'جهت جلوگیری از لیپوهایپرتروفی (سفت شدن بافت چربی)، محل تزریق را هر بار با فاصله حداقل ۲ سانتی‌متر از محل قبلی بچرخانید و همیشه قبل از تزریق از عدم وجود حباب هوا مطمئن شوید.';
       case MedicationForm.INHALER:
-      case MedicationForm.SPRAY:
         return 'در صورت استفاده از کورتیکواستروئید استنشاقی، پس از هر بار مصرف دهان و گلوی خود را با آب بشویید تا از ایجاد برفک دهانی و گرفتگی صدا پیشگیری شود.';
+      case MedicationForm.SPRAY:
+        if (route == MedicationRoute.INHALED) {
+          return 'در صورت استفاده از کورتیکواستروئید استنشاقی، پس از هر بار مصرف دهان و گلوی خود را با آب بشویید تا از ایجاد برفک دهانی و گرفتگی صدا پیشگیری شود.';
+        }
+        return 'قبل از مصرف، مجرای بینی را تمیز کرده، سر را کمی به جلو متمایل کنید و سر افشانه را به سمت دیواره خارجی بینی اسپری کنید.';
       case MedicationForm.PATCH:
         return 'پچ را روی پوست تمیز، خشک، بدون مو و سالم بچسبانید. هر بار محل چسباندن پچ را تغییر دهید و حداقل تا ۷ روز روی همان نقطه قبلی نچسبانید.';
       case MedicationForm.DROPS:
+        if (route == MedicationRoute.OTIC ||
+            dropSite == DropApplicationSite.EAR_RIGHT ||
+            dropSite == DropApplicationSite.EAR_LEFT ||
+            dropSite == DropApplicationSite.EARS_BOTH) {
+          return 'سر را به یک سمت خم کرده، قطره را در مجرای گوش بچکانید و ۲ تا ۳ دقیقه در همان حالت بمانید تا دارو به عمق مجرا نفوذ کند.';
+        }
+        if (route == MedicationRoute.NASAL ||
+            dropSite == DropApplicationSite.NOSE_RIGHT ||
+            dropSite == DropApplicationSite.NOSE_LEFT ||
+            dropSite == DropApplicationSite.NOSE_BOTH) {
+          return 'سر را به آرامی به عقب متمایل کرده و پس از چکاندن قطره در مجرای بینی، چند ثانیه از دهان نفس بکشید.';
+        }
         return 'پس از چکاندن قطره چشمی، گوشه داخلی چشم (مجرای اشکی) را به مدت ۱ دقیقه به آرامی با انگشت فشار دهید تا از خروج دارو و جذب سیستمیک جلوگیری شود.';
       default:
         return null;

@@ -12,7 +12,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_sug
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_plan_sheet.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 Future<void> showWeekSmartFillSheet(
   BuildContext context, {

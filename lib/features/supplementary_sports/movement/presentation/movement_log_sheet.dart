@@ -289,7 +289,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
 
     // معیار ثانوی — قبلاً کاملاً نادیده گرفته می‌شد
     final secondary = _secondaryMetricValue;
-    if (secondary != null && kind.secondaryMetric != null) {
+    if (secondary != null && kind.secondaryMetric != MovementMetric.none) {
       switch (kind.secondaryMetric) {
         case MovementMetric.elevation:
           elevMeters ??= secondary;
@@ -509,7 +509,7 @@ class _MovementLogSheetState extends State<MovementLogSheet> {
                         ),
                         const SizedBox(height: RitmoSpacing.md),
                         _buildPrimaryMetricField(accent),
-                        if (_selectedKind!.secondaryMetric != null) ...[
+                        if (_selectedKind!.secondaryMetric != MovementMetric.none) ...[
                           const SizedBox(height: RitmoSpacing.md),
                           _buildSecondaryMetricField(accent),
                         ],

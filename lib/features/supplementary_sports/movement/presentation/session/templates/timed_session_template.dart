@@ -7,7 +7,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_ses
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_template.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_widgets.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// مراحل ثابت هر جلسهٔ زمان‌محور.
 const List<_Phase> _phases = <_Phase>[

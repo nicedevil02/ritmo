@@ -11,7 +11,7 @@ void main() {
       sessionDurationMinutes: 45,
       createdAt: 0,
       updatedAt: 0,
-      energyRule: 'NONE',
+      energyRule: CourseEnergyRule.all,
       courseType: CourseType.custom,
       preferredDays: const [1, 3, 5],
     );
@@ -23,7 +23,7 @@ void main() {
       sessionDurationMinutes: 60,
       createdAt: 0,
       updatedAt: 0,
-      energyRule: 'skip',
+      energyRule: CourseEnergyRule.skipLow,
       courseType: CourseType.custom,
       preferredDays: const [1, 3, 5],
     );
@@ -35,7 +35,7 @@ void main() {
       sessionDurationMinutes: 90,
       createdAt: 0,
       updatedAt: 0,
-      energyRule: 'highEnergyOnly',
+      energyRule: CourseEnergyRule.highOnly,
       courseType: CourseType.custom,
       preferredDays: const [1, 3, 5],
     );

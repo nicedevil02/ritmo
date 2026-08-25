@@ -10,10 +10,48 @@ import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/features/health/models/medication_models.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// مخزن داده اصلی و جامع برای مدیریت داروها و پروفایل‌های دارویی
+/// مخزن داده اصلی، جامع و اتمیک برای مدیریت داروها، پروفایل‌های بالینی و ثبت دوزها
 class MedicationRepository {
   MedicationRepository._();
   static final MedicationRepository instance = MedicationRepository._();
+
+  /// محاسبه هوشمند تعداد واحدهای کسر شونده از موجودی بر مبنای دوز و شکل دارو
+  ///
+  /// C-01: اگر دوز بر حسب میلی‌گرم (mg) باشد ولی شکل دارو قرص یا کپسول باشد،
+  /// مقدار میلی‌گرم مستقیماً از تعداد قرص‌های بسته کم نمی‌شود؛ بلکه بر اساس
+  /// قدرت دارو (strength) به تعداد واحد مصرفی تبدیل می‌شود.
+  static double calculateDeductionUnits({
+    required MedicationProfile profile,
+    double? doseAmount,
+    String? doseUnit,
+  }) {
+    final effectiveAmount = doseAmount ?? profile.doseAmount ?? 1.0;
+    final rawUnit = (doseUnit ?? profile.doseUnit?.name ?? '').toUpperCase().trim();
+
+    final isMassUnit = rawUnit == 'MG' || rawUnit == 'MCG' || rawUnit == 'G';
+    final isCountableForm = profile.form == MedicationForm.TABLET ||
+        profile.form == MedicationForm.CAPSULE ||
+        profile.form == MedicationForm.PATCH ||
+        profile.form == MedicationForm.SACHET ||
+        profile.form == MedicationForm.SUPPOSITORY;
+
+    if (isMassUnit && isCountableForm) {
+      if (profile.strength != null && profile.strength!.isNotEmpty) {
+        final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(profile.strength!);
+        if (match != null) {
+          final strengthNum = double.tryParse(match.group(1)!);
+          if (strengthNum != null && strengthNum > 0) {
+            final units = effectiveAmount / strengthNum;
+            return units.clamp(0.1, 100.0);
+          }
+        }
+      }
+      // اگر قدرت قرص در پروفایل ثبت نشده بود، ۱ عدد قرص کسر می‌شود (نه مثلاً ۵۰۰ عدد!)
+      return 1.0;
+    }
+
+    return effectiveAmount.clamp(0.0, double.infinity);
+  }
 
   /// دریافت یک دارو بر اساس شناسه روتین
   Future<Medication?> getByRoutineId(String routineId) async {
@@ -40,6 +78,7 @@ class MedicationRepository {
         'routine_schedules',
         where: 'routineId = ?',
         whereArgs: [routineId],
+        orderBy: 'id ASC',
         limit: 1,
       );
       final scheduleMap = scheduleRows.isNotEmpty ? scheduleRows.first : null;
@@ -67,14 +106,20 @@ class MedicationRepository {
       if (routineRows.isEmpty) return const [];
 
       final profiles = await db.query('medication_profiles');
-      final profileMap = {
-        for (final p in profiles) p['routineId'] as String: p,
-      };
+      final profileMap = <String, Map<String, dynamic>>{};
+      for (final p in profiles) {
+        final rId = p['routineId'] as String?;
+        if (rId != null) profileMap[rId] = p;
+      }
 
-      final schedules = await db.query('routine_schedules');
-      final scheduleMap = {
-        for (final s in schedules) (s['routineId'] ?? s['routine_id']) as String: s,
-      };
+      final schedules = await db.query('routine_schedules', orderBy: 'id ASC');
+      final scheduleMap = <String, Map<String, dynamic>>{};
+      for (final s in schedules) {
+        final rId = (s['routineId'] ?? s['routine_id']) as String?;
+        if (rId != null && !scheduleMap.containsKey(rId)) {
+          scheduleMap[rId] = s;
+        }
+      }
 
       return routineRows.map((r) {
         final id = r['id'] as String;
@@ -102,14 +147,20 @@ class MedicationRepository {
       if (routineRows.isEmpty) return const [];
 
       final profiles = await db.query('medication_profiles');
-      final profileMap = {
-        for (final p in profiles) p['routineId'] as String: p,
-      };
+      final profileMap = <String, Map<String, dynamic>>{};
+      for (final p in profiles) {
+        final rId = p['routineId'] as String?;
+        if (rId != null) profileMap[rId] = p;
+      }
 
-      final schedules = await db.query('routine_schedules');
-      final scheduleMap = {
-        for (final s in schedules) (s['routineId'] ?? s['routine_id']) as String: s,
-      };
+      final schedules = await db.query('routine_schedules', orderBy: 'id ASC');
+      final scheduleMap = <String, Map<String, dynamic>>{};
+      for (final s in schedules) {
+        final rId = (s['routineId'] ?? s['routine_id']) as String?;
+        if (rId != null && !scheduleMap.containsKey(rId)) {
+          scheduleMap[rId] = s;
+        }
+      }
 
       return routineRows.map((r) {
         final id = r['id'] as String;
@@ -125,87 +176,120 @@ class MedicationRepository {
     }
   }
 
-  /// ایجاد یا ویرایش دارو همراه با پروفایل تخصصی و زمان‌بندی
+  /// ایجاد یا ویرایش دارو همراه با پروفایل تخصصی و زمان‌بندی درون تراکنش اتمیک
   Future<String> saveMedication({
     required Medication medication,
     required Map<String, dynamic> scheduleData,
     bool isEdit = false,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final routineId = isEdit ? medication.id : (medication.id.isNotEmpty ? medication.id : 'routine_med_$now');
+    final routineId = isEdit
+        ? medication.id
+        : (medication.id.isNotEmpty ? medication.id : 'routine_med_$now');
+
+    // C-03: اتصال سطح حساسیت دارو به سطح آگاه‌سازی و اولویت
+    String notifLevel = 'normal';
+    double priority = 2.0;
+    int isEssential = medication.isEssential ? 1 : 0;
+    int isEssentialLocked = 0;
+
+    switch (medication.profile.criticality) {
+      case MedicationCriticality.LIFE_CRITICAL:
+        notifLevel = 'alarm';
+        priority = 3.0;
+        isEssential = 1;
+        isEssentialLocked = 1;
+        break;
+      case MedicationCriticality.HIGH:
+        notifLevel = 'important';
+        priority = 2.5;
+        isEssential = 1;
+        break;
+      case MedicationCriticality.NORMAL:
+        notifLevel = 'normal';
+        priority = medication.isEssential ? 2.0 : 1.0;
+        break;
+    }
 
     final routineData = <String, dynamic>{
       'id': routineId,
       'title': medication.name,
       'description': medication.profile.instructions ?? medication.description,
-      'category': 'medical',
+      'category': medication.category.isNotEmpty ? medication.category : 'medical',
       'routineType': medication.routineType,
-      'notificationLevel': 'normal',
-      'isEssential': 1,
-      'isEssentialLocked': 0,
+      'notificationLevel': notifLevel,
+      'isEssential': isEssential,
+      'isEssentialLocked': isEssentialLocked,
       'energyRule': 'NONE',
-      'priority': 2.0,
-      'medStockCount': medication.profile.remainingAmount?.toInt() ?? 0,
-      'medRefillThreshold': medication.profile.refillThresholdAmount?.toInt() ?? 0,
+      'priority': priority,
+      'medStockCount': medication.profile.remainingAmount?.round() ?? 0,
+      'medRefillThreshold': medication.profile.refillThresholdAmount?.round() ?? 0,
       'minIntervalHours': medication.isPrn ? medication.minIntervalHours : 0,
       'maxDosesPerDay': medication.isPrn ? medication.maxDosesPerDay : 0,
       'isArchived': medication.isArchived ? 1 : 0,
-      'isPrivate': 0,
+      'isPrivate': medication.isPrivate ? 1 : 0,
       'displayOrder': 1,
       'createdAt': isEdit ? medication.createdAt : now,
       'updatedAt': now,
       'itemType': MedicationIdentity.itemType,
     };
 
-    if (isEdit) {
-      await RitmoExecutionKernel.instance.execute(
-        EditRoutineCommand(
-          routineId: routineId,
-          routineData: routineData,
-          scheduleData: scheduleData,
-          applyToAll: true,
-        ),
-      );
-    } else {
-      await RitmoExecutionKernel.instance.execute(
-        CreateRoutineCommand(
-          routineData: routineData,
-          scheduleData: scheduleData,
-        ),
-      );
-    }
-
-    // ذخیره یا به‌روزرسانی پروفایل در جدول medication_profiles
     final db = await DatabaseHelper.instance.database;
-    final profileData = medication.profile.copyWith(routineId: routineId).toMap();
-    await db.insert(
-      'medication_profiles',
-      profileData,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+
+    // H-12: اجرای ذخیره دستورات روتین و پروفایل دارویی در یک تراکنش اتمیک
+    await db.transaction((txn) async {
+      if (isEdit) {
+        await RitmoExecutionKernel.instance.execute(
+          EditRoutineCommand(
+            routineId: routineId,
+            routineData: routineData,
+            scheduleData: scheduleData,
+            applyToAll: true,
+          ),
+        );
+      } else {
+        await RitmoExecutionKernel.instance.execute(
+          CreateRoutineCommand(
+            routineData: routineData,
+            scheduleData: scheduleData,
+          ),
+        );
+      }
+
+      final profileData = medication.profile.copyWith(routineId: routineId).toMap();
+      await txn.insert(
+        'medication_profiles',
+        profileData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
 
     return routineId;
   }
 
-  /// به‌روزرسانی موجودی دارو
+  /// به‌روزرسانی موجودی دارو به صورت اتمیک (پشتیبانی کامل از اعشار)
   Future<void> updateStock(String routineId, double remainingAmount) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.update(
-        'medication_profiles',
-        {'remainingAmount': remainingAmount},
-        where: 'routineId = ?',
-        whereArgs: [routineId],
-      );
-      await db.update(
-        'routines',
-        {
-          'medStockCount': remainingAmount.toInt(),
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [routineId],
-      );
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      await db.transaction((txn) async {
+        await txn.update(
+          'medication_profiles',
+          {'remainingAmount': remainingAmount},
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+        await txn.update(
+          'routines',
+          {
+            'medStockCount': remainingAmount.round(),
+            'updatedAt': now,
+          },
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
+      });
     } catch (e, st) {
       debugPrint('[MedicationRepository] updateStock error: $e\n$st');
     }
@@ -214,11 +298,37 @@ class MedicationRepository {
   /// شارژ موجودی دارو / تمدید نسخه
   Future<void> refillStock(String routineId, double addedAmount) async {
     try {
-      final medication = await getByRoutineId(routineId);
-      if (medication == null) return;
-      final current = medication.profile.remainingAmount ?? 0.0;
-      final updated = current + addedAmount;
-      await updateStock(routineId, updated);
+      final db = await DatabaseHelper.instance.database;
+      await db.transaction((txn) async {
+        final profileRows = await txn.query(
+          'medication_profiles',
+          columns: ['remainingAmount'],
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+          limit: 1,
+        );
+        final current = profileRows.isNotEmpty
+            ? (profileRows.first['remainingAmount'] as num?)?.toDouble() ?? 0.0
+            : 0.0;
+        final updated = current + addedAmount;
+
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await txn.update(
+          'medication_profiles',
+          {'remainingAmount': updated},
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+        await txn.update(
+          'routines',
+          {
+            'medStockCount': updated.round(),
+            'updatedAt': now,
+          },
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
+      });
     } catch (e, st) {
       debugPrint('[MedicationRepository] refillStock error: $e\n$st');
     }
@@ -260,9 +370,14 @@ class MedicationRepository {
     }
   }
 
-  /// حذف نرم/کامل دارو
-  Future<void> delete(String routineId) async {
+  /// حذف دارو (به صورت پیش‌فرض آرشیو ایمن جهت حفظ سوابق بالینی)
+  Future<void> delete(String routineId, {bool hardDelete = false}) async {
     try {
+      if (!hardDelete) {
+        await archive(routineId);
+        return;
+      }
+
       await RitmoExecutionKernel.instance.execute(
         DeleteRoutineCommand(
           routineId: routineId,
@@ -308,17 +423,17 @@ class MedicationRepository {
         );
       }
     } else {
-      // PRN recent check: if taken within the last 10 minutes
+      // اگر زمان‌بندی صریح پاس داده نشد (داروی زمان‌دار یا موردی)
       final recentLogs = await db.query(
         'medication_logs',
-        where: 'routineId = ? AND status = ? AND createdAt >= ?',
-        whereArgs: [routineId, 'TAKEN', now - 10 * 60 * 1000],
+        where: 'routineId = ? AND status = ? AND (takenTime >= ? OR createdAt >= ?)',
+        whereArgs: [routineId, 'TAKEN', now - 15 * 60 * 1000, now - 15 * 60 * 1000],
       );
       if (recentLogs.isNotEmpty) {
         return const MedicationSafetyResult(
           isSafe: false,
           isDuplicate: true,
-          warningMessage: 'شما در ۱۰ دقیقه گذشته یک دوز از این دارو ثبت کرده‌اید. آیا از مصرف مجدد اطمینان دارید؟',
+          warningMessage: 'شما در ۱۵ دقیقه گذشته یک دوز از این دارو ثبت کرده‌اید. آیا از مصرف مجدد اطمینان دارید؟',
         );
       }
     }
@@ -328,19 +443,13 @@ class MedicationRepository {
       final oneDayAgo = now - 24 * 60 * 60 * 1000;
       final prnLogs = await db.query(
         'medication_logs',
-        where: 'routineId = ? AND status = ? AND createdAt >= ?',
+        where: 'routineId = ? AND status = ? AND COALESCE(takenTime, createdAt) >= ?',
         whereArgs: [routineId, 'TAKEN', oneDayAgo],
       );
-      final prnLegacy = await db.query(
-        'prn_logs',
-        where: 'routineId = ? AND takenAt >= ?',
-        whereArgs: [routineId, oneDayAgo],
-      );
 
-      final timestamps = <int>{
+      final timestamps = <int>[
         for (final l in prnLogs) (l['takenTime'] as int? ?? l['createdAt'] as int),
-        for (final l in prnLegacy) l['takenAt'] as int,
-      }.toList();
+      ];
 
       final overdose = MedicalEngine.checkOverdoseStatus(
         now: now,
@@ -349,7 +458,13 @@ class MedicationRepository {
         maxDosesPerDay: med.maxDosesPerDay,
       );
 
-      if (overdose == OverdoseResult.warningUnderInterval) {
+      if (overdose == OverdoseResult.warningBoth) {
+        return MedicationSafetyResult(
+          isSafe: false,
+          overdoseResult: overdose,
+          warningMessage: 'هشدار جدی: هم فاصله زمانی مجاز و هم سقف تعداد دوز در ۲۴ ساعت (${med.maxDosesPerDay} دوز) نقض شده است.',
+        );
+      } else if (overdose == OverdoseResult.warningUnderInterval) {
         final lastTaken = timestamps.fold<int>(0, (max, val) => val > max ? val : max);
         final elapsedMinutes = (now - lastTaken) / (60 * 1000);
         final requiredMinutes = med.minIntervalHours * 60;
@@ -372,7 +487,7 @@ class MedicationRepository {
     return const MedicationSafetyResult(isSafe: true);
   }
 
-  /// ثبت دقیق مصرف یا پرش یک دوز دارو (با کسر خودکار موجودی و همگام‌سازی وضعیت آلارم)
+  /// ثبت دقیق مصرف یا پرش یک دوز دارو به صورت اتمیک و Idempotent
   Future<String> recordIntake({
     required String routineId,
     required String status, // 'TAKEN', 'SKIPPED', 'SNOOZED'
@@ -384,90 +499,143 @@ class MedicationRepository {
     String? notes,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final logId = 'medlog_${routineId}_$now';
+    // H-13: شناسه idempotent برای دوزهای زمان‌بندی‌شده
+    final logId = scheduledTime != null
+        ? 'medlog_${routineId}_$scheduledTime'
+        : 'medlog_${routineId}_$now';
+
     final db = await DatabaseHelper.instance.database;
-
     final med = await getByRoutineId(routineId);
-    final effectiveDose = doseAmount ?? med?.profile.doseAmount ?? 1.0;
-    final effectiveUnit = doseUnit ?? med?.profile.doseUnit?.name ?? 'pill';
 
-    // 1. درج لاگ در جدول medication_logs
-    await db.insert(
-      'medication_logs',
-      {
-        'id': logId,
-        'routineId': routineId,
-        'scheduledTime': scheduledTime,
-        'takenTime': status == 'TAKEN' ? (takenTime ?? now) : null,
-        'status': status,
-        'note': notes,
-        'createdAt': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final deductionUnits = med != null
+        ? calculateDeductionUnits(
+            profile: med.profile,
+            doseAmount: doseAmount,
+            doseUnit: doseUnit,
+          )
+        : (doseAmount ?? 1.0);
 
-    // اگر موردی بود و لاگ legacy هم نیاز بود
-    if (med?.isPrn == true && status == 'TAKEN') {
-      try {
-        await db.insert('prn_logs', {
-          'id': 'prn_${routineId}_$now',
-          'routineId': routineId,
-          'takenAt': takenTime ?? now,
-          'dosage': '$effectiveDose $effectiveUnit',
-          'createdAt': now,
-        });
-      } catch (_) {}
-    }
+    final effectiveUnit = doseUnit ?? med?.profile.doseUnit?.name ?? 'TABLET';
 
-    // 2. کسر موجودی دارو در صورت مصرف (TAKEN)
-    if (status == 'TAKEN' && med != null) {
-      final currentStock = med.profile.remainingAmount ?? 0.0;
-      final newStock = (currentStock - effectiveDose).clamp(0.0, double.infinity);
-      await updateStock(routineId, newStock);
-    }
+    // C-05: محاسبه تاریخ دقیق وقوع بر مبنای ساعت زمان‌بندی‌شده یا زمان مصرف
+    final eventMs = scheduledTime ?? takenTime ?? now;
+    final targetDate = DateTime.fromMillisecondsSinceEpoch(eventMs);
+    final targetDateStr = targetDate.toIso8601String().substring(0, 10);
 
-    // 3. لغو آلارم‌های مرتبط با این دوز
-    if (scheduledTime != null) {
-      final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledTime);
-      final dateStr = scheduledDate.toIso8601String().substring(0, 10);
-      final timeStr = '${scheduledDate.hour.toString().padLeft(2, '0')}${scheduledDate.minute.toString().padLeft(2, '0')}';
-
-      // Update pending_reminders state to completed
-      await db.update(
-        'pending_reminders',
-        {
-          'state': status == 'TAKEN' ? 'completed' : 'skipped',
-          'updatedAt': now,
-        },
-        where: 'routineId = ? AND (originalTime = ? OR scheduledTime = ?)',
-        whereArgs: [routineId, scheduledTime, scheduledTime],
-      );
-
-      final matchingReminders = await db.query(
-        'pending_reminders',
-        where: 'routineId = ? AND id LIKE ?',
-        whereArgs: [routineId, '%$dateStr%$timeStr%'],
-      );
-      for (final rem in matchingReminders) {
-        final rId = rem['id'] as String;
-        await NotificationGateway.cancel(rId);
+    await db.transaction((txn) async {
+      // بررسی عدم ثبت دوباره دوز قبلاً ثبت‌شده (Idempotency)
+      if (scheduledTime != null && status == 'TAKEN') {
+        final existing = await txn.query(
+          'medication_logs',
+          where: 'routineId = ? AND scheduledTime = ? AND status = ?',
+          whereArgs: [routineId, scheduledTime, 'TAKEN'],
+        );
+        if (existing.isNotEmpty) {
+          return;
+        }
       }
-    }
 
-    // 4. ثبت نتیجه در هسته اجرای ریتمو برای نمایش در نمودارهای روزانه
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+      // ۱. درج یا به‌روزرسانی لاگ
+      await txn.insert(
+        'medication_logs',
+        {
+          'id': logId,
+          'routineId': routineId,
+          'scheduledTime': scheduledTime,
+          'takenTime': status == 'TAKEN' ? (takenTime ?? now) : null,
+          'status': status,
+          'note': notes,
+          'createdAt': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // ۲. کسر موجودی دارو در صورت مصرف (TAKEN)
+      if (status == 'TAKEN' && med != null && med.profile.hasStockTracking) {
+        final currentStock = med.profile.remainingAmount ?? 0.0;
+        final newStock = (currentStock - deductionUnits).clamp(0.0, double.infinity);
+        await txn.update(
+          'medication_profiles',
+          {'remainingAmount': newStock},
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+        await txn.update(
+          'routines',
+          {
+            'medStockCount': newStock.round(),
+            'updatedAt': now,
+          },
+          where: 'id = ?',
+          whereArgs: [routineId],
+        );
+      }
+
+      // ۳. لغو آلارم‌های مرتبط با این دوز
+      if (scheduledTime != null) {
+        final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledTime);
+        final dateStr = scheduledDate.toIso8601String().substring(0, 10);
+        final timeStr =
+            '${scheduledDate.hour.toString().padLeft(2, '0')}${scheduledDate.minute.toString().padLeft(2, '0')}';
+
+        await txn.update(
+          'pending_reminders',
+          {
+            'state': status == 'TAKEN' ? 'completed' : 'skipped',
+            'updatedAt': now,
+          },
+          where: 'routineId = ? AND (originalTime = ? OR scheduledTime = ?)',
+          whereArgs: [routineId, scheduledTime, scheduledTime],
+        );
+
+        final matchingReminders = await txn.query(
+          'pending_reminders',
+          where: 'routineId = ? AND id LIKE ?',
+          whereArgs: [routineId, '%$dateStr%$timeStr%'],
+        );
+        for (final rem in matchingReminders) {
+          final rId = rem['id'] as String;
+          await NotificationGateway.cancel(rId);
+        }
+      } else {
+        // M-21: لغو یادآورهای فعال نزدیک برای مصرف زودهنگام / موردی در ۲ ساعت آینده
+        final upcomingWindow = now + (2 * 60 * 60 * 1000);
+        final upcomingReminders = await txn.query(
+          'pending_reminders',
+          where: 'routineId = ? AND state = ? AND scheduledTime BETWEEN ? AND ?',
+          whereArgs: [routineId, 'pending', now - (30 * 60 * 1000), upcomingWindow],
+        );
+        if (upcomingReminders.isNotEmpty) {
+          await txn.update(
+            'pending_reminders',
+            {
+              'state': status == 'TAKEN' ? 'completed' : 'skipped',
+              'updatedAt': now,
+            },
+            where: 'routineId = ? AND state = ? AND scheduledTime BETWEEN ? AND ?',
+            whereArgs: [routineId, 'pending', now - (30 * 60 * 1000), upcomingWindow],
+          );
+          for (final rem in upcomingReminders) {
+            final rId = rem['id'] as String;
+            await NotificationGateway.cancel(rId);
+          }
+        }
+      }
+    });
+
+    // ۴. ثبت نتیجه در هسته اجرای ریتمو با تاریخ درست
     try {
       await RitmoExecutionKernel.instance.execute(
         CompleteOccurrenceCommand(
           routineId: routineId,
-          dateStr: todayStr,
+          dateStr: targetDateStr,
           resultType: status == 'TAKEN' ? 'FULL' : 'SKIPPED',
           durationMinutes: 5,
         ),
       );
     } catch (_) {}
 
-    // 5. اطلاع‌رسانی به سیستم رویدادها و همگام‌سازی اسنپ‌شات
+    // ۵. اطلاع‌رسانی به سیستم رویدادها و همگام‌سازی اسنپ‌شات
     RitmoEventBus().fire(RitmoEvent(
       type: status == 'TAKEN' ? 'medication_consumed' : 'medication_skipped',
       timestamp: DateTime.now(),
@@ -475,7 +643,7 @@ class MedicationRepository {
         'routineId': routineId,
         'takenAt': takenTime ?? now,
         'status': status,
-        'doseAmount': effectiveDose,
+        'doseAmount': deductionUnits,
         'doseUnit': effectiveUnit,
         'site': site,
       },
@@ -484,6 +652,109 @@ class MedicationRepository {
     await SnapshotSyncService.syncAll();
 
     return logId;
+  }
+
+  /// لغو ثبت مصرف دارو و بازگردانی دقیق موجودی (Undo Intake)
+  Future<void> undoIntake(String logId) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      await db.transaction((txn) async {
+        final logs = await txn.query(
+          'medication_logs',
+          where: 'id = ?',
+          whereArgs: [logId],
+          limit: 1,
+        );
+        if (logs.isEmpty) return;
+
+        final log = logs.first;
+        final routineId = log['routineId'] as String?;
+        final status = log['status'] as String?;
+        final scheduledTime = (log['scheduledTime'] as num?)?.toInt();
+        final takenTime = (log['takenTime'] as num?)?.toInt();
+
+        if (routineId == null) return;
+
+        // اگر دوز مصرف شده بود، موجودی را پس بده
+        if (status == 'TAKEN') {
+          final med = await getByRoutineId(routineId);
+          final deductionUnits = med != null
+              ? calculateDeductionUnits(profile: med.profile)
+              : 1.0;
+
+          final profileRows = await txn.query(
+            'medication_profiles',
+            columns: ['remainingAmount'],
+            where: 'routineId = ?',
+            whereArgs: [routineId],
+            limit: 1,
+          );
+          if (profileRows.isNotEmpty) {
+            final currentStock = (profileRows.first['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+            final restoredStock = currentStock + deductionUnits;
+            await txn.update(
+              'medication_profiles',
+              {'remainingAmount': restoredStock},
+              where: 'routineId = ?',
+              whereArgs: [routineId],
+            );
+            await txn.update(
+              'routines',
+              {
+                'medStockCount': restoredStock.round(),
+                'updatedAt': now,
+              },
+              where: 'id = ?',
+              whereArgs: [routineId],
+            );
+          }
+        }
+
+        // اگر دوز زمان‌بندی‌شده بود، وضعیت را به PENDING برگردان؛ وگرنه رکورد را حذف کن
+        if (scheduledTime != null) {
+          await txn.update(
+            'medication_logs',
+            {
+              'takenTime': null,
+              'status': 'PENDING',
+            },
+            where: 'id = ?',
+            whereArgs: [logId],
+          );
+        } else {
+          await txn.delete(
+            'medication_logs',
+            where: 'id = ?',
+            whereArgs: [logId],
+          );
+        }
+
+        final eventMs = scheduledTime ?? takenTime ?? now;
+        final dateStr = DateTime.fromMillisecondsSinceEpoch(eventMs).toIso8601String().substring(0, 10);
+        try {
+          await RitmoExecutionKernel.instance.execute(
+            CompleteOccurrenceCommand(
+              routineId: routineId,
+              dateStr: dateStr,
+              resultType: 'EMPTY',
+              durationMinutes: 0,
+            ),
+          );
+        } catch (_) {}
+      });
+
+      RitmoEventBus().fire(RitmoEvent(
+        type: 'medication_intake_undone',
+        timestamp: DateTime.now(),
+        payload: {'logId': logId},
+      ));
+      RitmoEvents.notifyRoutineChanged();
+      await SnapshotSyncService.syncAll();
+    } catch (e, st) {
+      debugPrint('[MedicationRepository] undoIntake error: $e\n$st');
+    }
   }
 }
 

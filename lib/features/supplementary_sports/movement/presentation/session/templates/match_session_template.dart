@@ -7,7 +7,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_ses
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_template.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_widgets.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// قالب ورزش‌های تیمی / راکتی: فوتبال، فوتسال، والیبال، بسکتبال، تنیس، رزمی.
 ///

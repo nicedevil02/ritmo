@@ -12,12 +12,8 @@ import 'package:sqflite/sqflite.dart';
 
 /// AgendaSource for the Medicine domain.
 ///
-/// MED-09: this source used to read `medication_logs` and nothing else, so a
-/// dose only existed once it had already been taken. The one view whose entire
-/// job is answering "did I take my pills today?" could never show an
-/// outstanding dose. It now expands each medication's schedule into the
-/// concrete slots of the requested day and folds the logged rows onto those
-/// slots: an untaken dose is pending, a taken one flips to done.
+/// Handles multi-slot daily doses, PRN actions, treatment course date filtering (C-04),
+/// intelligent slot matching (H-08), and missed dose inference (H-09).
 class MedicineAgendaSource implements AgendaSource {
   MedicineAgendaSource({
     required this.medicationRoutines,
@@ -25,7 +21,7 @@ class MedicineAgendaSource implements AgendaSource {
     required this.medicineEnabled,
   });
 
-  /// `{routine, schedule}` pairs for every non-archived medication.
+  /// `{routine, schedule, profile}` tuples for every non-archived medication.
   final List<Map<String, dynamic>> medicationRoutines;
 
   /// routineId -> `yyyy-MM-dd` -> that day's logs, ordered in time.
@@ -76,23 +72,39 @@ class MedicineAgendaSource implements AgendaSource {
       );
 
       if (routines.isNotEmpty) {
-        final schedules = await db.query('routine_schedules');
+        final schedules = await db.query('routine_schedules', orderBy: 'id ASC');
+        final profiles = await db.query('medication_profiles');
+
+        final schedulesByRoutine = <String, Map<String, dynamic>>{};
+        for (final s in schedules) {
+          final rId = (s['routineId'] ?? s['routine_id'])?.toString();
+          if (rId != null && !schedulesByRoutine.containsKey(rId)) {
+            schedulesByRoutine[rId] = s;
+          }
+        }
+
+        final profilesByRoutine = <String, Map<String, dynamic>>{};
+        for (final p in profiles) {
+          final rId = p['routineId']?.toString();
+          if (rId != null) {
+            profilesByRoutine[rId] = p;
+          }
+        }
+
         for (final routine in routines) {
-          final id = routine['id'] as String?;
+          final id = routine['id']?.toString();
           if (id == null) continue;
-          final schedule = schedules.firstWhere(
-            (s) => s['routineId'] == id,
-            orElse: () => <String, Object?>{},
-          );
+          final schedule = schedulesByRoutine[id] ?? <String, Object?>{};
+          final profile = profilesByRoutine[id];
+
           medicationRoutines.add({
             'routine': Map<String, dynamic>.from(routine),
             'schedule': Map<String, dynamic>.from(schedule),
+            if (profile != null) 'profile': Map<String, dynamic>.from(profile),
           });
         }
       }
 
-      // COALESCE, because rows written before scheduledTime was populated would
-      // otherwise fall out of the range filter entirely and look untaken.
       final startMs = DateTime(
         start.year,
         start.month,
@@ -103,6 +115,7 @@ class MedicineAgendaSource implements AgendaSource {
         end.month,
         end.day,
       ).add(const Duration(days: 1)).millisecondsSinceEpoch;
+
       final logs = await db.rawQuery(
         '''
         SELECT m.*, r.title as medicationName
@@ -121,7 +134,7 @@ class MedicineAgendaSource implements AgendaSource {
         final ts = _logMs(log);
         if (ts == null) continue;
         final dayKey = (log['date'] as String?) ??
-          DateKey.of(DateTime.fromMillisecondsSinceEpoch(ts));
+            DateKey.of(DateTime.fromMillisecondsSinceEpoch(ts));
         logsByRoutineAndDate
             .putIfAbsent(
               routineId,
@@ -156,19 +169,52 @@ class MedicineAgendaSource implements AgendaSource {
     if (!medicineEnabled) return const [];
 
     final items = <AgendaItem>[];
+    final currentDay = DateTime(ctx.date.year, ctx.date.month, ctx.date.day);
 
     for (final entry in medicationRoutines) {
       final routine = entry['routine']! as Map<String, dynamic>;
       final schedule = entry['schedule']! as Map<String, dynamic>;
+      final profile = entry['profile'] as Map<String, dynamic>?;
       final routineId = routine['id'] as String?;
       if (routineId == null) continue;
+
+      // C-04: بررسی دقیق بازه دوره درمان دارو (Start Date / End Date / Duration)
+      if (profile != null) {
+        final startDateMs = profile['startDate'] as int?;
+        if (startDateMs != null) {
+          final startDt = DateTime.fromMillisecondsSinceEpoch(startDateMs);
+          final startDay = DateTime(startDt.year, startDt.month, startDt.day);
+          if (currentDay.isBefore(startDay)) {
+            continue; // هنوز دوره درمان شروع نشده است
+          }
+        }
+
+        final isChronic = profile['isChronic'] == 1 || profile['isChronic'] == true;
+        if (!isChronic) {
+          final endDateMs = profile['endDate'] as int?;
+          final durationDays = profile['durationDays'] as int?;
+          DateTime? effectiveEnd;
+
+          if (endDateMs != null) {
+            final endDt = DateTime.fromMillisecondsSinceEpoch(endDateMs);
+            effectiveEnd = DateTime(endDt.year, endDt.month, endDt.day);
+          } else if (durationDays != null && durationDays > 0 && startDateMs != null) {
+            final startDt = DateTime.fromMillisecondsSinceEpoch(startDateMs);
+            effectiveEnd = DateTime(startDt.year, startDt.month, startDt.day)
+                .add(Duration(days: durationDays));
+          }
+
+          if (effectiveEnd != null && currentDay.isAfter(effectiveEnd)) {
+            continue; // دوره درمان پایان یافته است
+          }
+        }
+      }
 
       final dayLogs =
           logsByRoutineAndDate[routineId]?[ctx.dateStr] ??
           const <Map<String, dynamic>>[];
       final asNeeded = MedicationIdentity.isAsNeeded(routine);
 
-      // PRN has no due time, so only what was actually taken is shown.
       final slots = asNeeded
           ? const <String>[]
           : _slotsForDate(schedule, ctx.date);
@@ -176,6 +222,11 @@ class MedicineAgendaSource implements AgendaSource {
       if (slots.isEmpty) {
         if (asNeeded && ctx.isToday) {
           items.add(_buildPrnActionItem(ctx: ctx, routine: routine));
+        } else if (!asNeeded && dayLogs.isEmpty && ctx.isToday) {
+          // M-16: داروی بدون زمان‌بندی با راهنمای کاربر
+          items.add(
+            _buildUnscheduledItem(ctx: ctx, routine: routine),
+          );
         }
         for (final log in dayLogs) {
           items.add(
@@ -204,8 +255,6 @@ class MedicineAgendaSource implements AgendaSource {
         );
       }
 
-      // Extra doses beyond the schedule (e.g. a rescue dose) stay visible
-      // instead of being swallowed by the slot mapping.
       for (final log in match.extras) {
         items.add(
           _buildItem(
@@ -255,6 +304,39 @@ class MedicineAgendaSource implements AgendaSource {
     );
   }
 
+  AgendaItem _buildUnscheduledItem({
+    required AgendaDayContext ctx,
+    required Map<String, dynamic> routine,
+  }) {
+    final routineId = routine['id']! as String;
+    final title = routine['title'] as String? ?? 'دارو';
+
+    return AgendaItem(
+      id: buildAgendaItemId(
+        AgendaDomain.medicine,
+        '$routineId@unscheduled',
+        ctx.dateStr,
+      ),
+      sourceId: routineId,
+      domain: AgendaDomain.medicine,
+      itemType: AgendaItemType.flexible,
+      title: title,
+      subtitle: 'زمان‌بندی ساعت مشخص نشده است (کلیک جهت تنظیم)',
+      dateStr: ctx.dateStr,
+      timeOfDay: null,
+      durationMinutes: 5,
+      category: Category.medical,
+      priority: 1.5,
+      isEssential: true,
+      deepLink: AgendaDeepLink(
+        domain: AgendaDomain.medicine,
+        targetId: routineId,
+      ),
+      completion: AgendaCompletion.pending,
+      meta: {'routineId': routineId, 'isUnscheduled': true},
+    );
+  }
+
   AgendaItem _buildItem({
     required AgendaDayContext ctx,
     required Map<String, dynamic> routine,
@@ -271,14 +353,19 @@ class MedicineAgendaSource implements AgendaSource {
 
     final status = log?['status'] as String?;
     var completion = AgendaCompletion.pending;
+    String? subtitle = log?['note'] as String?;
+
     if (status == 'TAKEN') {
       completion = AgendaCompletion.done;
     } else if (status == 'SKIPPED' || status == 'MISSED') {
       completion = AgendaCompletion.skipped;
+    } else if (log == null && slot != null) {
+      // H-09: تشخیص دوزهای گذشته که لاگ ندارند (Overdue / Missed)
+      if (ctx.isPast) {
+        subtitle = subtitle ?? 'مصرف ثبت نشده (فراموش‌شده)';
+      }
     }
 
-    // MED-02: the completion pipeline resolves the medication by `sourceId`, so
-    // it has to be the routine id. The specific dose travels in `meta` and `deepLink.slot`.
     return AgendaItem(
       id: buildAgendaItemId(
         AgendaDomain.medicine,
@@ -289,7 +376,7 @@ class MedicineAgendaSource implements AgendaSource {
       domain: AgendaDomain.medicine,
       itemType: slot != null ? AgendaItemType.fixed : AgendaItemType.flexible,
       title: title,
-      subtitle: log?['note'] as String?,
+      subtitle: subtitle,
       dateStr: ctx.dateStr,
       timeOfDay: slot,
       durationMinutes: 5,
@@ -324,8 +411,6 @@ class MedicineAgendaSource implements AgendaSource {
       return const [];
     }
 
-    // reminderTimes is the multi-dose carrier: "08:00, 14:00, 20:00" means three
-    // separate doses, not one routine that repeats.
     final times =
         rule.reminderTimes
             .map(_normalizeTime)
@@ -336,7 +421,7 @@ class MedicineAgendaSource implements AgendaSource {
     if (times.isNotEmpty) return times;
 
     final fallback = _normalizeTime(schedule['timeOfDay'] as String?);
-    return fallback == null ? const ['08:00'] : [fallback];
+    return fallback != null ? [fallback] : const [];
   }
 
   static RecurrenceRule _ruleFor(Map<String, dynamic> schedule) {
@@ -360,45 +445,67 @@ class MedicineAgendaSource implements AgendaSource {
     final time = _normalizeTime(schedule['timeOfDay'] as String?);
     return RecurrenceRule(
       weekdays: days,
-      reminderTimes: time != null ? [time] : const ['08:00'],
+      reminderTimes: time != null ? [time] : const [],
     );
   }
 
-  /// Attributes logged doses to slots.
-  ///
-  /// Exact matches win first (a log whose `scheduledTime` lands on the slot
-  /// minute); the remaining logs fill the earliest free slots in order. That
-  /// second pass exists because `ActionRouter` does not forward the tapped slot
-  /// yet, so existing rows carry midnight instead of the real dose time —
-  /// without it, a dose the user already confirmed keeps rendering as pending.
+  /// H-08: نگاشت دقیق لاگ‌ها به نزدیک‌ترین اسلات بر اساس کمترین فاصله زمانی (تا سقف ۳ ساعت)
   static _SlotMatch _matchLogsToSlots(
     List<String> slots,
     List<Map<String, dynamic>> logs,
   ) {
     final perSlot = List<Map<String, dynamic>?>.filled(slots.length, null);
-    final approximate = <Map<String, dynamic>>[];
+    final unmatchedLogs = <Map<String, dynamic>>[];
     final extras = <Map<String, dynamic>>[];
 
+    // ۱. تطبیق دقیق ابتدا (Exact matches)
     for (final log in logs) {
       final slot = _slotOfLog(log);
       final index = slot == null ? -1 : slots.indexOf(slot);
       if (index >= 0 && perSlot[index] == null) {
         perSlot[index] = log;
       } else {
-        approximate.add(log);
+        unmatchedLogs.add(log);
       }
     }
 
-    for (final log in approximate) {
-      final index = perSlot.indexWhere((slot) => slot == null);
-      if (index < 0) {
+    // ۲. تطبیق نزدیک‌ترین اسلات خالی برای لاگ‌های تخمینی با حداکثر ۳ ساعت اختلاف
+    for (final log in unmatchedLogs) {
+      final logTimeStr = _slotOfLog(log);
+      if (logTimeStr == null) {
         extras.add(log);
+        continue;
+      }
+
+      final logMinutes = _timeToMinutes(logTimeStr);
+      int bestIndex = -1;
+      int minDiff = 181; // سقف ۳ ساعت = ۱۸۰ دقیقه
+
+      for (var i = 0; i < slots.length; i++) {
+        if (perSlot[i] != null) continue;
+        final slotMinutes = _timeToMinutes(slots[i]);
+        final diff = (logMinutes - slotMinutes).abs();
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestIndex = i;
+        }
+      }
+
+      if (bestIndex >= 0) {
+        perSlot[bestIndex] = log;
       } else {
-        perSlot[index] = log;
+        extras.add(log);
       }
     }
 
     return _SlotMatch(perSlot, extras);
+  }
+
+  static int _timeToMinutes(String timeStr) {
+    final parts = timeStr.split(':');
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+    return h * 60 + m;
   }
 
   static String? _slotOfLog(Map<String, dynamic> log) {

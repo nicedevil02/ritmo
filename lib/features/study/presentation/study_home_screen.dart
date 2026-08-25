@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/study/data/study_repository.dart';
 import 'package:ritmo/features/study/data/study_settings_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_planner.dart';
 import 'package:ritmo/features/study/domain/study_stats.dart';
+import 'package:ritmo/features/study/domain/study_validation.dart';
 import 'package:ritmo/features/study/presentation/study_settings_sheet.dart';
 import 'package:ritmo/features/study/presentation/subject_detail_screen.dart';
 import 'package:ritmo/features/study/presentation/widgets/manual_session_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/study_week_heatmap.dart';
+import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:uuid/uuid.dart';
 
 class StudyHomeScreen extends StatefulWidget {
@@ -28,6 +31,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
   Map<String, int> _weeklyHeatmapData = {};
   StudyRecommendation? _topRecommendation;
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -36,14 +40,17 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
     try {
       final settings = await StudySettingsRepository.instance.load();
       final isKonkur = settings.konkurMode;
       final subjects = await StudyRepository.instance.getSubjects(isKonkurMode: isKonkur);
       final topics = await StudyRepository.instance.getTopics(isKonkurMode: isKonkur);
 
-      final todayIso = DateTime.now().toIso8601String().substring(0, 10);
+      final todayIso = RitmoDate.dayKey(DateTime.now());
       final todaySessions = await StudyRepository.instance.getSessions(dateIso: todayIso);
       final allSessions = await StudyRepository.instance.getSessions(limit: 500);
 
@@ -74,6 +81,11 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
       }
     } catch (e, st) {
       debugPrint('[StudyHomeScreen] Error loading study data: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'خطا در بارگذاری داده‌های مطالعه. لطفاً دوباره تلاش کنید.';
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -85,35 +97,93 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
 
   Future<void> _addSubject() async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'نام درس (مثلاً: زبان انگلیسی)'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-            child: const Text('افزودن', style: TextStyle(color: Colors.white)),
+    String? name;
+    try {
+      name = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('افزودن درس جدید', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'نام درس (مثلاً: زبان انگلیسی)'),
           ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
+              child: const Text('افزودن', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (name != null && name.isNotEmpty) {
-      final subject = StudySubject(
-        id: const Uuid().v4(),
-        name: name,
-        orderIndex: _subjects.length,
-      );
-      await StudyRepository.instance.saveSubject(subject);
-      await _loadData();
+      try {
+        StudyValidator.validateSubjectName(name, existingSubjects: _subjects);
+        final subject = StudySubject(
+          id: const Uuid().v4(),
+          name: name,
+          orderIndex: _subjects.length,
+        );
+        await StudyRepository.instance.saveSubject(subject);
+        await _loadData();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
     }
+  }
+
+  Future<StudySubject?> _showSubjectPicker() async {
+    final colors = context.colors;
+    return showModalBottomSheet<StudySubject>(
+      context: context,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('انتخاب درس برای مطالعه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 300),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _subjects.length,
+                itemBuilder: (ctx, i) {
+                  final s = _subjects[i];
+                  return ListTile(
+                    leading: Text(s.emoji ?? '📚', style: const TextStyle(fontSize: 22)),
+                    title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: const Icon(Icons.play_arrow_rounded),
+                    onTap: () => Navigator.pop(ctx, s),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -131,7 +201,15 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           elevation: 0,
           actions: [
             IconButton(
+              icon: const Icon(Icons.school_outlined),
+              tooltip: 'تغییر به حالت کنکور',
+              onPressed: () async {
+                await StudyModuleEntry.switchMode(context, konkur: true);
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.settings_outlined),
+              tooltip: 'تنظیمات مطالعه',
               onPressed: () async {
                 if (_settings != null) {
                   await StudySettingsSheet.show(context, settings: _settings!);
@@ -143,60 +221,82 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
         ),
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: colors.primary))
-            : RefreshIndicator(
-                onRefresh: _loadData,
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
-                            const SizedBox(height: 16),
-                            _buildTodayProgressCard(todayMinutes, targetMinutes),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                                TextButton.icon(
-                                  onPressed: _addSubject,
-                                  icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            if (_subjects.isEmpty)
-                              _buildEmptyState()
-                            else
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: _subjects.length,
-                                itemBuilder: (context, index) {
-                                  final subject = _subjects[index];
-                                  final stats = _subjectStats[subject.id];
-                                  return _buildSubjectCard(subject, stats);
-                                },
-                              ),
-                            const SizedBox(height: 24),
-                            StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
-                          ],
-                        ),
+            : _errorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: colors.error),
+                          const SizedBox(height: 12),
+                          Text(_errorMessage!, style: TextStyle(fontSize: 14, color: colors.textPrimary), textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _loadData,
+                            icon: const Icon(Icons.refresh, color: Colors.white),
+                            label: const Text('تلاش مجدد', style: TextStyle(color: Colors.white)),
+                            style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (_topRecommendation != null) _buildNextUpCard(_topRecommendation!),
+                                const SizedBox(height: 16),
+                                _buildTodayProgressCard(todayMinutes, targetMinutes),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('دروس من', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                                    TextButton.icon(
+                                      onPressed: _addSubject,
+                                      icon: const Icon(Icons.add, size: 18),
+                                      label: const Text('درس جدید', style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                if (_subjects.isEmpty)
+                                  _buildEmptyState()
+                                else
+                                  ..._subjects.map((subject) {
+                                    final stats = _subjectStats[subject.id];
+                                    return _buildSubjectCard(subject, stats);
+                                  }),
+                                const SizedBox(height: 24),
+                                StudyWeekHeatmap(sessionsByDate: _weeklyHeatmapData),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () async {
-            if (_subjects.isNotEmpty) {
-              await SessionTimerSheet.show(context, subject: _subjects.first);
-            } else {
+            if (_subjects.isEmpty) {
               await _addSubject();
+            } else if (_subjects.length == 1) {
+              await SessionTimerSheet.show(context, subject: _subjects.first);
+              await _loadData();
+            } else {
+              final chosenSubject = await _showSubjectPicker();
+              if (chosenSubject != null && context.mounted) {
+                await SessionTimerSheet.show(context, subject: chosenSubject);
+                await _loadData();
+              }
             }
           },
           backgroundColor: colors.primary,
@@ -232,7 +332,10 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           Text('دلیل: ${rec.reason}', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
           const SizedBox(height: 12),
           ElevatedButton.icon(
-            onPressed: () => SessionTimerSheet.show(context, subject: rec.subject, topic: rec.topic),
+            onPressed: () async {
+              await SessionTimerSheet.show(context, subject: rec.subject, topic: rec.topic);
+              await _loadData();
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

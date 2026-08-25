@@ -20,7 +20,6 @@ import 'package:ritmo/features/supplementary_sports/movement/presentation/planne
 import 'package:ritmo/features/supplementary_sports/movement/presentation/planner/week_smart_fill_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/ss_plan_day_detail_screen.dart';
 
-const String _fontFa = 'Vazirmatn';
 const List<String> _shortDayNames = <String>['شن', 'یک', 'دو', 'سه', 'چه', 'پن', 'جم'];
 
 /// نمای قابل‌جاسازی برنامهٔ هفته — بدون Scaffold — تا هم صفحهٔ مستقل باشد

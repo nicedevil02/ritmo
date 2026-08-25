@@ -1,6 +1,92 @@
 enum StudyMastery { notStarted, learning, review, mastered }
+
+extension StudyMasteryExtension on StudyMastery {
+  String get dbValue {
+    switch (this) {
+      case StudyMastery.learning:
+        return 'LEARNING';
+      case StudyMastery.review:
+        return 'NEEDS_REVIEW';
+      case StudyMastery.mastered:
+        return 'MASTERED';
+      case StudyMastery.notStarted:
+        return 'NOT_STARTED';
+    }
+  }
+
+  static StudyMastery fromDbValue(String? val) {
+    switch (val?.toUpperCase()) {
+      case 'LEARNING':
+        return StudyMastery.learning;
+      case 'NEEDS_REVIEW':
+      case 'REVIEW':
+        return StudyMastery.review;
+      case 'MASTERED':
+        return StudyMastery.mastered;
+      case 'NOT_STARTED':
+      default:
+        return StudyMastery.notStarted;
+    }
+  }
+}
+
 enum StudyMode { learn, practice, review }
+
+extension StudyModeExtension on StudyMode {
+  String get dbValue {
+    switch (this) {
+      case StudyMode.practice:
+        return 'PRACTICE';
+      case StudyMode.review:
+        return 'REVIEW';
+      case StudyMode.learn:
+        return 'LEARN';
+    }
+  }
+
+  String get labelFa {
+    switch (this) {
+      case StudyMode.practice:
+        return 'تمرین و تست';
+      case StudyMode.review:
+        return 'مرور مبحث';
+      case StudyMode.learn:
+        return 'یادگیری';
+    }
+  }
+
+  static StudyMode fromDbValue(String? val) {
+    switch (val?.toUpperCase()) {
+      case 'PRACTICE':
+      case 'TEST':
+        return StudyMode.practice;
+      case 'REVIEW':
+        return StudyMode.review;
+      case 'LEARN':
+      default:
+        return StudyMode.learn;
+    }
+  }
+}
+
 enum StudyOrigin { user, konkurPreset }
+
+extension StudyOriginExtension on StudyOrigin {
+  String get dbValue {
+    switch (this) {
+      case StudyOrigin.konkurPreset:
+        return 'KONKUR_PRESET';
+      case StudyOrigin.user:
+        return 'USER';
+    }
+  }
+
+  static StudyOrigin fromDbValue(String? val) {
+    return val?.toUpperCase() == 'KONKUR_PRESET'
+        ? StudyOrigin.konkurPreset
+        : StudyOrigin.user;
+  }
+}
 
 class StudySubject {
   const StudySubject({
@@ -15,6 +101,8 @@ class StudySubject {
     this.importanceFactor = 1.0,
     this.examQuestionCount = 0,
     this.subjectGroup = 'GENERAL',
+    this.createdAtMs,
+    this.updatedAtMs,
   });
 
   final String id;
@@ -29,40 +117,76 @@ class StudySubject {
   final double importanceFactor;
   final int examQuestionCount;
   final String subjectGroup;
+  final int? createdAtMs;
+  final int? updatedAtMs;
 
   factory StudySubject.fromMap(Map<String, dynamic> map) {
-    final origStr = map['origin'] as String? ?? 'USER';
     return StudySubject(
       id: map['id'] as String,
       name: map['name'] as String,
       emoji: map['emoji'] as String?,
       colorHex: map['colorHex'] as String?,
       weeklyTargetMinutes: map['weeklyTargetMinutes'] as int? ?? 0,
-      origin: origStr == 'KONKUR_PRESET' ? StudyOrigin.konkurPreset : StudyOrigin.user,
+      origin: StudyOriginExtension.fromDbValue(map['origin'] as String?),
       isArchived: (map['isArchived'] as int? ?? 0) == 1,
       orderIndex: map['orderIndex'] as int? ?? 0,
       importanceFactor: (map['importanceFactor'] as num?)?.toDouble() ?? 1.0,
       examQuestionCount: map['examQuestionCount'] as int? ?? 0,
       subjectGroup: map['subjectGroup'] as String? ?? 'GENERAL',
+      createdAtMs: map['createdAt'] as int?,
+      updatedAtMs: map['updatedAt'] as int?,
     );
   }
 
   Map<String, dynamic> toMap() {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
     return {
       'id': id,
       'name': name,
       'emoji': emoji,
       'colorHex': colorHex,
       'weeklyTargetMinutes': weeklyTargetMinutes,
-      'origin': origin == StudyOrigin.konkurPreset ? 'KONKUR_PRESET' : 'USER',
+      'origin': origin.dbValue,
       'isArchived': isArchived ? 1 : 0,
       'orderIndex': orderIndex,
       'importanceFactor': importanceFactor,
       'examQuestionCount': examQuestionCount,
       'subjectGroup': subjectGroup,
-      'createdAt': DateTime.now().millisecondsSinceEpoch,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      'createdAt': createdAtMs ?? nowMs,
+      'updatedAt': updatedAtMs ?? nowMs,
     };
+  }
+
+  StudySubject copyWith({
+    String? id,
+    String? name,
+    String? emoji,
+    String? colorHex,
+    int? weeklyTargetMinutes,
+    StudyOrigin? origin,
+    bool? isArchived,
+    int? orderIndex,
+    double? importanceFactor,
+    int? examQuestionCount,
+    String? subjectGroup,
+    int? createdAtMs,
+    int? updatedAtMs,
+  }) {
+    return StudySubject(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      emoji: emoji ?? this.emoji,
+      colorHex: colorHex ?? this.colorHex,
+      weeklyTargetMinutes: weeklyTargetMinutes ?? this.weeklyTargetMinutes,
+      origin: origin ?? this.origin,
+      isArchived: isArchived ?? this.isArchived,
+      orderIndex: orderIndex ?? this.orderIndex,
+      importanceFactor: importanceFactor ?? this.importanceFactor,
+      examQuestionCount: examQuestionCount ?? this.examQuestionCount,
+      subjectGroup: subjectGroup ?? this.subjectGroup,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+      updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+    );
   }
 }
 
@@ -80,6 +204,9 @@ class StudyTopic {
     this.orderIndex = 0,
     this.origin = StudyOrigin.user,
     this.chapter,
+    this.reviewCount = 0,
+    this.createdAtMs,
+    this.updatedAtMs,
   });
 
   final String id;
@@ -94,53 +221,85 @@ class StudyTopic {
   final int orderIndex;
   final StudyOrigin origin;
   final String? chapter;
+  final int reviewCount;
+  final int? createdAtMs;
+  final int? updatedAtMs;
 
   factory StudyTopic.fromMap(Map<String, dynamic> map) {
-    final origStr = map['origin'] as String? ?? 'USER';
-    final mStr = map['masteryLevel'] as String? ?? 'NOT_STARTED';
-    StudyMastery m = StudyMastery.notStarted;
-    if (mStr == 'LEARNING') m = StudyMastery.learning;
-    if (mStr == 'NEEDS_REVIEW' || mStr == 'REVIEW') m = StudyMastery.review;
-    if (mStr == 'MASTERED') m = StudyMastery.mastered;
-
     return StudyTopic(
       id: map['id'] as String,
       subjectId: map['subjectId'] as String,
       parentTopicId: map['parentTopicId'] as String?,
       name: map['name'] as String,
-      mastery: m,
+      mastery: StudyMasteryExtension.fromDbValue(map['masteryLevel'] as String?),
       studyCompletedMinutes: map['studyCompletedMinutes'] as int? ?? 0,
       lastStudiedAtMs: map['lastStudiedAt'] as int?,
       nextReviewDateIso: map['nextReviewDate'] as String?,
       plannedDateIso: map['plannedDate'] as String?,
       orderIndex: map['orderIndex'] as int? ?? 0,
-      origin: origStr == 'KONKUR_PRESET' ? StudyOrigin.konkurPreset : StudyOrigin.user,
+      origin: StudyOriginExtension.fromDbValue(map['origin'] as String?),
       chapter: map['chapter'] as String?,
+      reviewCount: map['reviewCount'] as int? ?? 0,
+      createdAtMs: map['createdAt'] as int?,
+      updatedAtMs: map['updatedAt'] as int?,
     );
   }
 
   Map<String, dynamic> toMap() {
-    String mStr = 'NOT_STARTED';
-    if (mastery == StudyMastery.learning) mStr = 'LEARNING';
-    if (mastery == StudyMastery.review) mStr = 'NEEDS_REVIEW';
-    if (mastery == StudyMastery.mastered) mStr = 'MASTERED';
-
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
     return {
       'id': id,
       'subjectId': subjectId,
       'parentTopicId': parentTopicId,
       'name': name,
-      'masteryLevel': mStr,
+      'masteryLevel': mastery.dbValue,
       'studyCompletedMinutes': studyCompletedMinutes,
       'lastStudiedAt': lastStudiedAtMs,
       'nextReviewDate': nextReviewDateIso,
       'plannedDate': plannedDateIso,
       'orderIndex': orderIndex,
-      'origin': origin == StudyOrigin.konkurPreset ? 'KONKUR_PRESET' : 'USER',
+      'origin': origin.dbValue,
       'chapter': chapter,
-      'createdAt': DateTime.now().millisecondsSinceEpoch,
-      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      'reviewCount': reviewCount,
+      'createdAt': createdAtMs ?? nowMs,
+      'updatedAt': updatedAtMs ?? nowMs,
     };
+  }
+
+  StudyTopic copyWith({
+    String? id,
+    String? subjectId,
+    String? parentTopicId,
+    String? name,
+    StudyMastery? mastery,
+    int? studyCompletedMinutes,
+    int? lastStudiedAtMs,
+    String? nextReviewDateIso,
+    String? plannedDateIso,
+    int? orderIndex,
+    StudyOrigin? origin,
+    String? chapter,
+    int? reviewCount,
+    int? createdAtMs,
+    int? updatedAtMs,
+  }) {
+    return StudyTopic(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      parentTopicId: parentTopicId ?? this.parentTopicId,
+      name: name ?? this.name,
+      mastery: mastery ?? this.mastery,
+      studyCompletedMinutes: studyCompletedMinutes ?? this.studyCompletedMinutes,
+      lastStudiedAtMs: lastStudiedAtMs ?? this.lastStudiedAtMs,
+      nextReviewDateIso: nextReviewDateIso ?? this.nextReviewDateIso,
+      plannedDateIso: plannedDateIso ?? this.plannedDateIso,
+      orderIndex: orderIndex ?? this.orderIndex,
+      origin: origin ?? this.origin,
+      chapter: chapter ?? this.chapter,
+      reviewCount: reviewCount ?? this.reviewCount,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+      updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+    );
   }
 }
 
@@ -174,18 +333,13 @@ class StudySession {
   final int createdAtMs;
 
   factory StudySession.fromMap(Map<String, dynamic> map) {
-    final modeStr = map['mode'] as String? ?? 'LEARN';
-    StudyMode m = StudyMode.learn;
-    if (modeStr == 'PRACTICE' || modeStr == 'TEST') m = StudyMode.practice;
-    if (modeStr == 'REVIEW') m = StudyMode.review;
-
     return StudySession(
       id: map['id'] as String,
       subjectId: map['subjectId'] as String? ?? '',
       topicId: map['topicId'] as String?,
       durationMinutes: map['durationMinutes'] as int? ?? 0,
       dateIso: map['dateIso'] as String? ?? '',
-      mode: m,
+      mode: StudyModeExtension.fromDbValue(map['mode'] as String?),
       source: map['source'] as String? ?? 'MANUAL',
       startedAtMs: map['startedAtMs'] as int?,
       endedAtMs: map['endedAtMs'] as int?,
@@ -196,17 +350,13 @@ class StudySession {
   }
 
   Map<String, dynamic> toMap() {
-    String mStr = 'LEARN';
-    if (mode == StudyMode.practice) mStr = 'PRACTICE';
-    if (mode == StudyMode.review) mStr = 'REVIEW';
-
     return {
       'id': id,
       'subjectId': subjectId,
       'topicId': topicId,
       'durationMinutes': durationMinutes,
       'dateIso': dateIso,
-      'mode': mStr,
+      'mode': mode.dbValue,
       'source': source,
       'startedAtMs': startedAtMs,
       'endedAtMs': endedAtMs,
@@ -214,6 +364,36 @@ class StudySession {
       'note': note,
       'createdAt': createdAtMs,
     };
+  }
+
+  StudySession copyWith({
+    String? id,
+    String? subjectId,
+    String? topicId,
+    int? durationMinutes,
+    String? dateIso,
+    StudyMode? mode,
+    String? source,
+    int? startedAtMs,
+    int? endedAtMs,
+    int? quality,
+    String? note,
+    int? createdAtMs,
+  }) {
+    return StudySession(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      topicId: topicId ?? this.topicId,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      dateIso: dateIso ?? this.dateIso,
+      mode: mode ?? this.mode,
+      source: source ?? this.source,
+      startedAtMs: startedAtMs ?? this.startedAtMs,
+      endedAtMs: endedAtMs ?? this.endedAtMs,
+      quality: quality ?? this.quality,
+      note: note ?? this.note,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+    );
   }
 }
 
@@ -249,16 +429,11 @@ class ActiveStudySessionState {
   }
 
   factory ActiveStudySessionState.fromMap(Map<String, dynamic> map) {
-    final modeStr = map['mode'] as String? ?? 'LEARN';
-    StudyMode m = StudyMode.learn;
-    if (modeStr == 'PRACTICE') m = StudyMode.practice;
-    if (modeStr == 'REVIEW') m = StudyMode.review;
-
     return ActiveStudySessionState(
-      id: map['id'] as String,
+      id: map['id'] as String? ?? 'singleton',
       subjectId: map['subjectId'] as String?,
       topicId: map['topicId'] as String?,
-      mode: m,
+      mode: StudyModeExtension.fromDbValue(map['mode'] as String?),
       startedAtMs: map['startedAtMs'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       accumulatedSeconds: map['accumulatedSeconds'] as int? ?? 0,
       isPaused: (map['isPaused'] as int? ?? 0) == 1,
@@ -268,20 +443,40 @@ class ActiveStudySessionState {
   }
 
   Map<String, dynamic> toMap() {
-    String mStr = 'LEARN';
-    if (mode == StudyMode.practice) mStr = 'PRACTICE';
-    if (mode == StudyMode.review) mStr = 'REVIEW';
-
     return {
-      'id': 'singleton',
+      'id': id,
       'subjectId': subjectId,
       'topicId': topicId,
-      'mode': mStr,
+      'mode': mode.dbValue,
       'startedAtMs': startedAtMs,
       'accumulatedSeconds': accumulatedSeconds,
       'isPaused': isPaused ? 1 : 0,
       'plannedMinutes': plannedMinutes,
       'createdAt': createdAtMs,
     };
+  }
+
+  ActiveStudySessionState copyWith({
+    String? id,
+    String? subjectId,
+    String? topicId,
+    StudyMode? mode,
+    int? startedAtMs,
+    int? accumulatedSeconds,
+    bool? isPaused,
+    int? plannedMinutes,
+    int? createdAtMs,
+  }) {
+    return ActiveStudySessionState(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      topicId: topicId ?? this.topicId,
+      mode: mode ?? this.mode,
+      startedAtMs: startedAtMs ?? this.startedAtMs,
+      accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
+      isPaused: isPaused ?? this.isPaused,
+      plannedMinutes: plannedMinutes ?? this.plannedMinutes,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+    );
   }
 }

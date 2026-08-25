@@ -51,8 +51,7 @@ import 'package:ritmo/features/routines/presentation/widgets/routine_snooze_bott
 import 'package:ritmo/features/routines/shared/routine_actions.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_details_sheet.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_niyyah_sheet.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_intro_screen.dart';
+import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/today/presentation/dashboard_controller.dart';
 import 'package:ritmo/features/today/presentation/home_focus_ranker.dart';
@@ -493,8 +492,8 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
             context,
             MaterialPageRoute(
               builder: (_) => hasCompletedOnboarding
-                  ? const SSHomeDashboardScreen()
-                  : const SSIntroScreen(),
+                  ? const MvHubScreen()
+                  : MvOnboardingScreen(onComplete: (_) async => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MvHubScreen()))),
             ),
           ).then((_) => _loadDashboardData()),
         );
@@ -505,7 +504,7 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
         unawaited(
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const SSIntroScreen()),
+            MaterialPageRoute(builder: (_) => const MvHubScreen()),
           ).then((_) => _loadDashboardData()),
         );
       }

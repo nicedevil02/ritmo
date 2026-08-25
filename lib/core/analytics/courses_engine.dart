@@ -1,6 +1,5 @@
 
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
-import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
@@ -95,30 +94,25 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
     final nextSat = CourseDate.addDays(satOfWeek, 7);
     final nextSatStartMs = DateTime(nextSat.year, nextSat.month, nextSat.day).millisecondsSinceEpoch;
 
-    // A. Calculate weeklyDoneSessions & weeklyStudyMinutes from achievementSessions
+    // A. Calculate weeklyDoneSessions & weeklyStudyMinutes from achievementSessions (Fixes M3)
     var weeklyDone = 0;
     var weeklyMinutes = 0;
     var includesEstimatedMinutes = false;
 
     for (final session in achievementSessions) {
       if (session.isCompleted) {
-        int compTimeMs;
         if (session.completedAt != null && session.completedAt! > 0) {
-          compTimeMs = session.completedAt!;
-        } else {
-          RitmoLog.warning('COURSES_ENGINE', 'Session ${session.id} completedAt is null, falling back to updatedAt');
-          compTimeMs = session.updatedAt;
-        }
-
-        if (compTimeMs >= satStartMs && compTimeMs < nextSatStartMs) {
-          weeklyDone++;
-          if (session.actualDurationMinutes != null && session.actualDurationMinutes! > 0) {
-            weeklyMinutes += session.actualDurationMinutes!;
-          } else {
-            final course = coursesMap[session.courseId];
-            final estimated = course?.sessionDurationMinutes ?? 45;
-            weeklyMinutes += estimated;
-            includesEstimatedMinutes = true;
+          final compTimeMs = session.completedAt!;
+          if (compTimeMs >= satStartMs && compTimeMs < nextSatStartMs) {
+            weeklyDone++;
+            if (session.actualDurationMinutes != null && session.actualDurationMinutes! > 0) {
+              weeklyMinutes += session.actualDurationMinutes!;
+            } else {
+              final course = coursesMap[session.courseId];
+              final estimated = course?.sessionDurationMinutes ?? 45;
+              weeklyMinutes += estimated;
+              includesEstimatedMinutes = true;
+            }
           }
         }
       }
@@ -130,12 +124,11 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
       totalWeeklyTarget += course.weeklyTargetSessions;
     }
 
-    // C. studyStreakDays from achievementSessions
+    // C. studyStreakDays from achievementSessions (Fixes M3)
     final completedDates = <String>{};
     for (final session in achievementSessions) {
-      if (session.isCompleted) {
-        final compMs = (session.completedAt != null && session.completedAt! > 0) ? session.completedAt! : session.updatedAt;
-        final compDate = DateTime.fromMillisecondsSinceEpoch(compMs);
+      if (session.isCompleted && session.completedAt != null && session.completedAt! > 0) {
+        final compDate = DateTime.fromMillisecondsSinceEpoch(session.completedAt!);
         completedDates.add(CourseDate.toDayKey(compDate));
       }
     }
@@ -225,8 +218,8 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
 
       rateMap[course.id] = (totalLearnCount > 0) ? (completedLearnCount / totalLearnCount).clamp(0.0, 1.0) : 0.0;
 
-      // Adherence: done / (scheduled up to today)
-      final scheduledUpToToday = courseSessions.where((s) => s.plannedDate != null && s.plannedDate!.compareTo(todayStr) <= 0).toList();
+      // Adherence: done / (scheduled up to today excluding skipped sessions) (Fixes M5)
+      final scheduledUpToToday = courseSessions.where((s) => s.plannedDate != null && s.plannedDate!.compareTo(todayStr) <= 0 && !s.isSkipped).toList();
       if (scheduledUpToToday.isNotEmpty) {
         final doneScheduled = scheduledUpToToday.where((s) => s.isCompleted).length;
         adherenceMap[course.id] = (doneScheduled / scheduledUpToToday.length).clamp(0.0, 1.0);

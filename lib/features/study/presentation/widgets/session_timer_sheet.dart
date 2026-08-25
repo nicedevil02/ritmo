@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_review_policy.dart';
@@ -56,23 +57,32 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
   Future<void> _finishSession() async {
     final curTopic = widget.topic;
     ReviewResult? reviewRes;
+    int? newReviewCount;
     if (curTopic != null) {
       reviewRes = StudyReviewPolicy.evaluate(
         feedback: _feedback,
         currentMastery: curTopic.mastery,
-        reviewCount: curTopic.studyCompletedMinutes > 0 ? 1 : 0,
+        reviewCount: curTopic.reviewCount,
       );
+      if (_feedback == SessionFeedback.understood) {
+        newReviewCount = curTopic.reviewCount + 1;
+      } else if (_feedback == SessionFeedback.needAgain) {
+        newReviewCount = 0;
+      } else {
+        newReviewCount = curTopic.reviewCount;
+      }
     }
 
     String? nextReviewDateIso;
     if (reviewRes != null) {
       final nextDt = DateTime.now().add(Duration(days: reviewRes.nextReviewDays));
-      nextReviewDateIso = nextDt.toIso8601String().substring(0, 10);
+      nextReviewDateIso = RitmoDate.dayKey(nextDt);
     }
 
     await StudyTimerService.instance.stopAndSaveSession(
       newMastery: reviewRes?.nextMastery,
       nextReviewDateIso: nextReviewDateIso,
+      newReviewCount: newReviewCount,
     );
 
     if (mounted) Navigator.pop(context);

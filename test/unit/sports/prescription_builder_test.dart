@@ -10,24 +10,28 @@ void main() {
         id: 'pres_2026-08-10',
         dateIso: '2026-08-10',
         cycleWeek: 1,
-        slotType: SlotType.workout,
+        slotType: SlotType.strength,
         focusCodes: const ['CHEST', 'TRICEPS'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه و پشت‌بازو',
-        source: PrescriptionSource.generated,
+        source: 'GENERATED',
+        createdAt: 1000,
+        updatedAt: 1000,
       );
 
       final p2 = SessionPrescription(
         id: 'pres_2026-08-17',
         dateIso: '2026-08-17',
         cycleWeek: 2,
-        slotType: SlotType.workout,
+        slotType: SlotType.strength,
         focusCodes: const ['CHEST', 'TRICEPS'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه و پشت‌بازو',
-        source: PrescriptionSource.generated,
+        source: 'GENERATED',
+        createdAt: 1000,
+        updatedAt: 1000,
       );
 
       expect(p1.dateIso, isNot(equals(p2.dateIso)));
@@ -43,14 +47,14 @@ void main() {
         id: 'pres_test_1',
         dateIso: '2026-08-10',
         cycleWeek: 1,
-        slotType: SlotType.workout,
+        slotType: SlotType.strength,
         focusCodes: const ['CHEST', 'SHOULDER'],
         targetMinutes: 60,
         intensityTier: IntensityTier.hard,
         targetRpe: 8,
         headlineFa: '۶۰ دقیقه سینه و سرشانه',
         coachNoteFa: 'تمرین با کیفیت امروز',
-        source: PrescriptionSource.user,
+        source: 'USER',
         isLocked: true,
         status: PrescriptionStatus.done,
         workoutLogId: 'wlog_123',
@@ -78,7 +82,7 @@ void main() {
       final headline = MuscleGroup.buildHeadline(
         45,
         ['BICEPS', 'SHOULDER'],
-        SlotType.workout,
+        SlotType.strength,
       );
 
       expect(headline, contains('۴۵'));
@@ -91,7 +95,7 @@ void main() {
       final headline = MuscleGroup.buildHeadline(
         60,
         ['CHEST', 'SHOULDER', 'BICEPS', 'TRICEPS'],
-        SlotType.workout,
+        SlotType.strength,
       );
 
       expect(headline, contains('۶۰'));
@@ -111,13 +115,15 @@ void main() {
         id: 'pres_lock_1',
         dateIso: '2026-08-10',
         cycleWeek: 1,
-        slotType: SlotType.workout,
+        slotType: SlotType.strength,
         focusCodes: const ['CHEST'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه',
-        source: PrescriptionSource.user,
+        source: 'USER',
         isLocked: true,
+        createdAt: 1000,
+        updatedAt: 1000,
       );
 
       expect(p.isLocked, isTrue);

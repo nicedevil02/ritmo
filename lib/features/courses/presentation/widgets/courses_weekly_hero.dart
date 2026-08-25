@@ -4,18 +4,19 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/courses/presentation/widgets/course_formatters.dart';
 
 class CoursesWeeklyHero extends StatelessWidget {
-
   const CoursesWeeklyHero({
     super.key,
     required this.weeklyDoneSessions,
     required this.weeklyTargetSessions,
     required this.weeklyStudyMinutes,
     required this.studyStreakDays,
+    this.estimatedMinutesIncluded = false,
   });
   final int weeklyDoneSessions;
   final int weeklyTargetSessions;
   final int weeklyStudyMinutes;
   final int studyStreakDays;
+  final bool estimatedMinutesIncluded;
 
   @override
   Widget build(BuildContext context) {
@@ -150,9 +151,20 @@ class CoursesWeeklyHero extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'کل زمان مطالعه',
-                        style: RitmoTextStyles.caption(colors.textSecondary),
+                      Row(
+                        children: [
+                          Text(
+                            'کل زمان مطالعه',
+                            style: RitmoTextStyles.caption(colors.textSecondary),
+                          ),
+                          if (estimatedMinutesIncluded) ...[
+                            SizedBox(width: m.spaceXs),
+                            Text(
+                              '(تخمینی)',
+                              style: RitmoTextStyles.caption(colors.warning).copyWith(fontSize: 10),
+                            ),
+                          ],
+                        ],
                       ),
                       SizedBox(height: m.spaceXs),
                       FittedBox(

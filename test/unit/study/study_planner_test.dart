@@ -35,7 +35,7 @@ void main() {
       );
 
       expect(recs.first.topic.id, equals('t2'));
-      expect(recs.first.reason, contains('مرورشه'));
+      expect(recs.first.reason, contains('مرور'));
     });
 
     test('Studied topic today is penalized', () {

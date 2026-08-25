@@ -8,7 +8,6 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_remin
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// اکشن‌های «فقط این هفته» برای یک اسلات حرکت.
 Future<bool> showMovementSlotActionsSheet(

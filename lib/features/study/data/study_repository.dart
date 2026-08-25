@@ -1,6 +1,8 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
+import 'package:ritmo/features/study/domain/study_validation.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SubjectStats {
@@ -46,6 +48,7 @@ class StudyRepository {
   }
 
   Future<void> saveSubject(StudySubject subject) async {
+    StudyValidator.validateSubject(subject);
     final db = await _database;
     await db.insert('konkur_subjects', subject.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
@@ -56,12 +59,15 @@ class StudyRepository {
       await txn.delete('konkur_subjects', where: 'id = ?', whereArgs: [id]);
       await txn.delete('konkur_topics', where: 'subjectId = ?', whereArgs: [id]);
       await txn.delete('konkur_study_sessions', where: 'subjectId = ?', whereArgs: [id]);
+      await txn.delete('study_active_session', where: 'subjectId = ?', whereArgs: [id]);
     });
   }
 
   Future<List<StudyTopic>> getTopics({String? subjectId, bool isKonkurMode = false}) async {
     final db = await _database;
-    String whereStr = isKonkurMode ? '1=1' : "(origin = 'USER' OR origin IS NULL)";
+    String whereStr = isKonkurMode
+        ? 'subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0)'
+        : "(origin = 'USER' OR origin IS NULL) AND subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0)";
     final args = <dynamic>[];
     if (subjectId != null) {
       whereStr += ' AND subjectId = ?';
@@ -71,12 +77,23 @@ class StudyRepository {
     return rows.map(StudyTopic.fromMap).toList();
   }
 
+  Future<StudyTopic?> getTopicById(String id) async {
+    final db = await _database;
+    final rows = await db.query('konkur_topics', where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return null;
+    return StudyTopic.fromMap(rows.first);
+  }
+
   Future<void> saveTopic(StudyTopic topic) async {
+    StudyValidator.validateTopic(topic);
     final db = await _database;
     await db.insert('konkur_topics', topic.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> saveTopicsBulk(List<StudyTopic> topics) async {
+    for (final topic in topics) {
+      StudyValidator.validateTopic(topic);
+    }
     final db = await _database;
     await db.transaction((txn) async {
       for (final topic in topics) {
@@ -87,26 +104,68 @@ class StudyRepository {
 
   Future<void> deleteTopic(String id) async {
     final db = await _database;
-    await db.delete('konkur_topics', where: 'id = ?', whereArgs: [id]);
+    await db.transaction((txn) async {
+      await txn.delete('konkur_topics', where: 'id = ?', whereArgs: [id]);
+      await txn.update('konkur_study_sessions', {'topicId': null}, where: 'topicId = ?', whereArgs: [id]);
+      await txn.update('study_active_session', {'topicId': null}, where: 'topicId = ?', whereArgs: [id]);
+    });
   }
 
-  Future<List<StudySession>> getSessions({String? dateIso, int? limit}) async {
+  Future<List<StudySession>> getSessions({
+    String? dateIso,
+    String? startDateIso,
+    String? endDateIso,
+    String? subjectId,
+    String? topicId,
+    int? limit,
+  }) async {
     final db = await _database;
-    final where = dateIso != null ? 'dateIso = ?' : null;
-    final whereArgs = dateIso != null ? [dateIso] : null;
+    final whereClauses = <String>[];
+    final whereArgs = <dynamic>[];
+
+    if (dateIso != null && dateIso.isNotEmpty) {
+      whereClauses.add('dateIso = ?');
+      whereArgs.add(dateIso);
+    }
+    if (startDateIso != null && startDateIso.isNotEmpty) {
+      whereClauses.add('dateIso >= ?');
+      whereArgs.add(startDateIso);
+    }
+    if (endDateIso != null && endDateIso.isNotEmpty) {
+      whereClauses.add('dateIso <= ?');
+      whereArgs.add(endDateIso);
+    }
+    if (subjectId != null && subjectId.isNotEmpty) {
+      whereClauses.add('subjectId = ?');
+      whereArgs.add(subjectId);
+    }
+    if (topicId != null && topicId.isNotEmpty) {
+      whereClauses.add('topicId = ?');
+      whereArgs.add(topicId);
+    }
+
+    final whereStr = whereClauses.isNotEmpty ? whereClauses.join(' AND ') : null;
     final rows = await db.query(
       'konkur_study_sessions',
-      where: where,
-      whereArgs: whereArgs,
+      where: whereStr,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
       orderBy: 'createdAt DESC',
       limit: limit,
     );
     return rows.map(StudySession.fromMap).toList();
   }
 
-  Future<void> recordSession(StudySession session, {StudyMastery? newMastery, String? nextReviewDateIso}) async {
+  Future<void> recordSession(
+    StudySession session, {
+    StudyMastery? newMastery,
+    String? nextReviewDateIso,
+    int? newReviewCount,
+  }) async {
+    StudyValidator.validateSession(session);
     final db = await _database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final sessionEndMs = session.endedAtMs ??
+        (RitmoDate.tryParseDayKey(session.dateIso)?.millisecondsSinceEpoch ?? nowMs);
 
     await db.transaction((txn) async {
       await txn.insert('konkur_study_sessions', session.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
@@ -117,17 +176,18 @@ class StudyRepository {
           final oldTopic = StudyTopic.fromMap(topicRows.first);
           final updatedMinutes = oldTopic.studyCompletedMinutes + session.durationMinutes;
 
-          String mStr = oldTopic.toMap()['masteryLevel'] as String;
-          if (newMastery != null) {
-            if (newMastery == StudyMastery.learning) mStr = 'LEARNING';
-            if (newMastery == StudyMastery.review) mStr = 'NEEDS_REVIEW';
-            if (newMastery == StudyMastery.mastered) mStr = 'MASTERED';
-          }
+          final effectiveLastStudiedAt = (oldTopic.lastStudiedAtMs == null || sessionEndMs > oldTopic.lastStudiedAtMs!)
+              ? sessionEndMs
+              : oldTopic.lastStudiedAtMs;
+
+          final mStr = (newMastery ?? oldTopic.mastery).dbValue;
+          final resolvedReviewCount = newReviewCount ?? oldTopic.reviewCount;
 
           final updateMap = <String, dynamic>{
             'studyCompletedMinutes': updatedMinutes,
-            'lastStudiedAt': nowMs,
+            'lastStudiedAt': effectiveLastStudiedAt,
             'masteryLevel': mStr,
+            'reviewCount': resolvedReviewCount,
             'updatedAt': nowMs,
           };
           if (nextReviewDateIso != null) {

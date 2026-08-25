@@ -15,6 +15,20 @@ class AgendaDayContext {
   final bool isToday;
   final Map<String, String> prayerTimes;
   final AgendaQueryOptions options;
+
+  bool get isPast {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    return target.isBefore(today);
+  }
+
+  bool get isFuture {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    return target.isAfter(today);
+  }
 }
 
 /// قرارداد واحد هر منبع اجندا.

@@ -1,3 +1,4 @@
+import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:sqflite/sqflite.dart';
 
 class KonkurTables {
@@ -46,6 +47,7 @@ class KonkurTables {
           practiceTargetMinutes INTEGER NOT NULL DEFAULT 0,
           reviewTargetMinutes INTEGER NOT NULL DEFAULT 0,
           chapter TEXT,
+          reviewCount INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY(subjectId) REFERENCES konkur_subjects(id) ON DELETE CASCADE,
           FOREIGN KEY(parentTopicId) REFERENCES konkur_topics(id) ON DELETE CASCADE
       );
@@ -152,8 +154,14 @@ class KonkurTables {
     );
   }
 
-  /// Self-healing schema validation to ensure konkur plan tables exist.
+  /// Self-healing schema validation to ensure konkur plan tables and topic columns exist.
   static Future<void> ensureSchema(DatabaseExecutor db) async {
+    await SchemaManager.safeAddColumn(
+      db,
+      'konkur_topics',
+      'reviewCount',
+      'INTEGER NOT NULL DEFAULT 0',
+    );
     await db.execute('''
       CREATE TABLE IF NOT EXISTS konkur_plans (
         id TEXT PRIMARY KEY,

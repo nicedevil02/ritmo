@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// کارت مشترک بخش‌های درون جلسه — تا همهٔ قالب‌ها یک زبان بصری داشته باشند.
 class SessionCard extends StatelessWidget {

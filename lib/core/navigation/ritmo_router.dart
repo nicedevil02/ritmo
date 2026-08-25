@@ -6,7 +6,7 @@ import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
 import 'package:ritmo/features/goals/presentation/goals_screen.dart';
 import 'package:ritmo/features/health/presentation/health_screen.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
+import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/wellbeing/presentation/wellbeing_screen.dart';
 import 'package:ritmo/features/worship/presentation/worship_screen.dart';
 import 'package:ritmo/features/profile/presentation/web_bridge_diagnostics_screen.dart';
@@ -84,8 +84,8 @@ class RitmoRouter {
     if (r == '/goals' || r == '/goal') {
       return RitmoRouteTarget.screen((_) => const GoalsScreen());
     }
-    if (r == '/sports' || r == '/sport') {
-      return RitmoRouteTarget.screen((_) => const SSHomeDashboardScreen());
+    if (r == '/sports' || r == '/sport' || r == '/movement') {
+      return RitmoRouteTarget.screen((_) => const MvHubScreen());
     }
     if (r == '/health') {
       return RitmoRouteTarget.screen((_) => const HealthScreen());

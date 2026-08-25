@@ -2,6 +2,7 @@ import 'package:ritmo/features/courses/models/course_models.dart';
 
 class CourseEnergyEngine {
   /// Filters and ranks candidate sessions based on current energy level (HIGH, MEDIUM, LOW)
+  /// (Fixes C1)
   static List<CourseSession> filterAndRankForEnergy({
     required List<CourseSession> candidateSessions,
     required Map<String, Course> coursesMap,
@@ -12,15 +13,17 @@ class CourseEnergyEngine {
 
     for (final session in candidateSessions) {
       final course = coursesMap[session.courseId];
-      final energyRule = course?.energyRule ?? 'NONE';
+      final energyRule = course?.energyRule ?? CourseEnergyRule.all;
 
       if (energy == 'LOW') {
-        if (energyRule == 'skip' || energyRule == 'highEnergyOnly') {
+        if (energyRule == CourseEnergyRule.skipLow ||
+            energyRule == CourseEnergyRule.highOnly ||
+            energyRule == CourseEnergyRule.mediumOrHigh) {
           continue; // Filter out
         }
         filtered.add(session);
       } else if (energy == 'MEDIUM') {
-        if (energyRule == 'highEnergyOnly') {
+        if (energyRule == CourseEnergyRule.highOnly) {
           continue; // Filter out
         }
         filtered.add(session);
@@ -35,21 +38,22 @@ class CourseEnergyEngine {
       final courseA = coursesMap[a.courseId];
       final courseB = coursesMap[b.courseId];
 
-      final ruleA = courseA?.energyRule ?? 'NONE';
-      final ruleB = courseB?.energyRule ?? 'NONE';
+      final ruleA = courseA?.energyRule ?? CourseEnergyRule.all;
+      final ruleB = courseB?.energyRule ?? CourseEnergyRule.all;
 
       final diffA = a.difficulty ?? 3;
       final diffB = b.difficulty ?? 3;
 
       if (energy == 'HIGH') {
         // High energy prefers highEnergyOnly rules and higher difficulty
-        final scoreA = (ruleA == 'highEnergyOnly' ? 10 : 0) + diffA;
-        final scoreB = (ruleB == 'highEnergyOnly' ? 10 : 0) + diffB;
+        final scoreA = (ruleA == CourseEnergyRule.highOnly ? 10 : 0) + diffA;
+        final scoreB = (ruleB == CourseEnergyRule.highOnly ? 10 : 0) + diffB;
         return scoreB.compareTo(scoreA);
       } else if (energy == 'LOW') {
-        // Low energy prefers lower difficulty first, then shorter duration.
-        // (Previously duration minutes dominated the score and difficulty was
-        // effectively ignored.)
+        // Low energy prefers offerLight rules, lower difficulty first, then shorter duration.
+        final offerBonusA = ruleA == CourseEnergyRule.offerLight ? -5 : 0;
+        final offerBonusB = ruleB == CourseEnergyRule.offerLight ? -5 : 0;
+        if (offerBonusA != offerBonusB) return offerBonusA.compareTo(offerBonusB);
         if (diffA != diffB) return diffA.compareTo(diffB);
         final durA = a.estimatedDurationMinutes ?? courseA?.sessionDurationMinutes ?? 45;
         final durB = b.estimatedDurationMinutes ?? courseB?.sessionDurationMinutes ?? 45;

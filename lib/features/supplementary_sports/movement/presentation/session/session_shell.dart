@@ -16,7 +16,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/movement_session_notifier.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_template.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// اسکلت مشترک همهٔ جلسات فعالیت — قدرتی، پیاده‌روی، کوه، شنا، بازی.
 ///
@@ -430,7 +429,7 @@ class _SessionShellState extends State<SessionShell> {
 						child: LinearProgressIndicator(
 							value: percent,
 							backgroundColor: Colors.white24,
-							valueColor: const AlwaysStoppedAnimation<Color>(const Color(0xFF10B981)),
+							valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
 							minHeight: 6,
 						),
 					),

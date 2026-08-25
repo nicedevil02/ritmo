@@ -1,5 +1,6 @@
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
+import 'package:ritmo/features/courses/logic/course_validation.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 
@@ -27,6 +28,7 @@ class CourseCatchupEngine {
     required List<CourseSession> sessions,
     required DateTime today,
     int maxAdditionalWeeklyTarget = 2,
+    Set<DateTime> blockedDates = const {},
   }) {
     final overdueCount = CourseScheduler.daysBehind(sessions: sessions, today: today);
 
@@ -41,17 +43,49 @@ class CourseCatchupEngine {
       );
     }
 
-    // Proposed new weekly target (cap at 14)
-    final proposedTarget = (course.weeklyTargetSessions + maxAdditionalWeeklyTarget).clamp(1, 14);
-
-    final pendingToReschedule = sessions.where((s) => !s.isCompleted && !s.isSkipped).toList();
-
-    final newDates = CourseScheduler.distributeSessions(
-      pendingCount: pendingToReschedule.length,
-      from: today,
-      weeklyTarget: proposedTarget,
-      preferredDays: course.preferredDays,
+    // Proposed new weekly target (clamp within limits)
+    final proposedTarget = (course.weeklyTargetSessions + maxAdditionalWeeklyTarget).clamp(
+      CourseLimits.minWeeklyTarget,
+      CourseLimits.maxWeeklyTarget,
     );
+
+    // For catch-up, all non-completed, non-skipped sessions are rescheduled
+    final pendingToReschedule = sessions.where((s) => !s.isCompleted && !s.isSkipped).toList();
+    final occupiedWeekly = CourseScheduler.weeklyOccupancy(
+      sessions: sessions.where((s) => s.isCompleted).toList(),
+    );
+
+    List<DateTime> newDates;
+    try {
+      newDates = CourseScheduler.distributeSessions(
+        pendingCount: pendingToReschedule.length,
+        from: today,
+        weeklyTarget: proposedTarget,
+        preferredDays: course.preferredDays,
+        occupiedWeeklyCounts: occupiedWeekly,
+        blockedDates: blockedDates,
+      );
+    } on CourseValidationException catch (e) {
+      return CatchupPlan(
+        courseId: course.id,
+        overdueSessionsCount: overdueCount,
+        proposedWeeklyTarget: proposedTarget,
+        rescheduledSessions: [],
+        suggestedSkipsCount: overdueCount > CourseLimits.suggestedSkipOverdueThreshold
+            ? overdueCount - CourseLimits.suggestedSkipOverdueThreshold
+            : 0,
+        messageFa: 'امکان زمان‌بندی مجدد خودکار وجود ندارد (${e.messageFa}). لطفاً هدف هفتگی یا روزهای انتخابی را تغییر دهید.',
+      );
+    } catch (_) {
+      return CatchupPlan(
+        courseId: course.id,
+        overdueSessionsCount: overdueCount,
+        proposedWeeklyTarget: proposedTarget,
+        rescheduledSessions: [],
+        suggestedSkipsCount: 0,
+        messageFa: 'خطا در محاسبه برنامه جبرانی. لطفاً تنظیمات دوره را بررسی نمایید.',
+      );
+    }
 
     final rescheduled = <CourseSession>[];
     for (var i = 0; i < pendingToReschedule.length; i++) {
@@ -60,21 +94,29 @@ class CourseCatchupEngine {
       if (i < newDates.length) {
         dateStr = CourseDate.toDayKey(newDates[i]);
       }
-      rescheduled.add(session.copyWith(plannedDate: dateStr));
+      rescheduled.add(session.copyWith(
+        plannedDate: dateStr,
+        plannedDateSet: true,
+        isUserScheduled: false,
+      ));
     }
 
     int suggestedSkips = 0;
-    if (overdueCount > 10) {
-      suggestedSkips = overdueCount - 10;
+    if (overdueCount > CourseLimits.suggestedSkipOverdueThreshold) {
+      suggestedSkips = overdueCount - CourseLimits.suggestedSkipOverdueThreshold;
     }
 
-    // Compute a realistic catch-up window instead of a hardcoded "۳ هفته".
+    // Compute realistic catch-up window
     final extraPerWeek = proposedTarget - course.weeklyTargetSessions;
-    final weeksToCatchUp = extraPerWeek > 0 ? (overdueCount / extraPerWeek).ceil() : overdueCount;
-
-    final msg = overdueCount > 5
-        ? 'شما $overdueCount جلسه از برنامه عقب هستید. پیشنهاد می‌کنیم هدف هفتگی را به $proposedTarget جلسه افزایش دهید تا ظرف حدود $weeksToCatchUp هفته جبران شود.'
-        : 'شما $overdueCount جلسه عقب هستید. جلسات معوقه در روزهای آینده زمان‌بندی مجدد شدند.';
+    String msg;
+    if (extraPerWeek <= 0) {
+      msg = 'شما $overdueCount جلسه از برنامه عقب هستید. با هدف هفتگی فعلی امکان جبران وجود ندارد؛ پیشنهاد می‌شود هدف هفتگی را افزایش دهید.';
+    } else {
+      final weeksToCatchUp = (overdueCount / extraPerWeek).ceil();
+      msg = overdueCount > 5
+          ? 'شما $overdueCount جلسه از برنامه عقب هستید. پیشنهاد می‌کنیم هدف هفتگی را به $proposedTarget جلسه افزایش دهید تا ظرف حدود $weeksToCatchUp هفته جبران شود.'
+          : 'شما $overdueCount جلسه عقب هستید. جلسات معوقه در روزهای آینده زمان‌بندی مجدد شدند.';
+    }
 
     return CatchupPlan(
       courseId: course.id,
@@ -90,10 +132,6 @@ class CourseCatchupEngine {
     final course = await CoursesRepository.instance.getCourseById(plan.courseId);
     if (course == null) return;
 
-    // A single updateCourse call redistributes pending sessions with the new
-    // weekly target AND rebuilds reminders exactly once. (The previous loop of
-    // per-session rescheduleSession calls caused O(N) full reminder rebuilds,
-    // N alarm syncs, and marked every session as user-scheduled.)
     final updatedCourse = course.copyWith(
       weeklyTargetSessions: plan.proposedWeeklyTarget,
       updatedAt: DateTime.now().millisecondsSinceEpoch,

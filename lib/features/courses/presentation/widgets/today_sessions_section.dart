@@ -131,13 +131,13 @@ class TodaySessionsSection extends StatelessWidget {
             var customDuration = course.sessionDurationMinutes;
 
             if (isLowEnergy) {
-              if (energyRule == 'skip') {
+              if (energyRule == CourseEnergyRule.skipLow) {
                 isDimmed = true;
                 energyWarning = 'تراز انرژی شما پایین است؛ برای هماهنگی با ریتم بدنی پیشنهاد می‌شود امروز از این جلسه عبور کنید.';
-              } else if (energyRule == 'offerLight') {
+              } else if (energyRule == CourseEnergyRule.offerLight) {
                 customDuration = (course.sessionDurationMinutes / 2).ceil();
                 energyWarning = 'تراز انرژی شما پایین است؛ پیشنهاد می‌کنیم این جلسه را کوتاه‌تر و سبک‌تر (به مدت ${toPersianDigits(customDuration)} دقیقه) انجام دهید 💪';
-              } else if (energyRule == 'highEnergyOnly') {
+              } else if (energyRule == CourseEnergyRule.highOnly) {
                 isDimmed = true;
                 hideStartButton = true;
                 energyWarning = 'این کار نیاز به تمرکز بالا دارد. زمان مناسب‌تری برای آن برنامه‌ریزی کنید.';
@@ -276,7 +276,7 @@ class TodaySessionsSection extends StatelessWidget {
                                 ),
                                 icon: const Icon(CupertinoIcons.play_fill, size: 12),
                                 label: Text(
-                                  isLowEnergy && energyRule == 'offerLight' ? 'شروع نسخه سبک' : 'شروع تایمر',
+                                  isLowEnergy && energyRule == CourseEnergyRule.offerLight ? 'شروع نسخه سبک' : 'شروع تایمر',
                                   style: const TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.bold,

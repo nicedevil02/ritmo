@@ -26,9 +26,9 @@ class SM2ReviewEngine {
   }) {
     final q = qualityScore.clamp(0, 5);
 
-    // Calculate new Easiness Factor (EF)
+    // Calculate new Easiness Factor (EF), bounded between 1.3 and 2.5
     var ef = previousEasinessFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
-    if (ef < 1.3) ef = 1.3;
+    ef = ef.clamp(1.3, 2.5);
 
     int reps;
     int interval;
@@ -43,15 +43,18 @@ class SM2ReviewEngine {
       } else if (reps == 2) {
         interval = 6;
       } else {
-        interval = (previousIntervalDays * ef).round();
+        final safePrevInterval = math.max(1, previousIntervalDays);
+        interval = math.max(1, (safePrevInterval * ef).round());
       }
     }
 
-    final nextDate = fromDate.add(Duration(days: math.max(1, interval)));
+    final safeInterval = math.max(1, interval);
+    final normalizedFrom = DateTime(fromDate.year, fromDate.month, fromDate.day);
+    final nextDate = normalizedFrom.add(Duration(days: safeInterval));
 
     return SM2Result(
       repetitions: reps,
-      intervalDays: interval,
+      intervalDays: safeInterval,
       easinessFactor: ef,
       nextReviewDate: nextDate,
     );

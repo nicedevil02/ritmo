@@ -25,7 +25,10 @@ class StudyReviewPolicy {
         return const ReviewResult(nextReviewDays: 1, nextMastery: StudyMastery.learning);
 
       case SessionFeedback.partial:
-        return ReviewResult(nextReviewDays: 3, nextMastery: currentMastery);
+        final nextM = currentMastery == StudyMastery.notStarted
+            ? StudyMastery.learning
+            : currentMastery;
+        return ReviewResult(nextReviewDays: 3, nextMastery: nextM);
 
       case SessionFeedback.understood:
         if (reviewCount <= 0) {

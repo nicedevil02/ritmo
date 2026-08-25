@@ -156,11 +156,66 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
   }
 
   Future<void> _finishSession() async {
-    final elapsedMinutes = (_secondsElapsed / 60).ceil();
-    final actualDuration = elapsedMinutes > 0 ? elapsedMinutes : 1;
-
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Check for short session (<30 seconds) to avoid polluting analytics (Fixes M10)
+    if (_secondsElapsed < 30) {
+      final confirmShort = await showDialog<bool>(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            child: RitmoTheme.glassCardLight(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'جلسه بسیار کوتاه',
+                      textAlign: TextAlign.right,
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'مدت زمان مطالعه شما کمتر از ۳۰ ثانیه است (${toPersianDigits(_secondsElapsed.toString())} ثانیه). آیا مایلید این جلسه به عنوان ۱ دقیقه ثبت شود یا تایمر ادامه یابد؟',
+                      textAlign: TextAlign.right,
+                      style: RitmoTextStyles.caption(colors.textSecondary),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('ادامه تایمر', style: TextStyle(color: colors.textSecondary)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('ثبت جلسه', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      if (confirmShort != true || !mounted) return;
+    }
+
+    final roundedMinutes = (_secondsElapsed / 60).round();
+    final actualDuration = roundedMinutes > 0 ? roundedMinutes : 1;
 
     final result = await showDialog<bool>(
       context: context,

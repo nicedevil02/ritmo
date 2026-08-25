@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 
@@ -30,8 +31,13 @@ class StudyPlanner {
     if (subjects.isEmpty || topics.isEmpty) return [];
 
     final todayStr = RitmoDate.dayKey(today);
+    final todayStart = RitmoDate.startOfDay(today);
     final subjectMap = {for (final s in subjects) s.id: s};
     final todayStudiedTopicIds = todaySessions.map((s) => s.topicId).whereType<String>().toSet();
+
+    final todayStudiedMinutes = todaySessions.fold<int>(0, (sum, s) => sum + s.durationMinutes);
+    final remainingCap = dailyCapacityMinutes - todayStudiedMinutes;
+    final suggestedMin = remainingCap >= 15 ? math.min(30, remainingCap) : (remainingCap > 0 ? remainingCap : 30);
 
     final recs = <StudyRecommendation>[];
 
@@ -39,27 +45,40 @@ class StudyPlanner {
       final subject = subjectMap[topic.subjectId];
       if (subject == null || subject.isArchived) continue;
 
+      // Rule 0: Mastered topics that are NOT due for review should not clutter recommendations
+      final isReviewDue = topic.nextReviewDateIso != null && topic.nextReviewDateIso!.compareTo(todayStr) <= 0;
+      if (topic.mastery == StudyMastery.mastered && !isReviewDue) {
+        continue;
+      }
+
       int score = 0;
       String winnerReason = 'پیشنهاد برنامه‌ریزی';
       int maxRulePoints = -999;
 
       // Rule 1: Review due (+40)
-      if (topic.nextReviewDateIso != null && topic.nextReviewDateIso!.compareTo(todayStr) <= 0) {
+      if (isReviewDue) {
         score += 40;
         if (40 > maxRulePoints) {
           maxRulePoints = 40;
-          winnerReason = 'امروز موعد مرورشه';
+          winnerReason = 'امروز موعد مرور این مبحث است';
         }
       }
 
-      // Rule 2: >7 days unstudied (+25)
-      if (topic.lastStudiedAtMs != null) {
-        final daysDiff = today.difference(DateTime.fromMillisecondsSinceEpoch(topic.lastStudiedAtMs!)).inDays;
+      // Rule 2: Unstudied (never studied) (+30) vs >7 days unstudied (+25)
+      if (topic.lastStudiedAtMs == null) {
+        score += 30;
+        if (30 > maxRulePoints) {
+          maxRulePoints = 30;
+          winnerReason = 'هنوز مطالعه این سرفصل را شروع نکرده‌اید';
+        }
+      } else {
+        final lastStudiedDt = DateTime.fromMillisecondsSinceEpoch(topic.lastStudiedAtMs!);
+        final daysDiff = todayStart.difference(RitmoDate.startOfDay(lastStudiedDt)).inDays;
         if (daysDiff >= 7) {
           score += 25;
           if (25 > maxRulePoints) {
             maxRulePoints = 25;
-            winnerReason = '$daysDiff روزه سراغ ${subject.name} نرفتی';
+            winnerReason = '$daysDiff روزه سراغ «${topic.name}» نرفتی';
           }
         }
       }
@@ -69,7 +88,7 @@ class StudyPlanner {
         score += 20;
         if (20 > maxRulePoints) {
           maxRulePoints = 20;
-          winnerReason = 'نصفه رهاش کردی';
+          winnerReason = 'در حال یادگیری — نیاز به تکمیل مبحث';
         }
       }
 
@@ -83,8 +102,6 @@ class StudyPlanner {
       }
 
       // Rule 5: Fits in capacity (+10)
-      final todayStudiedMinutes = todaySessions.fold<int>(0, (sum, s) => sum + s.durationMinutes);
-      final remainingCap = dailyCapacityMinutes - todayStudiedMinutes;
       if (remainingCap >= 25) {
         score += 10;
         if (10 > maxRulePoints) {
@@ -101,7 +118,7 @@ class StudyPlanner {
       recs.add(StudyRecommendation(
         subject: subject,
         topic: topic,
-        suggestedMinutes: 30,
+        suggestedMinutes: suggestedMin,
         reason: winnerReason,
         score: score,
       ));

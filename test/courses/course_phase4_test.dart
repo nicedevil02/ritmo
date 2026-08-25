@@ -15,7 +15,7 @@ void main() {
         activityType: 'STUDY',
         zoneId: 'z_tech',
         isArchived: false,
-        energyRule: 'NONE',
+        energyRule: CourseEnergyRule.all,
         createdAt: 1000,
         updatedAt: 2000,
         courseType: CourseType.skill,

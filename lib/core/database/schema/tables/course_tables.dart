@@ -12,10 +12,10 @@ class CourseTables {
           activityType TEXT NOT NULL,
           zoneId TEXT,
           isArchived INTEGER NOT NULL DEFAULT 0,
-          energyRule TEXT NOT NULL DEFAULT 'NONE',
+          energyRule TEXT NOT NULL DEFAULT 'ALL' CHECK(energyRule IN ('ALL','OFFER_LIGHT','MEDIUM_OR_HIGH','HIGH_ONLY','SKIP_LOW')),
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL,
-          courseType TEXT NOT NULL DEFAULT 'VIDEO',
+          courseType TEXT NOT NULL DEFAULT 'VIDEO' CHECK(courseType IN ('VIDEO','BOOK','SKILL','CUSTOM')),
           unitLabel TEXT,
           emoji TEXT,
           colorHex TEXT,
@@ -84,7 +84,7 @@ class CourseTables {
           courseId TEXT NOT NULL,
           startedAt INTEGER NOT NULL,
           pausedAccumulatedMs INTEGER NOT NULL DEFAULT 0,
-          state TEXT NOT NULL DEFAULT 'RUNNING',
+          state TEXT NOT NULL DEFAULT 'RUNNING' CHECK(state IN ('RUNNING','PAUSED')),
           targetDurationMinutes INTEGER,
           updatedAt INTEGER NOT NULL,
           FOREIGN KEY(courseSessionId) REFERENCES course_sessions(id) ON DELETE CASCADE
@@ -107,7 +107,7 @@ class CourseTables {
     ''');
   }
 
-  /// Self-healing schema validation to ensure course tables, columns, and indexes exist. (Fixes K-13)
+  /// Self-healing schema validation to ensure course tables, columns, and indexes exist. (Fixes K-13 & M1)
   static Future<void> ensureSchema(DatabaseExecutor db) async {
     // 1. Ensure courses table & indexes
     await db.execute('''
@@ -119,7 +119,7 @@ class CourseTables {
           activityType TEXT NOT NULL,
           zoneId TEXT,
           isArchived INTEGER NOT NULL DEFAULT 0,
-          energyRule TEXT NOT NULL DEFAULT 'NONE',
+          energyRule TEXT NOT NULL DEFAULT 'ALL',
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL,
           courseType TEXT NOT NULL DEFAULT 'VIDEO',
@@ -138,7 +138,9 @@ class CourseTables {
           targetEndDate TEXT,
           adaptiveLastAppliedAt INTEGER,
           masteryScore REAL NOT NULL DEFAULT 0,
-          reviewEnabled INTEGER NOT NULL DEFAULT 0
+          reviewEnabled INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(zoneId) REFERENCES zones(id) ON DELETE SET NULL,
+          FOREIGN KEY(linkedGoalId) REFERENCES goals(id) ON DELETE SET NULL
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS index_courses_zoneId ON courses(zoneId);');
@@ -173,7 +175,8 @@ class CourseTables {
           questionResolved INTEGER NOT NULL DEFAULT 0,
           sourceSessionId TEXT,
           skipReason TEXT,
-          displayOrder INTEGER NOT NULL DEFAULT 0
+          displayOrder INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(courseId) REFERENCES courses(id) ON DELETE CASCADE
       );
     ''');
     await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS index_course_sessions_courseId_sessionNumber ON course_sessions(courseId, sessionNumber);');
@@ -190,7 +193,8 @@ class CourseTables {
           pausedAccumulatedMs INTEGER NOT NULL DEFAULT 0,
           state TEXT NOT NULL DEFAULT 'RUNNING',
           targetDurationMinutes INTEGER,
-          updatedAt INTEGER NOT NULL
+          updatedAt INTEGER NOT NULL,
+          FOREIGN KEY(courseSessionId) REFERENCES course_sessions(id) ON DELETE CASCADE
       );
     ''');
 
@@ -208,5 +212,15 @@ class CourseTables {
         createdAt INTEGER NOT NULL
       );
     ''');
+
+    // 5. Data Normalization Migrations (Fixes C1, C2)
+    try {
+      await db.execute("UPDATE courses SET courseType = UPPER(courseType) WHERE courseType IS NOT NULL;");
+      await db.execute("UPDATE courses SET energyRule = 'ALL' WHERE energyRule IN ('NONE', '', 'all', 'none') OR energyRule IS NULL;");
+      await db.execute("UPDATE courses SET energyRule = 'OFFER_LIGHT' WHERE energyRule IN ('offerLight', 'OFFERLIGHT');");
+      await db.execute("UPDATE courses SET energyRule = 'HIGH_ONLY' WHERE energyRule IN ('highEnergyOnly', 'HIGHENERGYONLY');");
+      await db.execute("UPDATE courses SET energyRule = 'SKIP_LOW' WHERE energyRule IN ('skip', 'SKIP', 'skipLow');");
+      await db.execute("UPDATE courses SET energyRule = 'MEDIUM_OR_HIGH' WHERE energyRule IN ('mediumOrHigh', 'MEDIUMORHIGH');");
+    } catch (_) {}
   }
 }

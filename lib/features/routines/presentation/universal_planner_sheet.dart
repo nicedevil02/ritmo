@@ -26,7 +26,7 @@ import 'package:ritmo/features/routines/presentation/widgets/planner_header.dart
 import 'package:ritmo/features/routines/presentation/widgets/planner_journey_preview.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_natural_input.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_submit_button.dart';
-import 'package:ritmo/features/supplementary_sports/presentation/ss_home_dashboard_screen.dart';
+import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/features/worship/presentation/widgets/mustahab_section.dart';
 
@@ -255,7 +255,7 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
       if (!mounted) return;
       final nav = Navigator.of(context);
       nav.push(
-        MaterialPageRoute(builder: (context) => const SSHomeDashboardScreen()),
+        MaterialPageRoute(builder: (context) => const MvHubScreen()),
       ).then((_) {
         widget.onSaved?.call();
         if (mounted) nav.pop();

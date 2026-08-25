@@ -6,7 +6,6 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_session.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_template.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// چک‌لیست وسایل مسیر؛ کلید ذخیره در liveJson می‌شود: gear
 const Map<String, String> _gearItems = <String, String>{

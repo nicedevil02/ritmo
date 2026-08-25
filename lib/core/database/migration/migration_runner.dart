@@ -56,6 +56,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v114_cycle_fe
 import 'package:ritmo/core/database/migration/migrations/migration_v115_my_day.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v116_tags_and_normalized_fields.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v117_cycle_hardening.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v118_medication_integrity_and_safety.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -175,6 +176,7 @@ class MigrationRunner {
     MigrationV115MyDay(), // Simple Tasks: addedToMyDayAt column
     MigrationV116TagsAndNormalizedFields(), // Simple Tasks: tagsJson, noteNormalized, titleNormalized
     MigrationV117CycleHardening(), // Cycle module hardening: autoClosed, indexes, normalization & cleanup
+    MigrationV118MedicationIntegrityAndSafety(), // Medication integrity, stock tracking & safety indexes
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

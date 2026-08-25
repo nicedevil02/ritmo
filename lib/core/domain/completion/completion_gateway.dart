@@ -4,7 +4,6 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/completion/completion_outcome.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
-import 'package:ritmo/core/domain/engines/progression_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
@@ -370,6 +369,11 @@ class CompletionGateway {
           'WHERE id = ? AND medStockCount IS NOT NULL AND medStockCount > 0',
           [nowMs, routineId],
         );
+        await txn.rawUpdate(
+          'UPDATE medication_profiles SET remainingAmount = MAX(0.0, remainingAmount - 1.0) '
+          'WHERE routineId = ? AND remainingAmount IS NOT NULL',
+          [routineId],
+        );
       });
 
       _notifySuccess(domain: 'medicine', itemId: routineId, dateStr: req.dateStr, result: 'FULL');
@@ -562,6 +566,11 @@ class CompletionGateway {
                 'UPDATE routines SET medStockCount = medStockCount + 1, updatedAt = ? '
                 'WHERE id = ? AND medStockCount IS NOT NULL',
                 [DateTime.now().millisecondsSinceEpoch, medRoutineId],
+              );
+              await txn.rawUpdate(
+                'UPDATE medication_profiles SET remainingAmount = remainingAmount + 1.0 '
+                'WHERE routineId = ? AND remainingAmount IS NOT NULL',
+                [medRoutineId],
               );
             }
           });

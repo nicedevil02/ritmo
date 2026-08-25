@@ -62,6 +62,7 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
 
     setState(() => _konkurMode = val);
     if (!mounted) return;
+    Navigator.of(context).pop(); // Dismiss bottom sheet
     await StudyModuleEntry.switchMode(context, konkur: val);
   }
 

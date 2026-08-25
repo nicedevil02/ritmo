@@ -434,7 +434,7 @@ class _MovementSessionScaffoldState extends State<MovementSessionScaffold> {
                           child: LinearProgressIndicator(
                             value: targetPercent,
                             backgroundColor: Colors.white24,
-                            valueColor: const AlwaysStoppedAnimation<Color>(const Color(0xFF10B981)),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
                             minHeight: 6,
                           ),
                         ),

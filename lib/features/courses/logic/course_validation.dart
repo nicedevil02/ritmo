@@ -29,6 +29,20 @@ class CourseValidator {
       throw CourseValidationException('INVALID_WEEKLY_TARGET', 'هدف هفتگی باید بین ${CourseLimits.minWeeklyTarget} تا ${CourseLimits.maxWeeklyTarget} جلسه باشد.');
     }
 
+    final validDaysCount = c.preferredDays.where((d) => d >= 0 && d <= 6).toSet().length;
+    if (validDaysCount == 0 && c.preferredDays.isNotEmpty) {
+      throw CourseValidationException('INVALID_PREFERRED_DAYS', 'روزهای ترجیحی انتخاب‌شده نامعتبر هستند.');
+    }
+    if (validDaysCount > 0) {
+      final maxWeeklyPossible = validDaysCount * CourseLimits.maxSessionsPerDay;
+      if (c.weeklyTargetSessions > maxWeeklyPossible) {
+        throw CourseValidationException(
+          'TARGET_EXCEEDS_CAPACITY',
+          'هدف هفتگی (${c.weeklyTargetSessions}) بیش از حداکثر ظرفیت روزهای انتخابی ($maxWeeklyPossible جلسه) است.',
+        );
+      }
+    }
+
     if (c.reminderEnabled) {
       if (c.preferredTime == null || c.preferredTime!.trim().isEmpty) {
         throw CourseValidationException('INVALID_REMINDER_TIME', 'برای فعال‌سازی یادآور، زمان یادآوری باید مشخص شود.');
@@ -45,11 +59,34 @@ class CourseValidator {
     }
   }
 
-  static List<int> normalizePreferredDays(List<int> days) {
-    final valid = days.where((d) => d >= 0 && d <= 6).toSet().toList()..sort();
-    if (valid.isEmpty) {
-      return [6, 1, 3]; // Default: Saturday, Monday, Wednesday
+  static int _farsiDayRank(int d) {
+    // Saturday(6)=0, Sunday(0)=1, Monday(1)=2, Tuesday(2)=3, Wednesday(3)=4, Thursday(4)=5, Friday(5)=6
+    switch (d) {
+      case 6:
+        return 0;
+      case 0:
+        return 1;
+      case 1:
+        return 2;
+      case 2:
+        return 3;
+      case 3:
+        return 4;
+      case 4:
+        return 5;
+      case 5:
+        return 6;
+      default:
+        return 7;
     }
+  }
+
+  static List<int> normalizePreferredDays(List<int> days) {
+    final valid = days.where((d) => d >= 0 && d <= 6).toSet().toList();
+    if (valid.isEmpty) {
+      return [6, 1, 3]; // Default: Saturday, Monday, Wednesday (شنبه، دوشنبه، چهارشنبه)
+    }
+    valid.sort((a, b) => _farsiDayRank(a).compareTo(_farsiDayRank(b)));
     return valid;
   }
 }

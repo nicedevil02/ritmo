@@ -7,7 +7,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_ses
 import 'package:ritmo/features/supplementary_sports/movement/domain/session_mode.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/movement_session_notifier.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// داده‌ها و ابزارهایی که پوستهٔ جلسه در اختیار هر قالب می‌گذارد.
 ///

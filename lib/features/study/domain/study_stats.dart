@@ -20,8 +20,13 @@ class StudyDate {
     if (diffDays == 1) return 'دیروز';
     if (diffDays == -1) return 'فردا';
     if (diffDays > 1 && diffDays <= 7) return '${RitmoNumber.faInt(diffDays)} روز پیش';
+    if (diffDays < -1 && diffDays >= -7) return '${RitmoNumber.faInt(-diffDays)} روز بعد';
 
     final jalali = Jalali.fromDateTime(dt);
+    final currentJalaliYear = Jalali.now().year;
+    if (jalali.year != currentJalaliYear) {
+      return '${RitmoNumber.faInt(jalali.day)} ${jalali.formatter.mN} ${RitmoNumber.faInt(jalali.year)}';
+    }
     return '${RitmoNumber.faInt(jalali.day)} ${jalali.formatter.mN}';
   }
 }

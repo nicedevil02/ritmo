@@ -184,6 +184,8 @@ class SupplementarySportsTables {
         splitPattern TEXT DEFAULT 'AUTO',
         defaultIntensity TEXT DEFAULT 'MODERATE',
         usesExternalApp INTEGER DEFAULT 0,
+        voiceCuesEnabled INTEGER DEFAULT 1,
+        cycleConsentGranted INTEGER DEFAULT 0,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       );
@@ -299,165 +301,184 @@ class SupplementarySportsTables {
     await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'splitPattern', "TEXT DEFAULT 'AUTO'");
     await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'defaultIntensity', "TEXT DEFAULT 'MODERATE'");
     await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'usesExternalApp', 'INTEGER DEFAULT 0');
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'voiceCuesEnabled', 'INTEGER DEFAULT 1');
+    await SchemaManager.safeAddColumn(db, 'ss_user_profile', 'cycleConsentGranted', 'INTEGER DEFAULT 0');
   }
 
   /// Ensures prescription tables exist on SQLite database safely.
   static Future<void> ensurePrescriptionTables(DatabaseExecutor db) async {
-    try {
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_session_prescription (
+    // 1. ss_session_prescription
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_session_prescription (
+        id TEXT PRIMARY KEY,
+        dateIso TEXT NOT NULL,
+        cycleWeek INTEGER NOT NULL,
+        slotType TEXT NOT NULL,
+        kindCode TEXT,
+        routineId TEXT,
+        plannedTime TEXT,
+        sourceRef TEXT,
+        focusCodes TEXT NOT NULL,
+        targetMinutes INTEGER NOT NULL,
+        intensityTier TEXT NOT NULL,
+        targetRpe INTEGER,
+        actualRpe INTEGER,
+        headlineFa TEXT NOT NULL,
+        coachNoteFa TEXT,
+        source TEXT NOT NULL,
+        isLocked INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'PLANNED',
+        movedToDateIso TEXT,
+        legacyPlanId TEXT,
+        workoutPlanId TEXT,
+        workoutLogId TEXT,
+        createdAt INTEGER NOT NULL,
+        updatedAt INTEGER NOT NULL
+      );
+    ''');
+
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'kindCode', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'routineId', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'plannedTime', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'sourceRef', 'TEXT');
+
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_ss_prescription_status ON ss_session_prescription(status, dateIso);',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_ss_prescription_plan ON ss_session_prescription(workoutPlanId, dateIso);',
+    );
+
+    // 2. ss_muscle_group
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_muscle_group (
+        code TEXT PRIMARY KEY,
+        titleFa TEXT NOT NULL,
+        region TEXT NOT NULL,
+        emoji TEXT,
+        sortOrder INTEGER NOT NULL
+      );
+    ''');
+
+    final muscleGroups = [
+      ['CHEST', 'سینه', 'UPPER', '🫁', 1],
+      ['SHOULDER', 'سرشانه', 'UPPER', '🎯', 2],
+      ['BICEPS', 'جلوبازو', 'UPPER', '💪', 3],
+      ['TRICEPS', 'پشت‌بازو', 'UPPER', '🦾', 4],
+      ['BACK', 'زیربغل و پشت', 'UPPER', '🪽', 5],
+      ['CORE', 'شکم و مرکز', 'CORE', '🎽', 6],
+      ['QUADS_GLUTES', 'ران و باسن', 'LOWER', '🦵', 7],
+      ['HAMSTRINGS', 'پشت ران', 'LOWER', '🦿', 8],
+      ['CALVES', 'ساق پا', 'LOWER', '🎯', 9],
+      ['CARDIO', 'هوازی', 'CARDIO', '🫀', 10],
+      ['MOBILITY', 'تحرک و کشش', 'MOBILITY', '🧘', 11],
+      ['FULL_BODY', 'کل بدن', 'FULL', '🔥', 12],
+    ];
+
+    for (final m in muscleGroups) {
+      await db.insert(
+        'ss_muscle_group',
+        {
+          'code': m[0],
+          'titleFa': m[1],
+          'region': m[2],
+          'emoji': m[3],
+          'sortOrder': m[4],
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+
+    // 3. station_bundles
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS station_bundles (
           id TEXT PRIMARY KEY,
-          dateIso TEXT NOT NULL,
-          cycleWeek INTEGER NOT NULL,
-          slotType TEXT NOT NULL,
-          focusCodes TEXT NOT NULL,
-          targetMinutes INTEGER NOT NULL,
-          intensityTier TEXT NOT NULL,
-          targetRpe INTEGER,
-          actualRpe INTEGER,
-          headlineFa TEXT NOT NULL,
-          coachNoteFa TEXT,
-          source TEXT NOT NULL,
-          isLocked INTEGER NOT NULL DEFAULT 0,
-          status TEXT NOT NULL DEFAULT 'PLANNED',
-          movedToDateIso TEXT,
-          legacyPlanId TEXT,
-          workoutPlanId TEXT,
-          workoutLogId TEXT,
+          title TEXT NOT NULL,
+          description TEXT,
+          category TEXT NOT NULL,
+          itemsJson TEXT NOT NULL,
+          isUserTemplate INTEGER NOT NULL DEFAULT 0,
+          usageCount INTEGER NOT NULL DEFAULT 0,
           createdAt INTEGER NOT NULL,
           updatedAt INTEGER NOT NULL
-        );
-      ''');
-
-      await db.execute(
-        'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',
       );
-      await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_ss_prescription_status ON ss_session_prescription(status, dateIso);',
+    ''');
+
+    // 4. ss_plan_schedule
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_plan_schedule (
+          id TEXT PRIMARY KEY,
+          planId TEXT NOT NULL,
+          scheduledDate TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'PENDING',
+          sessionId TEXT,
+          shiftedFromDate TEXT,
+          createdAt INTEGER NOT NULL,
+          updatedAt INTEGER NOT NULL,
+          FOREIGN KEY(planId) REFERENCES ss_workout_plan(id) ON DELETE CASCADE
       );
-      await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_ss_prescription_plan ON ss_session_prescription(workoutPlanId, dateIso);',
+    ''');
+
+    // 5. ss_exercise_pr
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_exercise_pr (
+          id TEXT PRIMARY KEY,
+          exerciseId TEXT NOT NULL,
+          prType TEXT NOT NULL,
+          value REAL NOT NULL,
+          sessionId TEXT,
+          achievedAt INTEGER NOT NULL,
+          UNIQUE(exerciseId, prType)
       );
+    ''');
 
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_muscle_group (
-          code TEXT PRIMARY KEY,
-          titleFa TEXT NOT NULL,
-          region TEXT NOT NULL,
-          emoji TEXT,
-          sortOrder INTEGER NOT NULL
-        );
-      ''');
+    // 6. ss_session_set_log
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ss_session_set_log (
+          id TEXT PRIMARY KEY,
+          sessionId TEXT NOT NULL,
+          exerciseId TEXT NOT NULL,
+          setNumber INTEGER NOT NULL,
+          weight REAL,
+          reps INTEGER,
+          rir INTEGER,
+          durationSeconds INTEGER,
+          isCompleted INTEGER NOT NULL DEFAULT 1,
+          loggedAt INTEGER NOT NULL,
+          FOREIGN KEY(sessionId) REFERENCES ss_workout_session_log(id) ON DELETE CASCADE
+      );
+    ''');
 
-      final muscleGroups = [
-        ['CHEST', 'سینه', 'UPPER', '🫁', 1],
-        ['SHOULDER', 'سرشانه', 'UPPER', '🎯', 2],
-        ['BICEPS', 'جلوبازو', 'UPPER', '💪', 3],
-        ['TRICEPS', 'پشت‌بازو', 'UPPER', '🦾', 4],
-        ['BACK', 'زیربغل و پشت', 'UPPER', '🪽', 5],
-        ['CORE', 'شکم و مرکز', 'CORE', '🎽', 6],
-        ['QUADS_GLUTES', 'ران و باسن', 'LOWER', '🦵', 7],
-        ['HAMSTRINGS', 'پشت ران', 'LOWER', '🦿', 8],
-        ['CALVES', 'ساق پا', 'LOWER', '🎯', 9],
-        ['CARDIO', 'هوازی', 'CARDIO', '🫀', 10],
-        ['MOBILITY', 'تحرک و کشش', 'MOBILITY', '🧘', 11],
-        ['FULL_BODY', 'کل بدن', 'FULL', '🔥', 12],
-      ];
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_ss_set_log_exercise ON ss_session_set_log(exerciseId, loggedAt);',
+    );
 
-      for (final m in muscleGroups) {
-        try {
-          await db.insert(
-            'ss_muscle_group',
-            {
-              'code': m[0],
-              'titleFa': m[1],
-              'region': m[2],
-              'emoji': m[3],
-              'sortOrder': m[4],
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore,
-          );
-        } catch (_) {}
-      }
+    // 7. movement_budget
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS movement_budget (
+          id TEXT PRIMARY KEY DEFAULT 'default',
+          weeklyMetMinutesTarget REAL NOT NULL DEFAULT 500,
+          weeklyActiveDaysTarget INTEGER NOT NULL DEFAULT 4,
+          isAutoAdjusted INTEGER NOT NULL DEFAULT 1,
+          updatedAt INTEGER NOT NULL
+      );
+    ''');
 
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS station_bundles (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT,
-            category TEXT NOT NULL,
-            itemsJson TEXT NOT NULL,
-            isUserTemplate INTEGER NOT NULL DEFAULT 0,
-            usageCount INTEGER NOT NULL DEFAULT 0,
-            createdAt INTEGER NOT NULL,
-            updatedAt INTEGER NOT NULL
-        );
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_plan_schedule (
-            id TEXT PRIMARY KEY,
-            planId TEXT NOT NULL,
-            scheduledDate TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING',
-            sessionId TEXT,
-            shiftedFromDate TEXT,
-            createdAt INTEGER NOT NULL,
-            updatedAt INTEGER NOT NULL,
-            FOREIGN KEY(planId) REFERENCES ss_workout_plan(id) ON DELETE CASCADE
-        );
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_exercise_pr (
-            id TEXT PRIMARY KEY,
-            exerciseId TEXT NOT NULL,
-            prType TEXT NOT NULL,
-            value REAL NOT NULL,
-            sessionId TEXT,
-            achievedAt INTEGER NOT NULL,
-            UNIQUE(exerciseId, prType)
-        );
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS ss_session_set_log (
-            id TEXT PRIMARY KEY,
-            sessionId TEXT NOT NULL,
-            exerciseId TEXT NOT NULL,
-            setNumber INTEGER NOT NULL,
-            weight REAL,
-            reps INTEGER,
-            rir INTEGER,
-            durationSeconds INTEGER,
-            isCompleted INTEGER NOT NULL DEFAULT 1,
-            loggedAt INTEGER NOT NULL,
-            FOREIGN KEY(sessionId) REFERENCES ss_workout_session_log(id) ON DELETE CASCADE
-        );
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS movement_budget (
-            id TEXT PRIMARY KEY DEFAULT 'default',
-            weeklyMetMinutesTarget REAL NOT NULL DEFAULT 500,
-            weeklyActiveDaysTarget INTEGER NOT NULL DEFAULT 4,
-            isAutoAdjusted INTEGER NOT NULL DEFAULT 1,
-            updatedAt INTEGER NOT NULL
-        );
-      ''');
-
-      await db.execute('''
-        CREATE TABLE IF NOT EXISTS movement_pr (
-            id TEXT PRIMARY KEY,
-            kind TEXT NOT NULL,
-            prType TEXT NOT NULL,
-            value REAL NOT NULL,
-            logId TEXT,
-            achievedAt INTEGER NOT NULL,
-            UNIQUE(kind, prType)
-        );
-      ''');
-    } catch (_) {}
+    // 8. movement_pr
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS movement_pr (
+          id TEXT PRIMARY KEY,
+          kind TEXT NOT NULL,
+          prType TEXT NOT NULL,
+          value REAL NOT NULL,
+          logId TEXT,
+          achievedAt INTEGER NOT NULL,
+          UNIQUE(kind, prType)
+      );
+    ''');
   }
 
   /// Ensures movement_sessions, movement_session_events, and movement_campaigns tables exist safely.
@@ -546,4 +567,129 @@ class SupplementarySportsTables {
   static Future<void> ensureMovementMuscleFocus(DatabaseExecutor db) async {
     await SchemaManager.safeAddColumn(db, 'routines', 'movementMuscleFocus', 'TEXT');
   }
+
+  /// Runs incremental, idempotent migrations M1–M7 for unified sports & movement architecture.
+  static Future<void> migrateToUnifiedSchema(DatabaseExecutor db) async {
+    // M1: Add kindCode, routineId, plannedTime, sourceRef to ss_session_prescription
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'kindCode', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'routineId', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'plannedTime', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'sourceRef', 'TEXT');
+
+    // M3: Mirror ss_workout_session_log into movement_sessions
+    try {
+      final legacySessions = await db.rawQuery('SELECT * FROM ss_workout_session_log');
+      for (final s in legacySessions) {
+        final id = s['id']?.toString();
+        if (id == null) continue;
+        final existing = await db.rawQuery(
+          'SELECT id FROM movement_sessions WHERE id = ? OR workoutLogId = ? LIMIT 1',
+          [id, id],
+        );
+        if (existing.isEmpty) {
+          final startedAt = (s['startedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch;
+          final finishedAt = (s['finishedAt'] as num?)?.toInt();
+          final durationSec = (s['durationSeconds'] as num?)?.toInt() ?? 0;
+          final ended = finishedAt ?? (startedAt + durationSec * 1000);
+          final presId = s['prescriptionId']?.toString();
+
+          await db.insert(
+            'movement_sessions',
+            {
+              'id': id,
+              'kindCode': 'bodyweight',
+              'prescriptionId': presId,
+              'sessionMode': 'structured',
+              'status': finishedAt != null ? 'COMPLETED' : 'ABANDONED',
+              'startedAt': startedAt,
+              'endedAt': ended,
+              'pausedMs': 0,
+              'workoutLogId': id,
+              'createdAt': startedAt,
+              'updatedAt': ended,
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        }
+      }
+    } catch (_) {}
+
+    // M4: Transfer ss_workout_set_log -> ss_session_set_log
+    try {
+      final legacySetLogs = await db.rawQuery('SELECT * FROM ss_workout_set_log');
+      for (final setRow in legacySetLogs) {
+        final id = setRow['id']?.toString() ?? 'set_${DateTime.now().millisecondsSinceEpoch}';
+        final sessId = setRow['session_id']?.toString();
+        final exId = setRow['exercise_id']?.toString();
+        final setNum = (setRow['set_index'] as num?)?.toInt() ?? 1;
+        final weight = (setRow['weight'] as num?)?.toDouble();
+        final reps = (setRow['reps'] as num?)?.toInt();
+        final rir = (setRow['rir'] as num?)?.toInt();
+
+        if (sessId != null && exId != null) {
+          await db.insert(
+            'ss_session_set_log',
+            {
+              'id': id,
+              'sessionId': sessId,
+              'exerciseId': exId,
+              'setNumber': setNum,
+              'weight': weight,
+              'reps': reps,
+              'rir': rir,
+              'durationSeconds': null,
+              'isCompleted': 1,
+              'loggedAt': DateTime.now().millisecondsSinceEpoch,
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        }
+      }
+    } catch (_) {}
+
+    // M5: Transfer ss_exercise_pr -> movement_pr
+    try {
+      final legacyPrs = await db.rawQuery('SELECT * FROM ss_exercise_pr');
+      for (final pr in legacyPrs) {
+        final id = pr['id']?.toString() ?? 'pr_${DateTime.now().millisecondsSinceEpoch}';
+        final exId = pr['exerciseId']?.toString();
+        final prType = pr['prType']?.toString() ?? 'maxWeight';
+        final val = (pr['value'] as num?)?.toDouble() ?? 0.0;
+        final sessId = pr['sessionId']?.toString();
+        final achievedAt = (pr['achievedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch;
+
+        if (exId != null) {
+          await db.insert(
+            'movement_pr',
+            {
+              'id': id,
+              'kind': 'EXERCISE:$exId',
+              'prType': prType,
+              'value': val,
+              'logId': sessId,
+              'achievedAt': achievedAt,
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+        }
+      }
+    } catch (_) {}
+
+    // M7: Ensure all hot path indexes
+    try {
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_ss_prescription_status ON ss_session_prescription(status, dateIso);',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_ss_set_log_exercise ON ss_session_set_log(exerciseId, loggedAt);',
+      );
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_movement_sessions_active ON movement_sessions(status) WHERE status IN (\'ACTIVE\', \'PAUSED\');',
+      );
+    } catch (_) {}
+  }
 }
+

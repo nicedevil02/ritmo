@@ -51,35 +51,48 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   Future<void> _addTopicSingle() async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('افزودن سرفصل جدید', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'نام سرفصل'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
-            child: const Text('افزودن', style: TextStyle(color: Colors.white)),
+    String? name;
+    try {
+      name = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('افزودن سرفصل جدید', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'نام سرفصل'),
           ),
-        ],
-      ),
-    );
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
+              child: const Text('افزودن', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
 
     if (name != null && name.isNotEmpty) {
-      final topic = StudyTopic(
-        id: const Uuid().v4(),
-        subjectId: widget.subject.id,
-        name: name,
-        orderIndex: _topics.length,
-      );
-      await StudyRepository.instance.saveTopic(topic);
-      await _loadTopics();
+      try {
+        final topic = StudyTopic(
+          id: const Uuid().v4(),
+          subjectId: widget.subject.id,
+          name: name,
+          orderIndex: _topics.length,
+        );
+        await StudyRepository.instance.saveTopic(topic);
+        await _loadTopics();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
     }
   }
 
@@ -93,34 +106,30 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   Future<void> _advanceMastery(StudyTopic topic) async {
     StudyMastery next;
+    int nextReviewCount;
     switch (topic.mastery) {
       case StudyMastery.notStarted:
         next = StudyMastery.learning;
+        nextReviewCount = 0;
         break;
       case StudyMastery.learning:
         next = StudyMastery.review;
+        nextReviewCount = 1;
         break;
       case StudyMastery.review:
         next = StudyMastery.mastered;
+        nextReviewCount = 3;
         break;
       case StudyMastery.mastered:
         next = StudyMastery.notStarted;
+        nextReviewCount = 0;
         break;
     }
 
-    final updated = StudyTopic(
-      id: topic.id,
-      subjectId: topic.subjectId,
-      parentTopicId: topic.parentTopicId,
-      name: topic.name,
+    final updated = topic.copyWith(
       mastery: next,
-      studyCompletedMinutes: topic.studyCompletedMinutes,
-      lastStudiedAtMs: topic.lastStudiedAtMs,
-      nextReviewDateIso: topic.nextReviewDateIso,
-      plannedDateIso: topic.plannedDateIso,
-      orderIndex: topic.orderIndex,
-      origin: topic.origin,
-      chapter: topic.chapter,
+      reviewCount: nextReviewCount,
+      updatedAtMs: DateTime.now().millisecondsSinceEpoch,
     );
 
     await StudyRepository.instance.saveTopic(updated);
@@ -260,7 +269,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
           ),
           IconButton(
             icon: Icon(Icons.play_circle_fill, color: colors.primary, size: 28),
-            onPressed: () => SessionTimerSheet.show(context, subject: widget.subject, topic: topic),
+            onPressed: () async {
+              await SessionTimerSheet.show(context, subject: widget.subject, topic: topic);
+              await _loadTopics();
+            },
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ActiveCourseTimer {
@@ -24,8 +25,8 @@ class ActiveCourseTimer {
     if (isPaused) return elapsedSecondsBeforePause;
     final runningSeconds = (now.millisecondsSinceEpoch - startedAt) ~/ 1000;
     final total = elapsedSecondsBeforePause + (runningSeconds > 0 ? runningSeconds : 0);
-    // 8-hour cap (28800 seconds)
-    return total > 28800 ? 28800 : total;
+    // 8-hour cap
+    return total > CourseLimits.maxTimerSeconds ? CourseLimits.maxTimerSeconds : total;
   }
 
   /// Maps to the actual `course_active_timers` schema:
@@ -70,7 +71,7 @@ class CourseTimerService extends ChangeNotifier {
 
   Future<Database> get _database async => DatabaseHelper.instance.database;
 
-  /// Restores active timer on app startup (C8)
+  /// Restores active timer on app startup (C8 & H4)
   Future<void> initOnAppStart() async {
     try {
       final db = await _database;
@@ -81,12 +82,12 @@ class CourseTimerService extends ChangeNotifier {
         final currentSec = timer.calculateCurrentElapsedSeconds(now);
 
         // Auto-pause if ran longer than 8 hours
-        if (!timer.isPaused && currentSec >= 28800) {
+        if (!timer.isPaused && currentSec >= CourseLimits.maxTimerSeconds) {
           timer = ActiveCourseTimer(
             courseId: timer.courseId,
             sessionId: timer.sessionId,
             startedAt: now.millisecondsSinceEpoch,
-            elapsedSecondsBeforePause: 28800,
+            elapsedSecondsBeforePause: CourseLimits.maxTimerSeconds,
             isPaused: true,
             updatedAt: now.millisecondsSinceEpoch,
           );
@@ -130,16 +131,17 @@ class CourseTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> pauseTimer(int currentElapsedSeconds) async {
+  Future<void> pauseTimer([int? currentElapsedSeconds]) async {
     if (_activeTimer == null) return;
     final db = await _database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final effectiveSeconds = currentElapsedSeconds ?? _activeTimer!.calculateCurrentElapsedSeconds(DateTime.now());
 
     final updated = ActiveCourseTimer(
       courseId: _activeTimer!.courseId,
       sessionId: _activeTimer!.sessionId,
       startedAt: nowMs,
-      elapsedSecondsBeforePause: currentElapsedSeconds,
+      elapsedSecondsBeforePause: effectiveSeconds.clamp(0, CourseLimits.maxTimerSeconds),
       isPaused: true,
       updatedAt: nowMs,
     );
@@ -191,10 +193,29 @@ class CourseTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Cancels in-memory timer if it belongs to a deleted course (Fixes C5)
+  Future<void> checkAndCancelTimerForCourse(String courseId) async {
+    if (_activeTimer != null && _activeTimer!.courseId == courseId) {
+      await stopTimer();
+    }
+  }
+
+  /// Cancels in-memory timer if it belongs to a deleted or finished session
+  Future<void> checkAndCancelTimerForSession(String sessionId) async {
+    if (_activeTimer != null && _activeTimer!.sessionId == sessionId) {
+      await stopTimer();
+    }
+  }
+
   void _startTicker() {
     _stopTicker();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_activeTimer != null && !_activeTimer!.isPaused) {
+        final currentSec = _activeTimer!.calculateCurrentElapsedSeconds(DateTime.now());
+        if (currentSec >= CourseLimits.maxTimerSeconds) {
+          pauseTimer(CourseLimits.maxTimerSeconds);
+          return;
+        }
         notifyListeners();
       }
     });

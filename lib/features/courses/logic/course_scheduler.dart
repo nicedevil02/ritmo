@@ -33,7 +33,7 @@ class CourseScheduler {
 
   /// Distributes pendingCount session dates starting from 'from'
   /// respecting weeklyTarget limit, preferredDays, occupiedWeeklyCounts, and blockedDates.
-  /// (Fixes K-14, K-19, K-20, K-21, K-22, K-23)
+  /// (Fixes K-14, K-19, K-20, K-21, K-22, K-23, C6)
   static List<DateTime> distributeSessions({
     required int pendingCount,
     required DateTime from,
@@ -41,6 +41,7 @@ class CourseScheduler {
     required List<int> preferredDays,
     Map<DateTime, int> occupiedWeeklyCounts = const {},
     Set<DateTime> blockedDates = const {},
+    bool throwOnIncomplete = false,
   }) {
     if (pendingCount <= 0) return const [];
     if (weeklyTarget < CourseLimits.minWeeklyTarget || weeklyTarget > CourseLimits.maxWeeklyTarget) {
@@ -99,7 +100,7 @@ class CourseScheduler {
       currentDate = CourseDate.addDays(currentDate, 1);
     }
 
-    if (result.length != pendingCount) {
+    if (result.length != pendingCount && throwOnIncomplete) {
       throw CourseValidationException(
         'SCHEDULE_INCOMPLETE',
         'امکان زمان‌بندی کامل $pendingCount جلسه در بازه زمانی مجاز ($maxDaysLimit روز) وجود ندارد.',
@@ -165,7 +166,7 @@ class CourseScheduler {
     if (pending.isEmpty) return sessions;
 
     final occupied = weeklyOccupancy(
-      sessions: sessions.where((s) => s.isCompleted || s.isSkipped || s.isUserScheduled).toList(),
+      sessions: sessions.where((s) => s.isCompleted || s.isUserScheduled).toList(),
     );
 
     final newDates = distributeSessions(
@@ -184,7 +185,7 @@ class CourseScheduler {
 
     return sessions.map((s) {
       if (dateMap.containsKey(s.id)) {
-        return s.copyWith(plannedDate: dateMap[s.id]);
+        return s.copyWith(plannedDate: dateMap[s.id], plannedDateSet: true);
       }
       return s;
     }).toList();

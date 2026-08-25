@@ -5,7 +5,6 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_template.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/session/session_widgets.dart';
 
-const String _fontFa = 'Vazirmatn';
 
 /// قالب ورزش‌های مسافت‌محور: دویدن، پیاده‌روی تند، دوچرخه، تردمیل، الپتیکال.
 ///

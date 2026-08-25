@@ -7,3 +7,4 @@
 | S-INIT-3 | 2026-08-25 | c53234b5 | PASS | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
 | S-INIT-4 | 2026-08-25 | c53234b5 | PASS | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
 | S0-T1 | 2026-08-25 | b3021b27 | PASS | ذخیرهٔ واقعی بازخورد جلسه در MvSession و اسکیما v124 |
+| S0-T2 | 2026-08-25 | e5de0795 | PASS | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |

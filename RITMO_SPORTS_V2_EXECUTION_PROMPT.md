@@ -209,7 +209,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T2 — یکسان‌سازی `kindCode` به UPPER_SNAKE_CASE
+### - [x] S0-T2 — یکسان‌سازی `kindCode` به UPPER_SNAKE_CASE — e5de0795
 
 **فایل‌ها:** `presentation/sheets/mv_quick_log_sheet.dart`، `presentation/screens/mv_today_tab.dart`، `domain/engines/plan_engine.dart`، `domain/models/mv_session.dart`، هر فایل دیگری که grep پیدا کرد.
 
@@ -1427,7 +1427,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S-INIT-3 | DONE | c53234b5 | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
 | S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
 | S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
-| S0-T2 |  |  |  |
+| S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
 | S0-T3 |  |  |  |
 | S0-T4 |  |  |  |
 | S0-T5 |  |  |  |

@@ -196,9 +196,14 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
       displaySeconds = elapsedSec;
     }
 
-    final minutes = displaySeconds ~/ 60;
+    final hours = displaySeconds ~/ 3600;
+    final minutes = (displaySeconds % 3600) ~/ 60;
     final seconds = displaySeconds % 60;
-    final timeStr = '${RitmoNumber.faInt(minutes)}:${seconds.toString().padLeft(2, '0')}';
+    final minStr = RitmoNumber.fa(minutes.toString().padLeft(2, '0'));
+    final secStr = RitmoNumber.fa(seconds.toString().padLeft(2, '0'));
+    final timeStr = hours > 0
+        ? '${RitmoNumber.fa(hours.toString().padLeft(2, '0'))}:$minStr:$secStr'
+        : '$minStr:$secStr';
 
     final content = Padding(
       padding: EdgeInsets.only(

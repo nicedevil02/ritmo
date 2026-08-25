@@ -14,42 +14,82 @@ class MvFinishSessionUseCase {
     MvPrescriptionRepository? prescriptionRepo,
     MvPrRepository? prRepo,
     ProgressionEngine? progressionEngine,
-  })  : _sessionRepo = sessionRepo ?? MvSessionRepository(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
-        _prRepo = prRepo ?? MvPrRepository(),
-        _progressionEngine = progressionEngine ?? const ProgressionEngine();
+  }) : _sessionRepo = sessionRepo ?? MvSessionRepository(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _prRepo = prRepo ?? MvPrRepository(),
+       _progressionEngine = progressionEngine ?? const ProgressionEngine();
 
-  /// Executes session completion and PR calculations.
+  /// Executes session completion and PR calculations (S4-T5).
   Future<List<MvPersonalRecord>> execute({
     required MvSession session,
-    required List<MvSetLog> setLogs,
-    required MvSessionFeeling feeling,
+    List<MvSetLog> setLogs = const [],
+    MvSessionFeeling? feeling,
+    int? rpe1To10,
+    String? effortSource,
+    double? distanceM,
+    double? elevationGainM,
+    int? laps,
+    double? packWeightKg,
+    int? routeId,
     String? note,
+    double? baseMet,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // 1. Finish session and save sets atomically
+    // 1. Resolve effort RPE (estimated if user did not provide)
+    int? resolvedRpe = rpe1To10 ?? session.rpe1To10;
+    String? resolvedEffortSource = effortSource ?? session.effortSource;
+
+    if (resolvedRpe == null && baseMet != null) {
+      if (baseMet < 3.0) {
+        resolvedRpe = 3;
+      } else if (baseMet <= 6.0) {
+        resolvedRpe = 5;
+      } else {
+        resolvedRpe = 7;
+      }
+      resolvedEffortSource = 'estimated';
+    } else if (resolvedRpe != null && resolvedEffortSource == null) {
+      resolvedEffortSource = 'user';
+    }
+
+    final updatedSession = session.copyWith(
+      distanceM: distanceM ?? session.distanceM,
+      elevationGainM: elevationGainM ?? session.elevationGainM,
+      laps: laps ?? session.laps,
+      packWeightKg: packWeightKg ?? session.packWeightKg,
+      rpe1To10: resolvedRpe,
+      effortSource: resolvedEffortSource,
+      routeId: routeId ?? session.routeId,
+      overallFeeling: feeling?.rirValue ?? session.overallFeeling,
+      note: note ?? session.note,
+    );
+
+    // 2. Finish session and save sets atomically
     await _sessionRepo.finishSession(
-      session,
+      updatedSession,
       setLogs: setLogs,
       feeling: feeling,
       note: note,
     );
 
-    // 2. Record completion event
+    // 3. Record completion event
     await _sessionRepo.recordEvent(
       MvSessionEvent(
         id: 'evt_${now}_finish',
         sessionId: session.id,
         type: 'SESSION_FINISH',
         at: now,
-        dataJson: '{"setCount": ${setLogs.length}, "feeling": "${feeling.code}"}',
+        dataJson:
+            '{"setCount": ${setLogs.length}, "feeling": "${feeling?.code}", "rpe": $resolvedRpe, "source": "$resolvedEffortSource"}',
       ),
     );
 
     // 3. Check for PR breakthroughs across completed sets
     final newPrs = <MvPersonalRecord>[];
-    final allExistingPrs = List<MvPersonalRecord>.from(await _prRepo.getAllPrs());
+    final allExistingPrs = List<MvPersonalRecord>.from(
+      await _prRepo.getAllPrs(),
+    );
 
     for (final log in setLogs) {
       if (log.reps != null && log.reps! > 0) {
@@ -71,7 +111,9 @@ class MvFinishSessionUseCase {
             allExistingPrs.add(pr);
           }
           // Replace or add in newPrs for this exercise
-          final existingInSessionIdx = newPrs.indexWhere((p) => p.exerciseId == log.exerciseId && p.prType == pr.prType);
+          final existingInSessionIdx = newPrs.indexWhere(
+            (p) => p.exerciseId == log.exerciseId && p.prType == pr.prType,
+          );
           if (existingInSessionIdx != -1) {
             newPrs[existingInSessionIdx] = pr;
           } else {
@@ -85,7 +127,9 @@ class MvFinishSessionUseCase {
     if (session.prescriptionId != null) {
       await _prescriptionRepo.updateSlotStatus(
         session.prescriptionId!,
-        session.status == MvSessionStatus.partial ? MvSlotStatus.partial : MvSlotStatus.done,
+        session.status == MvSessionStatus.partial
+            ? MvSlotStatus.partial
+            : MvSlotStatus.done,
         workoutLogId: session.id,
       );
     }

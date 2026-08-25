@@ -61,6 +61,7 @@ void main() {
 
     testWidgets('MvSessionSummaryScreen records feeling and triggers callback', (tester) async {
       MvSessionFeeling? selectedFeeling;
+      int? selectedRpe;
 
       await tester.pumpWidget(
         createTestApp(
@@ -69,24 +70,28 @@ void main() {
             setLogs: const [
               MvSetLog(id: '1', sessionId: 'sess_1', exerciseId: 'push_up', setNumber: 1, reps: 12, loggedAt: 100),
             ],
-            onFinish: (f, note) async => selectedFeeling = f,
+            onFinish: ({required feeling, required rpe1To10, required effortSource, note}) async {
+              selectedFeeling = feeling;
+              selectedRpe = rpe1To10;
+            },
           ),
         ),
       );
 
-      expect(find.text('خسته نباشی! جلسه به پایان رسید'), findsOneWidget);
-      expect(find.text('شدت تمرین امروز برایت چطور بود؟'), findsOneWidget);
+      expect(find.text('خلاصهٔ جلسه'), findsOneWidget);
+      expect(find.text('میزان تلاش این جلسه چطور بود؟'), findsOneWidget);
 
-      // Tap Easy feeling
-      await tester.tap(find.text('راحت / جا داشتم'));
+      // Tap Easy feeling (mv_effort_easy)
+      await tester.tap(find.byKey(const Key('mv_effort_easy')));
       await tester.pumpAndSettle();
 
       await tester.drag(find.byType(ListView), const Offset(0, -500));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ثبت و بازگشت به هاب'));
+      await tester.tap(find.text('ثبت جلسه و ذخیره'));
       await tester.pump();
       expect(selectedFeeling, equals(MvSessionFeeling.easy));
+      expect(selectedRpe, equals(3));
     });
   });
 }

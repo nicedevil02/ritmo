@@ -228,7 +228,7 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
       borderRadius: BorderRadius.circular(RitmoRadius.badge),
       child: Container(
         constraints: BoxConstraints(
-          minHeight: CalendarGeometry.effectiveChipHeight(context) * 0.7,
+          minHeight: CalendarGeometry.effectiveChipHeight(context),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
         decoration: BoxDecoration(
@@ -263,14 +263,15 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
               ),
             Text(
               item.title,
-              style: RitmoTextStyles.badge(
-                isDone
-                    ? context.colors.textTertiary
-                    : context.colors.textPrimary,
-              ).copyWith(
-                fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
-                decoration: isDone ? TextDecoration.lineThrough : null,
-              ),
+              style:
+                  RitmoTextStyles.badge(
+                    isDone
+                        ? context.colors.textTertiary
+                        : context.colors.textPrimary,
+                  ).copyWith(
+                    fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                  ),
             ),
           ],
         ),

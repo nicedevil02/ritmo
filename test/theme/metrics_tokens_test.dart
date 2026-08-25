@@ -1,6 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/theme/ritmo_palette.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
 import 'package:ritmo/core/theme/tokens/ritmo_metrics.dart';
 import 'package:ritmo/core/theme/ui_scale.dart';
+import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 
 void main() {
   group('RitmoMetrics ThemeExtension Tests', () {
@@ -73,5 +78,35 @@ void main() {
         closeTo((compact.navBarHeight + xl.navBarHeight) / 2, 0.001),
       );
     });
+
+    testWidgets(
+      'CalendarGeometry.effectiveChipHeight satisfies Law 38 across all densities',
+      (tester) async {
+        for (final density in RitmoDensityLevel.values) {
+          late BuildContext capturedContext;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: RitmoTheme.build(
+                palette: RitmoPalette.jadeNoir,
+                brightness: Brightness.light,
+                density: density,
+              ),
+              home: Builder(
+                builder: (context) {
+                  capturedContext = context;
+                  return const SizedBox();
+                },
+              ),
+            ),
+          );
+
+          expect(
+            CalendarGeometry.effectiveChipHeight(capturedContext),
+            greaterThanOrEqualTo(RitmoBreakpoints.minTouchTarget),
+            reason: 'effectiveChipHeight must be >= 48dp for $density',
+          );
+        }
+      },
+    );
   });
 }

@@ -193,7 +193,7 @@ plannedWeeklyLoadCap:
 
 **هدف اسپرینت:** هر عددی که امروز در اپ دیده می‌شود واقعی شود و هر داده‌ای که کاربر وارد می‌کند ذخیره شود.
 
-### - [ ] S0-T1 — ذخیرهٔ واقعی بازخورد جلسه
+### - [x] S0-T1 — ذخیرهٔ واقعی بازخورد جلسه — b3021b27
 
 **فایل‌ها:** `lib/features/supplementary_sports/domain/models/mv_session.dart`، `lib/core/database/schema/tables/supplementary_sports_tables.dart`
 
@@ -1426,7 +1426,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S-INIT-2 | DONE | c53234b5 | مطالعهٔ کامل ۷ سند پایه |
 | S-INIT-3 | DONE | c53234b5 | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
 | S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
-| S0-T1 |  |  |  |
+| S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
 | S0-T2 |  |  |  |
 | S0-T3 |  |  |  |
 | S0-T4 |  |  |  |

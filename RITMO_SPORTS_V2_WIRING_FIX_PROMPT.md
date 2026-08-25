@@ -159,7 +159,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T7 — اتصال `LoadEngine` به تب پیشرفت (رفع E-06 بخش اول)
+### - [x] S8-T7 — اتصال `LoadEngine` به تب پیشرفت (رفع E-06 بخش اول) — 786cbdcc
 
 1. در `MvHubController` فیلد `MvLoadSnapshot? loadSnapshot` اضافه کن و در `loadAllData()` از `LoadEngine` پرش کن.
 2. `MvProgressTab` پارامتر `MvLoadSnapshot? loadSnapshot` بگیرد.
@@ -285,7 +285,7 @@ flutter test
 | S8-T4 | DONE | 7ed80f4c | اتصال ۳ ورودی اجباری به صفحهٔ لنگر (هاب، تب هفته، تنظیمات) |
 | S8-T5 | DONE | f5dc8023 | نمایش لنگرها در تب هفته (MvDaySlotCard) و بنر فردا در تب امروز (MvTodayTab) |
 | S8-T6 | DONE | b9dce612 | اتصال انتخابگر حرکت و جزئیات ورزش در MvDayPlanSheet |
-| S8-T7 | | | |
+| S8-T7 | DONE | 786cbdcc | اتصال LoadEngine به تب پیشرفت با محاسبه ACWR و مدیریت داده ناکافی |
 | S8-T8 | | | |
 | S8-T9 | | | |
 | S8-T10 | | | |

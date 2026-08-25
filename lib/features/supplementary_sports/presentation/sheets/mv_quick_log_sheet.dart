@@ -8,20 +8,32 @@ import '../components/components.dart';
 class MvQuickLogSheet extends StatefulWidget {
   final String initialKindCode;
   final int initialDuration;
-  final Future<void> Function(String kindCode, int durationMinutes, MvSessionFeeling? feeling, String? note) onSave;
+  final Future<void> Function(
+    String kindCode,
+    int durationMinutes,
+    MvSessionFeeling? feeling,
+    String? note,
+  )
+  onSave;
 
   const MvQuickLogSheet({
     super.key,
-    this.initialKindCode = 'walking',
+    this.initialKindCode = 'WALKING',
     this.initialDuration = 20,
     required this.onSave,
   });
 
   static Future<void> show({
     required BuildContext context,
-    String initialKindCode = 'walking',
+    String initialKindCode = 'WALKING',
     int initialDuration = 20,
-    required Future<void> Function(String kindCode, int durationMinutes, MvSessionFeeling? feeling, String? note) onSave,
+    required Future<void> Function(
+      String kindCode,
+      int durationMinutes,
+      MvSessionFeeling? feeling,
+      String? note,
+    )
+    onSave,
   }) {
     return MvSheetScaffold.show(
       context: context,
@@ -45,12 +57,12 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
   bool _isLoading = false;
 
   final List<Map<String, dynamic>> _quickKinds = const [
-    {'code': 'walking', 'title': 'پیاده‌روی', 'emoji': '🚶'},
-    {'code': 'running', 'title': 'دویدن', 'emoji': '🏃'},
-    {'code': 'cycling', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
-    {'code': 'bodyweight', 'title': 'تمرین خانگی', 'emoji': '🏋️'},
-    {'code': 'football', 'title': 'فوتبال / تیمی', 'emoji': '⚽'},
-    {'code': 'stretching', 'title': 'کشش و یوگا', 'emoji': '🧘'},
+    {'code': 'WALKING', 'title': 'پیاده‌روی', 'emoji': '🚶'},
+    {'code': 'RUNNING', 'title': 'دویدن', 'emoji': '🏃'},
+    {'code': 'CYCLING', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
+    {'code': 'BODYWEIGHT', 'title': 'تمرین خانگی', 'emoji': '🏋️'},
+    {'code': 'FOOTBALL', 'title': 'فوتبال / تیمی', 'emoji': '⚽'},
+    {'code': 'STRETCHING', 'title': 'کشش و یوگا', 'emoji': '🧘'},
   ];
 
   final List<int> _durationPresets = const [10, 15, 20, 30, 45, 60];
@@ -75,7 +87,9 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
         _selectedKind,
         _duration,
         _feeling,
-        _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+        _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
       );
       if (mounted) Navigator.pop(context);
     } catch (_) {
@@ -113,9 +127,13 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                 final isSel = k['code'] == _selectedKind;
                 return MvChip(
                   label: k['title'] as String,
-                  icon: Text(k['emoji'] as String, style: const TextStyle(fontSize: 14)),
+                  icon: Text(
+                    k['emoji'] as String,
+                    style: const TextStyle(fontSize: 14),
+                  ),
                   isSelected: isSel,
-                  onTap: () => setState(() => _selectedKind = k['code'] as String),
+                  onTap: () =>
+                      setState(() => _selectedKind = k['code'] as String),
                 );
               }).toList(),
             ),
@@ -155,9 +173,17 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
             SizedBox(height: metrics.spaceSm),
             Row(
               children: [
-                _buildFeelingOption(MvSessionFeeling.easy, '😊', 'راحت / جا داشتم'),
+                _buildFeelingOption(
+                  MvSessionFeeling.easy,
+                  '😊',
+                  'راحت / جا داشتم',
+                ),
                 SizedBox(width: metrics.spaceSm),
-                _buildFeelingOption(MvSessionFeeling.good, '💪', 'خوب و متناسب'),
+                _buildFeelingOption(
+                  MvSessionFeeling.good,
+                  '💪',
+                  'خوب و متناسب',
+                ),
                 SizedBox(width: metrics.spaceSm),
                 _buildFeelingOption(MvSessionFeeling.hard, '🥵', 'سخت و چالشی'),
               ],
@@ -175,7 +201,11 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
     );
   }
 
-  Widget _buildFeelingOption(MvSessionFeeling feeling, String emoji, String label) {
+  Widget _buildFeelingOption(
+    MvSessionFeeling feeling,
+    String emoji,
+    String label,
+  ) {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
@@ -189,9 +219,14 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
           onTap: () => setState(() => _feeling = isSelected ? null : feeling),
           borderRadius: BorderRadius.circular(metrics.radiusCard),
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: metrics.spaceSm, horizontal: 4),
+            padding: EdgeInsets.symmetric(
+              vertical: metrics.spaceSm,
+              horizontal: 4,
+            ),
             decoration: BoxDecoration(
-              color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.surface,
+              color: isSelected
+                  ? colors.primary.withValues(alpha: 0.12)
+                  : colors.surface,
               borderRadius: BorderRadius.circular(metrics.radiusCard),
               border: Border.all(
                 color: isSelected ? colors.primary : colors.border,
@@ -205,7 +240,9 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                   label,
                   style: textTheme.labelSmall?.copyWith(
                     color: isSelected ? colors.primary : colors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w700
+                        : FontWeight.normal,
                     fontSize: 10,
                   ),
                   textAlign: TextAlign.center,

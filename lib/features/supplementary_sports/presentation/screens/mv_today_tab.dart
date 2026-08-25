@@ -19,7 +19,13 @@ class MvTodayTab extends StatelessWidget {
   final bool isSessionInProgress;
   final ValueChanged<MvSlot> onSlotUpdated;
   final ValueChanged<MvDailyCheckin> onCheckinSaved;
-  final Future<void> Function(String kindCode, int duration, MvSessionFeeling? feeling, String? note) onQuickLogSaved;
+  final Future<void> Function(
+    String kindCode,
+    int duration,
+    MvSessionFeeling? feeling,
+    String? note,
+  )
+  onQuickLogSaved;
   final ValueChanged<String> onDateSelected;
 
   const MvTodayTab({
@@ -81,8 +87,11 @@ class MvTodayTab extends StatelessWidget {
               isInProgress: isSessionInProgress,
               animationWidget: MvAnimationStage(
                 height: 180,
-                exerciseId: heroAnimationAsset ??
-                    (todaySlot.focusCodes.isNotEmpty ? 'bo009_squats' : 'bo001_side_leg_lift'),
+                exerciseId:
+                    heroAnimationAsset ??
+                    (todaySlot.focusCodes.isNotEmpty
+                        ? 'bo009_squats'
+                        : 'bo001_side_leg_lift'),
                 animationAsset: heroAnimationAsset,
               ),
               onStart: onStartSession,
@@ -101,7 +110,9 @@ class MvTodayTab extends StatelessWidget {
                   },
                   onMoveToTomorrow: () {
                     final dt = MvCalendar.parseDateIso(todaySlot.dateIso);
-                    final tomorrowIso = MvCalendar.formatDateIso(dt.add(const Duration(days: 1)));
+                    final tomorrowIso = MvCalendar.formatDateIso(
+                      dt.add(const Duration(days: 1)),
+                    );
                     final moved = todaySlot.copyWith(
                       status: MvSlotStatus.moved,
                       movedToDateIso: tomorrowIso,
@@ -117,7 +128,9 @@ class MvTodayTab extends StatelessWidget {
                     onSlotUpdated(stretch);
                   },
                   onSkipEntirely: () {
-                    final skipped = todaySlot.copyWith(status: MvSlotStatus.skipped);
+                    final skipped = todaySlot.copyWith(
+                      status: MvSlotStatus.skipped,
+                    );
                     onSlotUpdated(skipped);
                   },
                 );
@@ -130,14 +143,21 @@ class MvTodayTab extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
             child: MvQuickLogRow(
-              onQuickWalk: () => onQuickLogSaved('walking', 30, MvSessionFeeling.good, null),
-              onQuickStretch: () => onQuickLogSaved('stretching', 15, MvSessionFeeling.easy, null),
+              onQuickWalk: () =>
+                  onQuickLogSaved('WALKING', 30, MvSessionFeeling.good, null),
+              onQuickStretch: () => onQuickLogSaved(
+                'STRETCHING',
+                15,
+                MvSessionFeeling.easy,
+                null,
+              ),
               onCustomLog: () {
                 MvQuickLogSheet.show(
                   context: context,
-                  initialKindCode: 'cardio',
+                  initialKindCode: 'RUNNING',
                   initialDuration: 30,
-                  onSave: (kindCode, dur, feel, note) => onQuickLogSaved(kindCode, dur, feel, note),
+                  onSave: (kindCode, dur, feel, note) =>
+                      onQuickLogSaved(kindCode, dur, feel, note),
                 );
               },
             ),

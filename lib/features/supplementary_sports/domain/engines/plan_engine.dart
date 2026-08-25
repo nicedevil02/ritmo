@@ -40,7 +40,9 @@ class PlanEngine {
       final sat0 = i;
 
       // Check if there is an existing locked slot for this day
-      final existingLocked = existingSlots.where((s) => s.dateIso == dayIso && s.isLocked).firstOrNull;
+      final existingLocked = existingSlots
+          .where((s) => s.dateIso == dayIso && s.isLocked)
+          .firstOrNull;
       if (existingLocked != null) {
         slots.add(existingLocked);
         continue;
@@ -58,7 +60,8 @@ class PlanEngine {
             targetMinutes: 0,
             intensityTier: MvIntensityTier.light,
             headlineFa: 'روز استراحت و ریکاوری',
-            coachNoteFa: 'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
+            coachNoteFa:
+                'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
             source: 'GENERATED',
             status: MvSlotStatus.planned,
             createdAt: now,
@@ -69,7 +72,9 @@ class PlanEngine {
         // Training day
         final dayFocus = musclePlan[sat0] ?? ['FULL_BODY'];
         final headline = _generateHeadline(dayFocus, isDeload);
-        final intensity = isDeload ? MvIntensityTier.light : profile.defaultIntensity;
+        final intensity = isDeload
+            ? MvIntensityTier.light
+            : profile.defaultIntensity;
 
         slots.add(
           MvSlot(
@@ -77,7 +82,7 @@ class PlanEngine {
             dateIso: dayIso,
             cycleWeek: cycleWeek,
             slotType: MvSlotType.strength,
-            kindCode: 'bodyweight',
+            kindCode: 'BODYWEIGHT',
             focusCodes: dayFocus,
             targetMinutes: targetMinutes,
             intensityTier: intensity,
@@ -95,7 +100,8 @@ class PlanEngine {
       }
     }
 
-    String reasonFa = 'برنامهٔ هفتهٔ $cycleWeek با ${profile.trainingDays.length} روز فعال تنظیم شد.';
+    String reasonFa =
+        'برنامهٔ هفتهٔ $cycleWeek با ${profile.trainingDays.length} روز فعال تنظیم شد.';
     if (isDeload) {
       reasonFa += ' این هفته به عنوان «هفتهٔ سبک» با حجم کمتر تنظیم شده است.';
     }
@@ -132,7 +138,10 @@ class PlanEngine {
     return baseMinutes;
   }
 
-  Map<int, List<String>> _buildMuscleDistribution(List<int> trainingDays, bool isDeload) {
+  Map<int, List<String>> _buildMuscleDistribution(
+    List<int> trainingDays,
+    bool isDeload,
+  ) {
     final map = <int, List<String>>{};
     final count = trainingDays.length;
 
@@ -163,8 +172,10 @@ class PlanEngine {
   String _generateHeadline(List<String> focus, bool isDeload) {
     final prefix = isDeload ? 'سبک: ' : '';
     if (focus.contains('FULL_BODY')) return '$prefixتمرین کل بدن';
-    if (focus.contains('QUADS_GLUTES') || focus.contains('LOWER')) return '$prefixقدرت و استقامت پایین‌تنه';
-    if (focus.contains('CHEST') || focus.contains('UPPER')) return '$prefixقدرت بالاتنه و سینه';
+    if (focus.contains('QUADS_GLUTES') || focus.contains('LOWER'))
+      return '$prefixقدرت و استقامت پایین‌تنه';
+    if (focus.contains('CHEST') || focus.contains('UPPER'))
+      return '$prefixقدرت بالاتنه و سینه';
     if (focus.contains('BACK')) return '$prefixتقویت عضلات پشت و بازو';
     if (focus.contains('CORE')) return '$prefixتمرین مرکز بدن و شکم';
     return '$prefixجلسهٔ قدرتی';

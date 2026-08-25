@@ -13,6 +13,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onBack,
     this.density,
     this.preferredHeight,
+    this.showBackButton,
   });
 
   /// Factory constructor guaranteeing exact preferredSize pixel equality with BuildContext metrics.
@@ -24,6 +25,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
     Widget? statusBadge,
     List<Widget>? actions,
     VoidCallback? onBack,
+    bool? showBackButton,
   }) {
     final m = context.metrics;
     return RitmoModuleAppBar(
@@ -33,6 +35,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
       statusBadge: statusBadge,
       actions: actions,
       onBack: onBack,
+      showBackButton: showBackButton,
       preferredHeight: m.rowHeight + m.spaceSm,
     );
   }
@@ -44,6 +47,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBack;
   final RitmoDensityLevel? density;
   final double? preferredHeight;
+  final bool? showBackButton;
 
   @override
   Size get preferredSize {
@@ -57,6 +61,7 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
     final colors = context.colors;
     final m = context.metrics;
     final effectiveHeight = preferredHeight ?? (m.rowHeight + m.spaceSm); // 60/64/72/78
+    final bool shouldShowBack = showBackButton ?? Navigator.canPop(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -76,26 +81,28 @@ class RitmoModuleAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           child: Row(
             children: [
-              // Back Button (Min touchTarget)
-              Semantics(
-                button: true,
-                label: 'بازگشت',
-                child: InkWell(
-                  onTap: onBack ?? () => Navigator.maybePop(context),
-                  borderRadius: BorderRadius.circular(m.touchTarget / 2),
-                  child: Container(
-                    width: m.touchTarget,
-                    height: m.touchTarget,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.arrow_back_rounded,
-                      size: m.iconLg,
-                      color: colors.textPrimary,
+              if (shouldShowBack) ...[
+                // Back Button (Min touchTarget)
+                Semantics(
+                  button: true,
+                  label: 'بازگشت',
+                  child: InkWell(
+                    onTap: onBack ?? () => Navigator.maybePop(context),
+                    borderRadius: BorderRadius.circular(m.touchTarget / 2),
+                    child: Container(
+                      width: m.touchTarget,
+                      height: m.touchTarget,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        size: m.iconLg,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: m.spaceSm),
+                SizedBox(width: m.spaceSm),
+              ],
 
               // Title and Subtitle / Status Badge
               Expanded(

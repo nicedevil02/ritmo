@@ -131,6 +131,24 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAvatar();
+  }
+
+  void _precacheAvatar() {
+    try {
+      final avatarPath = SettingsService.instance.get<String>('user_avatar_path');
+      if (avatarPath.isNotEmpty && File(avatarPath).existsSync()) {
+        precacheImage(
+          ResizeImage(FileImage(File(avatarPath)), width: 96, height: 96),
+          context,
+        );
+      }
+    } catch (_) {}
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
@@ -432,7 +450,11 @@ class _NeumorphicSlotItem extends StatelessWidget {
                                         width: 1.0,
                                       ),
                                       image: DecorationImage(
-                                        image: FileImage(File(avatarPath)),
+                                        image: ResizeImage(
+                                          FileImage(File(avatarPath)),
+                                          width: 48,
+                                          height: 48,
+                                        ),
                                         fit: BoxFit.cover,
                                       ),
                                     ),
@@ -759,7 +781,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                     final Widget currentChild;
                     if (hasAvatar) {
                       currentChild = Container(
-                        key: ValueKey<String>('avatar_$avatarPath'),
+                        key: ValueKey<String>('avatar_${widget.activeItem.index}_$avatarPath'),
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
@@ -776,7 +798,11 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                             ),
                           ],
                           image: DecorationImage(
-                            image: FileImage(File(avatarPath)),
+                            image: ResizeImage(
+                              FileImage(File(avatarPath)),
+                              width: 96,
+                              height: 96,
+                            ),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -784,22 +810,31 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                     } else {
                       currentChild = Icon(
                         _currentIcon,
-                        key: ValueKey<String>('icon_${_currentIcon.codePoint}'),
+                        key: ValueKey<String>(
+                          'icon_${widget.activeItem.index}_${_currentIcon.codePoint}',
+                        ),
                         size: _currentIcon == CupertinoIcons.add ? 24 : 22,
                         color: widget.iconColor,
                       );
                     }
 
                     return AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 320),
-                      switchInCurve: Curves.easeOutBack,
-                      switchOutCurve: Curves.easeInCubic,
+                      duration: const Duration(milliseconds: 380),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, animation) =>
                           RotationTransition(
-                        turns: Tween<double>(begin: -0.15, end: 0.0)
-                            .animate(animation),
+                        turns: Tween<double>(begin: -0.15, end: 0.0).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutBack,
+                          ),
+                        ),
                         child: ScaleTransition(
-                          scale: animation,
+                          scale: CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutBack,
+                          ),
                           child: FadeTransition(
                             opacity: animation,
                             child: child,

@@ -358,27 +358,31 @@ class _NeumorphicSlotItem extends StatelessWidget {
 
               const SizedBox(height: 3),
 
-              // ── لیبل ──
-              Opacity(
-                opacity: isActive ? 1.0 : iconOpacity,
-                child: Text(
-                  item.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                  style: TextStyle(
-                    fontSize: _kLabelSize,
-                    fontWeight:
-                        isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive ? activeLabelColor : inactiveColor,
-                    letterSpacing: -0.2,
-                    height: 1.0,
-                  ),
-                ),
+              // ── لیبل (در حالت فعال ناپدید می‌شود تا زیر دکمه نماند) ──
+              SizedBox(
+                height: _kLabelSize,
+                child: isActive
+                    ? null
+                    : Opacity(
+                        opacity: iconOpacity,
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.clip,
+                          style: TextStyle(
+                            fontSize: _kLabelSize,
+                            fontWeight: FontWeight.w500,
+                            color: inactiveColor,
+                            letterSpacing: -0.2,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
               ),
 
               const SizedBox(height: 3),
 
-              // ── نشانگر فعال (خط کوچک زیر لیبل) ──
+              // ── نشانگر فعال (خط کوچک زیر دکمه) ──
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
@@ -602,79 +606,44 @@ Path _buildPillMoundPath(double w, double h, double cx) {
   const base = _kMoundHeight;
   const mhw = _kMoundHW;
 
-  final p = Path();
+  // ۱. بدنه پایه کپسول (قرص کامل با گوشه‌های کاملاً گرد)
+  final pillPath = Path()
+    ..addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, base, w, h - base),
+        const Radius.circular(r),
+      ),
+    );
 
-  // ─── لبه بالایی: از گوشه چپ تا قوس برآمده ───
-  p.moveTo(r, base);
+  // ۲. قوس برآمده گنبدی (Mound) منطبق بر موقعیت دکمه فعال
+  final clampedCx = cx.clamp(r + 4.0, w - r - 4.0);
+  final mLeft = clampedCx - mhw;
+  final mRight = clampedCx + mhw;
 
-  final mLeft = cx - mhw;
-  final mRight = cx + mhw;
-
-  if (mLeft > r) {
-    p.lineTo(mLeft, base);
-  }
-
-  // ─── قوس برآمده (Dome/Crest) روی دکمه فعال ───
-  // ۱. صعود نرم از خط پایه به قله
-  p.cubicTo(
+  final moundPath = Path();
+  moundPath.moveTo(mLeft, base);
+  moundPath.cubicTo(
     mLeft + 14.0,
     base,
-    cx - mhw * 0.45,
+    clampedCx - mhw * 0.45,
     0.0,
-    cx,
+    clampedCx,
     0.0,
   );
-
-  // ۲. نزول نرم از قله به خط پایه
-  p.cubicTo(
-    cx + mhw * 0.45,
+  moundPath.cubicTo(
+    clampedCx + mhw * 0.45,
     0.0,
     mRight - 14.0,
     base,
     mRight,
     base,
   );
+  moundPath.lineTo(mRight, base + 12.0);
+  moundPath.lineTo(mLeft, base + 12.0);
+  moundPath.close();
 
-  // ─── ادامه لبه بالایی تا گوشه راست ───
-  if (mRight < w - r) {
-    p.lineTo(w - r, base);
-  }
-
-  // ─── گوشه بالا-راست ───
-  p.arcToPoint(
-    Offset(w, base + r),
-    radius: const Radius.circular(r),
-  );
-
-  // ─── لبه راست ───
-  p.lineTo(w, h - r);
-
-  // ─── گوشه پایین-راست ───
-  p.arcToPoint(
-    Offset(w - r, h),
-    radius: const Radius.circular(r),
-  );
-
-  // ─── لبه پایین ───
-  p.lineTo(r, h);
-
-  // ─── گوشه پایین-چپ ───
-  p.arcToPoint(
-    Offset(0, h - r),
-    radius: const Radius.circular(r),
-  );
-
-  // ─── لبه چپ ───
-  p.lineTo(0, base + r);
-
-  // ─── گوشه بالا-چپ ───
-  p.arcToPoint(
-    const Offset(r, base),
-    radius: const Radius.circular(r),
-  );
-
-  p.close();
-  return p;
+  // ۳. پیوند و ادغام ریاضی بی‌نقص (بدون اعوجاج یا لبه‌های تیز در گوشه‌ها)
+  return Path.combine(PathOperation.union, pillPath, moundPath);
 }
 
 // ═══════════════════════════════════════════════════════════════════

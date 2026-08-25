@@ -85,17 +85,17 @@ void main() {
   });
 
   group('NAV2 — برچسب مقاصد در نوار نئومورفیک', () {
-    testWidgets('در حالت کامل برچسب مقصد فعال و بقیه آشکارند', (tester) async {
+    testWidgets('در حالت کامل برچسب مقصد فعال پنهان و بقیه آشکارند', (tester) async {
       await tester.pumpWidget(harness(AppMode.full, currentIndex: 3));
       await tester.pumpAndSettle();
 
-      expect(find.text('دستیار'), findsOneWidget); // Active label is shown with bold weight
+      expect(find.text('دستیار'), findsNothing); // Active label is hidden
       expect(find.text('تقویم'), findsOneWidget); // Inactive labels are shown
       expect(find.text('سیستم‌ها'), findsOneWidget);
       expect(find.text('بینش‌ها'), findsOneWidget);
     });
 
-    testWidgets('وقتی خانه فعال است، تمام برچسب‌ها نشان داده می‌شوند', (tester) async {
+    testWidgets('وقتی خانه فعال است، برچسب خانه پنهان و بقیه نشان داده می‌شوند', (tester) async {
       await tester.pumpWidget(
         harness(
           AppMode.full,
@@ -104,7 +104,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('خانه'), findsOneWidget); // Home active label is shown
+      expect(find.text('خانه'), findsNothing); // Home active label is hidden
       expect(find.text('تقویم'), findsOneWidget); // Other labels are shown
       expect(find.text('دستیار'), findsOneWidget);
       expect(find.text('سیستم‌ها'), findsOneWidget);

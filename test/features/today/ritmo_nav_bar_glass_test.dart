@@ -51,22 +51,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('renders all 5 tabs in full mode', (tester) async {
+    testWidgets('renders all inactive tabs in full mode with active tab label hidden', (tester) async {
       await tester.pumpWidget(buildNavBarHarness(mode: AppMode.full));
       await tester.pumpAndSettle();
 
-      expect(find.text('خانه'), findsOneWidget);
+      expect(find.text('خانه'), findsNothing); // Active label is hidden
       expect(find.text('تقویم'), findsOneWidget);
       expect(find.text('دستیار'), findsOneWidget);
       expect(find.text('سیستم‌ها'), findsOneWidget);
       expect(find.text('بینش‌ها'), findsOneWidget);
     });
 
-    testWidgets('renders all 3 tabs in simple mode', (tester) async {
+    testWidgets('renders all inactive tabs in simple mode with active tab label hidden', (tester) async {
       await tester.pumpWidget(buildNavBarHarness(mode: AppMode.simple));
       await tester.pumpAndSettle();
 
-      expect(find.text('کارها'), findsOneWidget);
+      expect(find.text('کارها'), findsNothing); // Active label is hidden
       expect(find.text('خانه'), findsOneWidget);
       expect(find.text('تقویم'), findsOneWidget);
     });

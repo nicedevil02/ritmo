@@ -764,7 +764,7 @@ class MvKindProfileRepository {
 
 ---
 
-### - [ ] S3-T4 — مرحلهٔ ۱: `ANCHORS`
+### - [x] S3-T4 — مرحلهٔ ۱: `ANCHORS` — 47ab1859
 
 **فایل:** `domain/engines/plan_engine.dart`
 
@@ -1454,7 +1454,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T1 | DONE | ca53f5c2 | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
 | S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
 | S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
-| S3-T4 |  |  |  |
+| S3-T4 | DONE | 47ab1859 | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
 | S3-T5 |  |  |  |
 | S3-T6 |  |  |  |
 | S3-T7 |  |  |  |

@@ -34,6 +34,7 @@
 | S3-T1 | 2026-08-25 | ca53f5c2 | PASS | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
 | S3-T2 | 2026-08-25 | 0ee12ae5 | PASS | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
 | S3-T3 | 2026-08-25 | dbb21119 | PASS | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
+| S3-T4 | 2026-08-25 | 47ab1859 | PASS | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
 
 ## S0 — نتیجه
 تمام ۸ تسک اسپرینت ۰ با موفقیت کامل و بدون هیچ خطای استاتیک یا تست ناموفق به پایان رسیدند. کل سویت ۷۸ تستی واحد و ویجت ورزش سبز است.

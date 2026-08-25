@@ -5,7 +5,7 @@ import 'package:ritmo/features/supplementary_sports/supplementary_sports.dart';
 
 void main() {
   group('Phase P7 Architecture & Guard Tests (ADR 0008)', () {
-    test('All 12 Domain Engines are properly constructed and accessible', () {
+    test('All 13 Domain Engines are properly constructed and accessible', () {
       const engines = [
         ProfileEngine(),
         ReadinessEngine(),
@@ -19,9 +19,10 @@ void main() {
         CoachEngine(),
         ReminderEngine(),
         LoadEngine(),
+        CampaignEngine(),
       ];
 
-      expect(engines.length, equals(12));
+      expect(engines.length, equals(13));
     });
 
     test(

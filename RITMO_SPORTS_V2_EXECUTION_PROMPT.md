@@ -397,7 +397,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T4 — `MvSlotType.sport` و اجباری شدن `kindCode`
+### - [x] S1-T4 — `MvSlotType.sport` و اجباری شدن `kindCode` — 347ced07
 
 **فایل‌ها:** `domain/models/mv_enums.dart`، `domain/models/mv_slot.dart`
 
@@ -1437,7 +1437,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T1 | DONE | aa56104b | پیاده‌سازی مدل کامل و ایمیوتبل MvMovementKind و لیست آلیاس‌ها |
 | S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
 | S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
-| S1-T4 |  |  |  |
+| S1-T4 | DONE | 347ced07 | افزودن sport و outdoor به MvSlotType و شرط اجباری بودن kindCode |
 | S1-T5 |  |  |  |
 | S1-T6 |  |  |  |
 | S1-T7 |  |  |  |

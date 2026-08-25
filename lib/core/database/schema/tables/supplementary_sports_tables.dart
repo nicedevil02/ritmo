@@ -550,6 +550,13 @@ class SupplementarySportsTables {
           workoutLogId  TEXT,
           overallFeeling INTEGER,
           note          TEXT,
+          distanceM     REAL,
+          elevationGainM REAL,
+          laps          INTEGER,
+          packWeightKg  REAL,
+          rpe1To10      INTEGER,
+          effortSource  TEXT,
+          routeId       INTEGER,
           createdAt     INTEGER NOT NULL,
           updatedAt     INTEGER NOT NULL
         );
@@ -557,10 +564,22 @@ class SupplementarySportsTables {
 
       await SchemaManager.safeAddColumn(db, 'movement_sessions', 'overallFeeling', 'INTEGER');
       await SchemaManager.safeAddColumn(db, 'movement_sessions', 'note', 'TEXT');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'distanceM', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'elevationGainM', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'laps', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'packWeightKg', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'rpe1To10', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'effortSource', 'TEXT');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'routeId', 'INTEGER');
 
       await db.execute('''
         CREATE UNIQUE INDEX IF NOT EXISTS idx_movement_sessions_active
           ON movement_sessions(status) WHERE status IN ('ACTIVE', 'PAUSED');
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_movement_sessions_kind_date
+          ON movement_sessions(kindCode, startedAt);
       ''');
 
       await db.execute('''

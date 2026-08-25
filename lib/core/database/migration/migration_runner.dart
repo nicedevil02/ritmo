@@ -65,6 +65,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v123_worship_
 import 'package:ritmo/core/database/migration/migrations/migration_v124_session_feedback_fields.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v125_mv_commitments.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v126_mv_kind_profile.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v127_session_metrics.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -193,6 +194,7 @@ class MigrationRunner {
     MigrationV124SessionFeedbackFields(), // Movement sessions overallFeeling and note fields
     MigrationV125MvCommitments(), // Weekly fixed sports commitments table mv_commitments
     MigrationV126MvKindProfile(), // Kind profiles table mv_kind_profile and seed data
+    MigrationV127SessionMetrics(), // Session metrics columns (distanceM, elevationGainM, laps, packWeightKg, rpe1To10, effortSource, routeId)
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

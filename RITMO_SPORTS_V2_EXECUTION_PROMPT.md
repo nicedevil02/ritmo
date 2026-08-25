@@ -792,7 +792,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T5 — مرحلهٔ ۲: `HARD_LIMITS`
+### - [x] S3-T5 — مرحلهٔ ۲: `HARD_LIMITS` — 2a339dfd
 
 **کار:** `_applyHardLimits()`: بازه‌های ممنوع تقویم، محدودیت‌های جسمی پروفایل (مفصل، حالت آپارتمان، بدون تجهیزات)، و فصل (`seasonMask`). خروجی: مجموعهٔ روزها/نوع‌های مجاز.
 
@@ -1455,7 +1455,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
 | S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
 | S3-T4 | DONE | 47ab1859 | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
-| S3-T5 |  |  |  |
+| S3-T5 | DONE | 2a339dfd | پیاده‌سازی مرحله ۲ HARD_LIMITS در PlanEngine، فیلتر فصل و محدودیت‌های جسمی و معافیت لنگرها با یادداشت |
 | S3-T6 |  |  |  |
 | S3-T7 |  |  |  |
 | S3-T8 |  |  |  |

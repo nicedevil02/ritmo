@@ -2,6 +2,7 @@
 // (Ultra-Premium Tactile Neumorphic Navigation Bar with Specular Chamfer, Recessed Crater Socket & Elevated Button)
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -9,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
@@ -411,10 +413,38 @@ class _NeumorphicSlotItem extends StatelessWidget {
                       ? null
                       : Opacity(
                           opacity: iconOpacity,
-                          child: Icon(
-                            item.inactiveIcon,
-                            size: _kIconSize,
-                            color: inactiveColor,
+                          child: ValueListenableBuilder<int>(
+                            valueListenable: SettingsService.instance.revision,
+                            builder: (context, revision, child) {
+                              if (item.label == 'پروفایل') {
+                                final avatarPath = SettingsService.instance
+                                    .get<String>('user_avatar_path');
+                                if (avatarPath.isNotEmpty &&
+                                    File(avatarPath).existsSync()) {
+                                  return Container(
+                                    width: _kIconSize,
+                                    height: _kIconSize,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color:
+                                            inactiveColor.withValues(alpha: 0.6),
+                                        width: 1.0,
+                                      ),
+                                      image: DecorationImage(
+                                        image: FileImage(File(avatarPath)),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                              return Icon(
+                                item.inactiveIcon,
+                                size: _kIconSize,
+                                color: inactiveColor,
+                              );
+                            },
                           ),
                         ),
                 ),
@@ -716,26 +746,69 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                 ),
               ),
               child: Center(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 320),
-                  switchInCurve: Curves.easeOutBack,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) =>
-                      RotationTransition(
-                    turns: Tween<double>(begin: -0.2, end: 0.0)
-                        .animate(animation),
-                    child: ScaleTransition(
-                      scale: animation,
-                      child: child,
-                    ),
-                  ),
-                  child: Icon(
-                    _currentIcon,
-                    key: ValueKey<IconData>(_currentIcon),
-                    size:
-                        _currentIcon == CupertinoIcons.add ? 24 : 22,
-                    color: widget.iconColor,
-                  ),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: SettingsService.instance.revision,
+                  builder: (context, revision, child) {
+                    final avatarPath = SettingsService.instance
+                        .get<String>('user_avatar_path');
+                    final isProfile = widget.activeItem.label == 'پروفایل';
+                    final bool hasAvatar = isProfile &&
+                        avatarPath.isNotEmpty &&
+                        File(avatarPath).existsSync();
+
+                    final Widget currentChild;
+                    if (hasAvatar) {
+                      currentChild = Container(
+                        key: ValueKey<String>('avatar_$avatarPath'),
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                          image: DecorationImage(
+                            image: FileImage(File(avatarPath)),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    } else {
+                      currentChild = Icon(
+                        _currentIcon,
+                        key: ValueKey<String>('icon_${_currentIcon.codePoint}'),
+                        size: _currentIcon == CupertinoIcons.add ? 24 : 22,
+                        color: widget.iconColor,
+                      );
+                    }
+
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 320),
+                      switchInCurve: Curves.easeOutBack,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) =>
+                          RotationTransition(
+                        turns: Tween<double>(begin: -0.15, end: 0.0)
+                            .animate(animation),
+                        child: ScaleTransition(
+                          scale: animation,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                      ),
+                      child: currentChild,
+                    );
+                  },
                 ),
               ),
             ),

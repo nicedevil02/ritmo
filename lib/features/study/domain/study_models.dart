@@ -574,7 +574,7 @@ class StudySession {
       testsTotal: map['testsTotal'] as int? ?? 0,
       testsCorrect: map['testsCorrect'] as int? ?? 0,
       testsWrong: map['testsWrong'] as int? ?? 0,
-      testsEmpty: map['testsEmpty'] as int? ?? 0,
+      testsEmpty: (map['testsBlank'] ?? map['testsEmpty']) as int? ?? 0,
       createdAtMs: map['createdAt'] as int? ?? 0,
     );
   }
@@ -595,7 +595,7 @@ class StudySession {
       'testsTotal': testsTotal,
       'testsCorrect': testsCorrect,
       'testsWrong': testsWrong,
-      'testsEmpty': testsEmpty,
+      'testsBlank': testsEmpty,
       'createdAt': createdAtMs,
     };
   }

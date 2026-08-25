@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class RitmoToast {
   static void show(
@@ -124,76 +124,53 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget>
           position: _offsetAnimation,
           child: Material(
             color: Colors.transparent,
-            child: ClipRRect(
+            child: RitmoGlassCard(
               borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xff1E2235).withValues(alpha: 0.65)
-                        : Colors.white.withValues(alpha: 0.65),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.06),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(
-                          alpha: isDark ? 0.15 : 0.04,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                child: Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(widget.icon, color: widget.iconColor, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.message,
+                        style: TextStyle(
+                          fontFamily: 'Vazirmatn',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
                       ),
-                    ],
-                  ),
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(widget.icon, color: widget.iconColor, size: 16),
-                        const SizedBox(width: 6),
-                        Text(
-                          widget.message,
-                          style: TextStyle(
-                            fontFamily: 'Vazirmatn',
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
+                      if (widget.onUndo != null) ...[
+                        const SizedBox(width: 10),
+                        Container(
+                          width: 1,
+                          height: 16,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : Colors.black.withValues(alpha: 0.25),
                         ),
-                        if (widget.onUndo != null) ...[
-                          const SizedBox(width: 10),
-                          Container(
-                            width: 1,
-                            height: 16,
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.25)
-                                : Colors.black.withValues(alpha: 0.25),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: _handleUndo,
-                            child: Text(
-                              'لغو ($_secondsLeft)',
-                              style: const TextStyle(
-                                fontFamily: 'Vazirmatn',
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xff60A5FA),
-                              ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: _handleUndo,
+                          child: Text(
+                            'لغو ($_secondsLeft)',
+                            style: const TextStyle(
+                              fontFamily: 'Vazirmatn',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff60A5FA),
                             ),
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),

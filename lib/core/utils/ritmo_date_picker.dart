@@ -1,7 +1,6 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -168,36 +167,17 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
       (index) => jalaliFirstLimit.year + index,
     );
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF111424).withValues(alpha: 0.85)
-                : Colors.white.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: colors.border.withValues(alpha: isDark ? 0.12 : 0.4),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24),
+        child: RitmoGlassSurface(
+          borderRadius: BorderRadius.circular(28),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                   children: [
                     // Header Selected Date Display
                     Align(
@@ -377,8 +357,7 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildDaysPanel(

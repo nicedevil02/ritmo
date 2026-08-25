@@ -11,12 +11,14 @@ import 'mv_kind_picker_sheet.dart';
 class MvDayPlanSheet extends StatefulWidget {
   final MvSlot slot;
   final MvKindUseCase? kindUseCase;
+  final MvSaveCommitmentUseCase? saveCommitmentUseCase;
   final ValueChanged<MvSlot> onSave;
 
   const MvDayPlanSheet({
     super.key,
     required this.slot,
     this.kindUseCase,
+    this.saveCommitmentUseCase,
     required this.onSave,
   });
 
@@ -24,6 +26,7 @@ class MvDayPlanSheet extends StatefulWidget {
     required BuildContext context,
     required MvSlot slot,
     MvKindUseCase? kindUseCase,
+    MvSaveCommitmentUseCase? saveCommitmentUseCase,
     required ValueChanged<MvSlot> onSave,
   }) {
     return MvSheetScaffold.show(
@@ -31,6 +34,7 @@ class MvDayPlanSheet extends StatefulWidget {
       builder: (ctx) => MvDayPlanSheet(
         slot: slot,
         kindUseCase: kindUseCase,
+        saveCommitmentUseCase: saveCommitmentUseCase,
         onSave: (s) {
           Navigator.pop(ctx);
           onSave(s);
@@ -77,6 +81,13 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     _focusCodes.addAll(widget.slot.focusCodes);
     _titleController = TextEditingController(text: widget.slot.headlineFa);
     _venueController = TextEditingController();
+    if (widget.slot.plannedTime != null && widget.slot.plannedTime!.contains(':')) {
+      final parts = widget.slot.plannedTime!.split(':');
+      _plannedTime = TimeOfDay(
+        hour: int.tryParse(parts[0]) ?? 18,
+        minute: int.tryParse(parts[1]) ?? 0,
+      );
+    }
     _loadKindDetails();
   }
 
@@ -187,7 +198,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     });
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final isRest = _slotType == MvSlotType.rest;
 
@@ -206,17 +217,42 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
         ? _titleController.text.trim()
         : (_kind?.titleFa ?? _slotType.titleFa);
 
+    final timeStr = _plannedTime != null
+        ? '${_plannedTime!.hour.toString().padLeft(2, '0')}:${_plannedTime!.minute.toString().padLeft(2, '0')}'
+        : null;
+
     final updated = widget.slot.copyWith(
       slotType: _slotType,
       kindCode: isRest ? null : finalKindCode,
       targetMinutes: isRest ? 0 : _minutes,
+      plannedTime: isRest ? null : timeStr,
       intensityTier: isRest ? MvIntensityTier.light : _intensity,
       focusCodes: _focusCodes,
       headlineFa: headline,
       updatedAt: now,
     );
 
-    widget.onSave(updated);
+    if (_repeatWeekly && timeStr != null && !isRest) {
+      final saveUseCase = widget.saveCommitmentUseCase ?? MvSaveCommitmentUseCase();
+      final result = await saveUseCase.execute(
+        slot: updated,
+        repeatWeekly: true,
+        venueNote: _venueController.text.trim().isNotEmpty ? _venueController.text.trim() : null,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.userMessageFa,
+              textAlign: TextAlign.right,
+            ),
+          ),
+        );
+      }
+      widget.onSave(result.savedSlot);
+    } else {
+      widget.onSave(updated.copyWith(isLocked: true));
+    }
   }
 
   @override

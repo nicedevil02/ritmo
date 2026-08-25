@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 class SupplementarySportsTables {
   static Future<void> create(DatabaseExecutor db) async {
     await MovementKindsSeed.ensureSchema(db);
+    await ensureCommitmentTables(db);
 
     // 1. ss_exercise
     await db.execute('''

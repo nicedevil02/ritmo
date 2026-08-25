@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
 /// Day Slot Card for Week Tab (Section 5.2 & 5.10).
@@ -7,11 +8,7 @@ class MvDaySlotCard extends StatelessWidget {
   final MvSlot slot;
   final VoidCallback? onTap;
 
-  const MvDaySlotCard({
-    super.key,
-    required this.slot,
-    this.onTap,
-  });
+  const MvDaySlotCard({super.key, required this.slot, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +17,9 @@ class MvDaySlotCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final dt = MvCalendar.parseDateIso(slot.dateIso);
-    final weekdayName = MvCalendar.persianWeekdayName(MvCalendar.dateTimeToSat0(dt));
+    final weekdayName = MvCalendar.persianWeekdayName(
+      MvCalendar.dateTimeToSat0(dt),
+    );
 
     final Color statusColor;
     switch (slot.status) {
@@ -88,17 +87,32 @@ class MvDaySlotCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        if (slot.isLocked) ...[
+                          SizedBox(width: metrics.spaceXs),
+                          const Icon(
+                            Icons.lock_rounded,
+                            size: 14,
+                            color: Color(0xFFD4A843),
+                          ),
+                        ],
                         if (slot.isRest) ...[
                           SizedBox(width: metrics.spaceSm),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.surfaceSunken,
-                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.pill,
+                              ),
                             ),
                             child: Text(
                               'استراحت',
-                              style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                              style: textTheme.labelSmall?.copyWith(
+                                color: colors.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -117,7 +131,7 @@ class MvDaySlotCard extends StatelessWidget {
                     if (!slot.isRest) ...[
                       SizedBox(height: metrics.spaceXs),
                       Text(
-                        '${slot.targetMinutes} دقیقه · ${slot.intensityTier.titleFa}',
+                        '${slot.targetMinutes} دقیقه · ${slot.intensityTier.titleFa}${slot.plannedTime != null ? ' · ساعت ${toPersianDigits(slot.plannedTime)}' : ''}',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),

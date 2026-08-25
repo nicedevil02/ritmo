@@ -49,7 +49,9 @@ class MvWeekTab extends StatelessWidget {
                   ),
                   SizedBox(height: metrics.spaceXs),
                   Text(
-                    isDeloadWeek ? 'هفتهٔ سبک برای بازیابی بدنی' : 'برنامهٔ منظم تمرین و ریکاوری',
+                    isDeloadWeek
+                        ? 'هفتهٔ سبک برای بازیابی بدنی'
+                        : 'برنامهٔ منظم تمرین و ریکاوری',
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -58,7 +60,10 @@ class MvWeekTab extends StatelessWidget {
               ),
               if (isDeloadWeek)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: metrics.spaceSm, vertical: metrics.spaceXs),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: metrics.spaceSm,
+                    vertical: metrics.spaceXs,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -74,6 +79,39 @@ class MvWeekTab extends StatelessWidget {
             ],
           ),
           SizedBox(height: metrics.spaceLg),
+
+          // Back-to-Back Conflict Banner (S2-T6, ADJ-6)
+          if (_hasBackToBackAnchors(weekSlots)) ...[
+            Container(
+              key: const ValueKey('mv_conflict_back_to_back'),
+              padding: EdgeInsets.all(metrics.spaceMd),
+              decoration: BoxDecoration(
+                color: colors.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(metrics.radiusCard),
+                border: Border.all(color: colors.warning.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: colors.warning,
+                    size: 20,
+                  ),
+                  SizedBox(width: metrics.spaceSm),
+                  Expanded(
+                    child: Text(
+                      'توجه: دو روز ورزش متوالی با تعهد ثابت تنظیم شده است. برای ریکاوری بهتر، فاصله بین جلسات توصیه می‌شود.',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: metrics.spaceMd),
+          ],
 
           // 7 Day Slot Cards
           ...List.generate(weekSlots.length, (index) {
@@ -110,5 +148,16 @@ class MvWeekTab extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _hasBackToBackAnchors(List<MvSlot> slots) {
+    for (int i = 0; i < slots.length - 1; i++) {
+      final current = slots[i];
+      final next = slots[i + 1];
+      if (current.isLocked && !current.isRest && next.isLocked && !next.isRest) {
+        return true;
+      }
+    }
+    return false;
   }
 }

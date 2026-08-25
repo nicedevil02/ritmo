@@ -435,7 +435,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T6 — اتصال شیت به ثبت سریع
+### - [x] S1-T6 — اتصال شیت به ثبت سریع — 36558b58
 
 **فایل‌ها:** `presentation/sheets/mv_quick_log_sheet.dart`، `application/mv_quick_log_use_case.dart`
 
@@ -1439,7 +1439,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
 | S1-T4 | DONE | 347ced07 | افزودن sport و outdoor به MvSlotType و شرط اجباری بودن kindCode |
 | S1-T5 | DONE | f3120fbd | شیت انتخاب کامل ۴۹ ورزش با جستجوی ۲۵۰ میلی‌ثانیه و بخش فصلی |
-| S1-T6 |  |  |  |
+| S1-T6 | DONE | 36558b58 | اتصال شیت انتخاب ورزش به ثبت سریع با ۴ چیپ اخیر و bumpUsage |
 | S1-T7 |  |  |  |
 | S1-T8 |  |  |  |
 | S1-T9 |  |  |  |

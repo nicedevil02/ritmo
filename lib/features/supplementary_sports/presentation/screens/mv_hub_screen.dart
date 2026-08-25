@@ -251,6 +251,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
             totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
             weeklyBudget: _controller.budgetProgress,
             loadSnapshot: _controller.loadSnapshot,
+            insights: _controller.insights,
             personalRecords: _controller.prs,
             bodyMapDistribution:
                 _controller.bodyMapDistribution ??

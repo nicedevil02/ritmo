@@ -77,6 +77,9 @@ class MvHubController extends ChangeNotifier {
   int? _continuousActiveWeeks;
   int? get continuousActiveWeeks => _continuousActiveWeeks;
 
+  List<MvInsight> _insights = const [];
+  List<MvInsight> get insights => _insights;
+
   MvHubController({
     MvProfileRepository? profileRepo,
     MvPrescriptionRepository? prescriptionRepo,
@@ -238,6 +241,13 @@ class MvHubController extends ChangeNotifier {
     _loadSnapshot = _loadEngine.computeLoadSnapshot(
       completedSessions: historySessions,
       daysOfHistory: daysOfHistory,
+      referenceDate: today,
+    );
+
+    // Generate Deterministic Progress Insights (InsightEngine / S8-T8)
+    _insights = _insightEngine.generateInsights(
+      completedSessions: historySessions,
+      activeCommitments: _commitments,
       referenceDate: today,
     );
 

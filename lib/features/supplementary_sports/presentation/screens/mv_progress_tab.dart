@@ -17,6 +17,7 @@ class MvProgressTab extends StatelessWidget {
   final Map<String, int>? monthlyKindMinutes;
   final Map<String, MvMovementKind>? kindsMap;
   final List<MvPersonalRecord> personalRecords;
+  final List<MvInsight> insights;
   final MvCampaign? activeCampaign;
   final MvBodyMapDistribution? bodyMapDistribution;
   final bool hasEnoughDataForTrends;
@@ -31,6 +32,7 @@ class MvProgressTab extends StatelessWidget {
     this.monthlyKindMinutes,
     this.kindsMap,
     this.personalRecords = const [],
+    this.insights = const [],
     this.activeCampaign,
     this.bodyMapDistribution,
     this.hasEnoughDataForTrends = false,
@@ -61,13 +63,19 @@ class MvProgressTab extends StatelessWidget {
           _buildPersonalRecordsCard(context),
           SizedBox(height: metrics.spaceLg),
 
-          // 5. دورهٔ هدف‌دار فعال (Active Goal Campaign)
+          // 5. بینش‌های پیشرفت بر مبنای قوانین مشخص (InsightEngine / S8-T8)
+          if (insights.isNotEmpty) ...[
+            _buildInsightsSection(context, insights),
+            SizedBox(height: metrics.spaceLg),
+          ],
+
+          // 6. دورهٔ هدف‌دار فعال (Active Goal Campaign)
           if (activeCampaign != null && activeCampaign!.isActive) ...[
             _buildActiveCampaignCard(context, activeCampaign!),
             SizedBox(height: metrics.spaceLg),
           ],
 
-          // 6. هفته‌های فعال پیوسته (Hero streak)
+          // 7. هفته‌های فعال پیوسته (Hero streak)
           if (continuousActiveWeeks != null && continuousActiveWeeks! > 0) ...[
             _buildStreakHero(context, continuousActiveWeeks!),
             SizedBox(height: metrics.spaceLg),
@@ -640,6 +648,93 @@ class MvProgressTab extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// بینش‌های پیشرفت (InsightEngine / S8-T8)
+  Widget _buildInsightsSection(
+    BuildContext context,
+    List<MvInsight> insightsList,
+  ) {
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      key: const ValueKey('mv_insights_section'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.lightbulb_outline_rounded,
+              color: colors.accent,
+              size: metrics.iconSm,
+            ),
+            SizedBox(width: metrics.spaceXs),
+            Text(
+              'بینش‌های پیشرفت',
+              style: textTheme.titleSmall?.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: metrics.spaceSm),
+        ...insightsList.map((insight) {
+          return Container(
+            key: ValueKey(insight.key),
+            margin: EdgeInsets.only(bottom: metrics.spaceSm),
+            padding: EdgeInsets.all(metrics.spaceMd),
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: BorderRadius.circular(metrics.radiusCard),
+              border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(metrics.spaceXs),
+                  decoration: BoxDecoration(
+                    color: colors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(metrics.radiusField),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    size: metrics.iconSm,
+                    color: colors.accent,
+                  ),
+                ),
+                SizedBox(width: metrics.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        insight.titleFa,
+                        style: textTheme.labelLarge?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: metrics.spaceXs),
+                      Text(
+                        insight.descriptionFa,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 }

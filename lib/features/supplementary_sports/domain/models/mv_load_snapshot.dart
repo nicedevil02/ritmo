@@ -1,60 +1,46 @@
-import 'package:flutter/foundation.dart';
-
-/// دسته‌بندی نسبت بار حاد به مزمن (ACWR) طبق §۴٫۳
-enum MvLoadBand {
-  low('mv_load_band_low', '< 0.8'),
-  optimal('mv_load_band_optimal', '0.8 – 1.3'),
-  watch('mv_load_band_watch', '1.3 – 1.5'),
-  spike('mv_load_band_spike', '> 1.5');
-
-  final String key;
-  final String range;
-  const MvLoadBand(this.key, this.range);
-
-  static MvLoadBand fromAcwr(double acwr) {
-    if (acwr < 0.8) return MvLoadBand.low;
-    if (acwr <= 1.3) return MvLoadBand.optimal;
-    if (acwr <= 1.5) return MvLoadBand.watch;
-    return MvLoadBand.spike;
-  }
-}
-
-/// مدل وضعیت بار حاد و مزمن تمرینی (S3-T4 / §۴٫۳)
-@immutable
+/// Immutable snapshot of acute and chronic training load (Section 4.3 & S4-T6).
 class MvLoadSnapshot {
-  final double acuteLoad;
-  final double chronicLoad;
-  final double acwr;
-  final MvLoadBand band;
-  final bool hasEnoughData;
+  final int acuteLoad;
+  final double chronicWeeklyLoad;
+  final double? ratio; // null when insufficient data
+  final String? bandKey; // One of 4 keys from Section 4.3
+  final int daysOfHistory;
+  final int completedSessions;
+  final String? customBandTitleFa;
 
   const MvLoadSnapshot({
     required this.acuteLoad,
-    required this.chronicLoad,
-    required this.acwr,
-    required this.band,
-    this.hasEnoughData = true,
-  });
+    required this.chronicWeeklyLoad,
+    this.ratio,
+    this.bandKey,
+    this.daysOfHistory = 0,
+    this.completedSessions = 0,
+    String? bandTitleFa,
+  }) : customBandTitleFa = bandTitleFa;
+
+  bool get hasEnoughData => ratio != null && bandKey != null;
+
+  String get bandTitleFa {
+    if (customBandTitleFa != null) return customBandTitleFa!;
+    switch (bandKey) {
+      case 'mv_load_band_low':
+        return 'پایین و ناکافی';
+      case 'mv_load_band_optimal':
+        return 'مطلوب و سازنده';
+      case 'mv_load_band_watch':
+        return 'احتیاط و بررسی';
+      case 'mv_load_band_spike':
+        return 'افزایش ناگهانی بار';
+      default:
+        return 'نامشخص';
+    }
+  }
 
   /// سقف رشد بار هفتگی (§۴٫۴): ۱۱۰٪ میانگین هفتگی مزمن
-  double get plannedWeeklyLoadCap => 1.10 * chronicLoad * 7;
+  double get plannedWeeklyLoadCap => 1.10 * chronicWeeklyLoad;
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MvLoadSnapshot &&
-          runtimeType == other.runtimeType &&
-          acuteLoad == other.acuteLoad &&
-          chronicLoad == other.chronicLoad &&
-          acwr == other.acwr &&
-          band == other.band &&
-          hasEnoughData == other.hasEnoughData;
-
-  @override
-  int get hashCode =>
-      acuteLoad.hashCode ^
-      chronicLoad.hashCode ^
-      acwr.hashCode ^
-      band.hashCode ^
-      hasEnoughData.hashCode;
+  String toString() =>
+      'MvLoadSnapshot(acute: $acuteLoad, chronicWeekly: $chronicWeeklyLoad, ratio: $ratio, bandKey: $bandKey, days: $daysOfHistory, sessions: $completedSessions)';
 }
+

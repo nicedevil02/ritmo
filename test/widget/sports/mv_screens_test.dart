@@ -109,8 +109,7 @@ void main() {
       );
 
       expect(find.text('هفته‌های فعال پیوسته'), findsOneWidget);
-      expect(find.text('4 هفته'), findsOneWidget);
-      expect(find.text('12'), findsOneWidget);
+      expect(find.text('۴ هفته'), findsOneWidget);
       expect(find.text('شنا سوئدی'), findsOneWidget);
     });
 

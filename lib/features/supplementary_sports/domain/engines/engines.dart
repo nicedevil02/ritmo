@@ -3,7 +3,7 @@ export 'budget_engine.dart';
 export 'campaign_engine.dart';
 export 'coach_engine.dart';
 export 'insight_engine.dart';
-export 'load_engine.dart' hide MvLoadSnapshot;
+export 'load_engine.dart';
 export 'plan_engine.dart';
 export 'profile_engine.dart';
 export 'progression_engine.dart';

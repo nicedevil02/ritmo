@@ -66,8 +66,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
             'امروز',
             style: TextStyle(
               fontSize: 13,
-              fontWeight: _controller.selectedHorizon == PlanningHorizon.day ? FontWeight.bold : FontWeight.normal,
-              color: _controller.selectedHorizon == PlanningHorizon.day ? Colors.white : colors.textPrimary,
+              fontWeight: _controller.selectedHorizon == PlanningHorizon.day
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              color: _controller.selectedHorizon == PlanningHorizon.day
+                  ? Colors.white
+                  : colors.textPrimary,
             ),
           ),
         ),
@@ -77,8 +81,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
             'این هفته',
             style: TextStyle(
               fontSize: 13,
-              fontWeight: _controller.selectedHorizon == PlanningHorizon.week ? FontWeight.bold : FontWeight.normal,
-              color: _controller.selectedHorizon == PlanningHorizon.week ? Colors.white : colors.textPrimary,
+              fontWeight: _controller.selectedHorizon == PlanningHorizon.week
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              color: _controller.selectedHorizon == PlanningHorizon.week
+                  ? Colors.white
+                  : colors.textPrimary,
             ),
           ),
         ),
@@ -88,8 +96,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
             'این ماه',
             style: TextStyle(
               fontSize: 13,
-              fontWeight: _controller.selectedHorizon == PlanningHorizon.month ? FontWeight.bold : FontWeight.normal,
-              color: _controller.selectedHorizon == PlanningHorizon.month ? Colors.white : colors.textPrimary,
+              fontWeight: _controller.selectedHorizon == PlanningHorizon.month
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              color: _controller.selectedHorizon == PlanningHorizon.month
+                  ? Colors.white
+                  : colors.textPrimary,
             ),
           ),
         ),
@@ -137,9 +149,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     final colors = context.colors;
 
     if (_controller.status == PlanningStateStatus.loading) {
-      return const Center(
-        child: CupertinoActivityIndicator(),
-      );
+      return const Center(child: CupertinoActivityIndicator());
     }
 
     if (_controller.status == PlanningStateStatus.failed) {
@@ -149,14 +159,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
           children: [
             Text(
               _controller.errorMessage ?? 'خطا در بارگذاری داده‌ها',
-              style: TextStyle(
-                fontSize: 14,
-                color: colors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14, color: colors.textSecondary),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () => _controller.loadHorizon(_controller.selectedHorizon),
+              onPressed: () =>
+                  _controller.loadHorizon(_controller.selectedHorizon),
               child: const Text('تلاش مجدد'),
             ),
           ],
@@ -190,10 +198,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  colors.primary.withValues(alpha: 0.2),
-                  colors.card,
-                ],
+                colors: [colors.primary.withValues(alpha: 0.2), colors.card],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
               ),
@@ -214,16 +219,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'می‌توانی فعالیت‌های امروزت را هوشمندانه بچینی.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -232,16 +237,20 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     final todayKey = DayKey.from(DateTime.now()).value;
                     final todayDraft = DayPlanDraft(
                       planDate: todayKey,
-                      items: _controller.commitments.map((c) => DayPlanItemDraft(
-                        title: c.title,
-                        targetModule: 'goals',
-                        startKind: 'FLEXIBLE',
-                        durationMin: c.effortMinutes,
-                        durationSource: 'USER_EXPLICIT',
-                        recurrence: 'ONCE',
-                        category: 'WORK',
-                        confidence: 1.0,
-                      )).toList(),
+                      items: _controller.commitments
+                          .map(
+                            (c) => DayPlanItemDraft(
+                              title: c.title,
+                              targetModule: 'goals',
+                              startKind: 'FLEXIBLE',
+                              durationMin: c.effortMinutes,
+                              durationSource: 'USER_EXPLICIT',
+                              recurrence: 'ONCE',
+                              category: 'WORK',
+                              confidence: 1.0,
+                            ),
+                          )
+                          .toList(),
                       questions: const [],
                       suggestions: const [],
                     );
@@ -255,7 +264,11 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       },
                     );
                   },
-                  icon: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                  icon: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                   label: const Text(
                     'چیدمان امروز با ✨',
                     style: TextStyle(
@@ -291,15 +304,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.event_available_outlined, size: 44, color: colors.primary.withValues(alpha: 0.8)),
+                  Icon(
+                    Icons.event_available_outlined,
+                    size: 44,
+                    color: colors.primary.withValues(alpha: 0.8),
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'امروز هیچ تعهدی نداری. نیازی به هدف قبلی نیست؛ می‌توانی هر کاری را برای امروز ثبت کنی.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -309,16 +323,23 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () {
                             CreateCommitmentSheet.show(
                               context,
                               initialHorizon: PlanningHorizon.day,
-                              onSaved: () => _controller.loadHorizon(PlanningHorizon.day),
+                              onSaved: () =>
+                                  _controller.loadHorizon(PlanningHorizon.day),
                             );
                           },
-                          icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                          icon: const Icon(
+                            Icons.add,
+                            size: 18,
+                            color: Colors.white,
+                          ),
                           label: const Text(
                             '+ افزودن تعهد برای امروز',
                             style: TextStyle(
@@ -332,14 +353,20 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       const SizedBox(width: 8),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           side: BorderSide(color: colors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () {
                           WeekPlannerSheet.show(
                             context,
-                            onSaved: () => _controller.loadHorizon(PlanningHorizon.day),
+                            onSaved: () =>
+                                _controller.loadHorizon(PlanningHorizon.day),
                           );
                         },
                         icon: const Icon(Icons.auto_awesome, size: 16),
@@ -359,12 +386,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 final isDone = c.status == CommitmentStatus.done;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDone ? colors.primary.withValues(alpha: 0.3) : colors.border.withValues(alpha: 0.2),
+                      color: isDone
+                          ? colors.primary.withValues(alpha: 0.3)
+                          : colors.border.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -374,17 +406,25 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         onTap: () async {
                           await HapticFeedback.lightImpact();
                           final updated = c.copyWith(
-                            status: isDone ? CommitmentStatus.accepted : CommitmentStatus.done,
+                            status: isDone
+                                ? CommitmentStatus.accepted
+                                : CommitmentStatus.done,
                             updatedAt: DateTime.now().millisecondsSinceEpoch,
                           );
-                          await PlanningRepository.instance.upsertCommitment(updated);
+                          await PlanningRepository.instance.upsertCommitment(
+                            updated,
+                          );
                           await _controller.loadHorizon(PlanningHorizon.day);
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(4),
                           child: Icon(
-                            isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                            color: isDone ? colors.primary : colors.textSecondary,
+                            isDone
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: isDone
+                                ? colors.primary
+                                : colors.textSecondary,
                             size: 22,
                           ),
                         ),
@@ -396,25 +436,33 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           children: [
                             Text(
                               c.title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                decoration: isDone ? TextDecoration.lineThrough : null,
-                                color: isDone ? colors.textSecondary : colors.textPrimary,
-                              ),
+                              style:
+                                  RitmoTextStyles.body(
+                                    isDone
+                                        ? colors.textSecondary
+                                        : colors.textPrimary,
+                                  ).copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    decoration: isDone
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
                             ),
                             Text(
                               '${PersianDigits.toPersian(c.effortMinutes.toString())} دقیقه · اولویت: ${c.importance.name.toUpperCase()}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colors.textSecondary,
+                              style: RitmoTextStyles.caption(
+                                colors.textSecondary,
                               ),
                             ),
                           ],
                         ),
                       ),
                       PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert, color: colors.textSecondary, size: 18),
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: colors.textSecondary,
+                          size: 18,
+                        ),
                         onSelected: (val) async {
                           if (val == 'drop') {
                             await PlanningRepository.instance.dropCommitment(
@@ -424,14 +472,25 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             );
                             await _controller.loadHorizon(PlanningHorizon.day);
                           } else if (val == 'shrink') {
-                            final half = (c.effortMinutes * 0.5).round().clamp(15, 240);
-                            await PlanningRepository.instance.upsertCommitment(c.copyWith(effortMinutes: half));
+                            final half = (c.effortMinutes * 0.5).round().clamp(
+                              15,
+                              240,
+                            );
+                            await PlanningRepository.instance.upsertCommitment(
+                              c.copyWith(effortMinutes: half),
+                            );
                             await _controller.loadHorizon(PlanningHorizon.day);
                           }
                         },
                         itemBuilder: (ctx) => [
-                          const PopupMenuItem(value: 'shrink', child: Text('کوچک‌تر کن (۵۰٪)')),
-                          const PopupMenuItem(value: 'drop', child: Text('حذف از امروز')),
+                          const PopupMenuItem(
+                            value: 'shrink',
+                            child: Text('کوچک‌تر کن (۵۰٪)'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'drop',
+                            child: Text('حذف از امروز'),
+                          ),
                         ],
                       ),
                     ],
@@ -444,7 +503,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 side: BorderSide(color: colors.border),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               onPressed: () {
                 CreateCommitmentSheet.show(
@@ -468,8 +529,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
   Widget _buildWeekView(BuildContext context) {
     final colors = context.colors;
     final active = _controller.activeCycle;
-    final totalCommittable = _controller.capacities.fold<int>(0, (acc, c) => acc + c.committableMinutes);
-    final totalCommitmentMinutes = _controller.commitments.fold<int>(0, (acc, c) => acc + c.effortMinutes);
+    final totalCommittable = _controller.capacities.fold<int>(
+      0,
+      (acc, c) => acc + c.committableMinutes,
+    );
+    final totalCommitmentMinutes = _controller.commitments.fold<int>(
+      0,
+      (acc, c) => acc + c.effortMinutes,
+    );
 
     return Column(
       children: [
@@ -481,11 +548,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
               children: [
                 // 1. Cycle status bar (U-04)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: colors.border.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -505,9 +577,12 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       if (active == null)
                         TextButton.icon(
                           onPressed: () {
-                            WeekPlannerSheet.show(context, onSaved: () {
-                              _controller.loadHorizon(PlanningHorizon.week);
-                            });
+                            WeekPlannerSheet.show(
+                              context,
+                              onSaved: () {
+                                _controller.loadHorizon(PlanningHorizon.week);
+                              },
+                            );
                           },
                           icon: const Icon(Icons.auto_awesome, size: 14),
                           label: const Text('ساخت سریع'),
@@ -517,12 +592,18 @@ class _PlanningScreenState extends State<PlanningScreen> {
                           children: [
                             IconButton(
                               tooltip: 'افزودن تعهد به این هفته',
-                              icon: Icon(Icons.add_circle_outline, color: colors.primary, size: 20),
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: colors.primary,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 CreateCommitmentSheet.show(
                                   context,
                                   initialHorizon: PlanningHorizon.week,
-                                  onSaved: () => _controller.loadHorizon(PlanningHorizon.week),
+                                  onSaved: () => _controller.loadHorizon(
+                                    PlanningHorizon.week,
+                                  ),
                                 );
                               },
                             ),
@@ -534,11 +615,16 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                   allocations: _controller.allocations,
                                   commitments: _controller.commitments,
                                   onClosed: () {
-                                    _controller.loadHorizon(PlanningHorizon.week);
+                                    _controller.loadHorizon(
+                                      PlanningHorizon.week,
+                                    );
                                   },
                                 );
                               },
-                              icon: const Icon(Icons.rate_review_outlined, size: 16),
+                              icon: const Icon(
+                                Icons.rate_review_outlined,
+                                size: 16,
+                              ),
                               label: const Text('مرور هفته'),
                             ),
                           ],
@@ -574,7 +660,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: totalCommitmentMinutes > totalCommittable ? colors.error : colors.primary,
+                              color: totalCommitmentMinutes > totalCommittable
+                                  ? colors.error
+                                  : colors.primary,
                             ),
                           ),
                         ],
@@ -583,20 +671,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: LinearProgressIndicator(
-                          value: totalCommittable > 0 ? (totalCommitmentMinutes / totalCommittable).clamp(0.0, 1.0) : 0.0,
+                          value: totalCommittable > 0
+                              ? (totalCommitmentMinutes / totalCommittable)
+                                    .clamp(0.0, 1.0)
+                              : 0.0,
                           minHeight: 8,
                           backgroundColor: colors.bg,
-                          color: totalCommitmentMinutes > totalCommittable ? colors.error : colors.primary,
+                          color: totalCommitmentMinutes > totalCommittable
+                              ? colors.error
+                              : colors.primary,
                         ),
                       ),
                       if (totalCommitmentMinutes > totalCommittable) ...[
                         const SizedBox(height: 6),
                         Text(
                           '${PersianDigits.toPersian((totalCommitmentMinutes - totalCommittable).toString())} دقیقه بیشتر از ظرفیت برنامه‌ریزی شده است.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: colors.error,
-                          ),
+                          style: TextStyle(fontSize: 11, color: colors.error),
                         ),
                       ],
                     ],
@@ -630,8 +720,13 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
                 Column(
                   children: _controller.dayLoads.map((dLoad) {
-                    final dayAllocations = _controller.allocations.where((a) => a.dayKey == dLoad.dayKey).toList();
-                    final dayMinutes = dayAllocations.fold<int>(0, (acc, a) => acc + a.plannedMinutes);
+                    final dayAllocations = _controller.allocations
+                        .where((a) => a.dayKey == dLoad.dayKey)
+                        .toList();
+                    final dayMinutes = dayAllocations.fold<int>(
+                      0,
+                      (acc, a) => acc + a.plannedMinutes,
+                    );
                     final isExpanded = _expandedDayKeys.contains(dLoad.dayKey);
 
                     return Container(
@@ -640,7 +735,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         color: colors.card,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isExpanded ? colors.primary.withValues(alpha: 0.3) : colors.border.withValues(alpha: 0.2),
+                          color: isExpanded
+                              ? colors.primary.withValues(alpha: 0.3)
+                              : colors.border.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
@@ -662,7 +759,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                 children: [
                                   Container(
                                     width: 70,
-                                    padding: const EdgeInsets.symmetric(vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: colors.bg,
                                       borderRadius: BorderRadius.circular(10),
@@ -691,7 +790,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           '${PersianDigits.toPersian(dayAllocations.length.toString())} تعهد · ${PersianDigits.toPersian(dayMinutes.toString())} دقیقه',
@@ -705,20 +805,34 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                     ),
                                   ),
                                   IconButton(
-                                    tooltip: dLoad.userMarkedLight ? 'تبدیل به روز عادی' : 'تنظیم به عنوان روز سبک (Light Day)',
+                                    tooltip: dLoad.userMarkedLight
+                                        ? 'تبدیل به روز عادی'
+                                        : 'تنظیم به عنوان روز سبک (Light Day)',
                                     icon: Icon(
-                                      dLoad.userMarkedLight ? Icons.nightlight_round : Icons.nightlight_outlined,
+                                      dLoad.userMarkedLight
+                                          ? Icons.nightlight_round
+                                          : Icons.nightlight_outlined,
                                       size: 18,
-                                      color: dLoad.userMarkedLight ? Colors.indigoAccent : colors.textSecondary,
+                                      color: dLoad.userMarkedLight
+                                          ? Colors.indigoAccent
+                                          : colors.textSecondary,
                                     ),
                                     onPressed: () async {
                                       await HapticFeedback.selectionClick();
-                                      await PlanningRepository.instance.setDayLight(dLoad.dayKey, !dLoad.userMarkedLight);
-                                      await _controller.loadHorizon(PlanningHorizon.week);
+                                      await PlanningRepository.instance
+                                          .setDayLight(
+                                            dLoad.dayKey,
+                                            !dLoad.userMarkedLight,
+                                          );
+                                      await _controller.loadHorizon(
+                                        PlanningHorizon.week,
+                                      );
                                     },
                                   ),
                                   Icon(
-                                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                    isExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
                                     color: colors.textSecondary,
                                     size: 20,
                                   ),
@@ -736,88 +850,154 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                 children: [
                                   if (dayAllocations.isEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
                                       child: Text(
                                         'تعهدی برای این روز تخصیص نیافته است.',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: colors.textSecondary,
+                                        style: RitmoTextStyles.caption(
+                                          colors.textSecondary,
                                         ),
                                       ),
                                     )
                                   else
                                     ...dayAllocations.map((alloc) {
-                                      final commitment = _controller.commitments.firstWhere(
-                                        (c) => c.id == alloc.commitmentId,
-                                        orElse: () => PlanningCommitment(
-                                          id: alloc.commitmentId,
-                                          cycleId: '',
-                                          title: 'تعهد',
-                                          createdAt: 0,
-                                          updatedAt: 0,
-                                        ),
-                                      );
-                                      final isDone = alloc.status == AllocationStatus.done;
+                                      final commitment = _controller.commitments
+                                          .firstWhere(
+                                            (c) => c.id == alloc.commitmentId,
+                                            orElse: () => PlanningCommitment(
+                                              id: alloc.commitmentId,
+                                              cycleId: '',
+                                              title: 'تعهد',
+                                              createdAt: 0,
+                                              updatedAt: 0,
+                                            ),
+                                          );
+                                      final isDone =
+                                          alloc.status == AllocationStatus.done;
 
                                       return Container(
-                                        margin: const EdgeInsets.only(bottom: 6),
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        margin: const EdgeInsets.only(
+                                          bottom: 6,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: colors.bg,
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
                                             InkWell(
                                               onTap: () async {
                                                 await HapticFeedback.lightImpact();
-                                                final newStatus = isDone ? AllocationStatus.planned : AllocationStatus.done;
-                                                await PlanningRepository.instance.insertAllocation(
-                                                  alloc.copyWith(status: newStatus, updatedAt: DateTime.now().millisecondsSinceEpoch),
+                                                final newStatus = isDone
+                                                    ? AllocationStatus.planned
+                                                    : AllocationStatus.done;
+                                                await PlanningRepository
+                                                    .instance
+                                                    .insertAllocation(
+                                                      alloc.copyWith(
+                                                        status: newStatus,
+                                                        updatedAt: DateTime.now()
+                                                            .millisecondsSinceEpoch,
+                                                      ),
+                                                    );
+                                                await _controller.loadHorizon(
+                                                  PlanningHorizon.week,
                                                 );
-                                                await _controller.loadHorizon(PlanningHorizon.week);
                                               },
                                               child: Icon(
-                                                isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                                                color: isDone ? colors.primary : colors.textSecondary,
+                                                isDone
+                                                    ? Icons.check_circle
+                                                    : Icons
+                                                          .radio_button_unchecked,
+                                                color: isDone
+                                                    ? colors.primary
+                                                    : colors.textSecondary,
                                                 size: 18,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
                                                     commitment.title,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.bold,
-                                                      decoration: isDone ? TextDecoration.lineThrough : null,
-                                                      color: isDone ? colors.textSecondary : colors.textPrimary,
-                                                    ),
+                                                    style:
+                                                        RitmoTextStyles.bodyMedium(
+                                                          isDone
+                                                              ? colors
+                                                                    .textSecondary
+                                                              : colors
+                                                                    .textPrimary,
+                                                        ).copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          decoration: isDone
+                                                              ? TextDecoration
+                                                                    .lineThrough
+                                                              : null,
+                                                        ),
                                                   ),
                                                   Text(
                                                     '${PersianDigits.toPersian(alloc.plannedMinutes.toString())} دقیقه · اولویت: ${commitment.importance.name.toUpperCase()}',
-                                                    style: TextStyle(
-                                                      fontSize: 11,
-                                                      color: colors.textSecondary,
-                                                    ),
+                                                    style:
+                                                        RitmoTextStyles.caption(
+                                                          colors.textSecondary,
+                                                        ),
                                                   ),
                                                 ],
                                               ),
                                             ),
                                             PopupMenuButton<String>(
-                                              icon: Icon(Icons.more_vert, color: colors.textSecondary, size: 16),
+                                              icon: Icon(
+                                                Icons.more_vert,
+                                                color: colors.textSecondary,
+                                                size: 16,
+                                              ),
                                               onSelected: (val) {
-                                                _handleContextMenuAction(val, dLoad.dayKey, [alloc]);
+                                                _handleContextMenuAction(
+                                                  val,
+                                                  dLoad.dayKey,
+                                                  [alloc],
+                                                );
                                               },
                                               itemBuilder: (ctx) => [
-                                                const PopupMenuItem(value: 'move', child: Text('انتقال به روز…')),
-                                                const PopupMenuItem(value: 'split', child: Text('تقسیم به دو بخش')),
-                                                const PopupMenuItem(value: 'shrink', child: Text('کوچک‌تر کن (۵۰٪)')),
-                                                const PopupMenuItem(value: 'lock', child: Text('قفل در همین روز')),
-                                                const PopupMenuItem(value: 'drop', child: Text('حذف از این هفته')),
+                                                const PopupMenuItem(
+                                                  value: 'move',
+                                                  child: Text('انتقال به روز…'),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'split',
+                                                  child: Text(
+                                                    'تقسیم به دو بخش',
+                                                  ),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'shrink',
+                                                  child: Text(
+                                                    'کوچک‌تر کن (۵۰٪)',
+                                                  ),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'lock',
+                                                  child: Text(
+                                                    'قفل در همین روز',
+                                                  ),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'drop',
+                                                  child: Text(
+                                                    'حذف از این هفته',
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ],
@@ -829,16 +1009,29 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                     width: double.infinity,
                                     child: OutlinedButton.icon(
                                       style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        side: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8,
+                                        ),
+                                        side: BorderSide(
+                                          color: colors.border.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
                                       ),
                                       onPressed: () {
                                         CreateCommitmentSheet.show(
                                           context,
                                           initialHorizon: PlanningHorizon.week,
                                           initialDayKey: dLoad.dayKey,
-                                          onSaved: () => _controller.loadHorizon(PlanningHorizon.week),
+                                          onSaved: () =>
+                                              _controller.loadHorizon(
+                                                PlanningHorizon.week,
+                                              ),
                                         );
                                       },
                                       icon: const Icon(Icons.add, size: 14),
@@ -859,21 +1052,28 @@ class _PlanningScreenState extends State<PlanningScreen> {
                 ),
 
                 // 4. Unplaced Queue
-                if (_controller.allocationResult?.unplaced.isNotEmpty == true) ...[
+                if (_controller.allocationResult?.unplaced.isNotEmpty ==
+                    true) ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.warning_amber_rounded, color: colors.error, size: 20),
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: colors.error,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'صف «جا نشد» (${PersianDigits.toPersian(_controller.allocationResult!.unplaced.length.toString())} مورد)',
@@ -887,7 +1087,9 @@ class _PlanningScreenState extends State<PlanningScreen> {
                         ),
                         const SizedBox(height: 8),
                         Column(
-                          children: _controller.allocationResult!.unplaced.map((unp) {
+                          children: _controller.allocationResult!.unplaced.map((
+                            unp,
+                          ) {
                             return Container(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               padding: const EdgeInsets.all(10),
@@ -899,7 +1101,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           unp.commitment.title,
@@ -911,9 +1114,8 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                         ),
                                         Text(
                                           unp.detailFa,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: colors.error,
+                                          style: RitmoTextStyles.caption(
+                                            colors.error,
                                           ),
                                         ),
                                       ],
@@ -921,22 +1123,45 @@ class _PlanningScreenState extends State<PlanningScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () async {
-                                      final half = (unp.commitment.effortMinutes * 0.5).round().clamp(15, 240);
-                                      await PlanningRepository.instance.upsertCommitment(unp.commitment.copyWith(effortMinutes: half));
-                                      await _controller.loadHorizon(PlanningHorizon.week);
-                                      if (mounted) RitmoToast.show(this.context, 'زمان تعهد به $half دقیقه کاهش یافت.');
+                                      final half =
+                                          (unp.commitment.effortMinutes * 0.5)
+                                              .round()
+                                              .clamp(15, 240);
+                                      await PlanningRepository.instance
+                                          .upsertCommitment(
+                                            unp.commitment.copyWith(
+                                              effortMinutes: half,
+                                            ),
+                                          );
+                                      await _controller.loadHorizon(
+                                        PlanningHorizon.week,
+                                      );
+                                      if (mounted)
+                                        RitmoToast.show(
+                                          this.context,
+                                          'زمان تعهد به $half دقیقه کاهش یافت.',
+                                        );
                                     },
-                                    child: const Text('نصف کردن', style: TextStyle(fontSize: 11)),
+                                    child: Text(
+                                      'نصف کردن',
+                                      style: RitmoTextStyles.badge(
+                                        colors.primary,
+                                      ),
+                                    ),
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.close, size: 16),
                                     onPressed: () async {
-                                       await PlanningRepository.instance.dropCommitment(
-                                         unp.commitment.id,
-                                         reason: 'حذف به علت عدم گنجایش',
-                                         nowMs: DateTime.now().millisecondsSinceEpoch,
-                                       );
-                                       await _controller.loadHorizon(PlanningHorizon.week);
+                                      await PlanningRepository.instance
+                                          .dropCommitment(
+                                            unp.commitment.id,
+                                            reason: 'حذف به علت عدم گنجایش',
+                                            nowMs: DateTime.now()
+                                                .millisecondsSinceEpoch,
+                                          );
+                                      await _controller.loadHorizon(
+                                        PlanningHorizon.week,
+                                      );
                                     },
                                   ),
                                 ],
@@ -965,12 +1190,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: colors.border),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     onPressed: () {
-                      WeekPlannerSheet.show(context, onSaved: () {
-                        _controller.loadHorizon(PlanningHorizon.week);
-                      });
+                      WeekPlannerSheet.show(
+                        context,
+                        onSaved: () {
+                          _controller.loadHorizon(PlanningHorizon.week);
+                        },
+                      );
                     },
                     icon: const Icon(Icons.auto_awesome, size: 16),
                     label: const Text(
@@ -985,12 +1215,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     onPressed: () {
-                      WeekPlannerSheet.show(context, onSaved: () {
-                        _controller.loadHorizon(PlanningHorizon.week);
-                      });
+                      WeekPlannerSheet.show(
+                        context,
+                        onSaved: () {
+                          _controller.loadHorizon(PlanningHorizon.week);
+                        },
+                      );
                     },
                     child: const Text(
                       'بازطراحی هفته',
@@ -1041,11 +1276,17 @@ class _PlanningScreenState extends State<PlanningScreen> {
           final picked = await showDialog<String>(
             context: context,
             builder: (ctx) => SimpleDialog(
-              title: const Text('انتقال به کدام روز؟', textAlign: TextAlign.right),
+              title: const Text(
+                'انتقال به کدام روز؟',
+                textAlign: TextAlign.right,
+              ),
               children: weekDays.map((dk) {
                 return SimpleDialogOption(
                   onPressed: () => Navigator.pop(ctx, dk),
-                  child: Text('${_getDayNameFa(dk)} ($dk)', textAlign: TextAlign.right),
+                  child: Text(
+                    '${_getDayNameFa(dk)} ($dk)',
+                    textAlign: TextAlign.right,
+                  ),
                 );
               }).toList(),
             ),
@@ -1053,24 +1294,42 @@ class _PlanningScreenState extends State<PlanningScreen> {
           if (picked != null && picked != dayKey) {
             await repo.moveAllocation(firstAlloc.id, picked, nowMs: nowMs);
             await _controller.loadHorizon(PlanningHorizon.week);
-            if (mounted) RitmoToast.show(context, 'تخصیص به ${_getDayNameFa(picked)} منتقل شد.');
+            if (mounted)
+              RitmoToast.show(
+                context,
+                'تخصیص به ${_getDayNameFa(picked)} منتقل شد.',
+              );
           }
           break;
 
         case 'split':
-          final halfMin = (firstAlloc.plannedMinutes / 2).round().clamp(15, 120);
+          final halfMin = (firstAlloc.plannedMinutes / 2).round().clamp(
+            15,
+            120,
+          );
           final updatedComm = commitment.copyWith(effortMinutes: halfMin);
           await repo.upsertCommitment(updatedComm);
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted) RitmoToast.show(context, 'تعهد به دو بخش $halfMin دقیقه‌ای تقسیم شد.');
+          if (mounted)
+            RitmoToast.show(
+              context,
+              'تعهد به دو بخش $halfMin دقیقه‌ای تقسیم شد.',
+            );
           break;
 
         case 'shrink':
-          final shrunkMin = (commitment.effortMinutes * 0.5).round().clamp(15, 240);
+          final shrunkMin = (commitment.effortMinutes * 0.5).round().clamp(
+            15,
+            240,
+          );
           final updatedComm = commitment.copyWith(effortMinutes: shrunkMin);
           await repo.upsertCommitment(updatedComm);
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted) RitmoToast.show(context, 'زمان تعهد به $shrunkMin دقیقه کاهش یافت.');
+          if (mounted)
+            RitmoToast.show(
+              context,
+              'زمان تعهد به $shrunkMin دقیقه کاهش یافت.',
+            );
           break;
 
         case 'lock':
@@ -1081,9 +1340,14 @@ class _PlanningScreenState extends State<PlanningScreen> {
           break;
 
         case 'drop':
-          await repo.dropCommitment(commitment.id, reason: 'حذف دستی از هفته', nowMs: nowMs);
+          await repo.dropCommitment(
+            commitment.id,
+            reason: 'حذف دستی از هفته',
+            nowMs: nowMs,
+          );
           await _controller.loadHorizon(PlanningHorizon.week);
-          if (mounted) RitmoToast.show(context, 'تعهد از برنامهٔ این هفته حذف شد.');
+          if (mounted)
+            RitmoToast.show(context, 'تعهد از برنامهٔ این هفته حذف شد.');
           break;
       }
     } catch (e) {
@@ -1095,14 +1359,22 @@ class _PlanningScreenState extends State<PlanningScreen> {
   String _getDayNameFa(String dayKey) {
     final dt = DateTime.tryParse(dayKey) ?? DateTime.now();
     switch (dt.weekday) {
-      case DateTime.saturday: return 'شنبه';
-      case DateTime.sunday: return 'یکشنبه';
-      case DateTime.monday: return 'دوشنبه';
-      case DateTime.tuesday: return 'سه‌شنبه';
-      case DateTime.wednesday: return 'چهارشنبه';
-      case DateTime.thursday: return 'پنجشنبه';
-      case DateTime.friday: return 'جمعه';
-      default: return '';
+      case DateTime.saturday:
+        return 'شنبه';
+      case DateTime.sunday:
+        return 'یکشنبه';
+      case DateTime.monday:
+        return 'دوشنبه';
+      case DateTime.tuesday:
+        return 'سه‌شنبه';
+      case DateTime.wednesday:
+        return 'چهارشنبه';
+      case DateTime.thursday:
+        return 'پنجشنبه';
+      case DateTime.friday:
+        return 'جمعه';
+      default:
+        return '';
     }
   }
 }

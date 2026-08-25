@@ -16,7 +16,8 @@ class AccountScreen extends StatefulWidget {
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserver {
+class _AccountScreenState extends State<AccountScreen>
+    with WidgetsBindingObserver {
   final AuthService _auth = AuthService.instance;
   final TextEditingController _emailController = TextEditingController();
 
@@ -65,7 +66,11 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
     setState(() => _isLoading = false);
 
     if (!res.isSuccess) {
-      setState(() => _errorMessage = res.errorMessage ?? AuthErrorCode.googleAuthCancelled.persianMessage);
+      setState(
+        () => _errorMessage =
+            res.errorMessage ??
+            AuthErrorCode.googleAuthCancelled.persianMessage,
+      );
     }
   }
 
@@ -105,26 +110,34 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                 ),
                 backgroundColor: const Color(0xff10B981),
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             );
           },
         ),
       );
     } else {
-      setState(() => _errorMessage = res.errorMessage ?? AuthErrorCode.unknown.persianMessage);
+      setState(
+        () => _errorMessage =
+            res.errorMessage ?? AuthErrorCode.unknown.persianMessage,
+      );
     }
   }
 
   Future<void> _confirmLogout() async {
-    final colors = Theme.of(context).extension<RitmoColors>() ?? RitmoColors.light;
+    final colors =
+        Theme.of(context).extension<RitmoColors>() ?? RitmoColors.light;
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: const Row(
             children: [
               Icon(Icons.logout_rounded, color: Colors.redAccent),
@@ -140,14 +153,19 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+              child: Text(
+                'انصراف',
+                style: TextStyle(color: colors.textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('خروج از حساب'),
             ),
@@ -163,7 +181,9 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
           SnackBar(
             content: const Text('از حساب کاربری خارج شدید.'),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
       }
@@ -181,7 +201,10 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
       child: Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
-          title: const Text('حساب کاربری', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'حساب کاربری',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           centerTitle: true,
           elevation: 0,
           backgroundColor: Colors.transparent,
@@ -197,12 +220,18 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                 decoration: BoxDecoration(
                   color: colors.warning.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: colors.warning.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline_rounded, color: colors.warning, size: 22),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: colors.warning,
+                      size: 22,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -243,7 +272,10 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: isLoggedIn
-                              ? [const Color(0xff10B981), const Color(0xff059669)]
+                              ? [
+                                  const Color(0xff10B981),
+                                  const Color(0xff059669),
+                                ]
                               : [Colors.grey.shade400, Colors.grey.shade600],
                         ),
                       ),
@@ -251,15 +283,21 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                         radius: 36,
                         backgroundColor: colors.surface,
                         child: Icon(
-                          isLoggedIn ? Icons.person_rounded : Icons.person_outline_rounded,
+                          isLoggedIn
+                              ? Icons.person_rounded
+                              : Icons.person_outline_rounded,
                           size: 40,
-                          color: isLoggedIn ? const Color(0xff10B981) : colors.textSecondary,
+                          color: isLoggedIn
+                              ? const Color(0xff10B981)
+                              : colors.textSecondary,
                         ),
                       ),
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      isLoggedIn ? 'حساب کاربری فعال' : 'حساب غیرفعال (کاربر مهمان)',
+                      isLoggedIn
+                          ? 'حساب کاربری فعال'
+                          : 'حساب غیرفعال (کاربر مهمان)',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -277,7 +315,10 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                       ),
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: colors.primaryContainer,
                           borderRadius: BorderRadius.circular(20),
@@ -289,8 +330,8 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                               _auth.provider == 'phone'
                                   ? Icons.phone_android_rounded
                                   : (_auth.provider == 'google'
-                                      ? Icons.g_mobiledata_rounded
-                                      : Icons.email_rounded),
+                                        ? Icons.g_mobiledata_rounded
+                                        : Icons.email_rounded),
                               size: 18,
                               color: colors.primary,
                             ),
@@ -331,19 +372,20 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                       backgroundColor: colors.primary,
                       foregroundColor: colors.onPrimary,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.account_circle, size: 24),
                         const SizedBox(width: 10),
-                        const Text(
+                        Text(
                           'ورود سریع با حساب گوگل (OAuth)',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: RitmoTextStyles.bodyMedium(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -361,7 +403,10 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                   ),
                   child: ExpansionTile(
                     shape: const Border(),
-                    leading: Icon(Icons.email_outlined, color: colors.textSecondary),
+                    leading: Icon(
+                      Icons.email_outlined,
+                      color: colors.textSecondary,
+                    ),
                     title: Text(
                       'ورود با ایمیل (مسیر پشتیبان)',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -383,7 +428,10 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                                 hintText: 'example@gmail.com',
                                 filled: true,
                                 fillColor: colors.surfaceSunken,
-                                prefixIcon: Icon(Icons.alternate_email_rounded, color: colors.textSecondary),
+                                prefixIcon: Icon(
+                                  Icons.alternate_email_rounded,
+                                  color: colors.textSecondary,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   borderSide: BorderSide.none,
@@ -397,7 +445,9 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                                 backgroundColor: colors.surfaceElevated,
                                 foregroundColor: colors.textPrimary,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
                               child: const Text('ارسال لینک/کد به ایمیل'),
                             ),
@@ -415,16 +465,24 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline_rounded, color: colors.error, size: 20),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: colors.error,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: colors.error, fontSize: 13, fontWeight: FontWeight.w600),
+                            style: RitmoTextStyles.caption(
+                              colors.error,
+                            ).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
@@ -439,15 +497,19 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                   child: ElevatedButton.icon(
                     onPressed: _confirmLogout,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent.shade700,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.error,
+                      foregroundColor: colors.textOnColor,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     icon: const Icon(Icons.logout_rounded),
-                    label: const Text(
+                    label: Text(
                       'خروج از حساب کاربری',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: RitmoTextStyles.body(
+                        colors.textOnColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -458,7 +520,9 @@ class _AccountScreenState extends State<AccountScreen> with WidgetsBindingObserv
                   label: const Text('عیب‌یابی و سلامت سیستم آلارم‌ها'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                 ),
               ],

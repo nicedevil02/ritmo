@@ -305,7 +305,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
         final target = targetsByTitle[title]!;
         if ((avgActual - target).abs() >= 15) {
           final cleanTitle = title.trim();
-          final fact = 'کاربر معمولاً برای «$cleanTitle» به جای $target دقیقه، حدود $avgActual دقیقه زمان صرف می‌کند.';
+          final fact =
+              'کاربر معمولاً برای «$cleanTitle» به جای $target دقیقه، حدود $avgActual دقیقه زمان صرف می‌کند.';
           final consent = await ConsentProfile.loadFromDb();
           final existing = await AiMemoryService.instance.retrieve(
             domain: 'core',
@@ -389,11 +390,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                               children: [
                                 Text(
                                   'دفتر ممیزی و تغییرات دستیار',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: colors.textPrimary,
-                                  ),
+                                  style: RitmoTextStyles.titleMedium(
+                                    colors.textPrimary,
+                                  ).copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 IconButton(
                                   icon: Icon(
@@ -941,7 +940,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
     });
 
     _sub = StreamingChatService()
-        .send(sessionId: _sessionId!, userText: text, consent: consent, personaId: 'global')
+        .send(
+          sessionId: _sessionId!,
+          userText: text,
+          consent: consent,
+          personaId: 'global',
+        )
         .listen(
           _onEvent,
           onError: (err) {
@@ -1602,19 +1606,17 @@ $suggestedSteps''';
               // 2026 Floating Chat Input Bar
               Builder(
                 builder: (context) {
-                  final keyboardInset =
-                      MediaQuery.viewInsetsOf(context).bottom;
-                  final rawViewInset =
-                      MediaQueryData.fromView(View.of(context))
-                          .viewInsets
-                          .bottom;
+                  final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+                  final rawViewInset = MediaQueryData.fromView(
+                    View.of(context),
+                  ).viewInsets.bottom;
                   final keyboardVisible =
                       isKeyboardOpen || keyboardInset > 0 || rawViewInset > 0;
                   final effectiveBottomPadding = keyboardVisible
                       ? 8.0
                       : (widget.isTab
-                          ? (RitmoShellMetrics.navBarHeight + 8.0)
-                          : 16.0);
+                            ? (RitmoShellMetrics.navBarHeight + 8.0)
+                            : 16.0);
 
                   return SafeArea(
                     bottom: !widget.isTab && !keyboardVisible,

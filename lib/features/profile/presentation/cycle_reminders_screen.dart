@@ -122,11 +122,9 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             ),
                             Text(
                               'یادآوری‌های چرخه بدن',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                              ),
+                              style: RitmoTextStyles.titleMedium(
+                                colors.textPrimary,
+                              ).copyWith(fontWeight: FontWeight.bold),
                             ),
                             Icon(
                               CupertinoIcons.lock_shield_fill,
@@ -200,30 +198,23 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                       children: [
                         Text(
                           'پیش‌بینی زمان شروع دوره بعدی',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.textSecondary,
-                          ),
+                          style: RitmoTextStyles.caption(colors.textSecondary),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           hasEnoughData ? dateStr : 'در حال شناخت ریتم شما',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
+                          style: RitmoTextStyles.titleMedium(
+                            colors.textPrimary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           hasEnoughData
                               ? 'تقریباً در ${PersianDigits.toFa(daysToNext.toString())} روز آینده'
                               : 'نیاز به ثبت چرخه‌های بیشتر برای پیش‌بینی',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: RitmoTextStyles.caption(
+                            colors.primary,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -238,11 +229,9 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
           if (output != null && output.privateReminderQueue.isNotEmpty) ...[
             Text(
               'یادآوری‌های محرمانه',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+              style: RitmoTextStyles.body(
+                colors.textPrimary,
+              ).copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             RitmoTheme.glassCardLight(
@@ -269,22 +258,18 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             ),
                             child: Text(
                               rem.level,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isT0 ? Colors.white : colors.textPrimary,
-                              ),
+                              style: RitmoTextStyles.badge(
+                                isT0 ? colors.onPrimary : colors.textPrimary,
+                              ).copyWith(fontWeight: FontWeight.bold),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               rem.message,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: colors.textPrimary,
-                                height: 1.4,
-                              ),
+                              style: RitmoTextStyles.bodyMedium(
+                                colors.textPrimary,
+                              ).copyWith(height: 1.4),
                             ),
                           ),
                         ],
@@ -300,11 +285,9 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
           // Cycle trend history
           Text(
             'تحلیل الگوی چرخه بدنی',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            style: RitmoTextStyles.body(
+              colors.textPrimary,
+            ).copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           RitmoTheme.glassCardLight(
@@ -318,36 +301,30 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                     children: [
                       Text(
                         'میانگین طول چرخه: ${PersianDigits.toFa(avgCycleLength.toString())} روز',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: RitmoTextStyles.caption(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'طول دوره: ${PersianDigits.toFa(avgPeriodDuration.toString())} روز',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: RitmoTextStyles.caption(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   const Divider(height: 20),
                   Text(
                     'تاریخچه‌ی دوره‌های ثبت شده:',
-                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    style: RitmoTextStyles.caption(colors.textSecondary),
                   ),
                   const SizedBox(height: 8),
                   if (_cycleLogs.isEmpty)
                     Text(
                       'تاکنون هیچ دوره‌ای ثبت نشده است. اطلاعات چرخه به مرور زمان و با ورود دوره‌ها در اینجا نمایش داده می‌شود.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                        height: 1.5,
-                      ),
+                      style: RitmoTextStyles.caption(
+                        colors.textSecondary,
+                      ).copyWith(height: 1.5),
                     )
                   else
                     Column(
@@ -355,15 +332,20 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                         final rawStart =
                             (log['cycleStartDate'] ?? log['startDate'])
                                 ?.toString();
-                        final rawEnd =
-                            (log['cycleEndDate'] ?? log['endDate'])?.toString();
+                        final rawEnd = (log['cycleEndDate'] ?? log['endDate'])
+                            ?.toString();
 
-                        final parsedStart =
-                            CycleDateContract.parseDayKey(rawStart);
+                        final parsedStart = CycleDateContract.parseDayKey(
+                          rawStart,
+                        );
                         final parsedEnd = CycleDateContract.parseDayKey(rawEnd);
 
-                        final startJ = parsedStart != null ? Jalali.fromDateTime(parsedStart) : null;
-                        final endJ = parsedEnd != null ? Jalali.fromDateTime(parsedEnd) : null;
+                        final startJ = parsedStart != null
+                            ? Jalali.fromDateTime(parsedStart)
+                            : null;
+                        final endJ = parsedEnd != null
+                            ? Jalali.fromDateTime(parsedEnd)
+                            : null;
 
                         final startStr = startJ != null
                             ? '${startJ.year}/${startJ.month}/${startJ.day}'
@@ -379,16 +361,14 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                             children: [
                               Text(
                                 'شروع: ${PersianDigits.toFa(startStr)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textPrimary,
+                                style: RitmoTextStyles.caption(
+                                  colors.textPrimary,
                                 ),
                               ),
                               Text(
                                 'پایان: ${PersianDigits.toFa(endStr)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colors.textSecondary,
+                                style: RitmoTextStyles.caption(
+                                  colors.textSecondary,
                                 ),
                               ),
                             ],
@@ -405,9 +385,7 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
           // Privacy Card
           RitmoTheme.glassCardLight(
             color: colors.success.withValues(alpha: isDark ? 0.08 : 0.04),
-            border: Border.all(
-              color: colors.success.withValues(alpha: 0.18),
-            ),
+            border: Border.all(color: colors.success.withValues(alpha: 0.18)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -423,11 +401,9 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'حریم خصوصی شما برای ما مهم است',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
+                        style: RitmoTextStyles.bodyMedium(
+                          colors.textPrimary,
+                        ).copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -464,9 +440,8 @@ class _CycleRemindersScreenState extends State<CycleRemindersScreen> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textPrimary.withValues(alpha: 0.8),
+              style: RitmoTextStyles.caption(
+                colors.textPrimary.withValues(alpha: 0.8),
               ),
             ),
           ),

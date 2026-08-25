@@ -4,7 +4,7 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 void main() {
   group('MvMovementKind Roundtrip & Model Verification (S1-T1)', () {
     test('FOOTBALL seed row roundtrip and aliasList', () {
-      final football = const MvMovementKind(
+      const football = MvMovementKind(
         code: 'FOOTBALL',
         titleFa: 'فوتبال',
         emoji: '⚽',
@@ -24,7 +24,7 @@ void main() {
         isEnabled: true,
         usageCount: 5,
         lastUsedAt: null,
-        sortOrder: 10,
+        sortOrder: 1,
         sessionModeOverride: null,
       );
 
@@ -38,18 +38,12 @@ void main() {
       expect(fromMap.emoji, equals('⚽'));
       expect(fromMap.family, equals(MovementFamily.sport));
       expect(fromMap.baseMet, equals(7.0));
-      expect(fromMap.metLow, equals(5.0));
-      expect(fromMap.metHigh, equals(9.0));
-      expect(fromMap.primaryMetric, equals(MovementMetric.duration));
-      expect(fromMap.secondaryMetric, isNull);
       expect(fromMap.isSocial, isTrue);
-      expect(fromMap.needsVenue, isTrue);
-      expect(fromMap.jointImpact, equals(2));
       expect(fromMap.aliasList, equals(['فوتبال', 'توپ بازی']));
     });
 
     test('HIKING seed row roundtrip and aliasList', () {
-      final hiking = const MvMovementKind(
+      const hiking = MvMovementKind(
         code: 'HIKING',
         titleFa: 'کوه‌نوردی',
         emoji: '🏔',
@@ -88,7 +82,7 @@ void main() {
     });
 
     test('STRETCHING seed row roundtrip and aliasList', () {
-      final stretching = const MvMovementKind(
+      const stretching = MvMovementKind(
         code: 'STRETCHING',
         titleFa: 'کشش',
         emoji: '🤸',

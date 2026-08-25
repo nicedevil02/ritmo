@@ -1,4 +1,3 @@
-import '../../movement/domain/movement_kind.dart';
 import '../models/models.dart';
 
 /// Weekly Activity Progress Summary based on WHO Physical Activity Guidelines.

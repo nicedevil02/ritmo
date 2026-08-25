@@ -1,15 +1,8 @@
 // lib/features/supplementary_sports/movement/domain/session_mode.dart
 
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
-enum SessionMode {
-  timed,       // زمان‌محور: یوگا، تنفس، کشش
-  distance,    // مسافت و سرعت: دویدن، دوچرخه
-  route,       // مسیر و ارتفاع: کوهنوردی، دوی طبیعت
-  laps,        // دور و طول: شنا، دوی پیست
-  structured,  // ساختاریافته: بدنسازی، HIIT
-  match,       // تیمی: فوتسال، والیبال
-}
+typedef SessionMode = MvSessionMode;
 
 extension SessionModeCode on SessionMode {
   String get code => name.toUpperCase();
@@ -32,12 +25,9 @@ SessionMode resolveMode(MovementKind k) {
 }
 
 SessionMode effectiveMode(MovementKind k) {
-  final o = k.sessionModeOverride; // فیلد جدید در مدل
-  if (o != null && o.isNotEmpty) {
-    return SessionMode.values.firstWhere(
-      (m) => m.code == o.toUpperCase(),
-      orElse: () => resolveMode(k),
-    );
+  final o = k.sessionModeOverride;
+  if (o != null) {
+    return o;
   }
   return resolveMode(k);
 }

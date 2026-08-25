@@ -14,21 +14,23 @@ import 'package:ritmo/features/supplementary_sports/movement/presentation/sessio
 /// قدیمی (MovementSessionScaffold) می‌ماند. این یعنی مهاجرت مرحله‌به‌مرحله بدون ریسک.
 /// تنها حالتی که هنوز null است: structured — نیازمند بازچینی IA در دور ۴.
 SessionTemplate? sessionTemplateFor(SessionMode mode) {
-	switch (mode) {
-		case SessionMode.route:
-			return const RouteSessionTemplate();
-		case SessionMode.timed:
-			return const TimedSessionTemplate();
-		case SessionMode.distance:
-			return const DistanceSessionTemplate();
-		case SessionMode.laps:
-			return const LapsSessionTemplate();
-		case SessionMode.match:
-			return const MatchSessionTemplate();
-		case SessionMode.structured:
-			// دور ۴: بازچینی IA — فعلاً به صفحهٔ قدرتی مستقیم دسترسی دارد.
-			return null;
-	}
+  switch (mode) {
+    case SessionMode.route:
+      return const RouteSessionTemplate();
+    case SessionMode.timed:
+      return const TimedSessionTemplate();
+    case SessionMode.distance:
+      return const DistanceSessionTemplate();
+    case SessionMode.laps:
+      return const LapsSessionTemplate();
+    case SessionMode.match:
+      return const MatchSessionTemplate();
+    case SessionMode.structured:
+    case SessionMode.guided:
+    case SessionMode.quickLog:
+      // دور ۴: بازچینی IA — فعلاً به صفحهٔ قدرتی / هدایت‌شده مستقیم دسترسی دارد.
+      return null;
+  }
 }
 
 /// آیا این حالت به پوستهٔ مشترک مهاجرت کرده است؟

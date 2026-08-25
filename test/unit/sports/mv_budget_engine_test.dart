@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/budget_engine.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 
 void main() {
   group('WHO Physical Activity BudgetEngine Tests (S0-T4)', () {

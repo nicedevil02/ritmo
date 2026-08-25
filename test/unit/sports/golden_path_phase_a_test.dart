@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/application/mv_hub_controller.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {

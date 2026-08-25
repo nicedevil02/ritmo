@@ -290,7 +290,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T7 — حالت «دادهٔ کافی نیست» واقعاً متصل شود
+### - [x] S0-T7 — حالت «دادهٔ کافی نیست» واقعاً متصل شود — a8fccd93
 
 **فایل‌ها:** `presentation/components/mv_insufficient_data.dart`، `presentation/screens/mv_progress_tab.dart`، `presentation/screens/mv_today_tab.dart`
 
@@ -1432,7 +1432,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S0-T4 | DONE | 1715480d | پیاده‌سازی فرمول معادل متوسط WHO و MET در BudgetEngine |
 | S0-T5 | DONE | 57fc6a03 | محاسبهٔ بودجهٔ فعالیت محدود به هفتهٔ تقویمی جاری |
 | S0-T6 | DONE | 7cd729e7 | ورودی‌های خواب و انرژی و هندلینگ پیش‌فرض آمادگی |
-| S0-T7 |  |  |  |
+| S0-T7 | DONE | a8fccd93 | نمایش MvInsufficientData در تب پیشرفت هنگام خالی بودن مخازن |
 | S0-T8 |  |  |  |
 | S1-T1 |  |  |  |
 | S1-T2 |  |  |  |

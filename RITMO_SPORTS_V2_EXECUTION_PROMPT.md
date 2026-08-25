@@ -996,7 +996,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T6 — `LoadEngine` و فرمول sRPE
+### - [x] S4-T6 — `LoadEngine` و فرمول sRPE — bbb32e6e
 
 **فایل جدید:** `domain/engines/load_engine.dart` و اضافه به `domain/engines/engines.dart`
 
@@ -1466,7 +1466,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S4-T3 | DONE | 81dd2655 | پورت ۵ قالب پلیر (timed, distance, route, laps, match) با رابط تعاملی و ویجت تست کامل |
 | S4-T4 | DONE | f5fa60b7 | پیاده‌سازی متد resolveSessionMode در MvStartSessionUseCase و تست جدولی ۸ ورزش و گاردتست معماری |
 | S4-T5 | DONE | 31272444 | صفحه پایان جلسه با نمایش متریک‌های اختصاصی هر مود، انتخاب ۳ سطحی تلاش و اسلایدر RPE و تأثیر هفتگی |
-| S4-T6 |  |  |  |
+| S4-T6 | DONE | bbb32e6e | پیاده‌سازی LoadEngine با فرمول sRPE و محاسبه ACWR با ۴ کلید محدوده بار و تست جدولی ۵ ردیفی |
 | S4-T7 |  |  |  |
 | S4-T8 |  |  |  |
 | S5-T1 |  |  |  |

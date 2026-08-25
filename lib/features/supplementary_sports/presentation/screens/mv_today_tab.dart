@@ -75,12 +75,12 @@ class MvTodayTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceMd),
 
-          // Tomorrow Anchor Notice (S2-T6)
+          // Tomorrow Anchor Notice (S2-T6, S8-T5)
           if (showTomorrowAnchor) ...[
             Padding(
               padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
               child: Container(
-                key: const ValueKey('mv_tomorrow_anchor_notice'),
+                key: const ValueKey('mv_tomorrow_anchor_banner'),
                 padding: EdgeInsets.symmetric(
                   horizontal: metrics.spaceMd,
                   vertical: metrics.spaceSm,
@@ -96,7 +96,7 @@ class MvTodayTab extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.lock_clock_rounded,
-                      size: 18,
+                      size: metrics.iconSm,
                       color: colors.accent,
                     ),
                     SizedBox(width: metrics.spaceSm),

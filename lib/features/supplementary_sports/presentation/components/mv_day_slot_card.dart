@@ -89,10 +89,37 @@ class MvDaySlotCard extends StatelessWidget {
                         ),
                         if (slot.isLocked) ...[
                           SizedBox(width: metrics.spaceXs),
-                          Icon(
-                            Icons.lock_rounded,
-                            size: 14,
-                            color: colors.accent,
+                          Container(
+                            key: const ValueKey('mv_slot_anchor_badge'),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: metrics.spaceXs,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.pill,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.lock_rounded,
+                                  key: const ValueKey('mv_slot_lock_icon'),
+                                  size: metrics.iconSm,
+                                  color: colors.accent,
+                                ),
+                                SizedBox(width: metrics.spaceXs),
+                                Text(
+                                  'ورزش ثابت',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colors.accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                         if (slot.isRest) ...[

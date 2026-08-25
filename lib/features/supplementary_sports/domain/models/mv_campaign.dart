@@ -6,7 +6,7 @@ class MvCampaign {
   final String goalCode;
   final String startDate; // ISO YYYY-MM-DD
   final int weeks;
-  final String status;    // ACTIVE, COMPLETED, ARCHIVED
+  final String status; // ACTIVE, COMPLETED, ARCHIVED
   final List<String> routineIds;
   final String? progressJson;
   final int createdAt;
@@ -26,6 +26,32 @@ class MvCampaign {
   });
 
   bool get isActive => status == 'ACTIVE';
+
+  MvCampaign copyWith({
+    String? id,
+    String? titleFa,
+    String? goalCode,
+    String? startDate,
+    int? weeks,
+    String? status,
+    List<String>? routineIds,
+    String? progressJson,
+    int? createdAt,
+    int? updatedAt,
+  }) {
+    return MvCampaign(
+      id: id ?? this.id,
+      titleFa: titleFa ?? this.titleFa,
+      goalCode: goalCode ?? this.goalCode,
+      startDate: startDate ?? this.startDate,
+      weeks: weeks ?? this.weeks,
+      status: status ?? this.status,
+      routineIds: routineIds ?? this.routineIds,
+      progressJson: progressJson ?? this.progressJson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -47,7 +73,11 @@ class MvCampaign {
       if (val == null) return [];
       final s = val.toString().trim();
       if (s.isEmpty) return [];
-      return s.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return s
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     return MvCampaign(
@@ -59,8 +89,12 @@ class MvCampaign {
       status: (map['status'] as String?) ?? 'ACTIVE',
       routineIds: parseList(map['routineIds']),
       progressJson: map['progressJson'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

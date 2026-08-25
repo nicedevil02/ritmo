@@ -2,6 +2,7 @@
 // (Ultra-Premium Tactile Neumorphic Navigation Bar with Specular Chamfer, Recessed Crater Socket & Elevated Button)
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
@@ -251,7 +252,23 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                           ),
                   ),
 
-                  // ─── 3. آیتم‌های ناوبری (کاملاً متمرکز در راستای عمودی) ───
+                  // ─── 3. تورفتگی سه‌بعدی روی نوار دور دکمه (از ساعت ۲ تا ۱۰ با شعاع ۲۷ پیکسل) ───
+                  Positioned(
+                    left: _kHMargin,
+                    right: _kHMargin,
+                    top: 0,
+                    height: pillH,
+                    child: CustomPaint(
+                      painter: _SunkenCraterPainter(
+                        centerX: ncx,
+                        centerY: -2.0 + _kCenterBtnSize / 2,
+                        radius: 27.0,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+
+                  // ─── 4. آیتم‌های ناوبری (کاملاً متمرکز در راستای عمودی) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -435,6 +452,88 @@ class _NeumorphicSlotItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  نقاش تورفتگی سه‌بعدی روی نوار دور دکمه (از ساعت ۲ تا ۱۰ با شعاع ۲۷ پیکسل)
+// ═══════════════════════════════════════════════════════════════════
+
+class _SunkenCraterPainter extends CustomPainter {
+  const _SunkenCraterPainter({
+    required this.centerX,
+    required this.centerY,
+    required this.radius,
+    required this.isDark,
+  });
+
+  final double centerX;
+  final double centerY;
+  final double radius;
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(centerX, centerY);
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // زاویه ساعت ۲ (-۳۰ درجه یا -pi/6) تا ساعت ۱۰ (۲۱۰ درجه یا 7pi/6)
+    // طول کمان: ۴pi/3 (۲۴۰ درجه رو به پایین)
+    const startAngle = -math.pi / 6;
+    const sweepAngle = math.pi * 4 / 3;
+
+    // ۱. سایه فرورفتگی داخلی لبه (Inner Depth Shadow)
+    final innerShadowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..shader = ui.Gradient.linear(
+        Offset(center.dx, center.dy - radius),
+        Offset(center.dx, center.dy + radius),
+        [
+          (isDark ? Colors.black : const Color(0xFF828F9F))
+              .withValues(alpha: isDark ? 0.40 : 0.28),
+          Colors.transparent,
+        ],
+        [0.0, 1.0],
+      );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - 1.0),
+      startAngle,
+      sweepAngle,
+      false,
+      innerShadowPaint,
+    );
+
+    // ۲. بازتاب نوری لبه پایینی تورفتگی (Bottom Specular Rim)
+    final rimHighlightPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..shader = ui.Gradient.linear(
+        Offset(center.dx, center.dy - radius),
+        Offset(center.dx, center.dy + radius),
+        [
+          Colors.transparent,
+          (isDark ? Colors.white : Colors.white)
+              .withValues(alpha: isDark ? 0.22 : 0.95),
+        ],
+        [0.3, 1.0],
+      );
+
+    canvas.drawArc(
+      rect,
+      startAngle,
+      sweepAngle,
+      false,
+      rimHighlightPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SunkenCraterPainter oldDelegate) =>
+      oldDelegate.centerX != centerX ||
+      oldDelegate.centerY != centerY ||
+      oldDelegate.radius != radius ||
+      oldDelegate.isDark != isDark;
 }
 
 // ═══════════════════════════════════════════════════════════════════

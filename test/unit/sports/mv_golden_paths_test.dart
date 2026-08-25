@@ -123,76 +123,94 @@ void main() {
       strengthDaysTarget: 2,
     );
 
-    test('Golden Path 1 — Weekly Futsal Player (پنجشنبه ۲۱:۰۰ فوتسال ۹۰ دقیقه)', () {
-      final futsalCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5, // پنجشنبه
-        startTime: '21:00',
-        durationMinutes: 90,
-        titleFa: 'فوتسال هفتگی',
-      );
+    test(
+      'Golden Path 1 — Weekly Futsal Player (پنجشنبه ۲۱:۰۰ فوتسال ۹۰ دقیقه)',
+      () {
+        final futsalCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5, // پنجشنبه
+          startTime: '21:00',
+          durationMinutes: 90,
+          titleFa: 'فوتسال هفتگی',
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [futsalCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [futsalCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      expect(result.slots.length, equals(7));
+        expect(result.slots.length, equals(7));
 
-      // 1. Thursday: locked anchor slot with exact kind and time
-      final thuSlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-27');
-      expect(thuSlot.isLocked, isTrue);
-      expect(thuSlot.kindCode, equals('FUTSAL'));
-      expect(thuSlot.plannedTime, equals('21:00'));
-      expect(thuSlot.targetMinutes, equals(90));
-      expect(thuSlot.reasonKey, equals(MvReasonKeys.anchor));
+        // 1. Thursday: locked anchor slot with exact kind and time
+        final thuSlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-27',
+        );
+        expect(thuSlot.isLocked, isTrue);
+        expect(thuSlot.kindCode, equals('FUTSAL'));
+        expect(thuSlot.plannedTime, equals('21:00'));
+        expect(thuSlot.targetMinutes, equals(90));
+        expect(thuSlot.reasonKey, equals(MvReasonKeys.anchor));
 
-      // 2. Wednesday: preAnchorTaper mobility <= 20 min
-      final wedSlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-26');
-      expect(wedSlot.slotType, equals(MvSlotType.mobility));
-      expect(wedSlot.targetMinutes, lessThanOrEqualTo(20));
-      expect(wedSlot.reasonKey, equals(MvReasonKeys.preAnchorTaper));
+        // 2. Wednesday: preAnchorTaper mobility <= 20 min
+        final wedSlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-26',
+        );
+        expect(wedSlot.slotType, equals(MvSlotType.mobility));
+        expect(wedSlot.targetMinutes, lessThanOrEqualTo(20));
+        expect(wedSlot.reasonKey, equals(MvReasonKeys.preAnchorTaper));
 
-      // 3. Friday: postAnchorRecovery activeRest <= 25 min
-      final friSlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-28');
-      expect(friSlot.slotType, equals(MvSlotType.activeRest));
-      expect(friSlot.targetMinutes, lessThanOrEqualTo(25));
-      expect(friSlot.reasonKey, equals(MvReasonKeys.postAnchorRecovery));
+        // 3. Friday: postAnchorRecovery activeRest <= 25 min
+        final friSlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-28',
+        );
+        expect(friSlot.slotType, equals(MvSlotType.activeRest));
+        expect(friSlot.targetMinutes, lessThanOrEqualTo(25));
+        expect(friSlot.reasonKey, equals(MvReasonKeys.postAnchorRecovery));
 
-      // 4. Two strength days with posterior_chain / complement focus
-      final strengthSlots = result.slots.where((s) => s.slotType == MvSlotType.strength).toList();
-      expect(strengthSlots.length, greaterThanOrEqualTo(2));
-      expect(strengthSlots.any((s) => s.focusCodes.contains('posterior_chain')), isTrue);
-      expect(strengthSlots.any((s) => s.reasonKey == MvReasonKeys.complement), isTrue);
+        // 4. Two strength days with posterior_chain / complement focus
+        final strengthSlots = result.slots
+            .where((s) => s.slotType == MvSlotType.strength)
+            .toList();
+        expect(strengthSlots.length, greaterThanOrEqualTo(2));
+        expect(
+          strengthSlots.any((s) => s.focusCodes.contains('posterior_chain')),
+          isTrue,
+        );
+        expect(
+          strengthSlots.any((s) => s.reasonKey == MvReasonKeys.complement),
+          isTrue,
+        );
 
-      // 5. Total moderate equivalent minutes >= 150
-      int totalEquivMinutes = 0;
-      for (final s in result.slots) {
-        final kind = kindsMap[s.kindCode];
-        final met = kind?.baseMet ?? (s.slotType == MvSlotType.strength ? 4.5 : 3.0);
-        if (met >= 6.0) {
-          totalEquivMinutes += s.targetMinutes * 2;
-        } else if (met >= 3.0) {
-          totalEquivMinutes += s.targetMinutes;
+        // 5. Total moderate equivalent minutes >= 150
+        int totalEquivMinutes = 0;
+        for (final s in result.slots) {
+          final kind = kindsMap[s.kindCode];
+          final met =
+              kind?.baseMet ?? (s.slotType == MvSlotType.strength ? 4.5 : 3.0);
+          if (met >= 6.0) {
+            totalEquivMinutes += s.targetMinutes * 2;
+          } else if (met >= 3.0) {
+            totalEquivMinutes += s.targetMinutes;
+          }
         }
-      }
-      expect(totalEquivMinutes, greaterThanOrEqualTo(150));
+        expect(totalEquivMinutes, greaterThanOrEqualTo(150));
 
-      // 6. Every slot has a valid, non-null reasonKey
-      for (final s in result.slots) {
-        expect(s.reasonKey, isNotNull);
-        expect(s.reasonKey, isNotEmpty);
-        expect(MvReasonKeys.all, contains(s.reasonKey));
-      }
-    });
+        // 6. Every slot has a valid, non-null reasonKey
+        for (final s in result.slots) {
+          expect(s.reasonKey, isNotNull);
+          expect(s.reasonKey, isNotEmpty);
+          expect(MvReasonKeys.all, contains(s.reasonKey));
+        }
+      },
+    );
 
     test('Golden Path 2 — Friday Hiker (جمعه ۰۶:۰۰ کوه ۲۴۰ دقیقه)', () {
       final hikingCommitment = MvCommitment(
@@ -238,9 +256,14 @@ void main() {
       expect(satSlot.reasonKey, equals(MvReasonKeys.postAnchorRecovery));
 
       // 4. Two strength days with eccentric_quad / complement focus
-      final strengthSlots = result.slots.where((s) => s.slotType == MvSlotType.strength).toList();
+      final strengthSlots = result.slots
+          .where((s) => s.slotType == MvSlotType.strength)
+          .toList();
       expect(strengthSlots.length, greaterThanOrEqualTo(2));
-      expect(strengthSlots.any((s) => s.focusCodes.contains('eccentric_quad')), isTrue);
+      expect(
+        strengthSlots.any((s) => s.focusCodes.contains('eccentric_quad')),
+        isTrue,
+      );
 
       // 5. No heavy strength on Thursday (ADJ-7)
       expect(thuSlot.slotType, isNot(equals(MvSlotType.strength)));

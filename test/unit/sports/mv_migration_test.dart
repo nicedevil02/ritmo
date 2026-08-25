@@ -161,7 +161,8 @@ void main() {
       final insertedId = await db.insert('mv_commitments', {
         'kindCode': 'FUTSAL',
         'titleFa': 'فوتسال پنجشنبه‌ها',
-        'dayOfWeekSat0': 5, // پنجشنبه در شنبه-مبنا (۰=ش، ۱=ی، ۲=د، ۳=س، ۴=چ، ۵=پ، ۶=ج)
+        'dayOfWeekSat0':
+            5, // پنجشنبه در شنبه-مبنا (۰=ش، ۱=ی، ۲=د، ۳=س، ۴=چ، ۵=پ، ۶=ج)
         'startTime': '21:00',
         'durationMinutes': 90,
         'venueNote': 'سالن یادگار',
@@ -191,27 +192,30 @@ void main() {
       expect(results.first['isFlexible'], equals(0));
     });
 
-    test('S2-T1: MigrationRunner applies MigrationV125MvCommitments idempotently', () async {
-      final migrationDb = await databaseFactory.openDatabase(
-        inMemoryDatabasePath,
-      );
-      // Run from v124 to v125
-      await MigrationRunner.run(migrationDb, 124, 125);
+    test(
+      'S2-T1: MigrationRunner applies MigrationV125MvCommitments idempotently',
+      () async {
+        final migrationDb = await databaseFactory.openDatabase(
+          inMemoryDatabasePath,
+        );
+        // Run from v124 to v125
+        await MigrationRunner.run(migrationDb, 124, 125);
 
-      final tables = await migrationDb.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='mv_commitments'",
-      );
-      expect(tables.isNotEmpty, isTrue);
+        final tables = await migrationDb.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='mv_commitments'",
+        );
+        expect(tables.isNotEmpty, isTrue);
 
-      final indexes = await migrationDb.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_mv_commitments_day'",
-      );
-      expect(indexes.isNotEmpty, isTrue);
+        final indexes = await migrationDb.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_mv_commitments_day'",
+        );
+        expect(indexes.isNotEmpty, isTrue);
 
-      // Verify idempotency (running ensure / migration again doesn't crash)
-      await SupplementarySportsTables.ensureCommitmentTables(migrationDb);
+        // Verify idempotency (running ensure / migration again doesn't crash)
+        await SupplementarySportsTables.ensureCommitmentTables(migrationDb);
 
-      await migrationDb.close();
-    });
+        await migrationDb.close();
+      },
+    );
   });
 }

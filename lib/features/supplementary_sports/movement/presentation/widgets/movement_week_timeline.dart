@@ -58,7 +58,11 @@ class MovementWeekTimeline extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Icon(CupertinoIcons.calendar, size: 28, color: colors.textTertiary),
+                Icon(
+                  CupertinoIcons.calendar,
+                  size: 28,
+                  color: colors.textTertiary,
+                ),
                 const SizedBox(height: RitmoSpacing.sm),
                 Text(
                   'این هفته هنوز فعالیتی ثبت نشده',
@@ -90,9 +94,13 @@ class MovementWeekTimeline extends StatelessWidget {
 
   /// گروه‌بندی براساس روز، تازه‌ترین بالا. قبلاً هیچ زمانی نشان داده نمی‌شد
   /// و دو جلسهٔ یک روز از هم قابل تشخیص نبودند.
-  List<Widget> _buildGroupedRows(BuildContext context, List<MovementEvent> events) {
+  List<Widget> _buildGroupedRows(
+    BuildContext context,
+    List<MovementEvent> events,
+  ) {
     final colors = context.colors;
-    final sorted = [...events]..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    final sorted = [...events]
+      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
 
     final widgets = <Widget>[];
     String? currentDayKey;
@@ -128,9 +136,15 @@ class MovementWeekTimeline extends StatelessWidget {
     return widgets;
   }
 
-  Widget _buildRow(BuildContext context, MovementEvent event, DateTime loggedAt) {
+  Widget _buildRow(
+    BuildContext context,
+    MovementEvent event,
+    DateTime loggedAt,
+  ) {
     final kind = snapshot?.kindsByCode[event.kindCode];
-    final title = kind == null ? event.kindCode : '${kind.emoji} ${kind.titleFa}';
+    final title = kind == null
+        ? event.kindCode
+        : '${kind.emoji} ${kind.titleFa}';
 
     // رکوردهای متعلق به جلسهٔ بدنسازی از اینجا حذف‌شدنی نیستند؛
     // قبلاً سوایپ می‌شدند و مخزن StateError پرتاب می‌کرد.
@@ -165,7 +179,11 @@ class MovementWeekTimeline extends StatelessWidget {
             color: context.colors.error.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(RitmoRadius.card),
           ),
-          child: const Icon(CupertinoIcons.trash, color: Colors.white, size: 20),
+          child: const Icon(
+            CupertinoIcons.trash,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
         child: card,
       ),
@@ -282,7 +300,11 @@ class _TimelineCard extends StatelessWidget {
             if (isLocked)
               Tooltip(
                 message: 'از بخش بدنسازی قابل ویرایش است',
-                child: Icon(CupertinoIcons.lock_fill, size: 14, color: colors.textTertiary),
+                child: Icon(
+                  CupertinoIcons.lock_fill,
+                  size: 14,
+                  color: colors.textTertiary,
+                ),
               )
             else
               Container(

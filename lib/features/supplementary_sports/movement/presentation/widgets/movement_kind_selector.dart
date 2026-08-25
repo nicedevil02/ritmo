@@ -36,8 +36,7 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
   // دکمهٔ «تغییر» دوباره بازش می‌کند.
   bool _forceExpand = false;
 
-  bool get _isCollapsed =>
-      widget.selectedKind != null && !_forceExpand;
+  bool get _isCollapsed => widget.selectedKind != null && !_forceExpand;
 
   @override
   void initState() {
@@ -64,7 +63,9 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
 
   Future<void> _loadInitialData() async {
     final recents = await MovementRepository.instance.recentKinds(limit: 6);
-    final kinds = await MovementRepository.instance.getKinds(family: _selectedFamilyTab);
+    final kinds = await MovementRepository.instance.getKinds(
+      family: _selectedFamilyTab,
+    );
     if (mounted) {
       setState(() {
         _recentKinds = recents;
@@ -192,7 +193,9 @@ class _MovementKindSelectorState extends State<MovementKindSelector> {
             child: Row(
               children: _recentKinds.map((k) {
                 return Padding(
-                  padding: const EdgeInsetsDirectional.only(end: RitmoSpacing.sm),
+                  padding: const EdgeInsetsDirectional.only(
+                    end: RitmoSpacing.sm,
+                  ),
                   child: _KindChip(
                     kind: k,
                     isSelected: widget.selectedKind?.code == k.code,
@@ -407,8 +410,7 @@ class _KindChip extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Vazirmatn',
                   fontSize: 13,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   color: isSelected ? accent : colors.textPrimary,
                 ),
               ),

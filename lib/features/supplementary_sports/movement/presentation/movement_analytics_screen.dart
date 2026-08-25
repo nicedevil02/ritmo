@@ -11,7 +11,8 @@ class MovementAnalyticsScreen extends StatefulWidget {
   const MovementAnalyticsScreen({super.key});
 
   @override
-  State<MovementAnalyticsScreen> createState() => _MovementAnalyticsScreenState();
+  State<MovementAnalyticsScreen> createState() =>
+      _MovementAnalyticsScreenState();
 }
 
 class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
@@ -32,13 +33,13 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
       final prRows = await db.query('movement_pr', orderBy: 'achievedAt DESC');
       final logRows = await db.query('workout_logs', columns: ['kind', 'type']);
       final kindRows = await db.query('movement_kinds');
-      
+
       final kindsMap = {
-        for (final r in kindRows) r['code'] as String: r['titleFa'] as String
+        for (final r in kindRows) r['code'] as String: r['titleFa'] as String,
       };
-      
+
       final kindToFamilyMap = {
-        for (final r in kindRows) r['code'] as String: r['family'] as String?
+        for (final r in kindRows) r['code'] as String: r['family'] as String?,
       };
 
       final familyCounts = <MovementFamily, int>{};
@@ -71,7 +72,10 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('تحلیل حرکت و رکوردهای شخصی', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'تحلیل حرکت و رکوردهای شخصی',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
       ),
       body: _isLoading
@@ -86,7 +90,11 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                     // Section 1: Diversity Map
                     Text(
                       '🎨 نقشهٔ تنوع خانواده‌های حرکت',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: colors.onBackground,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -99,10 +107,16 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                           width: (MediaQuery.of(context).size.width - 44) / 2,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isUsed ? colors.surfaceVariant : colors.surfaceVariant.withValues(alpha: 0.3),
+                            color: isUsed
+                                ? colors.surfaceVariant
+                                : colors.surfaceVariant.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isUsed ? colors.primary.withValues(alpha: 0.5) : colors.outlineVariant.withValues(alpha: 0.3),
+                              color: isUsed
+                                  ? colors.primary.withValues(alpha: 0.5)
+                                  : colors.outlineVariant.withValues(
+                                      alpha: 0.3,
+                                    ),
                             ),
                           ),
                           child: Column(
@@ -110,14 +124,19 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Text(f.emoji, style: const TextStyle(fontSize: 20)),
+                                  Text(
+                                    f.emoji,
+                                    style: const TextStyle(fontSize: 20),
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       f.titleFa,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: isUsed ? colors.onSurface : colors.onSurfaceVariant,
+                                        color: isUsed
+                                            ? colors.onSurface
+                                            : colors.onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -125,10 +144,14 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                isUsed ? '${count.toPersianDigits()} فعالیت ثبت‌شده' : 'این خانواده رو هنوز امتحان نکردی 💡',
+                                isUsed
+                                    ? '${count.toPersianDigits()} فعالیت ثبت‌شده'
+                                    : 'این خانواده رو هنوز امتحان نکردی 💡',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isUsed ? colors.primary : colors.onSurfaceVariant,
+                                  color: isUsed
+                                      ? colors.primary
+                                      : colors.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -141,14 +164,20 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                     // Section 2: Personal Records (PR)
                     Text(
                       '🏆 رکوردهای شخصی من (PR)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.onBackground),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: colors.onBackground,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _prs.isEmpty
                         ? Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: colors.surfaceVariant.withValues(alpha: 0.3),
+                              color: colors.surfaceVariant.withValues(
+                                alpha: 0.3,
+                              ),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Center(
@@ -183,15 +212,22 @@ class _MovementAnalyticsScreenState extends State<MovementAnalyticsScreen> {
                               }
 
                               return Card(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                                 child: ListTile(
                                   leading: const CircleAvatar(
                                     backgroundColor: Color(0xFFF59E0B),
-                                    child: Text('🏆', style: TextStyle(fontSize: 18)),
+                                    child: Text(
+                                      '🏆',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
                                   ),
                                   title: Text(
                                     '$kindTitle — $typeLabel',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   subtitle: Text(
                                     'مقدار رکورد: ${val.toStringAsFixed(1).toPersianDigits()} $unit',

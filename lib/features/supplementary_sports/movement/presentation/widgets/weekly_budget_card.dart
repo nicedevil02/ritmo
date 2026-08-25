@@ -6,11 +6,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/movement_budget.dart';
 
 class WeeklyBudgetCard extends StatelessWidget {
-  const WeeklyBudgetCard({
-    super.key,
-    required this.snapshot,
-    this.onTap,
-  });
+  const WeeklyBudgetCard({super.key, required this.snapshot, this.onTap});
 
   final MovementBudgetSnapshot snapshot;
   final VoidCallback? onTap;
@@ -30,9 +26,11 @@ class WeeklyBudgetCard extends StatelessWidget {
     } else if (snapshot.daysRemaining <= 2 && snapshot.progressRatio < 0.5) {
       footerText = 'هنوز وقت هست 💪 با یک حرکت سبک نزدیک‌تر میشی';
     } else if (snapshot.projectedTotal != null) {
-      footerText = '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با این روند به حدود ${snapshot.projectedTotal!.round().toPersianDigits()} MET-min میرسی';
+      footerText =
+          '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با این روند به حدود ${snapshot.projectedTotal!.round().toPersianDigits()} MET-min میرسی';
     } else {
-      footerText = '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با یک حرکت سبک ادامه بده 💪';
+      footerText =
+          '${snapshot.daysRemaining.toPersianDigits()} روز مونده · با یک حرکت سبک ادامه بده 💪';
     }
 
     return Directionality(
@@ -88,9 +86,13 @@ class WeeklyBudgetCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
                     minHeight: 10,
-                    backgroundColor: colors.outlineVariant.withValues(alpha: 0.3),
+                    backgroundColor: colors.outlineVariant.withValues(
+                      alpha: 0.3,
+                    ),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      progress >= 1.0 ? const Color(0xFF10B981) : colors.primary,
+                      progress >= 1.0
+                          ? const Color(0xFF10B981)
+                          : colors.primary,
                     ),
                   ),
                 ),
@@ -104,13 +106,20 @@ class WeeklyBudgetCard extends StatelessWidget {
                     children: snapshot.byKind.entries.take(3).map((e) {
                       final metVal = e.value.round().toPersianDigits();
                       final kind = snapshot.kindsByCode[e.key];
-                      final label = kind == null ? e.key : '${kind.emoji} ${kind.titleFa}';
+                      final label = kind == null
+                          ? e.key
+                          : '${kind.emoji} ${kind.titleFa}';
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: colors.surface,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: colors.outlineVariant.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Text(
                           '$label  $metVal MET-min',

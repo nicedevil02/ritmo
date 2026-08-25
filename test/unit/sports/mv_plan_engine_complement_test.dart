@@ -148,33 +148,38 @@ void main() {
       strengthDaysTarget: 2,
     );
 
-    test('FOOTBALL anchor -> strength day must have posterior_chain in focus with complement reasonKey', () {
-      final footballCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FOOTBALL',
-        dayOfWeekSat0: 5, // پنجشنبه
-        startTime: '20:00',
-        durationMinutes: 90,
-      );
+    test(
+      'FOOTBALL anchor -> strength day must have posterior_chain in focus with complement reasonKey',
+      () {
+        final footballCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FOOTBALL',
+          dayOfWeekSat0: 5, // پنجشنبه
+          startTime: '20:00',
+          durationMinutes: 90,
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [footballCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [footballCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      final complementStrengthSlot = result.slots.firstWhere(
-        (s) => s.slotType == MvSlotType.strength && s.reasonKey == MvReasonKeys.complement,
-      );
-      expect(complementStrengthSlot.focusCodes, contains('posterior_chain'));
-      expect(complementStrengthSlot.reasonParams?['kind'], equals('فوتبال'));
-    });
+        final complementStrengthSlot = result.slots.firstWhere(
+          (s) =>
+              s.slotType == MvSlotType.strength &&
+              s.reasonKey == MvReasonKeys.complement,
+        );
+        expect(complementStrengthSlot.focusCodes, contains('posterior_chain'));
+        expect(complementStrengthSlot.reasonParams?['kind'], equals('فوتبال'));
+      },
+    );
 
     test('HIKING anchor -> strength day must have eccentric_quad in focus', () {
       final hikingCommitment = MvCommitment(
@@ -198,38 +203,48 @@ void main() {
       );
 
       final complementStrengthSlot = result.slots.firstWhere(
-        (s) => s.slotType == MvSlotType.strength && s.reasonKey == MvReasonKeys.complement,
+        (s) =>
+            s.slotType == MvSlotType.strength &&
+            s.reasonKey == MvReasonKeys.complement,
       );
       expect(complementStrengthSlot.focusCodes, contains('eccentric_quad'));
       expect(complementStrengthSlot.reasonParams?['kind'], equals('کوهنوردی'));
     });
 
-    test('ROCK_CLIMBING anchor -> strength day must have antagonist_push in focus', () {
-      final climbingCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'ROCK_CLIMBING',
-        dayOfWeekSat0: 3, // سه‌شنبه
-        startTime: '18:00',
-        durationMinutes: 90,
-      );
+    test(
+      'ROCK_CLIMBING anchor -> strength day must have antagonist_push in focus',
+      () {
+        final climbingCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'ROCK_CLIMBING',
+          dayOfWeekSat0: 3, // سه‌شنبه
+          startTime: '18:00',
+          durationMinutes: 90,
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [climbingCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [climbingCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      final complementStrengthSlot = result.slots.firstWhere(
-        (s) => s.slotType == MvSlotType.strength && s.reasonKey == MvReasonKeys.complement,
-      );
-      expect(complementStrengthSlot.focusCodes, contains('antagonist_push'));
-      expect(complementStrengthSlot.reasonParams?['kind'], equals('سنگ‌نوردی / صخره‌نوردی'));
-    });
+        final complementStrengthSlot = result.slots.firstWhere(
+          (s) =>
+              s.slotType == MvSlotType.strength &&
+              s.reasonKey == MvReasonKeys.complement,
+        );
+        expect(complementStrengthSlot.focusCodes, contains('antagonist_push'));
+        expect(
+          complementStrengthSlot.reasonParams?['kind'],
+          equals('سنگ‌نوردی / صخره‌نوردی'),
+        );
+      },
+    );
   });
 }

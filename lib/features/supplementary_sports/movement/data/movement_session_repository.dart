@@ -72,16 +72,15 @@ class MovementSessionRepository {
       await txn.insert('movement_sessions', session.toMap());
       await _appendEvent(txn, session.id, SessionEventType.start, now, null);
     });
-    
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'movement_session_started',
-      timestamp: DateTime.now(),
-      payload: {
-        'kindCode': kind.code,
-        'sessionMode': sessionMode,
-      },
-    ));
-    
+
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: 'movement_session_started',
+        timestamp: DateTime.now(),
+        payload: {'kindCode': kind.code, 'sessionMode': sessionMode},
+      ),
+    );
+
     return session;
   }
 
@@ -90,10 +89,16 @@ class MovementSessionRepository {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.transaction((txn) async {
-      final rows = await txn.query('movement_sessions',
-          where: 'id = ? AND status = ?', whereArgs: [sessionId, 'ACTIVE'], limit: 1);
+      final rows = await txn.query(
+        'movement_sessions',
+        where: 'id = ? AND status = ?',
+        whereArgs: [sessionId, 'ACTIVE'],
+        limit: 1,
+      );
       if (rows.isEmpty) return; // idempotent
-      final live = jsonDecode(rows.first['liveJson'] as String? ?? '{}') as Map<String, dynamic>;
+      final live =
+          jsonDecode(rows.first['liveJson'] as String? ?? '{}')
+              as Map<String, dynamic>;
       live['pauseStartedAt'] = now;
       await txn.update(
         'movement_sessions',
@@ -110,16 +115,28 @@ class MovementSessionRepository {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.transaction((txn) async {
-      final rows = await txn.query('movement_sessions',
-          where: 'id = ? AND status = ?', whereArgs: [sessionId, 'PAUSED'], limit: 1);
+      final rows = await txn.query(
+        'movement_sessions',
+        where: 'id = ? AND status = ?',
+        whereArgs: [sessionId, 'PAUSED'],
+        limit: 1,
+      );
       if (rows.isEmpty) return; // idempotent
       final row = rows.first;
-      final live = jsonDecode(row['liveJson'] as String? ?? '{}') as Map<String, dynamic>;
+      final live =
+          jsonDecode(row['liveJson'] as String? ?? '{}')
+              as Map<String, dynamic>;
       final pauseStartedAt = live.remove('pauseStartedAt') as int? ?? now;
-      final newPausedMs = (row['pausedMs'] as int? ?? 0) + (now - pauseStartedAt);
+      final newPausedMs =
+          (row['pausedMs'] as int? ?? 0) + (now - pauseStartedAt);
       await txn.update(
         'movement_sessions',
-        {'status': 'ACTIVE', 'pausedMs': newPausedMs, 'liveJson': jsonEncode(live), 'updatedAt': now},
+        {
+          'status': 'ACTIVE',
+          'pausedMs': newPausedMs,
+          'liveJson': jsonEncode(live),
+          'updatedAt': now,
+        },
         where: 'id = ?',
         whereArgs: [sessionId],
       );
@@ -128,27 +145,43 @@ class MovementSessionRepository {
   }
 
   /// ثبت رویداد دور/اسپلیت/نقطهٔ مهم (مثل «رسیدم به قله») — فقط افزودنی.
-  Future<void> logSessionEvent(String sessionId, SessionEventType type, Map<String, dynamic>? data) async {
+  Future<void> logSessionEvent(
+    String sessionId,
+    SessionEventType type,
+    Map<String, dynamic>? data,
+  ) async {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.transaction((txn) async {
       await _appendEvent(txn, sessionId, type, now, data);
-      await txn.rawUpdate('UPDATE movement_sessions SET updatedAt = ? WHERE id = ?',
-          [now, sessionId]);
+      await txn.rawUpdate(
+        'UPDATE movement_sessions SET updatedAt = ? WHERE id = ?',
+        [now, sessionId],
+      );
     });
   }
 
   /// پایان و تولید لاگ نهایی — خودتوان (idempotent) به لطف ایندکس موجود
   /// idx_workout_logs_source_entity روی (sourceModule, sourceEntityId).
-  Future<String> finishSession(String sessionId, {String? feeling, String? note}) async {
+  Future<String> finishSession(
+    String sessionId, {
+    String? feeling,
+    String? note,
+  }) async {
     final db = await _db;
     String logId = '';
     await db.transaction((txn) async {
-      final rows = await txn.query('movement_sessions', where: 'id = ?', whereArgs: [sessionId], limit: 1);
+      final rows = await txn.query(
+        'movement_sessions',
+        where: 'id = ?',
+        whereArgs: [sessionId],
+        limit: 1,
+      );
       if (rows.isEmpty) throw StateError('SESSION_NOT_FOUND:$sessionId');
       final session = MovementSession.fromMap(rows.first);
 
-      if (session.status == MovementSessionStatus.completed && session.workoutLogId != null) {
+      if (session.status == MovementSessionStatus.completed &&
+          session.workoutLogId != null) {
         logId = session.workoutLogId!; // قبلاً finalize شده — دوباره‌کاری نکن
         return;
       }
@@ -158,7 +191,8 @@ class MovementSessionRepository {
       var pausedMs = session.pausedMs;
       final live = jsonDecode(session.liveJson ?? '{}') as Map<String, dynamic>;
       final pauseStartedAt = live.remove('pauseStartedAt') as int?;
-      if (session.status == MovementSessionStatus.paused && pauseStartedAt != null) {
+      if (session.status == MovementSessionStatus.paused &&
+          pauseStartedAt != null) {
         pausedMs += now - pauseStartedAt;
       }
       final elapsedMs = now - session.startedAt - pausedMs;
@@ -182,25 +216,37 @@ class MovementSessionRepository {
       );
 
       // همان کانال یکتای upsert: دوبار finalize = یک رکورد.
-      final res = await MovementRepository.instance.upsertEventInTransaction(txn, event);
+      final res = await MovementRepository.instance.upsertEventInTransaction(
+        txn,
+        event,
+      );
       logId = res['id'] as String;
 
       await txn.update(
         'movement_sessions',
-        {'status': 'COMPLETED', 'endedAt': now, 'pausedMs': pausedMs, 'liveJson': jsonEncode(live), 'workoutLogId': logId, 'updatedAt': now},
+        {
+          'status': 'COMPLETED',
+          'endedAt': now,
+          'pausedMs': pausedMs,
+          'liveJson': jsonEncode(live),
+          'workoutLogId': logId,
+          'updatedAt': now,
+        },
         where: 'id = ?',
         whereArgs: [sessionId],
       );
-      await _appendEvent(txn, sessionId, SessionEventType.finish, now, {'workoutLogId': logId});
+      await _appendEvent(txn, sessionId, SessionEventType.finish, now, {
+        'workoutLogId': logId,
+      });
     });
 
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'movement_session_completed',
-      timestamp: DateTime.now(),
-      payload: {
-        'sessionId': sessionId,
-      },
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: 'movement_session_completed',
+        timestamp: DateTime.now(),
+        payload: {'sessionId': sessionId},
+      ),
+    );
 
     return logId;
   }
@@ -219,24 +265,33 @@ class MovementSessionRepository {
       await _appendEvent(txn, sessionId, SessionEventType.abandon, now, null);
     });
 
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'movement_session_abandoned',
-      timestamp: DateTime.now(),
-      payload: {
-        'sessionId': sessionId,
-      },
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: 'movement_session_abandoned',
+        timestamp: DateTime.now(),
+        payload: {'sessionId': sessionId},
+      ),
+    );
   }
 
   /// بازیابی وضعیت با بازپخش جرنال — برای نمایش دورها/نقاط بعد از کرش.
   Future<List<Map<String, dynamic>>> getSessionEvents(String sessionId) async {
     final db = await _db;
-    return db.query('movement_session_events',
-        where: 'sessionId = ?', whereArgs: [sessionId], orderBy: 'at ASC');
+    return db.query(
+      'movement_session_events',
+      where: 'sessionId = ?',
+      whereArgs: [sessionId],
+      orderBy: 'at ASC',
+    );
   }
 
   Future<void> _appendEvent(
-      DatabaseExecutor txn, String sessionId, SessionEventType type, int at, Map<String, dynamic>? data) async {
+    DatabaseExecutor txn,
+    String sessionId,
+    SessionEventType type,
+    int at,
+    Map<String, dynamic>? data,
+  ) async {
     await txn.insert('movement_session_events', {
       'id': RitmoIdFactory.movementLog(),
       'sessionId': sessionId,

@@ -22,7 +22,9 @@ class MvChip extends StatelessWidget {
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 
-    final bgColor = isSelected ? colors.primary.withValues(alpha: 0.15) : colors.surfaceElevated;
+    final bgColor = isSelected
+        ? colors.primary.withValues(alpha: 0.15)
+        : colors.surfaceElevated;
     final borderColor = isSelected ? colors.primary : colors.border;
     final textColor = isSelected ? colors.primary : colors.textPrimary;
 
@@ -45,10 +47,7 @@ class MvChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
-                icon!,
-                SizedBox(width: metrics.spaceXs),
-              ],
+              if (icon != null) ...[icon!, SizedBox(width: metrics.spaceXs)],
               Text(
                 label,
                 style: textTheme.labelMedium?.copyWith(

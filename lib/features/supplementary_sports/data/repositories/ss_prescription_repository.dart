@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class SsPrescriptionRepository {
   SsPrescriptionRepository({DatabaseHelper? dbHelper})
-      : _dbHelper = dbHelper ?? DatabaseHelper.instance;
+    : _dbHelper = dbHelper ?? DatabaseHelper.instance;
 
   static final SsPrescriptionRepository instance = SsPrescriptionRepository();
 
@@ -12,7 +12,10 @@ class SsPrescriptionRepository {
 
   Future<Database> get _database async => _dbHelper.database;
 
-  Future<List<SessionPrescription>> getAllPrescriptions({String? status, int? limit}) async {
+  Future<List<SessionPrescription>> getAllPrescriptions({
+    String? status,
+    int? limit,
+  }) async {
     final db = await _database;
     final where = status != null ? 'status = ?' : null;
     final whereArgs = status != null ? [status] : null;
@@ -26,7 +29,10 @@ class SsPrescriptionRepository {
     return rows.map(SessionPrescription.fromMap).toList();
   }
 
-  Future<List<SessionPrescription>> getPrescriptionsInDateRange(String startIso, String endIso) async {
+  Future<List<SessionPrescription>> getPrescriptionsInDateRange(
+    String startIso,
+    String endIso,
+  ) async {
     final db = await _database;
     final rows = await db.query(
       'ss_session_prescription',
@@ -74,15 +80,20 @@ class SsPrescriptionRepository {
     return SessionPrescription.fromMap(rows.first);
   }
 
-  Future<SessionPrescription?> getPrescriptionBySessionId(String sessionId) async {
+  Future<SessionPrescription?> getPrescriptionBySessionId(
+    String sessionId,
+  ) async {
     final db = await _database;
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT p.*
       FROM ss_session_prescription p
       JOIN ss_workout_session_log s ON s.prescriptionId = p.id
       WHERE s.id = ?
       LIMIT 1
-    ''', [sessionId]);
+    ''',
+      [sessionId],
+    );
     if (rows.isEmpty) return null;
     return SessionPrescription.fromMap(rows.first);
   }

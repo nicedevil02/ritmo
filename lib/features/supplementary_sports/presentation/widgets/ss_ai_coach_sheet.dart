@@ -93,21 +93,32 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
       buffer.writeln('- هدف فیتنس: ${profile.goal.name}');
       buffer.writeln('- سطح تجربه: ${profile.experienceLevel.name}');
       buffer.writeln('- محل تمرین: ${profile.trainingLocation.name}');
-      buffer.writeln('- تجهیزات در دسترس: ${profile.availableEquipment.map((e) => e.name).join(', ')}');
+      buffer.writeln(
+        '- تجهیزات در دسترس: ${profile.availableEquipment.map((e) => e.name).join(', ')}',
+      );
       buffer.writeln('- روزهای تمرین در هفته: ${profile.daysPerWeek}');
       var durationStr = 'نامشخص';
       switch (profile.sessionDuration) {
-        case SessionDuration.short30: durationStr = '۳۰';
-        case SessionDuration.medium45: durationStr = '۴۵';
-        case SessionDuration.long60: durationStr = '۶۰';
-        case SessionDuration.flexible: durationStr = 'منعطف';
+        case SessionDuration.short30:
+          durationStr = '۳۰';
+        case SessionDuration.medium45:
+          durationStr = '۴۵';
+        case SessionDuration.long60:
+          durationStr = '۶۰';
+        case SessionDuration.flexible:
+          durationStr = 'منعطف';
       }
       buffer.writeln('- مدت زمان هر جلسه: $durationStr دقیقه');
-      buffer.writeln('- محدودیت‌های بدنی: ${profile.physicalLimitations.map((e) => e.name).join(', ')}');
-      if (profile.limitationNote != null && profile.limitationNote!.isNotEmpty) {
+      buffer.writeln(
+        '- محدودیت‌های بدنی: ${profile.physicalLimitations.map((e) => e.name).join(', ')}',
+      );
+      if (profile.limitationNote != null &&
+          profile.limitationNote!.isNotEmpty) {
         buffer.writeln('- یادداشت محدودیت: ${profile.limitationNote}');
       }
-      buffer.writeln('- وضعیت تمرین بی‌صدا (آپارتمانی): ${profile.neighborFriendly ? "فعال" : "غیرفعال"}');
+      buffer.writeln(
+        '- وضعیت تمرین بی‌صدا (آپارتمانی): ${profile.neighborFriendly ? "فعال" : "غیرفعال"}',
+      );
 
       buffer.writeln('\nبرنامه تمرینی فعلی کاربر (هفته فعال):');
       if (plans.isEmpty) {
@@ -118,12 +129,18 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
           final dayOfWeek = p['dayOfWeek']! as int;
           final muscleGroups = p['muscleGroups'].toString();
           final estMin = p['estimatedMinutes'] as int? ?? 30;
-          
-          buffer.writeln('روز $dayOfWeek - تمرکز عضلانی: $muscleGroups ($estMin دقیقه):');
-          
-          final dayCrossRefs = crossRefs.where((c) => c['planId'] == planId).toList()
-            ..sort((a, b) => (a['orderIndex']! as int).compareTo(b['orderIndex']! as int));
-            
+
+          buffer.writeln(
+            'روز $dayOfWeek - تمرکز عضلانی: $muscleGroups ($estMin دقیقه):',
+          );
+
+          final dayCrossRefs =
+              crossRefs.where((c) => c['planId'] == planId).toList()..sort(
+                (a, b) => (a['orderIndex']! as int).compareTo(
+                  b['orderIndex']! as int,
+                ),
+              );
+
           if (dayCrossRefs.isEmpty) {
             buffer.writeln('  بدون حرکت تمرینی.');
           } else {
@@ -134,8 +151,12 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               final sets = c['targetSets'] as int? ?? 3;
               final reps = c['targetReps'] as int? ?? 10;
               final weight = c['targetWeight'] as double?;
-              final weightStr = weight != null ? ' با وزنه $weight کیلوگرم' : '';
-              buffer.writeln('  - $name (شناسه حرکت: $exId) - $sets ست، $reps تکرار$weightStr');
+              final weightStr = weight != null
+                  ? ' با وزنه $weight کیلوگرم'
+                  : '';
+              buffer.writeln(
+                '  - $name (شناسه حرکت: $exId) - $sets ست، $reps تکرار$weightStr',
+              );
             }
           }
         }
@@ -153,16 +174,21 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
 
   Future<void> _loadActiveSession() async {
     try {
-      _sessions = await ChatRepository.instance.listSessions(chatType: 'sports');
+      _sessions = await ChatRepository.instance.listSessions(
+        chatType: 'sports',
+      );
       if (_sessions.isEmpty) {
-        final newSess = await ChatRepository.instance.createSession(chatType: 'sports');
+        final newSess = await ChatRepository.instance.createSession(
+          chatType: 'sports',
+        );
         _sessions = [newSess];
         _sessionId = newSess.id;
         final initMsg = ChatMessage(
           id: 'init_${DateTime.now().millisecondsSinceEpoch}',
           sessionId: _sessionId!,
           role: ChatRole.assistant,
-          content: 'سلام! من مربی هوشمند ریتمو هستم. چطور می‌توانم در تنظیم حرکات ورزشی، بهبود برنامه تمرینی، تغذیه ورزشی یا بهینه‌سازی مدت جلسات کمکتان کنم؟ 🏃‍♂️',
+          content:
+              'سلام! من مربی هوشمند ریتمو هستم. چطور می‌توانم در تنظیم حرکات ورزشی، بهبود برنامه تمرینی، تغذیه ورزشی یا بهینه‌سازی مدت جلسات کمکتان کنم؟ 🏃‍♂️',
           timestamp: DateTime.now(),
         );
         await ChatRepository.instance.addMessage(initMsg);
@@ -194,15 +220,20 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
 
   Future<void> _startNewSession() async {
     try {
-      final newSess = await ChatRepository.instance.createSession(chatType: 'sports');
+      final newSess = await ChatRepository.instance.createSession(
+        chatType: 'sports',
+      );
       _sessionId = newSess.id;
-      _sessions = await ChatRepository.instance.listSessions(chatType: 'sports');
-      
+      _sessions = await ChatRepository.instance.listSessions(
+        chatType: 'sports',
+      );
+
       final initMsg = ChatMessage(
         id: 'init_${DateTime.now().millisecondsSinceEpoch}',
         sessionId: _sessionId!,
         role: ChatRole.assistant,
-        content: 'سلام! من مربی هوشمند ریتمو هستم. چطور می‌توانم در تنظیم حرکات ورزشی، بهبود برنامه تمرینی، تغذیه ورزشی یا بهینه‌سازی مدت جلسات کمکتان کنم؟ 🏃‍♂️',
+        content:
+            'سلام! من مربی هوشمند ریتمو هستم. چطور می‌توانم در تنظیم حرکات ورزشی، بهبود برنامه تمرینی، تغذیه ورزشی یا بهینه‌سازی مدت جلسات کمکتان کنم؟ 🏃‍♂️',
         timestamp: DateTime.now(),
       );
       await ChatRepository.instance.addMessage(initMsg);
@@ -239,10 +270,24 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
       final oldId = action.payload['oldExerciseId']?.toString() ?? '';
       final newId = action.payload['newExerciseId']?.toString() ?? '';
       final db = await DatabaseHelper.instance.database;
-      final oldEx = await db.query('ss_exercise', where: 'id = ?', whereArgs: [oldId], limit: 1);
-      final newEx = await db.query('ss_exercise', where: 'id = ?', whereArgs: [newId], limit: 1);
-      final oldName = oldEx.isNotEmpty ? oldEx.first['name']! as String : 'حرکت قدیمی';
-      final newName = newEx.isNotEmpty ? newEx.first['name']! as String : 'حرکت جدید';
+      final oldEx = await db.query(
+        'ss_exercise',
+        where: 'id = ?',
+        whereArgs: [oldId],
+        limit: 1,
+      );
+      final newEx = await db.query(
+        'ss_exercise',
+        where: 'id = ?',
+        whereArgs: [newId],
+        limit: 1,
+      );
+      final oldName = oldEx.isNotEmpty
+          ? oldEx.first['name']! as String
+          : 'حرکت قدیمی';
+      final newName = newEx.isNotEmpty
+          ? newEx.first['name']! as String
+          : 'حرکت جدید';
       detailText = 'تعویض حرکت "$oldName" با حرکت مشابه "$newName"';
     } else if (action.type == 'adjustWorkoutIntensity') {
       final dur = action.payload['sessionDuration']?.toString();
@@ -264,17 +309,16 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
             side: isDark
-                ? BorderSide(color: colors.primary.withValues(alpha: 0.2), width: 1.5)
+                ? BorderSide(
+                    color: colors.primary.withValues(alpha: 0.2),
+                    width: 1.5,
+                  )
                 : BorderSide.none,
           ),
           backgroundColor: isDark ? const Color(0xff08090C) : Colors.white,
           title: Row(
             children: [
-              Icon(
-                CupertinoIcons.sparkles,
-                color: colors.primary,
-                size: 20,
-              ),
+              Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 'تایید نهایی تغییرات',
@@ -302,10 +346,14 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : Colors.black.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
                 child: Text(
@@ -336,15 +384,18 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
                 backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
               onPressed: () => Navigator.pop(context, true),
               child: const Text(
                 'تایید و اعمال',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -384,7 +435,7 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
       content: query,
       timestamp: DateTime.now(),
     );
-    
+
     setState(() {
       _messages.add({
         'id': userMsg.id,
@@ -399,7 +450,8 @@ class _SSAiCoachSheetState extends State<SSAiCoachSheet> {
     await ChatRepository.instance.addMessage(userMsg);
 
     try {
-      final systemPrompt = '''
+      final systemPrompt =
+          '''
 شما مربی هوشمند، دلسوز و مجرب ورزشی در برنامه ریتمو (با فونت وزیری و زبان فارسی) هستید.
 وظیفه شما پاسخ‌گویی به سوالات ورزشی، تناسب اندام، تغذیه ورزشی و کمک به کاربر در بهبود و تنظیم برنامه‌های ورزشی و حرکات تکمیلی است.
 لحن شما باید بسیار مشوق، گرم، باانگیزه و مثبت باشد.
@@ -479,10 +531,17 @@ $_sportsContext
 
       final messagesToSent = <Map<String, String>>[
         {'role': 'system', 'content': systemPrompt + memorySuffix},
-        ..._messages.map((m) => {'role': m['role'] as String, 'content': m['content'] as String})
+        ..._messages.map(
+          (m) => {
+            'role': m['role'] as String,
+            'content': m['content'] as String,
+          },
+        ),
       ];
 
-      final stream = AIGateway.instance.sendCustomChatStream(messages: messagesToSent);
+      final stream = AIGateway.instance.sendCustomChatStream(
+        messages: messagesToSent,
+      );
 
       if (mounted) {
         final assistantMsgId = 'msg_${DateTime.now().millisecondsSinceEpoch}_a';
@@ -500,28 +559,31 @@ $_sportsContext
         _scrollToBottom();
 
         var currentText = '';
-        
+
         _sportsSubscription = stream.listen(
           (chunk) async {
             if (!mounted) return;
-            
+
             if (chunk.startsWith('error:')) {
               final errorMsg = chunk.substring(6);
               setState(() {
                 if (currentText.isEmpty) {
                   if (errorMsg == 'quota_exceeded') {
-                    _messages[msgIndex]['content'] = 'سهمیه رایگان روزانه ۱۰,۰۰۰ نورون هوش مصنوعی کلادفلر شما برای امروز به پایان رسیده است ⚠️\n\nمی‌توانید فردا مجدداً تلاش کنید یا در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
+                    _messages[msgIndex]['content'] =
+                        'سهمیه رایگان روزانه ۱۰,۰۰۰ نورون هوش مصنوعی کلادفلر شما برای امروز به پایان رسیده است ⚠️\n\nمی‌توانید فردا مجدداً تلاش کنید یا در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم نمایید 🔌';
                   } else {
-                    _messages[msgIndex]['content'] = 'متاسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال خود را بررسی کنید. پیشنهاد می‌شود در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم کنید 🔌';
+                    _messages[msgIndex]['content'] =
+                        'متاسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال خود را بررسی کنید. پیشنهاد می‌شود در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم کنید 🔌';
                   }
                 } else {
-                  _messages[msgIndex]['content'] = '$currentText\n\n⚠️ [اتصال قطع شد. لطفاً در صورت نیاز مجدداً تلاش کنید]';
+                  _messages[msgIndex]['content'] =
+                      '$currentText\n\n⚠️ [اتصال قطع شد. لطفاً در صورت نیاز مجدداً تلاش کنید]';
                 }
               });
               _cancelStreaming();
               return;
             }
-            
+
             currentText += chunk;
             final tempParsed = ChatActionParser.parse(currentText);
             setState(() {
@@ -536,7 +598,7 @@ $_sportsContext
           onDone: () async {
             if (mounted) {
               final parsed = ChatActionParser.parse(currentText);
-              
+
               // Process cognitive memory updates
               // Process cognitive memory updates using shared binding helper
               await AssistantMemoryBinding.processResponse(
@@ -545,16 +607,18 @@ $_sportsContext
                 userText: query,
                 rawResponse: currentText,
               );
-              
+
               setState(() {
                 _isStreaming = false;
-                final idx = _messages.indexWhere((m) => m['id'] == assistantMsgId);
+                final idx = _messages.indexWhere(
+                  (m) => m['id'] == assistantMsgId,
+                );
                 if (idx != -1) {
                   _messages[idx]['content'] = parsed.cleanText;
                   _messages[idx]['actions'] = parsed.actions;
                 }
               });
-              
+
               final assistantMsg = ChatMessage(
                 id: assistantMsgId,
                 sessionId: _sessionId!,
@@ -568,7 +632,9 @@ $_sportsContext
               // Reload sports context to ensure next turn includes updated memories
               await _loadSportsContext();
 
-              final updated = await ChatRepository.instance.listSessions(chatType: 'sports');
+              final updated = await ChatRepository.instance.listSessions(
+                chatType: 'sports',
+              );
               setState(() {
                 _sessions = updated;
               });
@@ -583,7 +649,8 @@ $_sportsContext
         setState(() {
           _messages.add({
             'role': 'assistant',
-            'content': 'متاسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال خود را بررسی کنید. پیشنهاد می‌شود در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم کنید 🔌',
+            'content':
+                'متاسفانه در حال حاضر خطایی در برقراری ارتباط با سرور هوش مصنوعی رخ داده است. لطفاً اتصال خود را بررسی کنید. پیشنهاد می‌شود در تنظیمات پروفایل ارائه‌دهنده را روی OpenRouter یا Zhipu AI تنظیم کنید 🔌',
           });
           _isTyping = false;
           _isStreaming = false;
@@ -603,8 +670,19 @@ $_sportsContext
     );
   }
 
-  void _showTopToast(String message, IconData icon, Color iconColor, {VoidCallback? onUndo}) {
-    RitmoToast.show(context, message, icon: icon, iconColor: iconColor, onUndo: onUndo);
+  void _showTopToast(
+    String message,
+    IconData icon,
+    Color iconColor, {
+    VoidCallback? onUndo,
+  }) {
+    RitmoToast.show(
+      context,
+      message,
+      icon: icon,
+      iconColor: iconColor,
+      onUndo: onUndo,
+    );
   }
 
   void _scrollToBottom() {
@@ -644,11 +722,15 @@ $_sportsContext
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,
-                            ),
+                          ),
                         ),
                         IconButton(
                           tooltip: 'افزودن',
-                          icon: Icon(CupertinoIcons.add, color: colors.primary, size: 22),
+                          icon: Icon(
+                            CupertinoIcons.add,
+                            color: colors.primary,
+                            size: 22,
+                          ),
                           onPressed: () {
                             Navigator.pop(context);
                             _startNewSession();
@@ -662,7 +744,12 @@ $_sportsContext
                         maxHeight: RitmoBreakpoints.usableHeight(context) * 0.4,
                       ),
                       child: _sessions.isEmpty
-                          ? const Center(child: Text('گفتگویی یافت نشد', style: TextStyle()))
+                          ? const Center(
+                              child: Text(
+                                'گفتگویی یافت نشد',
+                                style: TextStyle(),
+                              ),
+                            )
                           : ListView.builder(
                               shrinkWrap: true,
                               itemCount: _sessions.length,
@@ -678,14 +765,26 @@ $_sportsContext
                                   ),
                                   subtitle: Text(
                                     '${sess.messageCount} پیام',
-                                    style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.6)),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.textSecondary.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                    ),
                                   ),
                                   trailing: IconButton(
-                                              tooltip: 'حذف',
-                                    icon: const Icon(CupertinoIcons.trash, size: 16, color: Colors.redAccent),
+                                    tooltip: 'حذف',
+                                    icon: const Icon(
+                                      CupertinoIcons.trash,
+                                      size: 16,
+                                      color: Colors.redAccent,
+                                    ),
                                     onPressed: () async {
-                                      await ChatRepository.instance.deleteSession(sess.id);
-                                      final updated = await ChatRepository.instance.listSessions(chatType: 'sports');
+                                      await ChatRepository.instance
+                                          .deleteSession(sess.id);
+                                      final updated = await ChatRepository
+                                          .instance
+                                          .listSessions(chatType: 'sports');
                                       setSheetState(() {
                                         _sessions = updated;
                                       });
@@ -733,14 +832,22 @@ $_sportsContext
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
           ),
-          padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            20,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           child: Column(
             children: [
               Center(
                 child: Container(
                   width: 40,
                   height: 5,
-                  decoration: BoxDecoration(color: colors.textSecondary.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(3)),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -750,7 +857,11 @@ $_sportsContext
                 children: [
                   Row(
                     children: [
-                      Icon(CupertinoIcons.heart_circle_fill, color: colors.primary, size: 22),
+                      Icon(
+                        CupertinoIcons.heart_circle_fill,
+                        color: colors.primary,
+                        size: 22,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'مربی هوشمند ریتمو',
@@ -758,20 +869,28 @@ $_sportsContext
                           fontSize: 17.5,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
-                          ),
+                        ),
                       ),
                     ],
                   ),
                   Row(
                     children: [
                       IconButton(
-                        icon: Icon(CupertinoIcons.chat_bubble_2, color: colors.textSecondary, size: 20),
+                        icon: Icon(
+                          CupertinoIcons.chat_bubble_2,
+                          color: colors.textSecondary,
+                          size: 20,
+                        ),
                         tooltip: 'تاریخچه گفتگوها',
                         onPressed: _showSessionSelector,
                       ),
                       IconButton(
                         tooltip: 'بستن',
-                        icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
+                        icon: Icon(
+                          CupertinoIcons.xmark,
+                          color: colors.textSecondary,
+                          size: 20,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -787,7 +906,8 @@ $_sportsContext
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemBuilder: (context, index) {
                     final msg = _messages[index];
-                    final msgId = (msg['id'] ?? 'temp_${index}_${msg['role']}').toString();
+                    final msgId = (msg['id'] ?? 'temp_${index}_${msg['role']}')
+                        .toString();
                     return Dismissible(
                       key: ValueKey<String>(msgId),
                       background: Container(
@@ -797,7 +917,11 @@ $_sportsContext
                           color: Colors.redAccent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+                        child: const Icon(
+                          CupertinoIcons.trash,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                       ),
                       secondaryBackground: Container(
                         alignment: Alignment.centerLeft,
@@ -806,7 +930,11 @@ $_sportsContext
                           color: Colors.redAccent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 20),
+                        child: const Icon(
+                          CupertinoIcons.trash,
+                          color: Colors.redAccent,
+                          size: 20,
+                        ),
                       ),
                       onDismissed: (direction) {
                         final removedMsg = Map<String, dynamic>.from(msg);
@@ -838,7 +966,10 @@ $_sportsContext
                                   _pendingDeletedMsgs.remove(msgId);
                                   setState(() {
                                     if (removedIndex <= _messages.length) {
-                                      _messages.insert(removedIndex, removedMsg);
+                                      _messages.insert(
+                                        removedIndex,
+                                        removedMsg,
+                                      );
                                     } else {
                                       _messages.add(removedMsg);
                                     }
@@ -852,7 +983,8 @@ $_sportsContext
                         msg: msg,
                         isStreaming: _isStreaming,
                         colors: colors,
-                        onCopy: () => _copyToClipboard(msg['content'] as String),
+                        onCopy: () =>
+                            _copyToClipboard(msg['content'] as String),
                         onActionPressed: _handleAction,
                       ),
                     );
@@ -870,9 +1002,14 @@ $_sportsContext
                       children: [
                         const SizedBox(width: 32),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.04),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(20),
                               topRight: Radius.circular(20),
@@ -880,7 +1017,9 @@ $_sportsContext
                               bottomRight: Radius.circular(20),
                             ),
                             border: Border.all(
-                              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.black.withValues(alpha: 0.05),
                             ),
                           ),
                           child: const _TypingIndicator(),
@@ -915,10 +1054,14 @@ $_sportsContext
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.05),
                           ),
                         ),
                         child: TextField(
@@ -931,12 +1074,19 @@ $_sportsContext
                             color: colors.textPrimary,
                           ),
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                             border: InputBorder.none,
-                            hintText: _isStreaming ? 'مربی در حال تایپ است...' : 'سوالی درباره ورزش بپرسید یا برنامه‌ای بخواهید...',
+                            hintText: _isStreaming
+                                ? 'مربی در حال تایپ است...'
+                                : 'سوالی درباره ورزش بپرسید یا برنامه‌ای بخواهید...',
                             hintStyle: TextStyle(
                               fontSize: 12.5,
-                              color: colors.textSecondary.withValues(alpha: 0.6),
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                           onSubmitted: (_) => _sendMessage(),
@@ -949,9 +1099,13 @@ $_sportsContext
                       onPressed: _isStreaming ? _cancelStreaming : _sendMessage,
                       child: CircleAvatar(
                         radius: 20,
-                        backgroundColor: _isStreaming ? const Color(0xffEF4444) : colors.primary,
+                        backgroundColor: _isStreaming
+                            ? const Color(0xffEF4444)
+                            : colors.primary,
                         child: Icon(
-                          _isStreaming ? CupertinoIcons.stop_fill : CupertinoIcons.arrow_up,
+                          _isStreaming
+                              ? CupertinoIcons.stop_fill
+                              : CupertinoIcons.arrow_up,
                           color: Colors.white,
                           size: _isStreaming ? 14 : 18,
                         ),
@@ -975,10 +1129,14 @@ $_sportsContext
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
           ),
         ),
         child: Text(
@@ -987,7 +1145,7 @@ $_sportsContext
             color: colors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            ),
+          ),
         ),
       ),
     );
@@ -995,7 +1153,6 @@ $_sportsContext
 }
 
 class SportsMessageBubble extends StatefulWidget {
-
   const SportsMessageBubble({
     super.key,
     required this.msg,
@@ -1047,9 +1204,12 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
 
     final bubbleBg = isUser
         ? colors.primary
-        : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04));
+        : (isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04));
 
-    final showCopy = !widget.isStreaming && widget.msg['content'].toString().isNotEmpty;
+    final showCopy =
+        !widget.isStreaming && widget.msg['content'].toString().isNotEmpty;
 
     final copyButton = GestureDetector(
       onTap: _handleCopy,
@@ -1058,9 +1218,12 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
         padding: const EdgeInsets.all(8),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
           child: Icon(
-            _isCopied ? CupertinoIcons.checkmark_alt : CupertinoIcons.doc_on_doc,
+            _isCopied
+                ? CupertinoIcons.checkmark_alt
+                : CupertinoIcons.doc_on_doc,
             key: ValueKey<bool>(_isCopied),
             size: 15,
             color: _isCopied
@@ -1071,7 +1234,8 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
       ),
     );
 
-    final actionsList = (widget.msg['actions'] as List?)?.cast<ChatAction>() ?? const [];
+    final actionsList =
+        (widget.msg['actions'] as List?)?.cast<ChatAction>() ?? const [];
 
     Widget? actionsSection;
     if (actionsList.isNotEmpty) {
@@ -1089,14 +1253,22 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
                 backgroundColor: colors.primary.withValues(alpha: 0.1),
                 foregroundColor: colors.primary,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 side: BorderSide(color: colors.primary.withValues(alpha: 0.2)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               icon: Icon(icon, size: 16),
               label: Text(
                 action.label,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               onPressed: () {
                 if (widget.onActionPressed != null) {
@@ -1124,11 +1296,15 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
             border: isUser
                 ? null
                 : Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.06)
+                        : Colors.black.withValues(alpha: 0.05),
                   ),
           ),
           constraints: BoxConstraints(
-            maxWidth: constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor,
+            maxWidth:
+                constraints.maxWidth *
+                RitmoBreakpoints.chatBubbleMaxWidthFactor,
           ),
           child: widget.msg['content'].toString().trim().isEmpty
               ? const _TypingIndicator()
@@ -1152,17 +1328,25 @@ class _SportsMessageBubbleState extends State<SportsMessageBubble> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(
-              crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: isUser
                       ? [
                           bubbleContainer,
-                          if (showCopy) copyButton else const SizedBox(width: 32),
+                          if (showCopy)
+                            copyButton
+                          else
+                            const SizedBox(width: 32),
                         ]
                       : [
-                          if (showCopy) copyButton else const SizedBox(width: 32),
+                          if (showCopy)
+                            copyButton
+                          else
+                            const SizedBox(width: 32),
                           bubbleContainer,
                         ],
                 ),
@@ -1183,7 +1367,8 @@ class _TypingIndicator extends StatefulWidget {
   State<_TypingIndicator> createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerProviderStateMixin {
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

@@ -81,7 +81,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     _focusCodes.addAll(widget.slot.focusCodes);
     _titleController = TextEditingController(text: widget.slot.headlineFa);
     _venueController = TextEditingController();
-    if (widget.slot.plannedTime != null && widget.slot.plannedTime!.contains(':')) {
+    if (widget.slot.plannedTime != null &&
+        widget.slot.plannedTime!.contains(':')) {
       final parts = widget.slot.plannedTime!.split(':');
       _plannedTime = TimeOfDay(
         hour: int.tryParse(parts[0]) ?? 18,
@@ -233,19 +234,19 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     );
 
     if (_repeatWeekly && timeStr != null && !isRest) {
-      final saveUseCase = widget.saveCommitmentUseCase ?? MvSaveCommitmentUseCase();
+      final saveUseCase =
+          widget.saveCommitmentUseCase ?? MvSaveCommitmentUseCase();
       final result = await saveUseCase.execute(
         slot: updated,
         repeatWeekly: true,
-        venueNote: _venueController.text.trim().isNotEmpty ? _venueController.text.trim() : null,
+        venueNote: _venueController.text.trim().isNotEmpty
+            ? _venueController.text.trim()
+            : null,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              result.userMessageFa,
-              textAlign: TextAlign.right,
-            ),
+            content: Text(result.userMessageFa, textAlign: TextAlign.right),
           ),
         );
       }
@@ -388,7 +389,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                 onTap: () async {
                   final picked = await showTimePicker(
                     context: context,
-                    initialTime: _plannedTime ?? const TimeOfDay(hour: 18, minute: 0),
+                    initialTime:
+                        _plannedTime ?? const TimeOfDay(hour: 18, minute: 0),
                   );
                   if (picked != null) {
                     setState(() => _plannedTime = picked);
@@ -407,14 +409,20 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.access_time_rounded, color: colors.textSecondary, size: 20),
+                      Icon(
+                        Icons.access_time_rounded,
+                        color: colors.textSecondary,
+                        size: 20,
+                      ),
                       SizedBox(width: metrics.spaceSm),
                       Text(
                         _plannedTime != null
                             ? '${toPersianDigits(_plannedTime!.hour.toString().padLeft(2, '0'))}:${toPersianDigits(_plannedTime!.minute.toString().padLeft(2, '0'))}'
                             : 'مشخص نشده',
                         style: textTheme.bodyMedium?.copyWith(
-                          color: _plannedTime != null ? colors.textPrimary : colors.textSecondary,
+                          color: _plannedTime != null
+                              ? colors.textPrimary
+                              : colors.textSecondary,
                         ),
                       ),
                     ],

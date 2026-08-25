@@ -16,22 +16,25 @@ import 'package:ritmo/core/ux/ritmo_haptics.dart';
 /// باید همین تابع را صدا بزند؛ نه مستقیم Navigator.push با صفحهٔ داخلی.
 /// این‌طور انتخاب قالب و رفتار جلسه فقط یک جا تعریف می‌شود.
 Future<void> openMovementSession(
-	BuildContext context, {
-	required MovementSession session,
-	required MovementKind kind,
+  BuildContext context, {
+  required MovementSession session,
+  required MovementKind kind,
 }) {
-	return Navigator.of(context).push<void>(
-		MaterialPageRoute<void>(
-			builder: (_) => MovementSessionScreen(session: session, kind: kind),
-		),
-	);
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => MovementSessionScreen(session: session, kind: kind),
+    ),
+  );
 }
 
 /// جریان شروع یک جلسه ورزشی جدید (با مدیریت و بررسی جلسات زندهٔ فعال قبلی)
-Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) async {
+Future<void> startMovementSessionFlow(
+  BuildContext context,
+  MovementKind kind,
+) async {
   RitmoHaptics.tap();
   final active = await MovementSessionRepository.instance.getActiveSession();
-  
+
   if (active != null) {
     // نمایش دیالوگ مدیریت جلسه فعال
     if (!context.mounted) return;
@@ -53,42 +56,64 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
             TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
-                await MovementSessionRepository.instance.abandonSession(active.id);
+                await MovementSessionRepository.instance.abandonSession(
+                  active.id,
+                );
                 // پس از حذف، جلسه جدید را استارت می‌زنیم
                 if (context.mounted) {
                   await _startAndOpenNewSession(context, kind);
                 }
               },
-              child: const Text('حذف قبلی', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'حذف قبلی',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
-                await MovementSessionRepository.instance.finishSession(active.id);
+                await MovementSessionRepository.instance.finishSession(
+                  active.id,
+                );
                 // پس از ذخیره، جلسه جدید را استارت می‌زنیم
                 if (context.mounted) {
                   await _startAndOpenNewSession(context, kind);
                 }
               },
-              child: const Text('پایان و ذخیره قبلی', style: TextStyle(color: Colors.amber)),
+              child: const Text(
+                'پایان و ذخیره قبلی',
+                style: TextStyle(color: Colors.amber),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 // ادامه جلسه قبلی
                 final kinds = await MovementRepository.instance.getKinds();
-                final activeKind = kinds.firstWhere((k) => k.code == active.kindCode, orElse: () => kind);
+                final activeKind = kinds.firstWhere(
+                  (k) => k.code == active.kindCode,
+                  orElse: () => kind,
+                );
                 if (context.mounted) {
-                  await openMovementSession(context, session: active, kind: activeKind);
+                  await openMovementSession(
+                    context,
+                    session: active,
+                    kind: activeKind,
+                  );
                 }
               },
               child: const Text(
                 'ادامهٔ قبلی',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -102,7 +127,10 @@ Future<void> startMovementSessionFlow(BuildContext context, MovementKind kind) a
   }
 }
 
-Future<void> _startAndOpenNewSession(BuildContext context, MovementKind kind) async {
+Future<void> _startAndOpenNewSession(
+  BuildContext context,
+  MovementKind kind,
+) async {
   final mode = effectiveMode(kind);
   final session = await MovementSessionRepository.instance.startSession(
     kind: kind,

@@ -109,7 +109,9 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
             children: [
               IconButton.filledTonal(
                 iconSize: 36,
-                icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                icon: Icon(
+                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                ),
                 onPressed: () {
                   RitmoHaptics.tap();
                   setState(() => _isPaused = !_isPaused);
@@ -118,7 +120,10 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
               const SizedBox(width: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
                 label: const Text('پایان جلسه'),

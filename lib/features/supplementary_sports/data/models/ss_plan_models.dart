@@ -3,7 +3,6 @@ import 'dart:convert';
 enum DayStatus { completed, partial, today, upcoming, rest }
 
 class WorkoutPlan {
-
   WorkoutPlan({
     required this.id,
     required this.dayOfWeek,
@@ -46,7 +45,6 @@ class WorkoutPlan {
 }
 
 class WorkoutExerciseCrossRef {
-
   WorkoutExerciseCrossRef({
     required this.id,
     required this.planId,
@@ -94,7 +92,6 @@ class WorkoutExerciseCrossRef {
 }
 
 class PlanDaySummary {
-
   const PlanDaySummary({
     required this.id,
     required this.dayName,
@@ -112,7 +109,6 @@ class PlanDaySummary {
 }
 
 class PlanVersionHistory {
-
   PlanVersionHistory({
     required this.id,
     required this.serializedPlan,
@@ -129,7 +125,8 @@ class PlanVersionHistory {
     );
   }
   final String id;
-  final String serializedPlan; // JSON dump of the entire plan state at that time
+  final String
+  serializedPlan; // JSON dump of the entire plan state at that time
   final String? changeReason; // «تغییر دستی» | «پیشنهاد AI پذیرفته شد»
   final int createdAt;
 

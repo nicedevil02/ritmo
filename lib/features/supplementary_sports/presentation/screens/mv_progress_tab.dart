@@ -86,7 +86,8 @@ class MvProgressTab extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final budget = weeklyBudget;
-    if (budget == null || (budget.moderateEquivalentMinutes == 0 && budget.strengthDays == 0)) {
+    if (budget == null ||
+        (budget.moderateEquivalentMinutes == 0 && budget.strengthDays == 0)) {
       return const MvInsufficientData(
         title: 'سلامت این هفته',
         requirementDescription:
@@ -99,7 +100,9 @@ class MvProgressTab extends StatelessWidget {
     final modProgress = (modMinutes / targetMod).clamp(0.0, 1.5);
 
     final strDays = budget.strengthDays;
-    final targetStr = budget.strengthDaysTarget > 0 ? budget.strengthDaysTarget : 2;
+    final targetStr = budget.strengthDaysTarget > 0
+        ? budget.strengthDaysTarget
+        : 2;
     final strProgress = (strDays / targetStr).clamp(0.0, 1.5);
 
     return Container(
@@ -114,7 +117,11 @@ class MvProgressTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.favorite_rounded, color: colors.primary, size: metrics.iconMd),
+              Icon(
+                Icons.favorite_rounded,
+                color: colors.primary,
+                size: metrics.iconMd,
+              ),
               SizedBox(width: metrics.spaceSm),
               Text(
                 'سلامت این هفته (توصیه بهداشت جهانی)',
@@ -131,10 +138,17 @@ class MvProgressTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('فعالیت معادل متوسط', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+              Text(
+                'فعالیت معادل متوسط',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
               Text(
                 '${toPersianDigits(modMinutes)} / ${toPersianDigits(targetMod)} دقیقه',
-                style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -154,10 +168,17 @@ class MvProgressTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('روزهای قدرتی و مقاومتی', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+              Text(
+                'روزهای قدرتی و مقاومتی',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
               Text(
                 '${toPersianDigits(strDays)} / ${toPersianDigits(targetStr)} روز',
-                style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -213,7 +234,11 @@ class MvProgressTab extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.speed_rounded, color: colors.primary, size: metrics.iconMd),
+                  Icon(
+                    Icons.speed_rounded,
+                    color: colors.primary,
+                    size: metrics.iconMd,
+                  ),
                   SizedBox(width: metrics.spaceSm),
                   Text(
                     'بار تمرینی (۷ روز به ۲۸ روز)',
@@ -225,7 +250,10 @@ class MvProgressTab extends StatelessWidget {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -233,7 +261,10 @@ class MvProgressTab extends StatelessWidget {
                 ),
                 child: Text(
                   load.bandTitleFa,
-                  style: textTheme.labelSmall?.copyWith(color: badgeColor, fontWeight: FontWeight.bold),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: badgeColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -263,7 +294,10 @@ class MvProgressTab extends StatelessWidget {
           SizedBox(height: metrics.spaceSm),
           Text(
             'به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما ${toPersianDigits(load.ratio!.toStringAsFixed(2))} بوده و در محدودهٔ ${load.bandTitleFa} قرار دارد.',
-            style: textTheme.bodySmall?.copyWith(color: colors.textSecondary, height: 1.4),
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -312,7 +346,11 @@ class MvProgressTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart_rounded, color: colors.primary, size: metrics.iconMd),
+              Icon(
+                Icons.pie_chart_rounded,
+                color: colors.primary,
+                size: metrics.iconMd,
+              ),
               SizedBox(width: metrics.spaceSm),
               Text(
                 'توزیع ورزش‌ها در ماه جاری',
@@ -337,8 +375,18 @@ class MvProgressTab extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('$emoji $title', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                      Text('${toPersianDigits(percent)}٪ (${toPersianDigits(e.value)} دقیقه)', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                      Text(
+                        '$emoji $title',
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '${toPersianDigits(percent)}٪ (${toPersianDigits(e.value)} دقیقه)',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -358,7 +406,10 @@ class MvProgressTab extends StatelessWidget {
           SizedBox(height: metrics.spaceSm),
           Text(
             'در ماه گذشته به نظر می‌رسد بیشترین تمرکز فعالیت شما بر $topName بوده است.',
-            style: textTheme.bodySmall?.copyWith(color: colors.textSecondary, height: 1.4),
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -391,7 +442,11 @@ class MvProgressTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events_rounded, color: colors.warning, size: metrics.iconMd),
+              Icon(
+                Icons.emoji_events_rounded,
+                color: colors.warning,
+                size: metrics.iconMd,
+              ),
               SizedBox(width: metrics.spaceSm),
               Text(
                 'رکوردهای شخصی به تفکیک ورزش',
@@ -405,7 +460,9 @@ class MvProgressTab extends StatelessWidget {
           SizedBox(height: metrics.spaceMd),
           ...personalRecords.map((pr) {
             final kind = kindsMap?[pr.kind.toUpperCase()];
-            final title = kind != null ? '${kind.emoji} ${kind.titleFa}' : (pr.isExercisePr ? pr.exerciseId : pr.kind);
+            final title = kind != null
+                ? '${kind.emoji} ${kind.titleFa}'
+                : (pr.isExercisePr ? pr.exerciseId : pr.kind);
 
             return Container(
               margin: EdgeInsets.only(bottom: metrics.spaceSm),
@@ -477,7 +534,11 @@ class MvProgressTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.flag_rounded, color: colors.primary, size: metrics.iconMd),
+              Icon(
+                Icons.flag_rounded,
+                color: colors.primary,
+                size: metrics.iconMd,
+              ),
               SizedBox(width: metrics.spaceSm),
               Text(
                 'دورهٔ هدف‌دار فعال',

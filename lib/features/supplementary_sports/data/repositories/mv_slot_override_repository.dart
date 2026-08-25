@@ -6,7 +6,11 @@ abstract class MvSlotOverrideRepository {
   Future<void> insert(MvSlotOverride override);
   Future<List<MvSlotOverride>> getForDateRange(String startIso, String endIso);
   Future<List<MvSlotOverride>> getForRoutine(String routineId);
-  Future<int> countCancellationsInPeriod(String routineId, String startIso, String endIso);
+  Future<int> countCancellationsInPeriod(
+    String routineId,
+    String startIso,
+    String endIso,
+  );
 }
 
 class MvSlotOverrideRepositoryImpl implements MvSlotOverrideRepository {
@@ -28,11 +32,15 @@ class MvSlotOverrideRepositoryImpl implements MvSlotOverrideRepository {
   }
 
   @override
-  Future<List<MvSlotOverride>> getForDateRange(String startIso, String endIso) async {
+  Future<List<MvSlotOverride>> getForDateRange(
+    String startIso,
+    String endIso,
+  ) async {
     final db = await _db;
     final rows = await db.query(
       'movement_slot_overrides',
-      where: '(dateIso >= ? AND dateIso <= ?) OR (newDateIso >= ? AND newDateIso <= ?)',
+      where:
+          '(dateIso >= ? AND dateIso <= ?) OR (newDateIso >= ? AND newDateIso <= ?)',
       whereArgs: [startIso, endIso, startIso, endIso],
       orderBy: 'createdAt ASC',
     );
@@ -52,7 +60,11 @@ class MvSlotOverrideRepositoryImpl implements MvSlotOverrideRepository {
   }
 
   @override
-  Future<int> countCancellationsInPeriod(String routineId, String startIso, String endIso) async {
+  Future<int> countCancellationsInPeriod(
+    String routineId,
+    String startIso,
+    String endIso,
+  ) async {
     final db = await _db;
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM movement_slot_overrides WHERE routineId = ? AND dateIso >= ? AND dateIso <= ?',

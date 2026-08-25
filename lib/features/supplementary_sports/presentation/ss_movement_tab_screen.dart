@@ -162,16 +162,20 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
   /// قبلاً هر فراخوانی کل صفحه را با اسپینر تمام‌صفحه جایگزین می‌کرد؛
   /// بعد از هر ثبت یا پول‌تو‌رفرش، محتوا یک لحطه ناپدید می‌شد.
   Future<void> _loadData() async {
-    final snapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
+    final snapshot = await MovementBudgetService.instance
+        .getCurrentWeekSnapshot();
     final suggestion = await MovementSuggester.suggestToday(budget: snapshot);
 
-    if (suggestion != null && suggestion.kind.code != _lastShownSuggestionCode) {
+    if (suggestion != null &&
+        suggestion.kind.code != _lastShownSuggestionCode) {
       _lastShownSuggestionCode = suggestion.kind.code;
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'movement_suggestion_shown',
-        timestamp: DateTime.now(),
-        payload: {'kindCode': suggestion.kind.code},
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'movement_suggestion_shown',
+          timestamp: DateTime.now(),
+          payload: {'kindCode': suggestion.kind.code},
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -192,7 +196,10 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
 
   Future<void> _handleActiveSession(MovementSession active) async {
     final kindTitle = _budgetSnapshot?.kindsByCode[active.kindCode]?.titleFa;
-    final choice = await showMovementSessionRecoveryDialog(context, kindTitle: kindTitle);
+    final choice = await showMovementSessionRecoveryDialog(
+      context,
+      kindTitle: kindTitle,
+    );
     if (!mounted || choice == null) return;
 
     if (choice == MovementRecoveryChoice.resume) {
@@ -217,18 +224,22 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
     );
     if (!mounted) return;
 
-    RitmoEventBus().fire(RitmoEvent(
-      type: 'movement_session_recovered',
-      timestamp: DateTime.now(),
-      payload: {
-        'kindCode': session.kindCode,
-        'sessionMode': session.sessionMode,
-      },
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: 'movement_session_recovered',
+        timestamp: DateTime.now(),
+        payload: {
+          'kindCode': session.kindCode,
+          'sessionMode': session.sessionMode,
+        },
+      ),
+    );
 
-    unawaited(openMovementSession(context, session: session, kind: kind).then((_) {
-      _loadData();
-    }));
+    unawaited(
+      openMovementSession(context, session: session, kind: kind).then((_) {
+        _loadData();
+      }),
+    );
   }
 
   // ── اقدام‌ها ───────────────────────────────────────────────
@@ -254,17 +265,22 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
     );
     if (!mounted) return;
 
-    unawaited(openMovementSession(context, session: session, kind: selected).then((_) {
-      _loadData();
-    }));
+    unawaited(
+      openMovementSession(context, session: session, kind: selected).then((_) {
+        _loadData();
+      }),
+    );
   }
 
   void _openPlanSheet() {
     RitmoHaptics.tap();
-    showMovementPlanSheet(context, onSaved: () {
-      RitmoHaptics.success();
-      _loadData();
-    });
+    showMovementPlanSheet(
+      context,
+      onSaved: () {
+        RitmoHaptics.success();
+        _loadData();
+      },
+    );
   }
 
   void _openLogSheet({MovementKind? presetKind}) {
@@ -317,14 +333,17 @@ class _MovementTodayTabState extends State<_MovementTodayTab>
                 _SuggestionCard(
                   suggestion: _suggestion!,
                   onStart: () {
-                    RitmoEventBus().fire(RitmoEvent(
-                      type: 'movement_suggestion_accepted',
-                      timestamp: DateTime.now(),
-                      payload: {'kindCode': _suggestion!.kind.code},
-                    ));
+                    RitmoEventBus().fire(
+                      RitmoEvent(
+                        type: 'movement_suggestion_accepted',
+                        timestamp: DateTime.now(),
+                        payload: {'kindCode': _suggestion!.kind.code},
+                      ),
+                    );
                     _startSessionFlow(presetKind: _suggestion!.kind);
                   },
-                  onLogInstead: () => _openLogSheet(presetKind: _suggestion!.kind),
+                  onLogInstead: () =>
+                      _openLogSheet(presetKind: _suggestion!.kind),
                 ),
                 const SizedBox(height: RitmoSpacing.lg),
               ],
@@ -440,7 +459,9 @@ class _SuggestionCard extends StatelessWidget {
               SizedBox(
                 height: 44,
                 child: TextButton(
-                  style: TextButton.styleFrom(foregroundColor: colors.textSecondary),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.textSecondary,
+                  ),
                   onPressed: onLogInstead,
                   child: const Text(
                     'انجامش دادم',
@@ -523,7 +544,11 @@ class _ActionButtons extends StatelessWidget {
                     ),
                   ),
                   onPressed: onLogPast,
-                  icon: Icon(CupertinoIcons.checkmark_circle, size: 18, color: accent),
+                  icon: Icon(
+                    CupertinoIcons.checkmark_circle,
+                    size: 18,
+                    color: accent,
+                  ),
                   label: const Text(
                     'ثبت انجام‌شده',
                     style: TextStyle(
@@ -548,7 +573,11 @@ class _ActionButtons extends StatelessWidget {
                     ),
                   ),
                   onPressed: onPlanLater,
-                  icon: Icon(CupertinoIcons.calendar_badge_plus, size: 18, color: accent),
+                  icon: Icon(
+                    CupertinoIcons.calendar_badge_plus,
+                    size: 18,
+                    color: accent,
+                  ),
                   label: const Text(
                     'برنامه برای بعد',
                     style: TextStyle(
@@ -596,10 +625,9 @@ class _ProgressTabWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(
-        appBarTheme: Theme.of(context).appBarTheme.copyWith(
-              toolbarHeight: 0,
-              elevation: 0,
-            ),
+        appBarTheme: Theme.of(
+          context,
+        ).appBarTheme.copyWith(toolbarHeight: 0, elevation: 0),
       ),
       child: const MovementAnalyticsScreen(),
     );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class PrimaryButton extends StatelessWidget {
-
   const PrimaryButton({
     super.key,
     required this.label,

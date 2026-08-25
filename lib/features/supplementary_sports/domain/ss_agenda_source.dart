@@ -36,8 +36,15 @@ class SsAgendaSource {
     Database db,
     Map<String, String> settingsMap,
   ) async {
-    final sportsEnabled = ModuleGate.instance.isEnabledFrom(settingsMap, 'module_sports_enabled') ||
-        ModuleGate.instance.isEnabledFrom(settingsMap, 'module_supplementary_sports_enabled');
+    final sportsEnabled =
+        ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_sports_enabled',
+        ) ||
+        ModuleGate.instance.isEnabledFrom(
+          settingsMap,
+          'module_supplementary_sports_enabled',
+        );
 
     if (!sportsEnabled) {
       return SsAgendaSource(
@@ -76,7 +83,9 @@ class SsAgendaSource {
           prescriptionsByDate[dateIso] = Map<String, dynamic>.from(r);
         }
       }
-    } catch (e) { debugPrint('[ss] ss_agenda_source.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_agenda_source.dart: $e');
+    }
 
     // 3. Movement routines + their schedules + today's completions
     final movementRoutines = <Map<String, dynamic>>[];
@@ -95,7 +104,9 @@ class SsAgendaSource {
       for (final s in sRows) {
         final rid = s['routineId']?.toString();
         if (rid == null) continue;
-        schedulesByRoutine.putIfAbsent(rid, () => []).add(Map<String, dynamic>.from(s));
+        schedulesByRoutine
+            .putIfAbsent(rid, () => [])
+            .add(Map<String, dynamic>.from(s));
       }
 
       final cRows = await db.query('routine_completions');
@@ -140,7 +151,13 @@ class SsAgendaSource {
         // Return only movement routines if prescription is moved
         items.addAll(_movementItems(date, dateStr));
         final seenMove = <String>{};
-        return items.where((i) => seenMove.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
+        return items
+            .where(
+              (i) => seenMove.add(
+                '${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}',
+              ),
+            )
+            .toList();
       }
 
       // Skip REST days — nothing on agenda
@@ -152,26 +169,37 @@ class SsAgendaSource {
           _ => AgendaCompletion.pending,
         };
 
-        items.add(AgendaItem(
-          id: 'sport:pres:$presId:$dateStr',
-          sourceId: presId,
-          domain: AgendaDomain.sport,
-          itemType: AgendaItemType.flexible,
-          title: headline,
-          subtitle: coachNote,
-          dateStr: dateStr,
-          durationMinutes: targetMinutes,
-          category: Category.fitness,
-          deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: presId),
-          completion: completion,
-          meta: {'prescription': pres},
-        ));
+        items.add(
+          AgendaItem(
+            id: 'sport:pres:$presId:$dateStr',
+            sourceId: presId,
+            domain: AgendaDomain.sport,
+            itemType: AgendaItemType.flexible,
+            title: headline,
+            subtitle: coachNote,
+            dateStr: dateStr,
+            durationMinutes: targetMinutes,
+            category: Category.fitness,
+            deepLink: AgendaDeepLink(
+              domain: AgendaDomain.sport,
+              targetId: presId,
+            ),
+            completion: completion,
+            meta: {'prescription': pres},
+          ),
+        );
       }
 
       // When prescriptions exist, skip legacy plans for this date
       final res = [...items, ..._movementItems(date, dateStr)];
       final seen = <String>{};
-      return res.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
+      return res
+          .where(
+            (i) => seen.add(
+              '${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}',
+            ),
+          )
+          .toList();
     }
 
     // 2. Legacy ss_workout_plan fallback
@@ -191,7 +219,9 @@ class SsAgendaSource {
         whereArgs: [dayOfWeek, activeW],
       );
     } else {
-      debugPrint('[SsAgendaSource] warning: week column not found in ss_workout_plan');
+      debugPrint(
+        '[SsAgendaSource] warning: week column not found in ss_workout_plan',
+      );
       filteredPlans = await db.query(
         'ss_workout_plan',
         where: 'dayOfWeek = ?',
@@ -206,20 +236,25 @@ class SsAgendaSource {
           plan['timeOfDay'] as String? ?? plan['targetTime'] as String?;
       final duration = plan['durationMinutes'] as int? ?? 45;
 
-      items.add(AgendaItem(
-        id: 'sport:plan:$planId:$dateStr',
-        sourceId: planId,
-        domain: AgendaDomain.sport,
-        itemType: AgendaItemType.flexible,
-        title: title,
-        dateStr: dateStr,
-        timeOfDay: timeOfDay,
-        durationMinutes: duration,
-        category: Category.fitness,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: planId),
-        completion: AgendaCompletion.pending,
-        meta: {'workoutPlan': plan},
-      ));
+      items.add(
+        AgendaItem(
+          id: 'sport:plan:$planId:$dateStr',
+          sourceId: planId,
+          domain: AgendaDomain.sport,
+          itemType: AgendaItemType.flexible,
+          title: title,
+          dateStr: dateStr,
+          timeOfDay: timeOfDay,
+          durationMinutes: duration,
+          category: Category.fitness,
+          deepLink: AgendaDeepLink(
+            domain: AgendaDomain.sport,
+            targetId: planId,
+          ),
+          completion: AgendaCompletion.pending,
+          meta: {'workoutPlan': plan},
+        ),
+      );
     }
 
     // 3. Movement routines
@@ -227,7 +262,13 @@ class SsAgendaSource {
 
     // Step 4: Final Deduplication Guard
     final seen = <String>{};
-    return items.where((i) => seen.add('${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}')).toList();
+    return items
+        .where(
+          (i) => seen.add(
+            '${i.domain.name}_${i.sourceId}_${i.dateStr}_${i.title}',
+          ),
+        )
+        .toList();
   }
 
   List<AgendaItem> _movementItems(DateTime date, String dateStr) {
@@ -245,19 +286,21 @@ class SsAgendaSource {
       final duration = r['targetDurationMinutes'] as int? ?? 30;
       final isDone = completedKeys.contains('$rId:$dateStr');
 
-      items.add(AgendaItem(
-        id: 'sport:movement:$rId:$dateStr',
-        sourceId: rId,
-        domain: AgendaDomain.sport,
-        itemType: isMeetup ? AgendaItemType.fixed : AgendaItemType.flexible,
-        title: title,
-        dateStr: dateStr,
-        durationMinutes: duration,
-        category: Category.fitness,
-        deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: rId),
-        completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
-        meta: {'routine': r},
-      ));
+      items.add(
+        AgendaItem(
+          id: 'sport:movement:$rId:$dateStr',
+          sourceId: rId,
+          domain: AgendaDomain.sport,
+          itemType: isMeetup ? AgendaItemType.fixed : AgendaItemType.flexible,
+          title: title,
+          dateStr: dateStr,
+          durationMinutes: duration,
+          category: Category.fitness,
+          deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: rId),
+          completion: isDone ? AgendaCompletion.done : AgendaCompletion.pending,
+          meta: {'routine': r},
+        ),
+      );
     }
     return items;
   }
@@ -268,7 +311,11 @@ class SsAgendaSource {
   bool _isScheduledOn(List<Map<String, dynamic>> schedules, DateTime date) {
     for (final s in schedules) {
       final daysStr = s['daysOfWeek'] as String? ?? '6,7,1,2,3,4,5';
-      final days = daysStr.split(',').map((d) => int.tryParse(d.trim())).whereType<int>().toSet();
+      final days = daysStr
+          .split(',')
+          .map((d) => int.tryParse(d.trim()))
+          .whereType<int>()
+          .toSet();
       if (days.contains(date.weekday)) return true;
     }
     return false;

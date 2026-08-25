@@ -27,7 +27,8 @@ class SSExerciseLibraryScreen extends StatefulWidget {
   final VoidCallback? onExerciseAdded;
 
   @override
-  State<SSExerciseLibraryScreen> createState() => _SSExerciseLibraryScreenState();
+  State<SSExerciseLibraryScreen> createState() =>
+      _SSExerciseLibraryScreenState();
 }
 
 class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
@@ -59,44 +60,59 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
   String _normalizeCategoryKey(String? rawCategory) {
     final clean = (rawCategory ?? '').toLowerCase().trim();
     // ── Fitify native keys ────────────────────────────────────────
-    if (clean == 'upper_body') return 'chest';          // شنا / بالاتنه
-    if (clean == 'shoulder_and_back') return 'back';    // کمر / زیربغل
-    if (clean == 'lower_body') return 'legs';           // پا
-    if (clean == 'core') return 'abs';                  // شکم
-    if (clean == 'cardio') return 'cardio';             // کاردیو
-    if (clean == 'plyometric') return 'cardio';         // پلایومتریک
+    if (clean == 'upper_body') return 'chest'; // شنا / بالاتنه
+    if (clean == 'shoulder_and_back') return 'back'; // کمر / زیربغل
+    if (clean == 'lower_body') return 'legs'; // پا
+    if (clean == 'core') return 'abs'; // شکم
+    if (clean == 'cardio') return 'cardio'; // کاردیو
+    if (clean == 'plyometric') return 'cardio'; // پلایومتریک
     if (clean == 'stretching' || clean == 'yoga') return 'stretch'; // کشش
-    if (clean == 'warmup' || clean == 'balance') return 'stretch';  // گرم‌کردن
+    if (clean == 'warmup' || clean == 'balance') return 'stretch'; // گرم‌کردن
 
     // ── English keywords (legacy / custom exercises) ─────────────
-    if (clean.contains('chest') || clean.contains('pec') ||
-        clean.contains('upper_body') || clean.contains('push')) {
+    if (clean.contains('chest') ||
+        clean.contains('pec') ||
+        clean.contains('upper_body') ||
+        clean.contains('push')) {
       return 'chest';
     }
     // سینه و بالاتنه شامل سرشانه و بازو نیز می‌شود
-    if (clean.contains('shoulder') || clean.contains('deltoid') ||
-        clean.contains('arm') || clean.contains('bicep') || clean.contains('tricep')) {
+    if (clean.contains('shoulder') ||
+        clean.contains('deltoid') ||
+        clean.contains('arm') ||
+        clean.contains('bicep') ||
+        clean.contains('tricep')) {
       return 'chest';
     }
-    if (clean.contains('back') || clean.contains('lat') ||
-        clean.contains('row') || clean.contains('shoulder_and_back')) {
+    if (clean.contains('back') ||
+        clean.contains('lat') ||
+        clean.contains('row') ||
+        clean.contains('shoulder_and_back')) {
       return 'back';
     }
-    if (clean.contains('lower_body') || clean.contains('leg') ||
-        clean.contains('quad') || clean.contains('glute') ||
-        clean.contains('hamstring') || clean.contains('calf')) {
+    if (clean.contains('lower_body') ||
+        clean.contains('leg') ||
+        clean.contains('quad') ||
+        clean.contains('glute') ||
+        clean.contains('hamstring') ||
+        clean.contains('calf')) {
       return 'legs';
     }
-    if (clean.contains('ab') || clean.contains('core') ||
+    if (clean.contains('ab') ||
+        clean.contains('core') ||
         clean.contains('waist')) {
       return 'abs';
     }
-    if (clean.contains('cardio') || clean.contains('hiit') ||
-        clean.contains('run') || clean.contains('plyo')) {
+    if (clean.contains('cardio') ||
+        clean.contains('hiit') ||
+        clean.contains('run') ||
+        clean.contains('plyo')) {
       return 'cardio';
     }
-    if (clean.contains('stretch') || clean.contains('recovery') ||
-        clean.contains('yoga') || clean.contains('flex') ||
+    if (clean.contains('stretch') ||
+        clean.contains('recovery') ||
+        clean.contains('yoga') ||
+        clean.contains('flex') ||
         clean.contains('warmup')) {
       return 'stretch';
     }
@@ -106,14 +122,22 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
   String _translateCategory(String categoryKey) {
     final key = _normalizeCategoryKey(categoryKey);
     switch (key) {
-      case 'all': return 'همه';
-      case 'chest': return 'سینه و بالاتنه';
-      case 'back': return 'پشت و زیربغل';
-      case 'legs': return 'پا و باسن';
-      case 'abs': return 'شکم و پهلو';
-      case 'cardio': return 'کاردیو';
-      case 'stretch': return 'کشش و یوگا';
-      default: return 'سایر';
+      case 'all':
+        return 'همه';
+      case 'chest':
+        return 'سینه و بالاتنه';
+      case 'back':
+        return 'پشت و زیربغل';
+      case 'legs':
+        return 'پا و باسن';
+      case 'abs':
+        return 'شکم و پهلو';
+      case 'cardio':
+        return 'کاردیو';
+      case 'stretch':
+        return 'کشش و یوگا';
+      default:
+        return 'سایر';
     }
   }
 
@@ -125,8 +149,10 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final List<Map<String, dynamic>> results =
-          await db.query('ss_exercise', orderBy: 'name ASC');
+      final List<Map<String, dynamic>> results = await db.query(
+        'ss_exercise',
+        orderBy: 'name ASC',
+      );
 
       final catKeys = <String>{'all'};
       for (final row in results) {
@@ -134,14 +160,24 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         catKeys.add(normKey);
       }
 
-      const orderedKeys = ['all', 'chest', 'back', 'legs', 'abs', 'cardio', 'stretch', 'other'];
+      const orderedKeys = [
+        'all',
+        'chest',
+        'back',
+        'legs',
+        'abs',
+        'cardio',
+        'stretch',
+        'other',
+      ];
       final categoriesList = orderedKeys.where(catKeys.contains).toList();
 
       if (!mounted) return;
       setState(() {
         _allExercises = results;
         _categories = categoriesList;
-        _selectedCategory = (widget.initialCategory != null &&
+        _selectedCategory =
+            (widget.initialCategory != null &&
                 categoriesList.contains(widget.initialCategory))
             ? widget.initialCategory!
             : 'all';
@@ -198,13 +234,20 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
 
   int _getFarsiDayOfWeek(DateTime dt) {
     switch (dt.weekday) {
-      case DateTime.monday: return 3;
-      case DateTime.tuesday: return 4;
-      case DateTime.wednesday: return 5;
-      case DateTime.thursday: return 6;
-      case DateTime.friday: return 7;
-      case DateTime.saturday: return 1;
-      case DateTime.sunday: return 2;
+      case DateTime.monday:
+        return 3;
+      case DateTime.tuesday:
+        return 4;
+      case DateTime.wednesday:
+        return 5;
+      case DateTime.thursday:
+        return 6;
+      case DateTime.friday:
+        return 7;
+      case DateTime.saturday:
+        return 1;
+      case DateTime.sunday:
+        return 2;
     }
     return 1;
   }
@@ -212,15 +255,23 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
   String _translateEquipment(String? equipment) {
     if (equipment == null || equipment.isEmpty) return 'وزن بدن';
     switch (equipment.toLowerCase()) {
-      case 'dumbbell': return 'دمبل';
-      case 'barbell': return 'هالتر';
-      case 'kettlebell': return 'کتل‌بل';
-      case 'machine': return 'دستگاه';
-      case 'cable': return 'سیم‌کش';
-      case 'band': return 'کش ورزشی';
+      case 'dumbbell':
+        return 'دمبل';
+      case 'barbell':
+        return 'هالتر';
+      case 'kettlebell':
+        return 'کتل‌بل';
+      case 'machine':
+        return 'دستگاه';
+      case 'cable':
+        return 'سیم‌کش';
+      case 'band':
+        return 'کش ورزشی';
       case 'none':
-      case 'bodyweight': return 'وزن بدن';
-      default: return equipment;
+      case 'bodyweight':
+        return 'وزن بدن';
+      default:
+        return equipment;
     }
   }
 
@@ -242,7 +293,9 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         await db.insert('ss_workout_plan', {
           'id': planId,
           'dayOfWeek': todayFarsiDay,
-          'muscleGroups': jsonEncode([_translateCategory((exercise['category'] ?? 'سایر').toString())]),
+          'muscleGroups': jsonEncode([
+            _translateCategory((exercise['category'] ?? 'سایر').toString()),
+          ]),
           'estimatedMinutes': 30,
           'createdAt': DateTime.now().millisecondsSinceEpoch,
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
@@ -263,7 +316,8 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
         if (order > maxOrder) maxOrder = order;
       }
 
-      final crossRefId = 'ref_${planId}_${exercise['id']}_${DateTime.now().millisecondsSinceEpoch}';
+      final crossRefId =
+          'ref_${planId}_${exercise['id']}_${DateTime.now().millisecondsSinceEpoch}';
       await db.insert('ss_workout_exercise_crossref', {
         'id': crossRefId,
         'planId': planId,
@@ -317,7 +371,9 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(RitmoRadius.sheet)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(RitmoRadius.sheet),
+              ),
               border: Border.all(color: colors.border, width: 1),
             ),
             // قبلاً ثابت بود؛ با محتوای بلند سرریز می‌کرد.
@@ -383,12 +439,16 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                   Row(
                     children: [
                       _Tag(
-                        label: _translateCategory(exercise['category']?.toString() ?? ''),
+                        label: _translateCategory(
+                          exercise['category']?.toString() ?? '',
+                        ),
                         color: accent,
                       ),
                       const SizedBox(width: 8),
                       _Tag(
-                        label: _translateEquipment(exercise['equipment']?.toString()),
+                        label: _translateEquipment(
+                          exercise['equipment']?.toString(),
+                        ),
                         color: colors.textSecondary,
                       ),
                     ],
@@ -423,10 +483,15 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: colors.error, width: 1.2),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                            borderRadius: BorderRadius.circular(
+                              RitmoRadius.card,
+                            ),
                           ),
                         ),
-                        icon: Icon(CupertinoIcons.play_circle_fill, color: colors.error),
+                        icon: Icon(
+                          CupertinoIcons.play_circle_fill,
+                          color: colors.error,
+                        ),
                         label: Text(
                           'مشاهدهٔ ویدیوی آموزش حرکت',
                           style: TextStyle(
@@ -440,7 +505,10 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                           final uri = Uri.tryParse(videoUrl);
                           final messenger = ScaffoldMessenger.of(context);
                           if (uri != null && await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
                           } else {
                             messenger.showSnackBar(
                               const SnackBar(
@@ -562,7 +630,11 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                 color: colors.textPrimary,
               ),
               decoration: InputDecoration(
-                icon: Icon(CupertinoIcons.search, color: colors.textTertiary, size: 20),
+                icon: Icon(
+                  CupertinoIcons.search,
+                  color: colors.textTertiary,
+                  size: 20,
+                ),
                 hintText: 'جست‌وجوی نام حرکت یا تجهیزات...',
                 hintStyle: TextStyle(
                   fontFamily: 'Vazirmatn',
@@ -573,8 +645,11 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         tooltip: 'پاک کردن',
-                        icon: Icon(CupertinoIcons.xmark_circle_fill,
-                            color: colors.textTertiary, size: 18),
+                        icon: Icon(
+                          CupertinoIcons.xmark_circle_fill,
+                          color: colors.textTertiary,
+                          size: 18,
+                        ),
                         onPressed: () {
                           _searchController.clear();
                           setState(() {
@@ -687,7 +762,10 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
               borderRadius: BorderRadius.circular(RitmoRadius.card),
               child: Container(
                 constraints: const BoxConstraints(minHeight: 64),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(RitmoRadius.card),
                   border: Border.all(color: colors.border),
@@ -712,7 +790,9 @@ class _SSExerciseLibraryScreenState extends State<SSExerciseLibraryScreen> {
                           Row(
                             children: [
                               Text(
-                                _translateCategory(ex['category']?.toString() ?? ''),
+                                _translateCategory(
+                                  ex['category']?.toString() ?? '',
+                                ),
                                 style: TextStyle(
                                   fontFamily: 'Vazirmatn',
                                   fontSize: 12,
@@ -779,9 +859,7 @@ class _CategoryChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? accent : colors.surfaceElevated,
             borderRadius: BorderRadius.circular(RitmoRadius.pill),
-            border: Border.all(
-              color: isSelected ? accent : colors.border,
-            ),
+            border: Border.all(color: isSelected ? accent : colors.border),
           ),
           alignment: Alignment.center,
           child: Text(

@@ -6,7 +6,10 @@ import 'package:sqflite/sqflite.dart';
 abstract class MvCommitmentRepository {
   Future<List<MvCommitment>> getAll({bool onlyActive = true});
   Future<List<MvCommitment>> getActive();
-  Future<List<MvCommitment>> getForDay(int dayOfWeekSat0, {bool onlyActive = true});
+  Future<List<MvCommitment>> getForDay(
+    int dayOfWeekSat0, {
+    bool onlyActive = true,
+  });
   Future<MvCommitment?> getById(int id);
   Future<int> insert(MvCommitment commitment);
   Future<void> update(MvCommitment commitment);
@@ -112,11 +115,7 @@ class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
   @override
   Future<void> delete(int id) async {
     final db = await _db;
-    await db.delete(
-      'mv_commitments',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('mv_commitments', where: 'id = ?', whereArgs: [id]);
   }
 
   @override
@@ -125,10 +124,7 @@ class MvCommitmentRepositoryImpl implements MvCommitmentRepository {
     final now = DateTime.now().toIso8601String();
     await db.update(
       'mv_commitments',
-      {
-        'isActive': isActive ? 1 : 0,
-        'updatedAt': now,
-      },
+      {'isActive': isActive ? 1 : 0, 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [id],
     );

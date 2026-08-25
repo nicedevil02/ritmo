@@ -60,7 +60,9 @@ class MovementCampaign {
       if (decoded is List) {
         rIds = decoded.map((e) => e.toString()).toList();
       }
-    } catch (e) { debugPrint('[ss] movement_campaign.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] movement_campaign.dart: $e');
+    }
 
     return MovementCampaign(
       id: map['id'] as String,
@@ -68,7 +70,9 @@ class MovementCampaign {
       goalCode: map['goalCode'] as String,
       startDate: map['startDate'] as String,
       weeks: (map['weeks'] as num).toInt(),
-      status: MovementCampaignStatus.fromCode(map['status']?.toString() ?? 'ACTIVE'),
+      status: MovementCampaignStatus.fromCode(
+        map['status']?.toString() ?? 'ACTIVE',
+      ),
       routineIds: rIds,
       progressJson: map['progressJson'] as String?,
     );

@@ -38,7 +38,9 @@ List<String> _parseSoreParts(String? note) {
     if (decoded is Map && decoded.containsKey('soreParts')) {
       return List<String>.from(decoded['soreParts'] as List);
     }
-  } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
+  } catch (e) {
+    debugPrint('[ss] ss_daily_checkin_widget.dart: $e');
+  }
   return [];
 }
 
@@ -117,7 +119,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     // Compute soreness level from count of sore parts (for backward compat)
     final sorenessLevel = _soreBodyParts.isEmpty
         ? 1
-        : (_soreBodyParts.length <= 2 ? 2 : (_soreBodyParts.length <= 4 ? 3 : 4));
+        : (_soreBodyParts.length <= 2
+              ? 2
+              : (_soreBodyParts.length <= 4 ? 3 : 4));
 
     final checkin = SsDailyCheckin(
       dateIso: dateKey,
@@ -230,14 +234,17 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     if (status == 'DONE' || status == 'PARTIAL') return;
 
     // Get exercises in today's plan
-    final crossRefs = await db.rawQuery('''
+    final crossRefs = await db.rawQuery(
+      '''
       SELECT c.id as crossRefId, c.exerciseId, c.orderIndex, c.targetSets, c.targetReps, c.targetWeight,
              e.name, e.category, e.muscleIntensity
       FROM ss_workout_exercise_crossref c
       JOIN ss_exercise e ON e.id = c.exerciseId
       WHERE c.planId = ?
       ORDER BY c.orderIndex ASC
-    ''', [planId]);
+    ''',
+      [planId],
+    );
 
     if (crossRefs.isEmpty) return;
 
@@ -275,7 +282,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
               break;
             }
           }
-        } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
+        } catch (e) {
+          debugPrint('[ss] ss_daily_checkin_widget.dart: $e');
+        }
       }
 
       if (conflicts) {
@@ -286,8 +295,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
     if (conflicting.isEmpty || !mounted) return;
 
     // Find alternative exercises not targeting sore muscles
-    final usedExerciseIds =
-        crossRefs.map((e) => e['exerciseId']?.toString()).whereType<String>().toSet();
+    final usedExerciseIds = crossRefs
+        .map((e) => e['exerciseId']?.toString())
+        .whereType<String>()
+        .toSet();
 
     // Build alternative query - exercises in same general category but not targeting sore muscles
     final allExercises = await db.query('ss_exercise', limit: 200);
@@ -317,7 +328,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
               break;
             }
           }
-        } catch (e) { debugPrint('[ss] ss_daily_checkin_widget.dart: $e'); }
+        } catch (e) {
+          debugPrint('[ss] ss_daily_checkin_widget.dart: $e');
+        }
       }
 
       if (!altConflicts) {
@@ -378,7 +391,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.5),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.4),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF10B981).withValues(alpha: 0.08),
@@ -400,7 +416,11 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       color: const Color(0xFF10B981).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF10B981),
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -438,16 +458,29 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       onTap: _undo,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                          color: const Color(
+                            0xFFF59E0B,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFF59E0B,
+                            ).withValues(alpha: 0.3),
+                          ),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.undo_rounded, color: Color(0xFFF59E0B), size: 16),
+                            Icon(
+                              Icons.undo_rounded,
+                              color: Color(0xFFF59E0B),
+                              size: 16,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'واگرد',
@@ -498,7 +531,11 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
             // Header
             Row(
               children: [
-                const Icon(Icons.bolt_rounded, color: Color(0xFF10B981), size: 20),
+                const Icon(
+                  Icons.bolt_rounded,
+                  color: Color(0xFF10B981),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   widget.existingCheckin == null
@@ -513,7 +550,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                 const Spacer(),
                 if (widget.existingCheckin != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -521,9 +561,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                     child: const Text(
                       'ثبت شد ✓',
                       style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF10B981),
-                          fontWeight: FontWeight.bold),
+                        fontSize: 11,
+                        color: Color(0xFF10B981),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
               ],
@@ -531,8 +572,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
             const SizedBox(height: 14),
 
             // 1. Energy selector
-            const Text('سطح انرژی:',
-                style: TextStyle(fontSize: 12, color: Colors.white70)),
+            const Text(
+              'سطح انرژی:',
+              style: TextStyle(fontSize: 12, color: Colors.white70),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [1, 2, 3, 4, 5].map((lvl) {
@@ -548,7 +591,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       margin: const EdgeInsets.symmetric(horizontal: 2),
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       decoration: BoxDecoration(
-                        color: selected ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                        color: selected
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
@@ -556,7 +601,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                         labels[lvl - 1],
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: selected ? Colors.white : Colors.white70,
                         ),
                       ),
@@ -568,8 +615,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
             const SizedBox(height: 14),
 
             // 2. Sore Body Parts selector (multi-select chips)
-            const Text('کوفتگی عضلانی (عضوهای کوفته رو انتخاب کن):',
-                style: TextStyle(fontSize: 12, color: Colors.white70)),
+            const Text(
+              'کوفتگی عضلانی (عضوهای کوفته رو انتخاب کن):',
+              style: TextStyle(fontSize: 12, color: Colors.white70),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
@@ -580,7 +629,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                   onTap: () => _toggleBodyPart(part.code),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: selected
                           ? const Color(0xFFF59E0B).withValues(alpha: 0.2)
@@ -602,13 +654,21 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                           part.titleFa,
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                            color: selected ? const Color(0xFFF59E0B) : Colors.white70,
+                            fontWeight: selected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: selected
+                                ? const Color(0xFFF59E0B)
+                                : Colors.white70,
                           ),
                         ),
                         if (selected) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.check_circle, color: Color(0xFFF59E0B), size: 14),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Color(0xFFF59E0B),
+                            size: 14,
+                          ),
                         ],
                       ],
                     ),
@@ -630,8 +690,10 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
             const SizedBox(height: 14),
 
             // 3. Available Minutes selector
-            const Text('زمان در دسترس امروز:',
-                style: TextStyle(fontSize: 12, color: Colors.white70)),
+            const Text(
+              'زمان در دسترس امروز:',
+              style: TextStyle(fontSize: 12, color: Colors.white70),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [15, 30, 45, 60].map((min) {
@@ -646,7 +708,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       decoration: BoxDecoration(
-                        color: selected ? const Color(0xFF38BDF8) : const Color(0xFF1E293B),
+                        color: selected
+                            ? const Color(0xFF38BDF8)
+                            : const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       alignment: Alignment.center,
@@ -654,7 +718,9 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                         toPersianDigits('$min د'),
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: selected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: selected ? Colors.white : Colors.white70,
                         ),
                       ),
@@ -673,13 +739,18 @@ class _SSDailyCheckinWidgetState extends State<SSDailyCheckinWidget>
                 onPressed: _isSaving ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: _isSaving
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : Text(
                         widget.existingCheckin == null
@@ -734,7 +805,8 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
     for (int i = 0; i < widget.conflicting.length; i++) {
       final crossRefId = widget.conflicting[i]['crossRefId']?.toString() ?? '';
       if (widget.alternatives.length > i) {
-        _selectedAlternatives[crossRefId] = widget.alternatives[i]['id']?.toString();
+        _selectedAlternatives[crossRefId] = widget.alternatives[i]['id']
+            ?.toString();
       }
     }
   }
@@ -777,9 +849,7 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
@@ -788,226 +858,262 @@ class _ExerciseSwapSheetState extends State<_ExerciseSwapSheet> {
           color: colors.surfaceElevated,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
 
-            // Title
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.swap_horiz_rounded,
-                            color: Color(0xFFF59E0B), size: 22),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'پیشنهاد جایگزینی حرکات',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFF59E0B,
+                            ).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.swap_horiz_rounded,
+                            color: Color(0xFFF59E0B),
+                            size: 22,
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'پیشنهاد جایگزینی حرکات',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'با توجه به کوفتگی ${widget.sorePartNames}، حرکات زیر ممکنه فشار اضافه‌ای بیاره. '
+                      'می‌خوای جایگزین بشن؟',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white60,
+                        height: 1.5,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'با توجه به کوفتگی ${widget.sorePartNames}، حرکات زیر ممکنه فشار اضافه‌ای بیاره. '
-                    'می‌خوای جایگزین بشن؟',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white60,
-                      height: 1.5,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            const Divider(color: Color(0xFF1E293B), height: 1),
+              const Divider(color: Color(0xFF1E293B), height: 1),
 
-            // List of conflicting exercises
-            Flexible(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shrinkWrap: true,
-                itemCount: widget.conflicting.length,
-                itemBuilder: (ctx, i) {
-                  final ex = widget.conflicting[i];
-                  final crossRefId = ex['crossRefId']?.toString() ?? '';
-                  final name = ex['name']?.toString() ?? 'حرکت';
-                  final selectedAlt = _selectedAlternatives[crossRefId];
+              // List of conflicting exercises
+              Flexible(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  shrinkWrap: true,
+                  itemCount: widget.conflicting.length,
+                  itemBuilder: (ctx, i) {
+                    final ex = widget.conflicting[i];
+                    final crossRefId = ex['crossRefId']?.toString() ?? '';
+                    final name = ex['name']?.toString() ?? 'حرکت';
+                    final selectedAlt = _selectedAlternatives[crossRefId];
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Current exercise
-                        Row(
-                          children: [
-                            const Icon(Icons.close_rounded, color: Color(0xFFEF4444), size: 16),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  decoration: TextDecoration.lineThrough,
-                                  decorationColor: Color(0xFFEF4444),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B).withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Current exercise
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.close_rounded,
+                                color: Color(0xFFEF4444),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    decoration: TextDecoration.lineThrough,
+                                    decorationColor: Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          if (widget.alternatives.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Text(
+                              'جایگزین:',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: Colors.white54,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Alternative exercise dropdown
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F172A),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF334155),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: selectedAlt,
+                                  dropdownColor: const Color(0xFF1E293B),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                  hint: const Text(
+                                    'انتخاب جایگزین...',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white38,
+                                    ),
+                                  ),
+                                  items: widget.alternatives.take(15).map((
+                                    alt,
+                                  ) {
+                                    final altId = alt['id']?.toString() ?? '';
+                                    final altName =
+                                        alt['name']?.toString() ?? 'حرکت';
+                                    return DropdownMenuItem<String>(
+                                      value: altId,
+                                      child: Text(
+                                        altName,
+                                        style: const TextStyle(),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      _selectedAlternatives[crossRefId] = val;
+                                    });
+                                  },
                                 ),
                               ),
                             ),
                           ],
-                        ),
-
-                        if (widget.alternatives.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          const Text(
-                            'جایگزین:',
-                            style: TextStyle(
-                                fontSize: 10.5, color: Colors.white54),
-                          ),
-                          const SizedBox(height: 4),
-                          // Alternative exercise dropdown
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFF334155)),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                value: selectedAlt,
-                                dropdownColor: const Color(0xFF1E293B),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                ),
-                                hint: const Text(
-                                  'انتخاب جایگزین...',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.white38),
-                                ),
-                                items: widget.alternatives.take(15).map((alt) {
-                                  final altId = alt['id']?.toString() ?? '';
-                                  final altName = alt['name']?.toString() ?? 'حرکت';
-                                  return DropdownMenuItem<String>(
-                                    value: altId,
-                                    child: Text(altName,
-                                        style: const TextStyle()),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setState(() {
-                                    _selectedAlternatives[crossRefId] = val;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
                         ],
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
 
-            // Buttons
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              child: Row(
-                children: [
-                  // Apply swaps
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSwapping || _swapDone ? null : _applySwaps,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _swapDone
-                              ? const Color(0xFF10B981)
-                              : const Color(0xFFF59E0B),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: Icon(
-                          _swapDone ? Icons.check_rounded : Icons.swap_horiz_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: Text(
-                          _swapDone
-                              ? 'تغییرات اعمال شد ✓'
-                              : 'تأیید و جایگزینی',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+              // Buttons
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Row(
+                  children: [
+                    // Apply swaps
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSwapping || _swapDone
+                              ? null
+                              : _applySwaps,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _swapDone
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFF59E0B),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(
+                            _swapDone
+                                ? Icons.check_rounded
+                                : Icons.swap_horiz_rounded,
                             color: Colors.white,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _swapDone
+                                ? 'تغییرات اعمال شد ✓'
+                                : 'تأیید و جایگزینی',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Skip
-                  SizedBox(
-                    height: 44,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF334155)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text(
-                        'فعلاً نه',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white70,
+                    const SizedBox(width: 10),
+                    // Skip
+                    SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF334155)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'فعلاً نه',
+                          style: TextStyle(fontSize: 13, color: Colors.white70),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),);
+    );
   }
 }

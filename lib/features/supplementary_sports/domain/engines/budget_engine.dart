@@ -24,8 +24,8 @@ class MvWeeklyBudgetProgress {
     this.hasEnoughDataForForecast = false,
     int? currentActiveDays,
     int? targetActiveDays,
-  })  : currentActiveDays = currentActiveDays ?? strengthDays,
-        targetActiveDays = targetActiveDays ?? strengthDaysTarget;
+  }) : currentActiveDays = currentActiveDays ?? strengthDays,
+       targetActiveDays = targetActiveDays ?? strengthDaysTarget;
 
   double get targetMetMinutes => targetMin.toDouble();
   double get currentMetMinutes => rawMetMinutes;
@@ -81,7 +81,8 @@ class BudgetEngine {
       );
       activeDaysSet.add(dateIso);
 
-      final isStrength = (kind != null && kind.family == MovementFamily.strength) ||
+      final isStrength =
+          (kind != null && kind.family == MovementFamily.strength) ||
           sess.kindCode.toUpperCase() == 'BODYWEIGHT' ||
           sess.sessionMode == MvSessionMode.guided ||
           sess.sessionMode == MvSessionMode.structured;
@@ -100,7 +101,8 @@ class BudgetEngine {
     if (canForecast) {
       final elapsedDays = currentDayOfWeekSat0 + 1;
       final dailyRate = totalModerateEquivalent / elapsedDays;
-      forecast = (totalModerateEquivalent + (dailyRate * (7 - elapsedDays))).roundToDouble();
+      forecast = (totalModerateEquivalent + (dailyRate * (7 - elapsedDays)))
+          .roundToDouble();
     }
 
     final progress = MvWeeklyBudgetProgress(

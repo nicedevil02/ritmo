@@ -8,7 +8,6 @@ import 'package:ritmo/features/supplementary_sports/movement/data/movement_remin
 import 'package:ritmo/features/supplementary_sports/movement/data/movement_slot_override_repository.dart';
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 
-
 /// اکشن‌های «فقط این هفته» برای یک اسلات حرکت.
 Future<bool> showMovementSlotActionsSheet(
   BuildContext context, {
@@ -84,7 +83,9 @@ Future<bool> showMovementSlotActionsSheet(
                 onTap: () async {
                   final picked = await showTimePicker(
                     context: ctx,
-                    initialTime: _parseTime(item.timeLabel) ?? const TimeOfDay(hour: 18, minute: 30),
+                    initialTime:
+                        _parseTime(item.timeLabel) ??
+                        const TimeOfDay(hour: 18, minute: 30),
                   );
                   if (picked == null) return;
                   final hh = picked.hour.toString().padLeft(2, '0');

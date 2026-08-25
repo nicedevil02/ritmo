@@ -22,7 +22,9 @@ class SSCompensationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_handledPrefKey(dateStr), true);
-    } catch (e) { debugPrint('[ss] ss_compensation_service.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_compensation_service.dart: $e');
+    }
   }
 
   /// Option 1: Shift Schedule
@@ -43,7 +45,9 @@ class SSCompensationService {
 
       if (plans.isEmpty) return false;
 
-      final plansToShift = plans.where((p) => (p['dayOfWeek']! as int) >= missedDayOfWeek).toList();
+      final plansToShift = plans
+          .where((p) => (p['dayOfWeek']! as int) >= missedDayOfWeek)
+          .toList();
 
       for (final p in plansToShift) {
         final currentDow = p['dayOfWeek']! as int;
@@ -117,12 +121,15 @@ class SSCompensationService {
         orderBy: 'orderIndex DESC',
         limit: 1,
       );
-      var maxOrder = todayCrossrefs.isNotEmpty ? (todayCrossrefs.first['orderIndex'] as int? ?? 0) : 0;
+      var maxOrder = todayCrossrefs.isNotEmpty
+          ? (todayCrossrefs.first['orderIndex'] as int? ?? 0)
+          : 0;
 
       // 3. Append missed exercises to today's plan with targetSets reduced to 2 (Express)
       for (final ref in missedCrossrefs) {
         maxOrder++;
-        final newId = 'xref_express_${DateTime.now().millisecondsSinceEpoch}_$maxOrder';
+        final newId =
+            'xref_express_${DateTime.now().millisecondsSinceEpoch}_$maxOrder';
         await db.insert('ss_workout_exercise_crossref', {
           'id': newId,
           'planId': todayPlanId,
@@ -136,7 +143,11 @@ class SSCompensationService {
       }
 
       // 4. Update today's estimated minutes slightly (+10 mins)
-      final todayPlans = await db.query('ss_workout_plan', where: 'id = ?', whereArgs: [todayPlanId]);
+      final todayPlans = await db.query(
+        'ss_workout_plan',
+        where: 'id = ?',
+        whereArgs: [todayPlanId],
+      );
       if (todayPlans.isNotEmpty) {
         final currentEst = todayPlans.first['estimatedMinutes'] as int? ?? 45;
         await db.update(
@@ -161,7 +172,9 @@ class SSCompensationService {
 
       return true;
     } catch (e, st) {
-      debugPrint('[SSCompensationService] Error express merging workouts: $e\n$st');
+      debugPrint(
+        '[SSCompensationService] Error express merging workouts: $e\n$st',
+      );
       return false;
     }
   }
@@ -174,21 +187,17 @@ class SSCompensationService {
   }) async {
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'ss_workout_session_log',
-        {
-          'id': 'log_adapted_rest_${DateTime.now().millisecondsSinceEpoch}',
-          'planId': missedPlanId,
-          'startedAt': now - 86400000,
-          'finishedAt': now - 86400000 + 60000,
-          'totalExercisesCount': 0,
-          'completedExercisesCount': 0,
-          'durationSeconds': 0,
-          'rpe': 1,
-          'feedbackNotes': 'Adaptive Rest (استراحت منطبیق‌شده جهت بازیابی)',
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('ss_workout_session_log', {
+        'id': 'log_adapted_rest_${DateTime.now().millisecondsSinceEpoch}',
+        'planId': missedPlanId,
+        'startedAt': now - 86400000,
+        'finishedAt': now - 86400000 + 60000,
+        'totalExercisesCount': 0,
+        'completedExercisesCount': 0,
+        'durationSeconds': 0,
+        'rpe': 1,
+        'feedbackNotes': 'Adaptive Rest (استراحت منطبیق‌شده جهت بازیابی)',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       await db.insert('ss_decision_log', {
         'id': 'dec_rest_${DateTime.now().millisecondsSinceEpoch}',

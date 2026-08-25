@@ -5,7 +5,8 @@ class SsExerciseFarsiNames {
   static const Map<String, Map<String, String>> names = {
     'bo001_side_leg_lift': {
       'title_fa': 'بالا بردن پا از پهلو خوابیده',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo002_mountain_climbers': {
       'title_fa': 'حرکت کوهنوردی شکم',
@@ -185,7 +186,8 @@ class SsExerciseFarsiNames {
     },
     'bo052_sit_ups': {
       'title_fa': 'Sit Ups',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo053_mason_twist': {
       'title_fa': 'Mason Twist',
@@ -193,15 +195,18 @@ class SsExerciseFarsiNames {
     },
     'bo054_v_sit_ups': {
       'title_fa': 'V Sit Ups',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo055_elevated_crunches': {
       'title_fa': 'Elevated کرانچ',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo056_reaching_crunch': {
       'title_fa': 'Reaching کرانچ',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo057_back_wrist_stretch': {
       'title_fa': 'پشت مچ دست کشش',
@@ -263,10 +268,7 @@ class SsExerciseFarsiNames {
       'title_fa': 'Puppet Spin',
       'desc_fa': 'پشت خود را صاف نگه دارید.',
     },
-    'bo075_burpees': {
-      'title_fa': 'Burpees',
-      'desc_fa': 'پشت خود را خم نکنید.',
-    },
+    'bo075_burpees': {'title_fa': 'Burpees', 'desc_fa': 'پشت خود را خم نکنید.'},
     'bo076_push_up_burpees': {
       'title_fa': 'Push Up Burpees',
       'desc_fa': 'پشت خود را خم نکنید.',
@@ -421,7 +423,8 @@ class SsExerciseFarsiNames {
     },
     'bo116_triangle_pose': {
       'title_fa': 'Triangle حرکت / ژست',
-      'desc_fa': 'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
+      'desc_fa':
+          'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
     },
     'bo117_side_bend': {
       'title_fa': 'پهلو Bend',
@@ -433,7 +436,8 @@ class SsExerciseFarsiNames {
     },
     'bo119_warrior_2': {
       'title_fa': 'جنگجو II',
-      'desc_fa': 'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
+      'desc_fa':
+          'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
     },
     'bo120_over_head_clap': {
       'title_fa': 'Overhead Clap',
@@ -469,7 +473,8 @@ class SsExerciseFarsiNames {
     },
     'bo129_abs_rollups': {
       'title_fa': 'Ab Rollups',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo130_seated_core_twist': {
       'title_fa': 'نشسته شکم (هسته) Twist',
@@ -477,7 +482,8 @@ class SsExerciseFarsiNames {
     },
     'bo131_teaser': {
       'title_fa': 'Teaser',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo133_arm_circles': {
       'title_fa': 'Forward دست / بازو چرخشی',
@@ -553,7 +559,8 @@ class SsExerciseFarsiNames {
     },
     'bo155_wide_legged_bend': {
       'title_fa': 'Wide Legged Bend',
-      'desc_fa': 'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
+      'desc_fa':
+          'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
     },
     'bo156_bent_over_twist': {
       'title_fa': 'Bent Over Twist',
@@ -633,7 +640,8 @@ class SsExerciseFarsiNames {
     },
     'bo177_toe_touches': {
       'title_fa': 'پنجه پا Touches',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo178_roof_kickback': {
       'title_fa': 'Roof Kickback',
@@ -649,7 +657,8 @@ class SsExerciseFarsiNames {
     },
     'bo181_warrior_3': {
       'title_fa': 'جنگجو III',
-      'desc_fa': 'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
+      'desc_fa':
+          'انگشتان پای خود را باز کنید و آنها را محکم در تشک بکارید - این باعث ثبات بیشتر موضع شما می شود.',
     },
     'bo182_side_lunge_march': {
       'title_fa': 'پهلو لانژ March',
@@ -661,7 +670,8 @@ class SsExerciseFarsiNames {
     },
     'bo184_leg_lifts': {
       'title_fa': 'Leg بالا آوردن',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo185_cross_country_run': {
       'title_fa': 'Cross Country دویدن',
@@ -717,7 +727,8 @@ class SsExerciseFarsiNames {
     },
     'bo203_crunches': {
       'title_fa': 'کرانچ',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo204_arm_raise_plank': {
       'title_fa': 'دست / بازو بالا آوردن پلانک',
@@ -909,7 +920,8 @@ class SsExerciseFarsiNames {
     },
     'bo317_side_crunches': {
       'title_fa': 'پهلو کرانچ',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo318_elbow_to_the_knee': {
       'title_fa': 'آرنج to the زانو',
@@ -1029,7 +1041,8 @@ class SsExerciseFarsiNames {
     },
     'bo357_adbdominal_hip_raise': {
       'title_fa': 'شکم باسن بالا آوردن',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo358_abdominal_marching': {
       'title_fa': 'Supine Marching',
@@ -1049,7 +1062,8 @@ class SsExerciseFarsiNames {
     },
     'bo362_dynamic_rollups': {
       'title_fa': 'پویا Rollups',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
     'bo363_side_to_side_reach': {
       'title_fa': 'پهلو to پهلو Reach',
@@ -1073,7 +1087,8 @@ class SsExerciseFarsiNames {
     },
     'bo401_v_sit_hold': {
       'title_fa': 'V Sit ایستایی',
-      'desc_fa': 'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
+      'desc_fa':
+          'از شکم خود برای بلند شدن استفاده کنید، گردن و شانه های شما شل هستند.',
     },
   };
 }

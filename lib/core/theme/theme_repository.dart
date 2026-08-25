@@ -26,6 +26,8 @@ class ThemeRepository {
       if (key == 'theme_mode' ||
           key == 'theme_palette' ||
           key == 'theme_reduce_transparency' ||
+          key == 'glass_blur_intensity' ||
+          key == 'glass_opacity_percent' ||
           key == 'theme_true_black' ||
           key == 'ui_text_scale' ||
           key == 'ui_text_follow_os' ||
@@ -41,6 +43,12 @@ class ThemeRepository {
       final paletteStr = SettingsService.instance.get<String>('theme_palette');
       final reduceTrans = SettingsService.instance.get<bool>(
         'theme_reduce_transparency',
+      );
+      final glassBlurInt = SettingsService.instance.get<int>(
+        'glass_blur_intensity',
+      );
+      final glassOpacity = SettingsService.instance.get<int>(
+        'glass_opacity_percent',
       );
       final trueBlk = SettingsService.instance.get<bool>('theme_true_black');
       final textScalePercent = SettingsService.instance.get<int>(
@@ -58,6 +66,8 @@ class ThemeRepository {
         paletteId: paletteId,
         reduceTransparency: reduceTrans,
         trueBlack: trueBlk,
+        glassBlurSigma: glassBlurInt.toDouble(),
+        glassOpacityPercent: glassOpacity,
         textScalePercent: textScalePercent,
         followOsTextScale: followOs,
         density: density,
@@ -130,6 +140,20 @@ class ThemeRepository {
     );
   }
 
+  Future<bool> updateGlassBlurSigma(double sigma) async {
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(glassBlurSigma: sigma);
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.set('glass_blur_intensity', sigma.round());
+  }
+
+  Future<bool> updateGlassOpacityPercent(int percent) async {
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(glassOpacityPercent: percent);
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.set('glass_opacity_percent', percent);
+  }
+
   Future<bool> updateTrueBlack(bool trueBlack) async {
     final current = preferencesNotifier.value;
     final updated = current.copyWith(trueBlack: trueBlack);
@@ -170,6 +194,8 @@ class ThemeRepository {
       'theme_mode': _serializeThemeMode(defaults.mode),
       'theme_palette': RitmoPalette.serializeId(defaults.paletteId),
       'theme_reduce_transparency': false,
+      'glass_blur_intensity': 20,
+      'glass_opacity_percent': 35,
       'theme_true_black': false,
       'ui_text_scale': defaults.textScalePercent,
       'ui_text_follow_os': defaults.followOsTextScale,

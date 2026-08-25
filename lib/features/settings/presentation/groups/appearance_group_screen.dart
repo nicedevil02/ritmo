@@ -485,6 +485,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                 SettingsSection(
                   title: 'جلوه‌های بصری و نمایشگر',
                   children: [
+                    // ۱. خاموش‌سازی کامل متریال شیشه‌ای
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: m.spaceLg,
@@ -498,7 +499,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'کاهش شفافیت',
+                                  'غیرفعال‌سازی متریال شیشه‌ای',
                                   style:
                                       context.t.titleSmall?.copyWith(
                                         fontWeight: FontWeight.w600,
@@ -511,7 +512,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 ),
                                 SizedBox(height: m.spaceXs),
                                 Text(
-                                  'سطوح شیشه‌ای مات می‌شوند (مناسب دستگاه‌های ضعیف‌تر)',
+                                  'حذف افکت بلور شیشه‌ای برای روان‌تر شدن برنامه در گوشی‌های ضعیف‌تر',
                                   style:
                                       context.t.bodySmall?.copyWith(
                                         color: colors.textSecondary,
@@ -535,6 +536,178 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                         ],
                       ),
                     ),
+
+                    if (!prefs.reduceTransparency) ...[
+                      // پیش‌نمایش زنده متریال شیشه‌ای
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: m.spaceLg,
+                          vertical: m.spaceSm,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(RitmoRadius.card),
+                          child: Stack(
+                            children: [
+                              // پس‌زمینه رنگی پیش‌نمایش
+                              Container(
+                                height: 84,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      colors.primary.withValues(alpha: 0.6),
+                                      colors.accent.withValues(alpha: 0.5),
+                                    ],
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'پیش‌نمایش زنده متریال شیشه‌ای ریتمو',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.7),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      fontFamily: 'Vazirmatn',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // لایه شیشه روی آن
+                              Positioned.fill(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: RitmoGlassCard(
+                                    borderRadius: BorderRadius.circular(12),
+                                    blurSigma: prefs.glassBlurSigma,
+                                    color: (context.isDark ? Colors.black : Colors.white).withValues(
+                                      alpha: (prefs.glassOpacityPercent / 100.0).clamp(0.05, 0.95),
+                                    ),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.auto_awesome,
+                                            size: 18,
+                                            color: colors.primary,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'ماتی: ${prefs.glassBlurSigma.round()}px | شفافیت: ${prefs.glassOpacityPercent}٪',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: colors.textPrimary,
+                                              fontFamily: 'Vazirmatn',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // اسلایدر میزان مات بودن شیشه (بلور)
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: m.spaceLg,
+                          vertical: m.spaceSm,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'میزان مات بودن شیشه (بلور)',
+                                  style: context.t.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  '${prefs.glassBlurSigma.round()} پیکسل',
+                                  style: TextStyle(
+                                    color: colors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    fontFamily: 'Vazirmatn',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: m.spaceXs),
+                            Slider(
+                              value: prefs.glassBlurSigma.clamp(0.0, 40.0),
+                              min: 0,
+                              max: 40,
+                              divisions: 40,
+                              activeColor: colors.primary,
+                              inactiveColor: colors.border,
+                              onChanged: (val) {
+                                widget.themeRepository.updateGlassBlurSigma(val);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // اسلایدر میزان شفافیت / غلظت شیشه
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: m.spaceLg,
+                          vertical: m.spaceSm,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'میزان شفافیت شیشه',
+                                  style: context.t.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  '${prefs.glassOpacityPercent}٪',
+                                  style: TextStyle(
+                                    color: colors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    fontFamily: 'Vazirmatn',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: m.spaceXs),
+                            Slider(
+                              value: prefs.glassOpacityPercent.toDouble().clamp(10.0, 85.0),
+                              min: 10,
+                              max: 85,
+                              divisions: 15,
+                              activeColor: colors.primary,
+                              inactiveColor: colors.border,
+                              onChanged: (val) {
+                                widget.themeRepository.updateGlassOpacityPercent(val.round());
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    Divider(color: colors.divider, height: 1),
+
+                    // ۲. سیاه خالص OLED
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: m.spaceLg,

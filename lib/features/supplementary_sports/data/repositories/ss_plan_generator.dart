@@ -71,9 +71,10 @@ class SSPlanGenerator {
     final isFemale = (profile.gender ?? '').toUpperCase() == 'FEMALE';
     final hasCore = profile.focusAreas.contains(BodyArea.core);
     final hasLegs = profile.focusAreas.contains(BodyArea.legs);
-    final hasChestOrUpper = profile.focusAreas.contains(BodyArea.chest) || 
-                            profile.focusAreas.contains(BodyArea.arms) || 
-                            profile.focusAreas.contains(BodyArea.shoulders);
+    final hasChestOrUpper =
+        profile.focusAreas.contains(BodyArea.chest) ||
+        profile.focusAreas.contains(BodyArea.arms) ||
+        profile.focusAreas.contains(BodyArea.shoulders);
 
     if (profile.neighborFriendly) {
       if (profile.goal == FitnessGoal.fatLoss) {
@@ -109,7 +110,8 @@ class SSPlanGenerator {
       return 'sprint_cardio';
     }
 
-    if (profile.goal == FitnessGoal.muscleGain || profile.goal == FitnessGoal.strength) {
+    if (profile.goal == FitnessGoal.muscleGain ||
+        profile.goal == FitnessGoal.strength) {
       if (hasCore) {
         return 'insane_six_pack';
       }
@@ -143,7 +145,8 @@ class SSPlanGenerator {
     final setCode = _selectSetCode(profile);
 
     // 1. Fetch exercises from SQLite that belong to the chosen set and have suitability > 0
-    final List<Map<String, dynamic>> rawDbResult = await db.rawQuery('''
+    final List<Map<String, dynamic>> rawDbResult = await db.rawQuery(
+      '''
       SELECT e.*, 
              s.suitability, 
              s.suitability_lowerbody, 
@@ -157,7 +160,9 @@ class SSPlanGenerator {
       FROM ss_exercise e
       JOIN ss_exercise_set_suitability s ON e.id = s.exercise_id
       WHERE s.set_code = ? AND s.suitability > 0
-    ''', [setCode]);
+    ''',
+      [setCode],
+    );
 
     var allExercises = rawDbResult;
     if (allExercises.isEmpty) {
@@ -185,8 +190,8 @@ class SSPlanGenerator {
         if (noisyVal >= 2 || impactVal >= 2) return false;
       }
       return _isExerciseAllowed(ex, profile.availableEquipment) &&
-             _satisfiesLimitations(ex, profile.physicalLimitations) &&
-             _satisfiesSkill(ex, profile.experienceLevel);
+          _satisfiesLimitations(ex, profile.physicalLimitations) &&
+          _satisfiesSkill(ex, profile.experienceLevel);
     }).toList();
 
     // Fallback conflict resolution
@@ -194,13 +199,15 @@ class SSPlanGenerator {
     if (finalExercises.isEmpty) {
       finalExercises = allExercises.where((ex) {
         final tools = _decodeTools(ex['toolsRequired']);
-        final isBodyweight = tools.isEmpty || ex['equipment']?.toString() == 'bodyweightOnly';
-        final isSafeCategory = ex['category']?.toString() == 'warmup' ||
-                               ex['category']?.toString() == 'stretching' ||
-                               ex['category']?.toString() == 'yoga';
+        final isBodyweight =
+            tools.isEmpty || ex['equipment']?.toString() == 'bodyweightOnly';
+        final isSafeCategory =
+            ex['category']?.toString() == 'warmup' ||
+            ex['category']?.toString() == 'stretching' ||
+            ex['category']?.toString() == 'yoga';
         return isBodyweight && isSafeCategory;
       }).toList();
-      
+
       if (finalExercises.isEmpty) {
         throw StateError(
           'SS_NO_SAFE_EXERCISES: No exercise satisfies equipment, skill, '
@@ -216,11 +223,7 @@ class SSPlanGenerator {
       where: 'planId = ?',
       whereArgs: [planId],
     );
-    await db.delete(
-      'ss_workout_plan',
-      where: 'id = ?',
-      whereArgs: [planId],
-    );
+    await db.delete('ss_workout_plan', where: 'id = ?', whereArgs: [planId]);
 
     // 4. Determine schedule split (days of the week)
     final workoutDays = <int>[];
@@ -250,7 +253,12 @@ class SSPlanGenerator {
 
     if (splitLength == 1) {
       // Full Body
-      targetCategories = ['upper_body', 'lower_body', 'shoulder_and_back', 'core'];
+      targetCategories = [
+        'upper_body',
+        'lower_body',
+        'shoulder_and_back',
+        'core',
+      ];
       farsiMuscleNames = ['کل بدن'];
     } else if (splitLength == 2) {
       if (finalDayIndex == 0) {
@@ -286,8 +294,10 @@ class SSPlanGenerator {
     // Helper for sorting groups: sort by set_sort_order first, then by score DESC
     void sortGroup(List<Map<String, dynamic>> list) {
       list.sort((a, b) {
-        final orderA = int.tryParse(a['set_sort_order']?.toString() ?? '0') ?? 0;
-        final orderB = int.tryParse(b['set_sort_order']?.toString() ?? '0') ?? 0;
+        final orderA =
+            int.tryParse(a['set_sort_order']?.toString() ?? '0') ?? 0;
+        final orderB =
+            int.tryParse(b['set_sort_order']?.toString() ?? '0') ?? 0;
         if (orderA != 0 || orderB != 0) {
           if (orderA == 0) return 1;
           if (orderB == 0) return -1;
@@ -301,7 +311,11 @@ class SSPlanGenerator {
 
     // 5.1. Warmup (1 exercise)
     final warmups = finalExercises
-        .where((ex) => ex['category']?.toString() == 'warmup' || ex['category']?.toString() == 'stretching')
+        .where(
+          (ex) =>
+              ex['category']?.toString() == 'warmup' ||
+              ex['category']?.toString() == 'stretching',
+        )
         .toList();
     sortGroup(warmups);
     if (warmups.isNotEmpty) {
@@ -313,17 +327,26 @@ class SSPlanGenerator {
         .where((ex) => targetCategories.contains(ex['category']?.toString()))
         .toList();
     sortGroup(primaryOptions);
-    
+
     if (primaryOptions.isNotEmpty) {
       final selectCount = max(2, targetCount - 3);
-      final topOptions = primaryOptions.take(min(12, primaryOptions.length)).toList();
+      final topOptions = primaryOptions
+          .take(min(12, primaryOptions.length))
+          .toList();
       topOptions.shuffle(random);
-      sessionExercises.addAll(topOptions.take(min(selectCount, topOptions.length)));
+      sessionExercises.addAll(
+        topOptions.take(min(selectCount, topOptions.length)),
+      );
     }
 
     // 5.3. Finishers/Cardio (1-2 exercises)
     final finishers = finalExercises
-        .where((ex) => ex['category']?.toString() == 'core' || ex['category']?.toString() == 'cardio' || ex['category']?.toString() == 'plyometric')
+        .where(
+          (ex) =>
+              ex['category']?.toString() == 'core' ||
+              ex['category']?.toString() == 'cardio' ||
+              ex['category']?.toString() == 'plyometric',
+        )
         .toList();
     sortGroup(finishers);
     if (finishers.isNotEmpty) {
@@ -334,7 +357,11 @@ class SSPlanGenerator {
 
     // 5.4. Cooldown (1 exercise)
     final cooldowns = finalExercises
-        .where((ex) => ex['category']?.toString() == 'stretching' || ex['category']?.toString() == 'yoga')
+        .where(
+          (ex) =>
+              ex['category']?.toString() == 'stretching' ||
+              ex['category']?.toString() == 'yoga',
+        )
         .toList();
     sortGroup(cooldowns);
     if (cooldowns.isNotEmpty) {
@@ -379,8 +406,9 @@ class SSPlanGenerator {
 
     double? baseWeight;
     // Unknown load remains null until actual user history/input exists.
-    final hasWeights = profile.availableEquipment.contains(Equipment.dumbbell) ||
-                       profile.availableEquipment.contains(Equipment.barbell);
+    final hasWeights =
+        profile.availableEquipment.contains(Equipment.dumbbell) ||
+        profile.availableEquipment.contains(Equipment.barbell);
 
     // Apply Progressive Overload & Deload week adjustments
     if (isDeload || week == 4) {
@@ -407,18 +435,24 @@ class SSPlanGenerator {
     for (var order = 0; order < uniqueSessionExercises.length; order++) {
       final ex = uniqueSessionExercises[order];
       final crossId = 'cross_${planId}_${ex['id']}_$order';
-      final isWarmupOrCool = ex['category']?.toString() == 'warmup' ||
-                             ex['category']?.toString() == 'stretching' ||
-                             ex['category']?.toString() == 'yoga';
+      final isWarmupOrCool =
+          ex['category']?.toString() == 'warmup' ||
+          ex['category']?.toString() == 'stretching' ||
+          ex['category']?.toString() == 'yoga';
 
       final isWeightSupported = (ex['weightSupported'] as int? ?? 0) == 1;
-      
+
       var exerciseSets = isWarmupOrCool ? 1 : baseSets;
       var exerciseReps = isWarmupOrCool ? 12 : baseReps;
-      final exerciseWeight = (isWarmupOrCool || !isWeightSupported || !hasWeights) ? null : baseWeight;
+      final exerciseWeight =
+          (isWarmupOrCool || !isWeightSupported || !hasWeights)
+          ? null
+          : baseWeight;
 
       // Apply Progressive Overload signals (only maintain or decrease allowed during deload)
-      if (!isWarmupOrCool && progressionSignals != null && progressionSignals.containsKey(ex['id'])) {
+      if (!isWarmupOrCool &&
+          progressionSignals != null &&
+          progressionSignals.containsKey(ex['id'])) {
         final signal = progressionSignals[ex['id']];
         if (!isDeload && signal == ProgressionSignal.increase) {
           if (exerciseReps < 15) {
@@ -461,10 +495,15 @@ class SSPlanGenerator {
     }
   }
 
-  static bool _isExerciseAllowed(Map<String, dynamic> ex, List<Equipment> availableEquipment) {
+  static bool _isExerciseAllowed(
+    Map<String, dynamic> ex,
+    List<Equipment> availableEquipment,
+  ) {
     final tools = _decodeTools(ex['toolsRequired']);
 
-    final isBodyweightOnly = availableEquipment.contains(Equipment.bodyweightOnly);
+    final isBodyweightOnly = availableEquipment.contains(
+      Equipment.bodyweightOnly,
+    );
     if (isBodyweightOnly) {
       return tools.isEmpty;
     }
@@ -489,7 +528,7 @@ class SSPlanGenerator {
         for (final tool in option) {
           final toolStr = tool.toString();
           final requiredEquip = toolMapping[toolStr];
-          
+
           if (requiredEquip != null) {
             if (!availableEquipment.contains(requiredEquip)) {
               optionSatisfied = false;
@@ -501,7 +540,8 @@ class SSPlanGenerator {
               var partSatisfied = false;
               for (final part in parts) {
                 final partEquip = toolMapping[part.trim()];
-                if (partEquip == null || availableEquipment.contains(partEquip)) {
+                if (partEquip == null ||
+                    availableEquipment.contains(partEquip)) {
                   partSatisfied = true;
                   break;
                 }
@@ -522,7 +562,10 @@ class SSPlanGenerator {
     return false;
   }
 
-  static bool _satisfiesLimitations(Map<String, dynamic> ex, List<Limitation> limitations) {
+  static bool _satisfiesLimitations(
+    Map<String, dynamic> ex,
+    List<Limitation> limitations,
+  ) {
     if (limitations.contains(Limitation.none)) return true;
 
     final name = (ex['name'] ?? '').toString().toLowerCase();
@@ -540,52 +583,105 @@ class SSPlanGenerator {
 
     for (final lim in limitations) {
       if (lim == Limitation.kneeProblems) {
-        final hasKneeLoad = name.contains('squat') || name.contains('lunge') || name.contains('jump') || name.contains('jumping') ||
-                            name.contains('اسکوات') || name.contains('لانژ') || name.contains('پرش') || name.contains('هاپ') ||
-                            nameEn.contains('squat') || nameEn.contains('lunge') || nameEn.contains('jump') || nameEn.contains('jumping');
+        final hasKneeLoad =
+            name.contains('squat') ||
+            name.contains('lunge') ||
+            name.contains('jump') ||
+            name.contains('jumping') ||
+            name.contains('اسکوات') ||
+            name.contains('لانژ') ||
+            name.contains('پرش') ||
+            name.contains('هاپ') ||
+            nameEn.contains('squat') ||
+            nameEn.contains('lunge') ||
+            nameEn.contains('jump') ||
+            nameEn.contains('jumping');
         if (hasKneeLoad) return false;
-        
-        if (constraint != null && const ['4', '5', '6', '7', '11', '18', '33', '38'].contains(constraint)) {
+
+        if (constraint != null &&
+            const [
+              '4',
+              '5',
+              '6',
+              '7',
+              '11',
+              '18',
+              '33',
+              '38',
+            ].contains(constraint)) {
           return false;
         }
       }
       if (lim == Limitation.backProblems) {
-        final hasBackLoad = name.contains('deadlift') || name.contains('superman') || name.contains('good morning') ||
-                            name.contains('ددلیفت') || name.contains('فیله کمر') ||
-                            nameEn.contains('deadlift') || nameEn.contains('superman') || nameEn.contains('good morning');
+        final hasBackLoad =
+            name.contains('deadlift') ||
+            name.contains('superman') ||
+            name.contains('good morning') ||
+            name.contains('ددلیفت') ||
+            name.contains('فیله کمر') ||
+            nameEn.contains('deadlift') ||
+            nameEn.contains('superman') ||
+            nameEn.contains('good morning');
         if (hasBackLoad) return false;
       }
       if (lim == Limitation.shoulderProblems) {
-        final hasShoulderLoad = name.contains('shoulder press') || name.contains('overhead') || name.contains('handstand') ||
-                                name.contains('سرشانه') || name.contains('هنداستند') || name.contains('پرس شانه') ||
-                                nameEn.contains('shoulder press') || nameEn.contains('overhead') || nameEn.contains('handstand');
+        final hasShoulderLoad =
+            name.contains('shoulder press') ||
+            name.contains('overhead') ||
+            name.contains('handstand') ||
+            name.contains('سرشانه') ||
+            name.contains('هنداستند') ||
+            name.contains('پرس شانه') ||
+            nameEn.contains('shoulder press') ||
+            nameEn.contains('overhead') ||
+            nameEn.contains('handstand');
         if (hasShoulderLoad) return false;
 
-        if (constraint != null && const ['1', '28', '34'].contains(constraint)) {
+        if (constraint != null &&
+            const ['1', '28', '34'].contains(constraint)) {
           return false;
         }
       }
       if (lim == Limitation.wristProblems) {
-        final hasWristLoad = name.contains('pushup') || name.contains('plank') || name.contains('handstand') ||
-                             name.contains('شنا روی زمین') || name.contains('پلانک') ||
-                             nameEn.contains('pushup') || nameEn.contains('plank') || nameEn.contains('handstand');
+        final hasWristLoad =
+            name.contains('pushup') ||
+            name.contains('plank') ||
+            name.contains('handstand') ||
+            name.contains('شنا روی زمین') ||
+            name.contains('پلانک') ||
+            nameEn.contains('pushup') ||
+            nameEn.contains('plank') ||
+            nameEn.contains('handstand');
         if (hasWristLoad) return false;
 
-        if (constraint != null && const ['1', '9', '30', '39'].contains(constraint)) {
+        if (constraint != null &&
+            const ['1', '9', '30', '39'].contains(constraint)) {
           return false;
         }
       }
       if (lim == Limitation.noPullUps) {
-        final hasPullup = name.contains('pullup') || name.contains('pull-up') || name.contains('بارفیکس') ||
-                          nameEn.contains('pullup') || nameEn.contains('pull-up');
+        final hasPullup =
+            name.contains('pullup') ||
+            name.contains('pull-up') ||
+            name.contains('بارفیکس') ||
+            nameEn.contains('pullup') ||
+            nameEn.contains('pull-up');
         if (hasPullup) return false;
       }
       if (lim == Limitation.noJumping) {
-        final hasJumping = name.contains('jump') || name.contains('jumping') || name.contains('burpee') || name.contains('پرش') || name.contains('بورپی') ||
-                           nameEn.contains('jump') || nameEn.contains('jumping') || nameEn.contains('burpee');
+        final hasJumping =
+            name.contains('jump') ||
+            name.contains('jumping') ||
+            name.contains('burpee') ||
+            name.contains('پرش') ||
+            name.contains('بورپی') ||
+            nameEn.contains('jump') ||
+            nameEn.contains('jumping') ||
+            nameEn.contains('burpee');
         if (hasJumping) return false;
 
-        if (constraint != null && const ['4', '5', '9', '11', '12', '33'].contains(constraint)) {
+        if (constraint != null &&
+            const ['4', '5', '9', '11', '12', '33'].contains(constraint)) {
           return false;
         }
       }
@@ -594,12 +690,21 @@ class SSPlanGenerator {
     return true;
   }
 
-  static bool _satisfiesSkill(Map<String, dynamic> ex, ExperienceLevel experience) {
-    final skillRequired = int.tryParse(ex['set_skill_required']?.toString() ?? '-1') ?? -1;
-    final skillMax = int.tryParse(ex['set_skill_max']?.toString() ?? '-1') ?? -1;
+  static bool _satisfiesSkill(
+    Map<String, dynamic> ex,
+    ExperienceLevel experience,
+  ) {
+    final skillRequired =
+        int.tryParse(ex['set_skill_required']?.toString() ?? '-1') ?? -1;
+    final skillMax =
+        int.tryParse(ex['set_skill_max']?.toString() ?? '-1') ?? -1;
 
-    final skillReq = skillRequired != -1 ? skillRequired : (int.tryParse(ex['skillRequired']?.toString() ?? '0') ?? 0);
-    final skillMx = skillMax != -1 ? skillMax : (int.tryParse(ex['skill_max']?.toString() ?? '10') ?? 10);
+    final skillReq = skillRequired != -1
+        ? skillRequired
+        : (int.tryParse(ex['skillRequired']?.toString() ?? '0') ?? 0);
+    final skillMx = skillMax != -1
+        ? skillMax
+        : (int.tryParse(ex['skill_max']?.toString() ?? '10') ?? 10);
 
     var userLevel = 3;
     if (experience == ExperienceLevel.intermediate) {
@@ -613,16 +718,27 @@ class SSPlanGenerator {
 
   // --- Sorting & Scoring helpers ---
 
-  static double _calculateExerciseScore(Map<String, dynamic> ex, SsUserProfile profile) {
-    final suitabilityVal = int.tryParse(ex['suitability']?.toString() ?? '0') ?? 0;
-    final suitabilityLower = int.tryParse(ex['suitability_lowerbody']?.toString() ?? '-1') ?? -1;
-    final suitabilityAb = int.tryParse(ex['suitability_abscore']?.toString() ?? '-1') ?? -1;
-    final suitabilityBack = int.tryParse(ex['suitability_back']?.toString() ?? '-1') ?? -1;
-    final suitabilityUpper = int.tryParse(ex['suitability_upperbody']?.toString() ?? '-1') ?? -1;
+  static double _calculateExerciseScore(
+    Map<String, dynamic> ex,
+    SsUserProfile profile,
+  ) {
+    final suitabilityVal =
+        int.tryParse(ex['suitability']?.toString() ?? '0') ?? 0;
+    final suitabilityLower =
+        int.tryParse(ex['suitability_lowerbody']?.toString() ?? '-1') ?? -1;
+    final suitabilityAb =
+        int.tryParse(ex['suitability_abscore']?.toString() ?? '-1') ?? -1;
+    final suitabilityBack =
+        int.tryParse(ex['suitability_back']?.toString() ?? '-1') ?? -1;
+    final suitabilityUpper =
+        int.tryParse(ex['suitability_upperbody']?.toString() ?? '-1') ?? -1;
 
     var suitability = suitabilityVal.toDouble();
 
-    if (suitabilityLower != -1 && suitabilityAb != -1 && suitabilityBack != -1 && suitabilityUpper != -1) {
+    if (suitabilityLower != -1 &&
+        suitabilityAb != -1 &&
+        suitabilityBack != -1 &&
+        suitabilityUpper != -1) {
       var sum = 0.0;
       var count = 0.0;
       for (final area in profile.focusAreas) {
@@ -643,13 +759,22 @@ class SSPlanGenerator {
       if (count > 0.0) {
         suitability = sum / count;
       } else {
-        suitability = (suitabilityLower + suitabilityAb + suitabilityBack + suitabilityUpper) / 4.0;
+        suitability =
+            (suitabilityLower +
+                suitabilityAb +
+                suitabilityBack +
+                suitabilityUpper) /
+            4.0;
       }
     }
 
     final sexynessM = int.tryParse(ex['sexyness_m']?.toString() ?? '5') ?? 5;
     final sexynessF = int.tryParse(ex['sexyness_f']?.toString() ?? '5') ?? 5;
-    final sexyness = ((profile.gender ?? '').toUpperCase() == 'FEMALE' ? sexynessF : sexynessM).toDouble();
+    final sexyness =
+        ((profile.gender ?? '').toUpperCase() == 'FEMALE'
+                ? sexynessF
+                : sexynessM)
+            .toDouble();
 
     final looksCool = int.tryParse(ex['looksCool']?.toString() ?? '0') ?? 0;
 
@@ -667,7 +792,10 @@ class SSPlanGenerator {
     const w3 = 0.1; // looksCool
     const w4 = 0.2; // difficulty match
 
-    return (suitability * w1) + (sexyness * w2) + (looksCool * w3) - (diffPenalty * w4);
+    return (suitability * w1) +
+        (sexyness * w2) +
+        (looksCool * w3) -
+        (diffPenalty * w4);
   }
 
   /// Finds and filters suitable replacement candidates for a given exercise
@@ -677,38 +805,52 @@ class SSPlanGenerator {
     SsUserProfile profile, {
     int limit = 5,
   }) async {
-    var results = await db.rawQuery('''
+    var results = await db.rawQuery(
+      '''
       SELECT e.*, s.similarityScore 
       FROM ss_exercise_similarity s
       JOIN ss_exercise e ON s.similarExerciseId = e.id
       WHERE s.exerciseId = ?
       ORDER BY s.similarityScore DESC
-    ''', [exerciseId]);
+    ''',
+      [exerciseId],
+    );
 
     if (results.isEmpty) {
-      final categoryResult = await db.query('ss_exercise', where: 'id = ?', whereArgs: [exerciseId], limit: 1);
+      final categoryResult = await db.query(
+        'ss_exercise',
+        where: 'id = ?',
+        whereArgs: [exerciseId],
+        limit: 1,
+      );
       if (categoryResult.isNotEmpty) {
-        final category = categoryResult.first['category']?.toString() ?? 'Full Body';
-        results = await db.rawQuery('''
+        final category =
+            categoryResult.first['category']?.toString() ?? 'Full Body';
+        results = await db.rawQuery(
+          '''
           SELECT *, 0.5 as similarityScore
           FROM ss_exercise
           WHERE category = ? AND id != ?
           ORDER BY RANDOM()
           LIMIT 20
-        ''', [category, exerciseId]);
+        ''',
+          [category, exerciseId],
+        );
       }
     }
 
     final filtered = results.where((ex) {
       return _isExerciseAllowed(ex, profile.availableEquipment) &&
-             _satisfiesLimitations(ex, profile.physicalLimitations) &&
-             _satisfiesSkill(ex, profile.experienceLevel);
+          _satisfiesLimitations(ex, profile.physicalLimitations) &&
+          _satisfiesSkill(ex, profile.experienceLevel);
     }).toList();
 
     return filtered.take(limit).toList();
   }
 
-  static (int estimatedMinutes, int targetCount) getSessionDefaults(SessionDuration duration) {
+  static (int estimatedMinutes, int targetCount) getSessionDefaults(
+    SessionDuration duration,
+  ) {
     switch (duration) {
       case SessionDuration.short30:
         return (30, 4);

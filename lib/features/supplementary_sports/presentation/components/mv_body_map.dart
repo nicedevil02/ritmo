@@ -44,7 +44,11 @@ class MvBodyMap extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.accessibility_new_rounded, color: colors.primary, size: metrics.iconMd),
+              Icon(
+                Icons.accessibility_new_rounded,
+                color: colors.primary,
+                size: metrics.iconMd,
+              ),
             ],
           ),
           SizedBox(height: metrics.spaceMd),
@@ -84,17 +88,26 @@ class MvBodyMap extends StatelessWidget {
                         Text(
                           mg.titleFa,
                           style: textTheme.labelSmall?.copyWith(
-                            color: isTrained ? colors.primary : colors.textSecondary,
-                            fontWeight: isTrained ? FontWeight.w700 : FontWeight.normal,
+                            color: isTrained
+                                ? colors.primary
+                                : colors.textSecondary,
+                            fontWeight: isTrained
+                                ? FontWeight.w700
+                                : FontWeight.normal,
                           ),
                         ),
                         if (isTrained) ...[
                           SizedBox(width: metrics.spaceXs),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.primary,
-                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.pill,
+                              ),
                             ),
                             child: Text(
                               count.toString(),
@@ -127,11 +140,17 @@ class MvBodyMap extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(metrics.radiusField),
-                    border: Border.all(color: colors.accent.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: colors.accent.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.lightbulb_outline_rounded, color: colors.accent, size: metrics.iconMd),
+                      Icon(
+                        Icons.lightbulb_outline_rounded,
+                        color: colors.accent,
+                        size: metrics.iconMd,
+                      ),
                       SizedBox(width: metrics.spaceSm),
                       Expanded(
                         child: Text(
@@ -142,7 +161,11 @@ class MvBodyMap extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: colors.accent, size: metrics.iconSm),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: colors.accent,
+                        size: metrics.iconSm,
+                      ),
                     ],
                   ),
                 ),

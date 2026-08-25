@@ -65,8 +65,9 @@ class MovementReminderService {
               0,
             ).subtract(const Duration(days: 1));
           } else {
-            reminderTime = sessionDateTime
-                .subtract(Duration(minutes: item.reminderMinutes));
+            reminderTime = sessionDateTime.subtract(
+              Duration(minutes: item.reminderMinutes),
+            );
           }
 
           if (reminderTime.isAfter(now)) {
@@ -80,7 +81,8 @@ class MovementReminderService {
                   '${toPersianDigits(item.reminderMinutes.toString())} دقیقه دیگه ${item.title} ${item.emoji}';
             }
 
-            final reminderId = 'movement_${item.id}_${reminderTime.millisecondsSinceEpoch}';
+            final reminderId =
+                'movement_${item.id}_${reminderTime.millisecondsSinceEpoch}';
 
             await NotificationGateway.schedule(
               NotificationRequest(

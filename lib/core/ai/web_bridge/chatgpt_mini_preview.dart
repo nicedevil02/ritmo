@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -107,42 +108,28 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final textTheme = Theme.of(context).textTheme;
     final controller = ChatGptWebBridgeManager.instance.controller;
+    final cardRadius = BorderRadius.circular(RitmoRadius.card);
 
     return ValueListenableBuilder<ChatGptBridgeStatus>(
       valueListenable: ChatGptWebBridgeManager.instance.statusNotifier,
       builder: (context, status, _) {
         final isError = status == ChatGptBridgeStatus.error;
         final isGenerating = status == ChatGptBridgeStatus.generating;
-        return Material(
-          type: MaterialType.transparency,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: RitmoSpacing.md, vertical: RitmoSpacing.xs),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(RitmoRadius.card),
-              border: Border.all(
-                color: colors.primary.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.shadow.withValues(alpha: 0.15),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    color: colors.surfaceSunken,
+
+        final cardContent = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.03),
                     child: Row(
                       children: [
                         Container(
@@ -376,8 +363,82 @@ class _ChatGptMiniPreviewState extends State<ChatGptMiniPreview> {
                       },
                     ),
                 ],
-              ),
+              );
+
+        return Material(
+          type: MaterialType.transparency,
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              horizontal: RitmoSpacing.md,
+              vertical: RitmoSpacing.xs,
             ),
+            child: !isGlass
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      borderRadius: cardRadius,
+                      border: Border.all(
+                        color: isDark ? colors.border : colors.divider,
+                        width: 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.shadow.withValues(alpha: 0.15),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
+                      child: cardContent,
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: cardRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.glassTint,
+                          borderRadius: cardRadius,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.70),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.shadow.withValues(alpha: 0.15),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: cardRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(
+                                  alpha: isDark ? 0.08 : 0.20,
+                                ),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.45],
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(RitmoRadius.card - 1),
+                            child: cardContent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         );
       },

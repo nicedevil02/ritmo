@@ -98,8 +98,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // 2. Verify Repeat Weekly Switch is present and turn it on
-        final repeatSwitchFinder =
-            find.byKey(const ValueKey('day_plan_repeat_weekly_switch'));
+        final repeatSwitchFinder = find.byKey(
+          const ValueKey('day_plan_repeat_weekly_switch'),
+        );
         expect(repeatSwitchFinder, findsOneWidget);
         await tester.ensureVisible(repeatSwitchFinder);
         await tester.pumpAndSettle();

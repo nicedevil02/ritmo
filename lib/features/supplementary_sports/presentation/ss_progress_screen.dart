@@ -30,7 +30,6 @@ class SSProgressEmpty extends SSProgressUiState {
 }
 
 class SSProgressLoaded extends SSProgressUiState {
-
   const SSProgressLoaded({
     required this.streakDays,
     required this.streakRecord,
@@ -62,11 +61,7 @@ class SSProgressLoaded extends SSProgressUiState {
 }
 
 class SSProgressScreen extends StatefulWidget {
-
-  const SSProgressScreen({
-    super.key,
-    required this.onNavigateToTab,
-  });
+  const SSProgressScreen({super.key, required this.onNavigateToTab});
   final Function(int) onNavigateToTab;
 
   @override
@@ -93,17 +88,22 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       final today = DateTime.now();
 
       // 1. Fetch total session count
-      final totalSessionsResult = await db.rawQuery("SELECT COUNT(*) as count FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')");
+      final totalSessionsResult = await db.rawQuery(
+        "SELECT COUNT(*) as count FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')",
+      );
       final totalSessions = Sqflite.firstIntValue(totalSessionsResult) ?? 0;
 
       // 2. Fetch total duration in minutes
-      final totalMinutesResult = await db.rawQuery("SELECT SUM(durationMinutes) as total FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')");
+      final totalMinutesResult = await db.rawQuery(
+        "SELECT SUM(durationMinutes) as total FROM workout_logs WHERE sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')",
+      );
       final totalMinutes = (Sqflite.firstIntValue(totalMinutesResult) ?? 0);
 
       // 3. Fetch all completed session logs
       final allLogs = await db.query(
         'workout_logs',
-        where: "sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')",
+        where:
+            "sourceModule IN ('ss_prescription', 'movement_tracker', 'ss_session')",
         orderBy: 'loggedAt ASC',
       );
 
@@ -133,13 +133,18 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       var currentStreak = 0;
       var maxStreak = 0;
       if (allLogs.isNotEmpty) {
-        final dates = allLogs.map((l) {
-          final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
-          return DateTime(dt.year, dt.month, dt.day);
-        }).toSet().toList();
-        
+        final dates = allLogs
+            .map((l) {
+              final dt = DateTime.fromMillisecondsSinceEpoch(
+                l['loggedAt']! as int,
+              );
+              return DateTime(dt.year, dt.month, dt.day);
+            })
+            .toSet()
+            .toList();
+
         dates.sort();
-        
+
         var tempStreak = 1;
         for (var i = 0; i < dates.length; i++) {
           if (i > 0) {
@@ -153,7 +158,7 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           }
         }
         if (tempStreak > maxStreak) maxStreak = tempStreak;
-        
+
         if (dates.isNotEmpty) {
           final daysSinceLatest = today.difference(dates.last).inDays;
           if (daysSinceLatest <= 1) {
@@ -165,7 +170,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       }
 
       // 6. Fetch weekly dots
-      final last7DaysStart = today.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+      final last7DaysStart = today
+          .subtract(const Duration(days: 7))
+          .millisecondsSinceEpoch;
       final recentLogs = await db.query(
         'workout_logs',
         where: "loggedAt >= ? AND sourceModule = 'ss_prescription'",
@@ -174,22 +181,56 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
 
       final contList = List<bool>.generate(7, (i) {
         final date = today.subtract(Duration(days: i));
-        final start = DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
-        final end = DateTime(date.year, date.month, date.day, 23, 59, 59).millisecondsSinceEpoch;
-        return recentLogs.any((log) => (log['loggedAt']! as int) >= start && (log['loggedAt']! as int) <= end);
+        final start = DateTime(
+          date.year,
+          date.month,
+          date.day,
+        ).millisecondsSinceEpoch;
+        final end = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          23,
+          59,
+          59,
+        ).millisecondsSinceEpoch;
+        return recentLogs.any(
+          (log) =>
+              (log['loggedAt']! as int) >= start &&
+              (log['loggedAt']! as int) <= end,
+        );
       });
 
       // 7. Calculate weekly minutes for chart (Saturday to Friday)
       final dayOfWeek = _getFarsiDayOfWeek(today);
       final startOfWeek = today.subtract(Duration(days: dayOfWeek - 1));
-      final startOfWeekMidnight = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+      final startOfWeekMidnight = DateTime(
+        startOfWeek.year,
+        startOfWeek.month,
+        startOfWeek.day,
+      );
 
       final weeklyMins = List<double>.generate(7, (i) {
         final targetDate = startOfWeekMidnight.add(Duration(days: i));
-        final start = DateTime(targetDate.year, targetDate.month, targetDate.day).millisecondsSinceEpoch;
-        final end = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59).millisecondsSinceEpoch;
-        
-        final targetLogs = allLogs.where((log) => (log['loggedAt']! as int) >= start && (log['loggedAt']! as int) <= end);
+        final start = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+        ).millisecondsSinceEpoch;
+        final end = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          23,
+          59,
+          59,
+        ).millisecondsSinceEpoch;
+
+        final targetLogs = allLogs.where(
+          (log) =>
+              (log['loggedAt']! as int) >= start &&
+              (log['loggedAt']! as int) <= end,
+        );
         double mins = 0;
         for (final l in targetLogs) {
           mins += (l['durationMinutes'] as int? ?? 0).toDouble();
@@ -198,7 +239,11 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       });
 
       // 8. Fetch weight logs
-      final weightLogs = await db.query('ss_weight_log', orderBy: 'loggedAt ASC', limit: 10);
+      final weightLogs = await db.query(
+        'ss_weight_log',
+        orderBy: 'loggedAt ASC',
+        limit: 10,
+      );
 
       // 9. Load recent feelings
       final recentFeelingsLogs = await db.query(
@@ -214,24 +259,40 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       }).toList();
 
       // 10. Load month continuity percent
-      final startOfMonth = DateTime(today.year, today.month).millisecondsSinceEpoch;
+      final startOfMonth = DateTime(
+        today.year,
+        today.month,
+      ).millisecondsSinceEpoch;
       final monthLogs = await db.query(
         'workout_logs',
         where: "loggedAt >= ? AND sourceModule = 'ss_prescription'",
         whereArgs: [startOfMonth],
       );
-      final monthDaysCount = monthLogs.map((l) {
-        final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
-        return '${dt.year}-${dt.month}-${dt.day}';
-      }).toSet().length;
-      final totalDaysInMonth = today.difference(DateTime(today.year, today.month)).inDays + 1;
-      final monthPercent = totalDaysInMonth > 0 ? (monthDaysCount / totalDaysInMonth) * 100 : 0.0;
+      final monthDaysCount = monthLogs
+          .map((l) {
+            final dt = DateTime.fromMillisecondsSinceEpoch(
+              l['loggedAt']! as int,
+            );
+            return '${dt.year}-${dt.month}-${dt.day}';
+          })
+          .toSet()
+          .length;
+      final totalDaysInMonth =
+          today.difference(DateTime(today.year, today.month)).inDays + 1;
+      final monthPercent = totalDaysInMonth > 0
+          ? (monthDaysCount / totalDaysInMonth) * 100
+          : 0.0;
 
       // 11. Completed Dates
-      final completedDatesList = allLogs.map((l) {
-        final dt = DateTime.fromMillisecondsSinceEpoch(l['loggedAt']! as int);
-        return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-      }).toSet().toList();
+      final completedDatesList = allLogs
+          .map((l) {
+            final dt = DateTime.fromMillisecondsSinceEpoch(
+              l['loggedAt']! as int,
+            );
+            return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+          })
+          .toSet()
+          .toList();
 
       // 12. Ready to progress exercises
       final readyList = <ExerciseReadyForIncrease>[];
@@ -249,11 +310,13 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           final total = row['total'] as int? ?? 0;
           final easyCount = row['easyCount'] as int? ?? 0;
           if (total >= 4 && easyCount / total >= 0.7) {
-            readyList.add(ExerciseReadyForIncrease(
-              exerciseId: row['exerciseId'].toString(),
-              exerciseName: row['name'].toString(),
-              consecutiveEasyWeeks: (total / 2).round(),
-            ));
+            readyList.add(
+              ExerciseReadyForIncrease(
+                exerciseId: row['exerciseId'].toString(),
+                exerciseName: row['name'].toString(),
+                consecutiveEasyWeeks: (total / 2).round(),
+              ),
+            );
           }
         }
       }
@@ -287,13 +350,20 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
 
   int _getFarsiDayOfWeek(DateTime dt) {
     switch (dt.weekday) {
-      case DateTime.monday: return 3;
-      case DateTime.tuesday: return 4;
-      case DateTime.wednesday: return 5;
-      case DateTime.thursday: return 6;
-      case DateTime.friday: return 7;
-      case DateTime.saturday: return 1;
-      case DateTime.sunday: return 2;
+      case DateTime.monday:
+        return 3;
+      case DateTime.tuesday:
+        return 4;
+      case DateTime.wednesday:
+        return 5;
+      case DateTime.thursday:
+        return 6;
+      case DateTime.friday:
+        return 7;
+      case DateTime.saturday:
+        return 1;
+      case DateTime.sunday:
+        return 2;
     }
     return 1;
   }
@@ -304,19 +374,27 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
     for (final f in feelings) {
       counts[f] = (counts[f] ?? 0) + 1;
     }
-    final dominant = counts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+    final dominant = counts.entries
+        .reduce((a, b) => a.value > b.value ? a : b)
+        .key;
     switch (dominant) {
-      case Feeling.easy: return 'بیشتر تمرین‌های اخیرت راحت بود 😌';
-      case Feeling.good: return 'بیشتر تمرین‌های اخیرت خوب بود 🙂';
-      case Feeling.hard: return 'بیشتر تمرین‌های اخیرت سخت بود 😓';
+      case Feeling.easy:
+        return 'بیشتر تمرین‌های اخیرت راحت بود 😌';
+      case Feeling.good:
+        return 'بیشتر تمرین‌های اخیرت خوب بود 🙂';
+      case Feeling.hard:
+        return 'بیشتر تمرین‌های اخیرت سخت بود 😓';
     }
   }
 
   String _getFeelingEmoji(Feeling feeling) {
     switch (feeling) {
-      case Feeling.easy: return '😌';
-      case Feeling.good: return '🙂';
-      case Feeling.hard: return '😓';
+      case Feeling.easy:
+        return '😌';
+      case Feeling.good:
+        return '🙂';
+      case Feeling.hard:
+        return '😓';
     }
   }
 
@@ -327,11 +405,16 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('ثبت وزن جدید ⚖️', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'ثبت وزن جدید ⚖️',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+            ],
             textInputAction: TextInputAction.done,
             autofocus: true,
             maxLength: 6,
@@ -358,7 +441,13 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                   await _addWeightLog(weight);
                 }
               },
-              child: const Text('ثبت', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'ثبت',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -410,7 +499,8 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         return Scaffold(
           backgroundColor: colors.background,
           body: EmptyStateView(
-            message: 'روند پیشرفت شما پس از ثبت حداقل ۱ جلسه تمرینی آغاز می‌شود. تا کنون تمرینی تمام نشده است.',
+            message:
+                'روند پیشرفت شما پس از ثبت حداقل ۱ جلسه تمرینی آغاز می‌شود. تا کنون تمرینی تمام نشده است.',
             actionLabel: 'شروع تمرین امروز',
             onAction: () => widget.onNavigateToTab(0),
           ),
@@ -428,15 +518,20 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
         weeklyMinutes: final weeklyMinutes,
         weightLogs: final weightLogs,
         completedDates: final completedDates,
-        isDetailMode: final isDetailMode
+        isDetailMode: final isDetailMode,
       ):
         return Scaffold(
-          backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFFAFAF8),
+          backgroundColor: isDark
+              ? const Color(0xFF121212)
+              : const Color(0xFFFAFAF8),
           body: Directionality(
             textDirection: TextDirection.rtl,
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -446,24 +541,36 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                         Text(
                           'گزارش پیشرفت',
                           style: SupplementarySportsTheme.h1.copyWith(
-                            color: SupplementarySportsTheme.getTextPrimary(context),
+                            color: SupplementarySportsTheme.getTextPrimary(
+                              context,
+                            ),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           icon: const Icon(Icons.analytics_outlined, size: 18),
                           label: const Text(
                             'آنالیز متریال و METs',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const MovementAnalyticsScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const MovementAnalyticsScreen(),
+                              ),
                             );
                           },
                         ),
@@ -530,7 +637,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                       Text(
                         'حرکات آماده برای افزایش شدت ⚡',
                         style: SupplementarySportsTheme.h2.copyWith(
-                          color: SupplementarySportsTheme.getTextPrimary(context),
+                          color: SupplementarySportsTheme.getTextPrimary(
+                            context,
+                          ),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -554,7 +663,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
-        border: Border.all(color: isDark ? Colors.grey[850]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[850]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         children: [
@@ -562,7 +673,11 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
             textDirection: TextDirection.rtl,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.local_fire_department, color: Colors.orange, size: 36),
+              const Icon(
+                Icons.local_fire_department,
+                color: Colors.orange,
+                size: 36,
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -611,29 +726,32 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
-        border: Border.all(color: isDark ? Colors.grey[850]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[850]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             toPersianDigits('تقویم فعالیت ماهانه ($monthName $year)'),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
             textDirection: TextDirection.rtl,
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: farsiDays.map((d) => Text(
-              d,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.grey[500] : Colors.grey[600],
-              ),
-            )).toList(),
+            children: farsiDays
+                .map(
+                  (d) => Text(
+                    d,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 8),
           GridView.builder(
@@ -654,20 +772,23 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
               final day = index - paddingDays + 1;
               final jDate = Jalali(year, month, day);
               final gDate = jDate.toDateTime();
-              final gDateStr = '${gDate.year}-${gDate.month.toString().padLeft(2, '0')}-${gDate.day.toString().padLeft(2, '0')}';
+              final gDateStr =
+                  '${gDate.year}-${gDate.month.toString().padLeft(2, '0')}-${gDate.day.toString().padLeft(2, '0')}';
 
               final isCompleted = completedDates.contains(gDateStr);
 
               return Container(
                 decoration: BoxDecoration(
-                  color: isCompleted 
-                      ? const Color(0xFF2E7D5B) 
+                  color: isCompleted
+                      ? const Color(0xFF2E7D5B)
                       : (isDark ? Colors.grey[850] : Colors.grey[100]),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: isCompleted 
-                        ? Colors.transparent 
-                        : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.03)),
+                    color: isCompleted
+                        ? Colors.transparent
+                        : (isDark
+                              ? Colors.white10
+                              : Colors.black.withValues(alpha: 0.03)),
                   ),
                 ),
                 alignment: Alignment.center,
@@ -675,9 +796,11 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                   toPersianDigits('$day'),
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
-                    color: isCompleted 
-                        ? Colors.white 
+                    fontWeight: isCompleted
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isCompleted
+                        ? Colors.white
                         : (isDark ? Colors.grey[500] : Colors.grey[600]),
                   ),
                 ),
@@ -701,7 +824,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
-        border: Border.all(color: isDark ? Colors.grey[850]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[850]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -735,15 +860,19 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
                     width: 24,
                     height: barHeight,
                     decoration: BoxDecoration(
-                      gradient: val > 0 
+                      gradient: val > 0
                           ? const LinearGradient(
                               colors: [Color(0xFF2E7D5B), Color(0xFF1B5E20)],
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                             )
                           : null,
-                      color: val > 0 ? null : (isDark ? Colors.grey[850] : Colors.grey[200]),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                      color: val > 0
+                          ? null
+                          : (isDark ? Colors.grey[850] : Colors.grey[200]),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -779,7 +908,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
-        border: Border.all(color: isDark ? Colors.grey[850]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[850]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,11 +926,19 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
               ElevatedButton.icon(
                 onPressed: _showAddWeightDialog,
                 icon: const Icon(Icons.add, size: 14, color: Colors.white),
-                label: const Text('ثبت وزن', style: TextStyle(fontSize: 11, color: Colors.white)),
+                label: const Text(
+                  'ثبت وزن',
+                  style: TextStyle(fontSize: 11, color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D5B),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 2,
+                  ),
                 ),
               ),
             ],
@@ -819,7 +958,9 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
-        border: Border.all(color: isDark ? Colors.grey[850]! : Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? Colors.grey[850]! : Colors.grey[200]!,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,17 +976,17 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
           const SizedBox(height: 12),
           Row(
             textDirection: TextDirection.rtl,
-            children: feelings.isEmpty 
-              ? [Text('ثبت نشده', style: TextStyle(color: Colors.grey[500]))]
-              : feelings.map((f) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      _getFeelingEmoji(f),
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                  );
-                }).toList(),
+            children: feelings.isEmpty
+                ? [Text('ثبت نشده', style: TextStyle(color: Colors.grey[500]))]
+                : feelings.map((f) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        _getFeelingEmoji(f),
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    );
+                  }).toList(),
           ),
           const SizedBox(height: 12),
           Text(
@@ -889,26 +1030,28 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
             borderRadius: SupplementarySportsTheme.borderRadiusCard,
             clipBehavior: Clip.antiAlias,
             child: ListTile(
-            title: Text(
-              item.exerciseName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              toPersianDigits('${item.consecutiveEasyWeeks} هفته متوالی سبک بوده است.'),
-              style: const TextStyle(fontSize: 12),
-            ),
-            trailing: TextButton(
-              onPressed: () {
-                _navigateToCoachWithQuery(item.exerciseName);
-              },
-              child: Text(
-                'ارتقای شدت ⚡',
-                style: TextStyle(
-                  color: SupplementarySportsTheme.getSuccessColor(context),
+              title: Text(
+                item.exerciseName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                toPersianDigits(
+                  '${item.consecutiveEasyWeeks} هفته متوالی سبک بوده است.',
+                ),
+                style: const TextStyle(fontSize: 12),
+              ),
+              trailing: TextButton(
+                onPressed: () {
+                  _navigateToCoachWithQuery(item.exerciseName);
+                },
+                child: Text(
+                  'ارتقای شدت ⚡',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getSuccessColor(context),
+                  ),
                 ),
               ),
             ),
-          ),
           ),
         );
       }).toList(),
@@ -916,14 +1059,14 @@ class _SSProgressScreenState extends State<SSProgressScreen> {
   }
 
   void _navigateToCoachWithQuery(String exerciseName) {
-    SSAiCoachSheet.prefilledMessage = 'حرکت «$exerciseName» ۳ هفته برایم راحت بوده است. وزنه را اضافه کنم؟';
+    SSAiCoachSheet.prefilledMessage =
+        'حرکت «$exerciseName» ۳ هفته برایم راحت بوده است. وزنه را اضافه کنم؟';
     widget.onNavigateToTab(1);
   }
 }
 
 // --- Weight Tracker Paint Graph Widget ---
 class WeightLineChart extends StatelessWidget {
-
   const WeightLineChart({
     super.key,
     required this.weights,
@@ -940,19 +1083,25 @@ class WeightLineChart extends StatelessWidget {
       return Container(
         height: 120,
         alignment: Alignment.center,
-        child: const Text('داده‌ای برای نمایش وجود ندارد. وزن خود را ثبت کنید.', style: TextStyle(color: Colors.grey)),
+        child: const Text(
+          'داده‌ای برای نمایش وجود ندارد. وزن خود را ثبت کنید.',
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
     return CustomPaint(
       size: const Size(double.infinity, 120),
-      painter: WeightChartPainter(weights: weights, dates: dates, isDark: isDark),
+      painter: WeightChartPainter(
+        weights: weights,
+        dates: dates,
+        isDark: isDark,
+      ),
     );
   }
 }
 
 class WeightChartPainter extends CustomPainter {
-
   WeightChartPainter({
     required this.weights,
     required this.dates,
@@ -983,7 +1132,9 @@ class WeightChartPainter extends CustomPainter {
     final diffW = (maxW - minW) == 0 ? 1.0 : (maxW - minW);
 
     final points = <Offset>[];
-    final stepX = weights.length > 1 ? size.width / (weights.length - 1) : size.width;
+    final stepX = weights.length > 1
+        ? size.width / (weights.length - 1)
+        : size.width;
 
     for (var i = 0; i < weights.length; i++) {
       final x = i * stepX;
@@ -996,7 +1147,7 @@ class WeightChartPainter extends CustomPainter {
       final areaPath = Path()
         ..moveTo(points.first.dx, size.height)
         ..lineTo(points.first.dx, points.first.dy);
-      
+
       for (var i = 1; i < points.length; i++) {
         areaPath.lineTo(points[i].dx, points[i].dy);
       }
@@ -1015,7 +1166,7 @@ class WeightChartPainter extends CustomPainter {
 
     for (var i = 0; i < points.length; i++) {
       canvas.drawCircle(points[i], 4, paintDot);
-      
+
       final textSpan = TextSpan(
         style: TextStyle(
           fontSize: 9,
@@ -1029,7 +1180,10 @@ class WeightChartPainter extends CustomPainter {
         textDirection: TextDirection.rtl,
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(points[i].dx - textPainter.width / 2, points[i].dy - 18));
+      textPainter.paint(
+        canvas,
+        Offset(points[i].dx - textPainter.width / 2, points[i].dy - 18),
+      );
     }
   }
 

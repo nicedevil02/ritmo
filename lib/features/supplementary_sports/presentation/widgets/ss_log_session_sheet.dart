@@ -6,10 +6,7 @@ import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion
 import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/primary_button.dart';
 
 class SsLogSessionSheet extends StatefulWidget {
-  const SsLogSessionSheet({
-    super.key,
-    required this.prescription,
-  });
+  const SsLogSessionSheet({super.key, required this.prescription});
 
   final SessionPrescription prescription;
 
@@ -27,7 +24,9 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
   @override
   void initState() {
     super.initState();
-    _minutes = widget.prescription.targetMinutes > 0 ? widget.prescription.targetMinutes : 45;
+    _minutes = widget.prescription.targetMinutes > 0
+        ? widget.prescription.targetMinutes
+        : 45;
     _rpe = widget.prescription.intensityTier.targetRpe;
   }
 
@@ -45,7 +44,9 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
         actualMinutes: _minutes,
         actualRpe: _rpe,
         location: _location,
-        customNote: _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : null,
+        customNote: _noteController.text.trim().isNotEmpty
+            ? _noteController.text.trim()
+            : null,
       );
       if (mounted) Navigator.pop(context, true);
     } finally {
@@ -53,7 +54,12 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
     }
   }
 
-  Widget _buildFaceRpe(int rpeValue, String emoji, String labelFa, BuildContext context) {
+  Widget _buildFaceRpe(
+    int rpeValue,
+    String emoji,
+    String labelFa,
+    BuildContext context,
+  ) {
     final colors = context.colors;
     final isSelected = _rpe == rpeValue;
 
@@ -63,7 +69,9 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primary.withValues(alpha: 0.15) : Colors.transparent,
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? colors.primary : colors.border,
@@ -123,20 +131,23 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               const SizedBox(height: 8),
               Text(
                 widget.prescription.headlineFa,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: sportsAccent,
-                ),
+                style: TextStyle(fontSize: 14, color: sportsAccent),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              
+
               // Minutes Slider
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('مدت زمان', style: TextStyle(color: colors.textPrimary)),
-                  Text(toPersianDigits('$_minutes دقیقه'), style: TextStyle(fontWeight: FontWeight.bold, color: sportsAccent)),
+                  Text(
+                    toPersianDigits('$_minutes دقیقه'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: sportsAccent,
+                    ),
+                  ),
                 ],
               ),
               Slider(
@@ -151,7 +162,10 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               const SizedBox(height: 24),
 
               // RPE Faces
-              Text('چقدر سخت بود؟', style: TextStyle(color: colors.textPrimary)),
+              Text(
+                'چقدر سخت بود؟',
+                style: TextStyle(color: colors.textPrimary),
+              ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,7 +180,10 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
               const SizedBox(height: 24),
 
               // Location
-              Text('کجا تمرین کردی؟', style: TextStyle(color: colors.textPrimary)),
+              Text(
+                'کجا تمرین کردی؟',
+                style: TextStyle(color: colors.textPrimary),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -180,7 +197,9 @@ class _SsLogSessionSheetState extends State<SsLogSessionSheet> {
                     },
                     selectedColor: sportsAccent.withValues(alpha: 0.2),
                     backgroundColor: colors.surfaceSunken,
-                    labelStyle: TextStyle(color: isSelected ? sportsAccent : colors.textSecondary),
+                    labelStyle: TextStyle(
+                      color: isSelected ? sportsAccent : colors.textSecondary,
+                    ),
                     showCheckmark: false,
                   );
                 }).toList(),

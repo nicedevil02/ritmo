@@ -51,19 +51,17 @@ class ChatBubble extends StatelessWidget {
         return Align(
           alignment: alignment,
           child: Container(
-            margin: EdgeInsets.symmetric(
-              vertical: m.spaceSm,
-            ),
+            margin: EdgeInsets.symmetric(vertical: m.spaceSm),
             constraints: BoxConstraints(
-              maxWidth: constraints.maxWidth * RitmoBreakpoints.chatBubbleMaxWidthFactor,
+              maxWidth:
+                  constraints.maxWidth *
+                  RitmoBreakpoints.chatBubbleMaxWidthFactor,
             ),
             padding: bubblePadding,
             decoration: BoxDecoration(
               color: isFromUser ? userBgColor : aiBgColor,
               borderRadius: borderRadius,
-              border: isFromUser
-                  ? null
-                  : Border.all(color: aiBorderColor),
+              border: isFromUser ? null : Border.all(color: aiBorderColor),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -77,9 +75,7 @@ class ChatBubble extends StatelessWidget {
               textDirection: TextDirection.rtl,
               style: RitmoTextStyles.body(
                 isFromUser ? userTextColor : aiTextColor,
-              ).copyWith(
-                height: 1.5,
-              ),
+              ).copyWith(height: 1.5),
             ),
           ),
         );

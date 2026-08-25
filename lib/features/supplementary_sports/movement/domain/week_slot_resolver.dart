@@ -52,7 +52,11 @@ class PlannedSlot {
 
 String dateIsoForSat0(Sat0Weekday sat0, DateTime now) {
   final todaySat0 = dartWeekdayToSat0(now.weekday);
-  final day = DateTime(now.year, now.month, now.day).add(Duration(days: sat0 - todaySat0));
+  final day = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).add(Duration(days: sat0 - todaySat0));
   return formatDateIso(day);
 }
 
@@ -100,8 +104,13 @@ class WeekSlotResolver {
           byKey.remove(key);
         case MovementSlotAction.retime:
           final existing = byKey[key];
-          if (existing != null && override.newTime != null && override.newTime!.isNotEmpty) {
-            byKey[key] = existing.copyWith(time: override.newTime, isOverride: true);
+          if (existing != null &&
+              override.newTime != null &&
+              override.newTime!.isNotEmpty) {
+            byKey[key] = existing.copyWith(
+              time: override.newTime,
+              isOverride: true,
+            );
           }
         case MovementSlotAction.light:
           final existing = byKey[key];
@@ -114,7 +123,8 @@ class WeekSlotResolver {
           if (destIso == null || destIso.isEmpty) break;
           final destSat0 = sat0ForDateIsoInWeek(destIso, clock);
           if (destSat0 == null) break;
-          final base = existing ??
+          final base =
+              existing ??
               PlannedSlot(
                 routineId: override.routineId,
                 weekdaySat0: destSat0,

@@ -84,13 +84,14 @@ enum PrescriptionStatus {
     PrescriptionStatus.moved => 'MOVED',
   };
 
-  static PrescriptionStatus fromCode(String code) => switch (code.toUpperCase()) {
-    'DONE' => PrescriptionStatus.done,
-    'PARTIAL' => PrescriptionStatus.partial,
-    'SKIPPED' => PrescriptionStatus.skipped,
-    'MOVED' => PrescriptionStatus.moved,
-    _ => PrescriptionStatus.planned,
-  };
+  static PrescriptionStatus fromCode(String code) =>
+      switch (code.toUpperCase()) {
+        'DONE' => PrescriptionStatus.done,
+        'PARTIAL' => PrescriptionStatus.partial,
+        'SKIPPED' => PrescriptionStatus.skipped,
+        'MOVED' => PrescriptionStatus.moved,
+        _ => PrescriptionStatus.planned,
+      };
 
   String get labelFa => switch (this) {
     PrescriptionStatus.planned => 'برنامه‌ریزی شده',
@@ -223,7 +224,9 @@ class SessionPrescription {
     if (fociRaw is String && fociRaw.isNotEmpty) {
       try {
         foci = List<String>.from(jsonDecode(fociRaw) as List);
-      } catch (e) { debugPrint('[ss] session_prescription.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] session_prescription.dart: $e');
+      }
     }
     return SessionPrescription(
       id: map['id'] as String,
@@ -232,17 +235,22 @@ class SessionPrescription {
       slotType: SlotType.fromCode(map['slotType'] as String? ?? 'REST'),
       focusCodes: foci,
       targetMinutes: map['targetMinutes'] as int? ?? 0,
-      intensityTier: IntensityTier.fromCode(map['intensityTier'] as String? ?? 'MODERATE'),
+      intensityTier: IntensityTier.fromCode(
+        map['intensityTier'] as String? ?? 'MODERATE',
+      ),
       targetRpe: map['targetRpe'] as int?,
       actualRpe: map['actualRpe'] as int?,
       headlineFa: map['headlineFa'] as String? ?? '',
       coachNoteFa: map['coachNoteFa'] as String?,
       source: map['source'] as String? ?? 'GENERATED',
       isLocked: (map['isLocked'] as int? ?? 0) == 1,
-      status: PrescriptionStatus.fromCode(map['status'] as String? ?? 'PLANNED'),
+      status: PrescriptionStatus.fromCode(
+        map['status'] as String? ?? 'PLANNED',
+      ),
       movedToDateIso: map['movedToDateIso'] as String?,
       legacyPlanId: map['legacyPlanId'] as String?,
-      workoutPlanId: map['workoutPlanId'] as String? ?? map['legacyPlanId'] as String?,
+      workoutPlanId:
+          map['workoutPlanId'] as String? ?? map['legacyPlanId'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
       createdAt: map['createdAt'] as int? ?? 0,
       updatedAt: map['updatedAt'] as int? ?? 0,

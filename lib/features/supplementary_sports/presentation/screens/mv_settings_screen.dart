@@ -109,7 +109,11 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
               Wrap(
                 spacing: metrics.spaceSm,
                 children: _durations.map((dur) {
-                  final label = dur == 'short' ? 'کوتاه (۱۵ دقیقه)' : dur == 'medium' ? 'متوسط (۳۰ دقیقه)' : 'بلند (۴۵+ دقیقه)';
+                  final label = dur == 'short'
+                      ? 'کوتاه (۱۵ دقیقه)'
+                      : dur == 'medium'
+                      ? 'متوسط (۳۰ دقیقه)'
+                      : 'بلند (۴۵+ دقیقه)';
                   return MvChip(
                     label: label,
                     isSelected: _duration == dur,
@@ -140,8 +144,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           _buildCard(
             children: [
               SwitchListTile(
-                title: Text('حالت همسایه‌پسند (آپارتمانی)', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                subtitle: Text('حذف خودکار تمام حرکات پرشی و پرصدا', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                title: Text(
+                  'حالت همسایه‌پسند (آپارتمانی)',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'حذف خودکار تمام حرکات پرشی و پرصدا',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
                 value: _apartmentMode,
                 onChanged: (v) => setState(() => _apartmentMode = v),
               ),
@@ -154,8 +168,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           _buildCard(
             children: [
               SwitchListTile(
-                title: Text('راهنمای صوتی مربی', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                subtitle: Text('پخش پیام‌های شروع، استراحت و شمارش معکوس', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                title: Text(
+                  'راهنمای صوتی مربی',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'پخش پیام‌های شروع، استراحت و شمارش معکوس',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
                 value: _voiceEnabled,
                 onChanged: (v) => setState(() => _voiceEnabled = v),
               ),
@@ -168,8 +192,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           _buildCard(
             children: [
               SwitchListTile(
-                title: Text('تطبیق شدت با چرخهٔ فیزیولوژیک', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                subtitle: Text('پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                title: Text(
+                  'تطبیق شدت با چرخهٔ فیزیولوژیک',
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
                 value: _cycleConsent,
                 onChanged: (v) => setState(() => _cycleConsent = v),
               ),
@@ -184,8 +218,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
               children: [
                 ListTile(
                   leading: Icon(Icons.refresh_rounded, color: colors.primary),
-                  title: Text('بازسازی برنامهٔ هفتگی', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text('برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                  title: Text(
+                    'بازسازی برنامهٔ هفتگی',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
                   onTap: () {
                     widget.onRegenerateProgram?.call();
                     Navigator.pop(context);

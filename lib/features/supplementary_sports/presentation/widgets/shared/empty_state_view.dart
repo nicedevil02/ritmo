@@ -3,7 +3,6 @@ import 'package:ritmo/features/supplementary_sports/presentation/widgets/shared/
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class EmptyStateView extends StatelessWidget {
-
   const EmptyStateView({
     super.key,
     required this.message,
@@ -27,7 +26,9 @@ class EmptyStateView extends StatelessWidget {
           Icon(
             icon ?? Icons.inbox_outlined,
             size: 64,
-            color: SupplementarySportsTheme.getTextSecondary(context).withValues(alpha: 0.5),
+            color: SupplementarySportsTheme.getTextSecondary(
+              context,
+            ).withValues(alpha: 0.5),
             semanticLabel: 'آیکون خالی',
           ),
           const SizedBox(height: SupplementarySportsTheme.spacing24),
@@ -43,10 +44,7 @@ class EmptyStateView extends StatelessWidget {
           ),
           const SizedBox(height: SupplementarySportsTheme.spacing32),
           // Proposed Action Button
-          PrimaryButton(
-            label: actionLabel,
-            onPressed: onAction,
-          ),
+          PrimaryButton(label: actionLabel, onPressed: onAction),
         ],
       ),
     );

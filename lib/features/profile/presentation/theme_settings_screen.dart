@@ -2,8 +2,6 @@
 // جایگزین شیت قدیمی انتخاب تم
 
 import 'package:flutter/material.dart';
-import 'package:ritmo/core/theme/ritmo_colors.dart';
-import 'package:ritmo/core/theme/ritmo_palette.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_preferences.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
@@ -128,23 +126,190 @@ class ThemeSettingsScreen extends StatelessWidget {
                             themeRepository.updateReduceTransparency(val);
                           },
                           title: Text(
-                            'کاهش شفافیت',
+                            'غیرفعال‌سازی متریال شیشه‌ای',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: colors.textPrimary,
-                              ),
+                            ),
                           ),
                           subtitle: Text(
-                            'سطوح شیشه‌ای مات می‌شوند. روی گوشی‌های قدیمی‌تر روان‌تر است',
+                            'حذف افکت بلور شیشه‌ای برای کارایی بالاتر روی دستگاه‌های ضعیف‌تر',
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary,
-                              ),
+                            ),
                           ),
-                          activeColor: colors.primary,
+                          activeTrackColor: colors.primary,
                         ),
                       ),
+                      if (!prefs.reduceTransparency) ...[
+                        Divider(color: colors.divider, height: 1),
+                        // پیش‌نمایش زنده متریال شیشه‌ای
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.lg,
+                            vertical: RitmoSpacing.sm,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(RitmoRadius.card),
+                            child: Stack(
+                              children: [
+                                // پس‌زمینه رنگی پیش‌نمایش
+                                Container(
+                                  height: 84,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        colors.primary.withValues(alpha: 0.6),
+                                        colors.accent.withValues(alpha: 0.5),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'پیش‌نمایش زنده متریال شیشه‌ای ریتمو',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        fontFamily: 'Vazirmatn',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // لایه شیشه روی آن
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: RitmoGlassCard(
+                                      borderRadius: BorderRadius.circular(12),
+                                      blurSigma: prefs.glassBlurSigma,
+                                      color: (context.isDark ? Colors.black : Colors.white).withValues(
+                                        alpha: (prefs.glassOpacityPercent / 100.0).clamp(0.05, 0.95),
+                                      ),
+                                      child: Center(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.auto_awesome,
+                                              size: 18,
+                                              color: colors.primary,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'ماتی: ${prefs.glassBlurSigma.round()}px | شفافیت: ${prefs.glassOpacityPercent}٪',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: colors.textPrimary,
+                                                fontFamily: 'Vazirmatn',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.lg,
+                            vertical: RitmoSpacing.sm,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'میزان مات بودن شیشه (بلور)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${prefs.glassBlurSigma.round()}px',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Slider(
+                                value: prefs.glassBlurSigma.clamp(0.0, 40.0),
+                                min: 0,
+                                max: 40,
+                                divisions: 40,
+                                activeColor: colors.primary,
+                                inactiveColor: colors.border,
+                                onChanged: (val) {
+                                  themeRepository.updateGlassBlurSigma(val);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.lg,
+                            vertical: RitmoSpacing.sm,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'میزان شفافیت شیشه',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${prefs.glassOpacityPercent}٪',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Slider(
+                                value: prefs.glassOpacityPercent
+                                    .toDouble()
+                                    .clamp(10.0, 85.0),
+                                min: 10,
+                                max: 85,
+                                divisions: 15,
+                                activeColor: colors.primary,
+                                inactiveColor: colors.border,
+                                onChanged: (val) {
+                                  themeRepository
+                                      .updateGlassOpacityPercent(val.round());
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       Divider(color: colors.divider, height: 1),
                       Material(
                         color: Colors.transparent,
@@ -174,7 +339,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                               color: colors.textSecondary,
                               ),
                           ),
-                          activeColor: colors.primary,
+                          activeTrackColor: colors.primary,
                         ),
                       ),
                     ],

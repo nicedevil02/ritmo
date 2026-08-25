@@ -16,14 +16,13 @@ Widget createTestApp(Widget child) {
 
 void main() {
   group('Phase P4 Design System Components Tests', () {
-    testWidgets('MvPrimaryAction renders and triggers onPressed', (tester) async {
+    testWidgets('MvPrimaryAction renders and triggers onPressed', (
+      tester,
+    ) async {
       bool tapped = false;
       await tester.pumpWidget(
         createTestApp(
-          MvPrimaryAction(
-            label: 'شروع جلسه',
-            onPressed: () => tapped = true,
-          ),
+          MvPrimaryAction(label: 'شروع جلسه', onPressed: () => tapped = true),
         ),
       );
 
@@ -34,12 +33,7 @@ void main() {
 
     testWidgets('MvChip renders label and selection styling', (tester) async {
       await tester.pumpWidget(
-        createTestApp(
-          const MvChip(
-            label: 'سینه و بازو',
-            isSelected: true,
-          ),
-        ),
+        createTestApp(const MvChip(label: 'سینه و بازو', isSelected: true)),
       );
 
       expect(find.text('سینه و بازو'), findsOneWidget);
@@ -52,39 +46,36 @@ void main() {
       );
 
       await tester.pumpWidget(
-        createTestApp(
-          const MvReadinessBar(decision: decision),
-        ),
+        createTestApp(const MvReadinessBar(decision: decision)),
       );
 
       expect(find.text('آمادگی کامل'), findsOneWidget);
       expect(find.text('آمادگی بدنی عالی'), findsOneWidget);
     });
 
-    testWidgets('MvHeroCard renders title, subtitle and exactly primary and secondary actions', (tester) async {
-      const slot = MvSlot(
-        id: '1',
-        dateIso: '2026-08-25',
-        headlineFa: 'قدرت بالاتنه',
-        targetMinutes: 30,
-        createdAt: 100,
-        updatedAt: 100,
-      );
+    testWidgets(
+      'MvHeroCard renders title, subtitle and exactly primary and secondary actions',
+      (tester) async {
+        const slot = MvSlot(
+          id: '1',
+          dateIso: '2026-08-25',
+          headlineFa: 'قدرت بالاتنه',
+          targetMinutes: 30,
+          createdAt: 100,
+          updatedAt: 100,
+        );
 
-      await tester.pumpWidget(
-        createTestApp(
-          MvHeroCard(
-            slot: slot,
-            onStart: () {},
-            onCantToday: () {},
+        await tester.pumpWidget(
+          createTestApp(
+            MvHeroCard(slot: slot, onStart: () {}, onCantToday: () {}),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('قدرت بالاتنه'), findsOneWidget);
-      expect(find.text('شروع جلسه'), findsOneWidget);
-      expect(find.text('نمی‌تونم'), findsOneWidget);
-    });
+        expect(find.text('قدرت بالاتنه'), findsOneWidget);
+        expect(find.text('شروع جلسه'), findsOneWidget);
+        expect(find.text('نمی‌تونم'), findsOneWidget);
+      },
+    );
 
     testWidgets('MvDaySlotCard displays day and headline', (tester) async {
       const slot = MvSlot(
@@ -96,11 +87,7 @@ void main() {
         updatedAt: 100,
       );
 
-      await tester.pumpWidget(
-        createTestApp(
-          const MvDaySlotCard(slot: slot),
-        ),
-      );
+      await tester.pumpWidget(createTestApp(const MvDaySlotCard(slot: slot)));
 
       expect(find.text('قدرت پایین‌تنه'), findsOneWidget);
       expect(find.text('45 دقیقه · متوسط'), findsOneWidget);
@@ -121,7 +108,9 @@ void main() {
       expect(find.text('۱۰ دقیقه نرمش سبک'), findsOneWidget);
     });
 
-    testWidgets('MvBodyMap renders muscle groups and suggestion action', (tester) async {
+    testWidgets('MvBodyMap renders muscle groups and suggestion action', (
+      tester,
+    ) async {
       const distribution = MvBodyMapDistribution(
         muscleSessionCounts: {'CHEST': 2, 'BACK': 0},
         neglectedMuscleGroupCode: 'BACK',
@@ -129,16 +118,16 @@ void main() {
       );
 
       await tester.pumpWidget(
-        createTestApp(
-          const MvBodyMap(distribution: distribution),
-        ),
+        createTestApp(const MvBodyMap(distribution: distribution)),
       );
 
       expect(find.text('نقشهٔ عضلانی این هفته'), findsOneWidget);
       expect(find.text('پشت کار نکرده — ۱۵ دقیقه بسازم؟'), findsOneWidget);
     });
 
-    testWidgets('MvMetricRing and MvStatTile render statistics correctly', (tester) async {
+    testWidgets('MvMetricRing and MvStatTile render statistics correctly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         createTestApp(
           const Column(
@@ -149,11 +138,7 @@ void main() {
                 activeDays: 2,
                 targetDays: 4,
               ),
-              MvStatTile(
-                title: 'هفته‌های فعال',
-                value: '۵',
-                unit: 'هفته',
-              ),
+              MvStatTile(title: 'هفته‌های فعال', value: '۵', unit: 'هفته'),
             ],
           ),
         ),
@@ -165,7 +150,9 @@ void main() {
       expect(find.text('۵'), findsOneWidget);
     });
 
-    testWidgets('MvEmptyState and MvInsufficientData render properly', (tester) async {
+    testWidgets('MvEmptyState and MvInsufficientData render properly', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         createTestApp(
           const Column(
@@ -176,7 +163,8 @@ void main() {
                 description: 'برنامه‌ای تنظیم نشده است.',
               ),
               MvInsufficientData(
-                requirementDescription: 'برای نمایش نمودار حداقل ۷ روز ثبت نیاز است.',
+                requirementDescription:
+                    'برای نمایش نمودار حداقل ۷ روز ثبت نیاز است.',
               ),
             ],
           ),
@@ -185,10 +173,15 @@ void main() {
 
       expect(find.text('بدون برنامه'), findsOneWidget);
       expect(find.text('هنوز دادهٔ کافی نیست'), findsOneWidget);
-      expect(find.text('برای نمایش نمودار حداقل ۷ روز ثبت نیاز است.'), findsOneWidget);
+      expect(
+        find.text('برای نمایش نمودار حداقل ۷ روز ثبت نیاز است.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('MvSheetScaffold renders header, body and bottom action', (tester) async {
+    testWidgets('MvSheetScaffold renders header, body and bottom action', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         createTestApp(
           const MvSheetScaffold(

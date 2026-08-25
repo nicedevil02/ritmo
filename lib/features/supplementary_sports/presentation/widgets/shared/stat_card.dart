@@ -3,12 +3,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class StatCard extends StatelessWidget {
-
-  const StatCard({
-    super.key,
-    required this.value,
-    required this.label,
-  });
+  const StatCard({super.key, required this.value, required this.label});
   final String value;
   final String label;
 

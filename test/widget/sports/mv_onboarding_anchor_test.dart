@@ -73,8 +73,9 @@ void main() {
         );
 
         // 2. Tap «بله، اضافه کنم»
-        final addAnchorBtn =
-            find.byKey(const ValueKey('onboarding_add_anchor_btn'));
+        final addAnchorBtn = find.byKey(
+          const ValueKey('onboarding_add_anchor_btn'),
+        );
         expect(addAnchorBtn, findsOneWidget);
         await tester.ensureVisible(addAnchorBtn);
         await tester.pumpAndSettle();
@@ -95,8 +96,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // 4. Config sheet opens -> tap confirm
-        final confirmBtn =
-            find.byKey(const ValueKey('confirm_anchor_commitment_btn'));
+        final confirmBtn = find.byKey(
+          const ValueKey('confirm_anchor_commitment_btn'),
+        );
         expect(confirmBtn, findsOneWidget);
         await tester.ensureVisible(confirmBtn);
         await tester.pumpAndSettle();
@@ -107,8 +109,9 @@ void main() {
         expect(find.textContaining('پنج‌شنبه: فوتسال'), findsOneWidget);
 
         // 6. Tap Submit Action
-        final submitBtn =
-            find.byKey(const ValueKey('onboarding_submit_action'));
+        final submitBtn = find.byKey(
+          const ValueKey('onboarding_submit_action'),
+        );
         expect(submitBtn, findsOneWidget);
         await tester.ensureVisible(submitBtn);
         await tester.pumpAndSettle();
@@ -169,8 +172,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // 1. Tap «فعلاً نه»
-        final skipBtn =
-            find.byKey(const ValueKey('onboarding_skip_anchor_btn'));
+        final skipBtn = find.byKey(
+          const ValueKey('onboarding_skip_anchor_btn'),
+        );
         expect(skipBtn, findsOneWidget);
         await tester.ensureVisible(skipBtn);
         await tester.pumpAndSettle();
@@ -178,8 +182,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // 2. Submit onboarding
-        final submitBtn =
-            find.byKey(const ValueKey('onboarding_submit_action'));
+        final submitBtn = find.byKey(
+          const ValueKey('onboarding_submit_action'),
+        );
         expect(submitBtn, findsOneWidget);
         await tester.ensureVisible(submitBtn);
         await tester.pumpAndSettle();

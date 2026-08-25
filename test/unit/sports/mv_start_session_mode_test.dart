@@ -39,20 +39,26 @@ void main() {
       for (final entry in testCases.entries) {
         final kind = await kindRepo.getByCode(entry.key);
         expect(kind, isNotNull, reason: 'Kind ${entry.key} must exist in seed');
-        final resolvedMode = MvStartSessionUseCase.resolveSessionMode(kind: kind!);
+        final resolvedMode = MvStartSessionUseCase.resolveSessionMode(
+          kind: kind!,
+        );
         expect(
           resolvedMode,
           equals(entry.value),
-          reason: 'Expected ${entry.key} to resolve to ${entry.value.name}, but got ${resolvedMode.name}',
+          reason:
+              'Expected ${entry.key} to resolve to ${entry.value.name}, but got ${resolvedMode.name}',
         );
       }
 
       // Test RUNNING (distance or route depending on isOutdoor)
       final runningKind = await kindRepo.getByCode('RUNNING');
       expect(runningKind, isNotNull);
-      final runningMode = MvStartSessionUseCase.resolveSessionMode(kind: runningKind!);
+      final runningMode = MvStartSessionUseCase.resolveSessionMode(
+        kind: runningKind!,
+      );
       expect(
-        runningMode == MvSessionMode.distance || runningMode == MvSessionMode.route,
+        runningMode == MvSessionMode.distance ||
+            runningMode == MvSessionMode.route,
         isTrue,
       );
 
@@ -76,9 +82,15 @@ void main() {
         sortOrder: 1,
       );
 
-      final bwGuided = MvStartSessionUseCase.resolveSessionMode(kind: bodyweightKind, hasPrescription: true);
+      final bwGuided = MvStartSessionUseCase.resolveSessionMode(
+        kind: bodyweightKind,
+        hasPrescription: true,
+      );
       expect(bwGuided, equals(MvSessionMode.guided));
-      final bwStructured = MvStartSessionUseCase.resolveSessionMode(kind: bodyweightKind, hasPrescription: false);
+      final bwStructured = MvStartSessionUseCase.resolveSessionMode(
+        kind: bodyweightKind,
+        hasPrescription: false,
+      );
       expect(bwStructured, equals(MvSessionMode.structured));
     });
 
@@ -107,29 +119,39 @@ void main() {
       expect(mode, equals(MvSessionMode.laps));
     });
 
-    test('Architecture Guard: No unconditional hardcoded MvSessionMode.guided in application layer', () {
-      final appDir = Directory('lib/features/supplementary_sports/application');
-      final dartFiles = appDir.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart'));
+    test(
+      'Architecture Guard: No unconditional hardcoded MvSessionMode.guided in application layer',
+      () {
+        final appDir = Directory(
+          'lib/features/supplementary_sports/application',
+        );
+        final dartFiles = appDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'));
 
-      for (final file in dartFiles) {
-        final lines = file.readAsLinesSync();
-        for (var i = 0; i < lines.length; i++) {
-          final line = lines[i];
-          if (line.contains('MvSessionMode.guided')) {
-            // Must be conditional (e.g. within switch/ternary/resolver)
-            final isSafeUsage = line.contains('?') ||
-                line.contains(':') ||
-                line.contains('==') ||
-                line.contains('case') ||
-                line.contains('//');
-            expect(
-              isSafeUsage,
-              isTrue,
-              reason: 'Found unconditional MvSessionMode.guided in ${file.path}:${i + 1}: "$line"',
-            );
+        for (final file in dartFiles) {
+          final lines = file.readAsLinesSync();
+          for (var i = 0; i < lines.length; i++) {
+            final line = lines[i];
+            if (line.contains('MvSessionMode.guided')) {
+              // Must be conditional (e.g. within switch/ternary/resolver)
+              final isSafeUsage =
+                  line.contains('?') ||
+                  line.contains(':') ||
+                  line.contains('==') ||
+                  line.contains('case') ||
+                  line.contains('//');
+              expect(
+                isSafeUsage,
+                isTrue,
+                reason:
+                    'Found unconditional MvSessionMode.guided in ${file.path}:${i + 1}: "$line"',
+              );
+            }
           }
         }
-      }
-    });
+      },
+    );
   });
 }

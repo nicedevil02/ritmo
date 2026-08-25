@@ -18,7 +18,8 @@ class MvSessionSummaryScreen extends StatefulWidget {
     required int rpe1To10,
     required String effortSource,
     String? note,
-  }) onFinish;
+  })
+  onFinish;
 
   const MvSessionSummaryScreen({
     super.key,
@@ -97,7 +98,10 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
         : 1;
     final earnedEquivMin = durationMin;
     final weekTotalAfter = widget.currentWeekMinutesBefore + earnedEquivMin;
-    final remainingToGoal = (widget.weeklyGoalMinutes - weekTotalAfter).clamp(0, 9999);
+    final remainingToGoal = (widget.weeklyGoalMinutes - weekTotalAfter).clamp(
+      0,
+      9999,
+    );
 
     final title = widget.kind?.titleFa ?? 'ورزش و فعالیت';
     final emoji = widget.kind?.emoji ?? '🏃‍♂️';
@@ -115,7 +119,10 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             padding: EdgeInsets.all(metrics.spaceXl),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [colors.primary, colors.primary.withValues(alpha: 0.85)],
+                colors: [
+                  colors.primary,
+                  colors.primary.withValues(alpha: 0.85),
+                ],
               ),
               borderRadius: BorderRadius.circular(metrics.radiusHero),
             ),
@@ -189,7 +196,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             children: [
               Text(
                 'دقیق‌ترش کنم (RPE)',
-                style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
               ),
               Text(
                 toPersianDigits(_rpe.toString()),
@@ -228,7 +237,8 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           TextField(
             controller: _noteController,
             decoration: InputDecoration(
-              hintText: 'مثلاً هوا عالی بود، شیب تند بود، یا حس پیشرفت داشتم...',
+              hintText:
+                  'مثلاً هوا عالی بود، شیب تند بود، یا حس پیشرفت داشتم...',
               filled: true,
               fillColor: colors.surface,
               border: OutlineInputBorder(
@@ -314,8 +324,12 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                 Row(
                   children: [
                     Icon(
-                      remainingToGoal == 0 ? Icons.check_circle : Icons.flag_rounded,
-                      color: remainingToGoal == 0 ? Colors.green : colors.textSecondary,
+                      remainingToGoal == 0
+                          ? Icons.check_circle
+                          : Icons.flag_rounded,
+                      color: remainingToGoal == 0
+                          ? Colors.green
+                          : colors.textSecondary,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -353,7 +367,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
     final elevM = widget.session.elevationGainM;
     final laps = widget.session.laps;
     final packKg = widget.session.packWeightKg;
-    final durationMin = widget.session.elapsedMinutes > 0 ? widget.session.elapsedMinutes : 1;
+    final durationMin = widget.session.elapsedMinutes > 0
+        ? widget.session.elapsedMinutes
+        : 1;
 
     switch (mode) {
       case MvSessionMode.route:
@@ -397,7 +413,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             Expanded(
               child: MvStatTile(
                 title: 'مسافت',
-                value: distM != null ? toPersianDigits((distM / 1000.0).toStringAsFixed(2)) : '—',
+                value: distM != null
+                    ? toPersianDigits((distM / 1000.0).toStringAsFixed(2))
+                    : '—',
                 unit: 'کیلومتر',
                 icon: Icons.directions_run_rounded,
               ),
@@ -406,7 +424,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             Expanded(
               child: MvStatTile(
                 title: 'تمپو',
-                value: toPersianDigits(_formatPace(widget.session.paceSecPerKm)),
+                value: toPersianDigits(
+                  _formatPace(widget.session.paceSecPerKm),
+                ),
                 unit: 'دق/کم',
                 icon: Icons.speed_rounded,
               ),

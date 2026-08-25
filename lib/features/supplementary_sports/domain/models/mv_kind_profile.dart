@@ -102,7 +102,8 @@ class MvKindProfile {
       recoveryHours: recoveryHours ?? this.recoveryHours,
       complementFocus: complementFocus ?? this.complementFocus,
       prehabTags: prehabTags ?? this.prehabTags,
-      recommendedTierBefore: recommendedTierBefore ?? this.recommendedTierBefore,
+      recommendedTierBefore:
+          recommendedTierBefore ?? this.recommendedTierBefore,
       recommendedTierAfter: recommendedTierAfter ?? this.recommendedTierAfter,
     );
   }

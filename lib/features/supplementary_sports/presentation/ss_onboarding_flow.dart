@@ -85,13 +85,16 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         if (g == 'FEMALE' || g == 'MALE') {
           _selectedGender = g!;
         }
-      } catch (e) { debugPrint('[ss] ss_onboarding_flow.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] ss_onboarding_flow.dart: $e');
+      }
 
       final savedStep = prefs.getInt('ss_onboarding_step');
       if (savedStep != null && savedStep > 0 && savedStep <= _totalSteps) {
         setState(() {
           _currentStep = savedStep;
-          _simplifiedMode = prefs.getBool('ss_onboarding_simplified_mode') ?? false;
+          _simplifiedMode =
+              prefs.getBool('ss_onboarding_simplified_mode') ?? false;
           _heightCm = prefs.getDouble('ss_onboarding_height') ?? 175;
           _weightKg = prefs.getDouble('ss_onboarding_weight') ?? 70;
 
@@ -120,7 +123,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           }
 
           _selectedDays = prefs.getInt('ss_onboarding_days') ?? 3;
-          _selectedMinutes = prefs.getInt('ss_onboarding_duration_minutes') ?? 45;
+          _selectedMinutes =
+              prefs.getInt('ss_onboarding_duration_minutes') ?? 45;
 
           final savedEquip = prefs.getStringList('ss_onboarding_equipment');
           if (savedEquip != null) {
@@ -179,12 +183,21 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         await prefs.setString('ss_onboarding_goal', _selectedGoal.toString());
       }
       if (_selectedLevel != null) {
-        await prefs.setString('ss_onboarding_experience', _selectedLevel.toString());
+        await prefs.setString(
+          'ss_onboarding_experience',
+          _selectedLevel.toString(),
+        );
       }
-      await prefs.setString('ss_onboarding_location', _selectedLocation.toString());
+      await prefs.setString(
+        'ss_onboarding_location',
+        _selectedLocation.toString(),
+      );
       await prefs.setInt('ss_onboarding_days', _selectedDays);
       await prefs.setInt('ss_onboarding_duration_minutes', _selectedMinutes);
-      await prefs.setStringList('ss_onboarding_sports', _selectedSportCodes.toList());
+      await prefs.setStringList(
+        'ss_onboarding_sports',
+        _selectedSportCodes.toList(),
+      );
       await prefs.setStringList(
         'ss_onboarding_equipment',
         _selectedEquipment.map((e) => e.toString()).toList(),
@@ -276,11 +289,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         daysPerWeek: _selectedDays,
         focusAreas: _selectedFocusAreas.toList(),
         physicalLimitations: _selectedLimitations.toList(),
-        sessionDuration: _selectedMinutes == 30 
-            ? SessionDuration.short30 
-            : _selectedMinutes == 60 
-                ? SessionDuration.long60 
-                : SessionDuration.medium45,
+        sessionDuration: _selectedMinutes == 30
+            ? SessionDuration.short30
+            : _selectedMinutes == 60
+            ? SessionDuration.long60
+            : SessionDuration.medium45,
         gender: _selectedGender,
         onboardingCompleted: true,
         createdAt: now,
@@ -299,12 +312,13 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
 
       // Also sync gender with main app user_settings
       try {
-        await db.insert(
-          'app_settings',
-          {'key': 'user_gender', 'value': _selectedGender},
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      } catch (e) { debugPrint('[ss] ss_onboarding_flow.dart: $e'); }
+        await db.insert('app_settings', {
+          'key': 'user_gender',
+          'value': _selectedGender,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      } catch (e) {
+        debugPrint('[ss] ss_onboarding_flow.dart: $e');
+      }
 
       // Apply selected detail mode
       await SportsDetailMode.setEnabled(!_simplifiedMode);
@@ -344,7 +358,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
     } catch (e) {
       debugPrint('Error finishing onboarding flow: $e');
       if (mounted) {
-        RitmoToast.show(context, 'خطا در ساخت برنامه: $e', icon: Icons.error_outline);
+        RitmoToast.show(
+          context,
+          'خطا در ساخت برنامه: $e',
+          icon: Icons.error_outline,
+        );
       }
     } finally {
       if (mounted) {
@@ -406,15 +424,13 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         const SizedBox(height: 8),
         Text(
           'شما می‌توانید برنامه را بر اساس نیازتان ساده یا بسیار دقیق کنید.',
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: colors.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 24),
         _buildSelectableCard(
           title: 'حالت پیشرفته (دقیق)',
-          subtitle: 'شامل انیمیشن‌های سه‌بعدی، تعداد ست و تکرار دقیق و زمان‌های استراحت.',
+          subtitle:
+              'شامل انیمیشن‌های سه‌بعدی، تعداد ست و تکرار دقیق و زمان‌های استراحت.',
           icon: Icons.fitness_center_rounded,
           isSelected: !_simplifiedMode,
           onTap: () {
@@ -428,7 +444,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         const SizedBox(height: 12),
         _buildSelectableCard(
           title: 'حالت ساده (بدون دردسر)',
-          subtitle: 'فقط تیک زدن روزهای ورزش بدون درگیری با جزئیات و تعداد حرکات.',
+          subtitle:
+              'فقط تیک زدن روزهای ورزش بدون درگیری با جزئیات و تعداد حرکات.',
           icon: Icons.check_circle_outline_rounded,
           isSelected: _simplifiedMode,
           onTap: () {
@@ -459,7 +476,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? colors.primary : colors.border,
@@ -472,7 +491,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isSelected ? colors.primary.withValues(alpha: 0.2) : colors.surface,
+                color: isSelected
+                    ? colors.primary.withValues(alpha: 0.2)
+                    : colors.surface,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -490,7 +511,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
                       color: isSelected ? colors.primary : colors.textPrimary,
                     ),
                   ),
@@ -526,7 +549,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? colors.primary : colors.border,
@@ -611,7 +636,10 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   itemCount: _totalSteps,
                   itemBuilder: (context, index) {
                     return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       child: _buildStepContent(_activeSteps[index]),
                     );
                   },
@@ -620,7 +648,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: PrimaryButton(
-                  label: _currentStep == _totalSteps ? 'شروع برنامه اختصاصی ✨' : 'ادامه',
+                  label: _currentStep == _totalSteps
+                      ? 'شروع برنامه اختصاصی ✨'
+                      : 'ادامه',
                   onPressed: _isStepValid() ? _nextStep : null,
                 ),
               ),
@@ -679,7 +709,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'مشخصات فیزیکی',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -693,7 +727,14 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           textDirection: TextDirection.rtl,
           children: [
-            Text('جنسیت شما:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+            Text(
+              'جنسیت شما:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
             Row(
               children: [
                 _buildGenderToggleOption(
@@ -724,7 +765,7 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           ],
         ),
         const SizedBox(height: 20),
-        
+
         // BMI Gauge & Card
         Container(
           padding: const EdgeInsets.all(18),
@@ -743,24 +784,43 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     textDirection: TextDirection.rtl,
                     children: [
-                      Text('شاخص توده بدنی (BMI)', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                      Text(
+                        'شاخص توده بدنی (BMI)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         toPersianDigits(bmi.toStringAsFixed(1)),
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: categoryColor),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: categoryColor,
+                        ),
                       ),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: categoryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: categoryColor.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: categoryColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       category,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: categoryColor),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: categoryColor,
+                      ),
                     ),
                   ),
                 ],
@@ -772,7 +832,14 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           ),
         ),
         const SizedBox(height: 24),
-        Text('قد: ${toPersianDigits(_heightCm.toInt().toString())} سانتی‌متر', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text(
+          'قد: ${toPersianDigits(_heightCm.toInt().toString())} سانتی‌متر',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
         Slider(
           value: _heightCm,
           min: 130,
@@ -785,7 +852,14 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           },
         ),
         const SizedBox(height: 16),
-        Text('وزن: ${toPersianDigits(_weightKg.toInt().toString())} کیلوگرم', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text(
+          'وزن: ${toPersianDigits(_weightKg.toInt().toString())} کیلوگرم',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
         Slider(
           value: _weightKg,
           min: 40,
@@ -809,7 +883,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'هدف اصلی ورزشی شما چیه؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -835,7 +913,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           label: 'بازسازی بدنی و تناسب اندام ⚖️',
           icon: '✨',
           isSelected: _selectedGoal == FitnessGoal.bodyRecomposition,
-          onTap: () => setState(() => _selectedGoal = FitnessGoal.bodyRecomposition),
+          onTap: () =>
+              setState(() => _selectedGoal = FitnessGoal.bodyRecomposition),
           colors: colors,
         ),
         _buildChoiceItem(
@@ -857,7 +936,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'سطح تجربه ورزشی شما چقدره؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -869,21 +952,24 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           label: 'مبتدی (کمتر از ۶ ماه ورزش)',
           icon: '🌱',
           isSelected: _selectedLevel == ExperienceLevel.beginner,
-          onTap: () => setState(() => _selectedLevel = ExperienceLevel.beginner),
+          onTap: () =>
+              setState(() => _selectedLevel = ExperienceLevel.beginner),
           colors: colors,
         ),
         _buildChoiceItem(
           label: 'متوسط (۶ ماه تا ۲ سال)',
           icon: '⚡',
           isSelected: _selectedLevel == ExperienceLevel.intermediate,
-          onTap: () => setState(() => _selectedLevel = ExperienceLevel.intermediate),
+          onTap: () =>
+              setState(() => _selectedLevel = ExperienceLevel.intermediate),
           colors: colors,
         ),
         _buildChoiceItem(
           label: 'پیشرفته (بیش از ۲ سال)',
           icon: '🏆',
           isSelected: _selectedLevel == ExperienceLevel.advanced,
-          onTap: () => setState(() => _selectedLevel = ExperienceLevel.advanced),
+          onTap: () =>
+              setState(() => _selectedLevel = ExperienceLevel.advanced),
           colors: colors,
         ),
       ],
@@ -898,7 +984,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'کجا تمرین می‌کنی؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -910,7 +1000,8 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           label: 'خانه 🏠',
           icon: '🏡',
           isSelected: _selectedLocation == TrainingLocation.home,
-          onTap: () => setState(() => _selectedLocation = TrainingLocation.home),
+          onTap: () =>
+              setState(() => _selectedLocation = TrainingLocation.home),
           colors: colors,
         ),
         _buildChoiceItem(
@@ -954,7 +1045,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'کدام بخش‌های بدن برات مهم‌تره؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -998,7 +1093,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'چه تجهیزاتی در دسترس داری؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -1071,7 +1170,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'آسیب‌دیدگی یا محدودیت جسمی داری؟',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -1132,7 +1235,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       } catch (e) {
         debugPrint('[ss] ss_onboarding_flow.dart: $e');
       }
-      final kinds = await MovementRepository.instance.getKinds(enabledOnly: true);
+      final kinds = await MovementRepository.instance.getKinds(
+        enabledOnly: true,
+      );
       return kinds.where((k) => !_excludedSportCodes.contains(k.code)).toList();
     }();
     return _sportKindsFuture!;
@@ -1171,7 +1276,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  snapshot.data!.isEmpty) {
                 return Center(
                   child: Text(
                     'فهرست ورزش‌ها بارگذاری نشد؛ می‌توانید بدون انتخاب ادامه دهید.',
@@ -1266,7 +1373,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
                   style: TextStyle(
                     color: isSelected ? colors.primary : colors.textPrimary,
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ],
@@ -1280,7 +1389,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
   /// برای هر ورزش محبوب یک روتین هفتگی با برنامهٔ پیش‌فرض می‌سازد
   /// (یکشنبه و چهارشنبه، ساعت ۱۸) — قابل ویرایش از تب «برنامه».
   Future<void> _createFavoriteSportRoutines(int now) async {
-    final kinds = await MovementRepository.instance.getKinds(enabledOnly: false);
+    final kinds = await MovementRepository.instance.getKinds(
+      enabledOnly: false,
+    );
     for (final code in _selectedSportCodes) {
       MovementKind? kind;
       for (final k in kinds) {
@@ -1371,7 +1482,11 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
       children: [
         Text(
           'زمان‌بندی هفتگی شما',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colors.textPrimary),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -1379,14 +1494,26 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           style: TextStyle(fontSize: 14, color: colors.textSecondary),
         ),
         const SizedBox(height: 20),
-        Text('تعداد روزهای تمرین در هفته: ${toPersianDigits(_selectedDays.toString())} روز', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text(
+          'تعداد روزهای تمرین در هفته: ${toPersianDigits(_selectedDays.toString())} روز',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [2, 3, 4, 5, 6].map((days) {
             final isSelected = _selectedDays == days;
             return ChoiceChip(
-              label: Text(toPersianDigits('$days روز'), style: TextStyle(color: isSelected ? Colors.white : colors.textPrimary)),
+              label: Text(
+                toPersianDigits('$days روز'),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : colors.textPrimary,
+                ),
+              ),
               selected: isSelected,
               selectedColor: colors.primary,
               backgroundColor: colors.card,
@@ -1400,14 +1527,26 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           }).toList(),
         ),
         const SizedBox(height: 24),
-        Text('مدت هر جلسه تمرین: ${toPersianDigits(_selectedMinutes.toString())} دقیقه', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        Text(
+          'مدت هر جلسه تمرین: ${toPersianDigits(_selectedMinutes.toString())} دقیقه',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [30, 45, 60].map((mins) {
             final isSelected = _selectedMinutes == mins;
             return ChoiceChip(
-              label: Text(toPersianDigits('$mins دقیقه'), style: TextStyle(color: isSelected ? Colors.white : colors.textPrimary)),
+              label: Text(
+                toPersianDigits('$mins دقیقه'),
+                style: TextStyle(
+                  color: isSelected ? Colors.white : colors.textPrimary,
+                ),
+              ),
               selected: isSelected,
               selectedColor: colors.primary,
               backgroundColor: colors.card,
@@ -1429,7 +1568,9 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
           experience: _selectedLevel,
           days: _selectedDays,
           durationMins: _selectedMinutes,
-          limitationsCount: _selectedLimitations.contains(Limitation.none) ? 0 : _selectedLimitations.length,
+          limitationsCount: _selectedLimitations.contains(Limitation.none)
+              ? 0
+              : _selectedLimitations.length,
           colors: colors,
         ),
       ],
@@ -1470,12 +1611,16 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         decoration: BoxDecoration(
           color: isDisabled
               ? colors.card.withValues(alpha: 0.4)
-              : isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+              : isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDisabled
                 ? colors.border.withValues(alpha: 0.3)
-                : isSelected ? colors.primary : colors.border,
+                : isSelected
+                ? colors.primary
+                : colors.border,
             width: isSelected && !isDisabled ? 2 : 1,
           ),
         ),
@@ -1487,13 +1632,25 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
               label,
               style: TextStyle(
                 fontSize: 15,
-                fontWeight: isSelected && !isDisabled ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected && !isDisabled
+                    ? FontWeight.bold
+                    : FontWeight.normal,
                 color: isDisabled
                     ? colors.textSecondary.withValues(alpha: 0.5)
-                    : isSelected ? colors.primary : colors.textPrimary,
+                    : isSelected
+                    ? colors.primary
+                    : colors.textPrimary,
               ),
             ),
-            Text(icon, style: TextStyle(fontSize: 20, color: isDisabled ? colors.textSecondary.withValues(alpha: 0.4) : null)),
+            Text(
+              icon,
+              style: TextStyle(
+                fontSize: 20,
+                color: isDisabled
+                    ? colors.textSecondary.withValues(alpha: 0.4)
+                    : null,
+              ),
+            ),
           ],
         ),
       ),
@@ -1515,12 +1672,16 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
         decoration: BoxDecoration(
           color: isDisabled
               ? colors.card.withValues(alpha: 0.4)
-              : isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+              : isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDisabled
                 ? colors.border.withValues(alpha: 0.3)
-                : isSelected ? colors.primary : colors.border,
+                : isSelected
+                ? colors.primary
+                : colors.border,
             width: isSelected && !isDisabled ? 2 : 1,
           ),
         ),
@@ -1532,17 +1693,25 @@ class _SSOnboardingFlowState extends State<SSOnboardingFlow> {
               label,
               style: TextStyle(
                 fontSize: 15,
-                fontWeight: isSelected && !isDisabled ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected && !isDisabled
+                    ? FontWeight.bold
+                    : FontWeight.normal,
                 color: isDisabled
                     ? colors.textSecondary.withValues(alpha: 0.5)
-                    : isSelected ? colors.primary : colors.textPrimary,
+                    : isSelected
+                    ? colors.primary
+                    : colors.textPrimary,
               ),
             ),
             Icon(
-              isSelected && !isDisabled ? Icons.check_box : Icons.check_box_outline_blank,
+              isSelected && !isDisabled
+                  ? Icons.check_box
+                  : Icons.check_box_outline_blank,
               color: isDisabled
                   ? colors.textSecondary.withValues(alpha: 0.3)
-                  : isSelected ? colors.primary : colors.textSecondary,
+                  : isSelected
+                  ? colors.primary
+                  : colors.textSecondary,
             ),
           ],
         ),
@@ -1588,7 +1757,9 @@ class _BmiSpectrumGauge extends StatelessWidget {
             // Pin Indicator
             Positioned(
               right: null,
-              left: (MediaQuery.of(context).size.width - 92) * percent.clamp(0.02, 0.95),
+              left:
+                  (MediaQuery.of(context).size.width - 92) *
+                  percent.clamp(0.02, 0.95),
               top: -6,
               child: Container(
                 width: 24,
@@ -1598,7 +1769,11 @@ class _BmiSpectrumGauge extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: colors.primary, width: 3),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
               ),
@@ -1609,10 +1784,22 @@ class _BmiSpectrumGauge extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('کمبود', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            Text('نرمال', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            Text('اضافه وزن', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
-            Text('چاقی', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+            Text(
+              'کمبود',
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
+            ),
+            Text(
+              'نرمال',
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
+            ),
+            Text(
+              'اضافه وزن',
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
+            ),
+            Text(
+              'چاقی',
+              style: TextStyle(fontSize: 10, color: colors.textSecondary),
+            ),
           ],
         ),
       ],
@@ -1675,7 +1862,10 @@ class _WorkoutPersonaCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: colors.primary.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1700,7 +1890,11 @@ class _WorkoutPersonaCard extends StatelessWidget {
             children: [
               _buildPersonaChip('هدف', _getGoalTitle(), colors),
               _buildPersonaChip('سطح', _getExpTitle(), colors),
-              _buildPersonaChip('زمان', toPersianDigits('$days روز × $durationMins دقیقه'), colors),
+              _buildPersonaChip(
+                'زمان',
+                toPersianDigits('$days روز × $durationMins دقیقه'),
+                colors,
+              ),
             ],
           ),
           if (limitationsCount > 0) ...[
@@ -1717,7 +1911,9 @@ class _WorkoutPersonaCard extends StatelessWidget {
                   Icon(Icons.shield_outlined, color: colors.warning, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    toPersianDigits('محافظت از $limitationsCount ناحیه حساس بدن فعال شد'),
+                    toPersianDigits(
+                      'محافظت از $limitationsCount ناحیه حساس بدن فعال شد',
+                    ),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -1743,9 +1939,19 @@ class _WorkoutPersonaCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: colors.textSecondary),
+          ),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
         ],
       ),
     );
@@ -1809,27 +2015,37 @@ class _AiPlanBuildingProgressView extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isDone
                             ? colors.success
-                            : isCurrent ? colors.primary : colors.card,
+                            : isCurrent
+                            ? colors.primary
+                            : colors.card,
                         border: Border.all(
                           color: isDone
                               ? colors.success
-                              : isCurrent ? colors.primary : colors.border,
+                              : isCurrent
+                              ? colors.primary
+                              : colors.border,
                         ),
                       ),
                       child: isDone
-                          ? const Icon(Icons.check, color: Colors.white, size: 16)
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 16,
+                            )
                           : isCurrent
-                              ? const Center(
-                                  child: SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
+                          ? const Center(
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
                                   ),
-                                )
-                              : null,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -1837,10 +2053,14 @@ class _AiPlanBuildingProgressView extends StatelessWidget {
                         stages[index],
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isCurrent || isDone
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: isDone
                               ? colors.success
-                              : isCurrent ? colors.textPrimary : colors.textSecondary.withValues(alpha: 0.6),
+                              : isCurrent
+                              ? colors.textPrimary
+                              : colors.textSecondary.withValues(alpha: 0.6),
                         ),
                       ),
                     ),

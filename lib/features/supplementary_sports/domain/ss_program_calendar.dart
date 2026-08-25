@@ -1,14 +1,22 @@
 class SsProgramCalendar {
   /// هفتهٔ چندم از چرخه؟ از programStartDate محاسبه می‌شود.
-  static int cycleWeekFor(DateTime date, {required DateTime programStart, int cycleLength = 4}) {
+  static int cycleWeekFor(
+    DateTime date, {
+    required DateTime programStart,
+    int cycleLength = 4,
+  }) {
     // If start is in the future, return week 1
     if (date.isBefore(programStart)) {
       return 1;
     }
     // Normalize date and start to ignore time of day
-    final startNormalized = DateTime(programStart.year, programStart.month, programStart.day);
+    final startNormalized = DateTime(
+      programStart.year,
+      programStart.month,
+      programStart.day,
+    );
     final dateNormalized = DateTime(date.year, date.month, date.day);
-    
+
     final diffDays = dateNormalized.difference(startNormalized).inDays;
     final elapsedWeeks = diffDays ~/ 7;
     return (elapsedWeeks % cycleLength) + 1;

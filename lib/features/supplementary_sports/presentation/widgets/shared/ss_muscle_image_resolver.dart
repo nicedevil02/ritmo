@@ -2,9 +2,10 @@ class SSMuscleImageResolver {
   static String resolve(String workoutName, String? gender, {int level = 2}) {
     final name = workoutName.toLowerCase();
     final g = (gender ?? '').toUpperCase();
-    
+
     // Explicitly check for female variants. Default to MALE if unspecified or male ('MALE', 'MAN', 'M', 'مرد', etc.)
-    final isFemale = g == 'FEMALE' || g == 'WOMAN' || g == 'ZAN' || g == 'F' || g == 'زن';
+    final isFemale =
+        g == 'FEMALE' || g == 'WOMAN' || g == 'ZAN' || g == 'F' || g == 'زن';
     final l = level.clamp(1, 3);
 
     // 0. Full Body Holographic Biometric Scan
@@ -39,7 +40,9 @@ class SSMuscleImageResolver {
     }
 
     // 3. Chest (سینه)
-    if (name.contains('سینه') || name.contains('chest') || name.contains('pec')) {
+    if (name.contains('سینه') ||
+        name.contains('chest') ||
+        name.contains('pec')) {
       return isFemale
           ? 'assets/images/cover_female_chest_$l.webp'
           : 'assets/images/cover_chest_$l.webp';

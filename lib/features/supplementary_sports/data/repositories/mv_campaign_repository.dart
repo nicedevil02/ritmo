@@ -68,10 +68,7 @@ class MvCampaignRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'movement_campaigns',
-      {
-        'status': 'COMPLETED',
-        'updatedAt': now,
-      },
+      {'status': 'COMPLETED', 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [id.toString()],
     );
@@ -83,10 +80,7 @@ class MvCampaignRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'movement_campaigns',
-      {
-        'status': 'ARCHIVED',
-        'updatedAt': now,
-      },
+      {'status': 'ARCHIVED', 'updatedAt': now},
       where: 'id = ?',
       whereArgs: [id.toString()],
     );

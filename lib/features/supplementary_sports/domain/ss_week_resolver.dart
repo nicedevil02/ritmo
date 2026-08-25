@@ -11,7 +11,11 @@ class SsWeekResolver {
     required int totalWeeks,
   }) {
     if (totalWeeks <= 0) return 1;
-    final start = DateTime(programStartDate.year, programStartDate.month, programStartDate.day);
+    final start = DateTime(
+      programStartDate.year,
+      programStartDate.month,
+      programStartDate.day,
+    );
     final target = DateTime(targetDate.year, targetDate.month, targetDate.day);
     final diff = target.difference(start).inDays;
     if (diff < 0) return 1;
@@ -33,7 +37,9 @@ class SsWeekResolver {
           if (dt != null) return dt;
         }
       }
-    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_week_resolver.dart: $e');
+    }
 
     try {
       final minCreated = await db.rawQuery(
@@ -45,7 +51,9 @@ class SsWeekResolver {
           return DateTime.fromMillisecondsSinceEpoch(ms);
         }
       }
-    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_week_resolver.dart: $e');
+    }
 
     return DateTime.now();
   }
@@ -79,7 +87,9 @@ class SsWeekResolver {
         }
       }
       if (weeks.isNotEmpty) return weeks.length;
-    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_week_resolver.dart: $e');
+    }
 
     return 4;
   }
@@ -93,7 +103,9 @@ class SsWeekResolver {
       if (decoded is List && decoded.isNotEmpty) {
         return 'تمرین ${decoded.map((e) => e.toString()).join(' و ')}';
       }
-    } catch (e) { debugPrint('[ss] ss_week_resolver.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_week_resolver.dart: $e');
+    }
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return 'تمرین ورزشی';
     return 'تمرین $trimmed';

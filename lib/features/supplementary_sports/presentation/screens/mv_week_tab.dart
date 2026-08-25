@@ -88,7 +88,9 @@ class MvWeekTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.warning.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(metrics.radiusCard),
-                border: Border.all(color: colors.warning.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: colors.warning.withValues(alpha: 0.5),
+                ),
               ),
               child: Row(
                 children: [
@@ -154,7 +156,10 @@ class MvWeekTab extends StatelessWidget {
     for (int i = 0; i < slots.length - 1; i++) {
       final current = slots[i];
       final next = slots[i + 1];
-      if (current.isLocked && !current.isRest && next.isLocked && !next.isRest) {
+      if (current.isLocked &&
+          !current.isRest &&
+          next.isLocked &&
+          !next.isRest) {
         return true;
       }
     }

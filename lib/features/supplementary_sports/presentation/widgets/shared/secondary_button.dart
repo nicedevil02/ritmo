@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class SecondaryButton extends StatelessWidget {
-
   const SecondaryButton({
     super.key,
     required this.label,
@@ -36,7 +35,9 @@ class SecondaryButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: textColor,
             side: BorderSide(
-              color: onPressed != null ? outlineColor.withValues(alpha: 0.5) : disabledColor,
+              color: onPressed != null
+                  ? outlineColor.withValues(alpha: 0.5)
+                  : disabledColor,
             ),
             shape: const RoundedRectangleBorder(
               borderRadius: SupplementarySportsTheme.borderRadiusButton,
@@ -49,7 +50,9 @@ class SecondaryButton extends StatelessWidget {
             label,
             textDirection: TextDirection.rtl,
             style: SupplementarySportsTheme.buttonLabel.copyWith(
-              color: onPressed != null ? textColor : outlineColor.withValues(alpha: 0.4),
+              color: onPressed != null
+                  ? textColor
+                  : outlineColor.withValues(alpha: 0.4),
             ),
           ),
         ),

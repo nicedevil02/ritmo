@@ -43,4 +43,3 @@ class MvLoadSnapshot {
   String toString() =>
       'MvLoadSnapshot(acute: $acuteLoad, chronicWeekly: $chronicWeeklyLoad, ratio: $ratio, bandKey: $bandKey, days: $daysOfHistory, sessions: $completedSessions)';
 }
-

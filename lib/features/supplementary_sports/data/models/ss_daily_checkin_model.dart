@@ -44,8 +44,12 @@ class SsDailyCheckin {
       painLevel: (map['painLevel'] as num?)?.toInt() ?? 0,
       availableMinutes: (map['availableMinutes'] as num?)?.toInt(),
       note: map['note'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 

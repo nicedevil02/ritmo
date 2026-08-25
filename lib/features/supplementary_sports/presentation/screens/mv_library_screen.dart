@@ -113,8 +113,9 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     return _allKinds.where((k) {
       final matchesTitle = k.titleFa.toLowerCase().contains(query);
       final matchesCode = k.code.toLowerCase().contains(query);
-      final matchesAliases =
-          k.aliasList.any((a) => a.toLowerCase().contains(query));
+      final matchesAliases = k.aliasList.any(
+        (a) => a.toLowerCase().contains(query),
+      );
       return matchesTitle || matchesCode || matchesAliases;
     }).toList();
   }
@@ -126,7 +127,10 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     );
     if (newKind != null && mounted) {
       setState(() {
-        _allKinds = [newKind, ..._allKinds.where((k) => k.code != newKind.code)];
+        _allKinds = [
+          newKind,
+          ..._allKinds.where((k) => k.code != newKind.code),
+        ];
       });
       await _loadKinds();
     }
@@ -351,9 +355,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () => _showExerciseDetail(ex),
-                        borderRadius: BorderRadius.circular(
-                          metrics.radiusCard,
-                        ),
+                        borderRadius: BorderRadius.circular(metrics.radiusCard),
                         child: Container(
                           padding: EdgeInsets.all(metrics.spaceMd),
                           decoration: BoxDecoration(
@@ -443,9 +445,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
             SizedBox(height: metrics.spaceSm),
             Text(
               'برنامه‌ها بر اساس سطح و اهداف شما از تب هفته قابل تنظیم و بازتولید هستند.',
-              style: textTheme.bodySmall?.copyWith(
-                color: colors.textSecondary,
-              ),
+              style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -502,69 +502,66 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
           child: _isLoadingKinds
               ? const Center(child: CircularProgressIndicator())
               : kinds.isEmpty
-                  ? const MvEmptyState(
-                      icon: Icons.search_off_rounded,
-                      title: 'ورزشی پیدا نشد',
-                      description: 'می‌توانی ورزش جدیدی به لیست اضافه کنی.',
-                    )
-                  : ListView.separated(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: metrics.spaceLg,
-                        vertical: metrics.spaceSm,
+              ? const MvEmptyState(
+                  icon: Icons.search_off_rounded,
+                  title: 'ورزشی پیدا نشد',
+                  description: 'می‌توانی ورزش جدیدی به لیست اضافه کنی.',
+                )
+              : ListView.separated(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: metrics.spaceLg,
+                    vertical: metrics.spaceSm,
+                  ),
+                  itemCount: kinds.length,
+                  separatorBuilder: (_, _) => SizedBox(height: metrics.spaceSm),
+                  itemBuilder: (context, index) {
+                    final kind = kinds[index];
+                    return Container(
+                      key: ValueKey('library_kind_${kind.code}'),
+                      padding: EdgeInsets.all(metrics.spaceMd),
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(metrics.radiusCard),
+                        border: Border.all(color: colors.border),
                       ),
-                      itemCount: kinds.length,
-                      separatorBuilder: (_, _) =>
-                          SizedBox(height: metrics.spaceSm),
-                      itemBuilder: (context, index) {
-                        final kind = kinds[index];
-                        return Container(
-                          key: ValueKey('library_kind_${kind.code}'),
-                          padding: EdgeInsets.all(metrics.spaceMd),
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            borderRadius: BorderRadius.circular(
-                              metrics.radiusCard,
-                            ),
-                            border: Border.all(color: colors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(kind.emoji, style: textTheme.headlineSmall),
-                              SizedBox(width: metrics.spaceMd),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        children: [
+                          Text(kind.emoji, style: textTheme.headlineSmall),
+                          SizedBox(width: metrics.spaceMd),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          kind.titleFa,
-                                          style: textTheme.bodyLarge?.copyWith(
-                                            color: colors.textPrimary,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        if (kind.isCustom) ...[
-                                          SizedBox(width: metrics.spaceSm),
-                                          _buildTag('سفارشی', colors.primary),
-                                        ],
-                                      ],
-                                    ),
-                                    SizedBox(height: metrics.spaceXs),
                                     Text(
-                                      '${kind.family.titleFa} · شدت انرژی: ${toPersianDigits(kind.baseMet.toStringAsFixed(1))} MET',
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: colors.textSecondary,
+                                      kind.titleFa,
+                                      style: textTheme.bodyLarge?.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
+                                    if (kind.isCustom) ...[
+                                      SizedBox(width: metrics.spaceSm),
+                                      _buildTag('سفارشی', colors.primary),
+                                    ],
                                   ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: metrics.spaceXs),
+                                Text(
+                                  '${kind.family.titleFa} · شدت انرژی: ${toPersianDigits(kind.baseMet.toStringAsFixed(1))} MET',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      },
-                    ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );

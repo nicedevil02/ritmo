@@ -6,7 +6,10 @@ import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
-void showSSCantTodaySheet(BuildContext context, {required ValueChanged<String> onReasonSelected}) {
+void showSSCantTodaySheet(
+  BuildContext context, {
+  required ValueChanged<String> onReasonSelected,
+}) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -24,12 +27,36 @@ class _SSCantTodaySheet extends StatelessWidget {
     const theme = SupplementarySportsTheme.dark;
 
     final reasons = [
-      {'code': 'NO_TIME', 'title': 'وقت نداشتم ⏳', 'subtitle': 'اشکالی نداره، فردا جبران می‌کنیم.'},
-      {'code': 'NO_ENERGY', 'title': 'انرژی نداشتم 🔋', 'subtitle': 'استراحت مهم‌تره، امشب خوب بخواب.'},
-      {'code': 'UNWELL', 'title': 'حالم خوب نبود 🤕', 'subtitle': 'مراقب سلامتیت باش، بهبود پیدا کن.'},
-      {'code': 'FORGOT', 'title': 'یادم رفت 🧠', 'subtitle': 'یادآوریت رو تنظیم می‌کنیم.'},
-      {'code': 'NO_MOOD', 'title': 'حوصله نداشتم 😴', 'subtitle': 'پیش میاد، فردا با انگیزه تازه می‌آی.'},
-      {'code': 'OUTSIDE', 'title': 'بیرون بودم 🚗', 'subtitle': 'یک پیاده‌روی سبک بیرون هم حسابه.'},
+      {
+        'code': 'NO_TIME',
+        'title': 'وقت نداشتم ⏳',
+        'subtitle': 'اشکالی نداره، فردا جبران می‌کنیم.',
+      },
+      {
+        'code': 'NO_ENERGY',
+        'title': 'انرژی نداشتم 🔋',
+        'subtitle': 'استراحت مهم‌تره، امشب خوب بخواب.',
+      },
+      {
+        'code': 'UNWELL',
+        'title': 'حالم خوب نبود 🤕',
+        'subtitle': 'مراقب سلامتیت باش، بهبود پیدا کن.',
+      },
+      {
+        'code': 'FORGOT',
+        'title': 'یادم رفت 🧠',
+        'subtitle': 'یادآوریت رو تنظیم می‌کنیم.',
+      },
+      {
+        'code': 'NO_MOOD',
+        'title': 'حوصله نداشتم 😴',
+        'subtitle': 'پیش میاد، فردا با انگیزه تازه می‌آی.',
+      },
+      {
+        'code': 'OUTSIDE',
+        'title': 'بیرون بودم 🚗',
+        'subtitle': 'یک پیاده‌روی سبک بیرون هم حسابه.',
+      },
     ];
 
     return Directionality(
@@ -59,7 +86,11 @@ class _SSCantTodaySheet extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'چرا امروز نه؟ 🤔',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textPrimary),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
@@ -69,10 +100,17 @@ class _SSCantTodaySheet extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              ...reasons.map((r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _buildOption(context, r['code']!, r['title']!, r['subtitle']!),
-                  )),
+              ...reasons.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _buildOption(
+                    context,
+                    r['code']!,
+                    r['title']!,
+                    r['subtitle']!,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -80,7 +118,12 @@ class _SSCantTodaySheet extends StatelessWidget {
     );
   }
 
-  Widget _buildOption(BuildContext context, String code, String title, String subtitle) {
+  Widget _buildOption(
+    BuildContext context,
+    String code,
+    String title,
+    String subtitle,
+  ) {
     const theme = SupplementarySportsTheme.dark;
     return GestureDetector(
       onTap: () async {
@@ -95,7 +138,9 @@ class _SSCantTodaySheet extends StatelessWidget {
             'reason': code,
             'createdAt': DateTime.now().millisecondsSinceEpoch,
           });
-        } catch (e) { debugPrint('[ss] ss_cant_today_sheet.dart: $e'); }
+        } catch (e) {
+          debugPrint('[ss] ss_cant_today_sheet.dart: $e');
+        }
         if (context.mounted) Navigator.pop(context);
         onReasonSelected(code);
       },
@@ -109,9 +154,19 @@ class _SSCantTodaySheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 14, color: theme.textPrimary, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: theme.textSecondary)),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 11, color: theme.textSecondary),
+            ),
           ],
         ),
       ),

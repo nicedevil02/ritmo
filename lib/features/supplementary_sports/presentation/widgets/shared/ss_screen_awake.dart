@@ -7,27 +7,27 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 /// so no custom native channel is needed anymore — this replaced the old
 /// `ritmo/screen_awake` MethodChannel which was never wired natively.
 class SsScreenAwake {
-	const SsScreenAwake._();
+  const SsScreenAwake._();
 
-	static bool _enabled = false;
+  static bool _enabled = false;
 
-	static bool get isEnabled => _enabled;
+  static bool get isEnabled => _enabled;
 
-	static Future<void> enable() => _set(true);
+  static Future<void> enable() => _set(true);
 
-	static Future<void> disable() => _set(false);
+  static Future<void> disable() => _set(false);
 
-	static Future<void> _set(bool enabled) async {
-		if (_enabled == enabled) return;
-		_enabled = enabled;
-		try {
-			if (enabled) {
-				await WakelockPlus.enable();
-			} else {
-				await WakelockPlus.disable();
-			}
-		} catch (e) {
-			debugPrint('[ss] screen-awake toggle failed: $e');
-		}
-	}
+  static Future<void> _set(bool enabled) async {
+    if (_enabled == enabled) return;
+    _enabled = enabled;
+    try {
+      if (enabled) {
+        await WakelockPlus.enable();
+      } else {
+        await WakelockPlus.disable();
+      }
+    } catch (e) {
+      debugPrint('[ss] screen-awake toggle failed: $e');
+    }
+  }
 }

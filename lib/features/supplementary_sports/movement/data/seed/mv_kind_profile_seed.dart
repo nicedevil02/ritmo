@@ -275,10 +275,7 @@ class MvKindProfileSeed {
 
     if (rows.isEmpty) {
       await MovementKindsSeed.seed(db);
-      rows = await db.query(
-        'movement_kinds',
-        columns: ['code', 'jointImpact'],
-      );
+      rows = await db.query('movement_kinds', columns: ['code', 'jointImpact']);
     }
 
     final batch = db.batch();
@@ -289,41 +286,31 @@ class MvKindProfileSeed {
 
       if (explicitProfiles.containsKey(code)) {
         final profile = explicitProfiles[code]!;
-        batch.insert(
-          'mv_kind_profile',
-          {
-            'kindCode': code,
-            'primaryMuscles': profile['primaryMuscles'],
-            'neuroCost': profile['neuroCost'],
-            'recoveryHours': profile['recoveryHours'],
-            'complementFocus': profile['complementFocus'],
-            'prehabTags': profile['prehabTags'],
-            'recommendedTierBefore': profile['recommendedTierBefore'],
-            'recommendedTierAfter': profile['recommendedTierAfter'],
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert('mv_kind_profile', {
+          'kindCode': code,
+          'primaryMuscles': profile['primaryMuscles'],
+          'neuroCost': profile['neuroCost'],
+          'recoveryHours': profile['recoveryHours'],
+          'complementFocus': profile['complementFocus'],
+          'prehabTags': profile['prehabTags'],
+          'recommendedTierBefore': profile['recommendedTierBefore'],
+          'recommendedTierAfter': profile['recommendedTierAfter'],
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       } else {
         // Default fallback profile calculation (S3-T1 specification)
-        final int neuroCost = jointImpact >= 3
-            ? 3
-            : (jointImpact == 2 ? 2 : 1);
+        final int neuroCost = jointImpact >= 3 ? 3 : (jointImpact == 2 ? 2 : 1);
         final int recoveryHours = jointImpact * 16;
 
-        batch.insert(
-          'mv_kind_profile',
-          {
-            'kindCode': code,
-            'primaryMuscles': 'full_body',
-            'neuroCost': neuroCost,
-            'recoveryHours': recoveryHours,
-            'complementFocus': 'mobility,core',
-            'prehabTags': null,
-            'recommendedTierBefore': 'light',
-            'recommendedTierAfter': 'light',
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.insert('mv_kind_profile', {
+          'kindCode': code,
+          'primaryMuscles': 'full_body',
+          'neuroCost': neuroCost,
+          'recoveryHours': recoveryHours,
+          'complementFocus': 'mobility,core',
+          'prehabTags': null,
+          'recommendedTierBefore': 'light',
+          'recommendedTierAfter': 'light',
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     }
 

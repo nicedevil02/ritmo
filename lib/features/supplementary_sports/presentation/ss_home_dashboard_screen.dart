@@ -53,7 +53,6 @@ class SSHomeRestDay extends SSHomeUiState {
 }
 
 class SSHomeWorkoutReady extends SSHomeUiState {
-
   const SSHomeWorkoutReady({
     required this.dayName,
     required this.dayOfWeek,
@@ -86,11 +85,7 @@ class SSHomePrescriptionReady extends SSHomeUiState {
 }
 
 class SSHomeWorkoutCompleted extends SSHomeUiState {
-
-  const SSHomeWorkoutCompleted({
-    required this.dayName,
-    required this.summary,
-  });
+  const SSHomeWorkoutCompleted({required this.dayName, required this.summary});
   final String dayName;
   final String summary;
 }
@@ -150,7 +145,9 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
   void _onTabSelected(int index) {
     setState(() {
       _selectedIndex = index.clamp(0, 4);
-      _builtTabs.add(_selectedIndex); // mark tab as built before IndexedStack renders it
+      _builtTabs.add(
+        _selectedIndex,
+      ); // mark tab as built before IndexedStack renders it
     });
   }
 
@@ -208,7 +205,9 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                     labels[index],
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? Colors.white : colors.textSecondary,
                     ),
                   ),
@@ -255,7 +254,9 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? Colors.white : colors.textSecondary,
                     ),
                   ),
@@ -301,7 +302,10 @@ class _SSHomeDashboardScreenState extends State<SSHomeDashboardScreen> {
           centerTitle: false,
           actions: [
             IconButton(
-              icon: const Icon(CupertinoIcons.sparkles, color: Color(0xFFF59E0B)),
+              icon: const Icon(
+                CupertinoIcons.sparkles,
+                color: Color(0xFFF59E0B),
+              ),
               tooltip: 'مربی هوشمند AI',
               onPressed: _openAiCoach,
             ),
@@ -418,7 +422,8 @@ class _NewSportsTabContentState extends State<_NewSportsTabContent> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => MovementFamilyDetailScreen(family: family),
+                  builder: (context) =>
+                      MovementFamilyDetailScreen(family: family),
                 ),
               );
             },
@@ -521,10 +526,12 @@ class MovementFamilyDetailScreen extends StatefulWidget {
   final MovementFamily family;
 
   @override
-  State<MovementFamilyDetailScreen> createState() => _MovementFamilyDetailScreenState();
+  State<MovementFamilyDetailScreen> createState() =>
+      _MovementFamilyDetailScreenState();
 }
 
-class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen> {
+class _MovementFamilyDetailScreenState
+    extends State<MovementFamilyDetailScreen> {
   List<MovementKind> _kinds = [];
   bool _isLoading = true;
 
@@ -536,10 +543,14 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
 
   Future<void> _loadKinds() async {
     try {
-      var kinds = await MovementRepository.instance.getKinds(family: widget.family);
+      var kinds = await MovementRepository.instance.getKinds(
+        family: widget.family,
+      );
       if (widget.family == MovementFamily.mindBody) {
         // فیلتر کردن یوگا و کشش جداگانه جهت ترکیب آنها
-        kinds = kinds.where((k) => k.code != 'YOGA' && k.code != 'STRETCHING').toList();
+        kinds = kinds
+            .where((k) => k.code != 'YOGA' && k.code != 'STRETCHING')
+            .toList();
       }
       if (mounted) {
         setState(() {
@@ -598,10 +609,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      cat.emoji,
-                      style: const TextStyle(fontSize: 22),
-                    ),
+                    Text(cat.emoji, style: const TextStyle(fontSize: 22)),
                     Text(
                       cat.title,
                       maxLines: 2,
@@ -668,10 +676,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.emoji,
-                        style: const TextStyle(fontSize: 22),
-                      ),
+                      Text(item.emoji, style: const TextStyle(fontSize: 22)),
                       Text(
                         item.title,
                         maxLines: 2,
@@ -742,10 +747,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item.emoji,
-                        style: const TextStyle(fontSize: 22),
-                      ),
+                      Text(item.emoji, style: const TextStyle(fontSize: 22)),
                       Text(
                         item.title,
                         maxLines: 2,
@@ -787,10 +789,7 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
           elevation: 0,
           title: Text(
             widget.family.titleFa,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
           centerTitle: true,
           leading: IconButton(
@@ -801,36 +800,41 @@ class _MovementFamilyDetailScreenState extends State<MovementFamilyDetailScreen>
         body: isStrength
             ? _buildStrengthSubcategoriesGrid(context)
             : (isMindBody
-                ? (_isLoading
-                    ? const Center(child: CupertinoActivityIndicator())
-                    : _buildMindBodyGrid(context))
-                : (isEndurance
-                    ? (_isLoading
+                  ? (_isLoading
                         ? const Center(child: CupertinoActivityIndicator())
-                        : _buildEnduranceGrid(context))
-                    : (_isLoading
-                        ? const Center(child: CupertinoActivityIndicator())
-                        : _kinds.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'ورزشی در این گروه پیدا نشد.',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              )
-                            : GridView.builder(
-                                padding: const EdgeInsets.all(16),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 10,
-                                  childAspectRatio: 0.95,
-                                ),
-                                itemCount: _kinds.length,
-                                itemBuilder: (context, index) {
-                                  final kind = _kinds[index];
-                                  return _KindCard(kind: kind);
-                                },
-                              )))),
+                        : _buildMindBodyGrid(context))
+                  : (isEndurance
+                        ? (_isLoading
+                              ? const Center(
+                                  child: CupertinoActivityIndicator(),
+                                )
+                              : _buildEnduranceGrid(context))
+                        : (_isLoading
+                              ? const Center(
+                                  child: CupertinoActivityIndicator(),
+                                )
+                              : _kinds.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'ورزشی در این گروه پیدا نشد.',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                )
+                              : GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        crossAxisSpacing: 10,
+                                        mainAxisSpacing: 10,
+                                        childAspectRatio: 0.95,
+                                      ),
+                                  itemCount: _kinds.length,
+                                  itemBuilder: (context, index) {
+                                    final kind = _kinds[index];
+                                    return _KindCard(kind: kind);
+                                  },
+                                )))),
       ),
     );
   }
@@ -878,12 +882,12 @@ class _KindCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      kind.emoji,
-                      style: const TextStyle(fontSize: 18),
-                    ),
+                    Text(kind.emoji, style: const TextStyle(fontSize: 18)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1.5,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.background,
                         borderRadius: BorderRadius.circular(4),
@@ -975,9 +979,20 @@ class _SportDetailSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _InfoBlock(title: 'کالری‌سوزی (MET)', value: kind.baseMet.toString().toPersianDigits()),
-                _InfoBlock(title: 'متریک اصلی', value: kind.primaryMetric.unitFa.isEmpty ? 'دقیقه' : kind.primaryMetric.unitFa),
-                _InfoBlock(title: 'محیط ورزشی', value: kind.isOutdoor ? 'فضای باز' : 'فضای بسته'),
+                _InfoBlock(
+                  title: 'کالری‌سوزی (MET)',
+                  value: kind.baseMet.toString().toPersianDigits(),
+                ),
+                _InfoBlock(
+                  title: 'متریک اصلی',
+                  value: kind.primaryMetric.unitFa.isEmpty
+                      ? 'دقیقه'
+                      : kind.primaryMetric.unitFa,
+                ),
+                _InfoBlock(
+                  title: 'محیط ورزشی',
+                  value: kind.isOutdoor ? 'فضای باز' : 'فضای بسته',
+                ),
               ],
             ),
             const SizedBox(height: 24),
@@ -1029,10 +1044,7 @@ class _InfoBlock extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 11,
-            color: colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 11, color: colors.textSecondary),
         ),
         const SizedBox(height: 4),
         Text(
@@ -1092,7 +1104,11 @@ class TrendLinePainter extends CustomPainter {
     final endPointPaint = Paint()
       ..color = const Color(0xFF10B981)
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(size.width, size.height * 0.05), 3.5, endPointPaint);
+    canvas.drawCircle(
+      Offset(size.width, size.height * 0.05),
+      3.5,
+      endPointPaint,
+    );
   }
 
   @override
@@ -1101,7 +1117,6 @@ class TrendLinePainter extends CustomPainter {
 
 // --- Ring Gauge Painter for Body Readiness Gauges ---
 class RingGaugePainter extends CustomPainter {
-
   RingGaugePainter({required this.percentage, required this.color});
   final double percentage; // 0.0 to 1.0
   final Color color;
@@ -1144,16 +1159,21 @@ class RingGaugePainter extends CustomPainter {
 
 // --- Holographic Scanner & Pedestal Painter ---
 class HolographicScannerWidget extends StatefulWidget {
-
-  const HolographicScannerWidget({super.key, required this.auraColor, this.userGender});
+  const HolographicScannerWidget({
+    super.key,
+    required this.auraColor,
+    this.userGender,
+  });
   final Color auraColor;
   final String? userGender;
 
   @override
-  State<HolographicScannerWidget> createState() => _HolographicScannerWidgetState();
+  State<HolographicScannerWidget> createState() =>
+      _HolographicScannerWidgetState();
 }
 
-class _HolographicScannerWidgetState extends State<HolographicScannerWidget> with SingleTickerProviderStateMixin {
+class _HolographicScannerWidgetState extends State<HolographicScannerWidget>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
@@ -1173,7 +1193,10 @@ class _HolographicScannerWidgetState extends State<HolographicScannerWidget> wit
 
   @override
   Widget build(BuildContext context) {
-    final bodyImagePath = SSMuscleImageResolver.resolve('full_body', widget.userGender);
+    final bodyImagePath = SSMuscleImageResolver.resolve(
+      'full_body',
+      widget.userGender,
+    );
 
     return AnimatedBuilder(
       animation: _controller,
@@ -1198,11 +1221,7 @@ class _HolographicScannerWidgetState extends State<HolographicScannerWidget> wit
                   return const LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black,
-                      Colors.black,
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.black, Colors.black, Colors.transparent],
                     stops: [0.0, 0.8, 0.98],
                   ).createShader(rect);
                 },
@@ -1211,10 +1230,26 @@ class _HolographicScannerWidgetState extends State<HolographicScannerWidget> wit
                   opacity: 0.85 + (_controller.value * 0.15),
                   child: ColorFiltered(
                     colorFilter: const ColorFilter.matrix(<double>[
-                      1.2, 0, 0, 0, 0,
-                      0, 1.2, 0, 0, 0,
-                      0, 0, 1.2, 0, 0,
-                      0, 0, 0, 1, 0,
+                      1.2,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1.2,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1.2,
+                      0,
+                      0,
+                      0,
+                      0,
+                      0,
+                      1,
+                      0,
                     ]),
                     child: Image.asset(
                       bodyImagePath,
@@ -1261,7 +1296,6 @@ class _HolographicScannerWidgetState extends State<HolographicScannerWidget> wit
 }
 
 class HolographicPedestalPainter extends CustomPainter {
-
   HolographicPedestalPainter({
     this.progress = 0.5,
     this.glowColor = const Color(0xFF06B6D4),
@@ -1276,13 +1310,16 @@ class HolographicPedestalPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height * 0.88);
 
     final fillGlow = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          glowColor.withValues(alpha: 0.35),
-          glowColor.withValues(alpha: 0.08),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: size.width * 0.45));
+      ..shader =
+          RadialGradient(
+            colors: [
+              glowColor.withValues(alpha: 0.35),
+              glowColor.withValues(alpha: 0.08),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(center: center, radius: size.width * 0.45),
+          );
 
     canvas.drawOval(
       Rect.fromCenter(center: center, width: size.width * 0.8, height: 20),
@@ -1316,15 +1353,12 @@ class HolographicPedestalPainter extends CustomPainter {
 
 // --- Dashboard Tab Content ---
 class SSHomeDashboardTabContent extends StatefulWidget {
-
-  const SSHomeDashboardTabContent({
-    super.key,
-    required this.onNavigateToTab,
-  });
+  const SSHomeDashboardTabContent({super.key, required this.onNavigateToTab});
   final Function(int) onNavigateToTab;
 
   @override
-  State<SSHomeDashboardTabContent> createState() => _SSHomeDashboardTabContentState();
+  State<SSHomeDashboardTabContent> createState() =>
+      _SSHomeDashboardTabContentState();
 }
 
 class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
@@ -1370,7 +1404,6 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     return const Color(0xFFEF4444);
   }
 
-
   void _openAiCoach() {
     showModalBottomSheet(
       context: context,
@@ -1410,7 +1443,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     end: Alignment.bottomLeft,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.4),
+                    width: 1.2,
+                  ),
                 ),
                 child: Row(
                   textDirection: TextDirection.rtl,
@@ -1464,9 +1500,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            _sleepRecoveryTip ?? (readiness >= 75
-                                ? 'بدن شما در بهترین فاز ریکاوری و انرژی است. امروز می‌توانید وزنه و فشار تمرین را افزایش دهید!'
-                                : 'بدن شما نیاز به ریکاوری ملایم دارد. انجام تمرینات با تمرکز بر فرم صحیح حرکت توصیه می‌شود.'),
+                            _sleepRecoveryTip ??
+                                (readiness >= 75
+                                    ? 'بدن شما در بهترین فاز ریکاوری و انرژی است. امروز می‌توانید وزنه و فشار تمرین را افزایش دهید!'
+                                    : 'بدن شما نیاز به ریکاوری ملایم دارد. انجام تمرینات با تمرکز بر فرم صحیح حرکت توصیه می‌شود.'),
                             style: const TextStyle(
                               fontSize: 11.5,
                               color: Colors.white70,
@@ -1482,15 +1519,40 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 20),
 
               // 5 Biometric Meter Breakdown Tiles
-              _statusDetailMeterTile('انرژی بدنی ⚡', _energyScore, 'میزان سرزندگی و آمادگی حسی برای شروع تمرین.', const Color(0xFF10B981)),
+              _statusDetailMeterTile(
+                'انرژی بدنی ⚡',
+                _energyScore,
+                'میزان سرزندگی و آمادگی حسی برای شروع تمرین.',
+                const Color(0xFF10B981),
+              ),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('ریکاوری عضلانی ❤️', _recoveryScore, 'میزان کاهش کوفتگی و رفع خستگی عضلات.', const Color(0xFFEF4444)),
+              _statusDetailMeterTile(
+                'ریکاوری عضلانی ❤️',
+                _recoveryScore,
+                'میزان کاهش کوفتگی و رفع خستگی عضلات.',
+                const Color(0xFFEF4444),
+              ),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('کیفیت خواب 🌙', _sleepScore, 'مدت و ثبات خواب شبانه برای تجدید قوا.', const Color(0xFF06B6D4)),
+              _statusDetailMeterTile(
+                'کیفیت خواب 🌙',
+                _sleepScore,
+                'مدت و ثبات خواب شبانه برای تجدید قوا.',
+                const Color(0xFF06B6D4),
+              ),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('سطح استرس 🧠', _stressScore, 'میزان فشار ذهنی و خستگی روزانه.', const Color(0xFFF59E0B)),
+              _statusDetailMeterTile(
+                'سطح استرس 🧠',
+                _stressScore,
+                'میزان فشار ذهنی و خستگی روزانه.',
+                const Color(0xFFF59E0B),
+              ),
               const SizedBox(height: 12),
-              _statusDetailMeterTile('تداوم فعالیت 🏃', _activityScore, 'میزان پایبندی به برنامه تمرینی هفته جاری.', const Color(0xFF22C55E)),
+              _statusDetailMeterTile(
+                'تداوم فعالیت 🏃',
+                _activityScore,
+                'میزان پایبندی به برنامه تمرینی هفته جاری.',
+                const Color(0xFF22C55E),
+              ),
               const SizedBox(height: 20),
             ],
           ),
@@ -1499,7 +1561,12 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     );
   }
 
-  Widget _statusDetailMeterTile(String title, int score, String desc, Color color) {
+  Widget _statusDetailMeterTile(
+    String title,
+    int score,
+    String desc,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1581,15 +1648,27 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       }
       _userGender ??= 'MALE';
       try {
-        _movementBudgetSnapshot = await MovementBudgetService.instance.getCurrentWeekSnapshot();
+        _movementBudgetSnapshot = await MovementBudgetService.instance
+            .getCurrentWeekSnapshot();
       } catch (e) {
         debugPrint('Error loading movement budget on dashboard: $e');
       }
       // (Removed flawed all-time plan completion check that caused the UI to get stuck)
 
       // Check today's session log
-      final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
-      final endOfToday = DateTime(today.year, today.month, today.day, 23, 59, 59).millisecondsSinceEpoch;
+      final startOfToday = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).millisecondsSinceEpoch;
+      final endOfToday = DateTime(
+        today.year,
+        today.month,
+        today.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
 
       final sessionLogs = await db.query(
         'ss_workout_session_log',
@@ -1599,7 +1678,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
       // Fetch week completed history (Sat to Fri)
       final startOfWeek = today.subtract(Duration(days: dayOfWeek - 1));
-      final startOfWeekMidnight = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+      final startOfWeekMidnight = DateTime(
+        startOfWeek.year,
+        startOfWeek.month,
+        startOfWeek.day,
+      );
       final weekLogs = await db.query(
         'ss_workout_session_log',
         where: 'startedAt >= ? AND finishedAt IS NOT NULL',
@@ -1608,12 +1691,29 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
       _weekCompleted = List.generate(7, (i) {
         final targetDate = startOfWeekMidnight.add(Duration(days: i));
-        final start = DateTime(targetDate.year, targetDate.month, targetDate.day).millisecondsSinceEpoch;
-        final end = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59).millisecondsSinceEpoch;
-        
-        final dayLogs = weekLogs.where((log) => (log['startedAt']! as int) >= start && (log['startedAt']! as int) <= end).toList();
+        final start = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+        ).millisecondsSinceEpoch;
+        final end = DateTime(
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          23,
+          59,
+          59,
+        ).millisecondsSinceEpoch;
+
+        final dayLogs = weekLogs
+            .where(
+              (log) =>
+                  (log['startedAt']! as int) >= start &&
+                  (log['startedAt']! as int) <= end,
+            )
+            .toList();
         if (dayLogs.isEmpty) return -1;
-        
+
         final session = dayLogs.first;
         final completedCount = session['completedExercisesCount'] as int? ?? 0;
         final totalCount = session['totalExercisesCount'] as int? ?? 1;
@@ -1626,7 +1726,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
       final activeSessionId = prefs.getString('ss_active_session_id');
       final activePlanId = prefs.getString('ss_active_plan_id');
-      if (activeSessionId != null && activeSessionId.isNotEmpty && activePlanId != null) {
+      if (activeSessionId != null &&
+          activeSessionId.isNotEmpty &&
+          activePlanId != null) {
         _unfinishedActivePlanId = activePlanId;
       } else {
         _unfinishedActivePlanId = null;
@@ -1634,7 +1736,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
       // Evaluate Readiness and Checkin honestly
       _readinessVerdict = await SSReadinessService.instance.evaluateToday();
-      _dailyCheckin = await SSReadinessService.instance.getDailyCheckin(DateTime.now().toIso8601String().substring(0, 10));
+      _dailyCheckin = await SSReadinessService.instance.getDailyCheckin(
+        DateTime.now().toIso8601String().substring(0, 10),
+      );
 
       final completedCount = _weekCompleted.where((c) => c >= 50).length;
       _activityScore = ((completedCount / 4) * 100).clamp(0, 100).round();
@@ -1642,8 +1746,12 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       if (_readinessVerdict != null && _readinessVerdict!.hasData) {
         final sleepMin = _readinessVerdict!.sleepMinutes ?? 420;
         _sleepScore = ((sleepMin / 480) * 100).clamp(0, 100).round();
-        _energyScore = _dailyCheckin != null ? (_dailyCheckin!.energy * 20) : (_sleepScore * 0.8).round();
-        _recoveryScore = _dailyCheckin != null ? ((6 - _dailyCheckin!.soreness) * 20) : (_sleepScore * 0.7).round();
+        _energyScore = _dailyCheckin != null
+            ? (_dailyCheckin!.energy * 20)
+            : (_sleepScore * 0.8).round();
+        _recoveryScore = _dailyCheckin != null
+            ? ((6 - _dailyCheckin!.soreness) * 20)
+            : (_sleepScore * 0.7).round();
         _stressScore = ((100 - _sleepScore) * 0.5).round();
         _sleepRecoveryTip = _readinessVerdict!.reasonFa;
       } else {
@@ -1661,7 +1769,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       );
       final weekTimeline = List<bool>.generate(7, (i) {
         final targetDayOfWeek = i + 1;
-        return allPlans.isNotEmpty && allPlans.any((p) => p['dayOfWeek'] == targetDayOfWeek);
+        return allPlans.isNotEmpty &&
+            allPlans.any((p) => p['dayOfWeek'] == targetDayOfWeek);
       });
 
       // Find next workout plan dynamically
@@ -1685,59 +1794,85 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         }
         if (nextPlans.isNotEmpty) {
           final nPlan = nextPlans.first;
-          final nMusclesRaw = jsonDecode(nPlan['muscleGroups'].toString()) as List<dynamic>;
+          final nMusclesRaw =
+              jsonDecode(nPlan['muscleGroups'].toString()) as List<dynamic>;
           _nextWorkoutName = nMusclesRaw.join(' و ');
           _nextWorkoutMinutes = nPlan['estimatedMinutes'] as int? ?? 30;
-          _nextWorkoutDayName = offset == 1 ? 'فردا' : _getFarsiDayName(nextDayOfWeek);
+          _nextWorkoutDayName = offset == 1
+              ? 'فردا'
+              : _getFarsiDayName(nextDayOfWeek);
           _nextDayOfWeek = nextDayOfWeek;
           break;
         }
       }
 
       // ── NEW: Try ss_session_prescription first ──────────────────────
-      final todayIso = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final todayIso =
+          '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       SessionPrescription? todayPres;
       try {
-        todayPres = await SsPrescriptionRepository.instance.getPrescriptionForDate(todayIso);
-      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+        todayPres = await SsPrescriptionRepository.instance
+            .getPrescriptionForDate(todayIso);
+      } catch (e) {
+        debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+      }
 
       SsUserProfile? userProfile;
       try {
-        final profileRows = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
+        final profileRows = await db.query(
+          'ss_user_profile',
+          where: 'id = ?',
+          whereArgs: ['default'],
+        );
         if (profileRows.isNotEmpty) {
           userProfile = SsUserProfile.fromMap(profileRows.first);
         }
-      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+      }
 
       if (todayPres == null) {
         int existingCount = 0;
         try {
-          existingCount = Sqflite.firstIntValue(
-            await db.rawQuery('SELECT COUNT(*) FROM ss_session_prescription')
-          ) ?? 0;
-        } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+          existingCount =
+              Sqflite.firstIntValue(
+                await db.rawQuery(
+                  'SELECT COUNT(*) FROM ss_session_prescription',
+                ),
+              ) ??
+              0;
+        } catch (e) {
+          debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+        }
 
         if (existingCount == 0) {
-          final prof = userProfile ?? SsUserProfile(
-            goal: FitnessGoal.bodyRecomposition,
-            experienceLevel: ExperienceLevel.beginner,
-            trainingLocation: TrainingLocation.home,
-            availableEquipment: [Equipment.bodyweightOnly, Equipment.dumbbell],
-            focusAreas: [BodyArea.arms, BodyArea.chest, BodyArea.legs],
-            physicalLimitations: [],
-            sessionDuration: SessionDuration.medium45,
-            createdAt: DateTime.now().millisecondsSinceEpoch,
-            updatedAt: DateTime.now().millisecondsSinceEpoch,
+          final prof =
+              userProfile ??
+              SsUserProfile(
+                goal: FitnessGoal.bodyRecomposition,
+                experienceLevel: ExperienceLevel.beginner,
+                trainingLocation: TrainingLocation.home,
+                availableEquipment: [
+                  Equipment.bodyweightOnly,
+                  Equipment.dumbbell,
+                ],
+                focusAreas: [BodyArea.arms, BodyArea.chest, BodyArea.legs],
+                physicalLimitations: [],
+                sessionDuration: SessionDuration.medium45,
+                createdAt: DateTime.now().millisecondsSinceEpoch,
+                updatedAt: DateTime.now().millisecondsSinceEpoch,
+              );
+
+          await SsProgramBuilder.apply(
+            ProgramBuildRequest(fromDate: today, profile: prof),
           );
-          
-          await SsProgramBuilder.apply(ProgramBuildRequest(
-            fromDate: today,
-            profile: prof,
-          ));
 
           try {
-            todayPres = await SsPrescriptionRepository.instance.getPrescriptionForDate(todayIso);
-          } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+            todayPres = await SsPrescriptionRepository.instance
+                .getPrescriptionForDate(todayIso);
+          } catch (e) {
+            debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+          }
         }
       }
 
@@ -1745,15 +1880,18 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         final session = sessionLogs.first;
         final completedCount = session['completedExercisesCount'] as int? ?? 0;
         final totalCount = session['totalExercisesCount'] as int? ?? 0;
-        final percentage = totalCount > 0 ? ((completedCount / totalCount) * 100).round() : 0;
+        final percentage = totalCount > 0
+            ? ((completedCount / totalCount) * 100).round()
+            : 0;
 
-        if (todayPres != null && todayPres.status == PrescriptionStatus.partial) {
+        if (todayPres != null &&
+            todayPres.status == PrescriptionStatus.partial) {
           if (mounted) {
             setState(() {
               _state = SSHomeWorkoutPartiallyCompleted(
                 dayName: _getFarsiDayName(dayOfWeek),
                 summary: toPersianDigits(
-                  'شما $completedCount از $totalCount حرکت را انجام داده‌اید ($percentage٪ پیشرفت).'
+                  'شما $completedCount از $totalCount حرکت را انجام داده‌اید ($percentage٪ پیشرفت).',
                 ),
                 prescription: todayPres!,
               );
@@ -1777,18 +1915,26 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
       bool detailMode = false;
       try {
-        final dmRows = await db.query('app_settings', where: 'key = ?', whereArgs: ['sports_detail_mode']);
+        final dmRows = await db.query(
+          'app_settings',
+          where: 'key = ?',
+          whereArgs: ['sports_detail_mode'],
+        );
         if (dmRows.isNotEmpty) {
           detailMode = dmRows.first['value'] == 'true';
         }
-      } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+      }
 
       if (todayPres != null) {
         if (todayPres.slotType == SlotType.rest) {
           if (mounted) {
             setState(() {
               _state = SSHomeRestDay(
-                suggestion: todayPres!.coachNoteFa ?? 'امروز روز استراحت شماست. پیاده‌روی سبک یا تمرین کششی پیشنهاد می‌شود.',
+                suggestion:
+                    todayPres!.coachNoteFa ??
+                    'امروز روز استراحت شماست. پیاده‌روی سبک یا تمرین کششی پیشنهاد می‌شود.',
               );
             });
           }
@@ -1800,17 +1946,24 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         final weekPres = <String, Map<String, dynamic>>{};
         for (var i = 0; i < 7; i++) {
           final d = weekStart.add(Duration(days: i));
-          final iso = '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+          final iso =
+              '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
           try {
-            final wp = await SsPrescriptionRepository.instance.getPrescriptionForDate(iso);
+            final wp = await SsPrescriptionRepository.instance
+                .getPrescriptionForDate(iso);
             if (wp != null) weekPres[iso] = wp.toMap();
-          } catch (e) { debugPrint('[ss] ss_home_dashboard_screen.dart: $e'); }
+          } catch (e) {
+            debugPrint('[ss] ss_home_dashboard_screen.dart: $e');
+          }
         }
         final weekTimelineFromPres = List<bool>.generate(7, (i) {
           final d = weekStart.add(Duration(days: i));
-          final iso = '${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
+          final iso =
+              '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
           final wp = weekPres[iso];
-          return wp != null && wp['slotType'] != 'REST' && wp['targetMinutes'] != 0;
+          return wp != null &&
+              wp['slotType'] != 'REST' &&
+              wp['targetMinutes'] != 0;
         });
 
         if (!detailMode) {
@@ -1864,7 +2017,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         if (mounted) {
           setState(() {
             _state = const SSHomeRestDay(
-              suggestion: 'امروز روز استراحت شماست. پیاده‌روی سبک یا تمرین کششی پیشنهاد می‌شود.',
+              suggestion:
+                  'امروز روز استراحت شماست. پیاده‌روی سبک یا تمرین کششی پیشنهاد می‌شود.',
             );
           });
         }
@@ -1880,7 +2034,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       );
       final exerciseCount = Sqflite.firstIntValue(exercisesCountResult) ?? 0;
 
-      final musclesRaw = jsonDecode(plan['muscleGroups'].toString()) as List<dynamic>;
+      final musclesRaw =
+          jsonDecode(plan['muscleGroups'].toString()) as List<dynamic>;
       final muscles = musclesRaw.join(' و ');
 
       if (mounted) {
@@ -1893,7 +2048,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             exerciseCount: exerciseCount,
             estimatedMinutes: plan['estimatedMinutes'] as int? ?? 40,
             continuity: List.generate(7, (i) => i < 6),
-            aiSuggestion: 'امروز بدن شما پرانرژی‌تره، بهترین زمان برای افزایش شدت حرکاته. آب بیشتری بنوش و تمرکزت رو حفظ کن.',
+            aiSuggestion:
+                'امروز بدن شما پرانرژی‌تره، بهترین زمان برای افزایش شدت حرکاته. آب بیشتری بنوش و تمرکزت رو حفظ کن.',
             weekTimeline: weekTimeline,
           );
         });
@@ -1910,26 +2066,40 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
 
   int _getFarsiDayOfWeek(DateTime dt) {
     switch (dt.weekday) {
-      case DateTime.monday: return 3;
-      case DateTime.tuesday: return 4;
-      case DateTime.wednesday: return 5;
-      case DateTime.thursday: return 6;
-      case DateTime.friday: return 7;
-      case DateTime.saturday: return 1;
-      case DateTime.sunday: return 2;
+      case DateTime.monday:
+        return 3;
+      case DateTime.tuesday:
+        return 4;
+      case DateTime.wednesday:
+        return 5;
+      case DateTime.thursday:
+        return 6;
+      case DateTime.friday:
+        return 7;
+      case DateTime.saturday:
+        return 1;
+      case DateTime.sunday:
+        return 2;
     }
     return 1;
   }
 
   String _getFarsiDayName(int dayOfWeek) {
     switch (dayOfWeek) {
-      case 1: return 'شنبه';
-      case 2: return 'یکشنبه';
-      case 3: return 'دوشنبه';
-      case 4: return 'سه‌شنبه';
-      case 5: return 'چهارشنبه';
-      case 6: return 'پنج‌شنبه';
-      case 7: return 'جمعه';
+      case 1:
+        return 'شنبه';
+      case 2:
+        return 'یکشنبه';
+      case 3:
+        return 'دوشنبه';
+      case 4:
+        return 'سه‌شنبه';
+      case 5:
+        return 'چهارشنبه';
+      case 6:
+        return 'پنج‌شنبه';
+      case 7:
+        return 'جمعه';
     }
     return '';
   }
@@ -1953,7 +2123,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         backgroundColor: const Color(0xFF1E293B),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: const Text('انتقال به فردا', style: TextStyle()),
@@ -1966,10 +2138,15 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         backgroundColor: const Color(0xFF1E293B),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('تمرین فشرده (۳ حرکت)', style: TextStyle()),
+                      child: const Text(
+                        'تمرین فشرده (۳ حرکت)',
+                        style: TextStyle(),
+                      ),
                     ),
                   ),
                 ],
@@ -1994,7 +2171,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 16),
               _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
-              _buildAiCoachCard('امروز روز استراحت شماست. فعالیت بدنی سبک و کشش‌های پویا پیشنهاد می‌شود.'),
+              _buildAiCoachCard(
+                'امروز روز استراحت شماست. فعالیت بدنی سبک و کشش‌های پویا پیشنهاد می‌شود.',
+              ),
               const SizedBox(height: 16),
               _buildTodayBodyStatusWidget(),
               const SizedBox(height: 16),
@@ -2015,7 +2194,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         estimatedMinutes: final estimatedMinutes,
         continuity: _,
         aiSuggestion: final aiSuggestion,
-        weekTimeline: _
+        weekTimeline: _,
       ):
         return _buildDashboardContent(
           child: Column(
@@ -2043,7 +2222,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 16),
               _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
-              _buildAiCoachCard(aiSuggestion ?? 'امروز بدن شما پرانرژی‌تره، بهترین زمان برای افزایش شدت حرکاته. آب بیشتری بنوش و تمرکزت رو حفظ کن.'),
+              _buildAiCoachCard(
+                aiSuggestion ??
+                    'امروز بدن شما پرانرژی‌تره، بهترین زمان برای افزایش شدت حرکاته. آب بیشتری بنوش و تمرکزت رو حفظ کن.',
+              ),
               const SizedBox(height: 16),
               SSDailyCheckinWidget(
                 existingCheckin: _dailyCheckin,
@@ -2085,7 +2267,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               const SizedBox(height: 16),
               _buildWeeklyStreakWidget(_weekCompleted),
               const SizedBox(height: 16),
-              _buildAiCoachCard(pres.coachNoteFa ?? 'امروز برنامه ورزشی خود را در اولویت قرار دهید.'),
+              _buildAiCoachCard(
+                pres.coachNoteFa ??
+                    'امروز برنامه ورزشی خود را در اولویت قرار دهید.',
+              ),
               const SizedBox(height: 16),
               SSDailyCheckinWidget(
                 existingCheckin: _dailyCheckin,
@@ -2102,7 +2287,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             ],
           ),
         );
-      case SSHomeWorkoutPartiallyCompleted(dayName: final dayName, summary: final summary, prescription: final pres):
+      case SSHomeWorkoutPartiallyCompleted(
+        dayName: final dayName,
+        summary: final summary,
+        prescription: final pres,
+      ):
         return _buildDashboardContent(
           child: Column(
             children: [
@@ -2119,21 +2308,47 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.incomplete_circle_rounded, color: Colors.white, size: 64),
+                    const Icon(
+                      Icons.incomplete_circle_rounded,
+                      color: Colors.white,
+                      size: 64,
+                    ),
                     const SizedBox(height: 12),
-                    const Text('تمرین نیمه‌تمام ⏳', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text(
+                      'تمرین نیمه‌تمام ⏳',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text(summary, style: const TextStyle(fontSize: 13, color: Colors.white)),
+                    Text(
+                      summary,
+                      style: const TextStyle(fontSize: 13, color: Colors.white),
+                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.play_arrow_rounded, color: Color(0xFFD97706)),
-                        label: const Text('ادامه تمرین', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
+                        icon: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Color(0xFFD97706),
+                        ),
+                        label: const Text(
+                          'ادامه تمرین',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFD97706),
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 0,
                         ),
                         onPressed: () {
@@ -2173,7 +2388,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             ],
           ),
         );
-      case SSHomeWorkoutCompleted(dayName: final dayName, summary: final summary):
+      case SSHomeWorkoutCompleted(
+        dayName: final dayName,
+        summary: final summary,
+      ):
         return _buildDashboardContent(
           child: Column(
             children: [
@@ -2190,13 +2408,36 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 64),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                      size: 64,
+                    ),
                     const SizedBox(height: 12),
-                    const Text('خسته نباشید قهرمان! 🎉', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text(
+                      'خسته نباشید قهرمان! 🎉',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    Text('تمرین روز $dayName با موفقیت انجام شد.', style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                    Text(
+                      'تمرین روز $dayName با موفقیت انجام شد.',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(summary, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                    Text(
+                      summary,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2233,7 +2474,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2262,11 +2505,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           const SizedBox(height: 8),
           const Text(
             'یک تمرین از قبل ذخیره شده در حال اجراست. می‌توانید آن را ادامه دهید یا انصراف دهید.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white70,
-              height: 1.4,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
             textDirection: TextDirection.rtl,
           ),
           const SizedBox(height: 14),
@@ -2289,7 +2528,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     });
                   },
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                  label: const Text('ادامه تمرین', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'ادامه تمرین',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF59E0B),
                     foregroundColor: Colors.black,
@@ -2342,10 +2584,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_movementBudgetSnapshot != null) ...[
-            WeeklyBudgetCard(
-              snapshot: _movementBudgetSnapshot!,
-              onTap: () {},
-            ),
+            WeeklyBudgetCard(snapshot: _movementBudgetSnapshot!, onTap: () {}),
             const SizedBox(height: 16),
           ],
           if (_unfinishedActivePlanId != null) ...[
@@ -2366,7 +2605,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     required VoidCallback onStart,
     required VoidCallback onCantToday,
   }) {
-    final firstFocus = prescription.focusCodes.isNotEmpty ? prescription.focusCodes.first : 'full_body';
+    final firstFocus = prescription.focusCodes.isNotEmpty
+        ? prescription.focusCodes.first
+        : 'full_body';
     final coverImage = SSMuscleImageResolver.resolve(firstFocus, _userGender);
 
     return Container(
@@ -2379,7 +2620,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
@@ -2400,20 +2644,35 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               children: [
                 // Top Tag Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.psychology_alt_rounded, color: Color(0xFF0EA5E9), size: 13),
+                      const Icon(
+                        Icons.psychology_alt_rounded,
+                        color: Color(0xFF0EA5E9),
+                        size: 13,
+                      ),
                       const SizedBox(width: 5),
                       Text(
-                        usesExternalApp ? 'تمرین با اپ خارجی' : 'تمرین تجویزی هوشمند',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                        usesExternalApp
+                            ? 'تمرین با اپ خارجی'
+                            : 'تمرین تجویزی هوشمند',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -2432,7 +2691,8 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (prescription.coachNoteFa != null && prescription.coachNoteFa!.isNotEmpty) ...[
+                if (prescription.coachNoteFa != null &&
+                    prescription.coachNoteFa!.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
                     prescription.coachNoteFa!,
@@ -2453,9 +2713,18 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   runSpacing: 6,
                   textDirection: TextDirection.rtl,
                   children: [
-                    _heroMetric(Icons.access_time_rounded, toPersianDigits('${prescription.targetMinutes} دقیقه')),
-                    _heroMetric(Icons.fitness_center_rounded, prescription.slotType.labelFa),
-                    _heroMetric(Icons.speed_rounded, prescription.intensityTier.labelFa),
+                    _heroMetric(
+                      Icons.access_time_rounded,
+                      toPersianDigits('${prescription.targetMinutes} دقیقه'),
+                    ),
+                    _heroMetric(
+                      Icons.fitness_center_rounded,
+                      prescription.slotType.labelFa,
+                    ),
+                    _heroMetric(
+                      Icons.speed_rounded,
+                      prescription.intensityTier.labelFa,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -2471,13 +2740,25 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           backgroundColor: const Color(0xFF0EA5E9),
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
-                        icon: Icon(usesExternalApp ? Icons.open_in_new_rounded : Icons.play_arrow_rounded, size: 20),
+                        icon: Icon(
+                          usesExternalApp
+                              ? Icons.open_in_new_rounded
+                              : Icons.play_arrow_rounded,
+                          size: 20,
+                        ),
                         label: Text(
-                          usesExternalApp ? 'ثبت در اپ خارجی' : 'شروع تمرین تجویزی',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                          usesExternalApp
+                              ? 'ثبت در اپ خارجی'
+                              : 'شروع تمرین تجویزی',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         onPressed: onStart,
                       ),
@@ -2489,14 +2770,26 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.black.withValues(alpha: 0.35),
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white70),
+                        icon: const Icon(
+                          Icons.edit_note_rounded,
+                          size: 16,
+                          color: Colors.white70,
+                        ),
                         label: const Text(
                           'اصلاح تمرین',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
                         ),
                         onPressed: onCantToday,
                       ),
@@ -2538,7 +2831,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       cacheWidth: 300,
                       cacheHeight: 300,
                       fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.accessibility_new_rounded, size: 60, color: Color(0xFF0EA5E9)),
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.accessibility_new_rounded,
+                        size: 60,
+                        color: Color(0xFF0EA5E9),
+                      ),
                     ),
                   ),
                 ],
@@ -2571,7 +2868,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+          color: const Color(0xFFEA580C).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFEA580C).withValues(alpha: 0.18),
@@ -2592,20 +2892,33 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               children: [
                 // Top Tag Pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: const Color(0xFFEA580C).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.fitness_center, color: Color(0xFFF97316), size: 13),
+                      Icon(
+                        Icons.fitness_center,
+                        color: Color(0xFFF97316),
+                        size: 13,
+                      ),
                       SizedBox(width: 5),
                       Text(
                         'جلسه تمرین',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -2632,8 +2945,14 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   runSpacing: 6,
                   textDirection: TextDirection.rtl,
                   children: [
-                    _heroMetric(Icons.access_time_rounded, toPersianDigits('$estimatedMinutes د')),
-                    _heroMetric(Icons.local_fire_department_rounded, toPersianDigits('۳۶۰ کالری')),
+                    _heroMetric(
+                      Icons.access_time_rounded,
+                      toPersianDigits('$estimatedMinutes د'),
+                    ),
+                    _heroMetric(
+                      Icons.local_fire_department_rounded,
+                      toPersianDigits('۳۶۰ کالری'),
+                    ),
                     _heroMetric(Icons.speed_rounded, 'متوسط'),
                   ],
                 ),
@@ -2651,13 +2970,18 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           backgroundColor: const Color(0xFFEA580C),
                           foregroundColor: Colors.white,
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         icon: const Icon(Icons.play_arrow_rounded, size: 20),
                         label: const Text(
                           'شروع تمرین',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         onPressed: onStart,
                       ),
@@ -2670,14 +2994,26 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.black.withValues(alpha: 0.35),
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
                           padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.white70),
+                        icon: const Icon(
+                          Icons.edit_note_rounded,
+                          size: 16,
+                          color: Colors.white70,
+                        ),
                         label: const Text(
                           'اصلاح تمرین',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white70),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
                         ),
                         onPressed: onCantToday,
                       ),
@@ -2719,7 +3055,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       cacheWidth: 300,
                       cacheHeight: 300,
                       fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.accessibility_new_rounded, size: 60, color: Color(0xFFEA580C)),
+                      errorBuilder: (ctx, err, stack) => const Icon(
+                        Icons.accessibility_new_rounded,
+                        size: 60,
+                        color: Color(0xFFEA580C),
+                      ),
                     ),
                   ),
                 ],
@@ -2737,10 +3077,7 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
       children: [
         Icon(icon, size: 15, color: const Color(0xFFF97316)),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 12, color: Colors.white70),
-        ),
+        Text(text, style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ],
     );
   }
@@ -2804,7 +3141,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       color: Color(0xFFEA580C),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.local_fire_department_rounded, size: 12, color: Colors.white),
+                    child: const Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -2829,12 +3170,18 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           color: Colors.white,
                         ),
                       ),
-                      Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white38),
+                      Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 14,
+                        color: Colors.white38,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    toPersianDigits('تو از ۷ روز هفته $completedCount روز تمرین داشتی'),
+                    toPersianDigits(
+                      'تو از ۷ روز هفته $completedCount روز تمرین داشتی',
+                    ),
                     style: const TextStyle(fontSize: 11, color: Colors.white54),
                   ),
                   const SizedBox(height: 12),
@@ -2867,7 +3214,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             children: [
                               Text(
                                 farsiDays[i],
-                                style: const TextStyle(fontSize: 11, color: Colors.white54),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white54,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Container(
@@ -2875,11 +3225,17 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                                 height: 22,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: isDone ? const Color(0xFFEA580C) : const Color(0xFF1E293B),
+                                  color: isDone
+                                      ? const Color(0xFFEA580C)
+                                      : const Color(0xFF1E293B),
                                 ),
                                 child: Center(
                                   child: isDone
-                                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                                      ? const Icon(
+                                          Icons.check,
+                                          size: 14,
+                                          color: Colors.white,
+                                        )
                                       : const SizedBox.shrink(),
                                 ),
                               ),
@@ -2912,7 +3268,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
             end: Alignment.bottomLeft,
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFF06B6D4).withValues(alpha: 0.3), width: 1.2),
+          border: Border.all(
+            color: const Color(0xFF06B6D4).withValues(alpha: 0.3),
+            width: 1.2,
+          ),
         ),
         child: Row(
           textDirection: TextDirection.rtl,
@@ -2924,7 +3283,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                border: Border.all(color: const Color(0xFF06B6D4).withValues(alpha: 0.4), width: 1.5),
+                border: Border.all(
+                  color: const Color(0xFF06B6D4).withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
               ),
               child: ClipOval(
                 child: Image.asset(
@@ -2932,7 +3294,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   cacheWidth: 150,
                   cacheHeight: 150,
                   fit: BoxFit.cover,
-                  errorBuilder: (ctx, err, stack) => const Icon(Icons.android, size: 36, color: Color(0xFF06B6D4)),
+                  errorBuilder: (ctx, err, stack) => const Icon(
+                    Icons.android,
+                    size: 36,
+                    color: Color(0xFF06B6D4),
+                  ),
                 ),
               ),
             ),
@@ -2946,7 +3312,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 children: [
                   const Row(
                     children: [
-                      Icon(CupertinoIcons.sparkles, color: Color(0xFF06B6D4), size: 16),
+                      Icon(
+                        CupertinoIcons.sparkles,
+                        color: Color(0xFF06B6D4),
+                        size: 16,
+                      ),
                       SizedBox(width: 6),
                       Text(
                         'توصیه مربی AI',
@@ -2987,7 +3357,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 ),
                 Text(
                   toPersianDigits('$_energyScore٪'),
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF10B981),
+                  ),
                 ),
               ],
             ),
@@ -3049,7 +3423,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             color: readinessColor.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.monitor_heart_rounded, size: 16, color: readinessColor),
+                          child: Icon(
+                            Icons.monitor_heart_rounded,
+                            size: 16,
+                            color: readinessColor,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         const Text(
@@ -3063,11 +3441,16 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: readinessColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: readinessColor.withValues(alpha: 0.4)),
+                        border: Border.all(
+                          color: readinessColor.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -3081,7 +3464,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.chevron_left_rounded, size: 16, color: readinessColor),
+                          Icon(
+                            Icons.chevron_left_rounded,
+                            size: 16,
+                            color: readinessColor,
+                          ),
                         ],
                       ),
                     ),
@@ -3108,15 +3495,50 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         child: Row(
                           textDirection: TextDirection.rtl,
                           children: [
-                            _bodyGaugeCard('انرژی', '$_energyScore', Icons.bolt_rounded, const Color(0xFF10B981), _energyScore / 100, _energyScore >= 80 ? 'عالی' : 'متوسط'),
+                            _bodyGaugeCard(
+                              'انرژی',
+                              '$_energyScore',
+                              Icons.bolt_rounded,
+                              const Color(0xFF10B981),
+                              _energyScore / 100,
+                              _energyScore >= 80 ? 'عالی' : 'متوسط',
+                            ),
                             const SizedBox(width: 8),
-                            _bodyGaugeCard('ریکاوری', '$_recoveryScore', Icons.favorite_rounded, const Color(0xFFEF4444), _recoveryScore / 100, _recoveryScore >= 75 ? 'کامل' : 'نیاز به رشد'),
+                            _bodyGaugeCard(
+                              'ریکاوری',
+                              '$_recoveryScore',
+                              Icons.favorite_rounded,
+                              const Color(0xFFEF4444),
+                              _recoveryScore / 100,
+                              _recoveryScore >= 75 ? 'کامل' : 'نیاز به رشد',
+                            ),
                             const SizedBox(width: 8),
-                            _bodyGaugeCard('خواب', '$_sleepScore', Icons.nightlight_round, const Color(0xFF06B6D4), _sleepScore / 100, _sleepScore >= 80 ? 'عمیق' : 'کافی'),
+                            _bodyGaugeCard(
+                              'خواب',
+                              '$_sleepScore',
+                              Icons.nightlight_round,
+                              const Color(0xFF06B6D4),
+                              _sleepScore / 100,
+                              _sleepScore >= 80 ? 'عمیق' : 'کافی',
+                            ),
                             const SizedBox(width: 8),
-                            _bodyGaugeCard('استرس', '$_stressScore', Icons.psychology_rounded, const Color(0xFFF59E0B), _stressScore / 100, _stressScore <= 35 ? 'پایین' : 'متوسط'),
+                            _bodyGaugeCard(
+                              'استرس',
+                              '$_stressScore',
+                              Icons.psychology_rounded,
+                              const Color(0xFFF59E0B),
+                              _stressScore / 100,
+                              _stressScore <= 35 ? 'پایین' : 'متوسط',
+                            ),
                             const SizedBox(width: 8),
-                            _bodyGaugeCard('فعالیت', '$_activityScore', Icons.directions_run_rounded, const Color(0xFF22C55E), _activityScore / 100, _activityScore >= 80 ? 'پایدار' : 'عادی'),
+                            _bodyGaugeCard(
+                              'فعالیت',
+                              '$_activityScore',
+                              Icons.directions_run_rounded,
+                              const Color(0xFF22C55E),
+                              _activityScore / 100,
+                              _activityScore >= 80 ? 'پایدار' : 'عادی',
+                            ),
                           ],
                         ),
                       ),
@@ -3131,7 +3553,14 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     );
   }
 
-  Widget _bodyGaugeCard(String label, String percent, IconData icon, Color color, double val, String statusTag) {
+  Widget _bodyGaugeCard(
+    String label,
+    String percent,
+    IconData icon,
+    Color color,
+    double val,
+    String statusTag,
+  ) {
     final displayPercent = _hasReadinessData ? '$percent٪' : '--';
     final displayTag = _hasReadinessData ? statusTag : 'ثبت‌نشده';
     final displayVal = _hasReadinessData ? val : 0.0;
@@ -3149,7 +3578,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.white70),
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white70,
+            ),
           ),
           const SizedBox(height: 6),
           Stack(
@@ -3159,7 +3592,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 width: 40,
                 height: 40,
                 child: CustomPaint(
-                  painter: RingGaugePainter(percentage: displayVal, color: color),
+                  painter: RingGaugePainter(
+                    percentage: displayVal,
+                    color: color,
+                  ),
                 ),
               ),
               Icon(icon, size: 15, color: color),
@@ -3234,7 +3670,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                 MaterialPageRoute(
                   builder: (context) => SSPlanDayDetailScreen(
                     dayOfWeek: _nextDayOfWeek!,
-                    dayName: _nextWorkoutDayName ?? _getFarsiDayName(_nextDayOfWeek!),
+                    dayName:
+                        _nextWorkoutDayName ??
+                        _getFarsiDayName(_nextDayOfWeek!),
                   ),
                 ),
               ).then((_) {
@@ -3261,7 +3699,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                       textDirection: TextDirection.rtl,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFF059669), Color(0xFF10B981)],
@@ -3269,7 +3710,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.3),
                                 blurRadius: 8,
                               ),
                             ],
@@ -3278,7 +3721,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                             mainAxisSize: MainAxisSize.min,
                             textDirection: TextDirection.rtl,
                             children: [
-                              const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.white),
+                              const Icon(
+                                Icons.calendar_today_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 toPersianDigits('برنامه $dayLabel'),
@@ -3293,7 +3740,10 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
@@ -3349,7 +3799,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                                 width: 88,
                                 height: 88,
                                 color: const Color(0xFF1E293B),
-                                child: const Icon(Icons.fitness_center, size: 32, color: Colors.white38),
+                                child: const Icon(
+                                  Icons.fitness_center,
+                                  size: 32,
+                                  color: Colors.white38,
+                                ),
                               ),
                             ),
                           ),
@@ -3358,16 +3812,24 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.85),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.85),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.5),
                                 blurRadius: 8,
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -3403,7 +3865,9 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                               ),
                               _buildMetaBadge(
                                 icon: Icons.local_fire_department_rounded,
-                                label: toPersianDigits('${durationMins * 7} کالری'),
+                                label: toPersianDigits(
+                                  '${durationMins * 7} کالری',
+                                ),
                                 color: const Color(0xFFFB923C),
                               ),
                             ],
@@ -3421,7 +3885,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
     );
   }
 
-  Widget _buildMetaBadge({required IconData icon, required String label, required Color color}) {
+  Widget _buildMetaBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -3449,10 +3917,20 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
   }
 
   String _getWorkoutCategoryTag(String workoutName) {
-    if (workoutName.contains('کششی') || workoutName.contains('انعطاف')) return 'تمرین کششی';
-    if (workoutName.contains('پا') || workoutName.contains('ران') || workoutName.contains('باسن') || workoutName.contains('ساق')) return 'تمرین پایین‌تنه';
-    if (workoutName.contains('شکم') || workoutName.contains('پهلو')) return 'تمرین هسته بدن';
-    if (workoutName.contains('سینه') || workoutName.contains('بازو') || workoutName.contains('شانه') || workoutName.contains('پشت')) return 'تمرین بالاتنه';
+    if (workoutName.contains('کششی') || workoutName.contains('انعطاف'))
+      return 'تمرین کششی';
+    if (workoutName.contains('پا') ||
+        workoutName.contains('ران') ||
+        workoutName.contains('باسن') ||
+        workoutName.contains('ساق'))
+      return 'تمرین پایین‌تنه';
+    if (workoutName.contains('شکم') || workoutName.contains('پهلو'))
+      return 'تمرین هسته بدن';
+    if (workoutName.contains('سینه') ||
+        workoutName.contains('بازو') ||
+        workoutName.contains('شانه') ||
+        workoutName.contains('پشت'))
+      return 'تمرین بالاتنه';
     return 'جلسه بعدی';
   }
 
@@ -3471,7 +3949,11 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
           const SizedBox(height: 12),
           const Text(
             'امروز روز استراحت شماست 🧘‍♂️',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -3500,13 +3982,21 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                   const SizedBox(height: 16),
                   const Text(
                     'برنامه ۲۸ روزه شما به پایان رسید!',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'تبریک می‌گوییم! شما تمام جلسات این دوره را با اراده و تداوم به پایان رساندید.',
-                    style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      height: 1.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
@@ -3516,12 +4006,18 @@ class _SSHomeDashboardTabContentState extends State<SSHomeDashboardTabContent> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       onPressed: _resetAndStartNewPlan,
                       child: const Text(
                         'شروع برنامه جدید',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

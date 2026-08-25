@@ -188,154 +188,171 @@ void main() {
       await db.close();
     });
 
-    test('Full E2E Lifecycle: Anchor Slot -> Route Mode Player -> Metrics & Hard RPE -> DB Saved -> Route Updated -> Weekly Budget Updated', () async {
-      final now = DateTime(2026, 8, 28, 7, 0); // Friday of week 2026-08-22
+    test(
+      'Full E2E Lifecycle: Anchor Slot -> Route Mode Player -> Metrics & Hard RPE -> DB Saved -> Route Updated -> Weekly Budget Updated',
+      () async {
+        final now = DateTime(2026, 8, 28, 7, 0); // Friday of week 2026-08-22
 
-      // 1. Create a saved Route «قله دارآباد»
-      final savedRouteId = await routeRepo.insertRoute(
-        const MvRoute(
-          titleFa: 'قله دارآباد',
-          kindCode: 'HIKING',
+        // 1. Create a saved Route «قله دارآباد»
+        final savedRouteId = await routeRepo.insertRoute(
+          const MvRoute(
+            titleFa: 'قله دارآباد',
+            kindCode: 'HIKING',
+            distanceM: 12000.0,
+            elevationGainM: 950.0,
+            notes: 'مسیر یال شرقی و جان‌پناه',
+            createdAt: '2026-08-01T06:00:00Z',
+          ),
+        );
+        expect(savedRouteId, greaterThan(0));
+
+        // 2. User has Friday Anchor commitment for HIKING (dayOfWeekSat0: 6 = Friday)
+        await commitmentRepo.upsert(
+          MvCommitment(
+            kindCode: 'HIKING',
+            titleFa: 'کوهنوردی جمعه',
+            dayOfWeekSat0: 6,
+            startTime: '07:00',
+            durationMinutes: 180,
+            recurrence: CommitmentRecurrence.weekly,
+            isActive: true,
+            createdAt: '2026-08-01T00:00:00Z',
+            updatedAt: '2026-08-01T00:00:00Z',
+          ),
+        );
+
+        // 3. Generate Week Plan via PlanEngine
+        final profiles = await kindProfileRepo.getMapByCodes([
+          'HIKING',
+          'BODYWEIGHT',
+          'STRETCHING',
+          'RUNNING',
+        ]);
+        final commitments = await commitmentRepo.getActive();
+        final kinds = await kindRepo.getMapByCodes([
+          'HIKING',
+          'BODYWEIGHT',
+          'STRETCHING',
+          'RUNNING',
+        ]);
+
+        final weekPlan = planEngine.generateWeek(
+          weekStartSat: DateTime(2026, 8, 22),
+          profile: MvUserProfile.empty(),
+          commitments: commitments,
+          overrides: const [],
+          kinds: kinds,
+          kindProfiles: profiles,
+          budget: const MvBudgetSnapshot(
+            moderateEquivalentMinutes: 0,
+            rawMetMinutes: 0,
+            strengthDays: 0,
+            targetMin: 150,
+            targetOptimal: 300,
+            strengthDaysTarget: 2,
+          ),
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
+
+        // Friday slot (index 6) MUST be locked HIKING
+        final fridaySlot = weekPlan.slots[6];
+        expect(fridaySlot.isLocked, isTrue);
+        expect(fridaySlot.kindCode, equals('HIKING'));
+        expect(fridaySlot.slotType, equals(MvSlotType.outdoor));
+        expect(fridaySlot.targetMinutes, equals(180));
+
+        // 4. Start Session via MvStartSessionUseCase -> Mode is resolved to ROUTE
+        final hikingKind = await kindRepo.getByCode('HIKING');
+        expect(hikingKind, isNotNull);
+
+        final startResult = await startUseCase.execute(
+          slot: fridaySlot,
+          profile: MvUserProfile.empty(),
+        );
+        final session = startResult.session;
+
+        expect(session.sessionMode, equals(MvSessionMode.route));
+        expect(session.status, equals(MvSessionStatus.active));
+
+        // 5. Complete Session with all 7 metrics and Hard effort
+        final startedAt = now.millisecondsSinceEpoch;
+        final endedAt = startedAt + (180 * 60 * 1000); // 180 minutes
+
+        final activeSession = session.copyWith(
+          startedAt: startedAt,
+          endedAt: endedAt,
+        );
+
+        await finishUseCase.execute(
+          session: activeSession,
           distanceM: 12000.0,
           elevationGainM: 950.0,
-          notes: 'مسیر یال شرقی و جان‌پناه',
-          createdAt: '2026-08-01T06:00:00Z',
-        ),
-      );
-      expect(savedRouteId, greaterThan(0));
+          packWeightKg: 7.5,
+          routeId: savedRouteId,
+          rpe1To10: 8, // Hard effort
+          effortSource: 'user',
+          note: 'تمرین استقامتی فوق‌العاده در هوای مطبوع',
+        );
 
-      // 2. User has Friday Anchor commitment for HIKING (dayOfWeekSat0: 6 = Friday)
-      await commitmentRepo.upsert(
-        MvCommitment(
-          kindCode: 'HIKING',
-          titleFa: 'کوهنوردی جمعه',
-          dayOfWeekSat0: 6,
-          startTime: '07:00',
-          durationMinutes: 180,
-          recurrence: CommitmentRecurrence.weekly,
-          isActive: true,
-          createdAt: '2026-08-01T00:00:00Z',
-          updatedAt: '2026-08-01T00:00:00Z',
-        ),
-      );
+        // 6. Verification: Database State
+        final activeFromDb = await sessionRepo.getActiveSession();
+        expect(
+          activeFromDb,
+          isNull,
+          reason: 'Session must no longer be active',
+        );
 
-      // 3. Generate Week Plan via PlanEngine
-      final profiles = await kindProfileRepo.getMapByCodes(['HIKING', 'BODYWEIGHT', 'STRETCHING', 'RUNNING']);
-      final commitments = await commitmentRepo.getActive();
-      final kinds = await kindRepo.getMapByCodes(['HIKING', 'BODYWEIGHT', 'STRETCHING', 'RUNNING']);
+        final savedSession = await db.query(
+          'movement_sessions',
+          where: 'id = ?',
+          whereArgs: [session.id],
+        );
+        expect(savedSession.isNotEmpty, isTrue);
+        final row = savedSession.first;
+        expect(row['status'], equals('COMPLETED'));
+        expect(row['distanceM'], equals(12000.0));
+        expect(row['elevationGainM'], equals(950.0));
+        expect(row['packWeightKg'], equals(7.5));
+        expect(row['routeId'], equals(savedRouteId));
+        expect(row['rpe1To10'], equals(8));
+        expect(row['effortSource'], equals('user'));
+        expect(row['note'], equals('تمرین استقامتی فوق‌العاده در هوای مطبوع'));
 
-      final weekPlan = planEngine.generateWeek(
-        weekStartSat: DateTime(2026, 8, 22),
-        profile: MvUserProfile.empty(),
-        commitments: commitments,
-        overrides: const [],
-        kinds: kinds,
-        kindProfiles: profiles,
-        budget: const MvBudgetSnapshot(
-          moderateEquivalentMinutes: 0,
-          rawMetMinutes: 0,
-          strengthDays: 0,
-          targetMin: 150,
-          targetOptimal: 300,
-          strengthDaysTarget: 2,
-        ),
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        // Check sessionLoad computed getter
+        final restoredSession = MvSession.fromMap(row);
+        expect(restoredSession.sessionLoad, equals(8 * 180)); // 1440 sRPE
 
-      // Friday slot (index 6) MUST be locked HIKING
-      final fridaySlot = weekPlan.slots[6];
-      expect(fridaySlot.isLocked, isTrue);
-      expect(fridaySlot.kindCode, equals('HIKING'));
-      expect(fridaySlot.slotType, equals(MvSlotType.outdoor));
-      expect(fridaySlot.targetMinutes, equals(180));
+        // 7. Verification: Route Completion Statistics Updated
+        final updatedRoute = await routeRepo.getRouteById(savedRouteId);
+        expect(updatedRoute, isNotNull);
+        expect(updatedRoute!.timesCompleted, equals(1));
+        expect(updatedRoute.bestDurationMin, equals(180));
+        expect(updatedRoute.lastDoneAt, isNotNull);
 
-      // 4. Start Session via MvStartSessionUseCase -> Mode is resolved to ROUTE
-      final hikingKind = await kindRepo.getByCode('HIKING');
-      expect(hikingKind, isNotNull);
+        // 8. Verification: Weekly WHO Activity Budget Updated
+        final weeklySessions = [restoredSession];
+        final budgetDecision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: weeklySessions,
+          currentDayOfWeekSat0: 6,
+          kindsByCode: kinds,
+        );
+        final progress = budgetDecision.value;
 
-      final startResult = await startUseCase.execute(
-        slot: fridaySlot,
-        profile: MvUserProfile.empty(),
-      );
-      final session = startResult.session;
+        // HIKING baseMet = 7.5 (> 6.0 vigorous) -> 180 min * 2.0 = 360 moderate equivalent min
+        expect(progress.moderateEquivalentMinutes, equals(360));
+        expect(progress.percentage, greaterThanOrEqualTo(1.0));
 
-      expect(session.sessionMode, equals(MvSessionMode.route));
-      expect(session.status, equals(MvSessionStatus.active));
-
-      // 5. Complete Session with all 7 metrics and Hard effort
-      final startedAt = now.millisecondsSinceEpoch;
-      final endedAt = startedAt + (180 * 60 * 1000); // 180 minutes
-
-      final activeSession = session.copyWith(
-        startedAt: startedAt,
-        endedAt: endedAt,
-      );
-
-      await finishUseCase.execute(
-        session: activeSession,
-        distanceM: 12000.0,
-        elevationGainM: 950.0,
-        packWeightKg: 7.5,
-        routeId: savedRouteId,
-        rpe1To10: 8, // Hard effort
-        effortSource: 'user',
-        note: 'تمرین استقامتی فوق‌العاده در هوای مطبوع',
-      );
-
-      // 6. Verification: Database State
-      final activeFromDb = await sessionRepo.getActiveSession();
-      expect(activeFromDb, isNull, reason: 'Session must no longer be active');
-
-      final savedSession = await db.query(
-        'movement_sessions',
-        where: 'id = ?',
-        whereArgs: [session.id],
-      );
-      expect(savedSession.isNotEmpty, isTrue);
-      final row = savedSession.first;
-      expect(row['status'], equals('COMPLETED'));
-      expect(row['distanceM'], equals(12000.0));
-      expect(row['elevationGainM'], equals(950.0));
-      expect(row['packWeightKg'], equals(7.5));
-      expect(row['routeId'], equals(savedRouteId));
-      expect(row['rpe1To10'], equals(8));
-      expect(row['effortSource'], equals('user'));
-      expect(row['note'], equals('تمرین استقامتی فوق‌العاده در هوای مطبوع'));
-
-      // Check sessionLoad computed getter
-      final restoredSession = MvSession.fromMap(row);
-      expect(restoredSession.sessionLoad, equals(8 * 180)); // 1440 sRPE
-
-      // 7. Verification: Route Completion Statistics Updated
-      final updatedRoute = await routeRepo.getRouteById(savedRouteId);
-      expect(updatedRoute, isNotNull);
-      expect(updatedRoute!.timesCompleted, equals(1));
-      expect(updatedRoute.bestDurationMin, equals(180));
-      expect(updatedRoute.lastDoneAt, isNotNull);
-
-      // 8. Verification: Weekly WHO Activity Budget Updated
-      final weeklySessions = [restoredSession];
-      final budgetDecision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: weeklySessions,
-        currentDayOfWeekSat0: 6,
-        kindsByCode: kinds,
-      );
-      final progress = budgetDecision.value;
-
-      // HIKING baseMet = 7.5 (> 6.0 vigorous) -> 180 min * 2.0 = 360 moderate equivalent min
-      expect(progress.moderateEquivalentMinutes, equals(360));
-      expect(progress.percentage, greaterThanOrEqualTo(1.0));
-
-      // 9. Verification: LoadEngine ACWR & sRPE
-      final loadSnapshot = loadEngine.computeLoadSnapshot(
-        completedSessions: [restoredSession],
-        daysOfHistory: 7,
-        referenceDate: DateTime(2026, 8, 28, 12, 0),
-      );
-      expect(loadSnapshot.acuteLoad, equals(1440));
-      // < 14 days history -> ratio is safely null
-      expect(loadSnapshot.ratio, isNull);
-    });
+        // 9. Verification: LoadEngine ACWR & sRPE
+        final loadSnapshot = loadEngine.computeLoadSnapshot(
+          completedSessions: [restoredSession],
+          daysOfHistory: 7,
+          referenceDate: DateTime(2026, 8, 28, 12, 0),
+        );
+        expect(loadSnapshot.acuteLoad, equals(1440));
+        // < 14 days history -> ratio is safely null
+        expect(loadSnapshot.ratio, isNull);
+      },
+    );
   });
 }

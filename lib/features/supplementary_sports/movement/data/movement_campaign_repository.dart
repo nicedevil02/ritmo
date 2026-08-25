@@ -31,7 +31,8 @@ class MovementCampaignRepository {
   }) async {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
-    final startDateStr = '${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+    final startDateStr =
+        '${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
 
     final campaignId = RitmoIdFactory.routine(); // or custom factory ID
     final routineIds = <String>[];
@@ -41,134 +42,142 @@ class MovementCampaignRepository {
       // 1. Friday Hiking (weekday 7)
       final hikeId = RitmoIdFactory.routine();
       routineIds.add(hikeId);
-      await RitmoExecutionKernel.instance.execute(CreateRoutineCommand(
-        routineData: {
-          'id': hikeId,
-          'title': 'دماوند - کوهنوردی جمعه',
-          'category': 'fitness',
-          'routineType': 'ROUTINE',
-          'targetDurationMinutes': 180,
-          'movementKind': 'HIKING',
-          'movementTargetMetric': 'ELEVATION',
-          'movementTargetValue': 600.0, // starts at 600m
-          'isArchived': 0,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-        scheduleData: {
-          'id': RitmoIdFactory.schedule(hikeId),
-          'routineId': hikeId,
-          'scheduleType': 'SPECIFIC_DAYS',
-          'daysOfWeek': '7', // Friday
-          'timeOfDay': '06:00',
-          'recurrenceRule': jsonEncode({
-            'reminderTimes': ['06:00'],
-            'startDate': startDateStr,
-            'weekdays': [7]
-          }),
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      ));
+      await RitmoExecutionKernel.instance.execute(
+        CreateRoutineCommand(
+          routineData: {
+            'id': hikeId,
+            'title': 'دماوند - کوهنوردی جمعه',
+            'category': 'fitness',
+            'routineType': 'ROUTINE',
+            'targetDurationMinutes': 180,
+            'movementKind': 'HIKING',
+            'movementTargetMetric': 'ELEVATION',
+            'movementTargetValue': 600.0, // starts at 600m
+            'isArchived': 0,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+          scheduleData: {
+            'id': RitmoIdFactory.schedule(hikeId),
+            'routineId': hikeId,
+            'scheduleType': 'SPECIFIC_DAYS',
+            'daysOfWeek': '7', // Friday
+            'timeOfDay': '06:00',
+            'recurrenceRule': jsonEncode({
+              'reminderTimes': ['06:00'],
+              'startDate': startDateStr,
+              'weekdays': [7],
+            }),
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        ),
+      );
 
       // 2. Leg Strength 1 (Monday, weekday 3)
       final str1Id = RitmoIdFactory.routine();
       routineIds.add(str1Id);
-      await RitmoExecutionKernel.instance.execute(CreateRoutineCommand(
-        routineData: {
-          'id': str1Id,
-          'title': 'دماوند - قدرت پا دوشنبه',
-          'category': 'fitness',
-          'routineType': 'ROUTINE',
-          'targetDurationMinutes': 45,
-          'movementKind': 'STRENGTH_HOME',
-          'movementTargetMetric': 'DURATION',
-          'movementTargetValue': 45.0,
-          'isArchived': 0,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-        scheduleData: {
-          'id': RitmoIdFactory.schedule(str1Id),
-          'routineId': str1Id,
-          'scheduleType': 'SPECIFIC_DAYS',
-          'daysOfWeek': '3', // Monday
-          'timeOfDay': '08:00',
-          'recurrenceRule': jsonEncode({
-            'reminderTimes': ['08:00'],
-            'startDate': startDateStr,
-            'weekdays': [3]
-          }),
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      ));
+      await RitmoExecutionKernel.instance.execute(
+        CreateRoutineCommand(
+          routineData: {
+            'id': str1Id,
+            'title': 'دماوند - قدرت پا دوشنبه',
+            'category': 'fitness',
+            'routineType': 'ROUTINE',
+            'targetDurationMinutes': 45,
+            'movementKind': 'STRENGTH_HOME',
+            'movementTargetMetric': 'DURATION',
+            'movementTargetValue': 45.0,
+            'isArchived': 0,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+          scheduleData: {
+            'id': RitmoIdFactory.schedule(str1Id),
+            'routineId': str1Id,
+            'scheduleType': 'SPECIFIC_DAYS',
+            'daysOfWeek': '3', // Monday
+            'timeOfDay': '08:00',
+            'recurrenceRule': jsonEncode({
+              'reminderTimes': ['08:00'],
+              'startDate': startDateStr,
+              'weekdays': [3],
+            }),
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        ),
+      );
 
       // 3. Leg Strength 2 (Wednesday, weekday 5)
       final str2Id = RitmoIdFactory.routine();
       routineIds.add(str2Id);
-      await RitmoExecutionKernel.instance.execute(CreateRoutineCommand(
-        routineData: {
-          'id': str2Id,
-          'title': 'دماوند - قدرت پا چهارشنبه',
-          'category': 'fitness',
-          'routineType': 'ROUTINE',
-          'targetDurationMinutes': 45,
-          'movementKind': 'STRENGTH_HOME',
-          'movementTargetMetric': 'DURATION',
-          'movementTargetValue': 45.0,
-          'isArchived': 0,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-        scheduleData: {
-          'id': RitmoIdFactory.schedule(str2Id),
-          'routineId': str2Id,
-          'scheduleType': 'SPECIFIC_DAYS',
-          'daysOfWeek': '5', // Wednesday
-          'timeOfDay': '08:00',
-          'recurrenceRule': jsonEncode({
-            'reminderTimes': ['08:00'],
-            'startDate': startDateStr,
-            'weekdays': [5]
-          }),
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      ));
+      await RitmoExecutionKernel.instance.execute(
+        CreateRoutineCommand(
+          routineData: {
+            'id': str2Id,
+            'title': 'دماوند - قدرت پا چهارشنبه',
+            'category': 'fitness',
+            'routineType': 'ROUTINE',
+            'targetDurationMinutes': 45,
+            'movementKind': 'STRENGTH_HOME',
+            'movementTargetMetric': 'DURATION',
+            'movementTargetValue': 45.0,
+            'isArchived': 0,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+          scheduleData: {
+            'id': RitmoIdFactory.schedule(str2Id),
+            'routineId': str2Id,
+            'scheduleType': 'SPECIFIC_DAYS',
+            'daysOfWeek': '5', // Wednesday
+            'timeOfDay': '08:00',
+            'recurrenceRule': jsonEncode({
+              'reminderTimes': ['08:00'],
+              'startDate': startDateStr,
+              'weekdays': [5],
+            }),
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        ),
+      );
 
       // 4. Stair Climbing (Saturday, weekday 1)
       final stairId = RitmoIdFactory.routine();
       routineIds.add(stairId);
-      await RitmoExecutionKernel.instance.execute(CreateRoutineCommand(
-        routineData: {
-          'id': stairId,
-          'title': 'دماوند - پله‌نوردی شنبه',
-          'category': 'fitness',
-          'routineType': 'ROUTINE',
-          'targetDurationMinutes': 30,
-          'movementKind': 'STAIR_CLIMBING',
-          'movementTargetMetric': 'DURATION',
-          'movementTargetValue': 30.0,
-          'isArchived': 0,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-        scheduleData: {
-          'id': RitmoIdFactory.schedule(stairId),
-          'routineId': stairId,
-          'scheduleType': 'SPECIFIC_DAYS',
-          'daysOfWeek': '1', // Saturday
-          'timeOfDay': '07:00',
-          'recurrenceRule': jsonEncode({
-            'reminderTimes': ['07:00'],
-            'startDate': startDateStr,
-            'weekdays': [1]
-          }),
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      ));
+      await RitmoExecutionKernel.instance.execute(
+        CreateRoutineCommand(
+          routineData: {
+            'id': stairId,
+            'title': 'دماوند - پله‌نوردی شنبه',
+            'category': 'fitness',
+            'routineType': 'ROUTINE',
+            'targetDurationMinutes': 30,
+            'movementKind': 'STAIR_CLIMBING',
+            'movementTargetMetric': 'DURATION',
+            'movementTargetValue': 30.0,
+            'isArchived': 0,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+          scheduleData: {
+            'id': RitmoIdFactory.schedule(stairId),
+            'routineId': stairId,
+            'scheduleType': 'SPECIFIC_DAYS',
+            'daysOfWeek': '1', // Saturday
+            'timeOfDay': '07:00',
+            'recurrenceRule': jsonEncode({
+              'reminderTimes': ['07:00'],
+              'startDate': startDateStr,
+              'weekdays': [1],
+            }),
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        ),
+      );
     }
 
     final campaign = MovementCampaign(
@@ -229,10 +238,7 @@ class MovementCampaignRepository {
     for (final rId in campaign.routineIds) {
       await db.update(
         'routines',
-        {
-          'isArchived': 1,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
+        {'isArchived': 1, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
         where: 'id = ?',
         whereArgs: [rId],
       );
@@ -241,24 +247,32 @@ class MovementCampaignRepository {
 
   Future<void> checkAndUpdateCampaignWeek(String campaignId) async {
     final campaign = await getCampaignById(campaignId);
-    if (campaign == null || campaign.status != MovementCampaignStatus.active) return;
+    if (campaign == null || campaign.status != MovementCampaignStatus.active)
+      return;
 
     final start = DateTime.parse(campaign.startDate);
     final daysDiff = DateTime.now().difference(start).inDays;
     final currentWeek = (daysDiff / 7).floor() + 1;
 
-    final progress = jsonDecode(campaign.progressJson ?? '{}') as Map<String, dynamic>;
+    final progress =
+        jsonDecode(campaign.progressJson ?? '{}') as Map<String, dynamic>;
     final lastWeek = progress['currentWeek'] as int? ?? 1;
 
     if (currentWeek > lastWeek && currentWeek <= campaign.weeks) {
       final db = await _db;
 
       for (final rId in campaign.routineIds) {
-        final rRows = await db.query('routines', where: 'id = ?', whereArgs: [rId], limit: 1);
+        final rRows = await db.query(
+          'routines',
+          where: 'id = ?',
+          whereArgs: [rId],
+          limit: 1,
+        );
         if (rRows.isNotEmpty) {
           final r = rRows.first;
-          final double currentTargetValue = (r['movementTargetValue'] as num? ?? 0).toDouble();
-          
+          final double currentTargetValue =
+              (r['movementTargetValue'] as num? ?? 0).toDouble();
+
           // Apply maximum 10% progression using static helper multiplier
           final suggested = currentTargetValue * 1.10;
 

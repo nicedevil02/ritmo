@@ -39,76 +39,97 @@ void main() {
   });
 
   group('MvLibraryScreen Kinds Tab & Custom Sport Tests (S1-T8)', () {
-    testWidgets('Switch to Kinds tab, create custom sport پدل, verify saved in DB and rendered in list', (tester) async {
-      List<MvMovementKind> allInitial = [];
-      await tester.runAsync(() async {
-        allInitial = await kindRepo.getAll();
-      });
+    testWidgets(
+      'Switch to Kinds tab, create custom sport پدل, verify saved in DB and rendered in list',
+      (tester) async {
+        List<MvMovementKind> allInitial = [];
+        await tester.runAsync(() async {
+          allInitial = await kindRepo.getAll();
+        });
 
-      await tester.pumpWidget(
-        createTestApp(
-          MvLibraryScreen(
-            allExercises: const [],
-            kindUseCase: kindUseCase,
-            initialKinds: allInitial,
+        await tester.pumpWidget(
+          createTestApp(
+            MvLibraryScreen(
+              allExercises: const [],
+              kindUseCase: kindUseCase,
+              initialKinds: allInitial,
+            ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
 
-      // 1. Switch to 3rd tab "انواع ورزش"
-      expect(find.byKey(const ValueKey('library_tab_kinds')), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('library_tab_kinds')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+        // 1. Switch to 3rd tab "انواع ورزش"
+        expect(find.byKey(const ValueKey('library_tab_kinds')), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey('library_tab_kinds')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.byKey(const ValueKey('kinds_tab_search_field')), findsOneWidget);
-      expect(find.byKey(const ValueKey('library_create_custom_kind_button')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('kinds_tab_search_field')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('library_create_custom_kind_button')),
+          findsOneWidget,
+        );
 
-      // 2. Open Custom Kind Sheet
-      await tester.tap(find.byKey(const ValueKey('library_create_custom_kind_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+        // 2. Open Custom Kind Sheet
+        await tester.tap(
+          find.byKey(const ValueKey('library_create_custom_kind_button')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.byKey(const ValueKey('custom_kind_title_field')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('custom_kind_title_field')),
+          findsOneWidget,
+        );
 
-      // 3. Enter Title "پدل"
-      await tester.enterText(find.byKey(const ValueKey('custom_kind_title_field')), 'پدل');
-      await tester.pump();
+        // 3. Enter Title "پدل"
+        await tester.enterText(
+          find.byKey(const ValueKey('custom_kind_title_field')),
+          'پدل',
+        );
+        await tester.pump();
 
-      // 4. Select SPORT family
-      await tester.ensureVisible(find.byKey(const ValueKey('family_sport')));
-      await tester.tap(find.byKey(const ValueKey('family_sport')));
-      await tester.pump();
+        // 4. Select SPORT family
+        await tester.ensureVisible(find.byKey(const ValueKey('family_sport')));
+        await tester.tap(find.byKey(const ValueKey('family_sport')));
+        await tester.pump();
 
-      // 5. Toggle needsVenue switch
-      await tester.ensureVisible(find.byKey(const ValueKey('custom_kind_needs_venue')));
-      await tester.tap(find.byKey(const ValueKey('custom_kind_needs_venue')));
-      await tester.pump();
+        // 5. Toggle needsVenue switch
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('custom_kind_needs_venue')),
+        );
+        await tester.tap(find.byKey(const ValueKey('custom_kind_needs_venue')));
+        await tester.pump();
 
-      // 6. Tap Save Button
-      await tester.ensureVisible(find.byKey(const ValueKey('custom_kind_save_action')));
-      await tester.tap(find.byKey(const ValueKey('custom_kind_save_action')));
-      await tester.pump();
-      await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 300));
-      });
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+        // 6. Tap Save Button
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('custom_kind_save_action')),
+        );
+        await tester.tap(find.byKey(const ValueKey('custom_kind_save_action')));
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 300));
+        });
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
 
-      // 7. Verify DB contains پدل
-      MvMovementKind? padel;
-      await tester.runAsync(() async {
-        final all = await kindRepo.getAll();
-        padel = all.firstWhere((k) => k.titleFa == 'پدل');
-      });
-      expect(padel, isNotNull);
-      expect(padel!.isCustom, isTrue);
-      expect(padel!.family, equals(MovementFamily.sport));
-      expect(padel!.needsVenue, isTrue);
+        // 7. Verify DB contains پدل
+        MvMovementKind? padel;
+        await tester.runAsync(() async {
+          final all = await kindRepo.getAll();
+          padel = all.firstWhere((k) => k.titleFa == 'پدل');
+        });
+        expect(padel, isNotNull);
+        expect(padel!.isCustom, isTrue);
+        expect(padel!.family, equals(MovementFamily.sport));
+        expect(padel!.needsVenue, isTrue);
 
-      // 8. Verify list in Library screen displays پدل
-      expect(find.text('پدل'), findsOneWidget);
-    });
+        // 8. Verify list in Library screen displays پدل
+        expect(find.text('پدل'), findsOneWidget);
+      },
+    );
   });
 }

@@ -75,7 +75,8 @@ class ReadinessEngine {
     score = score.clamp(0.0, 100.0);
     final MvReadinessTier tier;
     if (!hasData) {
-      tier = MvReadinessTier.full; // Default full when no check-in exists (Rule S0-T6)
+      tier = MvReadinessTier
+          .full; // Default full when no check-in exists (Rule S0-T6)
     } else if (score >= 80) {
       tier = MvReadinessTier.full;
     } else if (score >= 60) {

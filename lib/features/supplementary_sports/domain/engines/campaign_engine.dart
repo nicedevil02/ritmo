@@ -1,11 +1,7 @@
 import 'dart:math' as math;
 
 /// Phase of a goal-oriented training campaign (S5-T2).
-enum MvCampaignPhase {
-  base,
-  progressiveLoad,
-  taper,
-}
+enum MvCampaignPhase { base, progressiveLoad, taper }
 
 /// Target parameters for a single week of a campaign.
 class MvCampaignWeekPlan {
@@ -150,7 +146,9 @@ class CampaignEngine {
         final phase2Index = w - (baseWeeks + 1);
         final stepIndex = (phase2Index ~/ 2).clamp(0, _packSteps.length - 1);
         final packPercent = _packSteps[stepIndex];
-        final packKg = double.parse((packPercent * effectiveWeight).toStringAsFixed(1));
+        final packKg = double.parse(
+          (packPercent * effectiveWeight).toStringAsFixed(1),
+        );
 
         weeks.add(
           MvCampaignWeekPlan(
@@ -160,7 +158,11 @@ class CampaignEngine {
             packWeightKg: packKg,
             volumeRatio: 1.0,
             reasonKey: 'mv_campaign_progressive_load',
-            reasonParams: {'week': w, 'packKg': packKg, 'percent': (packPercent * 100).toInt()},
+            reasonParams: {
+              'week': w,
+              'packKg': packKg,
+              'percent': (packPercent * 100).toInt(),
+            },
             isTaper: false,
           ),
         );

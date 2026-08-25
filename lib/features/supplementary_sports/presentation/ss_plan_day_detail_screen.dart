@@ -24,7 +24,6 @@ import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.d
 import 'package:sqflite/sqflite.dart';
 
 class SSPlanDayDetailScreen extends StatefulWidget {
-
   const SSPlanDayDetailScreen({
     super.key,
     required this.dayOfWeek,
@@ -63,7 +62,8 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
       _isDetailMode = await SportsDetailMode.isEnabled();
       if (!_isDetailMode && widget.dateIso != null) {
-        _prescription = await SsPrescriptionRepository.instance.getPrescriptionForDate(widget.dateIso!);
+        _prescription = await SsPrescriptionRepository.instance
+            .getPrescriptionForDate(widget.dateIso!);
         if (_prescription != null) {
           setState(() {
             _isLoading = false;
@@ -92,7 +92,8 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
       _planId = plan['id'].toString();
 
       // 2. Load crossrefs joined with exercises
-      final results = await db.rawQuery('''
+      final results = await db.rawQuery(
+        '''
         SELECT c.id as crossRefId, c.targetSets, c.targetReps, c.targetWeight,
                e.id as exId, e.name as exName, e.category as exCategory,
                e.equipment as exEquipment, e.instructions as exInstructions,
@@ -102,7 +103,9 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         JOIN ss_exercise e ON c.exerciseId = e.id
         WHERE c.planId = ?
         ORDER BY c.orderIndex ASC
-      ''', [_planId]);
+      ''',
+        [_planId],
+      );
 
       final list = <PlanExerciseDetail>[];
       for (final row in results) {
@@ -118,8 +121,12 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
               changeSides: (row['exChangeSides'] as int? ?? 0) == 1,
               repsDouble: (row['exRepsDouble'] as int? ?? 0) == 1,
               repsHint: row['exRepsHint']?.toString(),
-              impact: row['exImpact'] is num ? (row['exImpact']! as num).toInt() : 0,
-              noisy: row['exNoisy'] is num ? (row['exNoisy']! as num).toInt() : 0,
+              impact: row['exImpact'] is num
+                  ? (row['exImpact']! as num).toInt()
+                  : 0,
+              noisy: row['exNoisy'] is num
+                  ? (row['exNoisy']! as num).toInt()
+                  : 0,
             ),
             targetSets: row['targetSets'] as int? ?? 3,
             targetReps: row['targetReps'] as int? ?? 10,
@@ -133,7 +140,8 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         final exName = list.first.exercise.name;
         _aiSuggestion = SSInlineAiSuggestion(
           id: 'sug_overload_${list.first.exercise.id}',
-          message: 'مربی هوشمند 🤖: چون سه هفته متوالی حرکت «$exName» برایت راحت بوده، وزنه را ۵ کیلوگرم اضافه کنم؟',
+          message:
+              'مربی هوشمند 🤖: چون سه هفته متوالی حرکت «$exName» برایت راحت بوده، وزنه را ۵ کیلوگرم اضافه کنم؟',
           crossRefId: list.first.crossRefId,
           newWeight: list.first.targetWeight + 5.0,
         );
@@ -170,7 +178,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     });
   }
 
-
   Future<void> _applyAiSuggestion() async {
     if (_aiSuggestion == null) return;
 
@@ -188,14 +195,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         },
       );
 
-      await AssistantActionRegistry.executeAction(
-        context,
-        action,
-        () async {
-          _aiSuggestion = null;
-          await _loadDayDetails();
-        },
-      );
+      await AssistantActionRegistry.executeAction(context, action, () async {
+        _aiSuggestion = null;
+        await _loadDayDetails();
+      });
     } catch (e) {
       debugPrint('Error applying AI suggestion: $e');
       setState(() {
@@ -204,16 +207,17 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     }
   }
 
-  Future<void> _updateExerciseTargets(String crossRefId, int sets, int reps, double weight) async {
+  Future<void> _updateExerciseTargets(
+    String crossRefId,
+    int sets,
+    int reps,
+    double weight,
+  ) async {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.update(
         'ss_workout_exercise_crossref',
-        {
-          'targetSets': sets,
-          'targetReps': reps,
-          'targetWeight': weight,
-        },
+        {'targetSets': sets, 'targetReps': reps, 'targetWeight': weight},
         where: 'id = ?',
         whereArgs: [crossRefId],
       );
@@ -261,8 +265,14 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
-            title: const Text('این روز خالی می‌ماند!', style: TextStyle(fontWeight: FontWeight.bold)),
-            content: const Text('حذف این حرکت باعث خالی شدن کل روز تمرینی می‌شود. آیا می‌خواهید کل روز تمرینی را حذف کنید یا حرکت دیگری جایگزین کنید؟', style: TextStyle()),
+            title: const Text(
+              'این روز خالی می‌ماند!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'حذف این حرکت باعث خالی شدن کل روز تمرینی می‌شود. آیا می‌خواهید کل روز تمرینی را حذف کنید یا حرکت دیگری جایگزین کنید؟',
+              style: TextStyle(),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -280,7 +290,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                   Navigator.pop(context);
                   await _deleteEntirePlanDay();
                 },
-                child: const Text('حذف کل روز تمرینی', style: TextStyle(color: Colors.red)),
+                child: const Text(
+                  'حذف کل روز تمرینی',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -299,7 +312,11 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.delete('ss_workout_plan', where: 'id = ?', whereArgs: [_planId]);
-      await db.delete('ss_workout_exercise_crossref', where: 'planId = ?', whereArgs: [_planId]);
+      await db.delete(
+        'ss_workout_exercise_crossref',
+        where: 'planId = ?',
+        whereArgs: [_planId],
+      );
 
       await _logVersionHistory(db, 'حذف کل روز تمرینی ${widget.dayName}');
       await _loadDayDetails();
@@ -311,10 +328,12 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     }
   }
 
-  Future<void> _showSwapExerciseBottomSheet(PlanExerciseDetail currentDetail) async {
+  Future<void> _showSwapExerciseBottomSheet(
+    PlanExerciseDetail currentDetail,
+  ) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       // Load user profile
       final profileMapList = await db.query('ss_user_profile', limit: 1);
       if (profileMapList.isEmpty) return;
@@ -339,42 +358,53 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
       }
 
       if (mounted) {
-        unawaited(showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (context) {
-            return BottomSheetContainer(
-              title: 'جایگزین مشابه برای ${currentDetail.exercise.name}',
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: results.length,
-                itemBuilder: (context, index) {
-                  final row = results[index];
-                  final exId = row['id'].toString();
-                  final exName = row['name'].toString();
-                  final score = ((row['similarityScore'] as num? ?? 0.0) * 100).round();
+        unawaited(
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) {
+              return BottomSheetContainer(
+                title: 'جایگزین مشابه برای ${currentDetail.exercise.name}',
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: results.length,
+                  itemBuilder: (context, index) {
+                    final row = results[index];
+                    final exId = row['id'].toString();
+                    final exName = row['name'].toString();
+                    final score =
+                        ((row['similarityScore'] as num? ?? 0.0) * 100).round();
 
-                  return SelectableCard(
-                    title: '$exName (شباهت: $score٪)',
-                    selected: false,
-                    onClick: () async {
-                      Navigator.pop(context);
-                      await _swapExercise(currentDetail.crossRefId, exId, exName);
-                    },
-                  );
-                },
-              ),
-            );
-          },
-        ));
+                    return SelectableCard(
+                      title: '$exName (شباهت: $score٪)',
+                      selected: false,
+                      onClick: () async {
+                        Navigator.pop(context);
+                        await _swapExercise(
+                          currentDetail.crossRefId,
+                          exId,
+                          exName,
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error swapping exercise: $e');
     }
   }
 
-  Future<void> _swapExercise(String crossRefId, String newExerciseId, String newName) async {
+  Future<void> _swapExercise(
+    String crossRefId,
+    String newExerciseId,
+    String newName,
+  ) async {
     setState(() {
       _isLoading = true;
     });
@@ -403,59 +433,71 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       // Query all exercises not in this day
       final results = await db.query('ss_exercise');
 
       if (mounted) {
-        unawaited(showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          builder: (context) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
-              ),
-              child: BottomSheetContainer(
-                title: 'افزودن حرکت جدید',
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const ClampingScrollPhysics(),
-                  itemCount: results.length,
-                  itemBuilder: (context, index) {
-                    final row = results[index];
-                    final exId = row['id'].toString();
-                    final exName = row['name'].toString();
-                    final equip = row['equipment']?.toString() ?? 'وزن بدن';
-
-                    // Check if already in plan
-                    final alreadyAdded = _exercises.any((e) => e.exercise.id == exId);
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: SelectableCard(
-                        title: '$exName ($equip)',
-                        selected: alreadyAdded,
-                        onClick: alreadyAdded ? () {} : () async {
-                          Navigator.pop(context);
-                          await _addExerciseToPlan(exId, exName);
-                        },
-                      ),
-                    );
-                  },
+        unawaited(
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            isScrollControlled: true,
+            builder: (context) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: RitmoBreakpoints.sheetMaxHeight(
+                    context,
+                    factor: 0.85,
+                  ),
                 ),
-              ),
-            );
-          },
-        ));
+                child: BottomSheetContainer(
+                  title: 'افزودن حرکت جدید',
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    itemCount: results.length,
+                    itemBuilder: (context, index) {
+                      final row = results[index];
+                      final exId = row['id'].toString();
+                      final exName = row['name'].toString();
+                      final equip = row['equipment']?.toString() ?? 'وزن بدن';
+
+                      // Check if already in plan
+                      final alreadyAdded = _exercises.any(
+                        (e) => e.exercise.id == exId,
+                      );
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SelectableCard(
+                          title: '$exName ($equip)',
+                          selected: alreadyAdded,
+                          onClick: alreadyAdded
+                              ? () {}
+                              : () async {
+                                  Navigator.pop(context);
+                                  await _addExerciseToPlan(exId, exName);
+                                },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error loading exercises: $e');
     }
   }
 
-  Future<void> _addExerciseToPlan(String exerciseId, String exerciseName) async {
+  Future<void> _addExerciseToPlan(
+    String exerciseId,
+    String exerciseName,
+  ) async {
     if (_planId == null) return;
 
     setState(() {
@@ -464,7 +506,8 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      final crossRefId = 'cross_${_planId}_${exerciseId}_${DateTime.now().millisecondsSinceEpoch}';
+      final crossRefId =
+          'cross_${_planId}_${exerciseId}_${DateTime.now().millisecondsSinceEpoch}';
 
       await db.insert('ss_workout_exercise_crossref', {
         'id': crossRefId,
@@ -502,7 +545,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.surface,
-          title: Text(widget.dayName, style: TextStyle(color: colors.textPrimary)),
+          title: Text(
+            widget.dayName,
+            style: TextStyle(color: colors.textPrimary),
+          ),
           centerTitle: true,
         ),
         body: Directionality(
@@ -521,7 +567,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.surface,
-          title: Text('نسخه تمرینی ${widget.dayName}', style: TextStyle(color: colors.textPrimary)),
+          title: Text(
+            'نسخه تمرینی ${widget.dayName}',
+            style: TextStyle(color: colors.textPrimary),
+          ),
           centerTitle: true,
         ),
         body: Directionality(
@@ -535,7 +584,10 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text('جزئیات تمرین ${widget.dayName}', style: TextStyle(color: colors.textPrimary)),
+        title: Text(
+          'جزئیات تمرین ${widget.dayName}',
+          style: TextStyle(color: colors.textPrimary),
+        ),
         centerTitle: true,
       ),
       body: Directionality(
@@ -555,18 +607,24 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                       // AI Inline Suggestion Card
                       if (_aiSuggestion != null) ...[
                         _buildAiInlineCard(),
-                        const SizedBox(height: SupplementarySportsTheme.spacing24),
+                        const SizedBox(
+                          height: SupplementarySportsTheme.spacing24,
+                        ),
                       ],
 
                       // Exercises List
                       Text(
                         'لیست حرکات امروز',
                         style: SupplementarySportsTheme.h2.copyWith(
-                          color: SupplementarySportsTheme.getTextPrimary(context),
+                          color: SupplementarySportsTheme.getTextPrimary(
+                            context,
+                          ),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: SupplementarySportsTheme.spacing12),
+                      const SizedBox(
+                        height: SupplementarySportsTheme.spacing12,
+                      ),
 
                       ListView.builder(
                         shrinkWrap: true,
@@ -577,7 +635,9 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                           return _buildExerciseEditableCard(detail);
                         },
                       ),
-                      const SizedBox(height: SupplementarySportsTheme.spacing24),
+                      const SizedBox(
+                        height: SupplementarySportsTheme.spacing24,
+                      ),
                     ],
                   ),
                 ),
@@ -585,7 +645,9 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
               // Bottom Actions
               Padding(
-                padding: const EdgeInsets.all(SupplementarySportsTheme.spacing24),
+                padding: const EdgeInsets.all(
+                  SupplementarySportsTheme.spacing24,
+                ),
                 child: PrimaryButton(
                   label: '+ افزودن حرکت',
                   onPressed: _showAddExerciseBottomSheet,
@@ -600,7 +662,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
   Widget _buildPrescriptionView(BuildContext context) {
     if (_prescription == null) return const SizedBox();
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: SupplementarySportsTheme.spacing24,
@@ -631,7 +693,11 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Icon(Icons.timer_outlined, color: context.colors.textSecondary, size: 20),
+                    Icon(
+                      Icons.timer_outlined,
+                      color: context.colors.textSecondary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       toPersianDigits('${_prescription!.targetMinutes} دقیقه'),
@@ -645,11 +711,17 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.fitness_center_outlined, color: context.colors.textSecondary, size: 20),
+                    Icon(
+                      Icons.fitness_center_outlined,
+                      color: context.colors.textSecondary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _prescription!.focusCodes.isNotEmpty ? _prescription!.focusCodes.join(' و ') : '',
+                        _prescription!.focusCodes.isNotEmpty
+                            ? _prescription!.focusCodes.join(' و ')
+                            : '',
                         style: TextStyle(
                           color: context.colors.textSecondary,
                           fontSize: 14,
@@ -661,7 +733,11 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.speed_outlined, color: context.colors.textSecondary, size: 20),
+                    Icon(
+                      Icons.speed_outlined,
+                      color: context.colors.textSecondary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'شدت: ${_prescription!.intensityTier.labelFa}',
@@ -682,12 +758,17 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
               decoration: BoxDecoration(
                 color: context.colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: context.colors.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: context.colors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.tips_and_updates_outlined, color: context.colors.primary),
+                  Icon(
+                    Icons.tips_and_updates_outlined,
+                    color: context.colors.primary,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -770,7 +851,9 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: SupplementarySportsTheme.spacing8),
+      margin: const EdgeInsets.symmetric(
+        vertical: SupplementarySportsTheme.spacing8,
+      ),
       padding: const EdgeInsets.all(SupplementarySportsTheme.spacing16),
       decoration: BoxDecoration(
         color: SupplementarySportsTheme.getSurfaceColor(context),
@@ -800,41 +883,61 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                         color: SupplementarySportsTheme.getTextPrimary(context),
                       ),
                     ),
-                     const SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       textDirection: TextDirection.rtl,
                       children: [
                         Text(
                           detail.exercise.equipment ?? 'وزن بدن',
                           style: SupplementarySportsTheme.caption.copyWith(
-                            color: SupplementarySportsTheme.getTextSecondary(context),
+                            color: SupplementarySportsTheme.getTextSecondary(
+                              context,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Icon(
-                          detail.exercise.impact >= 2 
-                              ? Icons.directions_run 
-                              : (detail.exercise.impact == 1 ? Icons.directions_walk : Icons.spa),
+                          detail.exercise.impact >= 2
+                              ? Icons.directions_run
+                              : (detail.exercise.impact == 1
+                                    ? Icons.directions_walk
+                                    : Icons.spa),
                           size: 14,
                           color: Colors.grey,
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          detail.exercise.impact >= 2 ? 'پربرخورد' : (detail.exercise.impact == 1 ? 'متوسط' : 'آرام'),
-                          style: SupplementarySportsTheme.caption.copyWith(fontSize: 10, color: Colors.grey),
+                          detail.exercise.impact >= 2
+                              ? 'پربرخورد'
+                              : (detail.exercise.impact == 1
+                                    ? 'متوسط'
+                                    : 'آرام'),
+                          style: SupplementarySportsTheme.caption.copyWith(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Icon(
-                          detail.exercise.noisy >= 2 
-                              ? Icons.volume_up 
-                              : (detail.exercise.noisy == 1 ? Icons.volume_down : Icons.volume_mute),
+                          detail.exercise.noisy >= 2
+                              ? Icons.volume_up
+                              : (detail.exercise.noisy == 1
+                                    ? Icons.volume_down
+                                    : Icons.volume_mute),
                           size: 14,
                           color: Colors.grey,
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          detail.exercise.noisy >= 2 ? 'پرصدا' : (detail.exercise.noisy == 1 ? 'متوسط' : 'بی‌صدا'),
-                          style: SupplementarySportsTheme.caption.copyWith(fontSize: 10, color: Colors.grey),
+                          detail.exercise.noisy >= 2
+                              ? 'پرصدا'
+                              : (detail.exercise.noisy == 1
+                                    ? 'متوسط'
+                                    : 'بی‌صدا'),
+                          style: SupplementarySportsTheme.caption.copyWith(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -844,12 +947,20 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.sync_alt, size: 20, color: Colors.blueAccent),
+                    icon: const Icon(
+                      Icons.sync_alt,
+                      size: 20,
+                      color: Colors.blueAccent,
+                    ),
                     tooltip: 'جایگزین مشابه',
                     onPressed: () => _showSwapExerciseBottomSheet(detail),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: Colors.redAccent,
+                    ),
                     tooltip: 'حذف',
                     onPressed: () => _deleteExercise(detail.crossRefId),
                   ),
@@ -873,7 +984,12 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                   setState(() {
                     detail.targetSets = val;
                   });
-                  _updateExerciseTargets(detail.crossRefId, detail.targetSets, detail.targetReps, detail.targetWeight);
+                  _updateExerciseTargets(
+                    detail.crossRefId,
+                    detail.targetSets,
+                    detail.targetReps,
+                    detail.targetWeight,
+                  );
                 },
               ),
               // Reps
@@ -885,7 +1001,12 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                   setState(() {
                     detail.targetReps = val;
                   });
-                  _updateExerciseTargets(detail.crossRefId, detail.targetSets, detail.targetReps, detail.targetWeight);
+                  _updateExerciseTargets(
+                    detail.crossRefId,
+                    detail.targetSets,
+                    detail.targetReps,
+                    detail.targetWeight,
+                  );
                 },
               ),
               // Weight
@@ -896,7 +1017,12 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
                   setState(() {
                     detail.targetWeight = val;
                   });
-                  _updateExerciseTargets(detail.crossRefId, detail.targetSets, detail.targetReps, detail.targetWeight);
+                  _updateExerciseTargets(
+                    detail.crossRefId,
+                    detail.targetSets,
+                    detail.targetReps,
+                    detail.targetWeight,
+                  );
                 },
               ),
             ],
@@ -925,12 +1051,7 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
           ),
         ),
         const SizedBox(height: SupplementarySportsTheme.spacing4),
-        StepperInput(
-          value: value,
-          min: 1,
-          max: 10,
-          onChanged: onChanged,
-        ),
+        StepperInput(value: value, min: 1, max: 10, onChanged: onChanged),
       ],
     );
   }
@@ -978,7 +1099,6 @@ class _SSPlanDayDetailScreenState extends State<SSPlanDayDetailScreen> {
 
 // --- Local View UI State Helper Models ---
 class PlanExerciseDetail {
-
   PlanExerciseDetail({
     required this.crossRefId,
     required this.exercise,
@@ -994,7 +1114,6 @@ class PlanExerciseDetail {
 }
 
 class SSInlineAiSuggestion {
-
   SSInlineAiSuggestion({
     required this.id,
     required this.message,

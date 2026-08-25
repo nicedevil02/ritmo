@@ -45,36 +45,39 @@ void main() {
       expect(bundles, isEmpty);
     });
 
-    test('upsert, getById, getByCategory, bumpUsage, and delete lifecycle', () async {
-      const bundle = MvStationBundle(
-        id: 'bundle_bodyweight_core',
-        title: 'ایستگاه شکم و مرکز',
-        description: 'تمرینات بدون وسیله مرکز بدن',
-        category: 'core',
-        itemsJson: '["plank", "crunch"]',
-        isUserTemplate: true,
-        usageCount: 0,
-        createdAt: 1700000000,
-        updatedAt: 1700000000,
-      );
+    test(
+      'upsert, getById, getByCategory, bumpUsage, and delete lifecycle',
+      () async {
+        const bundle = MvStationBundle(
+          id: 'bundle_bodyweight_core',
+          title: 'ایستگاه شکم و مرکز',
+          description: 'تمرینات بدون وسیله مرکز بدن',
+          category: 'core',
+          itemsJson: '["plank", "crunch"]',
+          isUserTemplate: true,
+          usageCount: 0,
+          createdAt: 1700000000,
+          updatedAt: 1700000000,
+        );
 
-      await repo.upsertBundle(bundle);
+        await repo.upsertBundle(bundle);
 
-      final fetched = await repo.getById('bundle_bodyweight_core');
-      expect(fetched, isNotNull);
-      expect(fetched!.title, equals('ایستگاه شکم و مرکز'));
-      expect(fetched.isUserTemplate, isTrue);
+        final fetched = await repo.getById('bundle_bodyweight_core');
+        expect(fetched, isNotNull);
+        expect(fetched!.title, equals('ایستگاه شکم و مرکز'));
+        expect(fetched.isUserTemplate, isTrue);
 
-      final coreBundles = await repo.getByCategory('core');
-      expect(coreBundles.length, equals(1));
+        final coreBundles = await repo.getByCategory('core');
+        expect(coreBundles.length, equals(1));
 
-      await repo.bumpUsage('bundle_bodyweight_core');
-      final updated = await repo.getById('bundle_bodyweight_core');
-      expect(updated!.usageCount, equals(1));
+        await repo.bumpUsage('bundle_bodyweight_core');
+        final updated = await repo.getById('bundle_bodyweight_core');
+        expect(updated!.usageCount, equals(1));
 
-      final deleted = await repo.deleteBundle('bundle_bodyweight_core');
-      expect(deleted, equals(1));
-      expect(await repo.getById('bundle_bodyweight_core'), isNull);
-    });
+        final deleted = await repo.deleteBundle('bundle_bodyweight_core');
+        expect(deleted, equals(1));
+        expect(await repo.getById('bundle_bodyweight_core'), isNull);
+      },
+    );
   });
 }

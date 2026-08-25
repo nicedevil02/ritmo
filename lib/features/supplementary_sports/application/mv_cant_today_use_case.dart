@@ -10,8 +10,8 @@ class MvCantTodayUseCase {
   MvCantTodayUseCase({
     MvPrescriptionRepository? prescriptionRepo,
     AdaptationEngine? adaptationEngine,
-  })  : _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
-        _adaptationEngine = adaptationEngine ?? const AdaptationEngine();
+  }) : _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _adaptationEngine = adaptationEngine ?? const AdaptationEngine();
 
   /// Applies 10-minute minimal effective dose.
   Future<MvSlot> applyMinimalDose(MvSlot slot) async {

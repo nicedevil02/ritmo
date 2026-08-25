@@ -21,9 +21,11 @@ class SsUnitFormatter {
     return prefs.getBool(prefsKey) ?? true;
   }
 
-  static String weightUnit({required bool metric}) => metric ? 'کیلوگرم' : 'پوند';
+  static String weightUnit({required bool metric}) =>
+      metric ? 'کیلوگرم' : 'پوند';
 
-  static String heightUnit({required bool metric}) => metric ? 'سانتی‌متر' : 'اینچ';
+  static String heightUnit({required bool metric}) =>
+      metric ? 'سانتی‌متر' : 'اینچ';
 
   /// kg -> displayed value in the active unit.
   static double weightFromKg(double kg, {required bool metric}) =>

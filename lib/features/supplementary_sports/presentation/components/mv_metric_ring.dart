@@ -22,7 +22,9 @@ class MvMetricRing extends StatelessWidget {
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 
-    final ratio = targetMet > 0 ? (currentMet / targetMet).clamp(0.0, 1.0) : 0.0;
+    final ratio = targetMet > 0
+        ? (currentMet / targetMet).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       padding: EdgeInsets.all(metrics.spaceLg),

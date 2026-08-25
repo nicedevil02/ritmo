@@ -35,7 +35,9 @@ double? parseFlexibleNumber(String raw) {
 String formatMetricValue(double value, int decimals) {
   if (decimals == 0) return value.round().toPersianDigits();
   final fixed = value.toStringAsFixed(decimals);
-  final trimmed = fixed.endsWith('.0') ? fixed.substring(0, fixed.length - 2) : fixed;
+  final trimmed = fixed.endsWith('.0')
+      ? fixed.substring(0, fixed.length - 2)
+      : fixed;
   return trimmed.toPersianDigits();
 }
 
@@ -128,7 +130,8 @@ class _MovementMetricFieldState extends State<MovementMetricField> {
 
   void _bump(double delta) {
     HapticFeedback.selectionClick();
-    final base = widget.value ?? (delta > 0 ? widget.min : widget.min + widget.step);
+    final base =
+        widget.value ?? (delta > 0 ? widget.min : widget.min + widget.step);
     final next = _clamp(base + delta);
     _controller.text = _textFor(next);
     widget.onChanged(next);
@@ -301,8 +304,8 @@ class _MovementMetricFieldState extends State<MovementMetricField> {
             spacing: RitmoSpacing.sm,
             runSpacing: RitmoSpacing.xs,
             children: widget.quickValues.map((v) {
-              final isSelected = widget.value != null &&
-                  (widget.value! - v).abs() < 0.001;
+              final isSelected =
+                  widget.value != null && (widget.value! - v).abs() < 0.001;
               return InkWell(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -332,7 +335,9 @@ class _MovementMetricFieldState extends State<MovementMetricField> {
                     style: TextStyle(
                       fontFamily: 'Vazirmatn',
                       fontSize: 12.5,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                       color: isSelected ? accent : colors.textSecondary,
                     ),
                   ),

@@ -59,18 +59,30 @@ class SsProgramDiffSheet extends StatelessWidget {
                 textAlign: TextAlign.justify,
               ),
               const SizedBox(height: 24),
-              
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _DiffStat(label: 'اضافه', count: addedCount, color: Colors.green),
-                  _DiffStat(label: 'حذف', count: removedCount, color: Colors.red),
-                  _DiffStat(label: 'تغییر', count: updatedCount, color: Colors.orange),
+                  _DiffStat(
+                    label: 'اضافه',
+                    count: addedCount,
+                    color: Colors.green,
+                  ),
+                  _DiffStat(
+                    label: 'حذف',
+                    count: removedCount,
+                    color: Colors.red,
+                  ),
+                  _DiffStat(
+                    label: 'تغییر',
+                    count: updatedCount,
+                    color: Colors.orange,
+                  ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -111,7 +123,7 @@ class _DiffStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    
+
     return Column(
       children: [
         Container(
@@ -133,10 +145,7 @@ class _DiffStat extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: colors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 12, color: colors.textSecondary),
         ),
       ],
     );

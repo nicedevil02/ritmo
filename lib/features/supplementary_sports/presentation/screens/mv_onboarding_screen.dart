@@ -11,7 +11,11 @@ import '../components/components.dart';
 /// Fast question-based onboarding with fixed anchor commitment support.
 class MvOnboardingScreen extends StatefulWidget {
   final Future<void> Function(MvUserProfile profile) onComplete;
-  final Future<void> Function(MvUserProfile profile, List<MvCommitment> commitments)? onCompleteWithCommitments;
+  final Future<void> Function(
+    MvUserProfile profile,
+    List<MvCommitment> commitments,
+  )?
+  onCompleteWithCommitments;
   final MvKindUseCase? kindUseCase;
   final MvCommitmentUseCase? commitmentUseCase;
   final List<MvMovementKind>? initialKinds;
@@ -87,7 +91,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
     final pickedKind = await MvKindPickerSheet.show(
       context: context,
       useCase: _kindUseCase,
-      initialKinds: widget.initialKinds ?? (_allKinds.isNotEmpty ? _allKinds : null),
+      initialKinds:
+          widget.initialKinds ?? (_allKinds.isNotEmpty ? _allKinds : null),
     );
 
     if (pickedKind == null || !mounted) return;
@@ -123,7 +128,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                 left: metrics.spaceLg,
                 right: metrics.spaceLg,
                 top: metrics.spaceLg,
-                bottom: MediaQuery.of(context).viewInsets.bottom + metrics.spaceLg,
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom + metrics.spaceLg,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -151,7 +157,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                         return ChoiceChip(
                           label: Text(name),
                           selected: isSel,
-                          onSelected: (_) => setSheetState(() => selectedDay = idx),
+                          onSelected: (_) =>
+                              setSheetState(() => selectedDay = idx),
                         );
                       }),
                     ),
@@ -175,7 +182,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                         padding: EdgeInsets.all(metrics.spaceSm),
                         decoration: BoxDecoration(
                           color: colors.surface,
-                          borderRadius: BorderRadius.circular(metrics.radiusField),
+                          borderRadius: BorderRadius.circular(
+                            metrics.radiusField,
+                          ),
                           border: Border.all(color: colors.border),
                         ),
                         child: Text(
@@ -194,9 +203,12 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                       runSpacing: metrics.spaceSm,
                       children: [45, 60, 90, 120].map((dur) {
                         return ChoiceChip(
-                          label: Text('${toPersianDigits(dur.toString())} دقیقه'),
+                          label: Text(
+                            '${toPersianDigits(dur.toString())} دقیقه',
+                          ),
                           selected: selectedDuration == dur,
-                          onSelected: (_) => setSheetState(() => selectedDuration = dur),
+                          onSelected: (_) =>
+                              setSheetState(() => selectedDuration = dur),
                         );
                       }).toList(),
                     ),
@@ -288,7 +300,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                 horizontal: metrics.spaceXs,
                               ),
                               child: ChoiceChip(
-                                label: Text('${toPersianDigits(d.toString())} روز'),
+                                label: Text(
+                                  '${toPersianDigits(d.toString())} روز',
+                                ),
                                 selected: isSel,
                                 onSelected: (_) =>
                                     setState(() => _daysPerWeek = d),
@@ -382,7 +396,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                           children: [
                             Expanded(
                               child: _buildChoice(
-                                key: const ValueKey('onboarding_add_anchor_btn'),
+                                key: const ValueKey(
+                                  'onboarding_add_anchor_btn',
+                                ),
                                 label: 'بله، اضافه کنم',
                                 emoji: '⚽',
                                 isSelected: _hasFixedAnchor == true,
@@ -392,11 +408,14 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                             SizedBox(width: metrics.spaceSm),
                             Expanded(
                               child: _buildChoice(
-                                key: const ValueKey('onboarding_skip_anchor_btn'),
+                                key: const ValueKey(
+                                  'onboarding_skip_anchor_btn',
+                                ),
                                 label: 'فعلاً نه',
                                 emoji: '⏭️',
                                 isSelected: _hasFixedAnchor == false,
-                                onTap: () => setState(() => _hasFixedAnchor = false),
+                                onTap: () =>
+                                    setState(() => _hasFixedAnchor = false),
                               ),
                             ),
                           ],
@@ -412,12 +431,18 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: colors.surface,
-                              borderRadius: BorderRadius.circular(metrics.radiusCard),
+                              borderRadius: BorderRadius.circular(
+                                metrics.radiusCard,
+                              ),
                               border: Border.all(color: colors.primary),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.lock_rounded, size: 18, color: Color(0xFFD4A843)),
+                                const Icon(
+                                  Icons.lock_rounded,
+                                  size: 18,
+                                  color: Color(0xFFD4A843),
+                                ),
                                 SizedBox(width: metrics.spaceSm),
                                 Expanded(
                                   child: Text(
@@ -429,7 +454,10 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                  ),
                                   onPressed: () {
                                     setState(() {
                                       _commitments.remove(c);
@@ -442,7 +470,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                         }),
                         if (_commitments.length < 3) ...[
                           OutlinedButton.icon(
-                            key: const ValueKey('onboarding_add_another_anchor_btn'),
+                            key: const ValueKey(
+                              'onboarding_add_another_anchor_btn',
+                            ),
                             icon: const Icon(Icons.add_rounded, size: 18),
                             label: const Text('افزودن ورزش ثابت دیگر'),
                             onPressed: _openAddAnchorFlow,
@@ -523,7 +553,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                   label,
                   style: textTheme.labelMedium?.copyWith(
                     color: isSelected ? colors.primary : colors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w700
+                        : FontWeight.normal,
                   ),
                 ),
               ),

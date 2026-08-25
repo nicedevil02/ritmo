@@ -29,7 +29,8 @@ class EnduranceProgressionEngine {
     MovementMetric metric = MovementMetric.distance,
   }) {
     if (previousWeekValue > 0) {
-      final percentageIncrease = (lastWeekValue - previousWeekValue) / previousWeekValue;
+      final percentageIncrease =
+          (lastWeekValue - previousWeekValue) / previousWeekValue;
       if (percentageIncrease > 0.10) {
         return EnduranceProgressionResult(
           kindCode: kindCode,
@@ -37,12 +38,15 @@ class EnduranceProgressionEngine {
           suggestedWeeklyValue: lastWeekValue,
           metric: metric,
           isInjuryRisk: true,
-          messageFa: 'هشدار: هفته قبل ${(percentageIncrease * 100).round()}% بیشتر فعالیت کردی. ریسک آسیب بالاست — این هفته همان حجم را حفظ کن.',
+          messageFa:
+              'هشدار: هفته قبل ${(percentageIncrease * 100).round()}% بیشتر فعالیت کردی. ریسک آسیب بالاست — این هفته همان حجم را حفظ کن.',
         );
       }
     }
 
-    final suggested = lastWeekValue > 0 ? lastWeekValue * 1.10 : 5.0; // Max +10%
+    final suggested = lastWeekValue > 0
+        ? lastWeekValue * 1.10
+        : 5.0; // Max +10%
 
     return EnduranceProgressionResult(
       kindCode: kindCode,
@@ -50,7 +54,8 @@ class EnduranceProgressionEngine {
       suggestedWeeklyValue: suggested,
       metric: metric,
       isInjuryRisk: false,
-      messageFa: 'پیشنهاد پیشرفت ایمن: حجم این هفته را حداکثر ۱۰٪ افزایش بده (+${(suggested - lastWeekValue).toStringAsFixed(1)}).',
+      messageFa:
+          'پیشنهاد پیشرفت ایمن: حجم این هفته را حداکثر ۱۰٪ افزایش بده (+${(suggested - lastWeekValue).toStringAsFixed(1)}).',
     );
   }
 }

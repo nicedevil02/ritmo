@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -52,7 +53,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
         _promptActiveTimerConflict();
       });
     } else {
-      CourseTimerService.instance.startTimer(widget.course.id, widget.session.id);
+      CourseTimerService.instance.startTimer(widget.course.id, widget.session.id).catchError((Object _) {});
       _secondsElapsed = 0;
       _isRunning = true;
     }
@@ -306,143 +307,199 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(30));
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
+    final content = Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.6),
         ),
-        child: RitmoTheme.glassCardLight(
-          borderRadius: 30,
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.6),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Header bar
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Header bar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.course.title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${widget.course.unitLabelResolved} ${widget.session.sessionNumber}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      widget.course.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textSecondary,
+                      ),
                     ),
-                    IconButton(
-                      icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5)),
-                      onPressed: () => Navigator.pop(context),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${widget.course.unitLabelResolved} ${widget.session.sessionNumber}',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
-
-                // Timer Display
-                ScaleTransition(
-                  scale: Tween<double>(begin: 0.98, end: 1.02).animate(_pulseController),
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          colors.primary.withValues(alpha: 0.2),
-                          colors.primary.withValues(alpha: 0.05),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: _isRunning ? 0.6 : 0.2),
-                        width: 3,
-                      ),
-                      boxShadow: [
-                        if (_isRunning)
-                          BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          toPersianDigits(_formatTime(_secondsElapsed)),
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _isRunning ? 'در حال مطالعه...' : 'متوقف شده',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: _isRunning ? colors.success : colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Control Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _togglePlayPause,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isRunning ? Colors.amber.shade700 : colors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      icon: Icon(_isRunning ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill, size: 20, color: Colors.white),
-                      label: Text(
-                        _isRunning ? 'مکس' : 'ادامه',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _finishSession,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.success,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      icon: const Icon(CupertinoIcons.checkmark_alt, size: 20, color: Colors.white),
-                      label: const Text(
-                        'اتمام جلسه',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5)),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
+
+            // Timer Display
+            ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1.02).animate(_pulseController),
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      colors.primary.withValues(alpha: 0.2),
+                      colors.primary.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: _isRunning ? 0.6 : 0.2),
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    if (_isRunning)
+                      BoxShadow(
+                        color: colors.primary.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      toPersianDigits(_formatTime(_secondsElapsed)),
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isRunning ? 'در حال مطالعه...' : 'متوقف شده',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _isRunning ? colors.success : colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Control Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _togglePlayPause,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isRunning ? Colors.amber.shade700 : colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: Icon(_isRunning ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill, size: 20, color: colors.onPrimary),
+                  label: Text(
+                    _isRunning ? 'مکس' : 'ادامه',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.onPrimary),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _finishSession,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.success,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: Icon(CupertinoIcons.checkmark_alt, size: 20, color: colors.onPrimary),
+                  label: Text(
+                    'اتمام جلسه',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.onPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
           ),
         ),
       ),

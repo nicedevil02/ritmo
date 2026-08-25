@@ -10,11 +10,7 @@ class MvCustomKindSheet extends StatefulWidget {
   final MvKindUseCase? useCase;
   final ValueChanged<MvMovementKind>? onSaved;
 
-  const MvCustomKindSheet({
-    super.key,
-    this.useCase,
-    this.onSaved,
-  });
+  const MvCustomKindSheet({super.key, this.useCase, this.onSaved});
 
   static Future<MvMovementKind?> show({
     required BuildContext context,
@@ -23,10 +19,7 @@ class MvCustomKindSheet extends StatefulWidget {
   }) {
     return MvSheetScaffold.show<MvMovementKind>(
       context: context,
-      builder: (ctx) => MvCustomKindSheet(
-        useCase: useCase,
-        onSaved: onSaved,
-      ),
+      builder: (ctx) => MvCustomKindSheet(useCase: useCase, onSaved: onSaved),
     );
   }
 
@@ -39,9 +32,26 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
   final _titleController = TextEditingController();
 
   static const List<String> _emojiOptions = [
-    '⚽', '🏀', '🏐', '🎾', '🏸', '🏓', '🥊', '🥋',
-    '🏋️', '🧘', '🧗', '⛷️', '🛹', '🚣', '🏊', '🚴',
-    '🏃', '🚶', '🏇', '🎯',
+    '⚽',
+    '🏀',
+    '🏐',
+    '🎾',
+    '🏸',
+    '🏓',
+    '🥊',
+    '🥋',
+    '🏋️',
+    '🧘',
+    '🧗',
+    '⛷️',
+    '🛹',
+    '🚣',
+    '🏊',
+    '🚴',
+    '🏃',
+    '🚶',
+    '🏇',
+    '🎯',
   ];
 
   static const List<MovementFamily> _allowedFamilies = [
@@ -235,7 +245,9 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isSel ? colors.primary.withValues(alpha: 0.15) : colors.surface,
+                      color: isSel
+                          ? colors.primary.withValues(alpha: 0.15)
+                          : colors.surface,
                       borderRadius: BorderRadius.circular(metrics.radiusField),
                       border: Border.all(
                         color: isSel ? colors.primary : colors.border,

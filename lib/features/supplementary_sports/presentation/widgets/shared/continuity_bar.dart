@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class ContinuityBar extends StatelessWidget {
-
-  const ContinuityBar({
-    super.key,
-    required this.daysCompleted,
-  });
+  const ContinuityBar({super.key, required this.daysCompleted});
   final List<bool> daysCompleted;
 
   @override
@@ -32,9 +28,12 @@ class ContinuityBar extends StatelessWidget {
         children: List.generate(7, (index) {
           final isCompleted = normalizedDays[index];
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: SupplementarySportsTheme.spacing4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: SupplementarySportsTheme.spacing4,
+            ),
             child: Semantics(
-              label: 'روز ${index + 1}: ${isCompleted ? "تمرین شده" : "استراحت"}',
+              label:
+                  'روز ${index + 1}: ${isCompleted ? "تمرین شده" : "استراحت"}',
               child: Container(
                 width: 14,
                 height: 14,

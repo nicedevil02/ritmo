@@ -15,7 +15,8 @@ class MvRouteTemplate extends StatefulWidget {
     required double packWeightKg,
     required int rpe1To10,
     int? routeId,
-  })? onFinish;
+  })?
+  onFinish;
 
   const MvRouteTemplate({
     super.key,
@@ -86,7 +87,11 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
             // Stopwatch
             Text(
               toPersianDigits(_formatDuration(_seconds)),
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, letterSpacing: 2),
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
             ),
             const SizedBox(height: 16),
             // Metrics grid
@@ -95,7 +100,8 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                 Expanded(
                   child: _MetricCard(
                     title: 'مسافت',
-                    value: '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ک‌م',
+                    value:
+                        '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ک‌م',
                     onAdd: () => setState(() => _distanceKm += 0.5),
                     onSub: () {
                       if (_distanceKm > 0.5) setState(() => _distanceKm -= 0.5);
@@ -106,10 +112,12 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                 Expanded(
                   child: _MetricCard(
                     title: 'ارتفاع صعود',
-                    value: '${toPersianDigits(_elevationGainM.round().toString())} م',
+                    value:
+                        '${toPersianDigits(_elevationGainM.round().toString())} م',
                     onAdd: () => setState(() => _elevationGainM += 50),
                     onSub: () {
-                      if (_elevationGainM > 50) setState(() => _elevationGainM -= 50);
+                      if (_elevationGainM > 50)
+                        setState(() => _elevationGainM -= 50);
                     },
                   ),
                 ),
@@ -121,17 +129,22 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                 Expanded(
                   child: _MetricCard(
                     title: 'وزن کوله',
-                    value: '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ک‌گ',
+                    value:
+                        '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ک‌گ',
                     onAdd: () => setState(() => _packWeightKg += 0.5),
                     onSub: () {
-                      if (_packWeightKg > 0.5) setState(() => _packWeightKg -= 0.5);
+                      if (_packWeightKg > 0.5)
+                        setState(() => _packWeightKg -= 0.5);
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12),
@@ -140,18 +153,34 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('مسیر', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const Text(
+                          'مسیر',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                         DropdownButton<int?>(
                           value: _selectedRouteId,
                           isExpanded: true,
                           underline: const SizedBox.shrink(),
                           items: const [
-                            DropdownMenuItem(value: null, child: Text('مسیر آزاد')),
-                            DropdownMenuItem(value: 1, child: Text('توچال - شیرپلا')),
-                            DropdownMenuItem(value: 2, child: Text('دربند - اوسون')),
-                            DropdownMenuItem(value: 3, child: Text('کلکچال - پناهگاه')),
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text('مسیر آزاد'),
+                            ),
+                            DropdownMenuItem(
+                              value: 1,
+                              child: Text('توچال - شیرپلا'),
+                            ),
+                            DropdownMenuItem(
+                              value: 2,
+                              child: Text('دربند - اوسون'),
+                            ),
+                            DropdownMenuItem(
+                              value: 3,
+                              child: Text('کلکچال - پناهگاه'),
+                            ),
                           ],
-                          onChanged: (v) => setState(() => _selectedRouteId = v),
+                          onChanged: (v) =>
+                              setState(() => _selectedRouteId = v),
                         ),
                       ],
                     ),
@@ -177,7 +206,9 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
               children: [
                 IconButton.filledTonal(
                   iconSize: 36,
-                  icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                  icon: Icon(
+                    _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  ),
                   onPressed: () {
                     RitmoHaptics.tap();
                     setState(() => _isPaused = !_isPaused);
@@ -186,7 +217,10 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                 const SizedBox(width: 20),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
                   ),
                   icon: const Icon(Icons.check_circle_rounded),
                   label: const Text('پایان جلسه'),
@@ -237,7 +271,10 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

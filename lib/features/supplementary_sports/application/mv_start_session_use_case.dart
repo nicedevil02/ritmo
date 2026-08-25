@@ -62,7 +62,9 @@ class MvStartSessionUseCase {
             ? MvSessionMode.match
             : MvSessionMode.timed;
       case MovementMetric.sets:
-        return hasPrescription ? MvSessionMode.guided : MvSessionMode.structured;
+        return hasPrescription
+            ? MvSessionMode.guided
+            : MvSessionMode.structured;
       case MovementMetric.steps:
       case MovementMetric.none:
         return MvSessionMode.timed;
@@ -121,14 +123,17 @@ class MvStartSessionUseCase {
     final selectedExercises = selectedDecision.value;
 
     // 4. Resolve session mode from kind and slot
-    final kindCode = slot.kindCode ??
+    final kindCode =
+        slot.kindCode ??
         (slot.focusCodes.isNotEmpty ? slot.focusCodes.first : 'BODYWEIGHT');
     final kind = await _kindRepo.getByCode(kindCode);
     final hasPrescription = selectedExercises.isNotEmpty;
 
     final sessionMode = kind != null
         ? resolveSessionMode(kind: kind, hasPrescription: hasPrescription)
-        : (slot.slotType == MvSlotType.strength ? MvSessionMode.guided : MvSessionMode.timed);
+        : (slot.slotType == MvSlotType.strength
+              ? MvSessionMode.guided
+              : MvSessionMode.timed);
 
     // 5. Create new MvSession
     final sessionId = 'sess_${now}_${slot.id}';

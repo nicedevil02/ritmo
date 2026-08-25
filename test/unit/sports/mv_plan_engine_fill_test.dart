@@ -123,46 +123,56 @@ void main() {
       strengthDaysTarget: 2,
     );
 
-    test('User with 2 anchors totaling >=270 moderate equivalent min: no extra cardio filler, but exactly 2 strength days placed', () {
-      final futsalCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5, // پنجشنبه 90 min (baseMet 7.0 -> 180 equiv min)
-        startTime: '21:00',
-        durationMinutes: 90,
-      );
+    test(
+      'User with 2 anchors totaling >=270 moderate equivalent min: no extra cardio filler, but exactly 2 strength days placed',
+      () {
+        final futsalCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5, // پنجشنبه 90 min (baseMet 7.0 -> 180 equiv min)
+          startTime: '21:00',
+          durationMinutes: 90,
+        );
 
-      final hikingCommitment = MvCommitment(
-        id: 2,
-        kindCode: 'HIKING',
-        dayOfWeekSat0: 1, // یکشنبه 90 min (baseMet 6.0 -> 180 equiv min)
-        startTime: '07:00',
-        durationMinutes: 90,
-      );
+        final hikingCommitment = MvCommitment(
+          id: 2,
+          kindCode: 'HIKING',
+          dayOfWeekSat0: 1, // یکشنبه 90 min (baseMet 6.0 -> 180 equiv min)
+          startTime: '07:00',
+          durationMinutes: 90,
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [futsalCommitment, hikingCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [futsalCommitment, hikingCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      // Total strength days must be at least 2
-      final strengthSlots = result.slots.where((s) => s.slotType == MvSlotType.strength).toList();
-      expect(strengthSlots.length, greaterThanOrEqualTo(2));
+        // Total strength days must be at least 2
+        final strengthSlots = result.slots
+            .where((s) => s.slotType == MvSlotType.strength)
+            .toList();
+        expect(strengthSlots.length, greaterThanOrEqualTo(2));
 
-      for (final s in strengthSlots) {
-        expect(s.reasonKey, isIn([MvReasonKeys.strengthQuota, MvReasonKeys.complement]));
-      }
+        for (final s in strengthSlots) {
+          expect(
+            s.reasonKey,
+            isIn([MvReasonKeys.strengthQuota, MvReasonKeys.complement]),
+          );
+        }
 
-      // No cardio filler should be added since anchors already exceed 150 min (180 + 180 = 360 > 150)
-      final cardioFillerSlots = result.slots.where((s) => s.reasonKey == MvReasonKeys.whoGap).toList();
-      expect(cardioFillerSlots, isEmpty);
-    });
+        // No cardio filler should be added since anchors already exceed 150 min (180 + 180 = 360 > 150)
+        final cardioFillerSlots = result.slots
+            .where((s) => s.reasonKey == MvReasonKeys.whoGap)
+            .toList();
+        expect(cardioFillerSlots, isEmpty);
+      },
+    );
   });
 }

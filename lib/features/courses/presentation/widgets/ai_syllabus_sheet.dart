@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -157,147 +158,207 @@ class _AiSyllabusSheetState extends State<AiSyllabusSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'ایجاد دوره با سرفصل AI',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    IconButton(
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, color: Colors.white54),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                Text(
+                  'ایجاد دوره با سرفصل AI',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
-                const Divider(color: Colors.white10),
-                const SizedBox(height: 8),
-
-                if (!_isParsed) ...[
-                  TextField(
-                    controller: _titleController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: const InputDecoration(
-                      labelText: 'عنوان دوره آموزشی',
-                      labelStyle: TextStyle(color: Colors.white60, fontSize: 11),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: _inputController,
-                      maxLines: null,
-                      expands: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                      decoration: InputDecoration(
-                        hintText: 'متن سرفصل، فهرست عناوین، یا فرمت JSON تولیدشده توسط AI را اینجا پیست کنید...\nمثال:\nجلسه ۱: مقدمه و نصب فلاتر\nجلسه ۲: متغیرها و انواع داده\nجلسه ۳: ساخت اولین ویجت',
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11.5),
-                        fillColor: Colors.white.withValues(alpha: 0.02),
-                        filled: true,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Colors.white12)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    onPressed: _parseSyllabusText,
-                    icon: const Icon(CupertinoIcons.sparkles, size: 18),
-                    label: const Text('استخراج سرفصل‌ها و پیش‌نمایش', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  ),
-                ] else ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'پیش‌نمایش ${_draftSessions.length} جلسه استخراج‌شده:',
-                        style: const TextStyle(fontSize: 13, color: Colors.white70),
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() => _isParsed = false),
-                        child: const Text('ویرایش متن ورودی', style: TextStyle(fontSize: 12, color: Colors.lightBlueAccent)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: ReorderableListView.builder(
-                      itemCount: _draftSessions.length,
-                      onReorderItem: (oldIndex, newIndex) {
-                        setState(() {
-                          final item = _draftSessions.removeAt(oldIndex);
-                          _draftSessions.insert(newIndex, item);
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final session = _draftSessions[index];
-                        return Container(
-                          key: ValueKey(session.id),
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.03),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Row(
-                            children: [
-                              Text('${index + 1}. ', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-                              Expanded(
-                                child: Text(
-                                  session.sessionTitle ?? 'جلسه ${index + 1}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 16),
-                                onPressed: () {
-                                  setState(() {
-                                    _draftSessions.removeAt(index);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.success,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    onPressed: _isSaving ? null : _saveCourseAndSessions,
-                    child: _isSaving
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('تأیید و ساخت دوره آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                IconButton(
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
+            Divider(color: colors.divider, height: 16),
+            const SizedBox(height: 8),
+
+            if (!_isParsed) ...[
+              TextField(
+                controller: _titleController,
+                style: TextStyle(color: colors.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'عنوان دوره آموزشی',
+                  labelStyle: TextStyle(color: colors.textSecondary, fontSize: 11),
+                  fillColor: colors.surfaceSunken,
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TextField(
+                  controller: _inputController,
+                  maxLines: null,
+                  expands: true,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 12.5),
+                  decoration: InputDecoration(
+                    hintText: 'متن سرفصل، فهرست عناوین، یا فرمت JSON تولیدشده توسط AI را اینجا پیست کنید...\nمثال:\nجلسه ۱: مقدمه و نصب فلاتر\nجلسه ۲: متغیرها و انواع داده\nجلسه ۳: ساخت اولین ویجت',
+                    hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 11.5),
+                    fillColor: colors.surfaceSunken,
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: _parseSyllabusText,
+                icon: const Icon(CupertinoIcons.sparkles, size: 18),
+                label: Text('استخراج سرفصل‌ها و پیش‌نمایش', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.onPrimary)),
+              ),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'پیش‌نمایش ${_draftSessions.length} جلسه استخراج‌شده:',
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                  ),
+                  TextButton(
+                    onPressed: () => setState(() => _isParsed = false),
+                    child: Text('ویرایش متن ورودی', style: TextStyle(fontSize: 12, color: colors.primary)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ReorderableListView.builder(
+                  itemCount: _draftSessions.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    setState(() {
+                      final item = _draftSessions.removeAt(oldIndex);
+                      _draftSessions.insert(newIndex, item);
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final session = _draftSessions[index];
+                    return Container(
+                      key: ValueKey(session.id),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Text('${index + 1}. ', style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: Text(
+                              session.sessionTitle ?? 'جلسه ${index + 1}',
+                              style: TextStyle(color: colors.textPrimary, fontSize: 13),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(CupertinoIcons.trash, color: colors.error, size: 18),
+                            onPressed: () {
+                              setState(() {
+                                _draftSessions.removeAt(index);
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.success,
+                  foregroundColor: colors.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: _isSaving ? null : _saveCourseAndSessions,
+                child: _isSaving
+                    ? CupertinoActivityIndicator(color: colors.onPrimary)
+                    : Text('تأیید و ساخت دوره آموزشی', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.onPrimary)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
           ),
         ),
       ),

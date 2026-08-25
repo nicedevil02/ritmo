@@ -130,103 +130,152 @@ void main() {
       await db.close();
     });
 
-    test('Two hiking sessions with 600m and 780m elevation gain update HIKING elevation PR to 780m while FUTSAL PR remains untouched', () async {
-      // 1. Initial FUTSAL duration PR
-      await prRepo.recordPr(
-        const MvPersonalRecord(
-          id: 'pr_futsal_duration',
-          kind: 'FUTSAL',
-          prType: MvPrType.longestDuration,
-          value: 90.0,
-          achievedAt: 1700000000,
-        ),
-      );
+    test(
+      'Two hiking sessions with 600m and 780m elevation gain update HIKING elevation PR to 780m while FUTSAL PR remains untouched',
+      () async {
+        // 1. Initial FUTSAL duration PR
+        await prRepo.recordPr(
+          const MvPersonalRecord(
+            id: 'pr_futsal_duration',
+            kind: 'FUTSAL',
+            prType: MvPrType.longestDuration,
+            value: 90.0,
+            achievedAt: 1700000000,
+          ),
+        );
 
-      // 2. First HIKING session: elevation = 600m
-      const hikeSession1 = MvSession(
-        id: 'sess_hike_600',
-        kindCode: 'HIKING',
-        sessionMode: MvSessionMode.route,
-        status: MvSessionStatus.active,
-        startedAt: 1700100000,
-        endedAt: 1700100000 + (120 * 60 * 1000), // 120 min
-        elevationGainM: 600.0,
-        distanceM: 7000.0,
-        createdAt: 1700100000,
-        updatedAt: 1700100000,
-      );
-      await sessionRepo.startSession(hikeSession1);
+        // 2. First HIKING session: elevation = 600m
+        const hikeSession1 = MvSession(
+          id: 'sess_hike_600',
+          kindCode: 'HIKING',
+          sessionMode: MvSessionMode.route,
+          status: MvSessionStatus.active,
+          startedAt: 1700100000,
+          endedAt: 1700100000 + (120 * 60 * 1000), // 120 min
+          elevationGainM: 600.0,
+          distanceM: 7000.0,
+          createdAt: 1700100000,
+          updatedAt: 1700100000,
+        );
+        await sessionRepo.startSession(hikeSession1);
 
-      final prs1 = await finishUseCase.execute(
-        session: hikeSession1,
-        elevationGainM: 600.0,
-        distanceM: 7000.0,
-      );
+        final prs1 = await finishUseCase.execute(
+          session: hikeSession1,
+          elevationGainM: 600.0,
+          distanceM: 7000.0,
+        );
 
-      expect(prs1.any((p) => p.kind == 'HIKING' && p.prType == MvPrType.maxElevation && p.value == 600.0), isTrue);
+        expect(
+          prs1.any(
+            (p) =>
+                p.kind == 'HIKING' &&
+                p.prType == MvPrType.maxElevation &&
+                p.value == 600.0,
+          ),
+          isTrue,
+        );
 
-      final hikePrAfter1 = await prRepo.getPrForKind('HIKING', MvPrType.maxElevation);
-      expect(hikePrAfter1, isNotNull);
-      expect(hikePrAfter1!.value, equals(600.0));
+        final hikePrAfter1 = await prRepo.getPrForKind(
+          'HIKING',
+          MvPrType.maxElevation,
+        );
+        expect(hikePrAfter1, isNotNull);
+        expect(hikePrAfter1!.value, equals(600.0));
 
-      // 3. Second HIKING session: elevation = 780m (PR breakthrough!)
-      const hikeSession2 = MvSession(
-        id: 'sess_hike_780',
-        kindCode: 'HIKING',
-        sessionMode: MvSessionMode.route,
-        status: MvSessionStatus.active,
-        startedAt: 1700200000,
-        endedAt: 1700200000 + (150 * 60 * 1000),
-        elevationGainM: 780.0,
-        distanceM: 8500.0,
-        createdAt: 1700200000,
-        updatedAt: 1700200000,
-      );
-      await sessionRepo.startSession(hikeSession2);
+        // 3. Second HIKING session: elevation = 780m (PR breakthrough!)
+        const hikeSession2 = MvSession(
+          id: 'sess_hike_780',
+          kindCode: 'HIKING',
+          sessionMode: MvSessionMode.route,
+          status: MvSessionStatus.active,
+          startedAt: 1700200000,
+          endedAt: 1700200000 + (150 * 60 * 1000),
+          elevationGainM: 780.0,
+          distanceM: 8500.0,
+          createdAt: 1700200000,
+          updatedAt: 1700200000,
+        );
+        await sessionRepo.startSession(hikeSession2);
 
-      final prs2 = await finishUseCase.execute(
-        session: hikeSession2,
-        elevationGainM: 780.0,
-        distanceM: 8500.0,
-      );
+        final prs2 = await finishUseCase.execute(
+          session: hikeSession2,
+          elevationGainM: 780.0,
+          distanceM: 8500.0,
+        );
 
-      expect(prs2.any((p) => p.kind == 'HIKING' && p.prType == MvPrType.maxElevation && p.value == 780.0), isTrue);
+        expect(
+          prs2.any(
+            (p) =>
+                p.kind == 'HIKING' &&
+                p.prType == MvPrType.maxElevation &&
+                p.value == 780.0,
+          ),
+          isTrue,
+        );
 
-      final hikePrAfter2 = await prRepo.getPrForKind('HIKING', MvPrType.maxElevation);
-      expect(hikePrAfter2, isNotNull);
-      expect(hikePrAfter2!.value, equals(780.0));
+        final hikePrAfter2 = await prRepo.getPrForKind(
+          'HIKING',
+          MvPrType.maxElevation,
+        );
+        expect(hikePrAfter2, isNotNull);
+        expect(hikePrAfter2!.value, equals(780.0));
 
-      // 4. Verify FUTSAL PR remains completely isolated and untouched
-      final futsalPr = await prRepo.getPrForKind('FUTSAL', MvPrType.longestDuration);
-      expect(futsalPr, isNotNull);
-      expect(futsalPr!.value, equals(90.0));
-      expect(futsalPr.kind, equals('FUTSAL'));
+        // 4. Verify FUTSAL PR remains completely isolated and untouched
+        final futsalPr = await prRepo.getPrForKind(
+          'FUTSAL',
+          MvPrType.longestDuration,
+        );
+        expect(futsalPr, isNotNull);
+        expect(futsalPr!.value, equals(90.0));
+        expect(futsalPr.kind, equals('FUTSAL'));
 
-      final futsalElevationPr = await prRepo.getPrForKind('FUTSAL', MvPrType.maxElevation);
-      expect(futsalElevationPr, isNull);
-    });
+        final futsalElevationPr = await prRepo.getPrForKind(
+          'FUTSAL',
+          MvPrType.maxElevation,
+        );
+        expect(futsalElevationPr, isNull);
+      },
+    );
 
-    test('ProgressionEngine evaluates 5 distinct sport metric PRs accurately', () {
-      const session = MvSession(
-        id: 'sess_run_1',
-        kindCode: 'RUNNING',
-        sessionMode: MvSessionMode.distance,
-        status: MvSessionStatus.completed,
-        startedAt: 1700000000,
-        endedAt: 1700000000 + (30 * 60 * 1000), // 30 min (1800s)
-        distanceM: 6000.0, // 6km -> pace = 1800 / 6 = 300 sec/km
-        createdAt: 1700000000,
-        updatedAt: 1700000000,
-      );
+    test(
+      'ProgressionEngine evaluates 5 distinct sport metric PRs accurately',
+      () {
+        const session = MvSession(
+          id: 'sess_run_1',
+          kindCode: 'RUNNING',
+          sessionMode: MvSessionMode.distance,
+          status: MvSessionStatus.completed,
+          startedAt: 1700000000,
+          endedAt: 1700000000 + (30 * 60 * 1000), // 30 min (1800s)
+          distanceM: 6000.0, // 6km -> pace = 1800 / 6 = 300 sec/km
+          createdAt: 1700000000,
+          updatedAt: 1700000000,
+        );
 
-      final newPrs = progressionEngine.evaluateSessionRecords(
-        session: session,
-        existingPrsForKind: [],
-      );
+        final newPrs = progressionEngine.evaluateSessionRecords(
+          session: session,
+          existingPrsForKind: [],
+        );
 
-      expect(newPrs.any((p) => p.prType == MvPrType.longestDuration && p.value == 30.0), isTrue);
-      expect(newPrs.any((p) => p.prType == MvPrType.longestDistance && p.value == 6000.0), isTrue);
-      expect(newPrs.any((p) => p.prType == MvPrType.bestPace5k && p.value == 300.0), isTrue);
-    });
+        expect(
+          newPrs.any(
+            (p) => p.prType == MvPrType.longestDuration && p.value == 30.0,
+          ),
+          isTrue,
+        );
+        expect(
+          newPrs.any(
+            (p) => p.prType == MvPrType.longestDistance && p.value == 6000.0,
+          ),
+          isTrue,
+        );
+        expect(
+          newPrs.any(
+            (p) => p.prType == MvPrType.bestPace5k && p.value == 300.0,
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 }

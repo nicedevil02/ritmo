@@ -44,12 +44,15 @@ class SubstitutionEngine {
 
     // 2. If similar candidates are insufficient, pick from same category in full pool
     if (validSubstitutes.isEmpty && fullPool.isNotEmpty) {
-      final categoryFallback = fullPool.where((ex) {
-        if (ex.id == currentExercise.id) return false;
-        if (ex.category != currentExercise.category) return false;
-        if (neighborFriendly && (ex.noisy || ex.impact > 1)) return false;
-        return true;
-      }).take(3).toList();
+      final categoryFallback = fullPool
+          .where((ex) {
+            if (ex.id == currentExercise.id) return false;
+            if (ex.category != currentExercise.category) return false;
+            if (neighborFriendly && (ex.noisy || ex.impact > 1)) return false;
+            return true;
+          })
+          .take(3)
+          .toList();
 
       if (categoryFallback.isNotEmpty) {
         return MvDecision<List<MvExercise>>(

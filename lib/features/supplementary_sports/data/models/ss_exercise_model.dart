@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 class SsExerciseModel {
-
   SsExerciseModel({
     required this.id,
     required this.name,
@@ -47,7 +46,9 @@ class SsExerciseModel {
           parsedTools = decoded.map((e) => e.toString()).toList();
         }
       }
-    } catch (e) { debugPrint('[ss] ss_exercise_model.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_exercise_model.dart: $e');
+    }
 
     var parsedMuscleIntensity = <String, dynamic>{};
     try {
@@ -58,7 +59,9 @@ class SsExerciseModel {
           parsedMuscleIntensity = decoded;
         }
       }
-    } catch (e) { debugPrint('[ss] ss_exercise_model.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_exercise_model.dart: $e');
+    }
 
     return SsExerciseModel(
       id: map['id']?.toString() ?? '',
@@ -78,7 +81,8 @@ class SsExerciseModel {
       repDurationHigh: (map['repDurationHigh'] as num?)?.toDouble() ?? 0.0,
       sexynessMale: (map['sexynessMale'] as num?)?.toDouble() ?? 0.0,
       sexynessFemale: (map['sexynessFemale'] as num?)?.toDouble() ?? 0.0,
-      isolatedVsCompound: (map['isolatedVsCompound'] as num?)?.toDouble() ?? 0.0,
+      isolatedVsCompound:
+          (map['isolatedVsCompound'] as num?)?.toDouble() ?? 0.0,
       durationSeconds: map['durationSeconds'] as int? ?? 0,
       defaultReps: map['defaultReps'] as int? ?? 0,
       repsHint: map['repsHint']?.toString(),
@@ -89,7 +93,8 @@ class SsExerciseModel {
       muscleIntensity: parsedMuscleIntensity,
       skillRequired: map['skillRequired'] as int? ?? 0,
       strengthVsCardio: (map['strengthVsCardio'] as num?)?.toDouble() ?? 0.0,
-      machineVsFreeweight: (map['machineVsFreeweight'] as num?)?.toDouble() ?? 0.0,
+      machineVsFreeweight:
+          (map['machineVsFreeweight'] as num?)?.toDouble() ?? 0.0,
       looksCool: map['looksCool'] as int? ?? 0,
       stance: map['stance']?.toString(),
     );

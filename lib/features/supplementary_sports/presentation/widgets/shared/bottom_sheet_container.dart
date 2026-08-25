@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class BottomSheetContainer extends StatelessWidget {
-
-  const BottomSheetContainer({
-    super.key,
-    required this.child,
-    this.title,
-  });
+  const BottomSheetContainer({super.key, required this.child, this.title});
   final Widget child;
   final String? title;
 
@@ -27,12 +22,12 @@ class BottomSheetContainer extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: isDark 
+              color: isDark
                   ? const Color(0xFF0F172A).withValues(alpha: 0.82)
                   : Colors.white.withValues(alpha: 0.85),
               borderRadius: SupplementarySportsTheme.borderRadiusBottomSheet,
               border: Border.all(
-                color: isDark 
+                color: isDark
                     ? Colors.white.withValues(alpha: 0.12)
                     : Colors.black.withValues(alpha: 0.08),
                 width: 1.5,
@@ -50,7 +45,8 @@ class BottomSheetContainer extends StatelessWidget {
               right: SupplementarySportsTheme.spacing16,
               // UX: lift the sheet above the on-screen keyboard so the focused
               // field stays visible while typing.
-              bottom: SupplementarySportsTheme.spacing24 +
+              bottom:
+                  SupplementarySportsTheme.spacing24 +
                   MediaQuery.of(context).viewInsets.bottom,
             ),
             child: SingleChildScrollView(
@@ -79,7 +75,9 @@ class BottomSheetContainer extends StatelessWidget {
                         title!,
                         textDirection: TextDirection.rtl,
                         style: SupplementarySportsTheme.h2.copyWith(
-                          color: SupplementarySportsTheme.getTextPrimary(context),
+                          color: SupplementarySportsTheme.getTextPrimary(
+                            context,
+                          ),
                           fontWeight: FontWeight.w600,
                         ),
                       ),

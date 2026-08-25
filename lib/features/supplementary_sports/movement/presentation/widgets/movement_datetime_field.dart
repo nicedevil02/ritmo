@@ -196,32 +196,30 @@ class MovementDateTimeField extends StatelessWidget {
             _QuickChip(
               label: 'الان',
               accent: accentColor,
-              isSelected: now.difference(value).abs() < const Duration(minutes: 3),
+              isSelected:
+                  now.difference(value).abs() < const Duration(minutes: 3),
               onTap: () => _apply(DateTime.now()),
             ),
             _QuickChip(
               label: 'نیم ساعت پیش',
               accent: accentColor,
               isSelected: false,
-              onTap: () => _apply(
-                DateTime.now().subtract(const Duration(minutes: 30)),
-              ),
+              onTap: () =>
+                  _apply(DateTime.now().subtract(const Duration(minutes: 30))),
             ),
             _QuickChip(
               label: '۲ ساعت پیش',
               accent: accentColor,
               isSelected: false,
-              onTap: () => _apply(
-                DateTime.now().subtract(const Duration(hours: 2)),
-              ),
+              onTap: () =>
+                  _apply(DateTime.now().subtract(const Duration(hours: 2))),
             ),
             _QuickChip(
               label: 'دیروز، همین ساعت',
               accent: accentColor,
               isSelected: false,
-              onTap: () => _apply(
-                DateTime.now().subtract(const Duration(days: 1)),
-              ),
+              onTap: () =>
+                  _apply(DateTime.now().subtract(const Duration(days: 1))),
             ),
           ],
         ),

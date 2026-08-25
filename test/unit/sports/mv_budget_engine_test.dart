@@ -33,11 +33,31 @@ void main() {
     }
 
     final kindsMap = {
-      'WALKING': makeKind(code: 'WALKING', baseMet: 3.5, family: MovementFamily.daily),
-      'FOOTBALL': makeKind(code: 'FOOTBALL', baseMet: 7.0, family: MovementFamily.sport),
-      'STRETCHING': makeKind(code: 'STRETCHING', baseMet: 2.3, family: MovementFamily.mindBody),
-      'HIKING': makeKind(code: 'HIKING', baseMet: 6.0, family: MovementFamily.outdoor),
-      'BODYWEIGHT': makeKind(code: 'BODYWEIGHT', baseMet: 5.0, family: MovementFamily.strength),
+      'WALKING': makeKind(
+        code: 'WALKING',
+        baseMet: 3.5,
+        family: MovementFamily.daily,
+      ),
+      'FOOTBALL': makeKind(
+        code: 'FOOTBALL',
+        baseMet: 7.0,
+        family: MovementFamily.sport,
+      ),
+      'STRETCHING': makeKind(
+        code: 'STRETCHING',
+        baseMet: 2.3,
+        family: MovementFamily.mindBody,
+      ),
+      'HIKING': makeKind(
+        code: 'HIKING',
+        baseMet: 6.0,
+        family: MovementFamily.outdoor,
+      ),
+      'BODYWEIGHT': makeKind(
+        code: 'BODYWEIGHT',
+        baseMet: 5.0,
+        family: MovementFamily.strength,
+      ),
     };
 
     MvSession makeSession({
@@ -61,70 +81,97 @@ void main() {
       );
     }
 
-    test('Table Item 1: WALKING (MET 3.5) 60 min -> moderateEquivalentMinutes == 60', () {
-      final session = makeSession(id: 's1', kindCode: 'WALKING', minutes: 60);
-      final decision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: [session],
-        currentDayOfWeekSat0: 3,
-        kindsByCode: kindsMap,
-      );
+    test(
+      'Table Item 1: WALKING (MET 3.5) 60 min -> moderateEquivalentMinutes == 60',
+      () {
+        final session = makeSession(id: 's1', kindCode: 'WALKING', minutes: 60);
+        final decision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      expect(decision.value.moderateEquivalentMinutes, equals(60));
-    });
+        expect(decision.value.moderateEquivalentMinutes, equals(60));
+      },
+    );
 
-    test('Table Item 2: FOOTBALL (MET 7.0) 90 min -> moderateEquivalentMinutes == 180 (vigorous doubles)', () {
-      final session = makeSession(id: 's2', kindCode: 'FOOTBALL', minutes: 90);
-      final decision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: [session],
-        currentDayOfWeekSat0: 3,
-        kindsByCode: kindsMap,
-      );
+    test(
+      'Table Item 2: FOOTBALL (MET 7.0) 90 min -> moderateEquivalentMinutes == 180 (vigorous doubles)',
+      () {
+        final session = makeSession(
+          id: 's2',
+          kindCode: 'FOOTBALL',
+          minutes: 90,
+        );
+        final decision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      expect(decision.value.moderateEquivalentMinutes, equals(180));
-    });
+        expect(decision.value.moderateEquivalentMinutes, equals(180));
+      },
+    );
 
-    test('Table Item 3: STRETCHING (MET 2.3) 30 min -> moderateEquivalentMinutes == 0 (light does not count)', () {
-      final session = makeSession(id: 's3', kindCode: 'STRETCHING', minutes: 30);
-      final decision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: [session],
-        currentDayOfWeekSat0: 3,
-        kindsByCode: kindsMap,
-      );
+    test(
+      'Table Item 3: STRETCHING (MET 2.3) 30 min -> moderateEquivalentMinutes == 0 (light does not count)',
+      () {
+        final session = makeSession(
+          id: 's3',
+          kindCode: 'STRETCHING',
+          minutes: 30,
+        );
+        final decision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      expect(decision.value.moderateEquivalentMinutes, equals(0));
-    });
+        expect(decision.value.moderateEquivalentMinutes, equals(0));
+      },
+    );
 
-    test('Table Item 4: HIKING (MET 6.0) 240 min -> moderateEquivalentMinutes == 480 (vigorous >= 6.0)', () {
-      final session = makeSession(id: 's4', kindCode: 'HIKING', minutes: 240);
-      final decision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: [session],
-        currentDayOfWeekSat0: 3,
-        kindsByCode: kindsMap,
-      );
+    test(
+      'Table Item 4: HIKING (MET 6.0) 240 min -> moderateEquivalentMinutes == 480 (vigorous >= 6.0)',
+      () {
+        final session = makeSession(id: 's4', kindCode: 'HIKING', minutes: 240);
+        final decision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      expect(decision.value.moderateEquivalentMinutes, equals(480));
-    });
+        expect(decision.value.moderateEquivalentMinutes, equals(480));
+      },
+    );
 
-    test('Table Item 5: Incomplete session (status != completed/partial) is NOT counted', () {
-      final session = makeSession(
-        id: 's5',
-        kindCode: 'FOOTBALL',
-        minutes: 90,
-        status: MvSessionStatus.active,
-      );
-      final decision = budgetEngine.calculateWeeklyProgress(
-        weekCompletedSessions: [session],
-        currentDayOfWeekSat0: 3,
-        kindsByCode: kindsMap,
-      );
+    test(
+      'Table Item 5: Incomplete session (status != completed/partial) is NOT counted',
+      () {
+        final session = makeSession(
+          id: 's5',
+          kindCode: 'FOOTBALL',
+          minutes: 90,
+          status: MvSessionStatus.active,
+        );
+        final decision = budgetEngine.calculateWeeklyProgress(
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      expect(decision.value.moderateEquivalentMinutes, equals(0));
-      expect(decision.value.rawMetMinutes, equals(0.0));
-    });
+        expect(decision.value.moderateEquivalentMinutes, equals(0));
+        expect(decision.value.rawMetMinutes, equals(0.0));
+      },
+    );
 
     test('Budget Engine targets and forecast gating', () {
       // Forecast requires at least day 3 of week (sat0 >= 2)
-      final session = makeSession(id: 's_sat', kindCode: 'WALKING', minutes: 60);
+      final session = makeSession(
+        id: 's_sat',
+        kindCode: 'WALKING',
+        minutes: 60,
+      );
 
       // On Saturday (sat0 = 0) -> forecast is null
       final satDecision = budgetEngine.calculateWeeklyProgress(

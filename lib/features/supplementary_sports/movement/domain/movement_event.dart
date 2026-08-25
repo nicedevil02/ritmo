@@ -58,19 +58,29 @@ class MovementEvent {
       id: map['id'] as String,
       kindCode: map['kind'] as String? ?? map['type'] as String? ?? 'OTHER',
       durationMinutes: (map['durationMinutes'] as num? ?? 0).toInt(),
-      intensity: MovementIntensity.fromCode(map['intensity'] as String? ?? 'MEDIUM'),
+      intensity: MovementIntensity.fromCode(
+        map['intensity'] as String? ?? 'MEDIUM',
+      ),
       note: map['note'] as String?,
-      loggedAt: (map['loggedAt'] as num? ?? DateTime.now().millisecondsSinceEpoch).toInt(),
+      loggedAt:
+          (map['loggedAt'] as num? ?? DateTime.now().millisecondsSinceEpoch)
+              .toInt(),
       endedAt: map['endedAt'] != null ? (map['endedAt'] as num).toInt() : null,
       tier: map['tier'] as String?,
       muscleGroups: map['muscleGroups'] as String?,
       feeling: map['feeling'] as String?,
       location: map['location'] as String?,
-      distanceMeters: map['distanceMeters'] != null ? (map['distanceMeters'] as num).toDouble() : null,
-      elevationMeters: map['elevationMeters'] != null ? (map['elevationMeters'] as num).toDouble() : null,
+      distanceMeters: map['distanceMeters'] != null
+          ? (map['distanceMeters'] as num).toDouble()
+          : null,
+      elevationMeters: map['elevationMeters'] != null
+          ? (map['elevationMeters'] as num).toDouble()
+          : null,
       laps: map['laps'] != null ? (map['laps'] as num).toInt() : null,
       steps: map['steps'] != null ? (map['steps'] as num).toInt() : null,
-      avgHeartRate: map['avgHeartRate'] != null ? (map['avgHeartRate'] as num).toInt() : null,
+      avgHeartRate: map['avgHeartRate'] != null
+          ? (map['avgHeartRate'] as num).toInt()
+          : null,
       metMinutes: (map['metMinutes'] as num? ?? 0.0).toDouble(),
       caloriesKcal: (map['caloriesKcal'] as num? ?? 0.0).toDouble(),
       venue: map['venue'] as String?,

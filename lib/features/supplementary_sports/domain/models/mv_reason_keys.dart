@@ -29,7 +29,10 @@ class MvReasonKeys {
   };
 
   /// قالب‌بندی پیام فارسی دلیل اسلات با جایگذاری متغیرها
-  static String formatReasonFa(String reasonKey, [Map<String, String>? params]) {
+  static String formatReasonFa(
+    String reasonKey, [
+    Map<String, String>? params,
+  ]) {
     switch (reasonKey) {
       case anchor:
         return 'لنگر ثابت توست';

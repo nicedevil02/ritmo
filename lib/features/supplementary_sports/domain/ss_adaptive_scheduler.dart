@@ -10,11 +10,15 @@ class SSAdaptiveScheduler {
   static const int _progressionWindowDays = 42;
 
   /// Ensures upcoming week's plan is generated adaptively.
-  static Future<void> ensureUpcomingWeekReady(Database db, DateTime today) async {
+  static Future<void> ensureUpcomingWeekReady(
+    Database db,
+    DateTime today,
+  ) async {
     final profile = await SSProfileRepository.instance.getProfile();
     if (profile == null) return;
 
-    final programStart = DateTime.tryParse(profile.programStartDate ?? '') ??
+    final programStart =
+        DateTime.tryParse(profile.programStartDate ?? '') ??
         DateTime(today.year, today.month, today.day);
     final nextWeekDate = today.add(const Duration(days: 7));
     final nextWk = SsProgramCalendar.cycleWeekFor(
@@ -31,7 +35,10 @@ class SSAdaptiveScheduler {
     if (check.isNotEmpty) return;
 
     final signals = await _collectProgressionSignals(db, today);
-    final currentWk = SsProgramCalendar.cycleWeekFor(today, programStart: programStart);
+    final currentWk = SsProgramCalendar.cycleWeekFor(
+      today,
+      programStart: programStart,
+    );
     final completionRate = await _calculateWeekCompletionRate(db, currentWk);
 
     var effectiveProfile = profile;
@@ -56,8 +63,11 @@ class SSAdaptiveScheduler {
       await txn.insert('ss_decision_log', {
         'id': RitmoIdFactory.ssDecision(),
         'userId': 'default',
-        'decisionType': isDeloadWeek ? 'DELOAD_WEEK_APPLIED' : 'WEEK_REGENERATED',
-        'rejectionReason': 'cycleWeek=$nextWk; completion=${(completionRate * 100).toStringAsFixed(0)}%; deload=$isDeloadWeek',
+        'decisionType': isDeloadWeek
+            ? 'DELOAD_WEEK_APPLIED'
+            : 'WEEK_REGENERATED',
+        'rejectionReason':
+            'cycleWeek=$nextWk; completion=${(completionRate * 100).toStringAsFixed(0)}%; deload=$isDeloadWeek',
         'createdAt': DateTime.now().millisecondsSinceEpoch,
       });
     });
@@ -70,12 +80,15 @@ class SSAdaptiveScheduler {
     final since = now
         .subtract(const Duration(days: _progressionWindowDays))
         .millisecondsSinceEpoch;
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT exerciseId, feeling, loggedAt
       FROM ss_exercise_feeling_log
       WHERE loggedAt >= ?
       ORDER BY exerciseId ASC, loggedAt DESC
-    ''', [since]);
+    ''',
+      [since],
+    );
 
     final byExercise = <String, List<String>>{};
     for (final row in rows) {
@@ -94,7 +107,9 @@ class SSAdaptiveScheduler {
       }
 
       final latestTwo = latest.take(2).toList(growable: false);
-      final hardCount = latestTwo.where((f) => f == 'HARD' || f == 'TOO_HARD').length;
+      final hardCount = latestTwo
+          .where((f) => f == 'HARD' || f == 'TOO_HARD')
+          .length;
       final easyCount = latestTwo.where((f) => f == 'EASY').length;
 
       if (hardCount >= 1) {
@@ -108,7 +123,10 @@ class SSAdaptiveScheduler {
     return signals;
   }
 
-  static Future<double> _calculateWeekCompletionRate(Database db, int week) async {
+  static Future<double> _calculateWeekCompletionRate(
+    Database db,
+    int week,
+  ) async {
     final rows = await db.query(
       'ss_session_prescription',
       columns: ['status'],

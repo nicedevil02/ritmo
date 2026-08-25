@@ -6,13 +6,12 @@ class MvKindUseCase {
   final MvKindRepository _repository;
 
   MvKindUseCase([MvKindRepository? repository])
-      : _repository = repository ?? MvKindRepository();
+    : _repository = repository ?? MvKindRepository();
 
   Future<List<MvMovementKind>> getAllKinds({bool onlyEnabled = true}) =>
       _repository.getAll(onlyEnabled: onlyEnabled);
 
-  Future<MvMovementKind?> getByCode(String code) =>
-      _repository.getByCode(code);
+  Future<MvMovementKind?> getByCode(String code) => _repository.getByCode(code);
 
   Future<List<MvMovementKind>> searchKinds(String query) =>
       _repository.searchFa(query);
@@ -20,11 +19,9 @@ class MvKindUseCase {
   Future<List<MvMovementKind>> getRecentKinds({int limit = 6}) =>
       _repository.getRecent(limit: limit);
 
-  Future<void> recordKindUsage(String code) =>
-      _repository.recordUsage(code);
+  Future<void> recordKindUsage(String code) => _repository.recordUsage(code);
 
-  Future<void> bumpKindUsage(String code) =>
-      _repository.bumpUsage(code);
+  Future<void> bumpKindUsage(String code) => _repository.bumpUsage(code);
 
   Future<List<MvMovementKind>> getSeasonalKinds(int jalaliMonth) =>
       _repository.getSeasonal(jalaliMonth);

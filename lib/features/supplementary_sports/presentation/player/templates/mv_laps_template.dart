@@ -72,12 +72,19 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
             toPersianDigits(_laps.toString()),
             style: const TextStyle(fontSize: 72, fontWeight: FontWeight.w900),
           ),
-          const Text('دور ثبت‌شده', style: TextStyle(fontSize: 16, color: Colors.grey)),
+          const Text(
+            'دور ثبت‌شده',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
           const SizedBox(height: 4),
           // Stopwatch
           Text(
             toPersianDigits(_formatDuration(_seconds)),
-            style: const TextStyle(fontSize: 22, color: Colors.grey, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 22,
+              color: Colors.grey,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 16),
           // Big +1 Lap button
@@ -88,10 +95,15 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               icon: const Icon(Icons.add_rounded, size: 28),
-              label: const Text('+۱ دور ثبت شد', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              label: const Text(
+                '+۱ دور ثبت شد',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               onPressed: () {
                 RitmoHaptics.confirm();
                 setState(() => _laps++);
@@ -116,7 +128,9 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
             children: [
               IconButton.filledTonal(
                 iconSize: 36,
-                icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                icon: Icon(
+                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                ),
                 onPressed: () {
                   RitmoHaptics.tap();
                   setState(() => _isPaused = !_isPaused);
@@ -125,7 +139,10 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
               const SizedBox(width: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
                 label: const Text('پایان جلسه'),

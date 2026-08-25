@@ -135,6 +135,89 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+    final scaffoldContent = Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: Column(
+          children: [
+            Container(
+              width: 50,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: colors.border.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            Text(
+              'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              CupertinoIcons.xmark_circle_fill,
+              color: colors.textSecondary.withValues(alpha: 0.6),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _currentDraft.items.isEmpty
+                ? Center(
+                    child: Text(
+                      'هیچ فعالیتی در برنامه وجود ندارد.',
+                      style: TextStyle(color: colors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    itemCount: _currentDraft.items.length,
+                    itemBuilder: (context, index) {
+                      final item = _currentDraft.items[index];
+                      return _buildTimelineItem(
+                        context,
+                        item,
+                        index,
+                        colors,
+                      );
+                    },
+                  ),
+          ),
+          if (_currentDraft.suggestions.isNotEmpty)
+            _buildSuggestionsBlock(colors),
+          _buildFooter(colors),
+        ],
+      ),
+    );
+
+    final wrappedContent = Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      ),
+      child: scaffoldContent,
+    );
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -142,102 +225,53 @@ class _AiDayPlannerPreviewSheetState extends State<AiDayPlannerPreviewSheet> {
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-          ),
-          decoration: BoxDecoration(
-            color: colors.bg.withValues(alpha: 0.85),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
-            border: Border.all(
-              color: colors.border.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Scaffold(
-                backgroundColor: Colors.transparent,
-                appBar: AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  centerTitle: true,
-                  automaticallyImplyLeading: false,
-                  title: Column(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 5,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: colors.border.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      Text(
-                        'پیش‌نمایش برنامه روز ${_getFarsiDate()}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
+        child: !isGlass
+            ? Container(
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: sheetRadius,
+                  border: Border.all(
+                    color: isDark ? colors.border : colors.divider,
+                    width: 1.0,
                   ),
-                  actions: [
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.xmark,
-                        color: colors.textSecondary,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
                 ),
-                body: Column(
-                  children: [
-                    Expanded(
-                      child: _currentDraft.items.isEmpty
-                          ? Center(
-                              child: Text(
-                                'هیچ فعالیتی در برنامه وجود ندارد.',
-                                style: TextStyle(color: colors.textSecondary),
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
-                              itemCount: _currentDraft.items.length,
-                              itemBuilder: (context, index) {
-                                final item = _currentDraft.items[index];
-                                return _buildTimelineItem(
-                                  context,
-                                  item,
-                                  index,
-                                  colors,
-                                );
-                              },
-                            ),
+                child: wrappedContent,
+              )
+            : ClipRRect(
+                borderRadius: sheetRadius,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.glassTint,
+                      borderRadius: sheetRadius,
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.18)
+                            : Colors.white.withValues(alpha: 0.70),
+                        width: 1.0,
+                      ),
                     ),
-                    if (_currentDraft.suggestions.isNotEmpty)
-                      _buildSuggestionsBlock(colors),
-                    _buildFooter(colors),
-                  ],
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: sheetRadius,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(
+                              alpha: isDark ? 0.08 : 0.20,
+                            ),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.45],
+                        ),
+                      ),
+                      child: wrappedContent,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

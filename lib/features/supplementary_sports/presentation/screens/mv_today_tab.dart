@@ -53,9 +53,14 @@ class MvTodayTab extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final dt = MvCalendar.parseDateIso(todaySlot.dateIso);
-    final tomorrowIso = MvCalendar.formatDateIso(dt.add(const Duration(days: 1)));
-    final tomorrowSlot = weekSlots.where((s) => s.dateIso == tomorrowIso).firstOrNull;
-    final showTomorrowAnchor = tomorrowSlot != null && tomorrowSlot.isLocked && !tomorrowSlot.isRest;
+    final tomorrowIso = MvCalendar.formatDateIso(
+      dt.add(const Duration(days: 1)),
+    );
+    final tomorrowSlot = weekSlots
+        .where((s) => s.dateIso == tomorrowIso)
+        .firstOrNull;
+    final showTomorrowAnchor =
+        tomorrowSlot != null && tomorrowSlot.isLocked && !tomorrowSlot.isRest;
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: metrics.spaceMd),
@@ -83,7 +88,9 @@ class MvTodayTab extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [

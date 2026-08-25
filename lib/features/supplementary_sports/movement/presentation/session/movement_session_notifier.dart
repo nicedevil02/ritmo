@@ -41,7 +41,11 @@ class MovementSessionNotifier extends ChangeNotifier {
 
   Future<void> finish({String? feeling, String? note}) async {
     _ticker?.cancel();
-    await MovementSessionRepository.instance.finishSession(session.id, feeling: feeling, note: note);
+    await MovementSessionRepository.instance.finishSession(
+      session.id,
+      feeling: feeling,
+      note: note,
+    );
     notifyListeners();
   }
 

@@ -9,15 +9,20 @@ import 'package:sqflite/sqflite.dart';
 
 class MovementSlotOverrideRepository {
   MovementSlotOverrideRepository._();
-  static final MovementSlotOverrideRepository instance = MovementSlotOverrideRepository._();
+  static final MovementSlotOverrideRepository instance =
+      MovementSlotOverrideRepository._();
 
   Future<Database> get _db async => DatabaseHelper.instance.database;
 
-  Future<List<MovementSlotOverride>> forDateRange(String startIso, String endIso) async {
+  Future<List<MovementSlotOverride>> forDateRange(
+    String startIso,
+    String endIso,
+  ) async {
     final db = await _db;
     final rows = await db.query(
       'movement_slot_overrides',
-      where: '(dateIso >= ? AND dateIso <= ?) OR (newDateIso >= ? AND newDateIso <= ?)',
+      where:
+          '(dateIso >= ? AND dateIso <= ?) OR (newDateIso >= ? AND newDateIso <= ?)',
       whereArgs: <Object>[startIso, endIso, startIso, endIso],
       orderBy: 'createdAt ASC',
     );
@@ -34,10 +39,7 @@ class MovementSlotOverrideRepository {
     await db.insert('movement_slot_overrides', override.toMap());
   }
 
-  Future<void> skip({
-    required String routineId,
-    required String dateIso,
-  }) {
+  Future<void> skip({required String routineId, required String dateIso}) {
     return upsert(
       MovementSlotOverride(
         id: RitmoIdFactory.movementSlotOverride(),
@@ -85,10 +87,7 @@ class MovementSlotOverrideRepository {
     );
   }
 
-  Future<void> light({
-    required String routineId,
-    required String dateIso,
-  }) {
+  Future<void> light({required String routineId, required String dateIso}) {
     return upsert(
       MovementSlotOverride(
         id: RitmoIdFactory.movementSlotOverride(),
@@ -194,8 +193,12 @@ class MovementSlotOverrideRepository {
             if (days.contains(targetDartWeekday)) {
               if (days.length == 1) {
                 // Only this day in schedule row -> update time directly
-                final recurrence = WeekdaysRecurrence(weekdays: {targetDartWeekday});
-                final (schedType, daysOfWeek) = deriveScheduleParams(recurrence);
+                final recurrence = WeekdaysRecurrence(
+                  weekdays: {targetDartWeekday},
+                );
+                final (schedType, daysOfWeek) = deriveScheduleParams(
+                  recurrence,
+                );
                 final recurrenceJson = encodeRecurrenceRule(
                   recurrence: recurrence,
                   startDate: DateTime.now(),
@@ -219,8 +222,12 @@ class MovementSlotOverrideRepository {
                 days.remove(targetDartWeekday);
                 days.sort();
 
-                final remainingRecurrence = WeekdaysRecurrence(weekdays: days.toSet());
-                final (remSchedType, remDaysOfWeek) = deriveScheduleParams(remainingRecurrence);
+                final remainingRecurrence = WeekdaysRecurrence(
+                  weekdays: days.toSet(),
+                );
+                final (remSchedType, remDaysOfWeek) = deriveScheduleParams(
+                  remainingRecurrence,
+                );
                 final originalTime = s['timeOfDay']?.toString() ?? '18:30';
                 final remainingRecurrenceJson = encodeRecurrenceRule(
                   recurrence: remainingRecurrence,
@@ -242,8 +249,12 @@ class MovementSlotOverrideRepository {
                 );
 
                 // Insert new schedule specifically for targetDartWeekday with newTime
-                final newRecurrence = WeekdaysRecurrence(weekdays: {targetDartWeekday});
-                final (newSchedType, newDaysOfWeek) = deriveScheduleParams(newRecurrence);
+                final newRecurrence = WeekdaysRecurrence(
+                  weekdays: {targetDartWeekday},
+                );
+                final (newSchedType, newDaysOfWeek) = deriveScheduleParams(
+                  newRecurrence,
+                );
                 final newRecurrenceJson = encodeRecurrenceRule(
                   recurrence: newRecurrence,
                   startDate: DateTime.now(),

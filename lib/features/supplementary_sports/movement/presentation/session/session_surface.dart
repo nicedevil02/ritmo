@@ -14,32 +14,28 @@ import 'package:ritmo/features/supplementary_sports/movement/presentation/sessio
 /// با این لایه، مهاجرت ورزش‌ها به پوستهٔ مشترک یکی‌یکی و بدون دست زدن به تمام
 /// صفحهٔ قدیمی انجام می‌شود؛ هر حالتی که قالب ندارد دقیقاً مانند قبل کار می‌کند.
 class MovementSessionSurface extends StatelessWidget {
-	const MovementSessionSurface({
-		super.key,
-		required this.notifier,
-		required this.kind,
-		required this.mode,
-	});
+  const MovementSessionSurface({
+    super.key,
+    required this.notifier,
+    required this.kind,
+    required this.mode,
+  });
 
-	final MovementSessionNotifier notifier;
-	final MovementKind kind;
-	final SessionMode mode;
+  final MovementSessionNotifier notifier;
+  final MovementKind kind;
+  final SessionMode mode;
 
-	@override
-	Widget build(BuildContext context) {
-		final SessionTemplate? template = sessionTemplateFor(mode);
-		if (template != null) {
-			return SessionShell(
-				notifier: notifier,
-				kind: kind,
-				mode: mode,
-				template: template,
-			);
-		}
-		return MovementSessionScaffold(
-			notifier: notifier,
-			kind: kind,
-			mode: mode,
-		);
-	}
+  @override
+  Widget build(BuildContext context) {
+    final SessionTemplate? template = sessionTemplateFor(mode);
+    if (template != null) {
+      return SessionShell(
+        notifier: notifier,
+        kind: kind,
+        mode: mode,
+        template: template,
+      );
+    }
+    return MovementSessionScaffold(notifier: notifier, kind: kind, mode: mode);
+  }
 }

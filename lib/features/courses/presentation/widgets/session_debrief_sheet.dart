@@ -141,10 +141,12 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? colors.primary.withValues(alpha: 0.15) : colors.surface,
+                      color: isSelected
+                          ? colors.primary.withValues(alpha: 0.2)
+                          : colors.surfaceSunken.withValues(alpha: context.isDark ? 0.4 : 0.6),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? colors.primary : colors.border,
+                        color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.3),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -194,6 +196,8 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
                 labelText: 'نکته کلیدی یا برداشت اصلی (اختیاری)',
                 hintText: 'مثلاً: مفهوم اصلی این بخش...',
                 prefixIcon: Icon(CupertinoIcons.lightbulb, color: colors.primary),
+                fillColor: colors.surfaceSunken.withValues(alpha: context.isDark ? 0.4 : 0.6),
+                filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               maxLines: 2,
@@ -208,6 +212,8 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
                 labelText: 'سوال یا ابهام باقی‌مانده (اختیاری)',
                 hintText: 'چیزی که باید بعداً پرسیده یا تحقیق شود...',
                 prefixIcon: const Icon(CupertinoIcons.question_diamond, color: Colors.orange),
+                fillColor: colors.surfaceSunken.withValues(alpha: context.isDark ? 0.4 : 0.6),
+                filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               maxLines: 2,
@@ -221,6 +227,8 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
               decoration: InputDecoration(
                 labelText: 'یادداشت مطالعه (اختیاری)',
                 prefixIcon: const Icon(CupertinoIcons.doc_text, color: Colors.grey),
+                fillColor: colors.surfaceSunken.withValues(alpha: context.isDark ? 0.4 : 0.6),
+                filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               maxLines: 2,
@@ -235,11 +243,11 @@ class _SessionDebriefSheetState extends State<SessionDebriefSheet> {
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSaving
-                    ? const CupertinoActivityIndicator(color: Colors.white)
+                    ? CupertinoActivityIndicator(color: colors.onPrimary)
                     : const Text(
                         'ثبت نهایی جلسه و تکمیل',
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),

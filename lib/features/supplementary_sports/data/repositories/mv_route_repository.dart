@@ -81,7 +81,8 @@ class MvRouteRepository {
     if (route == null) return;
 
     final newTimes = route.timesCompleted + 1;
-    final newBest = (route.bestDurationMin == null || durationMin < route.bestDurationMin!)
+    final newBest =
+        (route.bestDurationMin == null || durationMin < route.bestDurationMin!)
         ? durationMin
         : route.bestDurationMin;
 
@@ -97,10 +98,6 @@ class MvRouteRepository {
   /// Deletes a route by ID.
   Future<void> deleteRoute(int id) async {
     final db = await _db;
-    await db.delete(
-      'mv_routes',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('mv_routes', where: 'id = ?', whereArgs: [id]);
   }
 }

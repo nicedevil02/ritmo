@@ -92,11 +92,9 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
     try {
       final recent = await _kindUseCase.getRecentKinds(limit: 4);
       if (recent.isNotEmpty && mounted) {
-        final List<Map<String, String>> items = recent.map((k) => {
-          'code': k.code,
-          'title': k.titleFa,
-          'emoji': k.emoji,
-        }).toList();
+        final List<Map<String, String>> items = recent
+            .map((k) => {'code': k.code, 'title': k.titleFa, 'emoji': k.emoji})
+            .toList();
 
         // If fewer than 4, fill with fallback
         const fallback = [
@@ -140,7 +138,11 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
         _selectedKind = picked.code;
         if (!_quickKinds.any((k) => k['code'] == picked.code)) {
           _quickKinds = [
-            {'code': picked.code, 'title': picked.titleFa, 'emoji': picked.emoji},
+            {
+              'code': picked.code,
+              'title': picked.titleFa,
+              'emoji': picked.emoji,
+            },
             ..._quickKinds.take(3),
           ];
         }
@@ -202,8 +204,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                       style: const TextStyle(fontSize: 14),
                     ),
                     isSelected: isSel,
-                    onTap: () =>
-                        setState(() => _selectedKind = k['code']!),
+                    onTap: () => setState(() => _selectedKind = k['code']!),
                   );
                 }),
                 // 5th Chip: "بیشتر..."

@@ -36,62 +36,81 @@ void main() {
       updatedAt: 100,
     );
 
-    testWidgets('MvSessionPlayerScreen renders workout components and advances set', (tester) async {
-      await tester.pumpWidget(
-        createTestApp(
-          MvSessionPlayerScreen(
-            initialSession: testSession,
-            plannedExercises: const [testExercise],
-            initialAudioEnabled: false,
+    testWidgets(
+      'MvSessionPlayerScreen renders workout components and advances set',
+      (tester) async {
+        await tester.pumpWidget(
+          createTestApp(
+            MvSessionPlayerScreen(
+              initialSession: testSession,
+              plannedExercises: const [testExercise],
+              initialAudioEnabled: false,
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('شنا سوئدی'), findsWidgets);
-      expect(find.text('ست 1 از 3'), findsOneWidget);
-      expect(find.text('12 تکرار'), findsOneWidget);
+        expect(find.text('شنا سوئدی'), findsWidgets);
+        expect(find.text('ست 1 از 3'), findsOneWidget);
+        expect(find.text('12 تکرار'), findsOneWidget);
 
-      // Complete Set 1
-      await tester.tap(find.text('ثبت ست و ادامه (ست 1)'));
-      await tester.pumpAndSettle();
+        // Complete Set 1
+        await tester.tap(find.text('ثبت ست و ادامه (ست 1)'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('زمان استراحت'), findsOneWidget);
-      expect(find.text('رد کردن استراحت و شروع'), findsOneWidget);
-    });
+        expect(find.text('زمان استراحت'), findsOneWidget);
+        expect(find.text('رد کردن استراحت و شروع'), findsOneWidget);
+      },
+    );
 
-    testWidgets('MvSessionSummaryScreen records feeling and triggers callback', (tester) async {
-      MvSessionFeeling? selectedFeeling;
-      int? selectedRpe;
+    testWidgets(
+      'MvSessionSummaryScreen records feeling and triggers callback',
+      (tester) async {
+        MvSessionFeeling? selectedFeeling;
+        int? selectedRpe;
 
-      await tester.pumpWidget(
-        createTestApp(
-          MvSessionSummaryScreen(
-            session: testSession,
-            setLogs: const [
-              MvSetLog(id: '1', sessionId: 'sess_1', exerciseId: 'push_up', setNumber: 1, reps: 12, loggedAt: 100),
-            ],
-            onFinish: ({required feeling, required rpe1To10, required effortSource, note}) async {
-              selectedFeeling = feeling;
-              selectedRpe = rpe1To10;
-            },
+        await tester.pumpWidget(
+          createTestApp(
+            MvSessionSummaryScreen(
+              session: testSession,
+              setLogs: const [
+                MvSetLog(
+                  id: '1',
+                  sessionId: 'sess_1',
+                  exerciseId: 'push_up',
+                  setNumber: 1,
+                  reps: 12,
+                  loggedAt: 100,
+                ),
+              ],
+              onFinish:
+                  ({
+                    required feeling,
+                    required rpe1To10,
+                    required effortSource,
+                    note,
+                  }) async {
+                    selectedFeeling = feeling;
+                    selectedRpe = rpe1To10;
+                  },
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('خلاصهٔ جلسه'), findsOneWidget);
-      expect(find.text('میزان تلاش این جلسه چطور بود؟'), findsOneWidget);
+        expect(find.text('خلاصهٔ جلسه'), findsOneWidget);
+        expect(find.text('میزان تلاش این جلسه چطور بود؟'), findsOneWidget);
 
-      // Tap Easy feeling (mv_effort_easy)
-      await tester.tap(find.byKey(const Key('mv_effort_easy')));
-      await tester.pumpAndSettle();
+        // Tap Easy feeling (mv_effort_easy)
+        await tester.tap(find.byKey(const Key('mv_effort_easy')));
+        await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(ListView), const Offset(0, -500));
-      await tester.pumpAndSettle();
+        await tester.drag(find.byType(ListView), const Offset(0, -500));
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ثبت جلسه و ذخیره'));
-      await tester.pump();
-      expect(selectedFeeling, equals(MvSessionFeeling.easy));
-      expect(selectedRpe, equals(3));
-    });
+        await tester.tap(find.text('ثبت جلسه و ذخیره'));
+        await tester.pump();
+        expect(selectedFeeling, equals(MvSessionFeeling.easy));
+        expect(selectedRpe, equals(3));
+      },
+    );
   });
 }

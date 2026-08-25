@@ -162,44 +162,26 @@ class _AiWeeklyPlannerPreviewSheetState
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-        ),
-        decoration: BoxDecoration(
-          color: colors.bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+    final columnContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Handlebar
+        Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textSecondary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
             ),
-          ],
+          ),
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Handlebar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
 
                 // Title
                 Padding(
@@ -461,9 +443,68 @@ class _AiWeeklyPlannerPreviewSheetState
                   ),
                 ),
               ],
-            ),
-          ),
+            );
+
+    final wrappedContent = Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      ),
+      child: columnContent,
+    );
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
         ),
+        child: !isGlass
+            ? Container(
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: sheetRadius,
+                  border: Border.all(
+                    color: isDark ? colors.border : colors.divider,
+                    width: 1.0,
+                  ),
+                ),
+                child: wrappedContent,
+              )
+            : ClipRRect(
+                borderRadius: sheetRadius,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.glassTint,
+                      borderRadius: sheetRadius,
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.18)
+                            : Colors.white.withValues(alpha: 0.70),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: sheetRadius,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(
+                              alpha: isDark ? 0.08 : 0.20,
+                            ),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.45],
+                        ),
+                      ),
+                      child: wrappedContent,
+                    ),
+                  ),
+                ),
+              ),
       ),
     );
   }

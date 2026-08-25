@@ -28,7 +28,7 @@ enum SessionEventType {
   sample,
   note,
   finish,
-  abandon
+  abandon,
 }
 
 class MovementSession {
@@ -78,7 +78,9 @@ class MovementSession {
         if (pauseStartedAt != null) {
           return pauseStartedAt - startedAt - pausedMs;
         }
-      } catch (e) { debugPrint('[ss] movement_session.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] movement_session.dart: $e');
+      }
     }
     final baseEnd = endedAt ?? now;
     return baseEnd - startedAt - pausedMs;
@@ -113,7 +115,9 @@ class MovementSession {
       id: map['id'] as String,
       kindCode: map['kindCode'] as String,
       sessionMode: map['sessionMode'] as String,
-      status: MovementSessionStatus.fromCode(map['status'] as String? ?? 'ABANDONED'),
+      status: MovementSessionStatus.fromCode(
+        map['status'] as String? ?? 'ABANDONED',
+      ),
       startedAt: map['startedAt'] as int,
       endedAt: map['endedAt'] as int?,
       pausedMs: map['pausedMs'] as int? ?? 0,

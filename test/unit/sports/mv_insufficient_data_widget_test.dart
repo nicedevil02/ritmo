@@ -6,30 +6,33 @@ import 'package:ritmo/features/supplementary_sports/presentation/screens/mv_prog
 
 void main() {
   group('MvInsufficientData Presentation Verification (S0-T7)', () {
-    testWidgets('Empty repositories state in MvProgressTab renders MvInsufficientData widgets without fake numbers', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: MvProgressTab(
-              continuousActiveWeeks: null,
-              totalSessionsCount: 0,
-              totalMetMinutes: 0.0,
-              personalRecords: [],
-              bodyMapDistribution: MvBodyMapDistribution(
-                muscleSessionCounts: {},
+    testWidgets(
+      'Empty repositories state in MvProgressTab renders MvInsufficientData widgets without fake numbers',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: MvProgressTab(
+                continuousActiveWeeks: null,
+                totalSessionsCount: 0,
+                totalMetMinutes: 0.0,
+                personalRecords: [],
+                bodyMapDistribution: MvBodyMapDistribution(
+                  muscleSessionCounts: {},
+                ),
+                hasEnoughDataForTrends: false,
               ),
-              hasEnoughDataForTrends: false,
             ),
           ),
-        ),
-      );
+        );
 
-      // Verify that MvInsufficientData widgets are rendered
-      expect(find.byType(MvInsufficientData), findsAtLeastNWidgets(3));
+        // Verify that MvInsufficientData widgets are rendered
+        expect(find.byType(MvInsufficientData), findsAtLeastNWidgets(3));
 
-      // Verify that no fake stats or numbers are displayed
-      expect(find.text('0 هفته'), findsNothing);
-      expect(find.text('0 جلسه'), findsNothing);
-    });
+        // Verify that no fake stats or numbers are displayed
+        expect(find.text('0 هفته'), findsNothing);
+        expect(find.text('0 جلسه'), findsNothing);
+      },
+    );
   });
 }

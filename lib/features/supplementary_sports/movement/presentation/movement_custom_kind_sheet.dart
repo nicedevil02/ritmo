@@ -27,7 +27,8 @@ class MovementCustomKindSheet extends StatefulWidget {
   final String? initialTitle;
 
   @override
-  State<MovementCustomKindSheet> createState() => _MovementCustomKindSheetState();
+  State<MovementCustomKindSheet> createState() =>
+      _MovementCustomKindSheetState();
 }
 
 class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
@@ -47,8 +48,22 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
   MovementKind? _similarFound;
 
   final List<String> _emojis = [
-    '🎯', '🏃', '🚴', '🏊', '⚽', '🏀', '🎾', '🏐',
-    '🥊', '🥋', '🧘', '🧗', '🎿', '🏋️', '🚶', '🛼',
+    '🎯',
+    '🏃',
+    '🚴',
+    '🏊',
+    '⚽',
+    '🏀',
+    '🎾',
+    '🏐',
+    '🥊',
+    '🥋',
+    '🧘',
+    '🧗',
+    '🎿',
+    '🏋️',
+    '🚶',
+    '🛼',
   ];
 
   @override
@@ -70,7 +85,9 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
     if (title.isEmpty) return;
 
     if (_similarFound == null) {
-      final allKinds = await MovementRepository.instance.getKinds(enabledOnly: false);
+      final allKinds = await MovementRepository.instance.getKinds(
+        enabledOnly: false,
+      );
       for (final k in allKinds) {
         final sim1 = TextSimilarity.similarity(title, k.titleFa);
         final sim2 = TextSimilarity.similarity(title, k.aliasesFa ?? '');
@@ -112,14 +129,16 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
     );
 
     try {
-      final created = await MovementRepository.instance.createCustomKind(customKind);
+      final created = await MovementRepository.instance.createCustomKind(
+        customKind,
+      );
       await HapticFeedback.mediumImpact();
       if (mounted) Navigator.of(context).pop(created);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در ثبت نوع جدید: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('خطا در ثبت نوع جدید: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -143,7 +162,9 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: colors.outlineVariant.withValues(alpha: 0.3),
+          ),
         ),
         child: SingleChildScrollView(
           child: Form(
@@ -179,23 +200,34 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
                           'آیا منظورتان "${_similarFound!.emoji} ${_similarFound!.titleFa}" بود؟',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: colors.onSurface),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
-                                onPressed: () => Navigator.of(context).pop(_similarFound),
-                                child: const Text('بله، انتخابش کن', style: TextStyle(color: Colors.white)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: colors.primary,
+                                ),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(_similarFound),
+                                child: const Text(
+                                  'بله، انتخابش کن',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -205,7 +237,10 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                                   setState(() => _similarFound = null);
                                   _doSave();
                                 },
-                                child: const Text('نه، جدید بساز', style: TextStyle()),
+                                child: const Text(
+                                  'نه، جدید بساز',
+                                  style: TextStyle(),
+                                ),
                               ),
                             ),
                           ],
@@ -226,14 +261,21 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                     labelText: 'نام ورزش',
                     counterText: '',
                     hintText: 'مثلاً: پاتیناژ، دارت، تی‌آرایکس...',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'لطفاً نام ورزش را وارد کنید' : null,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'لطفاً نام ورزش را وارد کنید'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Emoji Picker
-                const Text('آیکن / ایموجی:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'آیکن / ایموجی:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -246,14 +288,21 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: isSelected ? colors.primary.withValues(alpha: 0.2) : colors.surfaceVariant,
+                          color: isSelected
+                              ? colors.primary.withValues(alpha: 0.2)
+                              : colors.surfaceVariant,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? colors.primary : Colors.transparent,
+                            color: isSelected
+                                ? colors.primary
+                                : Colors.transparent,
                             width: 2,
                           ),
                         ),
-                        child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 22),
+                        ),
                       ),
                     );
                   }).toList(),
@@ -261,7 +310,10 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Family Picker
-                const Text('خانواده ورزش:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'خانواده ورزش:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -269,7 +321,12 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                   children: MovementFamily.values.map((f) {
                     final isSelected = f == _selectedFamily;
                     return ChoiceChip(
-                      label: Text('${f.emoji} ${f.titleFa}', style: TextStyle(color: isSelected ? Colors.white : colors.onSurface)),
+                      label: Text(
+                        '${f.emoji} ${f.titleFa}',
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : colors.onSurface,
+                        ),
+                      ),
                       selected: isSelected,
                       selectedColor: colors.primary,
                       onSelected: (val) {
@@ -281,7 +338,10 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Intensity / MET Level
-                const Text('شدت تقریبی فعالیت:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'شدت تقریبی فعالیت:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Column(
                   children: [
@@ -293,44 +353,64 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                 const SizedBox(height: 16),
 
                 // Primary Metric
-                const Text('متریک اصلی اندازهگیری:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'متریک اصلی اندازهگیری:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [
-                    MovementMetric.duration,
-                    MovementMetric.distance,
-                    MovementMetric.laps,
-                    MovementMetric.elevation,
-                    MovementMetric.steps,
-                  ].map((m) {
-                    final isSelected = m == _selectedMetric;
-                    return ChoiceChip(
-                      label: Text('${m.code} (${m.unitFa})', style: TextStyle(color: isSelected ? Colors.white : colors.onSurface)),
-                      selected: isSelected,
-                      selectedColor: colors.primary,
-                      onSelected: (val) {
-                        if (val) setState(() => _selectedMetric = m);
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      [
+                        MovementMetric.duration,
+                        MovementMetric.distance,
+                        MovementMetric.laps,
+                        MovementMetric.elevation,
+                        MovementMetric.steps,
+                      ].map((m) {
+                        final isSelected = m == _selectedMetric;
+                        return ChoiceChip(
+                          label: Text(
+                            '${m.code} (${m.unitFa})',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : colors.onSurface,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedColor: colors.primary,
+                          onSelected: (val) {
+                            if (val) setState(() => _selectedMetric = m);
+                          },
+                        );
+                      }).toList(),
                 ),
                 const SizedBox(height: 16),
 
                 // Switches
                 SwitchListTile(
-                  title: const Text('فعالیت در فضای باز است؟', style: TextStyle()),
+                  title: const Text(
+                    'فعالیت در فضای باز است؟',
+                    style: TextStyle(),
+                  ),
                   value: _isOutdoor,
                   onChanged: (v) => setState(() => _isOutdoor = v),
                 ),
                 SwitchListTile(
-                  title: const Text('معمولاً تیمی/گروهی انجام می‌شود؟', style: TextStyle()),
+                  title: const Text(
+                    'معمولاً تیمی/گروهی انجام می‌شود؟',
+                    style: TextStyle(),
+                  ),
                   value: _isSocial,
                   onChanged: (v) => setState(() => _isSocial = v),
                 ),
                 SwitchListTile(
-                  title: const Text('نیاز به رزرو سالن/باشگاه دارد؟', style: TextStyle()),
+                  title: const Text(
+                    'نیاز به رزرو سالن/باشگاه دارد؟',
+                    style: TextStyle(),
+                  ),
                   value: _needsVenue,
                   onChanged: (v) => setState(() => _needsVenue = v),
                 ),
@@ -342,14 +422,20 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     onPressed: _isSaving ? null : _checkSimilarityAndSave,
                     child: _isSaving
                         ? const CupertinoActivityIndicator(color: Colors.white)
                         : const Text(
                             'ساخت ورزش سفارشی',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
                           ),
                   ),
                 ),
@@ -370,17 +456,23 @@ class _MovementCustomKindSheetState extends State<MovementCustomKindSheet> {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? colors.primary.withValues(alpha: 0.12) : colors.card,
+          color: isSelected
+              ? colors.primary.withValues(alpha: 0.12)
+              : colors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.5),
+            color: isSelected
+                ? colors.primary
+                : colors.border.withValues(alpha: 0.5),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
               color: isSelected ? colors.primary : colors.textSecondary,
               size: 20,
             ),

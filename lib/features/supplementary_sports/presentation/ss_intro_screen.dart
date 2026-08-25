@@ -13,7 +13,6 @@ class SSIntroScreen extends StatefulWidget {
 }
 
 class _SSIntroScreenState extends State<SSIntroScreen> {
-
   Future<void> _finishIntro() async {
     RitmoHaptics.confirm();
     final prefs = await SharedPreferences.getInstance();
@@ -52,7 +51,10 @@ class _SSIntroScreenState extends State<SSIntroScreen> {
                   // Dumbbell Custom painted vector Logo
                   CustomPaint(
                     size: const Size(200, 100),
-                    painter: DumbbellLogoPainter(accentColor: colors.primary, isDark: isDark),
+                    painter: DumbbellLogoPainter(
+                      accentColor: colors.primary,
+                      isDark: isDark,
+                    ),
                   ),
                   const SizedBox(height: 36),
 
@@ -94,7 +96,12 @@ class _SSIntroScreenState extends State<SSIntroScreen> {
                 color: waveColor,
                 alignment: Alignment.center,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 48, bottom: 24, left: 24, right: 24),
+                  padding: const EdgeInsets.only(
+                    top: 48,
+                    bottom: 24,
+                    left: 24,
+                    right: 24,
+                  ),
                   child: SizedBox(
                     width: 200,
                     child: PrimaryButton(
@@ -120,7 +127,6 @@ class DumbbellLogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-
     final lightGreenPaint = Paint()
       ..color = accentColor
       ..style = PaintingStyle.fill;
@@ -136,21 +142,33 @@ class DumbbellLogoPainter extends CustomPainter {
     // Left Plates (3 vertical bars)
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(-60, 0), width: 5, height: 28),
+        Rect.fromCenter(
+          center: center + const Offset(-60, 0),
+          width: 5,
+          height: 28,
+        ),
         const Radius.circular(3),
       ),
       lightGreenPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(-51, 0), width: 5, height: 42),
+        Rect.fromCenter(
+          center: center + const Offset(-51, 0),
+          width: 5,
+          height: 42,
+        ),
         const Radius.circular(3),
       ),
       lightGreenPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(-42, 0), width: 7, height: 56),
+        Rect.fromCenter(
+          center: center + const Offset(-42, 0),
+          width: 7,
+          height: 56,
+        ),
         const Radius.circular(4),
       ),
       lightGreenPaint,
@@ -159,21 +177,33 @@ class DumbbellLogoPainter extends CustomPainter {
     // Right Plates (3 vertical bars)
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(42, 0), width: 7, height: 56),
+        Rect.fromCenter(
+          center: center + const Offset(42, 0),
+          width: 7,
+          height: 56,
+        ),
         const Radius.circular(4),
       ),
       lightGreenPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(51, 0), width: 5, height: 42),
+        Rect.fromCenter(
+          center: center + const Offset(51, 0),
+          width: 5,
+          height: 42,
+        ),
         const Radius.circular(3),
       ),
       lightGreenPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center + const Offset(60, 0), width: 5, height: 28),
+        Rect.fromCenter(
+          center: center + const Offset(60, 0),
+          width: 5,
+          height: 28,
+        ),
         const Radius.circular(3),
       ),
       lightGreenPaint,
@@ -182,13 +212,28 @@ class DumbbellLogoPainter extends CustomPainter {
     // Dumbbell bar connecting line (forming letter A mountain shape)
     final path = Path()
       ..moveTo(center.dx - 35, center.dy)
-      ..quadraticBezierTo(center.dx - 24, center.dy, center.dx - 22, center.dy - 2)
+      ..quadraticBezierTo(
+        center.dx - 24,
+        center.dy,
+        center.dx - 22,
+        center.dy - 2,
+      )
       ..lineTo(center.dx - 2, center.dy - 38)
-      ..quadraticBezierTo(center.dx, center.dy - 41, center.dx + 2, center.dy - 38)
+      ..quadraticBezierTo(
+        center.dx,
+        center.dy - 41,
+        center.dx + 2,
+        center.dy - 38,
+      )
       ..lineTo(center.dx + 22, center.dy - 2)
       ..quadraticBezierTo(center.dx + 24, center.dy, center.dx + 35, center.dy);
 
-    canvas.drawPath(path, barPaint..color = isDark ? const Color(0xFFC8E6C9) : const Color(0xFF0F3621)..strokeWidth = 7);
+    canvas.drawPath(
+      path,
+      barPaint
+        ..color = isDark ? const Color(0xFFC8E6C9) : const Color(0xFF0F3621)
+        ..strokeWidth = 7,
+    );
 
     // Chevron pointing down in center (forming a V letter shape)
     final chevronPath = Path()
@@ -196,7 +241,12 @@ class DumbbellLogoPainter extends CustomPainter {
       ..lineTo(center.dx, center.dy + 3)
       ..lineTo(center.dx + 14, center.dy - 10);
 
-    canvas.drawPath(chevronPath, barPaint..color = isDark ? const Color(0xFFC8E6C9) : const Color(0xFF0F3621)..strokeWidth = 6);
+    canvas.drawPath(
+      chevronPath,
+      barPaint
+        ..color = isDark ? const Color(0xFFC8E6C9) : const Color(0xFF0F3621)
+        ..strokeWidth = 6,
+    );
   }
 
   @override
@@ -210,20 +260,10 @@ class BottomWaveClipper extends CustomClipper<Path> {
     final path = Path();
     path.moveTo(0, size.height);
     path.lineTo(0, 40);
-    
+
     // Wave bezier curve
-    path.quadraticBezierTo(
-      size.width / 4,
-      10,
-      size.width / 2,
-      30,
-    );
-    path.quadraticBezierTo(
-      3 * size.width / 4,
-      50,
-      size.width,
-      25,
-    );
+    path.quadraticBezierTo(size.width / 4, 10, size.width / 2, 30);
+    path.quadraticBezierTo(3 * size.width / 4, 50, size.width, 25);
 
     path.lineTo(size.width, size.height);
     path.close();

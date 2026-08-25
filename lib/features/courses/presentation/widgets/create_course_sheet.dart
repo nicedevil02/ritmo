@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -359,17 +360,18 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final isEditing = widget.editingCourse != null;
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(30));
 
-    return RitmoTheme.glassCardLight(
-      borderRadius: 30,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-        ),
-        padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(
+    final content = Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: Column(
           children: [
             // Handle bar
             Center(
@@ -808,25 +810,74 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                 onPressed: _isSaving ? null : _saveCourse,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: _isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
+                    ? CupertinoActivityIndicator(color: colors.onPrimary)
                     : Text(
                         isEditing ? 'ذخیره تغییرات' : 'ذخیره و ایجاد دوره',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
                       ),
               ),
             ),
           ],
+        ),
+      );
+
+    final sheetBody = Material(
+      type: MaterialType.transparency,
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDarkMode ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDarkMode
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDarkMode ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
+          ),
         ),
       ),
     );

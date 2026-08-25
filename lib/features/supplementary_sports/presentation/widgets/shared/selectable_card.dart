@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class SelectableCard extends StatefulWidget {
-
   const SelectableCard({
     super.key,
     required this.title,
@@ -29,7 +28,9 @@ class _SelectableCardState extends State<SelectableCard> {
 
     // Active color styles
     final activeBorderColor = SupplementarySportsTheme.getSuccessColor(context);
-    final activeBgColor = activeBorderColor.withValues(alpha: isDark ? 0.15 : 0.08);
+    final activeBgColor = activeBorderColor.withValues(
+      alpha: isDark ? 0.15 : 0.08,
+    );
 
     // Default color styles
     final defaultBorderColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
@@ -96,7 +97,9 @@ class _SelectableCardState extends State<SelectableCard> {
                     textDirection: TextDirection.rtl,
                     style: SupplementarySportsTheme.body.copyWith(
                       color: SupplementarySportsTheme.getTextPrimary(context),
-                      fontWeight: widget.selected ? FontWeight.w500 : FontWeight.w400,
+                      fontWeight: widget.selected
+                          ? FontWeight.w500
+                          : FontWeight.w400,
                     ),
                   ),
                 ),

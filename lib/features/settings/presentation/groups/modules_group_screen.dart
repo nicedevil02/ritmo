@@ -28,6 +28,7 @@ class ModulesGroupScreen extends StatefulWidget {
 
 class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
   final Map<String, bool> _moduleStates = {};
+  bool _groupingEnabled = true;
   bool _isLoading = true;
 
   @override
@@ -41,6 +42,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
       for (final mod in ModuleRegistry.modules) {
         _moduleStates[mod.key] = ModuleGate.instance.isEnabled(mod.key);
       }
+      _groupingEnabled = SettingsService.instance.get<bool>('systems_grouping_enabled');
       _isLoading = false;
     });
   }
@@ -237,10 +239,148 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
-              child: SettingsSection(
-                title: 'انتخاب بخش‌های فعال',
-                footer: 'ماژول‌های غیرفعال از نوار پایین، داشبورد و اعلان‌های روزانه پنهان خواهند شد.',
-                children: visibleModules.map((mod) {
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1. Systems Layout & Grouping Section
+                  SettingsSection(
+                    title: 'چیدمان و ساختار سیستم‌ها',
+                    footer: _groupingEnabled
+                        ? 'کارت‌ها به صورت پیش‌فرض در بخش‌های رشد و برنامه‌ریزی، توازن و سلامت دسته‌بندی می‌شوند.'
+                        : 'گروه‌بندی خودکار غیرفعال است و کارت‌ها بر اساس ترتیب سفارشی شما چیده شده‌اند.',
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                CupertinoIcons.square_grid_2x2,
+                                color: colors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'گروه‌بندی خودکار سیستم‌ها',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'دسته‌بندی در بخش‌های رشد، توازن و سلامت',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            CupertinoSwitch(
+                              value: _groupingEnabled,
+                              activeTrackColor: colors.primary,
+                              onChanged: (val) async {
+                                await SettingsService.instance.set(
+                                  'systems_grouping_enabled',
+                                  val,
+                                );
+                                if (!context.mounted) return;
+                                setState(() {
+                                  _groupingEnabled = val;
+                                });
+                                RitmoToast.show(
+                                  context,
+                                  val
+                                      ? 'گروه‌بندی خودکار سیستم‌ها فعال شد.'
+                                      : 'گروه‌بندی غیرفعال شد؛ چیدمان سفارشی در دسترس است.',
+                                  icon: Icons.check_circle_outline,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_groupingEnabled) ...[
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                        InkWell(
+                          onTap: () async {
+                            await SettingsService.instance.set(
+                              'systems_grouping_enabled',
+                              true,
+                            );
+                            await SettingsService.instance.set(
+                              'systems_custom_order',
+                              '["goals","notes","courses","konkur","religion","assistant","wellbeing","sports","medicine","cycle"]',
+                            );
+                            if (!context.mounted) return;
+                            setState(() {
+                              _groupingEnabled = true;
+                            });
+                            RitmoToast.show(
+                              context,
+                              'چیدمان کارت‌ها به حالت پیش‌فرض بازنشانی شد.',
+                              icon: Icons.refresh_rounded,
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: colors.warning.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    CupertinoIcons.arrow_counterclockwise,
+                                    color: colors.warning,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Text(
+                                    'بازنشانی به چیدمان پیش‌فرض',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.warning,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_left_rounded,
+                                  color: colors.textTertiary,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 2. Active Modules Selection
+                  SettingsSection(
+                    title: 'انتخاب بخش‌های فعال',
+                    footer: 'ماژول‌های غیرفعال از نوار پایین، داشبورد و اعلان‌های روزانه پنهان خواهند شد.',
+                    children: visibleModules.map((mod) {
                   final isEnabled = _moduleStates[mod.key] ?? mod.defaultEnabled;
 
                   return Padding(
@@ -321,7 +461,9 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
                   );
                 }).toList(),
               ),
-            ),
+            ],
+          ),
+        ),
     );
   }
 }

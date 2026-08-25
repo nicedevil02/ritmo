@@ -27,7 +27,9 @@ void main() {
   });
 
   group('MvKindPickerSheet Widget Verification (S1-T5)', () {
-    testWidgets('Full render, search filtering for شنا, and selection pop', (tester) async {
+    testWidgets('Full render, search filtering for شنا, and selection pop', (
+      tester,
+    ) async {
       MvMovementKind? pickedKind;
       late List<MvMovementKind> allKinds;
       await tester.runAsync(() async {

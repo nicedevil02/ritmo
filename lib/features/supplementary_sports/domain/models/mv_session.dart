@@ -74,7 +74,8 @@ class MvSession {
       ? rpe1To10! * elapsedMinutes
       : null;
 
-  double? get paceSecPerKm => (distanceM != null && distanceM! > 0 && elapsedMs > 0)
+  double? get paceSecPerKm =>
+      (distanceM != null && distanceM! > 0 && elapsedMs > 0)
       ? (elapsedMs / 1000.0) / (distanceM! / 1000.0)
       : null;
 

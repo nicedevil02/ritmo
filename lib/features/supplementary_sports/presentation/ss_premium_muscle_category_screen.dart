@@ -20,10 +20,12 @@ class SSPremiumMuscleCategoryScreen extends StatefulWidget {
   final String categoryName;
 
   @override
-  State<SSPremiumMuscleCategoryScreen> createState() => _SSPremiumMuscleCategoryScreenState();
+  State<SSPremiumMuscleCategoryScreen> createState() =>
+      _SSPremiumMuscleCategoryScreenState();
 }
 
-class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryScreen> {
+class _SSPremiumMuscleCategoryScreenState
+    extends State<SSPremiumMuscleCategoryScreen> {
   List<Map<String, dynamic>> _allExercises = [];
   List<Map<String, dynamic>> _filteredExercises = [];
   String _selectedEquip = 'all'; // all, bodyweight, dumbbell, gym
@@ -49,34 +51,49 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
     if (clean == 'warmup' || clean == 'balance') return 'stretch';
 
     // ── English keywords (legacy / custom exercises) ─────────────
-    if (clean.contains('chest') || clean.contains('pec') ||
-        clean.contains('upper_body') || clean.contains('push')) {
+    if (clean.contains('chest') ||
+        clean.contains('pec') ||
+        clean.contains('upper_body') ||
+        clean.contains('push')) {
       return 'chest';
     }
     // سینه و بالاتنه شامل سرشانه و بازو نیز می‌شود
-    if (clean.contains('shoulder') || clean.contains('deltoid') ||
-        clean.contains('arm') || clean.contains('bicep') || clean.contains('tricep')) {
+    if (clean.contains('shoulder') ||
+        clean.contains('deltoid') ||
+        clean.contains('arm') ||
+        clean.contains('bicep') ||
+        clean.contains('tricep')) {
       return 'chest';
     }
-    if (clean.contains('back') || clean.contains('lat') ||
-        clean.contains('row') || clean.contains('shoulder_and_back')) {
+    if (clean.contains('back') ||
+        clean.contains('lat') ||
+        clean.contains('row') ||
+        clean.contains('shoulder_and_back')) {
       return 'back';
     }
-    if (clean.contains('lower_body') || clean.contains('leg') ||
-        clean.contains('quad') || clean.contains('glute') ||
-        clean.contains('hamstring') || clean.contains('calf')) {
+    if (clean.contains('lower_body') ||
+        clean.contains('leg') ||
+        clean.contains('quad') ||
+        clean.contains('glute') ||
+        clean.contains('hamstring') ||
+        clean.contains('calf')) {
       return 'legs';
     }
-    if (clean.contains('ab') || clean.contains('core') ||
+    if (clean.contains('ab') ||
+        clean.contains('core') ||
         clean.contains('waist')) {
       return 'abs';
     }
-    if (clean.contains('cardio') || clean.contains('hiit') ||
-        clean.contains('run') || clean.contains('plyo')) {
+    if (clean.contains('cardio') ||
+        clean.contains('hiit') ||
+        clean.contains('run') ||
+        clean.contains('plyo')) {
       return 'cardio';
     }
-    if (clean.contains('stretch') || clean.contains('recovery') ||
-        clean.contains('yoga') || clean.contains('flex') ||
+    if (clean.contains('stretch') ||
+        clean.contains('recovery') ||
+        clean.contains('yoga') ||
+        clean.contains('flex') ||
         clean.contains('warmup')) {
       return 'stretch';
     }
@@ -112,14 +129,16 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
       list = list.where((ex) {
         final name = (ex['name']?.toString() ?? '').toLowerCase();
         final nameEn = (ex['nameEn']?.toString() ?? '').toLowerCase();
-        return name.contains(_searchQuery.toLowerCase()) || nameEn.contains(_searchQuery.toLowerCase());
+        return name.contains(_searchQuery.toLowerCase()) ||
+            nameEn.contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
     if (_selectedEquip != 'all') {
       list = list.where((ex) {
         final equip = (ex['equipment']?.toString() ?? '').toLowerCase().trim();
-        final isBodyweight = equip.contains('bodyweight') || equip == 'none' || equip.isEmpty;
+        final isBodyweight =
+            equip.contains('bodyweight') || equip == 'none' || equip.isEmpty;
         final isDumbbell = equip.contains('dumbbell');
 
         if (_selectedEquip == 'bodyweight') return isBodyweight;
@@ -135,7 +154,8 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
 
   String _translateEquipment(String? raw) {
     final clean = (raw ?? '').toLowerCase().trim();
-    if (clean.contains('bodyweight') || clean == 'none' || clean.isEmpty) return 'وزن بدن';
+    if (clean.contains('bodyweight') || clean == 'none' || clean.isEmpty)
+      return 'وزن بدن';
     if (clean.contains('dumbbell')) return 'دمبل';
     if (clean.contains('barbell')) return 'هالتر';
     if (clean.contains('cable')) return 'سیم‌کش';
@@ -155,7 +175,10 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(color: colors.border.withValues(alpha: 0.8), width: 1.5),
+            border: Border.all(
+              color: colors.border.withValues(alpha: 0.8),
+              width: 1.5,
+            ),
           ),
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
           child: Column(
@@ -185,10 +208,7 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                 const SizedBox(height: 4),
                 Text(
                   exercise['nameEn'].toString(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
                 ),
               ],
               const SizedBox(height: 16),
@@ -208,7 +228,10 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -224,7 +247,10 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.textSecondary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -250,7 +276,8 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               ),
               const SizedBox(height: 8),
               Text(
-                exercise['instructions']?.toString() ?? 'راهنمایی برای این حرکت ثبت نشده است.',
+                exercise['instructions']?.toString() ??
+                    'راهنمایی برای این حرکت ثبت نشده است.',
                 style: TextStyle(
                   fontSize: 13.5,
                   height: 1.6,
@@ -258,15 +285,24 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                 ),
               ),
               const SizedBox(height: 24),
-              if (exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty) ...[
+              if (exercise['videoUrl'] != null &&
+                  exercise['videoUrl'].toString().isNotEmpty) ...[
                 SizedBox(
                   height: 52,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.red.withValues(alpha: 0.7), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      side: BorderSide(
+                        color: Colors.red.withValues(alpha: 0.7),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    icon: const Icon(CupertinoIcons.play_circle_fill, color: Colors.red),
+                    icon: const Icon(
+                      CupertinoIcons.play_circle_fill,
+                      color: Colors.red,
+                    ),
                     label: const Text(
                       'مشاهده ویدیو آموزش حرکت 🎥',
                       style: TextStyle(
@@ -279,7 +315,10 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                       final urlStr = exercise['videoUrl'].toString();
                       final uri = Uri.parse(urlStr);
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
                       }
                     },
                   ),
@@ -291,7 +330,9 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text(
@@ -324,10 +365,7 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
           elevation: 0,
           title: Text(
             widget.categoryName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           centerTitle: true,
           leading: IconButton(
@@ -348,7 +386,9 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                     decoration: BoxDecoration(
                       color: colors.background,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                      border: Border.all(
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: TextField(
                       style: TextStyle(color: colors.textPrimary, fontSize: 14),
@@ -358,10 +398,19 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
                       },
                       decoration: InputDecoration(
                         hintText: 'جستجوی نام حرکت...',
-                        hintStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
-                        prefixIcon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
+                        hintStyle: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 13,
+                        ),
+                        prefixIcon: Icon(
+                          CupertinoIcons.search,
+                          color: colors.textSecondary,
+                          size: 20,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -389,94 +438,105 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
               child: _isLoading
                   ? const Center(child: CupertinoActivityIndicator())
                   : _filteredExercises.isEmpty
-                      ? Center(
-                          child: Text(
-                            'حرکتی یافت نشد.',
-                            style: TextStyle(color: colors.textSecondary, fontSize: 14),
-                          ),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  ? Center(
+                      child: Text(
+                        'حرکتی یافت نشد.',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                             childAspectRatio: 0.95,
                           ),
-                          itemCount: _filteredExercises.length,
-                          itemBuilder: (context, index) {
-                            final ex = _filteredExercises[index];
-                            final equipText = _translateEquipment(ex['equipment']?.toString());
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    colors.surface,
-                                    colors.surface.withValues(alpha: 0.6),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: colors.border.withValues(alpha: 0.6)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colors.shadow.withValues(alpha: 0.03),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                      itemCount: _filteredExercises.length,
+                      itemBuilder: (context, index) {
+                        final ex = _filteredExercises[index];
+                        final equipText = _translateEquipment(
+                          ex['equipment']?.toString(),
+                        );
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                colors.surface,
+                                colors.surface.withValues(alpha: 0.6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: colors.border.withValues(alpha: 0.6),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors.shadow.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => _showDetailSheet(ex),
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Expanded(
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(14),
-                                            child: Container(
-                                              color: colors.background,
-                                              child: SSExerciseAnimationCard(
-                                                category: ex['category']?.toString() ?? 'core',
-                                                exerciseId: ex['id']?.toString(),
-                                                height: double.infinity,
-                                              ),
-                                            ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _showDetailSheet(ex),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Container(
+                                          color: colors.background,
+                                          child: SSExerciseAnimationCard(
+                                            category:
+                                                ex['category']?.toString() ??
+                                                'core',
+                                            exerciseId: ex['id']?.toString(),
+                                            height: double.infinity,
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          ex['name']?.toString() ?? '',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                            color: colors.textPrimary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          equipText,
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: colors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      ex['name']?.toString() ?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      equipText,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: colors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -501,7 +561,9 @@ class _SSPremiumMuscleCategoryScreenState extends State<SSPremiumMuscleCategoryS
           color: isSelected ? colors.primary : colors.background,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? colors.primary : colors.border.withValues(alpha: 0.8),
+            color: isSelected
+                ? colors.primary
+                : colors.border.withValues(alpha: 0.8),
           ),
         ),
         child: Text(

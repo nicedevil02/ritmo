@@ -15,18 +15,78 @@ class MuscleGroup {
   final String? emoji;
 
   static const Map<String, MuscleGroup> taxonomy = {
-    'CHEST': MuscleGroup(code: 'CHEST', titleFa: 'سینه', region: 'UPPER', emoji: '🫁'),
-    'SHOULDER': MuscleGroup(code: 'SHOULDER', titleFa: 'سرشانه', region: 'UPPER', emoji: '🎯'),
-    'BICEPS': MuscleGroup(code: 'BICEPS', titleFa: 'جلوبازو', region: 'UPPER', emoji: '💪'),
-    'TRICEPS': MuscleGroup(code: 'TRICEPS', titleFa: 'پشت‌بازو', region: 'UPPER', emoji: '🦾'),
-    'BACK': MuscleGroup(code: 'BACK', titleFa: 'زیربغل و پشت', region: 'UPPER', emoji: '🪽'),
-    'CORE': MuscleGroup(code: 'CORE', titleFa: 'شکم و مرکز', region: 'CORE', emoji: '🎽'),
-    'QUADS_GLUTES': MuscleGroup(code: 'QUADS_GLUTES', titleFa: 'ران و باسن', region: 'LOWER', emoji: '🦵'),
-    'HAMSTRINGS': MuscleGroup(code: 'HAMSTRINGS', titleFa: 'پشت ران', region: 'LOWER', emoji: '🦿'),
-    'CALVES': MuscleGroup(code: 'CALVES', titleFa: 'ساق پا', region: 'LOWER', emoji: '🎯'),
-    'CARDIO': MuscleGroup(code: 'CARDIO', titleFa: 'هوازی', region: 'CARDIO', emoji: '🫀'),
-    'MOBILITY': MuscleGroup(code: 'MOBILITY', titleFa: 'تحرک و کشش', region: 'MOBILITY', emoji: '🧘'),
-    'FULL_BODY': MuscleGroup(code: 'FULL_BODY', titleFa: 'کل بدن', region: 'FULL', emoji: '🔥'),
+    'CHEST': MuscleGroup(
+      code: 'CHEST',
+      titleFa: 'سینه',
+      region: 'UPPER',
+      emoji: '🫁',
+    ),
+    'SHOULDER': MuscleGroup(
+      code: 'SHOULDER',
+      titleFa: 'سرشانه',
+      region: 'UPPER',
+      emoji: '🎯',
+    ),
+    'BICEPS': MuscleGroup(
+      code: 'BICEPS',
+      titleFa: 'جلوبازو',
+      region: 'UPPER',
+      emoji: '💪',
+    ),
+    'TRICEPS': MuscleGroup(
+      code: 'TRICEPS',
+      titleFa: 'پشت‌بازو',
+      region: 'UPPER',
+      emoji: '🦾',
+    ),
+    'BACK': MuscleGroup(
+      code: 'BACK',
+      titleFa: 'زیربغل و پشت',
+      region: 'UPPER',
+      emoji: '🪽',
+    ),
+    'CORE': MuscleGroup(
+      code: 'CORE',
+      titleFa: 'شکم و مرکز',
+      region: 'CORE',
+      emoji: '🎽',
+    ),
+    'QUADS_GLUTES': MuscleGroup(
+      code: 'QUADS_GLUTES',
+      titleFa: 'ران و باسن',
+      region: 'LOWER',
+      emoji: '🦵',
+    ),
+    'HAMSTRINGS': MuscleGroup(
+      code: 'HAMSTRINGS',
+      titleFa: 'پشت ران',
+      region: 'LOWER',
+      emoji: '🦿',
+    ),
+    'CALVES': MuscleGroup(
+      code: 'CALVES',
+      titleFa: 'ساق پا',
+      region: 'LOWER',
+      emoji: '🎯',
+    ),
+    'CARDIO': MuscleGroup(
+      code: 'CARDIO',
+      titleFa: 'هوازی',
+      region: 'CARDIO',
+      emoji: '🫀',
+    ),
+    'MOBILITY': MuscleGroup(
+      code: 'MOBILITY',
+      titleFa: 'تحرک و کشش',
+      region: 'MOBILITY',
+      emoji: '🧘',
+    ),
+    'FULL_BODY': MuscleGroup(
+      code: 'FULL_BODY',
+      titleFa: 'کل بدن',
+      region: 'FULL',
+      emoji: '🔥',
+    ),
   };
 
   static String buildHeadline(int minutes, List<String> codes, SlotType type) {

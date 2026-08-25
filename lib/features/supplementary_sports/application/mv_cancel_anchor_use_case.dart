@@ -26,8 +26,8 @@ class MvCancelAnchorUseCase {
   MvCancelAnchorUseCase({
     MvSlotOverrideRepository? overrideRepo,
     MvPrescriptionRepository? prescriptionRepo,
-  })  : _overrideRepo = overrideRepo ?? MvSlotOverrideRepositoryImpl(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository();
+  }) : _overrideRepo = overrideRepo ?? MvSlotOverrideRepositoryImpl(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository();
 
   Future<MvCancelAnchorResult> cancelAnchorThisWeek({
     required MvSlot anchorSlot,
@@ -65,7 +65,9 @@ class MvCancelAnchorUseCase {
     );
 
     final updatedSlots = List<MvSlot>.from(currentWeekSlots);
-    final slotIdx = updatedSlots.indexWhere((s) => s.dateIso == anchorSlot.dateIso);
+    final slotIdx = updatedSlots.indexWhere(
+      (s) => s.dateIso == anchorSlot.dateIso,
+    );
     if (slotIdx >= 0) {
       updatedSlots[slotIdx] = cancelledSlot;
     }
@@ -94,7 +96,8 @@ class MvCancelAnchorUseCase {
             slotType: slot.isRest ? MvSlotType.strength : slot.slotType,
             targetMinutes: newDur,
             headlineFa: slot.isRest ? 'تمرین جبرانی' : slot.headlineFa,
-            coachNoteFa: 'اضافه شدن $addDur دقیقه برای جبران جلسهٔ لغو شدهٔ ${anchorSlot.headlineFa}.',
+            coachNoteFa:
+                'اضافه شدن $addDur دقیقه برای جبران جلسهٔ لغو شدهٔ ${anchorSlot.headlineFa}.',
             updatedAt: DateTime.now().millisecondsSinceEpoch,
           );
           break;
@@ -110,9 +113,11 @@ class MvCancelAnchorUseCase {
     // 6. Build feedback message
     final String feedbackFa;
     if (replacedMinutes > 0 && replacedOnWeekday != null) {
-      feedbackFa = 'جلسه لغو شد. ${toPersianDigits(replacedMinutes.toString())} دقیقه تمرین به روز $replacedOnWeekday اضافه شد تا بودجه هفتگی حفظ شود.';
+      feedbackFa =
+          'جلسه لغو شد. ${toPersianDigits(replacedMinutes.toString())} دقیقه تمرین به روز $replacedOnWeekday اضافه شد تا بودجه هفتگی حفظ شود.';
     } else {
-      feedbackFa = 'جلسه فقط برای این هفته لغو شد. تعهد هفتگی شما فعال باقی می‌ماند.';
+      feedbackFa =
+          'جلسه فقط برای این هفته لغو شد. تعهد هفتگی شما فعال باقی می‌ماند.';
     }
 
     return MvCancelAnchorResult(

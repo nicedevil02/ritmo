@@ -65,8 +65,8 @@ class MvCommitment {
     this.reminderMinutes,
     String? createdAt,
     String? updatedAt,
-  })  : createdAt = createdAt ?? DateTime.now().toIso8601String(),
-        updatedAt = updatedAt ?? DateTime.now().toIso8601String() {
+  }) : createdAt = createdAt ?? DateTime.now().toIso8601String(),
+       updatedAt = updatedAt ?? DateTime.now().toIso8601String() {
     if (dayOfWeekSat0 < 0 || dayOfWeekSat0 > 6) {
       throw ArgumentError.value(
         dayOfWeekSat0,
@@ -129,7 +129,8 @@ class MvCommitment {
 
         if (candidateDateTime.isAfter(now)) {
           final candidateIso = MvCalendar.formatDateIso(candidateDate);
-          if (startDateIso != null && candidateIso.compareTo(startDateIso!) < 0) {
+          if (startDateIso != null &&
+              candidateIso.compareTo(startDateIso!) < 0) {
             continue;
           }
           if (endDateIso != null && candidateIso.compareTo(endDateIso!) > 0) {
@@ -258,19 +259,19 @@ class MvCommitment {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        kindCode,
-        titleFa,
-        dayOfWeekSat0,
-        startTime,
-        durationMinutes,
-        venueNote,
-        partnerNote,
-        recurrence,
-        isActive,
-        isFlexible,
-        startDateIso,
-        endDateIso,
-        reminderMinutes,
-      );
+    id,
+    kindCode,
+    titleFa,
+    dayOfWeekSat0,
+    startTime,
+    durationMinutes,
+    venueNote,
+    partnerNote,
+    recurrence,
+    isActive,
+    isFlexible,
+    startDateIso,
+    endDateIso,
+    reminderMinutes,
+  );
 }

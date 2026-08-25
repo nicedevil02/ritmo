@@ -88,7 +88,12 @@ class JumpToExercise extends SSWorkoutIntent {
 }
 
 class UpdateSetWeightAndReps extends SSWorkoutIntent {
-  const UpdateSetWeightAndReps({required this.setIndex, this.weight, this.reps, this.rir});
+  const UpdateSetWeightAndReps({
+    required this.setIndex,
+    this.weight,
+    this.reps,
+    this.rir,
+  });
   final int setIndex;
   final double? weight;
   final int? reps;
@@ -99,7 +104,6 @@ class UpdateSetWeightAndReps extends SSWorkoutIntent {
 enum SetStatus { pending, current, done }
 
 class SetRow {
-
   SetRow({
     required this.setNumber,
     required this.weight,
@@ -153,7 +157,6 @@ class SetRow {
 }
 
 class SSExerciseChecklistEntry {
-
   SSExerciseChecklistEntry({
     required this.exercise,
     required this.referenceSets,
@@ -163,31 +166,39 @@ class SSExerciseChecklistEntry {
     this.feeling,
     this.optionalNote,
     List<SetRow>? setRows,
-  }) : setRows = setRows ?? List.generate(
-          referenceSets,
-          (i) => SetRow(
-            setNumber: i + 1,
-            weight: referenceWeight ?? 0,
-            reps: referenceReps,
-            rir: 2,
-            restSeconds: 90,
-            status: i == 0 ? SetStatus.current : SetStatus.pending,
-          ),
-        );
+  }) : setRows =
+           setRows ??
+           List.generate(
+             referenceSets,
+             (i) => SetRow(
+               setNumber: i + 1,
+               weight: referenceWeight ?? 0,
+               reps: referenceReps,
+               rir: 2,
+               restSeconds: 90,
+               status: i == 0 ? SetStatus.current : SetStatus.pending,
+             ),
+           );
 
   factory SSExerciseChecklistEntry.fromMap(Map<String, dynamic> map) {
     final rawRows = map['setRows'] as List<dynamic>?;
     return SSExerciseChecklistEntry(
-      exercise: SsExerciseModel.fromMap(Map<String, dynamic>.from(map['exercise'] as Map)),
+      exercise: SsExerciseModel.fromMap(
+        Map<String, dynamic>.from(map['exercise'] as Map),
+      ),
       referenceSets: map['referenceSets'] as int,
       referenceReps: map['referenceReps'] as int,
       referenceWeight: map['referenceWeight'] as double?,
-      status: ExerciseStatus.values.firstWhere((e) => e.toString() == map['status']),
+      status: ExerciseStatus.values.firstWhere(
+        (e) => e.toString() == map['status'],
+      ),
       feeling: map['feeling'] != null
           ? Feeling.values.firstWhere((e) => e.toString() == map['feeling'])
           : null,
       optionalNote: map['optionalNote'] as String?,
-      setRows: rawRows?.map((r) => SetRow.fromMap(Map<String, dynamic>.from(r as Map))).toList(),
+      setRows: rawRows
+          ?.map((r) => SetRow.fromMap(Map<String, dynamic>.from(r as Map)))
+          .toList(),
     );
   }
   final SsExerciseModel exercise;
@@ -232,8 +243,10 @@ class SSExerciseChecklistEntry {
     'setRows': setRows.map((r) => r.toMap()).toList(),
   };
 
-  int get currentSetIndex => setRows.indexWhere((s) => s.status == SetStatus.current);
-  int get completedSetsCount => setRows.where((s) => s.status == SetStatus.done).length;
+  int get currentSetIndex =>
+      setRows.indexWhere((s) => s.status == SetStatus.current);
+  int get completedSetsCount =>
+      setRows.where((s) => s.status == SetStatus.done).length;
 }
 
 enum SSWorkoutViewMode { focus, routineList }
@@ -242,7 +255,6 @@ enum SSWorkoutViewMode { focus, routineList }
 // Redesigned Modern Glassmorphism Active Session Screen
 // ─────────────────────────────────────────────────────────────
 class SSWorkoutSessionScreen extends ConsumerStatefulWidget {
-
   const SSWorkoutSessionScreen({
     super.key,
     required this.planId,
@@ -254,12 +266,12 @@ class SSWorkoutSessionScreen extends ConsumerStatefulWidget {
   final String? prescriptionId;
 
   @override
-  ConsumerState<SSWorkoutSessionScreen> createState() => _SSWorkoutSessionScreenState();
+  ConsumerState<SSWorkoutSessionScreen> createState() =>
+      _SSWorkoutSessionScreenState();
 }
 
 class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-
   late AnimationController _pulseAnimController;
 
   SSWorkoutViewMode _viewMode = SSWorkoutViewMode.focus;
@@ -270,13 +282,17 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     prescriptionId: widget.prescriptionId,
   );
 
-  List<SSExerciseChecklistEntry> get _exercises => ref.read(ssWorkoutProvider(_key)).exercises;
-  int get _currentExerciseIndex => ref.read(ssWorkoutProvider(_key)).currentExerciseIndex;
+  List<SSExerciseChecklistEntry> get _exercises =>
+      ref.read(ssWorkoutProvider(_key)).exercises;
+  int get _currentExerciseIndex =>
+      ref.read(ssWorkoutProvider(_key)).currentExerciseIndex;
   bool get _isLoading => ref.read(ssWorkoutProvider(_key)).isLoading;
   bool get _isResting => ref.read(ssWorkoutProvider(_key)).isResting;
   bool get _isTimerPaused => ref.read(ssWorkoutProvider(_key)).isTimerPaused;
-  int get _restRemainingSeconds => ref.read(ssWorkoutProvider(_key)).restRemainingSeconds;
-  int get _restTotalSeconds => ref.read(ssWorkoutProvider(_key)).restTotalSeconds;
+  int get _restRemainingSeconds =>
+      ref.read(ssWorkoutProvider(_key)).restRemainingSeconds;
+  int get _restTotalSeconds =>
+      ref.read(ssWorkoutProvider(_key)).restTotalSeconds;
   bool get _handsFreeMode => ref.read(ssWorkoutProvider(_key)).handsFreeMode;
   int get _elapsedSeconds => ref.read(ssWorkoutProvider(_key)).elapsedSeconds;
 
@@ -308,7 +324,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     try {
       final gender = await DatabaseHelper.instance.getUserGender();
       if (mounted) setState(() => _userGender = gender);
-    } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_workout_session_screen.dart: $e');
+    }
   }
 
   @override
@@ -325,7 +343,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     if (state == AppLifecycleState.resumed) {
       ref.read(ssWorkoutProvider(_key).notifier).handleLifecycleResumed();
       SsScreenAwake.enable();
-    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       ref.read(ssWorkoutProvider(_key).notifier).handleLifecyclePaused();
       SsScreenAwake.disable();
     }
@@ -337,9 +356,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     final s = elapsedSeconds % 60;
     if (h > 0) {
       return toPersianDigits(
-          '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}');
+        '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}',
+      );
     }
-    return toPersianDigits('${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}');
+    return toPersianDigits(
+      '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}',
+    );
   }
 
   void _dispatchIntent(SSWorkoutIntent intent) {
@@ -377,32 +399,36 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         unawaited(
           showModalBottomSheet(
             context: context,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => BottomSheetContainer(
-            title: 'تعویض حرکت ورزشی',
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              itemCount: results.length,
-              itemBuilder: (_, i) {
-                final row = results[i];
-                final score = ((row['similarityScore'] as num? ?? 0) * 100).round();
-                return SelectableCard(
-                  title: '${row['name']} — $score٪ شباهت عضلانی',
-                  selected: false,
-                  onClick: () {
-                    Navigator.pop(ctx);
-                    _dispatchIntent(SwapExerciseIntent(
-                      exerciseId: current.exercise.id,
-                      newExerciseId: row['id'].toString(),
-                      newExerciseName: row['name'].toString(),
-                    ));
-                  },
-                );
-              },
+            backgroundColor: Colors.transparent,
+            builder: (ctx) => BottomSheetContainer(
+              title: 'تعویض حرکت ورزشی',
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const BouncingScrollPhysics(),
+                itemCount: results.length,
+                itemBuilder: (_, i) {
+                  final row = results[i];
+                  final score = ((row['similarityScore'] as num? ?? 0) * 100)
+                      .round();
+                  return SelectableCard(
+                    title: '${row['name']} — $score٪ شباهت عضلانی',
+                    selected: false,
+                    onClick: () {
+                      Navigator.pop(ctx);
+                      _dispatchIntent(
+                        SwapExerciseIntent(
+                          exerciseId: current.exercise.id,
+                          newExerciseId: row['id'].toString(),
+                          newExerciseName: row['name'].toString(),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
-        ));
+        );
       }
     } catch (e) {
       debugPrint('Error showing swap sheet: $e');
@@ -451,10 +477,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 label: 'ذخیره یادداشت',
                 onPressed: () {
                   Navigator.pop(ctx);
-                  _dispatchIntent(AddNoteToExercise(
-                    current.exercise.id,
-                    ctrl.text,
-                  ));
+                  _dispatchIntent(
+                    AddNoteToExercise(current.exercise.id, ctrl.text),
+                  );
                 },
               ),
             ],
@@ -486,34 +511,57 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
           content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+            ],
             textInputAction: TextInputAction.done,
             maxLength: 6,
             autofocus: true,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF10B981),
+            ),
             decoration: InputDecoration(
               suffixText: suffix,
               suffixStyle: const TextStyle(color: Colors.white70),
               filled: true,
               fillColor: const Color(0xFF0F172A),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF334155))),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFF334155)),
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('انصراف', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'انصراف',
+                style: TextStyle(color: Colors.white54),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () {
                 final v = double.tryParse(ctrl.text);
@@ -522,7 +570,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 }
                 Navigator.pop(ctx);
               },
-              child: const Text('تایید', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text(
+                'تایید',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -537,7 +591,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             'خروج از تمرین؟ ⚠️',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -549,15 +605,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'cancel_workout'),
-              child: const Text('لغو کامل', style: TextStyle(color: Colors.redAccent)),
+              child: const Text(
+                'لغو کامل',
+                style: TextStyle(color: Colors.redAccent),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'pause_workout'),
-              child: const Text('توقف موقت (بعدا ادامه میدم)', style: TextStyle(color: Color(0xFF10B981))),
+              child: const Text(
+                'توقف موقت (بعدا ادامه میدم)',
+                style: TextStyle(color: Color(0xFF10B981)),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, 'stay'),
-              child: const Text('انصراف', style: TextStyle(color: Colors.white70)),
+              child: const Text(
+                'انصراف',
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
           ],
         ),
@@ -574,7 +639,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
   Future<void> _onFinishPressed() async {
     final state = ref.read(ssWorkoutProvider(_key));
-    final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
+    final completedCount = state.exercises
+        .where((e) => e.status == ExerciseStatus.done)
+        .length;
 
     if (completedCount == 0) {
       final abort = await showDialog<bool>(
@@ -583,10 +650,15 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text(
               'انصراف از تمرین؟ ⚠️',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             content: const Text(
               'شما هیچ حرکتی را کامل نکرده‌اید. آیا می‌خواهید از تمرین انصراف دهید؟\n(در صورت انصراف، این تمرین در تاریخچه ثبت نخواهد شد)',
@@ -595,11 +667,17 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('ادامه تمرین', style: TextStyle(color: Color(0xFF10B981))),
+                child: const Text(
+                  'ادامه تمرین',
+                  style: TextStyle(color: Color(0xFF10B981)),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('انصراف و خروج', style: TextStyle(color: Colors.redAccent)),
+                child: const Text(
+                  'انصراف و خروج',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
             ],
           ),
@@ -618,7 +696,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             'اتمام تمرین؟ 🏁',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
@@ -630,15 +710,26 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('ادامه تمرین', style: TextStyle(color: Colors.white60)),
+              child: const Text(
+                'ادامه تمرین',
+                style: TextStyle(color: Colors.white60),
+              ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('ثبت و پایان', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text(
+                'ثبت و پایان',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -673,22 +764,39 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           decoration: const BoxDecoration(
             color: Color(0xFF0F172A),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(top: BorderSide(color: Color(0xFF1E293B), width: 1.5)),
+            border: Border(
+              top: BorderSide(color: Color(0xFF1E293B), width: 1.5),
+            ),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.fitness_center_rounded, color: Color(0xFF10B981), size: 24),
+                  const Icon(
+                    Icons.fitness_center_rounded,
+                    color: Color(0xFF10B981),
+                    size: 24,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'محاسبه‌گر صفحه وزنه (${toPersianDigits(totalWeight.toStringAsFixed(1))} کیلوگرم)',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -702,7 +810,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               if (platesPerSide.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Text('فقط وزن میله خالی (۲۰ کیلوگرم)', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'فقط وزن میله خالی (۲۰ کیلوگرم)',
+                    style: TextStyle(
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 )
               else
                 Wrap(
@@ -713,13 +827,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     final plateWeight = e.key;
                     final count = e.value;
                     Color plateColor = const Color(0xFF10B981);
-                    if (plateWeight >= 20) plateColor = const Color(0xFFEF4444);
-                    else if (plateWeight >= 15) plateColor = const Color(0xFF3B82F6);
-                    else if (plateWeight >= 10) plateColor = const Color(0xFFF59E0B);
-                    else if (plateWeight >= 5) plateColor = const Color(0xFF8B5CF6);
+                    if (plateWeight >= 20)
+                      plateColor = const Color(0xFFEF4444);
+                    else if (plateWeight >= 15)
+                      plateColor = const Color(0xFF3B82F6);
+                    else if (plateWeight >= 10)
+                      plateColor = const Color(0xFFF59E0B);
+                    else if (plateWeight >= 5)
+                      plateColor = const Color(0xFF8B5CF6);
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: plateColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
@@ -728,13 +849,22 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       child: Column(
                         children: [
                           Text(
-                            toPersianDigits('${plateWeight.toStringAsFixed(plateWeight % 1 == 0 ? 0 : 1)} kg'),
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: plateColor),
+                            toPersianDigits(
+                              '${plateWeight.toStringAsFixed(plateWeight % 1 == 0 ? 0 : 1)} kg',
+                            ),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: plateColor,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             toPersianDigits('$count عدد هر طرف'),
-                            style: const TextStyle(fontSize: 11, color: Colors.white70),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
                           ),
                         ],
                       ),
@@ -748,10 +878,18 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('متوجه شدم', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: const Text(
+                    'متوجه شدم',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -763,12 +901,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
   Future<void> _copyPreviousRecord(SSExerciseChecklistEntry entry) async {
     try {
-      final lastSet = await ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id);
+      final lastSet = await ref
+          .read(ssWorkoutProvider(_key).notifier)
+          .getLastLoggedSetForExercise(entry.exercise.id);
       if (lastSet != null) {
         final lastWeight = (lastSet['weight'] as num?)?.toDouble() ?? 0.0;
         final lastReps = (lastSet['reps'] as num?)?.toInt() ?? 10;
         for (var i = 0; i < entry.setRows.length; i++) {
-          _dispatchIntent(UpdateSetWeightAndReps(setIndex: i, weight: lastWeight, reps: lastReps));
+          _dispatchIntent(
+            UpdateSetWeightAndReps(
+              setIndex: i,
+              weight: lastWeight,
+              reps: lastReps,
+            ),
+          );
         }
         RitmoHaptics.success();
         if (mounted) {
@@ -777,7 +923,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               content: Directionality(
                 textDirection: TextDirection.rtl,
                 child: Text(
-                  toPersianDigits('اطلاعات سابقه قبلی (${lastWeight.round()}kg × $lastReps تکرار) روی ست‌ها کپی شد ✨'),
+                  toPersianDigits(
+                    'اطلاعات سابقه قبلی (${lastWeight.round()}kg × $lastReps تکرار) روی ست‌ها کپی شد ✨',
+                  ),
                   style: const TextStyle(),
                 ),
               ),
@@ -792,7 +940,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             const SnackBar(
               content: Directionality(
                 textDirection: TextDirection.rtl,
-                child: Text('سابقه قبلی برای این حرکت ثبت نشده است.', style: TextStyle()),
+                child: Text(
+                  'سابقه قبلی برای این حرکت ثبت نشده است.',
+                  style: TextStyle(),
+                ),
               ),
               backgroundColor: Colors.orangeAccent,
               behavior: SnackBarBehavior.floating,
@@ -800,12 +951,16 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           );
         }
       }
-    } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_workout_session_screen.dart: $e');
+    }
   }
 
   Future<void> _finishAndLogWorkout() async {
     try {
-      final result = await ref.read(ssWorkoutProvider(_key).notifier).finishAndLogWorkout();
+      final result = await ref
+          .read(ssWorkoutProvider(_key).notifier)
+          .finishAndLogWorkout();
       if (mounted) {
         unawaited(
           Navigator.pushReplacement(
@@ -866,10 +1021,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.arrow_downward_rounded, color: Colors.amberAccent),
-                title: const Text('کاهش وزن و شدت حرکت', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('کاهش ۳۰ درصدی وزنه یا تکرار ست‌های باقی‌مانده', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(
+                  Icons.arrow_downward_rounded,
+                  color: Colors.amberAccent,
+                ),
+                title: const Text(
+                  'کاهش وزن و شدت حرکت',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  'کاهش ۳۰ درصدی وزنه یا تکرار ست‌های باقی‌مانده',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -879,7 +1048,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     if (set.status != SetStatus.done) {
                       final newW = (set.weight * 0.7).roundToDouble();
                       final newR = max(3, set.reps - 3);
-                      _dispatchIntent(UpdateSetWeightAndReps(setIndex: i, weight: newW > 0 ? newW : null, reps: newR));
+                      _dispatchIntent(
+                        UpdateSetWeightAndReps(
+                          setIndex: i,
+                          weight: newW > 0 ? newW : null,
+                          reps: newR,
+                        ),
+                      );
                     }
                   }
                   try {
@@ -888,18 +1063,35 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'id': 'pain_dec_${DateTime.now().millisecondsSinceEpoch}',
                       'userId': 'default',
                       'decisionType': 'PAIN_ACTION',
-                      'rejectionReason': 'REDUCE_WEIGHT; exercise=${current.exercise.id}',
+                      'rejectionReason':
+                          'REDUCE_WEIGHT; exercise=${current.exercise.id}',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
+                  } catch (e) {
+                    debugPrint('[ss] ss_workout_session_screen.dart: $e');
+                  }
                 },
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF38BDF8)),
-                title: const Text('تعویض با حرکت جایگزین ایمن', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('انتخاب از بین حرکات کم‌فشارتر بدون فشار به این مفصل', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(
+                  Icons.swap_horiz_rounded,
+                  color: Color(0xFF38BDF8),
+                ),
+                title: const Text(
+                  'تعویض با حرکت جایگزین ایمن',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  'انتخاب از بین حرکات کم‌فشارتر بدون فشار به این مفصل',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -910,19 +1102,36 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'id': 'pain_dec_${DateTime.now().millisecondsSinceEpoch}',
                       'userId': 'default',
                       'decisionType': 'PAIN_ACTION',
-                      'rejectionReason': 'SWAP_EXERCISE; exercise=${current.exercise.id}',
+                      'rejectionReason':
+                          'SWAP_EXERCISE; exercise=${current.exercise.id}',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
+                  } catch (e) {
+                    debugPrint('[ss] ss_workout_session_screen.dart: $e');
+                  }
                   await _showSwapBottomSheet();
                 },
               ),
               const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.stop_circle_outlined, color: Colors.redAccent),
-                title: const Text('پایان امن تمرین امروز', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: const Text('ثبت ست‌های انجام‌شده تا الان بدون افت رکورد', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(
+                  Icons.stop_circle_outlined,
+                  color: Colors.redAccent,
+                ),
+                title: const Text(
+                  'پایان امن تمرین امروز',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  'ثبت ست‌های انجام‌شده تا الان بدون افت رکورد',
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 tileColor: const Color(0xFF1E293B),
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -935,16 +1144,22 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       'rejectionReason': 'SAFE_STOP',
                       'createdAt': DateTime.now().millisecondsSinceEpoch,
                     });
-                  } catch (e) { debugPrint('[ss] ss_workout_session_screen.dart: $e'); }
-                  
+                  } catch (e) {
+                    debugPrint('[ss] ss_workout_session_screen.dart: $e');
+                  }
+
                   final state = ref.read(ssWorkoutProvider(_key));
-                  final completedCount = state.exercises.where((e) => e.status == ExerciseStatus.done).length;
+                  final completedCount = state.exercises
+                      .where((e) => e.status == ExerciseStatus.done)
+                      .length;
                   if (completedCount == 0) {
-                    await ref.read(ssWorkoutProvider(_key).notifier).abandonSession();
+                    await ref
+                        .read(ssWorkoutProvider(_key).notifier)
+                        .abandonSession();
                     if (mounted) Navigator.pop(context);
                     return;
                   }
-                  
+
                   await _finishAndLogWorkout();
                 },
               ),
@@ -979,10 +1194,7 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const SizedBox(height: 12),
               Text(
                 'برای ثبت دقیق‌تر شدت تمرین شما در الگوریتم هوشمند',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[400],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
               ),
             ],
           ),
@@ -990,20 +1202,30 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       },
     ).then((_) {
       if (ref.read(ssWorkoutProvider(_key)).isShowingFeelingSheet) {
-        ref.read(ssWorkoutProvider(_key).notifier).dispatch(const DismissFeelingSheet());
+        ref
+            .read(ssWorkoutProvider(_key).notifier)
+            .dispatch(const DismissFeelingSheet());
       }
     });
   }
 
-  Widget _feelingButton(BuildContext ctx, String emoji, String label, Feeling feeling, SSWorkoutState state) {
+  Widget _feelingButton(
+    BuildContext ctx,
+    String emoji,
+    String label,
+    Feeling feeling,
+    SSWorkoutState state,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
           Navigator.pop(ctx);
-          _dispatchIntent(SelectFeeling(
-            state.exercises[state.currentExerciseIndex].exercise.id,
-            feeling,
-          ));
+          _dispatchIntent(
+            SelectFeeling(
+              state.exercises[state.currentExerciseIndex].exercise.id,
+              feeling,
+            ),
+          );
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1082,20 +1304,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
     if (state.loadError != null || _exercises.isEmpty) {
       final colors = context.colors;
-      final errorMessage = state.loadError ?? 'تمرینی برای این روز آماده نشده است.';
+      final errorMessage =
+          state.loadError ?? 'تمرینی برای این روز آماده نشده است.';
       return Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.surface,
           elevation: 0,
           leading: IconButton(
-                     tooltip: 'بازگشت',
+            tooltip: 'بازگشت',
             icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
             'تمرین ورزشی',
-            style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         body: Center(
@@ -1104,12 +1330,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.fitness_center_outlined, size: 64, color: colors.textSecondary),
+                Icon(
+                  Icons.fitness_center_outlined,
+                  size: 64,
+                  color: colors.textSecondary,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   errorMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: colors.textPrimary, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -1125,18 +1359,32 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E293B),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('بازگشت به برنامه', style: TextStyle(color: Colors.white)),
+                      child: const Text(
+                        'بازگشت به برنامه',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
-                      onPressed: () => ref.read(ssWorkoutProvider(_key).notifier).init(),
+                      onPressed: () =>
+                          ref.read(ssWorkoutProvider(_key).notifier).init(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('تلاش دوباره', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'تلاش دوباره',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1218,8 +1466,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   // ─── 1. TOP HUD HEADER ───────────────────────────────────────
-  Widget _buildTopHUDHeader(SSExerciseChecklistEntry entry, SSWorkoutState state) {
-    final completedCount = _exercises.where((e) => e.status == ExerciseStatus.done).length;
+  Widget _buildTopHUDHeader(
+    SSExerciseChecklistEntry entry,
+    SSWorkoutState state,
+  ) {
+    final completedCount = _exercises
+        .where((e) => e.status == ExerciseStatus.done)
+        .length;
     final totalCount = _exercises.length;
     final progress = totalCount > 0 ? (completedCount / totalCount) : 0.0;
 
@@ -1236,13 +1489,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             children: [
               IconButton(
                 tooltip: 'بستن',
-                icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 24),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white70,
+                  size: 24,
+                ),
                 onPressed: _onClosePressed,
               ),
               const SizedBox(width: 4),
               // Session Duration Pill
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E293B),
                   borderRadius: BorderRadius.circular(20),
@@ -1250,7 +1510,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.timer_outlined, color: Color(0xFF10B981), size: 16),
+                    const Icon(
+                      Icons.timer_outlined,
+                      color: Color(0xFF10B981),
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       _formatElapsed(_elapsedSeconds),
@@ -1266,7 +1530,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const Spacer(),
               // Exercise counter badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF10B981), Color(0xFF059669)],
@@ -1274,7 +1541,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  toPersianDigits('حرکت ${_currentExerciseIndex + 1} از $totalCount'),
+                  toPersianDigits(
+                    'حرکت ${_currentExerciseIndex + 1} از $totalCount',
+                  ),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -1285,7 +1554,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               const Spacer(),
               // Pain Action Quick Button
               IconButton(
-                icon: const Icon(Icons.healing_rounded, color: Colors.amberAccent, size: 24),
+                icon: const Icon(
+                  Icons.healing_rounded,
+                  color: Colors.amberAccent,
+                  size: 24,
+                ),
                 tooltip: 'درد دارم ⚠️',
                 onPressed: _showPainActionSheet,
               ),
@@ -1293,13 +1566,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               IconButton(
                 tooltip: 'خروج از حالت دست‌آزاد',
                 icon: Icon(
-                  _handsFreeMode ? CupertinoIcons.zoom_out : CupertinoIcons.zoom_in,
-                  color: _handsFreeMode ? const Color(0xFFF59E0B) : Colors.white70,
+                  _handsFreeMode
+                      ? CupertinoIcons.zoom_out
+                      : CupertinoIcons.zoom_in,
+                  color: _handsFreeMode
+                      ? const Color(0xFFF59E0B)
+                      : Colors.white70,
                   size: 22,
                 ),
                 onPressed: () {
                   HapticFeedback.selectionClick();
-                  ref.read(ssWorkoutProvider(_key).notifier).toggleHandsFreeMode();
+                  ref
+                      .read(ssWorkoutProvider(_key).notifier)
+                      .toggleHandsFreeMode();
                 },
               ),
             ],
@@ -1312,7 +1591,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               value: progress,
               minHeight: 4,
               backgroundColor: const Color(0xFF1E293B),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF10B981),
+              ),
             ),
           ),
         ],
@@ -1358,7 +1639,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             color: isActive ? const Color(0xFF10B981) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             boxShadow: isActive
-                ? [BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 2))]
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
                 : null,
           ),
           child: Text(
@@ -1384,7 +1671,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         final ex = _exercises[index];
         final isCurrent = index == _currentExerciseIndex;
         final isDone = ex.status == ExerciseStatus.done;
-        final completedSets = ex.setRows.where((s) => s.status == SetStatus.done).length;
+        final completedSets = ex.setRows
+            .where((s) => s.status == SetStatus.done)
+            .length;
 
         return GestureDetector(
           onTap: () {
@@ -1397,10 +1686,14 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isCurrent ? const Color(0xFF10B981).withValues(alpha: 0.10) : const Color(0xFF141C2E),
+              color: isCurrent
+                  ? const Color(0xFF10B981).withValues(alpha: 0.10)
+                  : const Color(0xFF141C2E),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isCurrent ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                color: isCurrent
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF1E293B),
                 width: isCurrent ? 1.5 : 1,
               ),
             ),
@@ -1413,18 +1706,26 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   decoration: BoxDecoration(
                     color: isDone
                         ? const Color(0xFF10B981)
-                        : (isCurrent ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B)),
+                        : (isCurrent
+                              ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                              : const Color(0xFF1E293B)),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: isDone
-                        ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          )
                         : Text(
                             toPersianDigits('${index + 1}'),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: isCurrent ? const Color(0xFF10B981) : Colors.white54,
+                              color: isCurrent
+                                  ? const Color(0xFF10B981)
+                                  : Colors.white54,
                             ),
                           ),
                   ),
@@ -1440,30 +1741,55 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isCurrent ? const Color(0xFF10B981) : Colors.white,
+                          color: isCurrent
+                              ? const Color(0xFF10B981)
+                              : Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        toPersianDigits('${ex.referenceSets} ست × ${ex.referenceReps} تکرار  •  $completedSets/${ex.referenceSets} انجام شده'),
-                        style: const TextStyle(fontSize: 12, color: Colors.white54),
+                        toPersianDigits(
+                          '${ex.referenceSets} ست × ${ex.referenceReps} تکرار  •  $completedSets/${ex.referenceSets} انجام شده',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white54,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (isCurrent)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('جاری', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text(
+                      'جاری',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   )
                 else if (isDone)
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF10B981),
+                    size: 22,
+                  )
                 else
-                  const Icon(Icons.radio_button_unchecked, color: Colors.white30, size: 22),
+                  const Icon(
+                    Icons.radio_button_unchecked,
+                    color: Colors.white30,
+                    size: 22,
+                  ),
               ],
             ),
           ),
@@ -1474,7 +1800,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
   // ─── Previous Record + 1RM Panel ─────────────────────────────
   Widget _buildPreviousRecordPanel(SSExerciseChecklistEntry entry) {
-    final activeRow = entry.setRows.where((r) => r.status == SetStatus.current || r.status == SetStatus.done).lastOrNull;
+    final activeRow = entry.setRows
+        .where(
+          (r) => r.status == SetStatus.current || r.status == SetStatus.done,
+        )
+        .lastOrNull;
     final w = activeRow?.weight ?? 0.0;
     final r = activeRow?.reps ?? 0;
     double? oneRM;
@@ -1510,17 +1840,34 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     Row(
                       textDirection: TextDirection.rtl,
                       children: [
-                        const Icon(Icons.history_rounded, size: 15, color: Color(0xFF06B6D4)),
+                        const Icon(
+                          Icons.history_rounded,
+                          size: 15,
+                          color: Color(0xFF06B6D4),
+                        ),
                         const SizedBox(width: 4),
-                        const Text('دفعه قبل', style: TextStyle(fontSize: 11, color: Color(0xFF06B6D4))),
+                        const Text(
+                          'دفعه قبل',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF06B6D4),
+                          ),
+                        ),
                         const Spacer(),
                         InkWell(
                           onTap: () => _copyPreviousRecord(entry),
                           child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
                             child: Text(
                               'کپی روی ست‌ها 📋',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF38BDF8), fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF38BDF8),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1528,20 +1875,38 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     ),
                     const SizedBox(height: 4),
                     FutureBuilder<Map<String, dynamic>?>(
-                      future: ref.read(ssWorkoutProvider(_key).notifier).getLastLoggedSetForExercise(entry.exercise.id),
+                      future: ref
+                          .read(ssWorkoutProvider(_key).notifier)
+                          .getLastLoggedSetForExercise(entry.exercise.id),
                       builder: (context, snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
-                          return const Text('...', style: TextStyle(fontSize: 13, color: Colors.white54));
+                          return const Text(
+                            '...',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white54,
+                            ),
+                          );
                         }
                         final data = snap.data;
                         if (data == null) {
-                          return const Text('سابقه‌ای ندارد', style: TextStyle(fontSize: 13, color: Colors.white38));
+                          return const Text(
+                            'سابقه‌ای ندارد',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white38,
+                            ),
+                          );
                         }
                         final lw = (data['weight'] as num?)?.toDouble() ?? 0.0;
                         final lr = (data['reps'] as num?)?.toInt() ?? 0;
                         return Text(
                           toPersianDigits('${lw.round()} kg × $lr تکرار'),
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         );
                       },
                     ),
@@ -1550,7 +1915,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               ),
 
               // Divider
-              Container(width: 1, height: 40, color: const Color(0xFF1E293B), margin: const EdgeInsets.symmetric(horizontal: 12)),
+              Container(
+                width: 1,
+                height: 40,
+                color: const Color(0xFF1E293B),
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+              ),
 
               // 1RM Estimator
               Expanded(
@@ -1560,9 +1930,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     const Row(
                       textDirection: TextDirection.rtl,
                       children: [
-                        Icon(Icons.bolt_rounded, size: 15, color: Color(0xFFF59E0B)),
+                        Icon(
+                          Icons.bolt_rounded,
+                          size: 15,
+                          color: Color(0xFFF59E0B),
+                        ),
                         SizedBox(width: 4),
-                        Text('۱ تکرار بیشینه (1RM)', style: TextStyle(fontSize: 11, color: Color(0xFFF59E0B))),
+                        Text(
+                          '۱ تکرار بیشینه (1RM)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFF59E0B),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1582,7 +1962,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             ],
           ),
         ),
-        if (entry.optionalNote != null && entry.optionalNote!.trim().isNotEmpty) ...[
+        if (entry.optionalNote != null &&
+            entry.optionalNote!.trim().isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -1590,21 +1971,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             decoration: BoxDecoration(
               color: const Color(0xFF10B981).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+              border: Border.all(
+                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               textDirection: TextDirection.rtl,
               children: [
-                const Icon(Icons.note_alt_outlined, size: 16, color: Color(0xFF10B981)),
+                const Icon(
+                  Icons.note_alt_outlined,
+                  size: 16,
+                  color: Color(0xFF10B981),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'دفعه قبل: ${entry.optionalNote}',
                     textDirection: TextDirection.rtl,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: Colors.white,
-                    ),
+                    style: const TextStyle(fontSize: 11.5, color: Colors.white),
                   ),
                 ),
               ],
@@ -1615,10 +1999,12 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     );
   }
 
-
   // ─── Muscle Activation Gauge ──────────────────────────────────
   Widget _buildMuscleActivationGauge(SSExerciseChecklistEntry entry) {
-    final muscleData = _getMuscleData(entry.exercise.category, entry.exercise.id);
+    final muscleData = _getMuscleData(
+      entry.exercise.category,
+      entry.exercise.id,
+    );
     if (muscleData.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -1634,11 +2020,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           const Row(
             textDirection: TextDirection.rtl,
             children: [
-              Icon(Icons.accessibility_new_rounded, size: 16, color: Color(0xFF8B5CF6)),
+              Icon(
+                Icons.accessibility_new_rounded,
+                size: 16,
+                color: Color(0xFF8B5CF6),
+              ),
               SizedBox(width: 6),
               Text(
                 'درصد درگیری عضلات',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6)),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8B5CF6),
+                ),
               ),
             ],
           ),
@@ -1654,8 +2048,21 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     textDirection: TextDirection.rtl,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(e.key, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                      Text(toPersianDigits('${e.value}٪'), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors)),
+                      Text(
+                        e.key,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      Text(
+                        toPersianDigits('${e.value}٪'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colors,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -1692,16 +2099,31 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   Color _muscleColor(String muscleName) {
-    if (muscleName.contains('سینه') || muscleName.contains('سرشانه') || muscleName.contains('شکم')) return const Color(0xFF10B981);
-    if (muscleName.contains('پشت') || muscleName.contains('کمر') || muscleName.contains('همسترینگ')) return const Color(0xFF3B82F6);
-    if (muscleName.contains('جلوبازو') || muscleName.contains('بایسپس') || muscleName.contains('ساعد')) return const Color(0xFFF59E0B);
-    if (muscleName.contains('چهارسر') || muscleName.contains('باسن') || muscleName.contains('پا')) return const Color(0xFF8B5CF6);
+    if (muscleName.contains('سینه') ||
+        muscleName.contains('سرشانه') ||
+        muscleName.contains('شکم'))
+      return const Color(0xFF10B981);
+    if (muscleName.contains('پشت') ||
+        muscleName.contains('کمر') ||
+        muscleName.contains('همسترینگ'))
+      return const Color(0xFF3B82F6);
+    if (muscleName.contains('جلوبازو') ||
+        muscleName.contains('بایسپس') ||
+        muscleName.contains('ساعد'))
+      return const Color(0xFFF59E0B);
+    if (muscleName.contains('چهارسر') ||
+        muscleName.contains('باسن') ||
+        muscleName.contains('پا'))
+      return const Color(0xFF8B5CF6);
     return const Color(0xFF06B6D4);
   }
 
   // ─── 2. HERO VISUAL STAGE (Lottie + Exercise Info) ───────────
   Widget _buildHeroVisualStage(SSExerciseChecklistEntry entry) {
-    final muscleImage = SSMuscleImageResolver.resolve(entry.exercise.id, _userGender);
+    final muscleImage = SSMuscleImageResolver.resolve(
+      entry.exercise.id,
+      _userGender,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -1754,9 +2176,14 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1769,11 +2196,17 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             ),
                           ),
                           const SizedBox(width: 8),
-                          if (entry.exercise.equipment != null && entry.exercise.equipment!.isNotEmpty)
+                          if (entry.exercise.equipment != null &&
+                              entry.exercise.equipment!.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
+                                color: const Color(
+                                  0xFF06B6D4,
+                                ).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -1797,7 +2230,8 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (entry.exercise.nameEn != null && entry.exercise.nameEn!.isNotEmpty)
+                      if (entry.exercise.nameEn != null &&
+                          entry.exercise.nameEn!.isNotEmpty)
                         Text(
                           entry.exercise.nameEn!,
                           style: const TextStyle(
@@ -1838,14 +2272,20 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               children: [
                 _stageTag(
                   Icons.layers_outlined,
-                  toPersianDigits('${entry.referenceSets} ست × ${entry.referenceReps} تکرار'),
+                  toPersianDigits(
+                    '${entry.referenceSets} ست × ${entry.referenceReps} تکرار',
+                  ),
                 ),
                 _stageTag(
-                  entry.exercise.impact >= 2 ? Icons.directions_run : Icons.accessibility,
+                  entry.exercise.impact >= 2
+                      ? Icons.directions_run
+                      : Icons.accessibility,
                   entry.exercise.impact >= 2 ? 'برخورد بالا' : 'آرام/کم‌برخورد',
                 ),
                 _stageTag(
-                  entry.exercise.noisy >= 2 ? Icons.volume_up : Icons.volume_off,
+                  entry.exercise.noisy >= 2
+                      ? Icons.volume_up
+                      : Icons.volume_off,
                   entry.exercise.noisy >= 2 ? 'پرصدا' : 'بی‌صدا',
                 ),
               ],
@@ -1887,7 +2327,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           Row(
             textDirection: TextDirection.rtl,
             children: [
-              const Icon(Icons.format_list_bulleted_rounded, color: Color(0xFF10B981), size: 20),
+              const Icon(
+                Icons.format_list_bulleted_rounded,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'ثبت ست‌های تمرین',
@@ -1899,11 +2343,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               ),
               const Spacer(),
               Text(
-                toPersianDigits('${entry.completedSetsCount} از ${entry.referenceSets} تکمیل شده'),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white54,
+                toPersianDigits(
+                  '${entry.completedSetsCount} از ${entry.referenceSets} تکمیل شده',
                 ),
+                style: const TextStyle(fontSize: 12, color: Colors.white54),
               ),
             ],
           ),
@@ -1943,13 +2386,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   height: 54,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: currentSetIndex != -1 ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                      backgroundColor: currentSetIndex != -1
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF1E293B),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       elevation: 0,
                     ),
                     icon: Icon(
-                      currentSetIndex != -1 ? CupertinoIcons.checkmark_alt_circle_fill : Icons.done_all,
+                      currentSetIndex != -1
+                          ? CupertinoIcons.checkmark_alt_circle_fill
+                          : Icons.done_all,
                       size: 22,
                     ),
                     label: Text(
@@ -1967,15 +2416,22 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   ),
                 ),
               ),
-              if (entry.setRows.any((s) => s.status == SetStatus.done) || _currentExerciseIndex > 0) ...[
+              if (entry.setRows.any((s) => s.status == SetStatus.done) ||
+                  _currentExerciseIndex > 0) ...[
                 const SizedBox(width: 8),
                 IconButton.filledTonal(
                   style: IconButton.styleFrom(
                     backgroundColor: const Color(0xFF1E293B),
                     padding: const EdgeInsets.all(14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  icon: const Icon(Icons.undo_rounded, color: Colors.white70, size: 22),
+                  icon: const Icon(
+                    Icons.undo_rounded,
+                    color: Colors.white70,
+                    size: 22,
+                  ),
                   tooltip: 'واگرد آخرین ست',
                   onPressed: () => _dispatchIntent(const UndoLastSet()),
                 ),
@@ -1998,7 +2454,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       decoration: BoxDecoration(
         color: isCurrent
             ? const Color(0xFF10B981).withValues(alpha: 0.12)
-            : (isDone ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFF0F172A)),
+            : (isDone
+                  ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                  : const Color(0xFF0F172A)),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isCurrent ? const Color(0xFF10B981) : const Color(0xFF1E293B),
@@ -2027,27 +2485,36 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             flex: 2,
             child: isCurrent
                 ? _stepperCell(
-                    valueText: toPersianDigits(row.weight == row.weight.roundToDouble()
-                        ? '${row.weight.round()}'
-                        : row.weight.toStringAsFixed(1)),
-                    onMinus: () => _dispatchIntent(UpdateSetWeightAndReps(
-                      setIndex: row.setNumber - 1,
-                      weight: max(0, row.weight - 2.5),
-                    )),
-                    onPlus: () => _dispatchIntent(UpdateSetWeightAndReps(
-                      setIndex: row.setNumber - 1,
-                      weight: row.weight + 2.5,
-                    )),
+                    valueText: toPersianDigits(
+                      row.weight == row.weight.roundToDouble()
+                          ? '${row.weight.round()}'
+                          : row.weight.toStringAsFixed(1),
+                    ),
+                    onMinus: () => _dispatchIntent(
+                      UpdateSetWeightAndReps(
+                        setIndex: row.setNumber - 1,
+                        weight: max(0, row.weight - 2.5),
+                      ),
+                    ),
+                    onPlus: () => _dispatchIntent(
+                      UpdateSetWeightAndReps(
+                        setIndex: row.setNumber - 1,
+                        weight: row.weight + 2.5,
+                      ),
+                    ),
                     onTapValue: () {
                       _showQuickEditValueDialog(
-                        title: 'تنظیم وزن ست ${toPersianDigits(row.setNumber.toString())}',
+                        title:
+                            'تنظیم وزن ست ${toPersianDigits(row.setNumber.toString())}',
                         initialValue: row.weight.toString(),
                         suffix: 'کیلوگرم',
                         onSaved: (newWeight) {
-                          _dispatchIntent(UpdateSetWeightAndReps(
-                            setIndex: row.setNumber - 1,
-                            weight: max(0, newWeight),
-                          ));
+                          _dispatchIntent(
+                            UpdateSetWeightAndReps(
+                              setIndex: row.setNumber - 1,
+                              weight: max(0, newWeight),
+                            ),
+                          );
                         },
                       );
                     },
@@ -2055,7 +2522,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 : Center(
                     child: Text(
                       toPersianDigits('${row.weight.round()} kg'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
           ),
@@ -2066,24 +2536,31 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             child: isCurrent
                 ? _stepperCell(
                     valueText: toPersianDigits('${row.reps}'),
-                    onMinus: () => _dispatchIntent(UpdateSetWeightAndReps(
-                      setIndex: row.setNumber - 1,
-                      reps: max(1, row.reps - 1),
-                    )),
-                    onPlus: () => _dispatchIntent(UpdateSetWeightAndReps(
-                      setIndex: row.setNumber - 1,
-                      reps: row.reps + 1,
-                    )),
+                    onMinus: () => _dispatchIntent(
+                      UpdateSetWeightAndReps(
+                        setIndex: row.setNumber - 1,
+                        reps: max(1, row.reps - 1),
+                      ),
+                    ),
+                    onPlus: () => _dispatchIntent(
+                      UpdateSetWeightAndReps(
+                        setIndex: row.setNumber - 1,
+                        reps: row.reps + 1,
+                      ),
+                    ),
                     onTapValue: () {
                       _showQuickEditValueDialog(
-                        title: 'تنظیم تکرار ست ${toPersianDigits(row.setNumber.toString())}',
+                        title:
+                            'تنظیم تکرار ست ${toPersianDigits(row.setNumber.toString())}',
                         initialValue: row.reps.toString(),
                         suffix: 'تکرار',
                         onSaved: (newReps) {
-                          _dispatchIntent(UpdateSetWeightAndReps(
-                            setIndex: row.setNumber - 1,
-                            reps: max(1, newReps.round()),
-                          ));
+                          _dispatchIntent(
+                            UpdateSetWeightAndReps(
+                              setIndex: row.setNumber - 1,
+                              reps: max(1, newReps.round()),
+                            ),
+                          );
                         },
                       );
                     },
@@ -2091,7 +2568,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 : Center(
                     child: Text(
                       toPersianDigits('${row.reps} تکرار'),
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
           ),
@@ -2103,7 +2583,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   ? _rirDropdownDark(row)
                   : Text(
                       isDone ? toPersianDigits('${row.rir}') : '-',
-                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
                     ),
             ),
           ),
@@ -2113,10 +2596,22 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
             flex: 2,
             child: Center(
               child: isDone
-                  ? const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 22)
+                  ? const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF10B981),
+                      size: 22,
+                    )
                   : (isCurrent
-                      ? const Icon(Icons.play_circle_fill, color: Color(0xFF10B981), size: 22)
-                      : const Icon(Icons.radio_button_unchecked, color: Colors.white30, size: 20)),
+                        ? const Icon(
+                            Icons.play_circle_fill,
+                            color: Color(0xFF10B981),
+                            size: 22,
+                          )
+                        : const Icon(
+                            Icons.radio_button_unchecked,
+                            color: Colors.white30,
+                            size: 20,
+                          )),
             ),
           ),
         ],
@@ -2189,7 +2684,11 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         value: row.rir,
         isDense: true,
         dropdownColor: const Color(0xFF1E293B),
-        icon: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 18),
+        icon: const Icon(
+          Icons.arrow_drop_down,
+          color: Colors.white70,
+          size: 18,
+        ),
         underline: const SizedBox(),
         items: [0, 1, 2, 3, 4, 5].map((v) {
           return DropdownMenuItem(
@@ -2202,7 +2701,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         }).toList(),
         onChanged: (v) {
           if (v != null) {
-            _dispatchIntent(UpdateSetWeightAndReps(setIndex: row.setNumber - 1, rir: v));
+            _dispatchIntent(
+              UpdateSetWeightAndReps(setIndex: row.setNumber - 1, rir: v),
+            );
           }
         },
       ),
@@ -2216,7 +2717,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF10B981).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+        ),
       ),
       child: const Row(
         textDirection: TextDirection.rtl,
@@ -2237,7 +2740,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   // ─── 4. FLOATING BOTTOM DOCK ─────────────────────────────────
   Widget _buildBottomFloatingDock(SSExerciseChecklistEntry entry) {
     // Calculate total weight for current set for plate calculator
-    final activeRow = entry.setRows.where((r) => r.status == SetStatus.current).firstOrNull;
+    final activeRow = entry.setRows
+        .where((r) => r.status == SetStatus.current)
+        .firstOrNull;
     final currentWeight = activeRow?.weight ?? 0.0;
 
     return Container(
@@ -2271,7 +2776,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                   icon: Icons.fitness_center_rounded,
                   label: 'وزنه‌ها',
                   accentColor: const Color(0xFF10B981),
-                  onTap: () => _showPlateCalculatorSheet(currentWeight > 0 ? currentWeight : 60.0),
+                  onTap: () => _showPlateCalculatorSheet(
+                    currentWeight > 0 ? currentWeight : 60.0,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
@@ -2355,9 +2862,18 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
     );
   }
 
-  Widget _navArrowButton({required IconData icon, required bool enabled, required VoidCallback onTap}) {
+  Widget _navArrowButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: enabled ? () { RitmoHaptics.selection(); onTap(); } : null,
+      onTap: enabled
+          ? () {
+              RitmoHaptics.selection();
+              onTap();
+            }
+          : null,
       child: Container(
         width: 40,
         height: 44,
@@ -2365,7 +2881,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
         decoration: BoxDecoration(
           color: enabled ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: enabled ? const Color(0xFF334155) : const Color(0xFF1E293B)),
+          border: Border.all(
+            color: enabled ? const Color(0xFF334155) : const Color(0xFF1E293B),
+          ),
         ),
         child: Icon(
           icon,
@@ -2384,7 +2902,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }) {
     final color = accentColor ?? const Color(0xFF06B6D4);
     return GestureDetector(
-      onTap: () { RitmoHaptics.selection(); onTap(); },
+      onTap: () {
+        RitmoHaptics.selection();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
@@ -2412,8 +2933,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   // ─── 5. FULL-STAGE REST MODE OVERLAY ─────────────────────────
-  Widget _buildRestingOverlay(SSWorkoutState state, SSExerciseChecklistEntry entry) {
-    final progress = _restTotalSeconds > 0 ? (_restRemainingSeconds / _restTotalSeconds) : 0.0;
+  Widget _buildRestingOverlay(
+    SSWorkoutState state,
+    SSExerciseChecklistEntry entry,
+  ) {
+    final progress = _restTotalSeconds > 0
+        ? (_restRemainingSeconds / _restTotalSeconds)
+        : 0.0;
     final curIdx = entry.currentSetIndex;
     final hasNextSet = curIdx != -1 && curIdx + 1 < entry.setRows.length;
     final nextSet = hasNextSet ? entry.setRows[curIdx + 1] : null;
@@ -2429,11 +2955,16 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Text(
                     'استراحت و تنفس عمیق 🧘‍♂️',
@@ -2456,7 +2987,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       child: CircularProgressIndicator(
                         value: progress,
                         strokeWidth: 8,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFF10B981),
+                        ),
                         backgroundColor: const Color(0xFF1E293B),
                       ),
                     ),
@@ -2490,31 +3023,47 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E293B),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       icon: Icon(
-                        _isTimerPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                        _isTimerPaused
+                            ? Icons.play_arrow_rounded
+                            : Icons.pause_rounded,
                         color: const Color(0xFF10B981),
                       ),
                       label: Text(
                         _isTimerPaused ? 'ادامه' : 'توقف',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      onPressed: () => _dispatchIntent(const PauseResumeTimer()),
+                      onPressed: () =>
+                          _dispatchIntent(const PauseResumeTimer()),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       onPressed: () => _dispatchIntent(const SkipRestTimer()),
                       child: const Text(
                         'شروع ست بعدی ⏭',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -2557,9 +3106,18 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _nextSetMetric('وزنه', toPersianDigits('${nextSet.weight.round()} kg')),
-                            _nextSetMetric('تکرار', toPersianDigits('${nextSet.reps} تکرار')),
-                            _nextSetMetric('RIR', toPersianDigits('${nextSet.rir}')),
+                            _nextSetMetric(
+                              'وزنه',
+                              toPersianDigits('${nextSet.weight.round()} kg'),
+                            ),
+                            _nextSetMetric(
+                              'تکرار',
+                              toPersianDigits('${nextSet.reps} تکرار'),
+                            ),
+                            _nextSetMetric(
+                              'RIR',
+                              toPersianDigits('${nextSet.rir}'),
+                            ),
                           ],
                         ),
                       ],
@@ -2576,9 +3134,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   Widget _nextSetMetric(String title, String val) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontSize: 11, color: Colors.white38)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 11, color: Colors.white38),
+        ),
         const SizedBox(height: 2),
-        Text(val, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(
+          val,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ],
     );
   }
@@ -2617,7 +3185,9 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               ),
               const SizedBox(height: 32),
               Text(
-                toPersianDigits('شروع تمرین تا ${state.timerRemainingSeconds} ثانیه...'),
+                toPersianDigits(
+                  'شروع تمرین تا ${state.timerRemainingSeconds} ثانیه...',
+                ),
                 style: const TextStyle(
                   fontSize: 22,
                   color: Colors.amberAccent,
@@ -2629,8 +3199,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: const Text(
@@ -2712,8 +3287,13 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               onPressed: _finishAndLogWorkout,
               child: const Text(
@@ -2728,7 +3308,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   }
 
   // ─── HANDS-FREE HUD ──────────────────────────────────────────
-  Widget _buildHandsFreeHud(SSExerciseChecklistEntry entry, SSWorkoutState state) {
+  Widget _buildHandsFreeHud(
+    SSExerciseChecklistEntry entry,
+    SSWorkoutState state,
+  ) {
     final curSetIdx = entry.currentSetIndex;
     final curSet = curSetIdx != -1 ? entry.setRows[curSetIdx] : null;
 
@@ -2740,13 +3323,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
                       tooltip: 'بستن',
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white70,
+                      ),
                       onPressed: _onClosePressed,
                     ),
                     const Text(
@@ -2759,10 +3348,15 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                     ),
                     IconButton(
                       tooltip: 'خروج از حالت دست‌آزاد',
-                      icon: const Icon(CupertinoIcons.zoom_out, color: Color(0xFFF59E0B)),
+                      icon: const Icon(
+                        CupertinoIcons.zoom_out,
+                        color: Color(0xFFF59E0B),
+                      ),
                       onPressed: () {
                         HapticFeedback.selectionClick();
-                        ref.read(ssWorkoutProvider(_key).notifier).toggleHandsFreeMode();
+                        ref
+                            .read(ssWorkoutProvider(_key).notifier)
+                            .toggleHandsFreeMode();
                       },
                     ),
                   ],
@@ -2772,7 +3366,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
 
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -2790,7 +3387,10 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                       const SizedBox(height: 8),
                       Text(
                         'درحال اجرای حرکت ${_currentExerciseIndex + 1} از ${_exercises.length}',
-                        style: const TextStyle(fontSize: 14, color: Colors.white38),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white38,
+                        ),
                       ),
                       const SizedBox(height: 36),
 
@@ -2802,21 +3402,44 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                               width: 180,
                               height: 180,
                               child: CircularProgressIndicator(
-                                value: _restTotalSeconds > 0 ? _restRemainingSeconds / _restTotalSeconds : 0.0,
+                                value: _restTotalSeconds > 0
+                                    ? _restRemainingSeconds / _restTotalSeconds
+                                    : 0.0,
                                 strokeWidth: 6,
-                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-                                backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF10B981),
+                                ),
+                                backgroundColor: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.15),
                               ),
                             ),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text('استراحت', style: TextStyle(fontSize: 14, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'استراحت',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF10B981),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 Text(
                                   toPersianDigits('$_restRemainingSeconds'),
-                                  style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: const TextStyle(
+                                    fontSize: 64,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                const Text('ثانیه', style: TextStyle(fontSize: 12, color: Colors.white38)),
+                                const Text(
+                                  'ثانیه',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white38,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -2827,14 +3450,26 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                           height: 68,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withValues(alpha: 0.1),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              side: const BorderSide(color: Colors.white24, width: 1.5),
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              side: const BorderSide(
+                                color: Colors.white24,
+                                width: 1.5,
+                              ),
                             ),
-                            onPressed: () => _dispatchIntent(const SkipRestTimer()),
+                            onPressed: () =>
+                                _dispatchIntent(const SkipRestTimer()),
                             child: const Text(
                               'رد کردن استراحت ⏭',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -2850,17 +3485,42 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                             children: [
                               Text(
                                 'ست شماره ${toPersianDigits(curSet.setNumber.toString())}',
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFF59E0B),
+                                ),
                               ),
                               const SizedBox(height: 24),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  _handsFreeMetric('وزن هدف', '${curSet.weight}', 'کیلوگرم'),
-                                  Container(width: 1, height: 60, color: Colors.white10),
-                                  _handsFreeMetric('تکرار هدف', '${curSet.reps}', 'تکرار'),
-                                  Container(width: 1, height: 60, color: Colors.white10),
-                                  _handsFreeMetric('RIR هدف', '${curSet.rir}', 'زاپاس'),
+                                  _handsFreeMetric(
+                                    'وزن هدف',
+                                    '${curSet.weight}',
+                                    'کیلوگرم',
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 60,
+                                    color: Colors.white10,
+                                  ),
+                                  _handsFreeMetric(
+                                    'تکرار هدف',
+                                    '${curSet.reps}',
+                                    'تکرار',
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 60,
+                                    color: Colors.white10,
+                                  ),
+                                  _handsFreeMetric(
+                                    'RIR هدف',
+                                    '${curSet.rir}',
+                                    'زاپاس',
+                                  ),
                                 ],
                               ),
                             ],
@@ -2874,13 +3534,24 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
                             ),
-                            icon: const Icon(CupertinoIcons.checkmark_alt_circle_fill, size: 28, color: Colors.white),
-                            onPressed: () => _dispatchIntent(const CompleteCurrentSet()),
+                            icon: const Icon(
+                              CupertinoIcons.checkmark_alt_circle_fill,
+                              size: 28,
+                              color: Colors.white,
+                            ),
+                            onPressed: () =>
+                                _dispatchIntent(const CompleteCurrentSet()),
                             label: Text(
                               'ثبت ست ${toPersianDigits(curSet.setNumber.toString())}',
-                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -2899,9 +3570,19 @@ class _SSWorkoutSessionScreenState extends ConsumerState<SSWorkoutSessionScreen>
   Widget _handsFreeMetric(String title, String val, String unit) {
     return Column(
       children: [
-        Text(title, style: const TextStyle(fontSize: 13, color: Colors.white38)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 13, color: Colors.white38),
+        ),
         const SizedBox(height: 6),
-        Text(toPersianDigits(val), style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text(
+          toPersianDigits(val),
+          style: const TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         Text(unit, style: const TextStyle(fontSize: 12, color: Colors.white38)),
       ],
     );

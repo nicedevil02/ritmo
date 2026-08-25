@@ -9,14 +9,14 @@ class RitmoGlassSurface extends StatelessWidget {
   const RitmoGlassSurface({
     super.key,
     required this.child,
-    this.blurSigma = 24.0,
+    this.blurSigma,
     this.borderRadius,
     this.padding,
     this.border,
   });
 
   final Widget child;
-  final double blurSigma;
+  final double? blurSigma;
   final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? padding;
   final Border? border;
@@ -24,14 +24,13 @@ class RitmoGlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final behavior = context.behavior;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final isDark = context.isDark;
 
     final effectiveRadius =
         borderRadius ?? BorderRadius.circular(RitmoRadius.card);
 
-    if (behavior.reduceTransparency || highContrast) {
+    if (!context.isGlassEnabled || highContrast) {
       return Container(
         padding: padding,
         decoration: BoxDecoration(
@@ -46,14 +45,21 @@ class RitmoGlassSurface extends StatelessWidget {
                 width: highContrast ? 2.0 : 1.0,
               ),
         ),
-        child: child,
+        child: Material(
+          type: MaterialType.transparency,
+          borderRadius: effectiveRadius,
+          child: child,
+        ),
       );
     }
+
+    final effectiveBlur =
+        (blurSigma ?? context.glassBlurSigma).clamp(0.0, 50.0);
 
     return ClipRRect(
       borderRadius: effectiveRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+        filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
@@ -63,11 +69,30 @@ class RitmoGlassSurface extends StatelessWidget {
                 border ??
                 Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.45),
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : Colors.white.withValues(alpha: 0.65),
+                  width: 1.0,
                 ),
           ),
-          child: child,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: effectiveRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              borderRadius: effectiveRadius,
+              child: child,
+            ),
+          ),
         ),
       ),
     );

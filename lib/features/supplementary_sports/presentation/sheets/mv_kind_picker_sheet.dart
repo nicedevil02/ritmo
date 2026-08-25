@@ -134,7 +134,8 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
         final lower = clean.toLowerCase();
         results = _allKinds.where((k) {
           final matchTitle = k.titleFa.toLowerCase().contains(lower);
-          final matchAlias = k.aliasesFa?.toLowerCase().contains(lower) ?? false;
+          final matchAlias =
+              k.aliasesFa?.toLowerCase().contains(lower) ?? false;
           return matchTitle || matchAlias;
         }).toList();
       } else {
@@ -143,7 +144,9 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
       if (mounted) {
         setState(() {
           if (_selectedFamily != null) {
-            _displayedKinds = results.where((k) => k.family == _selectedFamily).toList();
+            _displayedKinds = results
+                .where((k) => k.family == _selectedFamily)
+                .toList();
           } else {
             _displayedKinds = results;
           }
@@ -259,252 +262,303 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                // 1. Search Bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: 'جستجوی ورزش (مثلاً فوتبال، شنا، کوه...)',
-                    prefixIcon: Icon(Icons.search_rounded, color: colors.textSecondary),
-                    filled: true,
-                    fillColor: colors.surface,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: metrics.spaceMd,
-                      vertical: metrics.spaceSm,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(metrics.radiusField),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(metrics.radiusField),
-                      borderSide: BorderSide(color: colors.border),
+                  // 1. Search Bar
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      hintText: 'جستجوی ورزش (مثلاً فوتبال، شنا، کوه...)',
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: colors.textSecondary,
+                      ),
+                      filled: true,
+                      fillColor: colors.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceMd,
+                        vertical: metrics.spaceSm,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          metrics.radiusField,
+                        ),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          metrics.radiusField,
+                        ),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: metrics.spaceMd),
+                  SizedBox(height: metrics.spaceMd),
 
-                // 2. Family Filter Chips (7 ordered families)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: metrics.spaceSm),
-                        child: FilterChip(
-                          label: const Text('همه'),
-                          selected: _selectedFamily == null,
-                          onSelected: (_) => _onFamilySelected(null),
-                        ),
-                      ),
-                      ..._orderedFamilies.map((family) {
-                        return Padding(
+                  // 2. Family Filter Chips (7 ordered families)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        Padding(
                           padding: EdgeInsets.only(left: metrics.spaceSm),
                           child: FilterChip(
-                            avatar: Text(family.emoji),
-                            label: Text(family.titleFa),
-                            selected: _selectedFamily == family,
-                            onSelected: (_) => _onFamilySelected(family),
+                            label: const Text('همه'),
+                            selected: _selectedFamily == null,
+                            onSelected: (_) => _onFamilySelected(null),
                           ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-                SizedBox(height: metrics.spaceMd),
-
-                // 3. Recently Used Section (when no search query)
-                if (_searchController.text.isEmpty && _recentKinds.isNotEmpty && _selectedFamily == null) ...[
-                  Text(
-                    'اخیراً استفاده‌شده',
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: metrics.spaceSm),
-                  Wrap(
-                    spacing: metrics.spaceSm,
-                    runSpacing: metrics.spaceSm,
-                    children: _recentKinds.map((k) {
-                      return ActionChip(
-                        avatar: Text(k.emoji),
-                        label: Text(k.titleFa),
-                        onPressed: () => _selectKind(k),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: metrics.spaceMd),
-                ],
-
-                // 4. Seasonal Section (when no search query)
-                if (_searchController.text.isEmpty && _seasonalKinds.isNotEmpty && _selectedFamily == null) ...[
-                  Text(
-                    'مناسب این فصل',
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: metrics.spaceSm),
-                  Wrap(
-                    spacing: metrics.spaceSm,
-                    runSpacing: metrics.spaceSm,
-                    children: _seasonalKinds.map((k) {
-                      return ActionChip(
-                        avatar: Text(k.emoji),
-                        label: Text(k.titleFa),
-                        onPressed: () => _selectKind(k),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: metrics.spaceMd),
-                  const Divider(),
-                  SizedBox(height: metrics.spaceSm),
-                ],
-
-                // 5. Kinds List
-                if (_displayedKinds.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(metrics.spaceXl),
-                    child: Center(
-                      child: Text(
-                        'هیچ ورزشی با این مشخصات یافت نشد.',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colors.textSecondary,
                         ),
+                        ..._orderedFamilies.map((family) {
+                          return Padding(
+                            padding: EdgeInsets.only(left: metrics.spaceSm),
+                            child: FilterChip(
+                              avatar: Text(family.emoji),
+                              label: Text(family.titleFa),
+                              selected: _selectedFamily == family,
+                              onSelected: (_) => _onFamilySelected(family),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: metrics.spaceMd),
+
+                  // 3. Recently Used Section (when no search query)
+                  if (_searchController.text.isEmpty &&
+                      _recentKinds.isNotEmpty &&
+                      _selectedFamily == null) ...[
+                    Text(
+                      'اخیراً استفاده‌شده',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  )
-                else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _displayedKinds.length,
-                    separatorBuilder: (context, index) => SizedBox(height: metrics.spaceSm),
-                    itemBuilder: (context, index) {
-                      final kind = _displayedKinds[index];
-                      final isSelected = kind.code == widget.initialCode;
+                    SizedBox(height: metrics.spaceSm),
+                    Wrap(
+                      spacing: metrics.spaceSm,
+                      runSpacing: metrics.spaceSm,
+                      children: _recentKinds.map((k) {
+                        return ActionChip(
+                          avatar: Text(k.emoji),
+                          label: Text(k.titleFa),
+                          onPressed: () => _selectKind(k),
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: metrics.spaceMd),
+                  ],
 
-                      return InkWell(
-                        key: ValueKey('kind_${kind.code}'),
-                        onTap: () => _selectKind(kind),
-                        borderRadius: BorderRadius.circular(metrics.radiusCard),
-                        child: Container(
-                          padding: EdgeInsets.all(metrics.spaceMd),
-                          decoration: BoxDecoration(
-                            color: isSelected ? colors.primary.withValues(alpha: 0.1) : colors.surface,
-                            borderRadius: BorderRadius.circular(metrics.radiusCard),
-                            border: Border.all(
-                              color: isSelected ? colors.primary : colors.border,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                kind.emoji,
-                                style: const TextStyle(fontSize: 28),
-                              ),
-                              SizedBox(width: metrics.spaceMd),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      kind.titleFa,
-                                      style: textTheme.bodyLarge?.copyWith(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    SizedBox(height: metrics.spaceXs),
-                                    Wrap(
-                                      spacing: metrics.spaceSm,
-                                      runSpacing: 4,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: colors.surfaceElevated,
-                                            borderRadius: BorderRadius.circular(metrics.radiusCard),
-                                          ),
-                                          child: Text(
-                                            kind.family.titleFa,
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: colors.textSecondary,
-                                            ),
-                                          ),
-                                        ),
-                                        if (kind.isOutdoor)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: colors.surfaceElevated,
-                                              borderRadius: BorderRadius.circular(metrics.radiusCard),
-                                            ),
-                                            child: Text(
-                                              'فضای باز 🌿',
-                                              style: textTheme.labelSmall?.copyWith(
-                                                color: colors.textSecondary,
-                                              ),
-                                            ),
-                                          ),
-                                        if (kind.needsVenue)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: colors.surfaceElevated,
-                                              borderRadius: BorderRadius.circular(metrics.radiusCard),
-                                            ),
-                                            child: Text(
-                                              'نیازمند سالن 🏟',
-                                              style: textTheme.labelSmall?.copyWith(
-                                                color: colors.textSecondary,
-                                              ),
-                                            ),
-                                          ),
-                                        if (kind.jointImpact > 0)
-                                          Text(
-                                            'ضربه: ${kind.jointImpact}/3',
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: colors.textSecondary,
-                                            ),
-                                          ),
-                                        if (kind.primaryMetric.unitFa.isNotEmpty)
-                                          Text(
-                                            'واحد: ${kind.primaryMetric.unitFa}',
-                                            style: textTheme.labelSmall?.copyWith(
-                                              color: colors.textSecondary,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_left_rounded,
-                                color: colors.textSecondary,
-                              ),
-                            ],
+                  // 4. Seasonal Section (when no search query)
+                  if (_searchController.text.isEmpty &&
+                      _seasonalKinds.isNotEmpty &&
+                      _selectedFamily == null) ...[
+                    Text(
+                      'مناسب این فصل',
+                      style: textTheme.labelMedium?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: metrics.spaceSm),
+                    Wrap(
+                      spacing: metrics.spaceSm,
+                      runSpacing: metrics.spaceSm,
+                      children: _seasonalKinds.map((k) {
+                        return ActionChip(
+                          avatar: Text(k.emoji),
+                          label: Text(k.titleFa),
+                          onPressed: () => _selectKind(k),
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: metrics.spaceMd),
+                    const Divider(),
+                    SizedBox(height: metrics.spaceSm),
+                  ],
+
+                  // 5. Kinds List
+                  if (_displayedKinds.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.all(metrics.spaceXl),
+                      child: Center(
+                        child: Text(
+                          'هیچ ورزشی با این مشخصات یافت نشد.',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.textSecondary,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                SizedBox(height: metrics.spaceLg),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _displayedKinds.length,
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: metrics.spaceSm),
+                      itemBuilder: (context, index) {
+                        final kind = _displayedKinds[index];
+                        final isSelected = kind.code == widget.initialCode;
 
-                // 6. Create Custom Sport Button
-                OutlinedButton.icon(
-                  key: const ValueKey('mv_kind_picker_create_custom'),
-                  onPressed: _openCreateCustomDialog,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('تعریف ورزش یا فعالیت جدید'),
-                ),
-                SizedBox(height: metrics.spaceXl),
-              ],
+                        return InkWell(
+                          key: ValueKey('kind_${kind.code}'),
+                          onTap: () => _selectKind(kind),
+                          borderRadius: BorderRadius.circular(
+                            metrics.radiusCard,
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.all(metrics.spaceMd),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? colors.primary.withValues(alpha: 0.1)
+                                  : colors.surface,
+                              borderRadius: BorderRadius.circular(
+                                metrics.radiusCard,
+                              ),
+                              border: Border.all(
+                                color: isSelected
+                                    ? colors.primary
+                                    : colors.border,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  kind.emoji,
+                                  style: const TextStyle(fontSize: 28),
+                                ),
+                                SizedBox(width: metrics.spaceMd),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        kind.titleFa,
+                                        style: textTheme.bodyLarge?.copyWith(
+                                          color: colors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      SizedBox(height: metrics.spaceXs),
+                                      Wrap(
+                                        spacing: metrics.spaceSm,
+                                        runSpacing: 4,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: colors.surfaceElevated,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    metrics.radiusCard,
+                                                  ),
+                                            ),
+                                            child: Text(
+                                              kind.family.titleFa,
+                                              style: textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    color: colors.textSecondary,
+                                                  ),
+                                            ),
+                                          ),
+                                          if (kind.isOutdoor)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: colors.surfaceElevated,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      metrics.radiusCard,
+                                                    ),
+                                              ),
+                                              child: Text(
+                                                'فضای باز 🌿',
+                                                style: textTheme.labelSmall
+                                                    ?.copyWith(
+                                                      color:
+                                                          colors.textSecondary,
+                                                    ),
+                                              ),
+                                            ),
+                                          if (kind.needsVenue)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: colors.surfaceElevated,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      metrics.radiusCard,
+                                                    ),
+                                              ),
+                                              child: Text(
+                                                'نیازمند سالن 🏟',
+                                                style: textTheme.labelSmall
+                                                    ?.copyWith(
+                                                      color:
+                                                          colors.textSecondary,
+                                                    ),
+                                              ),
+                                            ),
+                                          if (kind.jointImpact > 0)
+                                            Text(
+                                              'ضربه: ${kind.jointImpact}/3',
+                                              style: textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    color: colors.textSecondary,
+                                                  ),
+                                            ),
+                                          if (kind
+                                              .primaryMetric
+                                              .unitFa
+                                              .isNotEmpty)
+                                            Text(
+                                              'واحد: ${kind.primaryMetric.unitFa}',
+                                              style: textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    color: colors.textSecondary,
+                                                  ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_left_rounded,
+                                  color: colors.textSecondary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  SizedBox(height: metrics.spaceLg),
+
+                  // 6. Create Custom Sport Button
+                  OutlinedButton.icon(
+                    key: const ValueKey('mv_kind_picker_create_custom'),
+                    onPressed: _openCreateCustomDialog,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('تعریف ورزش یا فعالیت جدید'),
+                  ),
+                  SizedBox(height: metrics.spaceXl),
+                ],
+              ),
             ),
-          ),
     );
   }
 }

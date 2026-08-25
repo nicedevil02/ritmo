@@ -29,16 +29,19 @@ void main() {
       expect(all.length, greaterThanOrEqualTo(40));
     });
 
-    test("getByCode('FOOTBALL') returns complete movement kind specifications", () async {
-      final football = await repo.getByCode('FOOTBALL');
-      expect(football, isNotNull);
-      expect(football!.code, equals('FOOTBALL'));
-      expect(football.titleFa, equals('فوتبال'));
-      expect(football.emoji, equals('⚽'));
-      expect(football.family, equals(MovementFamily.sport));
-      expect(football.baseMet, equals(7.0));
-      expect(football.isSocial, isTrue);
-    });
+    test(
+      "getByCode('FOOTBALL') returns complete movement kind specifications",
+      () async {
+        final football = await repo.getByCode('FOOTBALL');
+        expect(football, isNotNull);
+        expect(football!.code, equals('FOOTBALL'));
+        expect(football.titleFa, equals('فوتبال'));
+        expect(football.emoji, equals('⚽'));
+        expect(football.family, equals(MovementFamily.sport));
+        expect(football.baseMet, equals(7.0));
+        expect(football.isSocial, isTrue);
+      },
+    );
 
     test("searchFa('توپ') returns football and volleyball", () async {
       final results = await repo.searchFa('توپ');
@@ -48,18 +51,21 @@ void main() {
       expect(codes, contains('VOLLEYBALL'));
     });
 
-    test("recordUsage('SWIMMING') increments counter and updates lastUsedAt", () async {
-      final initial = await repo.getByCode('SWIMMING');
-      expect(initial, isNotNull);
-      final initialCount = initial!.usageCount;
+    test(
+      "recordUsage('SWIMMING') increments counter and updates lastUsedAt",
+      () async {
+        final initial = await repo.getByCode('SWIMMING');
+        expect(initial, isNotNull);
+        final initialCount = initial!.usageCount;
 
-      await repo.recordUsage('SWIMMING');
+        await repo.recordUsage('SWIMMING');
 
-      final updated = await repo.getByCode('SWIMMING');
-      expect(updated, isNotNull);
-      expect(updated!.usageCount, equals(initialCount + 1));
-      expect(updated.lastUsedAt, isNotNull);
-    });
+        final updated = await repo.getByCode('SWIMMING');
+        expect(updated, isNotNull);
+        expect(updated!.usageCount, equals(initialCount + 1));
+        expect(updated.lastUsedAt, isNotNull);
+      },
+    );
 
     test('getMapByCodes returns keyed map of movement kinds', () async {
       final map = await repo.getMapByCodes(['FOOTBALL', 'HIKING']);
@@ -72,7 +78,10 @@ void main() {
     test('getByFamily filters movement kinds correctly', () async {
       final martial = await repo.getByFamily(MovementFamily.martialSkill);
       expect(martial.isNotEmpty, isTrue);
-      expect(martial.every((k) => k.family == MovementFamily.martialSkill), isTrue);
+      expect(
+        martial.every((k) => k.family == MovementFamily.martialSkill),
+        isTrue,
+      );
     });
   });
 }

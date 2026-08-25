@@ -10,7 +10,8 @@ class SsProgramSettingsScreen extends StatefulWidget {
   const SsProgramSettingsScreen({super.key});
 
   @override
-  State<SsProgramSettingsScreen> createState() => _SsProgramSettingsScreenState();
+  State<SsProgramSettingsScreen> createState() =>
+      _SsProgramSettingsScreenState();
 }
 
 class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
@@ -31,7 +32,11 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
   Future<void> _loadProfile() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
+      final rows = await db.query(
+        'ss_user_profile',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
       if (rows.isNotEmpty) {
         final profile = SsUserProfile.fromMap(rows.first);
         setState(() {
@@ -55,7 +60,8 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const SsProgramDiffSheet(
-        messageFa: 'تغییر تنظیمات برنامه باعث می‌شود نسخه‌های تمرینی آینده شما (از فردا به بعد) مجدداً محاسبه و جایگزین شوند. آیا موافقید؟',
+        messageFa:
+            'تغییر تنظیمات برنامه باعث می‌شود نسخه‌های تمرینی آینده شما (از فردا به بعد) مجدداً محاسبه و جایگزین شوند. آیا موافقید؟',
         addedCount: 0,
         removedCount: 0,
         updatedCount: 0,
@@ -68,7 +74,7 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
 
     try {
       final db = await DatabaseHelper.instance.database;
-      
+
       // Update profile
       final newProfile = _profile!.copyWith(
         trainingDays: _trainingDays.toList(),
@@ -97,7 +103,12 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('برنامه با موفقیت به‌روزرسانی شد.', style: TextStyle())),
+          const SnackBar(
+            content: Text(
+              'برنامه با موفقیت به‌روزرسانی شد.',
+              style: TextStyle(),
+            ),
+          ),
         );
         Navigator.pop(context, true);
       }
@@ -113,7 +124,8 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
           _trainingDays.remove(dayNum);
         }
       } else {
-        if (_trainingDays.length < 6) { // Max 6 days
+        if (_trainingDays.length < 6) {
+          // Max 6 days
           _trainingDays.add(dayNum);
         }
       }
@@ -137,7 +149,10 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
       appBar: AppBar(
         backgroundColor: colors.surface,
         elevation: 0,
-        title: Text('تنظیمات برنامه تمرینی', style: TextStyle(color: colors.textPrimary)),
+        title: Text(
+          'تنظیمات برنامه تمرینی',
+          style: TextStyle(color: colors.textPrimary),
+        ),
         iconTheme: IconThemeData(color: colors.textPrimary),
       ),
       body: Directionality(
@@ -147,11 +162,21 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('روزهای تمرین در هفته', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+              Text(
+                'روزهای تمرین در هفته',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('حداقل یک روز برای استراحت باید خالی بماند.', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+              Text(
+                'حداقل یک روز برای استراحت باید خالی بماند.',
+                style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              ),
               const SizedBox(height: 16),
-              
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -167,7 +192,10 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              const Text('الگوی تقسیم عضلات (Split)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'الگوی تقسیم عضلات (Split)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _splitPattern,
@@ -175,14 +203,29 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: colors.surfaceSunken,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 style: TextStyle(color: colors.textPrimary),
                 items: const [
-                  DropdownMenuItem(value: 'AUTO', child: Text('هوشمند (پیشنهادی ریتمو)')),
-                  DropdownMenuItem(value: 'FULL_BODY', child: Text('فول بادی (تمام بدن)')),
-                  DropdownMenuItem(value: 'UPPER_LOWER', child: Text('بالاتنه / پایین‌تنه')),
-                  DropdownMenuItem(value: 'PUSH_PULL_LEGS', child: Text('هل دادن / کشیدن / پا')),
+                  DropdownMenuItem(
+                    value: 'AUTO',
+                    child: Text('هوشمند (پیشنهادی ریتمو)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'FULL_BODY',
+                    child: Text('فول بادی (تمام بدن)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'UPPER_LOWER',
+                    child: Text('بالاتنه / پایین‌تنه'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'PUSH_PULL_LEGS',
+                    child: Text('هل دادن / کشیدن / پا'),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _splitPattern = val);
@@ -190,7 +233,10 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              const Text('شدت پیش‌فرض (Intensity)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'شدت پیش‌فرض (Intensity)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _defaultIntensity,
@@ -198,19 +244,31 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: colors.surfaceSunken,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 style: TextStyle(color: colors.textPrimary),
                 items: const [
-                  DropdownMenuItem(value: 'LIGHT', child: Text('سبک (ریکاوری بیشتر)')),
-                  DropdownMenuItem(value: 'MODERATE', child: Text('متوسط (تعادل استاندارد)')),
-                  DropdownMenuItem(value: 'HARD', child: Text('سنگین (تمرکز بر حجم)')),
+                  DropdownMenuItem(
+                    value: 'LIGHT',
+                    child: Text('سبک (ریکاوری بیشتر)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'MODERATE',
+                    child: Text('متوسط (تعادل استاندارد)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'HARD',
+                    child: Text('سنگین (تمرکز بر حجم)'),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _defaultIntensity = val);
                 },
               ),
-              
+
               const SizedBox(height: 48),
 
               PrimaryButton(
@@ -235,7 +293,9 @@ class _SsProgramSettingsScreenState extends State<SsProgramSettingsScreen> {
       onSelected: (_) => _toggleDay(dayNum),
       selectedColor: sportsAccent.withValues(alpha: 0.2),
       backgroundColor: colors.surfaceSunken,
-      labelStyle: TextStyle(color: isSelected ? sportsAccent : colors.textSecondary),
+      labelStyle: TextStyle(
+        color: isSelected ? sportsAccent : colors.textSecondary,
+      ),
       showCheckmark: false,
     );
   }

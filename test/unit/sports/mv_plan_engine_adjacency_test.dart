@@ -123,132 +123,184 @@ void main() {
       strengthDaysTarget: 2,
     );
 
-    test('Case 1: Single Thursday futsal 90m -> Wednesday mobility <=20m and Friday activeRest <=25m', () {
-      final futsalCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5, // پنجشنبه 2026-08-27
-        startTime: '21:00',
-        durationMinutes: 90,
-        titleFa: 'فوتسال پنجشنبه',
-      );
+    test(
+      'Case 1: Single Thursday futsal 90m -> Wednesday mobility <=20m and Friday activeRest <=25m',
+      () {
+        final futsalCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5, // پنجشنبه 2026-08-27
+          startTime: '21:00',
+          durationMinutes: 90,
+          titleFa: 'فوتسال پنجشنبه',
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [futsalCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [futsalCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      // Wednesday (2026-08-26, day 4) -> mobility <= 20 min with preAnchorTaper reasonKey
-      final wednesdaySlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-26');
-      expect(wednesdaySlot.slotType, equals(MvSlotType.mobility));
-      expect(wednesdaySlot.targetMinutes, lessThanOrEqualTo(20));
-      expect(wednesdaySlot.reasonKey, equals(MvReasonKeys.preAnchorTaper));
-      expect(wednesdaySlot.reasonParams?['kind'], equals('فوتسال'));
+        // Wednesday (2026-08-26, day 4) -> mobility <= 20 min with preAnchorTaper reasonKey
+        final wednesdaySlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-26',
+        );
+        expect(wednesdaySlot.slotType, equals(MvSlotType.mobility));
+        expect(wednesdaySlot.targetMinutes, lessThanOrEqualTo(20));
+        expect(wednesdaySlot.reasonKey, equals(MvReasonKeys.preAnchorTaper));
+        expect(wednesdaySlot.reasonParams?['kind'], equals('فوتسال'));
 
-      // Friday (2026-08-28, day 6) -> activeRest <= 25 min with postAnchorRecovery reasonKey
-      final fridaySlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-28');
-      expect(fridaySlot.slotType, equals(MvSlotType.activeRest));
-      expect(fridaySlot.targetMinutes, lessThanOrEqualTo(25));
-      expect(fridaySlot.reasonKey, equals(MvReasonKeys.postAnchorRecovery));
-      expect(fridaySlot.reasonParams?['kind'], equals('فوتسال'));
-    });
+        // Friday (2026-08-28, day 6) -> activeRest <= 25 min with postAnchorRecovery reasonKey
+        final fridaySlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-28',
+        );
+        expect(fridaySlot.slotType, equals(MvSlotType.activeRest));
+        expect(fridaySlot.targetMinutes, lessThanOrEqualTo(25));
+        expect(fridaySlot.reasonKey, equals(MvReasonKeys.postAnchorRecovery));
+        expect(fridaySlot.reasonParams?['kind'], equals('فوتسال'));
+      },
+    );
 
-    test('Case 2: Thursday futsal + Friday mountain hiking -> both locked, Saturday activeRest (ADJ-6), conflict banner active', () {
-      final futsalCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5, // پنجشنبه
-        startTime: '21:00',
-        durationMinutes: 90,
-      );
+    test(
+      'Case 2: Thursday futsal + Friday mountain hiking -> both locked, Saturday activeRest (ADJ-6), conflict banner active',
+      () {
+        final futsalCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5, // پنجشنبه
+          startTime: '21:00',
+          durationMinutes: 90,
+        );
 
-      final hikingCommitment = MvCommitment(
-        id: 2,
-        kindCode: 'HIKING',
-        dayOfWeekSat0: 6, // جمعه
-        startTime: '06:00',
-        durationMinutes: 240,
-      );
+        final hikingCommitment = MvCommitment(
+          id: 2,
+          kindCode: 'HIKING',
+          dayOfWeekSat0: 6, // جمعه
+          startTime: '06:00',
+          durationMinutes: 240,
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [futsalCommitment, hikingCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [futsalCommitment, hikingCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      // Thursday & Friday are locked
-      expect(result.slots.firstWhere((s) => s.dateIso == '2026-08-27').isLocked, isTrue);
-      expect(result.slots.firstWhere((s) => s.dateIso == '2026-08-28').isLocked, isTrue);
+        // Thursday & Friday are locked
+        expect(
+          result.slots.firstWhere((s) => s.dateIso == '2026-08-27').isLocked,
+          isTrue,
+        );
+        expect(
+          result.slots.firstWhere((s) => s.dateIso == '2026-08-28').isLocked,
+          isTrue,
+        );
 
-      // Conflict warning active (ADJ-6)
-      expect(result.hasConflict, isTrue);
-      expect(result.conflictNote, equals('mv_conflict_back_to_back'));
+        // Conflict warning active (ADJ-6)
+        expect(result.hasConflict, isTrue);
+        expect(result.conflictNote, equals('mv_conflict_back_to_back'));
 
-      // Saturday (day index 0 in week) is set to activeRest
-      final satSlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-22');
-      expect(satSlot.slotType, equals(MvSlotType.activeRest));
-      expect(satSlot.targetMinutes, lessThanOrEqualTo(25));
-    });
+        // Saturday (day index 0 in week) is set to activeRest
+        final satSlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-22',
+        );
+        expect(satSlot.slotType, equals(MvSlotType.activeRest));
+        expect(satSlot.targetMinutes, lessThanOrEqualTo(25));
+      },
+    );
 
-    test('Case 3: 3 anchors in a week -> at least 1 full rest day guaranteed (ADJ-5)', () {
-      final comm1 = MvCommitment(id: 1, kindCode: 'SWIMMING', dayOfWeekSat0: 1, startTime: '08:00', durationMinutes: 45); // یکشنبه
-      final comm2 = MvCommitment(id: 2, kindCode: 'SWIMMING', dayOfWeekSat0: 3, startTime: '08:00', durationMinutes: 45); // سه‌شنبه
-      final comm3 = MvCommitment(id: 3, kindCode: 'FUTSAL', dayOfWeekSat0: 5, startTime: '21:00', durationMinutes: 90);  // پنجشنبه
+    test(
+      'Case 3: 3 anchors in a week -> at least 1 full rest day guaranteed (ADJ-5)',
+      () {
+        final comm1 = MvCommitment(
+          id: 1,
+          kindCode: 'SWIMMING',
+          dayOfWeekSat0: 1,
+          startTime: '08:00',
+          durationMinutes: 45,
+        ); // یکشنبه
+        final comm2 = MvCommitment(
+          id: 2,
+          kindCode: 'SWIMMING',
+          dayOfWeekSat0: 3,
+          startTime: '08:00',
+          durationMinutes: 45,
+        ); // سه‌شنبه
+        final comm3 = MvCommitment(
+          id: 3,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5,
+          startTime: '21:00',
+          durationMinutes: 90,
+        ); // پنجشنبه
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [comm1, comm2, comm3],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [comm1, comm2, comm3],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      final restSlots = result.slots.where((s) => s.slotType == MvSlotType.rest).toList();
-      expect(restSlots, isNotEmpty);
-      expect(restSlots.any((s) => s.reasonKey == MvReasonKeys.restGuaranteed), isTrue);
-    });
+        final restSlots = result.slots
+            .where((s) => s.slotType == MvSlotType.rest)
+            .toList();
+        expect(restSlots, isNotEmpty);
+        expect(
+          restSlots.any((s) => s.reasonKey == MvReasonKeys.restGuaranteed),
+          isTrue,
+        );
+      },
+    );
 
-    test('Case 5: Table tennis 45 min anchor (jointImpact=1) -> day after is NOT restricted to activeRest', () {
-      final pingPongCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'TABLE_TENNIS',
-        dayOfWeekSat0: 1, // یکشنبه 2026-08-23
-        startTime: '18:00',
-        durationMinutes: 45,
-      );
+    test(
+      'Case 5: Table tennis 45 min anchor (jointImpact=1) -> day after is NOT restricted to activeRest',
+      () {
+        final pingPongCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'TABLE_TENNIS',
+          dayOfWeekSat0: 1, // یکشنبه 2026-08-23
+          startTime: '18:00',
+          durationMinutes: 45,
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: MvUserProfile.empty(),
-        commitments: [pingPongCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: MvUserProfile.empty(),
+          commitments: [pingPongCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      // Monday (2026-08-24, day 2) should NOT be forced to postAnchorRecovery because Table Tennis jointImpact is 1 (< 2)
-      final mondaySlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-24');
-      expect(mondaySlot.reasonKey, isNot(equals(MvReasonKeys.postAnchorRecovery)));
-    });
+        // Monday (2026-08-24, day 2) should NOT be forced to postAnchorRecovery because Table Tennis jointImpact is 1 (< 2)
+        final mondaySlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-24',
+        );
+        expect(
+          mondaySlot.reasonKey,
+          isNot(equals(MvReasonKeys.postAnchorRecovery)),
+        );
+      },
+    );
   });
 }

@@ -78,7 +78,8 @@ class MvCantTodaySheet extends StatelessWidget {
               context: context,
               icon: Icons.event_busy_rounded,
               title: 'این هفته لغو شد',
-              description: 'لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.',
+              description:
+                  'لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.',
               onTap: onCancelAnchorThisWeek!,
               isRecommended: true,
             ),

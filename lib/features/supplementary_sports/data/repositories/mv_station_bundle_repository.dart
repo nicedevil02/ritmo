@@ -17,7 +17,10 @@ class MvStationBundleRepository {
   /// Retrieves all station bundles.
   Future<List<MvStationBundle>> getAllBundles() async {
     final db = await _db;
-    final rows = await db.query('station_bundles', orderBy: 'usageCount DESC, createdAt DESC');
+    final rows = await db.query(
+      'station_bundles',
+      orderBy: 'usageCount DESC, createdAt DESC',
+    );
     return rows.map((r) => MvStationBundle.fromMap(r)).toList();
   }
 
@@ -68,10 +71,6 @@ class MvStationBundleRepository {
   /// Deletes a user template bundle.
   Future<int> deleteBundle(String id) async {
     final db = await _db;
-    return await db.delete(
-      'station_bundles',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('station_bundles', where: 'id = ?', whereArgs: [id]);
   }
 }

@@ -53,7 +53,11 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
     widget.onLogged?.call();
   }
 
-  Widget _buildLevelSelector(String title, int current, ValueChanged<int> onChanged) {
+  Widget _buildLevelSelector(
+    String title,
+    int current,
+    ValueChanged<int> onChanged,
+  ) {
     const theme = SupplementarySportsTheme.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,10 +78,14 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? theme.emeraldPrimary : theme.surfaceVariant,
+                    color: isSelected
+                        ? theme.emeraldPrimary
+                        : theme.surfaceVariant,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected ? theme.emeraldPrimary : theme.cardBorder,
+                      color: isSelected
+                          ? theme.emeraldPrimary
+                          : theme.cardBorder,
                     ),
                   ),
                   child: Center(
@@ -85,7 +93,9 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                       val == 1 ? 'سبک' : (val == 2 ? 'متوسط' : 'شدید'),
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isSelected ? Colors.white : theme.textPrimary,
                       ),
                     ),
@@ -121,38 +131,65 @@ class _SSRecoveryCardState extends State<SSRecoveryCard> {
                 const SizedBox(width: 8),
                 Text(
                   'ارزیابی آمادگی و ریکاوری',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: theme.textPrimary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: theme.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 if (widget.isLoggedToday)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.emeraldPrimary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text('ثبت‌شده امروز ✅', style: TextStyle(fontSize: 11, color: theme.emeraldPrimary)),
+                    child: Text(
+                      'ثبت‌شده امروز ✅',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.emeraldPrimary,
+                      ),
+                    ),
                   ),
               ],
             ),
             const SizedBox(height: 14),
-            _buildLevelSelector('میزان کوفتگی عضلانی (Soreness)', _soreness, (v) => setState(() => _soreness = v)),
+            _buildLevelSelector(
+              'میزان کوفتگی عضلانی (Soreness)',
+              _soreness,
+              (v) => setState(() => _soreness = v),
+            ),
             const SizedBox(height: 10),
-            _buildLevelSelector('میزان خستگی عمومی (Fatigue)', _fatigue, (v) => setState(() => _fatigue = v)),
+            _buildLevelSelector(
+              'میزان خستگی عمومی (Fatigue)',
+              _fatigue,
+              (v) => setState(() => _fatigue = v),
+            ),
             const SizedBox(height: 14),
             SizedBox(
               height: 42,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.emeraldPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
                     ? const CupertinoActivityIndicator(color: Colors.white)
                     : const Text(
                         'ثبت وضعیت ریکاوری 🌿',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
                       ),
               ),
             ),

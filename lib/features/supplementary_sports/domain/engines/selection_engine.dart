@@ -18,7 +18,9 @@ class SelectionEngine {
       // 1. Hard filter: Limitations (e.g. knee, shoulder, back)
       if (ex.constraintNegative != null && ex.constraintNegative!.isNotEmpty) {
         for (final lim in physicalLimitations) {
-          if (ex.constraintNegative!.toLowerCase().contains(lim.toLowerCase())) {
+          if (ex.constraintNegative!.toLowerCase().contains(
+            lim.toLowerCase(),
+          )) {
             return false;
           }
         }
@@ -33,7 +35,9 @@ class SelectionEngine {
 
       // 3. Hard filter: Equipment
       if (availableEquipment.contains('none') || availableEquipment.isEmpty) {
-        final needsTools = ex.toolsRequired.where((t) => t != 'none' && t.isNotEmpty).isNotEmpty;
+        final needsTools = ex.toolsRequired
+            .where((t) => t != 'none' && t.isNotEmpty)
+            .isNotEmpty;
         if (needsTools) return false;
       }
 
@@ -70,7 +74,9 @@ class SelectionEngine {
     if (selected.isEmpty && pool.isNotEmpty) {
       final safeFallback = pool.where((e) => !e.noisy).take(count).toList();
       return MvDecision<List<MvExercise>>(
-        value: safeFallback.isNotEmpty ? safeFallback : pool.take(count).toList(),
+        value: safeFallback.isNotEmpty
+            ? safeFallback
+            : pool.take(count).toList(),
         reasonFa: 'حرکات با اولویت ایمنی و حرکات پایه انتخاب شدند.',
         sources: const ['pool_fallback'],
         confidence: 0.7,

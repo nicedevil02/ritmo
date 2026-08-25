@@ -68,16 +68,10 @@ class _NewMovementSectionState extends State<NewMovementSection>
               const UnifiedWeekPlannerView(),
               widget.sportsTab ??
                   const Center(
-                    child: Text(
-                      'ورزش‌ها',
-                      style: TextStyle(fontSize: 14),
-                    ),
+                    child: Text('ورزش‌ها', style: TextStyle(fontSize: 14)),
                   ),
               const Center(
-                child: Text(
-                  'محتوای تب ۳',
-                  style: TextStyle(fontSize: 14),
-                ),
+                child: Text('محتوای تب ۳', style: TextStyle(fontSize: 14)),
               ),
             ],
           ),

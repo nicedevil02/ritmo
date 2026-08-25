@@ -21,7 +21,6 @@ import 'package:ritmo/features/supplementary_sports/movement/domain/movement_rem
 import 'package:ritmo/features/supplementary_sports/movement/domain/week_plan_item.dart';
 import 'package:ritmo/features/supplementary_sports/movement/presentation/widgets/movement_kind_selector.dart';
 
-
 Future<void> showMovementPlanSheet(
   BuildContext context, {
   Map<String, dynamic>? routineToEdit,
@@ -86,7 +85,8 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   int _currentStep = 0; // 0 = نوع ورزش, 1 = روزها و زمان, 2 = یادآوری و هدف
 
   MovementKind? _selectedKind;
-  String? _muscleFocus; // CHEST_UPPER, BACK_LATS, LEGS_GLUTES, CORE_ABS, FULL_BODY
+  String?
+  _muscleFocus; // CHEST_UPPER, BACK_LATS, LEGS_GLUTES, CORE_ABS, FULL_BODY
   List<int> _selectedDays = <int>[]; // Dart weekdays (1..7)
   final Map<int, TimeOfDay> _dayTimes = {}; // Dart weekday -> TimeOfDay
   bool _hasReminder = true;
@@ -112,7 +112,8 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           _distanceKm = widget.initialKind!.defaultTargetValue();
         } else if (widget.initialKind!.primaryMetric == MovementMetric.laps) {
           _laps = widget.initialKind!.defaultTargetValue().toInt();
-        } else if (widget.initialKind!.primaryMetric == MovementMetric.elevation) {
+        } else if (widget.initialKind!.primaryMetric ==
+            MovementMetric.elevation) {
           _elevationMeters = widget.initialKind!.defaultTargetValue();
         } else if (widget.initialKind!.primaryMetric == MovementMetric.steps) {
           _steps = widget.initialKind!.defaultTargetValue().toInt();
@@ -127,7 +128,8 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         final todayDart = DateTime.now().weekday;
         _selectedDays = <int>[todayDart];
       }
-      if (widget.initialDayTimes != null && widget.initialDayTimes!.isNotEmpty) {
+      if (widget.initialDayTimes != null &&
+          widget.initialDayTimes!.isNotEmpty) {
         _dayTimes.addAll(widget.initialDayTimes!);
       } else {
         for (final d in _selectedDays) {
@@ -139,7 +141,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       }
       if (widget.initialReminderMinutes != null) {
         _reminderMinutes = widget.initialReminderMinutes!;
-        _hasReminder = widget.initialReminderMinutes! > 0 || widget.initialReminderMinutes == -1;
+        _hasReminder =
+            widget.initialReminderMinutes! > 0 ||
+            widget.initialReminderMinutes == -1;
       }
     }
     _initFromRoutine();
@@ -157,7 +161,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     if (toEdit == null) return;
 
     final kindCode = toEdit['movementKind']?.toString() ?? 'WALKING';
-    final kinds = await MovementRepository.instance.getKinds(enabledOnly: false);
+    final kinds = await MovementRepository.instance.getKinds(
+      enabledOnly: false,
+    );
     final matchingKind = kinds.firstWhere(
       (k) => k.code == kindCode,
       orElse: () => kinds.isNotEmpty ? kinds.first : _fallbackKind(),
@@ -180,7 +186,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           final timeStr = s['timeOfDay']?.toString() ?? '18:30';
           final parts = timeStr.split(':');
           final time = parts.length == 2
-              ? TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]))
+              ? TimeOfDay(
+                  hour: int.parse(parts[0]),
+                  minute: int.parse(parts[1]),
+                )
               : const TimeOfDay(hour: 18, minute: 30);
 
           final daysStr = s['daysOfWeek']?.toString() ?? '';
@@ -214,9 +223,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       }
     }
 
-    final targetVal = (toEdit['movementTargetValue'] as num? ?? 30.0).toDouble();
+    final targetVal = (toEdit['movementTargetValue'] as num? ?? 30.0)
+        .toDouble();
     final duration = (toEdit['targetDurationMinutes'] as num? ?? 30).toInt();
-    final storedReminder = (toEdit['reminderOffsetMinutes'] as num? ?? 0).toInt();
+    final storedReminder = (toEdit['reminderOffsetMinutes'] as num? ?? 0)
+        .toInt();
     final storedMuscleFocus = toEdit['movementMuscleFocus']?.toString();
 
     setState(() {
@@ -281,7 +292,8 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
   }
 
   Future<void> _selectTimeForDay(int dartWeekday) async {
-    final current = _dayTimes[dartWeekday] ?? _defaultTimeForKind(_selectedKind);
+    final current =
+        _dayTimes[dartWeekday] ?? _defaultTimeForKind(_selectedKind);
     final picked = await showTimePicker(
       context: context,
       initialTime: current,
@@ -368,7 +380,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isEditing ? 'برنامه با موفقیت ویرایش شد ✓' : 'برنامهٔ هفته با موفقیت ثبت شد 🎉',
+              _isEditing
+                  ? 'برنامه با موفقیت ویرایش شد ✓'
+                  : 'برنامهٔ هفته با موفقیت ثبت شد 🎉',
               style: const TextStyle(),
             ),
           ),
@@ -403,7 +417,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('برنامه آرشیو شد 📥', style: TextStyle())),
+          const SnackBar(
+            content: Text('برنامه آرشیو شد 📥', style: TextStyle()),
+          ),
         );
         widget.onSaved?.call();
         Navigator.of(context).pop();
@@ -411,7 +427,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle())),
+          SnackBar(
+            content: Text('خطا در آرشیو برنامه: $e', style: const TextStyle()),
+          ),
         );
       }
     } finally {
@@ -432,102 +450,110 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
           constraints: BoxConstraints(
             maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
           ),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border.all(color: colors.border.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isEditing ? 'ویرایش برنامهٔ حرکت' : 'افزودن به هفته',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isEditing ? 'ویرایش برنامهٔ حرکت' : 'افزودن به هفته',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _stepSubtitle(_currentStep),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.3),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _stepSubtitle(_currentStep),
+                      child: Text(
+                        '${toPersianDigits((_currentStep + 1).toString())} از ۳',
                         style: TextStyle(
                           fontSize: 12,
+                          fontWeight: FontWeight.w800,
                           color: colors.primary,
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
                     ),
-                    child: Text(
-                      '${toPersianDigits((_currentStep + 1).toString())} از ۳',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: colors.primary,
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Progress line
+              Row(
+                children: [
+                  for (int i = 0; i < 3; i++)
+                    Expanded(
+                      child: Container(
+                        height: 3,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: i <= _currentStep
+                              ? colors.primary
+                              : colors.surfaceSunken,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 10),
-            // Progress line
-            Row(
-              children: [
-                for (int i = 0; i < 3; i++)
-                  Expanded(
-                    child: Container(
-                      height: 3,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: i <= _currentStep ? colors.primary : colors.surfaceSunken,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 12,
+                    bottom: 20 + bottomInset,
                   ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: 12,
-                  bottom: 20 + bottomInset,
+                  child: _buildCurrentStep(colors),
                 ),
-                child: _buildCurrentStep(colors),
               ),
-            ),
-            _buildBottomBar(colors),
-          ],
+              _buildBottomBar(colors),
+            ],
+          ),
         ),
-      ),),
+      ),
     );
   }
 
@@ -595,10 +621,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 const SizedBox(height: 4),
                 Text(
                   'برای فیلتر هوشمند کتابخانهٔ حرکات در جلسات',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -696,10 +719,15 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               if (sortedDays.length > 1)
                 TextButton.icon(
                   onPressed: () {
-                    final firstTime = _dayTimes[sortedDays.first] ?? defaultTime;
+                    final firstTime =
+                        _dayTimes[sortedDays.first] ?? defaultTime;
                     _applyTimeToAllDays(firstTime);
                   },
-                  icon: Icon(Icons.sync_rounded, size: 16, color: colors.primary),
+                  icon: Icon(
+                    Icons.sync_rounded,
+                    size: 16,
+                    color: colors.primary,
+                  ),
                   label: Text(
                     'یکسان‌سازی ساعت',
                     style: TextStyle(
@@ -736,8 +764,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
     final sat0 = dartWeekdayToSat0(dartWeekday);
     final dayName = kPersianWeekdayNames[sat0];
     final time = _dayTimes[dartWeekday] ?? _defaultTimeForKind(_selectedKind);
-    final timeFormatted =
-        toPersianDigits('${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+    final timeFormatted = toPersianDigits(
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -755,7 +784,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               color: colors.primaryContainer.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.calendar_today_rounded, size: 16, color: colors.primary),
+            child: Icon(
+              Icons.calendar_today_rounded,
+              size: 16,
+              color: colors.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -776,11 +809,17 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               decoration: BoxDecoration(
                 color: colors.surfaceSunken,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.primary.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.5),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.access_time_rounded, size: 15, color: colors.primary),
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 15,
+                    color: colors.primary,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     timeFormatted,
@@ -824,7 +863,11 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.notifications_active_outlined, color: colors.primary, size: 20),
+                      Icon(
+                        Icons.notifications_active_outlined,
+                        color: colors.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'ارسال یادآوری قبل از حرکت',
@@ -852,10 +895,7 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 const SizedBox(height: 12),
                 Text(
                   'زمان یادآوری:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -898,7 +938,10 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('مدت زمان هدف:', style: TextStyle(color: colors.textPrimary)),
+                  Text(
+                    'مدت زمان هدف:',
+                    style: TextStyle(color: colors.textPrimary),
+                  ),
                   Text(
                     '${toPersianDigits(_durationMinutes.toString())} دقیقه',
                     style: TextStyle(
@@ -915,17 +958,24 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 max: 180,
                 divisions: 35,
                 activeColor: colors.primary,
-                onChanged: (val) => setState(() => _durationMinutes = val.toInt()),
+                onChanged: (val) =>
+                    setState(() => _durationMinutes = val.toInt()),
               ),
               if (kind.primaryMetric == MovementMetric.distance) ...[
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('مسافت هدف:', style: TextStyle(color: colors.textPrimary)),
+                    Text(
+                      'مسافت هدف:',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                     Text(
                       '${toPersianDigits(_distanceKm.toStringAsFixed(1))} کیلومتر',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -942,10 +992,16 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('تعداد طول (استخر ۲۵ متری):', style: TextStyle(color: colors.textPrimary)),
+                    Text(
+                      'تعداد طول (استخر ۲۵ متری):',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                     Text(
                       '${toPersianDigits(_laps.toString())} طول (${toPersianDigits((_laps * 25).toString())} متر)',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -962,10 +1018,16 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('ارتفاع صعود:', style: TextStyle(color: colors.textPrimary)),
+                    Text(
+                      'ارتفاع صعود:',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                     Text(
                       '${toPersianDigits(_elevationMeters.round().toString())} متر',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -982,10 +1044,16 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('تعداد گام:', style: TextStyle(color: colors.textPrimary)),
+                    Text(
+                      'تعداد گام:',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
                     Text(
                       '${toPersianDigits(_steps.toString())} گام',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
                     ),
                   ],
                 ),
@@ -1048,15 +1116,22 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
-        border: Border(top: BorderSide(color: colors.border.withValues(alpha: 0.4))),
+        border: Border(
+          top: BorderSide(color: colors.border.withValues(alpha: 0.4)),
+        ),
       ),
       child: Row(
         children: [
           if (_currentStep > 0) ...[
             OutlinedButton(
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 side: BorderSide(color: colors.border),
               ),
               onPressed: () {
@@ -1079,7 +1154,9 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                 backgroundColor: const Color(0xFF10B981),
                 foregroundColor: const Color(0xFF042116),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               onPressed: _isSaving
                   ? null
@@ -1117,12 +1194,17 @@ class _MovementPlanSheetState extends State<MovementPlanSheet> {
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF042116)),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF042116),
+                      ),
                     )
                   : Text(
                       _currentStep < 2
                           ? 'ادامه'
-                          : (_isEditing ? 'ذخیره تغییرات' : 'ثبت برنامه در هفته'),
+                          : (_isEditing
+                                ? 'ذخیره تغییرات'
+                                : 'ثبت برنامه در هفته'),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,

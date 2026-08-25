@@ -56,7 +56,9 @@ void main() {
               targetMin: 150,
               strengthDaysTarget: 2,
             ),
-            bodyMapDistribution: const MvBodyMapDistribution(muscleSessionCounts: {}),
+            bodyMapDistribution: const MvBodyMapDistribution(
+              muscleSessionCounts: {},
+            ),
             onStartSession: () {},
             onSlotUpdated: (_) {},
             onCheckinSaved: (_) {},
@@ -74,7 +76,9 @@ void main() {
       expect(find.text('دقیقهٔ فعال این هفته'), findsOneWidget);
     });
 
-    testWidgets('MvWeekTab renders 7 day cards and cycle header', (tester) async {
+    testWidgets('MvWeekTab renders 7 day cards and cycle header', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         createTestApp(
           MvWeekTab(
@@ -93,7 +97,9 @@ void main() {
       expect(find.text('استراحت'), findsWidgets);
     });
 
-    testWidgets('MvProgressTab renders active streak, stats and PRs', (tester) async {
+    testWidgets('MvProgressTab renders active streak, stats and PRs', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         createTestApp(
           const MvProgressTab(
@@ -101,7 +107,13 @@ void main() {
             totalSessionsCount: 12,
             totalMetMinutes: 1800,
             personalRecords: [
-              MvPersonalRecord(id: '1', kind: 'شنا سوئدی', prType: MvPrType.maxReps, value: 25, achievedAt: 100),
+              MvPersonalRecord(
+                id: '1',
+                kind: 'شنا سوئدی',
+                prType: MvPrType.maxReps,
+                value: 25,
+                achievedAt: 100,
+              ),
             ],
             bodyMapDistribution: MvBodyMapDistribution(muscleSessionCounts: {}),
           ),
@@ -113,16 +125,28 @@ void main() {
       expect(find.text('شنا سوئدی'), findsOneWidget);
     });
 
-    testWidgets('MvLibraryScreen filters by search and apartment mode', (tester) async {
+    testWidgets('MvLibraryScreen filters by search and apartment mode', (
+      tester,
+    ) async {
       final testPool = [
-        const MvExercise(id: '1', name: 'شنا سوئدی', category: 'CHEST', noisy: false, impact: 0),
-        const MvExercise(id: '2', name: 'برپی پرشی', category: 'CARDIO', noisy: true, impact: 3),
+        const MvExercise(
+          id: '1',
+          name: 'شنا سوئدی',
+          category: 'CHEST',
+          noisy: false,
+          impact: 0,
+        ),
+        const MvExercise(
+          id: '2',
+          name: 'برپی پرشی',
+          category: 'CARDIO',
+          noisy: true,
+          impact: 3,
+        ),
       ];
 
       await tester.pumpWidget(
-        createTestApp(
-          MvLibraryScreen(allExercises: testPool),
-        ),
+        createTestApp(MvLibraryScreen(allExercises: testPool)),
       );
 
       expect(find.text('شنا سوئدی'), findsOneWidget);
@@ -136,9 +160,15 @@ void main() {
       expect(find.text('برپی پرشی'), findsNothing);
     });
 
-    testWidgets('MvSettingsScreen displays toggles and triggers save', (tester) async {
+    testWidgets('MvSettingsScreen displays toggles and triggers save', (
+      tester,
+    ) async {
       MvUserProfile? savedProfile;
-      const profile = MvUserProfile(daysPerWeek: 3, createdAt: 100, updatedAt: 100);
+      const profile = MvUserProfile(
+        daysPerWeek: 3,
+        createdAt: 100,
+        updatedAt: 100,
+      );
 
       await tester.pumpWidget(
         createTestApp(
@@ -156,14 +186,14 @@ void main() {
       expect(savedProfile, isNotNull);
     });
 
-    testWidgets('MvOnboardingScreen 3-question completion calls onComplete', (tester) async {
+    testWidgets('MvOnboardingScreen 3-question completion calls onComplete', (
+      tester,
+    ) async {
       MvUserProfile? createdProfile;
 
       await tester.pumpWidget(
         createTestApp(
-          MvOnboardingScreen(
-            onComplete: (p) async => createdProfile = p,
-          ),
+          MvOnboardingScreen(onComplete: (p) async => createdProfile = p),
         ),
       );
 
@@ -198,9 +228,7 @@ void main() {
 
       await tester.pumpWidget(
         createTestApp(
-          MvQuickLogSheet(
-            onSave: (k, d, f, n) async => savedDuration = d,
-          ),
+          MvQuickLogSheet(onSave: (k, d, f, n) async => savedDuration = d),
         ),
       );
 

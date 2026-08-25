@@ -58,7 +58,12 @@ class _SSCustomExerciseSheetState extends State<SSCustomExerciseSheet> {
         color: isDark ? const Color(0xff121212) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,7 +92,9 @@ class _SSCustomExerciseSheetState extends State<SSCustomExerciseSheet> {
             decoration: InputDecoration(
               labelText: 'نام حرکت',
               hintText: 'مثلاً شنا روی صندلی',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -96,7 +103,9 @@ class _SSCustomExerciseSheetState extends State<SSCustomExerciseSheet> {
             maxLines: 2,
             decoration: InputDecoration(
               labelText: 'توضیحات و نحوه اجرا',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
           const SizedBox(height: 12),

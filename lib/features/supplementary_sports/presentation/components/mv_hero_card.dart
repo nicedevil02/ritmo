@@ -37,14 +37,14 @@ class MvHeroCard extends StatelessWidget {
     final title = isRest
         ? 'روز استراحت و ریکاوری'
         : isMinimal
-            ? 'حداقل مؤثر ۱۰ دقیقه‌ای'
-            : slot.headlineFa;
+        ? 'حداقل مؤثر ۱۰ دقیقه‌ای'
+        : slot.headlineFa;
 
     final subtitle = isRest
         ? 'بدنت به زمان برای بازسازی نیاز دارد. کشش سبک بهترین همراه امروز است.'
         : isMinimal
-            ? 'امروز فقط ۱۰ دقیقه. همین هم زنجیره‌ات را فعال نگه می‌دارد.'
-            : '${slot.targetMinutes} دقیقه · شدت ${slot.intensityTier.titleFa}';
+        ? 'امروز فقط ۱۰ دقیقه. همین هم زنجیره‌ات را فعال نگه می‌دارد.'
+        : '${slot.targetMinutes} دقیقه · شدت ${slot.intensityTier.titleFa}';
 
     return Container(
       decoration: BoxDecoration(
@@ -141,7 +141,11 @@ class MvHeroCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle_rounded, color: colors.success, size: metrics.iconMd),
+                        Icon(
+                          Icons.check_circle_rounded,
+                          color: colors.success,
+                          size: metrics.iconMd,
+                        ),
                         SizedBox(width: metrics.spaceSm),
                         Text(
                           'جلسهٔ امروز با موفقیت انجام شد',

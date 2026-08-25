@@ -105,7 +105,11 @@ class MvKindRepository {
     return all.where((k) {
       final mask = k.seasonMask;
       if (mask == null || mask.isEmpty) return true;
-      final months = mask.split(',').map((s) => int.tryParse(s.trim())).whereType<int>().toSet();
+      final months = mask
+          .split(',')
+          .map((s) => int.tryParse(s.trim()))
+          .whereType<int>()
+          .toSet();
       return months.contains(jalaliMonth);
     }).toList();
   }
@@ -113,9 +117,7 @@ class MvKindRepository {
   Future<MvMovementKind> saveCustomKind(MvMovementKind kind) async {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
-    final toSave = kind.copyWith(
-      isCustom: true,
-    );
+    final toSave = kind.copyWith(isCustom: true);
     final map = toSave.toMap();
     map['updatedAt'] = now;
     map['createdAt'] = map['createdAt'] ?? now;
@@ -132,10 +134,7 @@ class MvKindRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.update(
       'movement_kinds',
-      {
-        'isEnabled': isEnabled ? 1 : 0,
-        'updatedAt': now,
-      },
+      {'isEnabled': isEnabled ? 1 : 0, 'updatedAt': now},
       where: 'code = ?',
       whereArgs: [code],
     );

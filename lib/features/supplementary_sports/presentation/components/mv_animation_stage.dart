@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+
 /// Full-width Animation Stage for Workout Sessions and Hero Cards (Section 5.10 & 6.3).
 class MvAnimationStage extends StatelessWidget {
   final String? animationAsset;
@@ -46,13 +47,17 @@ class MvAnimationStage extends StatelessWidget {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.fitness_center_rounded, size: metrics.iconXl, color: colors.primary),
+                Icon(
+                  Icons.fitness_center_rounded,
+                  size: metrics.iconXl,
+                  color: colors.primary,
+                ),
                 SizedBox(height: metrics.spaceSm),
                 Text(
                   'حرکت ورزشی',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.textSecondary,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
                 ),
               ],
             );

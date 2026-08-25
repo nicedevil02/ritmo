@@ -2,8 +2,10 @@ import '../models/models.dart';
 
 /// Body Map Muscle Workload distribution.
 class MvBodyMapDistribution {
-  final Map<String, int> muscleSessionCounts; // MuscleGroup code -> count / sets
-  final Map<String, double> musclePercentages; // MuscleGroup code -> percentage (0..100)
+  final Map<String, int>
+  muscleSessionCounts; // MuscleGroup code -> count / sets
+  final Map<String, double>
+  musclePercentages; // MuscleGroup code -> percentage (0..100)
   final String? neglectedMuscleGroupCode;
   final double? neglectedPercentOfVolume;
   final String? suggestedActionFa;
@@ -180,8 +182,12 @@ class InsightEngine {
     }
 
     // 2. mv_insight_anchor_adherence: >=4 weeks active commitment; anchor attendance rate
-    if (activeCommitments.isNotEmpty && commitmentWeeks >= 4 && plannedAnchorSessions > 0) {
-      final rate = ((completedAnchorSessions / plannedAnchorSessions) * 100).round().clamp(0, 100);
+    if (activeCommitments.isNotEmpty &&
+        commitmentWeeks >= 4 &&
+        plannedAnchorSessions > 0) {
+      final rate = ((completedAnchorSessions / plannedAnchorSessions) * 100)
+          .round()
+          .clamp(0, 100);
       insights.add(
         MvInsight(
           key: 'mv_insight_anchor_adherence',
@@ -212,8 +218,12 @@ class InsightEngine {
       }).toList();
 
       if (recent.length >= 3 && previous.length >= 3) {
-        final recentAvg = recent.map((s) => s.rpe1To10!).reduce((a, b) => a + b) / recent.length;
-        final prevAvg = previous.map((s) => s.rpe1To10!).reduce((a, b) => a + b) / previous.length;
+        final recentAvg =
+            recent.map((s) => s.rpe1To10!).reduce((a, b) => a + b) /
+            recent.length;
+        final prevAvg =
+            previous.map((s) => s.rpe1To10!).reduce((a, b) => a + b) /
+            previous.length;
         final delta = recentAvg - prevAvg;
 
         if (delta.abs() >= 0.5) {
@@ -224,7 +234,11 @@ class InsightEngine {
               titleFa: 'روند ادراک فشار',
               descriptionFa:
                   'به نظر می‌رسد میانگین فشار تمرینی انتخابی شما در ماه جاری نسبت به ماه قبل $trend یافته است.',
-              params: {'recentAvg': recentAvg, 'prevAvg': prevAvg, 'delta': delta},
+              params: {
+                'recentAvg': recentAvg,
+                'prevAvg': prevAvg,
+                'delta': delta,
+              },
             ),
           );
         }
@@ -238,14 +252,18 @@ class InsightEngine {
       return dt.isAfter(startOfMonth) || dt.isAtSameMomentAs(startOfMonth);
     }).toList();
 
-    final distinctKinds = monthSessions.map((s) => s.kindCode.toUpperCase()).toSet();
+    final distinctKinds = monthSessions
+        .map((s) => s.kindCode.toUpperCase())
+        .toSet();
     if (distinctKinds.length >= 3) {
       final kindCounts = <String, int>{};
       for (final s in monthSessions) {
         final k = s.kindCode.toUpperCase();
         kindCounts[k] = (kindCounts[k] ?? 0) + 1;
       }
-      final topCode = kindCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+      final topCode = kindCounts.entries
+          .reduce((a, b) => a.value > b.value ? a : b)
+          .key;
       final topKind = kindsMap[topCode];
       final topTitle = topKind?.titleFa ?? topCode;
 
@@ -269,7 +287,11 @@ class InsightEngine {
             titleFa: 'پیشرفت در مسیر تکراری',
             descriptionFa:
                 'مسیر «${r.titleFa}» را ${r.timesCompleted} بار پیموده‌اید و بهترین زمان شما ${r.bestDurationMin ?? 0} دقیقه ثبت شده است.',
-            params: {'routeId': r.id, 'titleFa': r.titleFa, 'timesCompleted': r.timesCompleted},
+            params: {
+              'routeId': r.id,
+              'titleFa': r.titleFa,
+              'timesCompleted': r.timesCompleted,
+            },
           ),
         );
         break; // Show top/first qualifying route
@@ -310,4 +332,3 @@ class MvInsight {
     this.params = const {},
   });
 }
-

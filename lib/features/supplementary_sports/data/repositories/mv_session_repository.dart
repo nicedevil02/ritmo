@@ -194,7 +194,8 @@ class MvSessionRepository {
     final toMs = to.millisecondsSinceEpoch;
     final rows = await db.query(
       'movement_sessions',
-      where: "status IN ('COMPLETED', 'PARTIAL') AND startedAt >= ? AND startedAt <= ?",
+      where:
+          "status IN ('COMPLETED', 'PARTIAL') AND startedAt >= ? AND startedAt <= ?",
       whereArgs: [fromMs, toMs],
       orderBy: 'startedAt DESC',
     );

@@ -267,34 +267,35 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
         builder: (_) => MvSessionSummaryScreen(
           session: finishedSession,
           setLogs: _setLogs,
-          onFinish: ({
-            required feeling,
-            required rpe1To10,
-            required effortSource,
-            note,
-          }) async {
-            if (widget.onSessionCompleted != null) {
-              await widget.onSessionCompleted!(
-                finishedSession.copyWith(
-                  rpe1To10: rpe1To10,
-                  effortSource: effortSource,
-                ),
-                _setLogs,
-                feeling,
+          onFinish:
+              ({
+                required feeling,
+                required rpe1To10,
+                required effortSource,
                 note,
-              );
-            } else {
-              await _sessionController.finishSession(
-                session: finishedSession,
-                setLogs: _setLogs,
-                feeling: feeling,
-                rpe1To10: rpe1To10,
-                effortSource: effortSource,
-                note: note,
-              );
-            }
-            if (mounted) Navigator.pop(context);
-          },
+              }) async {
+                if (widget.onSessionCompleted != null) {
+                  await widget.onSessionCompleted!(
+                    finishedSession.copyWith(
+                      rpe1To10: rpe1To10,
+                      effortSource: effortSource,
+                    ),
+                    _setLogs,
+                    feeling,
+                    note,
+                  );
+                } else {
+                  await _sessionController.finishSession(
+                    session: finishedSession,
+                    setLogs: _setLogs,
+                    feeling: feeling,
+                    rpe1To10: rpe1To10,
+                    effortSource: effortSource,
+                    note: note,
+                  );
+                }
+                if (mounted) Navigator.pop(context);
+              },
         ),
       ),
     );

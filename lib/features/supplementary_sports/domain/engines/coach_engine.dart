@@ -26,14 +26,19 @@ class CoachEngine {
   }) {
     String tipText;
 
-    if (readiness == MvReadinessTier.minimal || readiness == MvReadinessTier.rest) {
-      tipText = 'امروز به بدنت گوش بده؛ حرکات کششی و حفظ فرم صحیح بالاترین اولویت را دارد.';
+    if (readiness == MvReadinessTier.minimal ||
+        readiness == MvReadinessTier.rest) {
+      tipText =
+          'امروز به بدنت گوش بده؛ حرکات کششی و حفظ فرم صحیح بالاترین اولویت را دارد.';
     } else if (slot.intensityTier == MvIntensityTier.hard) {
-      tipText = 'در ست‌های پایانی روی تنفس عمیق و انقباض آرام تمرکز کن تا بیشترین بهره را ببری.';
+      tipText =
+          'در ست‌های پایانی روی تنفس عمیق و انقباض آرام تمرکز کن تا بیشترین بهره را ببری.';
     } else if (profile.physicalLimitations.isNotEmpty) {
-      tipText = 'به دلیل محدودیت در ${profile.physicalLimitations.join("، ")}، از حرکات پرضربه خودداری شده است.';
+      tipText =
+          'به دلیل محدودیت در ${profile.physicalLimitations.join("، ")}، از حرکات پرضربه خودداری شده است.';
     } else {
-      tipText = 'نوشیدن آب کافی و گرم کردن ۵ دقیقه‌ای قبل از شروع، کیفیت تمرینت را دوچندان می‌کند.';
+      tipText =
+          'نوشیدن آب کافی و گرم کردن ۵ دقیقه‌ای قبل از شروع، کیفیت تمرینت را دوچندان می‌کند.';
     }
 
     final tip = MvCoachTip(

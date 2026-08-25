@@ -7,11 +7,7 @@ class MvReadinessBar extends StatelessWidget {
   final MvDecision<MvReadinessTier> decision;
   final VoidCallback? onTap;
 
-  const MvReadinessBar({
-    super.key,
-    required this.decision,
-    this.onTap,
-  });
+  const MvReadinessBar({super.key, required this.decision, this.onTap});
 
   @override
   Widget build(BuildContext context) {

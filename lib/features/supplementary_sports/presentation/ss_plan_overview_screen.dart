@@ -19,11 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SSPlanOverviewScreen extends StatefulWidget {
-
-  const SSPlanOverviewScreen({
-    super.key,
-    required this.onNavigateToTab,
-  });
+  const SSPlanOverviewScreen({super.key, required this.onNavigateToTab});
   final Function(int) onNavigateToTab;
 
   @override
@@ -46,19 +42,28 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
   Future<void> _loadSelectedWeekAndPlan() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final profiles = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
+      final profiles = await db.query(
+        'ss_user_profile',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
       if (profiles.isNotEmpty) {
         final profileMap = profiles.first;
         final startStr = profileMap['programStartDate'] as String?;
         if (startStr != null) {
           final startDt = DateTime.parse(startStr);
-          final cycleWeek = SsProgramCalendar.cycleWeekFor(DateTime.now(), programStart: startDt);
+          final cycleWeek = SsProgramCalendar.cycleWeekFor(
+            DateTime.now(),
+            programStart: startDt,
+          );
           setState(() {
             _selectedWeek = cycleWeek;
           });
         }
       }
-    } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_plan_overview_screen.dart: $e');
+    }
     await _loadWeeklyPlan();
   }
 
@@ -90,7 +95,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       // Fetch user gender
       try {
         _userGender = await DatabaseHelper.instance.getUserGender(executor: db);
-      } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] ss_plan_overview_screen.dart: $e');
+      }
       _userGender ??= 'MALE';
 
       // 1. Fetch ALL plans
@@ -104,11 +111,17 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
 
       bool detailMode = false;
       try {
-        final dmRows = await db.query('app_settings', where: 'key = ?', whereArgs: ['sports_detail_mode']);
+        final dmRows = await db.query(
+          'app_settings',
+          where: 'key = ?',
+          whereArgs: ['sports_detail_mode'],
+        );
         if (dmRows.isNotEmpty) {
           detailMode = dmRows.first['value'] == 'true';
         }
-      } catch (e) { debugPrint('[ss] ss_plan_overview_screen.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] ss_plan_overview_screen.dart: $e');
+      }
 
       final allPres = await db.query('ss_session_prescription');
 
@@ -139,7 +152,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             final presExists = presMatch.isNotEmpty;
             final pres = presExists ? presMatch.first : null;
             final isRest = pres != null && pres['slotType'] == 'REST';
-            final statusStr = pres != null ? pres['status'] as String? ?? 'PLANNED' : 'REST';
+            final statusStr = pres != null
+                ? pres['status'] as String? ?? 'PLANNED'
+                : 'REST';
             final isCompleted = statusStr == 'DONE' || statusStr == 'PARTIAL';
 
             var status = 'rest';
@@ -177,7 +192,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         }
 
         // Filter current week plans for the list view below the grid
-        final weekPresList = allPres.where((p) => (p['cycleWeek'] as int? ?? 1) == _selectedWeek).toList();
+        final weekPresList = allPres
+            .where((p) => (p['cycleWeek'] as int? ?? 1) == _selectedWeek)
+            .toList();
         for (var dayNum = 1; dayNum <= 7; dayNum++) {
           final dayName = _getFarsiDayName(dayNum);
           final presMatch = weekPresList.where((p) {
@@ -212,12 +229,19 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             if (isCompleted) {
               percentage = 100;
             } else if (isPartial) {
-              final pLogs = allLogs.where((l) => l['prescriptionId'] == planId).toList();
+              final pLogs = allLogs
+                  .where((l) => l['prescriptionId'] == planId)
+                  .toList();
               if (pLogs.isNotEmpty) {
                 // sort by date desc
-                pLogs.sort((a, b) => (b['startedAt'] as int? ?? 0).compareTo(a['startedAt'] as int? ?? 0));
+                pLogs.sort(
+                  (a, b) => (b['startedAt'] as int? ?? 0).compareTo(
+                    a['startedAt'] as int? ?? 0,
+                  ),
+                );
                 final session = pLogs.first;
-                final completedCount = session['completedExercisesCount'] as int? ?? 0;
+                final completedCount =
+                    session['completedExercisesCount'] as int? ?? 0;
                 final totalCount = session['totalExercisesCount'] as int? ?? 0;
                 if (totalCount > 0) {
                   percentage = ((completedCount / totalCount) * 100).round();
@@ -230,7 +254,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               status = DayStatus.completed;
             } else if (isPartial) {
               status = DayStatus.partial;
-            } else if (dayNum == todayFarsiDay && _selectedWeek == currentWeek) {
+            } else if (dayNum == todayFarsiDay &&
+                _selectedWeek == currentWeek) {
               status = DayStatus.today;
             }
 
@@ -253,7 +278,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             final planId = 'plan_w${w}_$dow';
             final planExists = allPlans.any((p) => p['id'] == planId);
             final isCompleted = allLogs.any((l) => l['planId'] == planId);
-            
+
             final dayIndex = (w - 1) * 7 + dow;
             var status = 'rest';
 
@@ -291,7 +316,11 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         }
 
         // Filter current week plans for the list view below the grid
-        List<Map<String, dynamic>> plans = allPlans.where((p) => p['id'].toString().startsWith('plan_w${_selectedWeek}_')).toList();
+        List<Map<String, dynamic>> plans = allPlans
+            .where(
+              (p) => p['id'].toString().startsWith('plan_w${_selectedWeek}_'),
+            )
+            .toList();
         if (plans.isEmpty && _selectedWeek == 1) {
           plans = allPlans;
         }
@@ -314,7 +343,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             );
           } else {
             final planId = dayPlan['id'].toString();
-            final musclesRaw = jsonDecode(dayPlan['muscleGroups'].toString()) as List<dynamic>;
+            final musclesRaw =
+                jsonDecode(dayPlan['muscleGroups'].toString()) as List<dynamic>;
             final musclesText = musclesRaw.join(' و ');
 
             final isCompleted = allLogs.any((log) => log['planId'] == planId);
@@ -322,7 +352,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
             var status = DayStatus.upcoming;
             if (isCompleted) {
               status = DayStatus.completed;
-            } else if (dayNum == todayFarsiDay && _selectedWeek == currentWeek) {
+            } else if (dayNum == todayFarsiDay &&
+                _selectedWeek == currentWeek) {
               status = DayStatus.today;
             }
 
@@ -340,8 +371,8 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
 
       setState(() {
         _all28Days = allDaysList;
-        _planProgressPercent = totalPlannedWorkoutsCount > 0 
-            ? (completedWorkoutsCount / totalPlannedWorkoutsCount) * 100 
+        _planProgressPercent = totalPlannedWorkoutsCount > 0
+            ? (completedWorkoutsCount / totalPlannedWorkoutsCount) * 100
             : 0.0;
         _weekDays = weekDaysList;
         _isLoading = false;
@@ -362,13 +393,20 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
 
   String _getFarsiDayName(int dayOfWeek) {
     switch (dayOfWeek) {
-      case 1: return 'شنبه';
-      case 2: return 'یکشنبه';
-      case 3: return 'دوشنبه';
-      case 4: return 'سه‌شنبه';
-      case 5: return 'چهارشنبه';
-      case 6: return 'پنج‌شنبه';
-      case 7: return 'جمعه';
+      case 1:
+        return 'شنبه';
+      case 2:
+        return 'یکشنبه';
+      case 3:
+        return 'دوشنبه';
+      case 4:
+        return 'سه‌شنبه';
+      case 5:
+        return 'چهارشنبه';
+      case 6:
+        return 'پنج‌شنبه';
+      case 7:
+        return 'جمعه';
     }
     return '';
   }
@@ -376,13 +414,19 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
   Future<void> _showVersionHistoryBottomSheet() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final histories = await db.query('ss_plan_version_history', orderBy: 'createdAt DESC');
+      final histories = await db.query(
+        'ss_plan_version_history',
+        orderBy: 'createdAt DESC',
+      );
 
       if (histories.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('هیچ تاریخچه تغییری ثبت نشده است.', style: TextStyle()),
+              content: Text(
+                'هیچ تاریخچه تغییری ثبت نشده است.',
+                style: TextStyle(),
+              ),
             ),
           );
         }
@@ -390,52 +434,64 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       }
 
       if (mounted) {
-        unawaited(showModalBottomSheet(
-          context: context,
-          backgroundColor: Colors.transparent,
-          builder: (context) {
-            return BottomSheetContainer(
-              title: 'تاریخچه تغییرات برنامه',
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: histories.length,
-                separatorBuilder: (context, index) => const Divider(),
-                itemBuilder: (context, index) {
-                  final hist = histories[index];
-                  final reason = hist['changeReason']?.toString() ?? 'تغییر نامشخص';
-                  final date = DateTime.fromMillisecondsSinceEpoch(hist['createdAt']! as int);
-                  final dateStr = toPersianDigits('${date.hour}:${date.minute} - ${date.year}/${date.month}/${date.day}');
+        unawaited(
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.transparent,
+            builder: (context) {
+              return BottomSheetContainer(
+                title: 'تاریخچه تغییرات برنامه',
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: histories.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final hist = histories[index];
+                    final reason =
+                        hist['changeReason']?.toString() ?? 'تغییر نامشخص';
+                    final date = DateTime.fromMillisecondsSinceEpoch(
+                      hist['createdAt']! as int,
+                    );
+                    final dateStr = toPersianDigits(
+                      '${date.hour}:${date.minute} - ${date.year}/${date.month}/${date.day}',
+                    );
 
-                  return ListTile(
-                    title: Text(
-                      reason,
-                      textDirection: TextDirection.rtl,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: Text(
-                      dateStr,
-                      textDirection: TextDirection.rtl,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: TextButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _restoreVersion(hist['id'].toString(), hist['serializedPlan'].toString());
-                      },
-                      child: Text(
-                        'بازیابی',
-                        style: TextStyle(
-                          color: SupplementarySportsTheme.getSuccessColor(context),
+                    return ListTile(
+                      title: Text(
+                        reason,
+                        textDirection: TextDirection.rtl,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        dateStr,
+                        textDirection: TextDirection.rtl,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _restoreVersion(
+                            hist['id'].toString(),
+                            hist['serializedPlan'].toString(),
+                          );
+                        },
+                        child: Text(
+                          'بازیابی',
+                          style: TextStyle(
+                            color: SupplementarySportsTheme.getSuccessColor(
+                              context,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        ));
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error loading version histories: $e');
@@ -459,7 +515,11 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         // Restore plans
         for (final p in oldPlans) {
           final plan = Map<String, dynamic>.from(p as Map);
-          await txn.insert('ss_workout_plan', plan, conflictAlgorithm: ConflictAlgorithm.replace);
+          await txn.insert(
+            'ss_workout_plan',
+            plan,
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
         }
       });
 
@@ -467,7 +527,10 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('برنامه با موفقیت به نسخه قبلی بازیابی شد.', style: TextStyle()),
+            content: Text(
+              'برنامه با موفقیت به نسخه قبلی بازیابی شد.',
+              style: TextStyle(),
+            ),
           ),
         );
       }
@@ -514,7 +577,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 ),
                 onPressed: _openProgramSettingsModal,
                 style: TextButton.styleFrom(
-                  foregroundColor: SupplementarySportsTheme.getPrimaryColor(context),
+                  foregroundColor: SupplementarySportsTheme.getPrimaryColor(
+                    context,
+                  ),
                 ),
               ),
             ],
@@ -546,7 +611,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 backgroundColor: const Color(0xFF2E7D5B),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 1,
               ),
               icon: const Icon(Icons.menu_book, size: 20, color: Colors.white),
@@ -561,7 +628,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SSExerciseLibraryScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const SSExerciseLibraryScreen(),
+                  ),
                 );
               },
             ),
@@ -595,7 +664,7 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
   Widget _buildWeekDayRow(PlanDaySummary day) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     // Status decorations
     Widget statusIcon = Container();
     Color statusColor;
@@ -603,21 +672,41 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
     switch (day.status) {
       case DayStatus.completed:
         statusColor = SupplementarySportsTheme.getSuccessColor(context);
-        statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
+        statusIcon = const Icon(
+          Icons.check_circle,
+          color: Colors.green,
+          size: 20,
+        );
       case DayStatus.partial:
         statusColor = const Color(0xFFF59E0B);
         statusIcon = Text(
           toPersianDigits('${day.completionPercentage}٪'),
-          style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: statusColor,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
         );
       case DayStatus.today:
-        statusColor = SupplementarySportsTheme.getSuccessColor(context).withValues(alpha: 0.2);
-        statusIcon = Icon(Icons.circle, color: SupplementarySportsTheme.getSuccessColor(context), size: 14);
+        statusColor = SupplementarySportsTheme.getSuccessColor(
+          context,
+        ).withValues(alpha: 0.2);
+        statusIcon = Icon(
+          Icons.circle,
+          color: SupplementarySportsTheme.getSuccessColor(context),
+          size: 14,
+        );
       case DayStatus.upcoming:
         statusColor = isDark ? Colors.grey[850]! : Colors.grey[100]!;
-        statusIcon = Icon(Icons.circle_outlined, color: isDark ? Colors.grey[600]! : Colors.grey[400]!, size: 14);
+        statusIcon = Icon(
+          Icons.circle_outlined,
+          color: isDark ? Colors.grey[600]! : Colors.grey[400]!,
+          size: 14,
+        );
       case DayStatus.rest:
-        statusColor = isDark ? Colors.black.withValues(alpha: 0.2) : Colors.grey[50]!;
+        statusColor = isDark
+            ? Colors.black.withValues(alpha: 0.2)
+            : Colors.grey[50]!;
         statusIcon = Text(
           'استراحت',
           style: SupplementarySportsTheme.caption.copyWith(
@@ -627,20 +716,24 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: SupplementarySportsTheme.spacing8),
+      margin: const EdgeInsets.symmetric(
+        vertical: SupplementarySportsTheme.spacing8,
+      ),
       decoration: BoxDecoration(
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
         border: Border.all(
-          color: day.status == DayStatus.today 
-              ? SupplementarySportsTheme.getSuccessColor(context) 
-              : isDark 
-                  ? Colors.grey[850]! 
-                  : Colors.grey[200]!,
+          color: day.status == DayStatus.today
+              ? SupplementarySportsTheme.getSuccessColor(context)
+              : isDark
+              ? Colors.grey[850]!
+              : Colors.grey[200]!,
           width: day.status == DayStatus.today ? 2.0 : 1.0,
         ),
       ),
       child: Material(
-        color: day.status == DayStatus.today ? statusColor : SupplementarySportsTheme.getSurfaceColor(context),
+        color: day.status == DayStatus.today
+            ? statusColor
+            : SupplementarySportsTheme.getSurfaceColor(context),
         borderRadius: SupplementarySportsTheme.borderRadiusCard,
         clipBehavior: Clip.antiAlias,
         child: ListTile(
@@ -662,7 +755,10 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
-                    SSMuscleImageResolver.resolve(day.muscleGroups, _userGender),
+                    SSMuscleImageResolver.resolve(
+                      day.muscleGroups,
+                      _userGender,
+                    ),
                     width: 48,
                     height: 48,
                     cacheWidth: 100,
@@ -672,7 +768,10 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                       width: 48,
                       height: 48,
                       color: Colors.grey[800],
-                      child: const Icon(Icons.fitness_center, color: Colors.white70),
+                      child: const Icon(
+                        Icons.fitness_center,
+                        color: Colors.white70,
+                      ),
                     ),
                   ),
                 )
@@ -696,7 +795,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                     day.muscleGroups,
                     style: SupplementarySportsTheme.body.copyWith(
                       color: day.status == DayStatus.rest
-                          ? SupplementarySportsTheme.getTextSecondary(context).withValues(alpha: 0.6)
+                          ? SupplementarySportsTheme.getTextSecondary(
+                              context,
+                            ).withValues(alpha: 0.6)
                           : SupplementarySportsTheme.getTextSecondary(context),
                     ),
                   ),
@@ -721,7 +822,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.black.withValues(alpha: 0.04),
           width: 1.5,
         ),
         boxShadow: isDark
@@ -750,7 +853,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                 ),
               ),
               Text(
-                toPersianDigits('پیشرفت کل: ${_planProgressPercent.toStringAsFixed(0)}٪'),
+                toPersianDigits(
+                  'پیشرفت کل: ${_planProgressPercent.toStringAsFixed(0)}٪',
+                ),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -766,7 +871,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
               value: _planProgressPercent / 100.0,
               minHeight: 8,
               backgroundColor: isDark ? Colors.grey[850] : Colors.grey[200],
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D5B)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF2E7D5B),
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -785,7 +892,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.grey[500] : const Color(0xFF8E8E93),
+                          color: isDark
+                              ? Colors.grey[500]
+                              : const Color(0xFF8E8E93),
                         ),
                       ),
                     ),
@@ -796,7 +905,9 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: List.generate(7, (dayOfWeekIdx) {
                           final index = weekIdx * 7 + dayOfWeekIdx;
-                          final dayData = _all28Days.length > index ? _all28Days[index] : null;
+                          final dayData = _all28Days.length > index
+                              ? _all28Days[index]
+                              : null;
 
                           if (dayData == null) return const SizedBox.shrink();
 
@@ -809,10 +920,17 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
 
                           if (status == 'done') {
                             circleColor = const Color(0xFF2E7D5B);
-                            child = const Icon(Icons.check, size: 11, color: Colors.white);
+                            child = const Icon(
+                              Icons.check,
+                              size: 11,
+                              color: Colors.white,
+                            );
                           } else if (status == 'today') {
                             circleColor = Colors.transparent;
-                            border = Border.all(color: const Color(0xFFC9822A), width: 2);
+                            border = Border.all(
+                              color: const Color(0xFFC9822A),
+                              width: 2,
+                            );
                             child = Text(
                               toPersianDigits('$dayIndex'),
                               style: TextStyle(
@@ -822,30 +940,51 @@ class _SSPlanOverviewScreenState extends State<SSPlanOverviewScreen> {
                               ),
                             );
                           } else if (status == 'missed') {
-                            circleColor = const Color(0xFFE63946).withValues(alpha: 0.15);
+                            circleColor = const Color(
+                              0xFFE63946,
+                            ).withValues(alpha: 0.15);
                             border = Border.all(color: const Color(0xFFE63946));
-                            child = const Icon(Icons.close, size: 10, color: Color(0xFFE63946));
+                            child = const Icon(
+                              Icons.close,
+                              size: 10,
+                              color: Color(0xFFE63946),
+                            );
                           } else if (status == 'upcoming') {
                             circleColor = Colors.transparent;
-                            border = Border.all(color: isDark ? Colors.white24 : Colors.black12);
+                            border = Border.all(
+                              color: isDark ? Colors.white24 : Colors.black12,
+                            );
                             child = Text(
                               toPersianDigits('$dayIndex'),
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isDark ? Colors.grey[650] : Colors.grey[400],
+                                color: isDark
+                                    ? Colors.grey[650]
+                                    : Colors.grey[400],
                               ),
                             );
                           } else if (status == 'today_rest') {
                             circleColor = Colors.transparent;
-                            border = Border.all(color: const Color(0xFFC9822A), width: 2);
-                            child = const Icon(Icons.hotel, size: 10, color: Color(0xFFC9822A));
+                            border = Border.all(
+                              color: const Color(0xFFC9822A),
+                              width: 2,
+                            );
+                            child = const Icon(
+                              Icons.hotel,
+                              size: 10,
+                              color: Color(0xFFC9822A),
+                            );
                           } else {
-                            circleColor = isDark ? Colors.grey[850]!.withValues(alpha: 0.3) : Colors.grey[200]!.withValues(alpha: 0.5);
+                            circleColor = isDark
+                                ? Colors.grey[850]!.withValues(alpha: 0.3)
+                                : Colors.grey[200]!.withValues(alpha: 0.5);
                             child = Text(
                               '-',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isDark ? Colors.grey[800] : Colors.grey[300],
+                                color: isDark
+                                    ? Colors.grey[800]
+                                    : Colors.grey[300],
                               ),
                             );
                           }

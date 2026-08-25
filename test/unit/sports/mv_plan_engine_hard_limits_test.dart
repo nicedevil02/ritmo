@@ -5,7 +5,9 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 void main() {
   group('PlanEngine Stage 2: HARD_LIMITS Unit Tests (S3-T5)', () {
     const planEngine = PlanEngine();
-    final weekStartSat = DateTime.parse('2026-08-22'); // تابستان (Mordad / Shahrivar 1405 -> Season bit 2)
+    final weekStartSat = DateTime.parse(
+      '2026-08-22',
+    ); // تابستان (Mordad / Shahrivar 1405 -> Season bit 2)
 
     final kindsMap = <String, MvMovementKind>{
       'FUTSAL': const MvMovementKind(
@@ -98,51 +100,59 @@ void main() {
       strengthDaysTarget: 2,
     );
 
-    test('User with knee pain limitation: high joint impact filler kinds excluded, but anchor futsal preserved with constraint note', () {
-      const kneeProfile = MvUserProfile(
-        physicalLimitations: ['knee'],
-        createdAt: 100,
-        updatedAt: 100,
-      );
+    test(
+      'User with knee pain limitation: high joint impact filler kinds excluded, but anchor futsal preserved with constraint note',
+      () {
+        const kneeProfile = MvUserProfile(
+          physicalLimitations: ['knee'],
+          createdAt: 100,
+          updatedAt: 100,
+        );
 
-      final futsalCommitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5, // پنجشنبه
-        startTime: '21:00',
-        durationMinutes: 90,
-        titleFa: 'فوتسال پنجشنبه',
-      );
+        final futsalCommitment = MvCommitment(
+          id: 1,
+          kindCode: 'FUTSAL',
+          dayOfWeekSat0: 5, // پنجشنبه
+          startTime: '21:00',
+          durationMinutes: 90,
+          titleFa: 'فوتسال پنجشنبه',
+        );
 
-      final result = planEngine.generateWeek(
-        weekStartSat: weekStartSat,
-        profile: kneeProfile,
-        commitments: [futsalCommitment],
-        overrides: const [],
-        kinds: kindsMap,
-        kindProfiles: kindProfilesMap,
-        budget: budget,
-        load: null,
-        readiness: MvReadinessTier.full,
-      );
+        final result = planEngine.generateWeek(
+          weekStartSat: weekStartSat,
+          profile: kneeProfile,
+          commitments: [futsalCommitment],
+          overrides: const [],
+          kinds: kindsMap,
+          kindProfiles: kindProfilesMap,
+          budget: budget,
+          load: null,
+          readiness: MvReadinessTier.full,
+        );
 
-      // High-impact kinds (FUTSAL with jointImpact=3) must be excluded from allowedKinds for filling
-      expect(result.allowedKinds.containsKey('FUTSAL'), isFalse);
-      // Low-impact kinds (SWIMMING with jointImpact=1) must be preserved
-      expect(result.allowedKinds.containsKey('SWIMMING'), isTrue);
+        // High-impact kinds (FUTSAL with jointImpact=3) must be excluded from allowedKinds for filling
+        expect(result.allowedKinds.containsKey('FUTSAL'), isFalse);
+        // Low-impact kinds (SWIMMING with jointImpact=1) must be preserved
+        expect(result.allowedKinds.containsKey('SWIMMING'), isTrue);
 
-      // Out-of-season kind (SKIING seasonMask=8 vs summer=2) must be excluded
-      expect(result.allowedKinds.containsKey('SKIING'), isFalse);
+        // Out-of-season kind (SKIING seasonMask=8 vs summer=2) must be excluded
+        expect(result.allowedKinds.containsKey('SKIING'), isFalse);
 
-      // Fixed anchor slot FUTSAL must stay locked on Thursday
-      final thursdaySlot = result.slots.firstWhere((s) => s.dateIso == '2026-08-27');
-      expect(thursdaySlot.isLocked, isTrue);
-      expect(thursdaySlot.kindCode, equals('FUTSAL'));
+        // Fixed anchor slot FUTSAL must stay locked on Thursday
+        final thursdaySlot = result.slots.firstWhere(
+          (s) => s.dateIso == '2026-08-27',
+        );
+        expect(thursdaySlot.isLocked, isTrue);
+        expect(thursdaySlot.kindCode, equals('FUTSAL'));
 
-      // Anchor must have constraint warning attached
-      expect(thursdaySlot.coachNoteFa, contains('زانو'));
-      expect(thursdaySlot.reasonParams?['constraintNote'], equals('mv_anchor_constraint_note'));
-      expect(result.notes, contains('mv_anchor_constraint_note'));
-    });
+        // Anchor must have constraint warning attached
+        expect(thursdaySlot.coachNoteFa, contains('زانو'));
+        expect(
+          thursdaySlot.reasonParams?['constraintNote'],
+          equals('mv_anchor_constraint_note'),
+        );
+        expect(result.notes, contains('mv_anchor_constraint_note'));
+      },
+    );
   });
 }

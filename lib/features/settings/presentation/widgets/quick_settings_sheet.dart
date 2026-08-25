@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/security/app_lock_service.dart';
@@ -27,8 +29,13 @@ class QuickSettingsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
 
-    return AnimatedBuilder(
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+    final content = AnimatedBuilder(
       animation: SettingsService.instance.revision,
       builder: (context, _) {
         final themeMode = SettingsService.instance.get<String>('theme_mode');
@@ -47,56 +54,47 @@ class QuickSettingsSheet extends StatelessWidget {
           'haptic_feedback_enabled',
         );
 
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-              top: 16,
-              left: 20,
-              right: 20,
-            ),
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              border: Border.all(color: colors.border),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.border,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            top: 16,
+            left: 20,
+            right: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.border,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        CupertinoIcons.slider_horizontal_3,
-                        color: colors.primary,
-                        size: 22,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.slider_horizontal_3,
+                      color: colors.primary,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'تنظیمات سریع',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'تنظیمات سریع',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
                   const SizedBox(height: 8),
                   Text(
                     'دسترسی آنی به کلیدهای پرکاربرد برنامه',
@@ -334,9 +332,15 @@ class QuickSettingsSheet extends StatelessWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: colors.surface,
+                      color: isGlass
+                          ? (isCurrentlyDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.white.withValues(alpha: 0.45))
+                          : colors.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.border),
+                      border: Border.all(
+                        color: isCurrentlyDark ? colors.border : colors.divider,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -410,9 +414,64 @@ class QuickSettingsSheet extends StatelessWidget {
                 ],
               ),
             ),
+          );
+        },
+      );
+
+    if (!isGlass) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark ? colors.border : colors.divider,
+              width: 1.0,
+            ),
           ),
-        );
-      },
+          child: content,
+        ),
+      );
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: ClipRRect(
+        borderRadius: sheetRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.glassTint,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.70),
+                width: 1.0,
+              ),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: sheetRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(
+                      alpha: isDark ? 0.08 : 0.20,
+                    ),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.45],
+                ),
+              ),
+              child: content,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -437,6 +496,16 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+
+    final inactiveBg = isGlass
+        ? (isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.white.withValues(alpha: 0.45))
+        : colors.surface;
+
+    final inactiveBorder = isDark ? colors.border : colors.divider;
 
     return GestureDetector(
       key: ValueKey(keyName),
@@ -446,13 +515,13 @@ class _QuickTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isActive
-              ? activeColor.withValues(alpha: 0.15)
-              : colors.surface,
+              ? activeColor.withValues(alpha: isDark ? 0.20 : 0.15)
+              : inactiveBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isActive
-                ? activeColor.withValues(alpha: 0.4)
-                : colors.border,
+                ? activeColor.withValues(alpha: 0.5)
+                : inactiveBorder,
           ),
         ),
         child: Row(

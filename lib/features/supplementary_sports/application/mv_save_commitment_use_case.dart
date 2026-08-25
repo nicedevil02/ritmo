@@ -31,12 +31,12 @@ class MvSaveCommitmentUseCase {
     MvPrescriptionRepository? prescriptionRepo,
     MvProfileRepository? profileRepo,
     MvWeekRegenUseCase? weekRegenUseCase,
-  })  : _commitmentRepo = commitmentRepo ?? MvCommitmentRepositoryImpl(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
-        _profileRepo = profileRepo ?? MvProfileRepository(),
-        _weekRegenUseCase =
-            weekRegenUseCase ??
-            MvWeekRegenUseCase(prescriptionRepo: prescriptionRepo);
+  }) : _commitmentRepo = commitmentRepo ?? MvCommitmentRepositoryImpl(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _profileRepo = profileRepo ?? MvProfileRepository(),
+       _weekRegenUseCase =
+           weekRegenUseCase ??
+           MvWeekRegenUseCase(prescriptionRepo: prescriptionRepo);
 
   Future<MvCommitmentSaveResult> execute({
     required MvSlot slot,

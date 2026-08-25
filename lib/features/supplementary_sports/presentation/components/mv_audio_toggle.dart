@@ -18,7 +18,9 @@ class MvAudioToggle extends StatelessWidget {
     final metrics = context.metrics;
 
     return IconButton(
-      tooltip: isAudioEnabled ? 'خاموش کردن راهنمای صوتی' : 'روشن کردن راهنمای صوتی',
+      tooltip: isAudioEnabled
+          ? 'خاموش کردن راهنمای صوتی'
+          : 'روشن کردن راهنمای صوتی',
       iconSize: metrics.iconMd,
       style: IconButton.styleFrom(
         minimumSize: Size(metrics.touchTarget, metrics.touchTarget),

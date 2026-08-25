@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class LoadingShimmer extends StatefulWidget {
-
   const LoadingShimmer({
     super.key,
     required this.width,
@@ -39,8 +38,12 @@ class _LoadingShimmerState extends State<LoadingShimmer>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final baseColor = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF0F0F0);
-    final highlightColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE0E0E0);
+    final baseColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFF0F0F0);
+    final highlightColor = isDark
+        ? const Color(0xFF3A3A3A)
+        : const Color(0xFFE0E0E0);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -53,13 +56,11 @@ class _LoadingShimmerState extends State<LoadingShimmer>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                baseColor,
-                highlightColor,
-                baseColor,
-              ],
+              colors: [baseColor, highlightColor, baseColor],
               stops: const [0.3, 0.5, 0.7],
-              transform: _SlidingGradientTransform(slidePercent: _controller.value),
+              transform: _SlidingGradientTransform(
+                slidePercent: _controller.value,
+              ),
             ),
           ),
         );
@@ -69,7 +70,6 @@ class _LoadingShimmerState extends State<LoadingShimmer>
 }
 
 class _SlidingGradientTransform extends GradientTransform {
-
   const _SlidingGradientTransform({required this.slidePercent});
   final double slidePercent;
 

@@ -8,7 +8,8 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 class MvDistanceTemplate extends StatefulWidget {
   final MvSession session;
   final MvMovementKind? kind;
-  final void Function(int elapsedSeconds, double distanceM, int rpe1To10)? onFinish;
+  final void Function(int elapsedSeconds, double distanceM, int rpe1To10)?
+  onFinish;
 
   const MvDistanceTemplate({
     super.key,
@@ -90,7 +91,11 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
           // Stopwatch
           Text(
             toPersianDigits(_formatDuration(_seconds)),
-            style: const TextStyle(fontSize: 24, color: Colors.grey, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 24,
+              color: Colors.grey,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 16),
           // Distance adjuster (+ / -)
@@ -107,7 +112,10 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                 },
               ),
               const SizedBox(width: 16),
-              const Text('تنظیم مسافت', style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                'تنظیم مسافت',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(width: 16),
               IconButton.outlined(
                 icon: const Icon(Icons.add),
@@ -136,7 +144,9 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
             children: [
               IconButton.filledTonal(
                 iconSize: 36,
-                icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                icon: Icon(
+                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                ),
                 onPressed: () {
                   RitmoHaptics.tap();
                   setState(() => _isPaused = !_isPaused);
@@ -145,7 +155,10 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
               const SizedBox(width: 20),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
                 ),
                 icon: const Icon(Icons.check_circle_rounded),
                 label: const Text('پایان جلسه'),

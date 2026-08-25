@@ -42,18 +42,14 @@ class MvKindProfileRepositoryImpl implements MvKindProfileRepository {
       whereArgs: codes,
     );
     return {
-      for (final r in rows)
-        (r['kindCode'] as String): MvKindProfile.fromMap(r),
+      for (final r in rows) (r['kindCode'] as String): MvKindProfile.fromMap(r),
     };
   }
 
   @override
   Future<List<MvKindProfile>> getAll() async {
     final db = await _db;
-    final rows = await db.query(
-      'mv_kind_profile',
-      orderBy: 'kindCode ASC',
-    );
+    final rows = await db.query('mv_kind_profile', orderBy: 'kindCode ASC');
     return rows.map(MvKindProfile.fromMap).toList();
   }
 

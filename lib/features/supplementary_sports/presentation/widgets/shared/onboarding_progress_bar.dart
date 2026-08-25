@@ -3,7 +3,6 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class OnboardingProgressBar extends StatelessWidget {
-
   const OnboardingProgressBar({
     super.key,
     required this.step,
@@ -40,10 +39,7 @@ class OnboardingProgressBar extends StatelessWidget {
                 child: Stack(
                   children: [
                     // Track
-                    Container(
-                      height: 8,
-                      color: trackColor,
-                    ),
+                    Container(height: 8, color: trackColor),
                     // Progress
                     LayoutBuilder(
                       builder: (context, constraints) {

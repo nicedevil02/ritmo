@@ -56,15 +56,22 @@ class MovementBudgetService {
         final info = await db.rawQuery('PRAGMA table_info(ss_user_profile)');
         hasExp = info.any((row) => row['name'] == 'experienceLevel');
         hasDays = info.any((row) => row['name'] == 'daysPerWeek');
-      } catch (e) { debugPrint('[ss] movement_budget.dart: $e'); }
+      } catch (e) {
+        debugPrint('[ss] movement_budget.dart: $e');
+      }
 
       if (hasExp && hasDays) {
-        final profRows = await db.query('ss_user_profile', where: "id = 'default'", limit: 1);
+        final profRows = await db.query(
+          'ss_user_profile',
+          where: "id = 'default'",
+          limit: 1,
+        );
         if (profRows.isNotEmpty) {
           final prof = profRows.first;
-          final exp = prof['experienceLevel']?.toString().toUpperCase() ?? 'BEGINNER';
+          final exp =
+              prof['experienceLevel']?.toString().toUpperCase() ?? 'BEGINNER';
           final days = (prof['daysPerWeek'] as num? ?? 3).toInt();
-          
+
           targetActiveDays = days;
           if (exp == 'ADVANCED' || days >= 5) {
             targetMetMinutes = 800.0;
@@ -76,23 +83,36 @@ class MovementBudgetService {
         }
       } else {
         // Fallback to movement_budget table
-        final bRows = await db.query('movement_budget', where: "id = 'default'", limit: 1);
+        final bRows = await db.query(
+          'movement_budget',
+          where: "id = 'default'",
+          limit: 1,
+        );
         if (bRows.isNotEmpty) {
-          targetMetMinutes = (bRows.first['weeklyMetMinutesTarget'] as num? ?? 500.0).toDouble();
-          targetActiveDays = (bRows.first['weeklyActiveDaysTarget'] as num? ?? 4).toInt();
+          targetMetMinutes =
+              (bRows.first['weeklyMetMinutesTarget'] as num? ?? 500.0)
+                  .toDouble();
+          targetActiveDays =
+              (bRows.first['weeklyActiveDaysTarget'] as num? ?? 4).toInt();
         }
       }
     } catch (e) {
-      debugPrint('[MovementBudget] budget config read failed, using defaults: $e');
+      debugPrint(
+        '[MovementBudget] budget config read failed, using defaults: $e',
+      );
     }
 
     final now = DateTime.now();
     final jalali = Jalali.fromDateTime(now);
-    final dayOfWeekIndex = jalali.weekDay - 1; // Jalali weekDay: 1=Shanbe (0 offset) to 7=Jomeh (6 offset)
+    final dayOfWeekIndex =
+        jalali.weekDay -
+        1; // Jalali weekDay: 1=Shanbe (0 offset) to 7=Jomeh (6 offset)
 
     final localToday = DateTime(now.year, now.month, now.day);
     final startOfWeek = localToday.subtract(Duration(days: dayOfWeekIndex));
-    final endOfWeekExclusive = startOfWeek.add(const Duration(days: 7)); // شنبهٔ هفتهٔ بعد، ناشمول
+    final endOfWeekExclusive = startOfWeek.add(
+      const Duration(days: 7),
+    ); // شنبهٔ هفتهٔ بعد، ناشمول
     final events = await MovementRepository.instance.eventsInRangeMs(
       startOfWeek.millisecondsSinceEpoch,
       endOfWeekExclusive.millisecondsSinceEpoch,
@@ -117,7 +137,9 @@ class MovementBudgetService {
       byFamily[family] = (byFamily[family] ?? 0.0) + e.metMinutes;
 
       final dt = DateTime.fromMillisecondsSinceEpoch(e.loggedAt);
-      activeDates.add('${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}');
+      activeDates.add(
+        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}',
+      );
     }
 
     final daysPassed = (dayOfWeekIndex + 1).clamp(1, 7);
@@ -126,8 +148,10 @@ class MovementBudgetService {
     double? projectedTotal;
     if (daysPassed >= 3 && totalMetMins > 0) {
       final dailyPace = totalMetMins / daysPassed;
-      projectedTotal =
-          (totalMetMins + dailyPace * daysRemaining).clamp(0.0, targetMetMinutes * 1.5);
+      projectedTotal = (totalMetMins + dailyPace * daysRemaining).clamp(
+        0.0,
+        targetMetMinutes * 1.5,
+      );
     }
 
     return MovementBudgetSnapshot(

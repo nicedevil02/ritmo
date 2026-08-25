@@ -24,45 +24,65 @@ void main() {
       await db.close();
     });
 
-    test('getByCode returns accurate MvKindProfile with parsed lists', () async {
-      final footballProfile = await repo.getByCode('FOOTBALL');
-      expect(footballProfile, isNotNull);
-      expect(footballProfile!.kindCode, equals('FOOTBALL'));
-      expect(
-        footballProfile.primaryMuscles,
-        equals(['hamstrings', 'quads', 'calves', 'glutes']),
-      );
-      expect(footballProfile.neuroCost, equals(3));
-      expect(footballProfile.recoveryHours, equals(48));
-      expect(
-        footballProfile.complementFocus,
-        equals(['posterior_chain', 'adductors', 'ankle']),
-      );
-      expect(
-        footballProfile.prehabTags,
-        equals(['nordic_hamstring', 'copenhagen', 'ankle_hop']),
-      );
-      expect(footballProfile.recommendedTierBefore, equals(MvIntensityTier.light));
-      expect(footballProfile.recommendedTierAfter, equals(MvIntensityTier.light));
+    test(
+      'getByCode returns accurate MvKindProfile with parsed lists',
+      () async {
+        final footballProfile = await repo.getByCode('FOOTBALL');
+        expect(footballProfile, isNotNull);
+        expect(footballProfile!.kindCode, equals('FOOTBALL'));
+        expect(
+          footballProfile.primaryMuscles,
+          equals(['hamstrings', 'quads', 'calves', 'glutes']),
+        );
+        expect(footballProfile.neuroCost, equals(3));
+        expect(footballProfile.recoveryHours, equals(48));
+        expect(
+          footballProfile.complementFocus,
+          equals(['posterior_chain', 'adductors', 'ankle']),
+        );
+        expect(
+          footballProfile.prehabTags,
+          equals(['nordic_hamstring', 'copenhagen', 'ankle_hop']),
+        );
+        expect(
+          footballProfile.recommendedTierBefore,
+          equals(MvIntensityTier.light),
+        );
+        expect(
+          footballProfile.recommendedTierAfter,
+          equals(MvIntensityTier.light),
+        );
 
-      // Test non-existent kind
-      final unknown = await repo.getByCode('NON_EXISTENT_KIND');
-      expect(unknown, isNull);
-    });
+        // Test non-existent kind
+        final unknown = await repo.getByCode('NON_EXISTENT_KIND');
+        expect(unknown, isNull);
+      },
+    );
 
-    test('getMapByCodes returns Map<String, MvKindProfile> for batch requested codes', () async {
-      final map = await repo.getMapByCodes(['SWIMMING', 'YOGA', 'FUTSAL', 'NON_EXISTENT']);
-      expect(map.length, equals(3));
-      expect(map.containsKey('SWIMMING'), isTrue);
-      expect(map.containsKey('YOGA'), isTrue);
-      expect(map.containsKey('FUTSAL'), isTrue);
-      expect(map.containsKey('NON_EXISTENT'), isFalse);
+    test(
+      'getMapByCodes returns Map<String, MvKindProfile> for batch requested codes',
+      () async {
+        final map = await repo.getMapByCodes([
+          'SWIMMING',
+          'YOGA',
+          'FUTSAL',
+          'NON_EXISTENT',
+        ]);
+        expect(map.length, equals(3));
+        expect(map.containsKey('SWIMMING'), isTrue);
+        expect(map.containsKey('YOGA'), isTrue);
+        expect(map.containsKey('FUTSAL'), isTrue);
+        expect(map.containsKey('NON_EXISTENT'), isFalse);
 
-      expect(map['SWIMMING']!.primaryMuscles, equals(['lats', 'shoulders', 'core']));
-      expect(map['YOGA']!.primaryMuscles, equals(['full_body']));
-      expect(map['YOGA']!.recoveryHours, equals(0));
-      expect(map['FUTSAL']!.neuroCost, equals(3));
-    });
+        expect(
+          map['SWIMMING']!.primaryMuscles,
+          equals(['lats', 'shoulders', 'core']),
+        );
+        expect(map['YOGA']!.primaryMuscles, equals(['full_body']));
+        expect(map['YOGA']!.recoveryHours, equals(0));
+        expect(map['FUTSAL']!.neuroCost, equals(3));
+      },
+    );
 
     test('getAll returns all 49 kind profiles', () async {
       final allProfiles = await repo.getAll();

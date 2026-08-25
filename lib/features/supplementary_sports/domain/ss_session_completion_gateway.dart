@@ -42,15 +42,17 @@ class SsSessionCompletionGateway {
     });
 
     if (completedLogId != null) {
-      RitmoEventBus().fire(RitmoEvent(
-        type: RitmoEventType.workoutLogChanged.code,
-        timestamp: DateTime.now(),
-        payload: {
-          'source': sourceModule,
-          'id': completedLogId,
-          'prescriptionId': prescription.id,
-        },
-      ));
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: RitmoEventType.workoutLogChanged.code,
+          timestamp: DateTime.now(),
+          payload: {
+            'source': sourceModule,
+            'id': completedLogId,
+            'prescriptionId': prescription.id,
+          },
+        ),
+      );
     }
     return completedLogId;
   }

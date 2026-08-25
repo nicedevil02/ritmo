@@ -107,7 +107,10 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                     children: [
                       Text(
                         toPersianDigits(_formatDuration(_seconds)),
-                        style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       if (_half == 1)
@@ -148,7 +151,9 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
               controller: _noteController,
               decoration: InputDecoration(
                 labelText: 'یادداشت مسابقه (نتیجه، گل‌ها، حس بازی)',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -158,7 +163,9 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
               children: [
                 IconButton.filledTonal(
                   iconSize: 36,
-                  icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                  icon: Icon(
+                    _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                  ),
                   onPressed: () {
                     RitmoHaptics.tap();
                     setState(() => _isPaused = !_isPaused);
@@ -167,7 +174,10 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                 const SizedBox(width: 20),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
                   ),
                   icon: const Icon(Icons.check_circle_rounded),
                   label: const Text('پایان مسابقه'),
@@ -176,7 +186,9 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                     widget.onFinish?.call(
                       _seconds,
                       _rpe,
-                      _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+                      _noteController.text.trim().isEmpty
+                          ? null
+                          : _noteController.text.trim(),
                     );
                   },
                 ),
@@ -206,7 +218,10 @@ class _ScoreColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 4),
         Text(
           toPersianDigits(score.toString()),

@@ -148,16 +148,12 @@ class PlanEngine {
     );
 
     // 6. FALLBACK (S3-T9: _fallback)
-    final finalSlots = _fallback(
-      slots: complementSlots,
-      profile: profile,
-    );
+    final finalSlots = _fallback(slots: complementSlots, profile: profile);
 
     stageDecisions.add(
       MvDecision<List<MvSlot>>(
         value: finalSlots,
-        reasonFa:
-            'گارد همیشه-خروجی و حداقل مؤثر ۱۰ دقیقه‌ای بررسی و تثبیت شد.',
+        reasonFa: 'گارد همیشه-خروجی و حداقل مؤثر ۱۰ دقیقه‌ای بررسی و تثبیت شد.',
         reasonKey: MvReasonKeys.fallbackMinimum,
         sources: const ['fallback_guard'],
       ),
@@ -261,10 +257,7 @@ class PlanEngine {
         focusCodes: focus,
         headlineFa: 'قدرتی مکمل $kindTitle: تقویت ${focus.join("، ")}',
         reasonKey: MvReasonKeys.complement,
-        reasonParams: {
-          'kind': kindTitle,
-          'focus': focus.join('، '),
-        },
+        reasonParams: {'kind': kindTitle, 'focus': focus.join('، ')},
       );
     }
 
@@ -293,7 +286,8 @@ class PlanEngine {
         currentStrengthDays++;
       }
       final kind = allowedKinds[s.kindCode] ?? kinds[s.kindCode];
-      final baseMet = kind?.baseMet ??
+      final baseMet =
+          kind?.baseMet ??
           (s.slotType == MvSlotType.strength
               ? 4.5
               : (s.slotType == MvSlotType.mobility ? 2.5 : 3.5));
@@ -322,8 +316,10 @@ class PlanEngine {
             continue;
           }
 
-          final strengthDuration =
-              _parseDuration(profile.sessionDuration, false);
+          final strengthDuration = _parseDuration(
+            profile.sessionDuration,
+            false,
+          );
           updatedSlots[i] = MvSlot(
             id: 'slot_${updatedSlots[i].dateIso}_strength',
             dateIso: updatedSlots[i].dateIso,
@@ -360,8 +356,10 @@ class PlanEngine {
               continue;
             }
 
-            final strengthDuration =
-                _parseDuration(profile.sessionDuration, false);
+            final strengthDuration = _parseDuration(
+              profile.sessionDuration,
+              false,
+            );
             updatedSlots[i] = MvSlot(
               id: 'slot_${updatedSlots[i].dateIso}_strength',
               dateIso: updatedSlots[i].dateIso,
@@ -453,8 +451,8 @@ class PlanEngine {
     for (final dayIdx in anchorDayIndices) {
       final anchorSlot = updatedSlots[dayIdx];
       final kind = kinds[anchorSlot.kindCode];
-      final isHighImpact = (kind?.jointImpact ?? 2) >= 2 ||
-          (anchorSlot.targetMinutes >= 60);
+      final isHighImpact =
+          (kind?.jointImpact ?? 2) >= 2 || (anchorSlot.targetMinutes >= 60);
 
       // ADJ-2: Day before (i - 1) -> mobility, max 20 min, light
       final dayBefore = (dayIdx - 1 + 7) % 7;
@@ -512,9 +510,11 @@ class PlanEngine {
       if (dayB == dayA + 1) {
         final kindA = kinds[updatedSlots[dayA].kindCode];
         final kindB = kinds[updatedSlots[dayB].kindCode];
-        final isHighImpactA = (kindA?.jointImpact ?? 2) >= 2 ||
+        final isHighImpactA =
+            (kindA?.jointImpact ?? 2) >= 2 ||
             (updatedSlots[dayA].targetMinutes >= 60);
-        final isHighImpactB = (kindB?.jointImpact ?? 2) >= 2 ||
+        final isHighImpactB =
+            (kindB?.jointImpact ?? 2) >= 2 ||
             (updatedSlots[dayB].targetMinutes >= 60);
 
         if (isHighImpactA && isHighImpactB) {
@@ -549,7 +549,9 @@ class PlanEngine {
 
     // ADJ-5: If >= 3 anchors in the week, guarantee at least 1 full rest day
     if (anchorDayIndices.length >= 3) {
-      final hasRest = updatedSlots.any((s) => !s.isLocked && s.slotType == MvSlotType.rest);
+      final hasRest = updatedSlots.any(
+        (s) => !s.isLocked && s.slotType == MvSlotType.rest,
+      );
       if (!hasRest) {
         for (int i = 0; i < 7; i++) {
           if (!updatedSlots[i].isLocked) {
@@ -594,8 +596,7 @@ class PlanEngine {
 
     final hasKneeLimitation = profile.physicalLimitations.any(
       (l) =>
-          l.toLowerCase().contains('knee') ||
-          l.toLowerCase().contains('زانو'),
+          l.toLowerCase().contains('knee') || l.toLowerCase().contains('زانو'),
     );
     final isNeighborFriendly = profile.neighborFriendly;
 
@@ -662,8 +663,10 @@ class PlanEngine {
     if (kind.seasonMask == null || kind.seasonMask!.trim().isEmpty) return true;
     final jDate = Jalali.fromDateTime(date);
     final currentMonth = jDate.month.toString(); // 1..12
-    final months =
-        kind.seasonMask!.split(',').map((m) => m.trim()).where((m) => m.isNotEmpty);
+    final months = kind.seasonMask!
+        .split(',')
+        .map((m) => m.trim())
+        .where((m) => m.isNotEmpty);
     return months.contains(currentMonth);
   }
 

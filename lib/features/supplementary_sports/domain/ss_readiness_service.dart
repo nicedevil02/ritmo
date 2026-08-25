@@ -64,7 +64,8 @@ class SSReadinessService {
   Future<SSReadinessVerdict> evaluateToday() async {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now();
-    final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final dateKey =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     final nowMs = today.millisecondsSinceEpoch;
     final twentyFourHoursAgo = nowMs - (24 * 60 * 60 * 1000);
 
@@ -183,10 +184,12 @@ class SSReadinessService {
         where: "key = 'cycle_consent_sports'",
         limit: 1,
       );
-      final hasConsent = cycleConsent.isNotEmpty && cycleConsent.first['value'] == 'true';
+      final hasConsent =
+          cycleConsent.isNotEmpty && cycleConsent.first['value'] == 'true';
 
       if (hasConsent) {
-        final todayIso = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+        final todayIso =
+            '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
         final cycleRows = await db.query(
           'cycle_periods',
           where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
@@ -228,7 +231,9 @@ class SSReadinessService {
     if (painLevel >= 5) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.rest,
-        reasonFa: appendSubjective('به دلیل درد ثبت‌شده، استراحت یا تمرین بسیار سبک توصیه می‌شود 🛑'),
+        reasonFa: appendSubjective(
+          'به دلیل درد ثبت‌شده، استراحت یا تمرین بسیار سبک توصیه می‌شود 🛑',
+        ),
         emoji: '🛑',
         score: 30,
         sleepMinutes: sleepMinutes,
@@ -240,7 +245,9 @@ class SSReadinessService {
     if (isMenstrualPhase) {
       return SSReadinessVerdict(
         tier: SSReadinessTier.light,
-        reasonFa: appendSubjective('فاز قاعدگی — تمرینات ملایم و کششی پیشنهاد می‌شود 🌸'),
+        reasonFa: appendSubjective(
+          'فاز قاعدگی — تمرینات ملایم و کششی پیشنهاد می‌شود 🌸',
+        ),
         emoji: '🌸',
         score: 50,
         sleepMinutes: sleepMinutes,
@@ -250,7 +257,9 @@ class SSReadinessService {
     }
 
     if (energy <= 1 || (sleepMinutes != null && sleepMinutes < 300)) {
-      final hours = sleepMinutes != null ? (sleepMinutes / 60.0).toStringAsFixed(1) : null;
+      final hours = sleepMinutes != null
+          ? (sleepMinutes / 60.0).toStringAsFixed(1)
+          : null;
       final msg = hours != null
           ? 'دیشب کم خوابیدی ($hours ساعت) — نسخهٔ حداقلی تا زنجیره نشکنه ⚡'
           : 'انرژی پایینه — نسخهٔ حداقلی تا زنجیره نشکنه ⚡';
@@ -264,8 +273,12 @@ class SSReadinessService {
       );
     }
 
-    if (energy == 2 || (sleepMinutes != null && sleepMinutes < 360) || recoveryLoad >= 6) {
-      final hours = sleepMinutes != null ? (sleepMinutes / 60.0).toStringAsFixed(1) : null;
+    if (energy == 2 ||
+        (sleepMinutes != null && sleepMinutes < 360) ||
+        recoveryLoad >= 6) {
+      final hours = sleepMinutes != null
+          ? (sleepMinutes / 60.0).toStringAsFixed(1)
+          : null;
       final msg = hours != null
           ? 'خواب یا ریکاوری متوسط ($hours ساعت) — نسخهٔ سبک پیشنهاد می‌شه 🔋'
           : 'بدنت هنوز خسته/کوفته‌ست — نسخهٔ سبک 🔋';

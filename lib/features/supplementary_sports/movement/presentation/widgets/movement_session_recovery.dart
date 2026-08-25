@@ -126,9 +126,7 @@ class _RecoveryDialog extends StatelessWidget {
           SizedBox(
             height: 48,
             child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: colors.error,
-              ),
+              style: TextButton.styleFrom(foregroundColor: colors.error),
               onPressed: () async {
                 final confirmed = await showDialog<bool>(
                   context: context,
@@ -207,10 +205,7 @@ class _RecoveryDialog extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(null),
               child: const Text(
                 'بعداً تصمیم می‌گیرم',
-                style: TextStyle(
-                  fontFamily: 'Vazirmatn',
-                  fontSize: 12.5,
-                ),
+                style: TextStyle(fontFamily: 'Vazirmatn', fontSize: 12.5),
               ),
             ),
           ),
@@ -257,7 +252,9 @@ Future<MovementKind?> showMovementKindPickerSheet(BuildContext context) async {
                 ),
                 const SizedBox(height: RitmoSpacing.md),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: RitmoSpacing.lg,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

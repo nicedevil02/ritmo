@@ -30,7 +30,10 @@ class MovementRepository {
 
   Future<Database> get _db async => DatabaseHelper.instance.database;
 
-  Future<List<MovementKind>> getKinds({MovementFamily? family, bool enabledOnly = true}) async {
+  Future<List<MovementKind>> getKinds({
+    MovementFamily? family,
+    bool enabledOnly = true,
+  }) async {
     final db = await _db;
     final whereClause = StringBuffer(enabledOnly ? 'isEnabled = 1' : '1=1');
     final whereArgs = <dynamic>[];
@@ -40,17 +43,18 @@ class MovementRepository {
     }
 
     Future<List<Map<String, Object?>>> runQuery() => db.query(
-          'movement_kinds',
-          where: whereClause.toString(),
-          whereArgs: whereArgs,
-          orderBy: 'usageCount DESC, sortOrder ASC, titleFa ASC',
-        );
+      'movement_kinds',
+      where: whereClause.toString(),
+      whereArgs: whereArgs,
+      orderBy: 'usageCount DESC, sortOrder ASC, titleFa ASC',
+    );
 
     var rows = await runQuery();
     if (rows.isEmpty) {
       // هرگز بهخاطر خالی بودن نتیجهٔ یک فیلتر seed نکن.
       // فقط وقتی bootstrap میکنیم که کل جدول واقعاً خالی باشد.
-      final total = Sqflite.firstIntValue(
+      final total =
+          Sqflite.firstIntValue(
             await db.rawQuery('SELECT COUNT(*) FROM movement_kinds'),
           ) ??
           0;
@@ -73,10 +77,14 @@ class MovementRepository {
 
     return kinds.where((k) {
       final titleNorm = TextSimilarity.normalize(k.titleFa).toLowerCase();
-      final aliasesNorm = TextSimilarity.normalize(k.aliasesFa ?? '').toLowerCase();
+      final aliasesNorm = TextSimilarity.normalize(
+        k.aliasesFa ?? '',
+      ).toLowerCase();
       final codeNorm = k.code.toLowerCase();
 
-      return titleNorm.contains(q) || aliasesNorm.contains(q) || codeNorm.contains(q);
+      return titleNorm.contains(q) ||
+          aliasesNorm.contains(q) ||
+          codeNorm.contains(q);
     }).toList();
   }
 
@@ -101,7 +109,10 @@ class MovementRepository {
       for (final r in [...rows, ...fallbackRows]) {
         combined[r['code'] as String] = r;
       }
-      return combined.values.take(limit).map((r) => MovementKind.fromMap(r)).toList();
+      return combined.values
+          .take(limit)
+          .map((r) => MovementKind.fromMap(r))
+          .toList();
     }
 
     return rows.map((r) => MovementKind.fromMap(r)).toList();
@@ -116,7 +127,10 @@ class MovementRepository {
   /// Transaction-safe variant of [getKind].
   /// Any code path that may run inside a transaction MUST call this
   /// with the transaction's own executor.
-  Future<MovementKind?> getKindIn(DatabaseExecutor executor, String code) async {
+  Future<MovementKind?> getKindIn(
+    DatabaseExecutor executor,
+    String code,
+  ) async {
     final rows = await executor.query(
       'movement_kinds',
       where: 'code = ?',
@@ -138,7 +152,11 @@ class MovementRepository {
       ..['createdAt'] = now
       ..['updatedAt'] = now;
 
-    await db.insert('movement_kinds', customMap, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'movement_kinds',
+      customMap,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return MovementKind.fromMap(customMap);
   }
 
@@ -192,11 +210,14 @@ class MovementRepository {
     }
 
     await txn.insert('workout_logs', fullEvent.toMap());
-    await txn.rawUpdate('''
+    await txn.rawUpdate(
+      '''
       UPDATE movement_kinds
       SET usageCount = usageCount + 1, lastUsedAt = ?
       WHERE code = ?
-    ''', [fullEvent.loggedAt, fullEvent.kindCode]);
+    ''',
+      [fullEvent.loggedAt, fullEvent.kindCode],
+    );
 
     final prResult = await _checkAndRecordPrs(txn, fullEvent, kind);
     return {'id': fullEvent.id, 'isPr': prResult.isNewPr, 'prResult': prResult};
@@ -213,17 +234,19 @@ class MovementRepository {
     });
 
     // Fire event bus after commit
-    RitmoEventBus().fire(RitmoEvent(
-      type: RitmoEventType.workoutLogChanged.code,
-      timestamp: DateTime.now(),
-      payload: {
-        'source': event.sourceModule,
-        'id': result['id'] ?? event.id,
-        'kind': event.kindCode,
-        'loggedAt': event.loggedAt,
-        'isPr': result['isPr'] ?? false,
-      },
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: RitmoEventType.workoutLogChanged.code,
+        timestamp: DateTime.now(),
+        payload: {
+          'source': event.sourceModule,
+          'id': result['id'] ?? event.id,
+          'kind': event.kindCode,
+          'loggedAt': event.loggedAt,
+          'isPr': result['isPr'] ?? false,
+        },
+      ),
+    );
 
     return result;
   }
@@ -241,8 +264,15 @@ class MovementRepository {
     );
 
     final weightKg = await MovementLoadCalculator.getUserWeightKg(db);
-    final metMins = MovementLoadCalculator.metMinutes(met: met, durationMinutes: event.durationMinutes);
-    final kcal = MovementLoadCalculator.calories(met: met, weightKg: weightKg, durationMinutes: event.durationMinutes);
+    final metMins = MovementLoadCalculator.metMinutes(
+      met: met,
+      durationMinutes: event.durationMinutes,
+    );
+    final kcal = MovementLoadCalculator.calories(
+      met: met,
+      weightKg: weightKg,
+      durationMinutes: event.durationMinutes,
+    );
 
     final updated = event.copyWith(metMinutes: metMins, caloriesKcal: kcal);
 
@@ -256,11 +286,17 @@ class MovementRepository {
       await _recalculatePrsForKind(txn, event.kindCode);
     });
 
-    RitmoEventBus().fire(RitmoEvent(
-      type: RitmoEventType.workoutLogChanged.code,
-      timestamp: DateTime.now(),
-      payload: {'source': event.sourceModule, 'id': event.id, 'kind': event.kindCode},
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: RitmoEventType.workoutLogChanged.code,
+        timestamp: DateTime.now(),
+        payload: {
+          'source': event.sourceModule,
+          'id': event.id,
+          'kind': event.kindCode,
+        },
+      ),
+    );
   }
 
   /// Delete a movement event.
@@ -272,7 +308,12 @@ class MovementRepository {
     String? kindCode;
 
     await db.transaction((txn) async {
-      final rows = await txn.query('workout_logs', where: 'id = ?', whereArgs: [id], limit: 1);
+      final rows = await txn.query(
+        'workout_logs',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
       if (rows.isEmpty) return;
 
       final row = rows.first;
@@ -286,14 +327,26 @@ class MovementRepository {
 
       kindCode = row['kind']?.toString() ?? row['type']?.toString();
 
-      await txn.delete('workout_exercise_logs', where: 'workoutLogId = ?', whereArgs: [id]);
+      await txn.delete(
+        'workout_exercise_logs',
+        where: 'workoutLogId = ?',
+        whereArgs: [id],
+      );
       await txn.delete('workout_logs', where: 'id = ?', whereArgs: [id]);
 
       if (sourceModule == 'MOVEMENT_SESSION') {
         final sessionId = row['sourceEntityId'] as String?;
         if (sessionId != null && sessionId.isNotEmpty) {
-          await txn.delete('movement_sessions', where: 'id = ?', whereArgs: [sessionId]);
-          await txn.delete('movement_session_events', where: 'sessionId = ?', whereArgs: [sessionId]);
+          await txn.delete(
+            'movement_sessions',
+            where: 'id = ?',
+            whereArgs: [sessionId],
+          );
+          await txn.delete(
+            'movement_session_events',
+            where: 'sessionId = ?',
+            whereArgs: [sessionId],
+          );
         }
       }
 
@@ -307,21 +360,31 @@ class MovementRepository {
       }
     });
 
-    RitmoEventBus().fire(RitmoEvent(
-      type: RitmoEventType.workoutLogChanged.code,
-      timestamp: DateTime.now(),
-      payload: {'source': 'movement', 'id': id, 'action': 'deleted'},
-    ));
+    RitmoEventBus().fire(
+      RitmoEvent(
+        type: RitmoEventType.workoutLogChanged.code,
+        timestamp: DateTime.now(),
+        payload: {'source': 'movement', 'id': id, 'action': 'deleted'},
+      ),
+    );
   }
 
-  Future<void> _recalculatePrsForKind(DatabaseExecutor txn, String kindCode) async {
+  Future<void> _recalculatePrsForKind(
+    DatabaseExecutor txn,
+    String kindCode,
+  ) async {
     final logs = await txn.query(
       'workout_logs',
       where: '(kind = ? OR type = ?)',
       whereArgs: [kindCode, kindCode],
     );
 
-    final prTypes = ['MAX_DISTANCE', 'MAX_DURATION', 'MAX_ELEVATION', 'MAX_LAPS'];
+    final prTypes = [
+      'MAX_DISTANCE',
+      'MAX_DURATION',
+      'MAX_ELEVATION',
+      'MAX_LAPS',
+    ];
     for (final prType in prTypes) {
       double? maxVal;
       String? topLogId;
@@ -373,7 +436,8 @@ class MovementRepository {
             {
               'value': maxVal,
               'logId': topLogId,
-              'achievedAt': topLoggedAt ?? DateTime.now().millisecondsSinceEpoch,
+              'achievedAt':
+                  topLoggedAt ?? DateTime.now().millisecondsSinceEpoch,
             },
             where: 'kind = ? AND prType = ?',
             whereArgs: [kindCode, prType],
@@ -391,7 +455,10 @@ class MovementRepository {
 
   /// Fetch events in the half-open range [startMs, endMsExclusive).
   /// Prefer this over eventsBetween for any period math.
-  Future<List<MovementEvent>> eventsInRangeMs(int startMs, int endMsExclusive) async {
+  Future<List<MovementEvent>> eventsInRangeMs(
+    int startMs,
+    int endMsExclusive,
+  ) async {
     final db = await _db;
     final rows = await db.query(
       'workout_logs',
@@ -405,8 +472,20 @@ class MovementRepository {
   /// Fetch events logged between two dates (inclusive).
   Future<List<MovementEvent>> eventsBetween(DateTime from, DateTime to) async {
     final db = await _db;
-    final startMs = DateTime(from.year, from.month, from.day).millisecondsSinceEpoch;
-    final endMs = DateTime(to.year, to.month, to.day, 23, 59, 59, 999).millisecondsSinceEpoch;
+    final startMs = DateTime(
+      from.year,
+      from.month,
+      from.day,
+    ).millisecondsSinceEpoch;
+    final endMs = DateTime(
+      to.year,
+      to.month,
+      to.day,
+      23,
+      59,
+      59,
+      999,
+    ).millisecondsSinceEpoch;
 
     final rows = await db.query(
       'workout_logs',
@@ -419,7 +498,10 @@ class MovementRepository {
   }
 
   /// Fetch events of a specific kind.
-  Future<List<MovementEvent>> eventsOfKind(String kindCode, {int limit = 30}) async {
+  Future<List<MovementEvent>> eventsOfKind(
+    String kindCode, {
+    int limit = 30,
+  }) async {
     final db = await _db;
     final rows = await db.query(
       'workout_logs',

@@ -3,7 +3,6 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/supplementary_sports_theme.dart';
 
 class StepperInput extends StatelessWidget {
-
   const StepperInput({
     super.key,
     required this.value,
@@ -22,8 +21,12 @@ class StepperInput extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Glassmorphic colors
-    final glassBg = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03);
-    final glassBorder = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08);
+    final glassBg = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.03);
+    final glassBorder = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
     final activeIconColor = SupplementarySportsTheme.getTextPrimary(context);
     final disabledIconColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
 
@@ -103,11 +106,7 @@ class StepperInput extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: borderColor),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
         ),
       ),

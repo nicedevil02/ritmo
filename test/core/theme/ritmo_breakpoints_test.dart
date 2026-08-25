@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ritmo/core/theme/tokens/ritmo_breakpoints.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/theme/theme_preferences.dart';
 import '../../support/responsive_harness.dart';
 
 void main() {
@@ -109,4 +110,77 @@ void main() {
       },
     );
   });
+
+  group('Glass Theme Dynamic Updates Tests', () {
+    test('RitmoTheme.build sets exact glassBlurSigma and glassOpacityPercent', () {
+      final theme = RitmoTheme.build(
+        palette: RitmoPalette.jadeNoir,
+        brightness: Brightness.dark,
+        glassBlurSigma: 12.0,
+        glassOpacityPercent: 65,
+      );
+
+      final behavior = theme.extension<RitmoBehavior>();
+      expect(behavior, isNotNull);
+      expect(behavior!.glassBlurSigma, 12.0);
+      expect(behavior.glassOpacityPercent, 65);
+
+      final colors = theme.extension<RitmoColors>();
+      expect(colors, isNotNull);
+      expect((colors!.glassTint.a * 100).round(), 65);
+    });
+
+    testWidgets('Dynamic theme updates glassBlurSigma and glassTint when notifier emits', (tester) async {
+      final preferencesNotifier = ValueNotifier<ThemePreferences>(
+        ThemePreferences.defaults.copyWith(
+          glassBlurSigma: 25.0,
+          glassOpacityPercent: 40,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ValueListenableBuilder<ThemePreferences>(
+          valueListenable: preferencesNotifier,
+          builder: (context, prefs, _) {
+            final palette = RitmoPalette.byId(prefs.paletteId);
+            final theme = RitmoTheme.build(
+              palette: palette,
+              brightness: Brightness.dark,
+              reduceTransparency: prefs.reduceTransparency,
+              glassBlurSigma: prefs.glassBlurSigma,
+              glassOpacityPercent: prefs.glassOpacityPercent,
+            );
+
+            return MaterialApp(
+              theme: theme,
+              home: Builder(
+                builder: (ctx) {
+                  return Scaffold(
+                    body: Column(
+                      children: [
+                        Text('Blur: ${ctx.glassBlurSigma}'),
+                        Text('Opacity: ${ctx.colors.glassTint.a}'),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      );
+
+      expect(find.text('Blur: 25.0'), findsOneWidget);
+
+      // Now change blur to 5.0 and opacity to 80%
+      preferencesNotifier.value = preferencesNotifier.value.copyWith(
+        glassBlurSigma: 5.0,
+        glassOpacityPercent: 80,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Blur: 5.0'), findsOneWidget);
+    });
+  });
 }
+

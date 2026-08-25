@@ -20,7 +20,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SSSettingsScreen extends StatefulWidget {
-
   const SSSettingsScreen({super.key, this.isModal = false});
   final bool isModal;
 
@@ -36,7 +35,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
   bool _remindersEnabled = false;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 18, minute: 0);
   bool _morningCheckinEnabled = true;
-  
+
   bool _ttsEnabled = true;
   bool _ttsCountdownEnabled = true;
   bool _audioCuesEnabled = true;
@@ -53,10 +52,14 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
   Future<void> _loadSettings() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final profiles = await db.query('ss_user_profile', where: 'id = ?', whereArgs: ['default']);
-      
+      final profiles = await db.query(
+        'ss_user_profile',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+
       final prefs = await SharedPreferences.getInstance();
-      
+
       final remindEnabled = prefs.getBool('ss_reminders_enabled') ?? false;
       final remindHour = prefs.getInt('ss_reminders_hour') ?? 18;
       final remindMinute = prefs.getInt('ss_reminders_minute') ?? 0;
@@ -101,11 +104,16 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
   Future<void> _updateMainRoutineSchedule(bool enabled, TimeOfDay time) async {
     try {
       const routineId = 'routine_supplementary_sports';
-      final timeStr = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      final timeStr =
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
       final now = DateTime.now().millisecondsSinceEpoch;
 
       final db = await DatabaseHelper.instance.database;
-      final check = await db.query('routines', where: 'id = ?', whereArgs: [routineId]);
+      final check = await db.query(
+        'routines',
+        where: 'id = ?',
+        whereArgs: [routineId],
+      );
       final exists = check.isNotEmpty;
 
       final routineData = {
@@ -170,7 +178,9 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            value ? 'یادآور روزانه در سیستم هوشمند ریتمو فعال شد.' : 'یادآور روزانه لغو شد.',
+            value
+                ? 'یادآور روزانه در سیستم هوشمند ریتمو فعال شد.'
+                : 'یادآور روزانه لغو شد.',
             style: const TextStyle(),
           ),
         ),
@@ -187,7 +197,7 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('ss_reminders_hour', picked.hour);
       await prefs.setInt('ss_reminders_minute', picked.minute);
-      
+
       setState(() {
         _reminderTime = picked;
       });
@@ -262,8 +272,8 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              value 
-                  ? 'حالت بی‌صدا (آپارتمانی) فعال شد. از این پس تمرینات بدون حرکات پرصدا تولید می‌شوند.' 
+              value
+                  ? 'حالت بی‌صدا (آپارتمانی) فعال شد. از این پس تمرینات بدون حرکات پرصدا تولید می‌شوند.'
                   : 'حالت بی‌صدا غیرفعال شد.',
               style: const TextStyle(),
             ),
@@ -280,41 +290,42 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       showDialog(
         context: context,
         builder: (context) {
-        return AlertDialog(
-          title: const Text(
-            'آیا مطمئن هستید؟',
-            textDirection: TextDirection.rtl,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: const Text(
-            'با انجام این کار، تمام اطلاعات تمرینی شما برای همیشه حذف می‌شود و این عملیات غیرقابل بازگشت است.',
-            textDirection: TextDirection.rtl,
-            style: TextStyle(),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                'لغو',
-                style: TextStyle(color: Colors.grey),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+          return AlertDialog(
+            title: const Text(
+              'آیا مطمئن هستید؟',
+              textDirection: TextDirection.rtl,
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            TextButton(
-              child: const Text(
-                'بله، بازنشانی کن',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _resetModule();
-              },
+            content: const Text(
+              'با انجام این کار، تمام اطلاعات تمرینی شما برای همیشه حذف می‌شود و این عملیات غیرقابل بازگشت است.',
+              textDirection: TextDirection.rtl,
+              style: TextStyle(),
             ),
-          ],
-        );
-      },
-    ));
+            actions: <Widget>[
+              TextButton(
+                child: const Text('لغو', style: TextStyle(color: Colors.grey)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text(
+                  'بله، بازنشانی کن',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _resetModule();
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _resetModule() async {
@@ -335,7 +346,11 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         await db.delete('ss_plan_version_history');
         await db.delete('ss_decision_log');
         await db.delete('ss_weight_log');
-        await db.delete('routine_schedules', where: 'routineId = ?', whereArgs: ['routine_supplementary_sports']);
+        await db.delete(
+          'routine_schedules',
+          where: 'routineId = ?',
+          whereArgs: ['routine_supplementary_sports'],
+        );
       } finally {
         await db.execute('PRAGMA foreign_keys = ON;');
       }
@@ -380,28 +395,38 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
   String _getGoalText(FitnessGoal? goal) {
     if (goal == null) return 'نامشخص';
     switch (goal) {
-      case FitnessGoal.muscleGain: return 'عضله‌سازی 💪';
-      case FitnessGoal.fatLoss: return 'کاهش چربی 🔥';
-      case FitnessGoal.bodyRecomposition: return 'تناسب اندام ⚡';
-      case FitnessGoal.strength: return 'افزایش قدرت 🏋';
+      case FitnessGoal.muscleGain:
+        return 'عضله‌سازی 💪';
+      case FitnessGoal.fatLoss:
+        return 'کاهش چربی 🔥';
+      case FitnessGoal.bodyRecomposition:
+        return 'تناسب اندام ⚡';
+      case FitnessGoal.strength:
+        return 'افزایش قدرت 🏋';
     }
   }
 
   String _getLevelText(ExperienceLevel? level) {
     if (level == null) return 'نامشخص';
     switch (level) {
-      case ExperienceLevel.beginner: return 'تازه‌کار 🌱';
-      case ExperienceLevel.intermediate: return 'متوسط 🏃';
-      case ExperienceLevel.advanced: return 'پیشرفته 🏆';
+      case ExperienceLevel.beginner:
+        return 'تازه‌کار 🌱';
+      case ExperienceLevel.intermediate:
+        return 'متوسط 🏃';
+      case ExperienceLevel.advanced:
+        return 'پیشرفته 🏆';
     }
   }
 
   String _getLocationText(TrainingLocation? loc) {
     if (loc == null) return 'نامشخص';
     switch (loc) {
-      case TrainingLocation.home: return 'خانه 🏠';
-      case TrainingLocation.gym: return 'باشگاه 🏋';
-      case TrainingLocation.outdoor: return 'فضای باز 🌳';
+      case TrainingLocation.home:
+        return 'خانه 🏠';
+      case TrainingLocation.gym:
+        return 'باشگاه 🏋';
+      case TrainingLocation.outdoor:
+        return 'فضای باز 🌳';
     }
   }
 
@@ -424,7 +449,10 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
     );
 
     final settingsList = ListView(
-      padding: EdgeInsets.symmetric(horizontal: widget.isModal ? 0 : SupplementarySportsTheme.spacing24, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.isModal ? 0 : SupplementarySportsTheme.spacing24,
+        vertical: 8,
+      ),
       children: [
         // Section: Profile
         _buildSectionTitle('پروفایل ورزشی شما'),
@@ -435,16 +463,24 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
             children: [
               _buildProfileRow('هدف اصلی ورزشی:', _getGoalText(_profile?.goal)),
               const Divider(),
-              _buildProfileRow('سطح تجربه:', _getLevelText(_profile?.experienceLevel)),
+              _buildProfileRow(
+                'سطح تجربه:',
+                _getLevelText(_profile?.experienceLevel),
+              ),
               const Divider(),
-              _buildProfileRow('محل تمرین:', _getLocationText(_profile?.trainingLocation)),
+              _buildProfileRow(
+                'محل تمرین:',
+                _getLocationText(_profile?.trainingLocation),
+              ),
               const SizedBox(height: SupplementarySportsTheme.spacing16),
               PrimaryButton(
                 label: 'ویرایش پروفایل ورزشی',
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SSOnboardingFlow()),
+                    MaterialPageRoute(
+                      builder: (context) => const SSOnboardingFlow(),
+                    ),
                   ).then((_) => _loadSettings());
                 },
               ),
@@ -461,24 +497,48 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('صدای مربی (TTS)', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('اعلام صوتی اسم و جزئیات حرکات به فارسی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'صدای مربی (TTS)',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'اعلام صوتی اسم و جزئیات حرکات به فارسی',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _ttsEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleTts,
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('شمارش معکوس صوتی مربی', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('اعلام ثانیه‌های آخر استراحت و حرکت به فارسی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'شمارش معکوس صوتی مربی',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'اعلام ثانیه‌های آخر استراحت و حرکت به فارسی',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _ttsCountdownEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleTtsCountdown,
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('افکت‌های صوتی تمرین', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('پخش صداهای شروع و پایان مراحل تمرینی', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'افکت‌های صوتی تمرین',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'پخش صداهای شروع و پایان مراحل تمرینی',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _audioCuesEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleAudioCues,
@@ -496,43 +556,69 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               ListTile(
-                title: const Text('مدت زمان استراحت پیش‌فرض', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: const Text('زمان استراحت بین ست‌ها و حرکات', style: TextStyle()),
+                title: const Text(
+                  'مدت زمان استراحت پیش‌فرض',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: const Text(
+                  'زمان استراحت بین ست‌ها و حرکات',
+                  style: TextStyle(),
+                ),
                 trailing: DropdownButton<int>(
                   value: _defaultRestSeconds,
-                  onChanged: (val) => val != null ? _updateRestSeconds(val) : null,
+                  onChanged: (val) =>
+                      val != null ? _updateRestSeconds(val) : null,
                   items: [30, 45, 60, 75, 90, 120].map((seconds) {
                     return DropdownMenuItem<int>(
                       value: seconds,
-                      child: Text(toPersianDigits('$seconds ثانیه'), style: const TextStyle()),
+                      child: Text(
+                        toPersianDigits('$seconds ثانیه'),
+                        style: const TextStyle(),
+                      ),
                     );
                   }).toList(),
                 ),
               ),
               const Divider(),
               SwitchListTile(
-                title: const Text('حالت بی‌صدا (مناسب آپارتمان) 🔇', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('حذف خودکار حرکات کوبشی و پر سر و صدا', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'حالت بی‌صدا (مناسب آپارتمان) 🔇',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'حذف خودکار حرکات کوبشی و پر سر و صدا',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _profile?.neighborFriendly ?? false,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleNeighborFriendly,
               ),
               const Divider(),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'واحد اندازه‌گیری',
-                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       'فرمت وزن و قد در برنامه',
                       style: TextStyle(
                         fontSize: 12,
-                        color: SupplementarySportsTheme.getTextSecondary(context),
+                        color: SupplementarySportsTheme.getTextSecondary(
+                          context,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -542,7 +628,10 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                           child: ChoiceChip(
                             showCheckmark: true,
                             label: const Center(
-                              child: Text('متریک (کیلوگرم)', style: TextStyle(fontSize: 12)),
+                              child: Text(
+                                'متریک (کیلوگرم)',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                             selected: _unitsMetric,
                             onSelected: (val) => _toggleUnits(true),
@@ -553,7 +642,10 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                           child: ChoiceChip(
                             showCheckmark: true,
                             label: const Center(
-                              child: Text('امپریال (پوند)', style: TextStyle(fontSize: 12)),
+                              child: Text(
+                                'امپریال (پوند)',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                             selected: !_unitsMetric,
                             onSelected: (val) => _toggleUnits(false),
@@ -578,14 +670,19 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
             children: [
               SwitchListTile(
                 title: Text(
-                  _detailMode ? 'حالت پیشرفته (دقیق با ست و تکرار)' : 'حالت ساده (خلاصه و تیک سریع)',
+                  _detailMode
+                      ? 'حالت پیشرفته (دقیق با ست و تکرار)'
+                      : 'حالت ساده (خلاصه و تیک سریع)',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   _detailMode
-                    ? 'برنامه ورزشی شامل انیمیشن حرکات، تعداد ست، تکرار و وزنه به صورت کامل نمایش داده می‌شود.'
-                    : 'برنامه به صورت خلاصه و با امکان تیک زدن سریع روزانه بدون درگیری با جزئیات ست نمایش داده می‌شود.',
-                  style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context), height: 1.4),
+                      ? 'برنامه ورزشی شامل انیمیشن حرکات، تعداد ست، تکرار و وزنه به صورت کامل نمایش داده می‌شود.'
+                      : 'برنامه به صورت خلاصه و با امکان تیک زدن سریع روزانه بدون درگیری با جزئیات ست نمایش داده می‌شود.',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                    height: 1.4,
+                  ),
                 ),
                 value: _detailMode,
                 activeThumbColor: const Color(0xFF2E7D5B),
@@ -607,8 +704,16 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text('یادآوری روزانه تمرین', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('یادآوری شروع جلسه در زمان مقرر', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'یادآوری روزانه تمرین',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'یادآوری شروع جلسه در زمان مقرر',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _remindersEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleReminders,
@@ -616,9 +721,15 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               if (_remindersEnabled) ...[
                 const Divider(),
                 ListTile(
-                  title: const Text('زمان یادآوری روزانه', style: TextStyle(fontWeight: FontWeight.w500)),
+                  title: const Text(
+                    'زمان یادآوری روزانه',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2E7D5B).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -636,8 +747,16 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
               ],
               const Divider(),
               SwitchListTile(
-                title: const Text('بررسی آمادگی صبحگاهی 🌅', style: TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text('سوال درباره سطح انرژی و خواب برای تنظیم تمرین روز', style: TextStyle(color: SupplementarySportsTheme.getTextSecondary(context))),
+                title: const Text(
+                  'بررسی آمادگی صبحگاهی 🌅',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  'سوال درباره سطح انرژی و خواب برای تنظیم تمرین روز',
+                  style: TextStyle(
+                    color: SupplementarySportsTheme.getTextSecondary(context),
+                  ),
+                ),
                 value: _morningCheckinEnabled,
                 activeThumbColor: const Color(0xFF2E7D5B),
                 onChanged: _toggleMorningCheckin,
@@ -668,7 +787,10 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                     color: SupplementarySportsTheme.getTextSecondary(context),
                   ),
                 ),
-                trailing: const Icon(Icons.restore_rounded, color: Colors.redAccent),
+                trailing: const Icon(
+                  Icons.restore_rounded,
+                  color: Colors.redAccent,
+                ),
                 onTap: _showResetConfirmationDialog,
               ),
             ],
@@ -687,7 +809,12 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
             constraints: BoxConstraints(
               maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
             ),
-            padding: EdgeInsets.fromLTRB(16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              20,
+              16,
+              MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
             child: Column(
               children: [
                 Center(
@@ -695,7 +822,9 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                      color: (isDark ? Colors.white : Colors.black).withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -706,26 +835,39 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(CupertinoIcons.gear_alt_fill, color: Color(0xFF2E7D5B), size: 22),
+                        const Icon(
+                          CupertinoIcons.gear_alt_fill,
+                          color: Color(0xFF2E7D5B),
+                          size: 22,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'تنظیمات ورزش تکمیلی',
                           style: TextStyle(
                             fontSize: 17.5,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF133B26),
-                            ),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF133B26),
+                          ),
                         ),
                       ],
                     ),
                     IconButton(
                       tooltip: 'بستن',
-                      icon: Icon(CupertinoIcons.xmark, color: isDark ? Colors.white70 : Colors.black54, size: 20),
+                      icon: Icon(
+                        CupertinoIcons.xmark,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        size: 20,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-                Divider(color: isDark ? Colors.white12 : Colors.black12, height: 16),
+                Divider(
+                  color: isDark ? Colors.white12 : Colors.black12,
+                  height: 16,
+                ),
                 Expanded(child: settingsList),
               ],
             ),
@@ -738,7 +880,13 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
       backgroundColor: colors.background,
       appBar: AppBar(
         backgroundColor: colors.surface,
-        title: Text('تنظیمات حرکت', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
+        title: Text(
+          'تنظیمات حرکت',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Directionality(
@@ -791,13 +939,13 @@ class _SSSettingsScreenState extends State<SSSettingsScreen> {
         child: Container(
           padding: const EdgeInsets.all(SupplementarySportsTheme.spacing16),
           decoration: BoxDecoration(
-            color: isDark 
-                ? const Color(0xFF1E293B).withValues(alpha: 0.45) 
+            color: isDark
+                ? const Color(0xFF1E293B).withValues(alpha: 0.45)
                 : Colors.white.withValues(alpha: 0.55),
             borderRadius: SupplementarySportsTheme.borderRadiusCard,
             border: Border.all(
-              color: isDark 
-                  ? Colors.white.withValues(alpha: 0.12) 
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
                   : Colors.white.withValues(alpha: 0.6),
               width: 1.2,
             ),

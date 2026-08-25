@@ -3,8 +3,17 @@ import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_
 
 abstract class SSSessionRepository {
   Future<String> startSession(String planId);
-  Future<void> logExerciseFeeling(String sessionId, String exerciseId, Feeling feeling);
-  Future<void> finishSession(String sessionId, {required int completedCount, required int totalCount, String? overallFeeling});
+  Future<void> logExerciseFeeling(
+    String sessionId,
+    String exerciseId,
+    Feeling feeling,
+  );
+  Future<void> finishSession(
+    String sessionId, {
+    required int completedCount,
+    required int totalCount,
+    String? overallFeeling,
+  });
   Future<bool> isTodaySessionLogged();
   Future<int> getCurrentStreak();
   Future<List<bool>> getLast7DaysActivity();

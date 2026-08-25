@@ -16,7 +16,8 @@ class MovementPlanWriter {
     String? routineId,
     required MovementKind kind,
     String? muscleFocus,
-    required Map<int, TimeOfDay> dayTimesDartWeekday, // Dart weekday 1..7 -> TimeOfDay
+    required Map<int, TimeOfDay>
+    dayTimesDartWeekday, // Dart weekday 1..7 -> TimeOfDay
     required int targetDurationMinutes,
     required double targetValue,
     required int reminderMinutes,
@@ -24,7 +25,9 @@ class MovementPlanWriter {
     Map<String, dynamic>? existingRoutineData,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final rId = (isEditing && routineId != null) ? routineId : RitmoIdFactory.routine();
+    final rId = (isEditing && routineId != null)
+        ? routineId
+        : RitmoIdFactory.routine();
 
     final routineData = <String, dynamic>{
       'id': rId,
@@ -84,7 +87,9 @@ class MovementPlanWriter {
         'timeOfDay': timeStr,
         'daysOfWeek': daysOfWeek,
         'recurrenceRule': recurrenceJson,
-        'createdAt': isEditing ? (existingRoutineData?['createdAt'] ?? now) : now,
+        'createdAt': isEditing
+            ? (existingRoutineData?['createdAt'] ?? now)
+            : now,
         'updatedAt': now,
       });
     }
@@ -100,19 +105,15 @@ class MovementPlanWriter {
       );
     } else {
       await RitmoExecutionKernel.instance.execute(
-        CreateRoutineCommand(
-          routineData: routineData,
-          schedules: schedules,
+        CreateRoutineCommand(routineData: routineData, schedules: schedules),
+      );
+      RitmoEventBus().fire(
+        RitmoEvent(
+          type: 'movement_plan_created',
+          timestamp: DateTime.now(),
+          payload: {'kindCode': kind.code, 'muscleFocus': muscleFocus},
         ),
       );
-      RitmoEventBus().fire(RitmoEvent(
-        type: 'movement_plan_created',
-        timestamp: DateTime.now(),
-        payload: {
-          'kindCode': kind.code,
-          'muscleFocus': muscleFocus,
-        },
-      ));
     }
 
     // باززمان‌بندی نوتیفیکیشن‌ها پس از تغییر برنامه

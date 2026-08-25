@@ -385,7 +385,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T3 — حذف تاکسونومی دوگانه
+### - [x] S1-T3 — حذف تاکسونومی دوگانه — 5e0c48ca
 
 **فایل‌ها:** `domain/models/mv_enums.dart` و هر فایلی که `MvMovementFamily` دارد.
 
@@ -1436,7 +1436,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S0-T8 | DONE | 2b35fa8e | تست جامع Golden Path Phase A و تأیید کامل تست‌های اسپرینت ۰ |
 | S1-T1 | DONE | aa56104b | پیاده‌سازی مدل کامل و ایمیوتبل MvMovementKind و لیست آلیاس‌ها |
 | S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
-| S1-T3 |  |  |  |
+| S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
 | S1-T4 |  |  |  |
 | S1-T5 |  |  |  |
 | S1-T6 |  |  |  |

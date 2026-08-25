@@ -615,94 +615,6 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     );
   }
 
-  Widget _buildSideBySideCategorySection({
-    required String rightTitle,
-    required Color rightAccentColor,
-    required List<Widget> rightCards,
-    required String leftTitle,
-    required Color leftAccentColor,
-    required List<Widget> leftCards,
-    required RitmoColors colors,
-  }) {
-    final hasRight = rightCards.isNotEmpty;
-    final hasLeft = leftCards.isNotEmpty;
-
-    if (!hasRight && !hasLeft) return const SizedBox.shrink();
-
-    if (hasRight && !hasLeft) {
-      return _buildCategorySection(
-        title: rightTitle,
-        accentColor: rightAccentColor,
-        cards: rightCards,
-        colors: colors,
-      );
-    }
-
-    if (!hasRight && hasLeft) {
-      return _buildCategorySection(
-        title: leftTitle,
-        accentColor: leftAccentColor,
-        cards: leftCards,
-        colors: colors,
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 320) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildCategorySection(
-                title: rightTitle,
-                accentColor: rightAccentColor,
-                cards: rightCards,
-                colors: colors,
-              ),
-              const SizedBox(height: 14),
-              _buildCategorySection(
-                title: leftTitle,
-                accentColor: leftAccentColor,
-                cards: leftCards,
-                colors: colors,
-              ),
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildCategoryHeader(rightTitle, rightAccentColor, colors),
-                  const SizedBox(height: 8),
-                  ...rightCards.map(
-                    (card) => AspectRatio(aspectRatio: 1.05, child: card),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildCategoryHeader(leftTitle, leftAccentColor, colors),
-                  const SizedBox(height: 8),
-                  ...leftCards.map(
-                    (card) => AspectRatio(aspectRatio: 1.05, child: card),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Widget _buildCategorySection({
     required String title,
     required Color accentColor,
@@ -1253,8 +1165,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
 
     // --- CASE B: Grouped Hierarchy View ---
     final growthCards = <Widget>[];
+    final intelligenceCards = <Widget>[];
     final spiritualityCards = <Widget>[];
-    final assistantCards = <Widget>[];
     final healthCards = <Widget>[];
     var cardIndex = 0;
 
@@ -1272,15 +1184,17 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['konkur']!, colors, isDarkMode));
     }
 
-    // Spirituality & Assistant / Insights
-    if (allItemsMap.containsKey('religion')) {
-      spiritualityCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['religion']!, colors, isDarkMode));
-    }
+    // Intelligence & Analytics: Assistant -> Insights
     if (allItemsMap.containsKey('assistant')) {
-      assistantCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['assistant']!, colors, isDarkMode));
+      intelligenceCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['assistant']!, colors, isDarkMode));
     }
     if (allItemsMap.containsKey('insights')) {
-      assistantCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['insights']!, colors, isDarkMode));
+      intelligenceCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['insights']!, colors, isDarkMode));
+    }
+
+    // Spirituality: Religion
+    if (allItemsMap.containsKey('religion')) {
+      spiritualityCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['religion']!, colors, isDarkMode));
     }
 
     // Health & Biology: Wellbeing -> Sports -> Medicine -> Cycle
@@ -1309,19 +1223,25 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
         ),
         const SizedBox(height: 14),
 
-        // 2. توازن و معنویت و بستر هوشمند
-        _buildSideBySideCategorySection(
-          rightTitle: 'توازن و معنویت',
-          rightAccentColor: const Color(0xffF59E0B),
-          rightCards: spiritualityCards,
-          leftTitle: 'بستر هوشمند',
-          leftAccentColor: const Color(0xff06B6D4),
-          leftCards: assistantCards,
+        // 2. هوشمندی و تحلیل
+        _buildCategorySection(
+          title: 'هوشمندی و تحلیل',
+          accentColor: const Color(0xff06B6D4),
+          cards: intelligenceCards,
           colors: colors,
         ),
         const SizedBox(height: 14),
 
-        // 3. سلامت و بیولوژی
+        // 3. توازن و معنویت
+        _buildCategorySection(
+          title: 'توازن و معنویت',
+          accentColor: const Color(0xffF59E0B),
+          cards: spiritualityCards,
+          colors: colors,
+        ),
+        const SizedBox(height: 14),
+
+        // 4. سلامت و بیولوژی
         _buildCategorySection(
           title: 'سلامت و بیولوژی',
           accentColor: const Color(0xff10B981),

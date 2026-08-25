@@ -619,7 +619,7 @@ ${jsonEncode(digest.json)}
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.background,
         body: Center(
           child: CircularProgressIndicator(color: colors.primary),
         ),
@@ -633,7 +633,7 @@ ${jsonEncode(digest.json)}
           AdService.instance.showInterstitialAd(context);
         },
         child: Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: colors.background,
           body: RefreshIndicator(
             onRefresh: _loadAnalytics,
             color: colors.primary,
@@ -686,8 +686,19 @@ ${jsonEncode(digest.json)}
   }
 
   Widget _buildHeader(RitmoColors colors) {
+    final canPop = Navigator.canPop(context);
+
     return Row(
       children: [
+        if (canPop) ...[
+          IconButton(
+            icon: const Icon(CupertinoIcons.back),
+            color: colors.textPrimary,
+            tooltip: 'بازگشت',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(width: 4),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

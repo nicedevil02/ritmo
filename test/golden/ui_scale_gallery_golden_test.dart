@@ -144,7 +144,7 @@ void main() {
       name: 'comfortable_100',
     ),
     (density: RitmoDensityLevel.spacious, scale: 1.25, name: 'spacious_125'),
-    (density: RitmoDensityLevel.xl, scale: 1.30, name: 'xl_140'),
+    (density: RitmoDensityLevel.xl, scale: 1.30, name: 'xl_130'),
   ];
 
   group('UI Scale Gallery Golden Tests', () {

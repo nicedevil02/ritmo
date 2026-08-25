@@ -43,10 +43,10 @@ flutter test
 
 ### ۰٫۳ کاری که در شروع باید بکنی (فقط همین، بعد برو سر S0-T1)
 
-- [ ] **S-INIT-1** — شاخهٔ `feat/sports-v2-anchor-filler` را از `main` بساز.
-- [ ] **S-INIT-2** — این فایل‌ها را کامل بخوان و خلاصه نکن، فقط بخوان: `docs/CONSTITUTION.md`، `docs/RITMO_DESIGN_TOKENS.md`، `docs/DESIGN_SYSTEM_ACTION_SHEETS.md`، `docs/movement/P0_AUDIT.md`، `docs/movement/MIGRATION_REPORT.md`، `docs/adr/0008-movement-unification.md`، `docs/l10n_audit.md`.
-- [ ] **S-INIT-3** — فایل `docs/movement/IMPLEMENTATION_LOG.md` را با هدر جدول ردیف‌های لاگ بساز و commit کن.
-- [ ] **S-INIT-4** — نسخهٔ فعلی اسکیما را از `lib/core/database/database_helper.dart` بخوان و در دفتر پیشرفت §۱۲ ثبت کن (انتظار: v121 از `MigrationV121SportsUnification`). شمارهٔ مایگریشن‌های این پرامپت باید **پشت‌سرهم** از این عدد جلو برود.
+- [x] **S-INIT-1** — شاخهٔ `feat/sports-v2-anchor-filler` را از `main` بساز. — c53234b5
+- [x] **S-INIT-2** — این فایل‌ها را کامل بخوان و خلاصه نکن، فقط بخوان: `docs/CONSTITUTION.md`، `docs/RITMO_DESIGN_TOKENS.md`، `docs/DESIGN_SYSTEM_ACTION_SHEETS.md`، `docs/movement/P0_AUDIT.md`، `docs/movement/MIGRATION_REPORT.md`، `docs/adr/0008-movement-unification.md`، `docs/l10n_audit.md`. — c53234b5
+- [x] **S-INIT-3** — فایل `docs/movement/IMPLEMENTATION_LOG.md` را با هدر جدول ردیف‌های لاگ بساز و commit کن. — c53234b5
+- [x] **S-INIT-4** — نسخهٔ فعلی اسکیما را از `lib/core/database/database_helper.dart` بخوان و در دفتر پیشرفت §۱۲ ثبت کن (انتظار: v121 از `MigrationV121SportsUnification`). شمارهٔ مایگریشن‌های این پرامپت باید **پشت‌سرهم** از این عدد جلو برود. — c53234b5
 
 ---
 
@@ -1422,10 +1422,10 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 | کد تسک | وضعیت | کامیت | یادداشت |
 | --- | --- | --- | --- |
-| S-INIT-1 |  |  |  |
-| S-INIT-2 |  |  |  |
-| S-INIT-3 |  |  |  |
-| S-INIT-4 |  |  |  |
+| S-INIT-1 | DONE | c53234b5 | ایجاد شاخهٔ feat/sports-v2-anchor-filler از main |
+| S-INIT-2 | DONE | c53234b5 | مطالعهٔ کامل ۷ سند پایه |
+| S-INIT-3 | DONE | c53234b5 | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
+| S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
 | S0-T1 |  |  |  |
 | S0-T2 |  |  |  |
 | S0-T3 |  |  |  |

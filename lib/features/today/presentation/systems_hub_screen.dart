@@ -728,8 +728,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       RitmoToast.show(
         context,
         enabled
-            ? 'گروه‌بندی خودکار سیستم‌ها فعال شد.'
-            : 'گروه‌بندی غیرفعال شد. اکنون می‌توانید کارت‌ها را با نگه داشتن انگشت جابجا کنید.',
+            ? 'گروه‌بندی خودکار فعال شد.'
+            : 'حالت چیدمان آزاد فعال شد.',
         icon: Icons.check_circle_outline,
       );
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -113,64 +114,75 @@ class _RitmoTopToastWidgetState extends State<_RitmoTopToastWidget>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
     return Positioned(
-      top: 64,
-      left: 0,
-      right: 0,
+      top: math.max(16.0, topPadding + 10.0),
+      left: 16,
+      right: 16,
       child: Align(
         alignment: Alignment.topCenter,
         child: SlideTransition(
           position: _offsetAnimation,
           child: Material(
             color: Colors.transparent,
-            child: RitmoGlassCard(
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(widget.icon, color: widget.iconColor, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.message,
-                        style: TextStyle(
-                          fontFamily: 'Vazirmatn',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      if (widget.onUndo != null) ...[
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 1,
-                          height: 16,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.25)
-                              : Colors.black.withValues(alpha: 0.25),
-                        ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: _handleUndo,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: math.min(420.0, screenWidth - 32.0),
+              ),
+              child: RitmoGlassCard(
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(widget.icon, color: widget.iconColor, size: 16),
+                        const SizedBox(width: 6),
+                        Flexible(
                           child: Text(
-                            'لغو ($_secondsLeft)',
-                            style: const TextStyle(
+                            widget.message,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
                               fontFamily: 'Vazirmatn',
                               fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xff60A5FA),
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                           ),
                         ),
+                        if (widget.onUndo != null) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            width: 1,
+                            height: 16,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.25)
+                                : Colors.black.withValues(alpha: 0.25),
+                          ),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: _handleUndo,
+                            child: Text(
+                              'لغو ($_secondsLeft)',
+                              style: const TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff60A5FA),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),

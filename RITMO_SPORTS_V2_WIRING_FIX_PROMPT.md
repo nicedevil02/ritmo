@@ -127,7 +127,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T4 — سه ورودی اجباری به صفحهٔ لنگر
+### - [x] S8-T4 — سه ورودی اجباری به صفحهٔ لنگر — 7ed80f4c
 
 1. **هاب:** در `mv_hub_screen.dart` یک `IconButton` با `Icons.lock_clock` و `key: ValueKey('mv_open_commitments')` به‌عنوان **آخرین** اکشن `AppBar` اضافه کن.
 2. **تب هفته:** اگر `commitments.isEmpty`، یک کارت دعوت بالای هفت کارت روز با کلید `mv_week_anchor_cta` و متن l10n `mv_week_anchor_cta_text` نمایش بده که به همان صفحه می‌رود.
@@ -283,7 +283,7 @@ flutter test
 | S8-T1 | DONE | fa94daa7 | کنترلر: بارگذاری و انتشار لنگرها با cycleWeek و متدهای ذخیره/حذف |
 | S8-T2 | DONE | 47253578 | شیت ساخت و ویرایش لنگر (MvCommitmentEditSheet) با ۸ فیلد و توکن‌های طراحی |
 | S8-T3 | DONE | 0f6b9b85 | صفحهٔ مدیریت لنگرها (MvCommitmentsScreen) با حالت خالی و پر و FAB |
-| S8-T4 | | | |
+| S8-T4 | DONE | 7ed80f4c | اتصال ۳ ورودی اجباری به صفحهٔ لنگر (هاب، تب هفته، تنظیمات) |
 | S8-T5 | | | |
 | S8-T6 | | | |
 | S8-T7 | | | |

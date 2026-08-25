@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 import 'mv_commitments_screen.dart';
@@ -32,6 +33,7 @@ class MvWeekTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(metrics.spaceLg),
@@ -46,7 +48,7 @@ class MvWeekTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'برنامهٔ هفتگی (هفتهٔ $cycleWeek)',
+                    l10n.mv_week_title(cycleWeek),
                     style: textTheme.titleMedium?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -55,8 +57,8 @@ class MvWeekTab extends StatelessWidget {
                   SizedBox(height: metrics.spaceXs),
                   Text(
                     isDeloadWeek
-                        ? 'هفتهٔ سبک برای بازیابی بدنی'
-                        : 'برنامهٔ منظم تمرین و ریکاوری',
+                        ? l10n.mv_week_deload_subtitle
+                        : l10n.mv_week_regular_subtitle,
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -74,7 +76,7 @@ class MvWeekTab extends StatelessWidget {
                     borderRadius: BorderRadius.circular(RitmoRadius.pill),
                   ),
                   child: Text(
-                    'هفته سبک',
+                    l10n.mv_week_deload_badge,
                     style: textTheme.labelSmall?.copyWith(
                       color: colors.accent,
                       fontWeight: FontWeight.w700,
@@ -121,7 +123,7 @@ class MvWeekTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'تعریف ورزش ثابت هفتگی',
+                            l10n.mv_week_anchor_cta,
                             style: textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -129,7 +131,7 @@ class MvWeekTab extends StatelessWidget {
                           ),
                           SizedBox(height: metrics.spaceXs),
                           Text(
-                            'روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.',
+                            l10n.mv_week_anchor_cta_text,
                             style: textTheme.bodySmall?.copyWith(
                               color: colors.textSecondary,
                             ),
@@ -171,7 +173,7 @@ class MvWeekTab extends StatelessWidget {
                   SizedBox(width: metrics.spaceSm),
                   Expanded(
                     child: Text(
-                      'توجه: دو روز ورزش متوالی با تعهد ثابت تنظیم شده است. برای ریکاوری بهتر، فاصله بین جلسات توصیه می‌شود.',
+                      l10n.mv_conflict_back_to_back,
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -212,7 +214,7 @@ class MvWeekTab extends StatelessWidget {
               ),
             ),
             icon: Icon(Icons.auto_fix_high_rounded, size: metrics.iconMd),
-            label: const Text('تنظیم مجدد هوشمند روزهای هفته'),
+            label: Text(l10n.mv_week_regenerate),
             onPressed: onRegenerateWeek,
           ),
           SizedBox(height: metrics.spaceXxl),

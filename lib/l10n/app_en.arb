@@ -848,9 +848,21 @@
   "mv_commitment_recurrence_label": "Recurrence",
   "mv_commitment_venue_label": "Venue (Optional)",
   "mv_commitment_reminder_label": "Reminder",
-  "mv_week_anchor_cta": "Set Fixed Weekly Sport",
-  "mv_week_anchor_cta_text": "Have regular futsal, swimming, or hiking days? The weekly plan will adapt around them.",
-  "mv_settings_anchors_section": "Fixed Sports (Anchors) Management",
+  "mv_week_anchor_cta": "Set Weekly Fixed Sport",
+  "mv_week_anchor_cta_text": "Do you have fixed futsal, swimming or hiking days? The weekly plan is smartly arranged around them.",
+  "mv_conflict_back_to_back": "Notice: Two consecutive workout days are set with fixed commitments.",
+  "mv_tomorrow_anchor_notice": "Reminder: Tomorrow {title} (at {time})",
+  "@mv_tomorrow_anchor_notice": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_settings_anchors_section": "Fixed Sports Management (Anchors)",
   "mv_campaign_create": "Create Training Campaign",
   "mv_campaign_active_phase": "Phase {phase} • Week {currentWeek} of {totalWeeks}",
   "@mv_campaign_active_phase": {
@@ -882,5 +894,62 @@
       }
     }
   },
-  "mv_week_regenerate": "Regenerate Plan"
+  "mv_week_regenerate": "Regenerate Plan",
+  "mv_week_deload_badge": "Deload Week",
+  "mv_week_deload_subtitle": "Deload week for physical recovery",
+  "mv_week_regular_subtitle": "Regular workout and recovery plan",
+  "mv_settings_title": "Sports Settings",
+  "mv_settings_save": "Save",
+  "mv_settings_program_goals": "Program & Goals",
+  "mv_settings_days_per_week": "Training days per week:",
+  "mv_settings_n_days": "{days} days",
+  "@mv_settings_n_days": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_settings_session_duration": "Session duration:",
+  "mv_settings_dur_short": "Short (15 min)",
+  "mv_settings_dur_medium": "Medium (30 min)",
+  "mv_settings_dur_long": "Long (45+ min)",
+  "mv_settings_default_intensity": "Default intensity:",
+  "mv_settings_env_equipment": "Environment & Equipment",
+  "mv_settings_neighbor_mode": "Neighbor-friendly (Apartment Mode)",
+  "mv_settings_neighbor_desc": "Automatically eliminates jump and loud exercises",
+  "mv_settings_audio_section": "Audio & Animation Guidance",
+  "mv_settings_voice_cues": "Coach Voice Cues",
+  "mv_settings_voice_desc": "Plays audio cues for start, rest, and countdowns",
+  "mv_settings_privacy_section": "Privacy & Physiological Data",
+  "mv_settings_cycle_consent": "Cycle-Adaptive Intensity",
+  "mv_settings_cycle_desc": "Suggests lighter days during cycle rest phase (offline & opt-in)",
+  "mv_settings_advanced_section": "Advanced",
+  "mv_settings_regen_title": "Regenerate Weekly Plan",
+  "mv_settings_regen_desc": "Regenerates daily slot plan without altering past logs.",
+  "mv_quick_log_title": "Quick Log Activity",
+  "mv_quick_log_subtitle": "Specify duration to record in weekly activity stats.",
+  "mv_quick_log_kind": "Activity Kind",
+  "mv_quick_log_more": "More...",
+  "mv_quick_log_duration": "Duration (minutes)",
+  "mv_quick_log_duration_min": "{minutes} min",
+  "@mv_quick_log_duration_min": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_quick_log_feeling_prompt": "How did it feel? (Optional)",
+  "mv_quick_log_feeling_easy": "Easy / Had energy left",
+  "mv_quick_log_feeling_good": "Good & Balanced",
+  "mv_quick_log_feeling_hard": "Hard & Challenging",
+  "mv_quick_log_submit": "Log Activity ({minutes} min)",
+  "@mv_quick_log_submit": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

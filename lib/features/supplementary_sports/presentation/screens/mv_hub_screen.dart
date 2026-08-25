@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../player/player.dart';
 import '../sheets/sheets.dart';
 import 'mv_library_screen.dart';
@@ -236,22 +237,24 @@ class _MvHubScreenState extends State<MvHubScreen> {
         MvSlot(
           id: 'temp_$todayIso',
           dateIso: todayIso,
-          headlineFa: 'تمرین روز',
+          headlineFa: '',
           createdAt: 0,
           updatedAt: 0,
         );
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'ورزش و حرکت',
+          l10n.mv_hub_title,
           style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.fitness_center_rounded),
-            tooltip: 'کتابخانهٔ حرکات',
+            tooltip: l10n.mv_library_tooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -264,7 +267,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.auto_awesome_rounded),
-            tooltip: 'مربی هوشمند',
+            tooltip: l10n.mv_coach_tooltip,
             onPressed: () {
               MvAiCoachSheet.show(
                 context: context,
@@ -275,7 +278,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'تنظیمات',
+            tooltip: l10n.mv_settings_tooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -295,7 +298,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           IconButton(
             key: const ValueKey('mv_open_commitments'),
             icon: const Icon(Icons.lock_clock),
-            tooltip: 'ورزش‌های ثابت',
+            tooltip: l10n.mv_commitments_title,
             onPressed: () {
               Navigator.push(
                 context,
@@ -320,7 +323,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 _controller.readinessDecision ??
                 const MvDecision<MvReadinessTier>(
                   value: MvReadinessTier.full,
-                  reasonFa: 'آمادگی کامل برای تمرین',
+                  reasonFa: '',
                 ),
             budgetProgress:
                 _controller.budgetProgress ??
@@ -385,21 +388,21 @@ class _MvHubScreenState extends State<MvHubScreen> {
         selectedIndex: _selectedTabIndex,
         onDestinationSelected: (idx) => setState(() => _selectedTabIndex = idx),
         indicatorColor: colors.primary.withValues(alpha: 0.15),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today_rounded),
-            label: 'امروز',
+            icon: const Icon(Icons.today_outlined),
+            selectedIcon: const Icon(Icons.today_rounded),
+            label: l10n.mv_tab_today,
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_view_week_outlined),
-            selectedIcon: Icon(Icons.calendar_view_week_rounded),
-            label: 'هفته',
+            icon: const Icon(Icons.calendar_view_week_outlined),
+            selectedIcon: const Icon(Icons.calendar_view_week_rounded),
+            label: l10n.mv_tab_week,
           ),
           NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights_rounded),
-            label: 'پیشرفت',
+            icon: const Icon(Icons.insights_outlined),
+            selectedIcon: const Icon(Icons.insights_rounded),
+            label: l10n.mv_tab_progress,
           ),
         ],
       ),

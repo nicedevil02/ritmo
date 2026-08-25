@@ -1459,12 +1459,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fixed anchor session with regard to recorded limitation';
 
   @override
-  String get mv_tomorrow_anchor_notice =>
-      'Reminder: You have a fixed anchor session tomorrow';
+  String mv_tomorrow_anchor_notice(String title, String time) {
+    return 'Reminder: Tomorrow $title (at $time)';
+  }
 
   @override
   String get mv_conflict_back_to_back =>
-      'Warning: Two intensive sessions scheduled back-to-back';
+      'Notice: Two consecutive workout days are set with fixed commitments.';
 
   @override
   String get mv_reason_anchor => 'Your scheduled fixed anchor session';
@@ -1680,14 +1681,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mv_commitment_reminder_label => 'Reminder';
 
   @override
-  String get mv_week_anchor_cta => 'Set Fixed Weekly Sport';
+  String get mv_week_anchor_cta => 'Set Weekly Fixed Sport';
 
   @override
   String get mv_week_anchor_cta_text =>
-      'Have regular futsal, swimming, or hiking days? The weekly plan will adapt around them.';
+      'Do you have fixed futsal, swimming or hiking days? The weekly plan is smartly arranged around them.';
 
   @override
-  String get mv_settings_anchors_section => 'Fixed Sports (Anchors) Management';
+  String get mv_settings_anchors_section => 'Fixed Sports Management (Anchors)';
 
   @override
   String get mv_campaign_create => 'Create Training Campaign';
@@ -1732,4 +1733,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mv_week_regenerate => 'Regenerate Plan';
+
+  @override
+  String get mv_week_deload_badge => 'Deload Week';
+
+  @override
+  String get mv_week_deload_subtitle => 'Deload week for physical recovery';
+
+  @override
+  String get mv_week_regular_subtitle => 'Regular workout and recovery plan';
+
+  @override
+  String get mv_settings_title => 'Sports Settings';
+
+  @override
+  String get mv_settings_save => 'Save';
+
+  @override
+  String get mv_settings_program_goals => 'Program & Goals';
+
+  @override
+  String get mv_settings_days_per_week => 'Training days per week:';
+
+  @override
+  String mv_settings_n_days(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get mv_settings_session_duration => 'Session duration:';
+
+  @override
+  String get mv_settings_dur_short => 'Short (15 min)';
+
+  @override
+  String get mv_settings_dur_medium => 'Medium (30 min)';
+
+  @override
+  String get mv_settings_dur_long => 'Long (45+ min)';
+
+  @override
+  String get mv_settings_default_intensity => 'Default intensity:';
+
+  @override
+  String get mv_settings_env_equipment => 'Environment & Equipment';
+
+  @override
+  String get mv_settings_neighbor_mode => 'Neighbor-friendly (Apartment Mode)';
+
+  @override
+  String get mv_settings_neighbor_desc =>
+      'Automatically eliminates jump and loud exercises';
+
+  @override
+  String get mv_settings_audio_section => 'Audio & Animation Guidance';
+
+  @override
+  String get mv_settings_voice_cues => 'Coach Voice Cues';
+
+  @override
+  String get mv_settings_voice_desc =>
+      'Plays audio cues for start, rest, and countdowns';
+
+  @override
+  String get mv_settings_privacy_section => 'Privacy & Physiological Data';
+
+  @override
+  String get mv_settings_cycle_consent => 'Cycle-Adaptive Intensity';
+
+  @override
+  String get mv_settings_cycle_desc =>
+      'Suggests lighter days during cycle rest phase (offline & opt-in)';
+
+  @override
+  String get mv_settings_advanced_section => 'Advanced';
+
+  @override
+  String get mv_settings_regen_title => 'Regenerate Weekly Plan';
+
+  @override
+  String get mv_settings_regen_desc =>
+      'Regenerates daily slot plan without altering past logs.';
+
+  @override
+  String get mv_quick_log_title => 'Quick Log Activity';
+
+  @override
+  String get mv_quick_log_subtitle =>
+      'Specify duration to record in weekly activity stats.';
+
+  @override
+  String get mv_quick_log_kind => 'Activity Kind';
+
+  @override
+  String get mv_quick_log_more => 'More...';
+
+  @override
+  String get mv_quick_log_duration => 'Duration (minutes)';
+
+  @override
+  String mv_quick_log_duration_min(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get mv_quick_log_feeling_prompt => 'How did it feel? (Optional)';
+
+  @override
+  String get mv_quick_log_feeling_easy => 'Easy / Had energy left';
+
+  @override
+  String get mv_quick_log_feeling_good => 'Good & Balanced';
+
+  @override
+  String get mv_quick_log_feeling_hard => 'Hard & Challenging';
+
+  @override
+  String mv_quick_log_submit(int minutes) {
+    return 'Log Activity ($minutes min)';
+  }
 }

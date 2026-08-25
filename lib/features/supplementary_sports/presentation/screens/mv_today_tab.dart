@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 
@@ -51,6 +52,7 @@ class MvTodayTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final dt = MvCalendar.parseDateIso(todaySlot.dateIso);
     final tomorrowIso = MvCalendar.formatDateIso(
@@ -102,7 +104,12 @@ class MvTodayTab extends StatelessWidget {
                     SizedBox(width: metrics.spaceSm),
                     Expanded(
                       child: Text(
-                        'یادآوری: فردا ${tomorrowSlot.headlineFa}${tomorrowSlot.plannedTime != null ? ' (ساعت ${toPersianDigits(tomorrowSlot.plannedTime)})' : ''}',
+                        l10n != null && tomorrowSlot.plannedTime != null
+                            ? l10n.mv_tomorrow_anchor_notice(
+                                tomorrowSlot.headlineFa,
+                                toPersianDigits(tomorrowSlot.plannedTime!),
+                              )
+                            : 'یادآوری: فردا ${tomorrowSlot.headlineFa}${tomorrowSlot.plannedTime != null ? ' (ساعت ${toPersianDigits(tomorrowSlot.plannedTime)})' : ''}',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textPrimary,
                           fontWeight: FontWeight.w600,

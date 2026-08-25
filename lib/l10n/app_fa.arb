@@ -850,6 +850,18 @@
   "mv_commitment_reminder_label": "یادآوری",
   "mv_week_anchor_cta": "تعریف ورزش ثابت هفتگی",
   "mv_week_anchor_cta_text": "روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.",
+  "mv_conflict_back_to_back": "توجه: دو روز ورزش متوالی با تعهد ثابت تنظیم شده است.",
+  "mv_tomorrow_anchor_notice": "یادآوری: فردا {title} (ساعت {time})",
+  "@mv_tomorrow_anchor_notice": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "mv_settings_anchors_section": "مدیریت ورزش‌های ثابت (لنگر)",
   "mv_campaign_create": "ساخت دورهٔ تمرینی",
   "mv_campaign_active_phase": "فاز {phase} • هفتهٔ {currentWeek} از {totalWeeks}",
@@ -882,5 +894,62 @@
       }
     }
   },
-  "mv_week_regenerate": "بازتولید برنامه"
+  "mv_week_regenerate": "بازتولید برنامه",
+  "mv_week_deload_badge": "هفته سبک",
+  "mv_week_deload_subtitle": "هفتهٔ سبک برای بازیابی بدنی",
+  "mv_week_regular_subtitle": "برنامهٔ منظم تمرین و ریکاوری",
+  "mv_settings_title": "تنظیمات ورزشی",
+  "mv_settings_save": "ذخیره",
+  "mv_settings_program_goals": "برنامه و اهداف",
+  "mv_settings_days_per_week": "تعداد روزهای تمرین در هفته:",
+  "mv_settings_n_days": "{days} روز",
+  "@mv_settings_n_days": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_settings_session_duration": "مدت هر جلسه:",
+  "mv_settings_dur_short": "کوتاه (۱۵ دقیقه)",
+  "mv_settings_dur_medium": "متوسط (۳۰ دقیقه)",
+  "mv_settings_dur_long": "بلند (۴۵+ دقیقه)",
+  "mv_settings_default_intensity": "شدت پیش‌فرض:",
+  "mv_settings_env_equipment": "محیط و تجهیزات",
+  "mv_settings_neighbor_mode": "حالت همسایه‌پسند (آپارتمانی)",
+  "mv_settings_neighbor_desc": "حذف خودکار تمام حرکات پرشی و پرصدا",
+  "mv_settings_audio_section": "راهنمای صوتی و انیمیشن",
+  "mv_settings_voice_cues": "راهنمای صوتی مربی",
+  "mv_settings_voice_desc": "پخش پیام‌های شروع، استراحت و شمارش معکوس",
+  "mv_settings_privacy_section": "حریم خصوصی و داده‌های فیزیولوژیک",
+  "mv_settings_cycle_consent": "تطبیق شدت با چرخهٔ فیزیولوژیک",
+  "mv_settings_cycle_desc": "پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)",
+  "mv_settings_advanced_section": "پیشرفته",
+  "mv_settings_regen_title": "بازسازی برنامهٔ هفتگی",
+  "mv_settings_regen_desc": "برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.",
+  "mv_quick_log_title": "ثبت سریع فعالیت",
+  "mv_quick_log_subtitle": "مدت‌زمان فعالیتت را مشخص کن تا در آمار هفتگی ثبت شود.",
+  "mv_quick_log_kind": "نوع فعالیت",
+  "mv_quick_log_more": "بیشتر...",
+  "mv_quick_log_duration": "مدت‌زمان (دقیقه)",
+  "mv_quick_log_duration_min": "{minutes} دقیقه",
+  "@mv_quick_log_duration_min": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_quick_log_feeling_prompt": "احساس چطور بود؟ (اختیاری)",
+  "mv_quick_log_feeling_easy": "راحت / جا داشتم",
+  "mv_quick_log_feeling_good": "خوب و متناسب",
+  "mv_quick_log_feeling_hard": "سخت و چالشی",
+  "mv_quick_log_submit": "ثبت فعالیت ({minutes} دقیقه)",
+  "@mv_quick_log_submit": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  }
 }

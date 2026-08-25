@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
-import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
@@ -9,14 +8,14 @@ import '../sheets/mv_commitment_edit_sheet.dart';
 
 /// Screen: مدیریت ورزش‌های ثابت و لنگرهای هفتگی (S8-T3 & Decision W-A).
 class MvCommitmentsScreen extends StatefulWidget {
-  final MvCommitmentRepository? commitmentRepo;
-  final MvKindRepository? kindRepo;
+  final MvCommitmentUseCase? commitmentUseCase;
+  final MvKindUseCase? kindUseCase;
   final MvHubController? controller;
 
   const MvCommitmentsScreen({
     super.key,
-    this.commitmentRepo,
-    this.kindRepo,
+    this.commitmentUseCase,
+    this.kindUseCase,
     this.controller,
   });
 
@@ -25,8 +24,8 @@ class MvCommitmentsScreen extends StatefulWidget {
 }
 
 class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
-  late final MvCommitmentRepository _commitmentRepo;
-  late final MvKindRepository _kindRepo;
+  late final MvCommitmentUseCase _commitmentUseCase;
+  late final MvKindUseCase _kindUseCase;
 
   List<MvCommitment> _commitments = [];
   Map<String, MvMovementKind> _kindsMap = {};
@@ -35,20 +34,22 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
   @override
   void initState() {
     super.initState();
-    _commitmentRepo = widget.commitmentRepo ??
-        widget.controller?.commitmentRepo ??
-        MvCommitmentRepositoryImpl();
-    _kindRepo = widget.kindRepo ??
-        widget.controller?.kindRepo ??
-        MvKindRepository();
+    _commitmentUseCase = widget.commitmentUseCase ??
+        (widget.controller != null
+            ? MvCommitmentUseCase(widget.controller!.commitmentRepo)
+            : MvCommitmentUseCase());
+    _kindUseCase = widget.kindUseCase ??
+        (widget.controller != null
+            ? MvKindUseCase(widget.controller!.kindRepo)
+            : MvKindUseCase());
     _loadData();
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final list = await _commitmentRepo.getAll(onlyActive: false);
-      final allKinds = await _kindRepo.getAll();
+      final list = await _commitmentUseCase.getAllCommitments(onlyActive: false);
+      final allKinds = await _kindUseCase.getAllKinds();
       if (!mounted) return;
 
       setState(() {
@@ -65,26 +66,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
     }
   }
 
-  String _dayLabel(int sat0) {
-    switch (sat0) {
-      case 0:
-        return 'شنبه';
-      case 1:
-        return 'یکشنبه';
-      case 2:
-        return 'دوشنبه';
-      case 3:
-        return 'سه‌شنبه';
-      case 4:
-        return 'چهارشنبه';
-      case 5:
-        return 'پنجشنبه';
-      case 6:
-        return 'جمعه';
-      default:
-        return '';
-    }
-  }
+  String _dayLabel(int sat0) => MvCalendar.persianWeekdayName(sat0);
 
   Future<void> _openEditSheet([MvCommitment? commitment]) async {
     await MvCommitmentEditSheet.show(
@@ -94,7 +76,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
         if (widget.controller != null) {
           await widget.controller!.saveCommitment(saved);
         } else {
-          await _commitmentRepo.upsert(saved);
+          await _commitmentUseCase.saveCommitment(saved);
         }
         await _loadData();
       },
@@ -102,7 +84,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
         if (widget.controller != null) {
           await widget.controller!.deleteCommitment(id);
         } else {
-          await _commitmentRepo.delete(id);
+          await _commitmentUseCase.deleteCommitment(id);
         }
         await _loadData();
       },
@@ -110,7 +92,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
   }
 
   Future<void> _toggleActive(MvCommitment commitment, bool active) async {
-    await _commitmentRepo.toggleActive(commitment.id!, active);
+    await _commitmentUseCase.toggleCommitmentActive(commitment.id!, active);
     if (widget.controller != null) {
       await widget.controller!.loadAllData();
     }

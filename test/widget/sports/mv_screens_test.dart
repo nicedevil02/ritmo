@@ -5,8 +5,13 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/screens/screens.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/sheets.dart';
 
+import 'package:ritmo/l10n/app_localizations.dart';
+
 Widget createTestApp(Widget child) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
     theme: ThemeData.light(),
     home: Directionality(
       textDirection: TextDirection.rtl,

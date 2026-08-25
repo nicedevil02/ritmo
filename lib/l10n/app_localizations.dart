@@ -2711,13 +2711,13 @@ abstract class AppLocalizations {
   /// No description provided for @mv_tomorrow_anchor_notice.
   ///
   /// In fa, this message translates to:
-  /// **'یادآوری: فردا جلسهٔ ثابت لنگر دارید'**
-  String get mv_tomorrow_anchor_notice;
+  /// **'یادآوری: فردا {title} (ساعت {time})'**
+  String mv_tomorrow_anchor_notice(String title, String time);
 
   /// No description provided for @mv_conflict_back_to_back.
   ///
   /// In fa, this message translates to:
-  /// **'هشدار: دو جلسهٔ سنگین متوالی برنامه‌ریزی شده است'**
+  /// **'توجه: دو روز ورزش متوالی با تعهد ثابت تنظیم شده است.'**
   String get mv_conflict_back_to_back;
 
   /// No description provided for @mv_reason_anchor.
@@ -3203,6 +3203,222 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'بازتولید برنامه'**
   String get mv_week_regenerate;
+
+  /// No description provided for @mv_week_deload_badge.
+  ///
+  /// In fa, this message translates to:
+  /// **'هفته سبک'**
+  String get mv_week_deload_badge;
+
+  /// No description provided for @mv_week_deload_subtitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'هفتهٔ سبک برای بازیابی بدنی'**
+  String get mv_week_deload_subtitle;
+
+  /// No description provided for @mv_week_regular_subtitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ منظم تمرین و ریکاوری'**
+  String get mv_week_regular_subtitle;
+
+  /// No description provided for @mv_settings_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'تنظیمات ورزشی'**
+  String get mv_settings_title;
+
+  /// No description provided for @mv_settings_save.
+  ///
+  /// In fa, this message translates to:
+  /// **'ذخیره'**
+  String get mv_settings_save;
+
+  /// No description provided for @mv_settings_program_goals.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامه و اهداف'**
+  String get mv_settings_program_goals;
+
+  /// No description provided for @mv_settings_days_per_week.
+  ///
+  /// In fa, this message translates to:
+  /// **'تعداد روزهای تمرین در هفته:'**
+  String get mv_settings_days_per_week;
+
+  /// No description provided for @mv_settings_n_days.
+  ///
+  /// In fa, this message translates to:
+  /// **'{days} روز'**
+  String mv_settings_n_days(int days);
+
+  /// No description provided for @mv_settings_session_duration.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدت هر جلسه:'**
+  String get mv_settings_session_duration;
+
+  /// No description provided for @mv_settings_dur_short.
+  ///
+  /// In fa, this message translates to:
+  /// **'کوتاه (۱۵ دقیقه)'**
+  String get mv_settings_dur_short;
+
+  /// No description provided for @mv_settings_dur_medium.
+  ///
+  /// In fa, this message translates to:
+  /// **'متوسط (۳۰ دقیقه)'**
+  String get mv_settings_dur_medium;
+
+  /// No description provided for @mv_settings_dur_long.
+  ///
+  /// In fa, this message translates to:
+  /// **'بلند (۴۵+ دقیقه)'**
+  String get mv_settings_dur_long;
+
+  /// No description provided for @mv_settings_default_intensity.
+  ///
+  /// In fa, this message translates to:
+  /// **'شدت پیش‌فرض:'**
+  String get mv_settings_default_intensity;
+
+  /// No description provided for @mv_settings_env_equipment.
+  ///
+  /// In fa, this message translates to:
+  /// **'محیط و تجهیزات'**
+  String get mv_settings_env_equipment;
+
+  /// No description provided for @mv_settings_neighbor_mode.
+  ///
+  /// In fa, this message translates to:
+  /// **'حالت همسایه‌پسند (آپارتمانی)'**
+  String get mv_settings_neighbor_mode;
+
+  /// No description provided for @mv_settings_neighbor_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف خودکار تمام حرکات پرشی و پرصدا'**
+  String get mv_settings_neighbor_desc;
+
+  /// No description provided for @mv_settings_audio_section.
+  ///
+  /// In fa, this message translates to:
+  /// **'راهنمای صوتی و انیمیشن'**
+  String get mv_settings_audio_section;
+
+  /// No description provided for @mv_settings_voice_cues.
+  ///
+  /// In fa, this message translates to:
+  /// **'راهنمای صوتی مربی'**
+  String get mv_settings_voice_cues;
+
+  /// No description provided for @mv_settings_voice_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پخش پیام‌های شروع، استراحت و شمارش معکوس'**
+  String get mv_settings_voice_desc;
+
+  /// No description provided for @mv_settings_privacy_section.
+  ///
+  /// In fa, this message translates to:
+  /// **'حریم خصوصی و داده‌های فیزیولوژیک'**
+  String get mv_settings_privacy_section;
+
+  /// No description provided for @mv_settings_cycle_consent.
+  ///
+  /// In fa, this message translates to:
+  /// **'تطبیق شدت با چرخهٔ فیزیولوژیک'**
+  String get mv_settings_cycle_consent;
+
+  /// No description provided for @mv_settings_cycle_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)'**
+  String get mv_settings_cycle_desc;
+
+  /// No description provided for @mv_settings_advanced_section.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیشرفته'**
+  String get mv_settings_advanced_section;
+
+  /// No description provided for @mv_settings_regen_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازسازی برنامهٔ هفتگی'**
+  String get mv_settings_regen_title;
+
+  /// No description provided for @mv_settings_regen_desc.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.'**
+  String get mv_settings_regen_desc;
+
+  /// No description provided for @mv_quick_log_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'ثبت سریع فعالیت'**
+  String get mv_quick_log_title;
+
+  /// No description provided for @mv_quick_log_subtitle.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدت‌زمان فعالیتت را مشخص کن تا در آمار هفتگی ثبت شود.'**
+  String get mv_quick_log_subtitle;
+
+  /// No description provided for @mv_quick_log_kind.
+  ///
+  /// In fa, this message translates to:
+  /// **'نوع فعالیت'**
+  String get mv_quick_log_kind;
+
+  /// No description provided for @mv_quick_log_more.
+  ///
+  /// In fa, this message translates to:
+  /// **'بیشتر...'**
+  String get mv_quick_log_more;
+
+  /// No description provided for @mv_quick_log_duration.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدت‌زمان (دقیقه)'**
+  String get mv_quick_log_duration;
+
+  /// No description provided for @mv_quick_log_duration_min.
+  ///
+  /// In fa, this message translates to:
+  /// **'{minutes} دقیقه'**
+  String mv_quick_log_duration_min(int minutes);
+
+  /// No description provided for @mv_quick_log_feeling_prompt.
+  ///
+  /// In fa, this message translates to:
+  /// **'احساس چطور بود؟ (اختیاری)'**
+  String get mv_quick_log_feeling_prompt;
+
+  /// No description provided for @mv_quick_log_feeling_easy.
+  ///
+  /// In fa, this message translates to:
+  /// **'راحت / جا داشتم'**
+  String get mv_quick_log_feeling_easy;
+
+  /// No description provided for @mv_quick_log_feeling_good.
+  ///
+  /// In fa, this message translates to:
+  /// **'خوب و متناسب'**
+  String get mv_quick_log_feeling_good;
+
+  /// No description provided for @mv_quick_log_feeling_hard.
+  ///
+  /// In fa, this message translates to:
+  /// **'سخت و چالشی'**
+  String get mv_quick_log_feeling_hard;
+
+  /// No description provided for @mv_quick_log_submit.
+  ///
+  /// In fa, this message translates to:
+  /// **'ثبت فعالیت ({minutes} دقیقه)'**
+  String mv_quick_log_submit(int minutes);
 }
 
 class _AppLocalizationsDelegate

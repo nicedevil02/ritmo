@@ -847,7 +847,7 @@ class _CreateCampaignDialog extends StatefulWidget {
 class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
   late final TextEditingController _weightController;
   DateTime _targetDate = DateTime.now().add(const Duration(days: 70)); // 10 weeks
-  final String _sportKind = 'HIKING';
+  final String _sportKind = MvKindCodes.hiking;
   String? _errorMessage;
 
   @override
@@ -921,7 +921,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                 children: [
                   const Text('🏔️'),
                   SizedBox(width: metrics.spaceSm),
-                  Text('کوهنوردی و پیمایش (HIKING)', style: textTheme.bodyMedium),
+                  Text('کوهنوردی و پیمایش (${MvKindCodes.hiking})', style: textTheme.bodyMedium),
                 ],
               ),
             ),

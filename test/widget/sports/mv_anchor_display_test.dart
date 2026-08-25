@@ -6,6 +6,16 @@ import 'package:ritmo/features/supplementary_sports/presentation/components/mv_d
 import 'package:ritmo/features/supplementary_sports/presentation/components/mv_week_rail.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/screens/mv_today_tab.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/screens/mv_week_tab.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
+
+Widget createTestApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
+    home: Scaffold(body: child),
+  );
+}
 
 void main() {
   group('S2-T6 Anchor Display in DaySlotCard, TodayTab, WeekRail, and WeekTab', () {
@@ -114,35 +124,33 @@ void main() {
         final weekSlots = [todaySlot, tomorrowLockedSlot];
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvTodayTab(
-                weekSlots: weekSlots,
-                todaySlot: todaySlot,
-                readinessDecision: const MvDecision(
-                  value: MvReadinessTier.full,
-                  reasonFa: 'آماده',
-                ),
-                budgetProgress: const MvWeeklyBudgetProgress(
-                  moderateEquivalentMinutes: 100,
-                  rawMetMinutes: 300,
-                  strengthDays: 2,
-                ),
-                bodyMapDistribution: const MvBodyMapDistribution(
-                  muscleSessionCounts: {},
-                ),
-                onStartSession: () {},
-                onSlotUpdated: (_) {},
-                onCheckinSaved: (_) {},
-                onQuickLogSaved: (a, b, c, d) async {},
-                onDateSelected: (_) {},
+          createTestApp(
+            MvTodayTab(
+              weekSlots: weekSlots,
+              todaySlot: todaySlot,
+              readinessDecision: const MvDecision(
+                value: MvReadinessTier.full,
+                reasonFa: 'آماده',
               ),
+              budgetProgress: const MvWeeklyBudgetProgress(
+                moderateEquivalentMinutes: 100,
+                rawMetMinutes: 300,
+                strengthDays: 2,
+              ),
+              bodyMapDistribution: const MvBodyMapDistribution(
+                muscleSessionCounts: {},
+              ),
+              onStartSession: () {},
+              onSlotUpdated: (_) {},
+              onCheckinSaved: (_) {},
+              onQuickLogSaved: (a, b, c, d) async {},
+              onDateSelected: (_) {},
             ),
           ),
         );
 
         expect(
-          find.byKey(const ValueKey('mv_tomorrow_anchor_notice')),
+          find.byKey(const ValueKey('mv_tomorrow_anchor_banner')),
           findsOneWidget,
         );
         expect(
@@ -182,35 +190,33 @@ void main() {
         final weekSlots = [todaySlot, tomorrowNormalSlot];
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvTodayTab(
-                weekSlots: weekSlots,
-                todaySlot: todaySlot,
-                readinessDecision: const MvDecision(
-                  value: MvReadinessTier.full,
-                  reasonFa: 'آماده',
-                ),
-                budgetProgress: const MvWeeklyBudgetProgress(
-                  moderateEquivalentMinutes: 100,
-                  rawMetMinutes: 300,
-                  strengthDays: 2,
-                ),
-                bodyMapDistribution: const MvBodyMapDistribution(
-                  muscleSessionCounts: {},
-                ),
-                onStartSession: () {},
-                onSlotUpdated: (_) {},
-                onCheckinSaved: (_) {},
-                onQuickLogSaved: (a, b, c, d) async {},
-                onDateSelected: (_) {},
+          createTestApp(
+            MvTodayTab(
+              weekSlots: weekSlots,
+              todaySlot: todaySlot,
+              readinessDecision: const MvDecision(
+                value: MvReadinessTier.full,
+                reasonFa: 'آماده',
               ),
+              budgetProgress: const MvWeeklyBudgetProgress(
+                moderateEquivalentMinutes: 100,
+                rawMetMinutes: 300,
+                strengthDays: 2,
+              ),
+              bodyMapDistribution: const MvBodyMapDistribution(
+                muscleSessionCounts: {},
+              ),
+              onStartSession: () {},
+              onSlotUpdated: (_) {},
+              onCheckinSaved: (_) {},
+              onQuickLogSaved: (a, b, c, d) async {},
+              onDateSelected: (_) {},
             ),
           ),
         );
 
         expect(
-          find.byKey(const ValueKey('mv_tomorrow_anchor_notice')),
+          find.byKey(const ValueKey('mv_tomorrow_anchor_banner')),
           findsNothing,
         );
       },
@@ -261,14 +267,12 @@ void main() {
         ];
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvWeekTab(
-                weekSlots: weekSlots,
-                cycleWeek: 1,
-                onSlotUpdated: (_) {},
-                onRegenerateWeek: () {},
-              ),
+          createTestApp(
+            MvWeekTab(
+              weekSlots: weekSlots,
+              cycleWeek: 1,
+              onSlotUpdated: (_) {},
+              onRegenerateWeek: () {},
             ),
           ),
         );
@@ -327,14 +331,12 @@ void main() {
         ];
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvWeekTab(
-                weekSlots: weekSlots,
-                cycleWeek: 1,
-                onSlotUpdated: (_) {},
-                onRegenerateWeek: () {},
-              ),
+          createTestApp(
+            MvWeekTab(
+              weekSlots: weekSlots,
+              cycleWeek: 1,
+              onSlotUpdated: (_) {},
+              onRegenerateWeek: () {},
             ),
           ),
         );

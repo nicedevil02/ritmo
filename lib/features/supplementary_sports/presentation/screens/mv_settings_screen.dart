@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/mv_hub_controller.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import 'mv_commitments_screen.dart';
 
@@ -69,16 +70,17 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تنظیمات ورزشی'),
+        title: Text(l10n.mv_settings_title),
         centerTitle: false,
         actions: [
           TextButton(
             onPressed: _saveChanges,
             child: Text(
-              'ذخیره',
+              l10n.mv_settings_save,
               style: textTheme.labelLarge?.copyWith(
                 color: colors.primary,
                 fontWeight: FontWeight.w700,
@@ -91,7 +93,7 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
         padding: EdgeInsets.all(metrics.spaceLg),
         children: [
           // 0. Fixed Sports (Anchors) Section (S8-T4)
-          _buildSectionHeader('ورزش‌های ثابت (لنگر)'),
+          _buildSectionHeader(l10n.mv_settings_anchors_section),
           _buildCard(
             children: [
               ListTile(
@@ -102,13 +104,13 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
                   size: metrics.iconMd,
                 ),
                 title: Text(
-                  'مدیریت ورزش‌های ثابت هفتگی',
+                  l10n.mv_commitments_title,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  'تعریف جلسات فوتسال، شنا، کوهنوردی یا کلاس‌های ثابت',
+                  l10n.mv_week_anchor_cta_text,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -136,16 +138,16 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           SizedBox(height: metrics.spaceLg),
 
           // 1. Program & Goal
-          _buildSectionHeader('برنامه و اهداف'),
+          _buildSectionHeader(l10n.mv_settings_program_goals),
           _buildCard(
             children: [
-              Text('تعداد روزهای تمرین در هفته:', style: textTheme.bodyMedium),
+              Text(l10n.mv_settings_days_per_week, style: textTheme.bodyMedium),
               SizedBox(height: metrics.spaceSm),
               Wrap(
                 spacing: metrics.spaceSm,
                 children: [1, 2, 3, 4, 5, 6, 7].map((d) {
                   return MvChip(
-                    label: '$d روز',
+                    label: l10n.mv_settings_n_days(d),
                     isSelected: _daysPerWeek == d,
                     onTap: () => setState(() => _daysPerWeek = d),
                   );
@@ -153,16 +155,16 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
               ),
               SizedBox(height: metrics.spaceMd),
 
-              Text('مدت هر جلسه:', style: textTheme.bodyMedium),
+              Text(l10n.mv_settings_session_duration, style: textTheme.bodyMedium),
               SizedBox(height: metrics.spaceSm),
               Wrap(
                 spacing: metrics.spaceSm,
                 children: _durations.map((dur) {
                   final label = dur == 'short'
-                      ? 'کوتاه (۱۵ دقیقه)'
+                      ? l10n.mv_settings_dur_short
                       : dur == 'medium'
-                      ? 'متوسط (۳۰ دقیقه)'
-                      : 'بلند (۴۵+ دقیقه)';
+                      ? l10n.mv_settings_dur_medium
+                      : l10n.mv_settings_dur_long;
                   return MvChip(
                     label: label,
                     isSelected: _duration == dur,
@@ -172,7 +174,7 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
               ),
               SizedBox(height: metrics.spaceMd),
 
-              Text('شدت پیش‌فرض:', style: textTheme.bodyMedium),
+              Text(l10n.mv_settings_default_intensity, style: textTheme.bodyMedium),
               SizedBox(height: metrics.spaceSm),
               Wrap(
                 spacing: metrics.spaceSm,
@@ -189,18 +191,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           SizedBox(height: metrics.spaceLg),
 
           // 2. Apartment Mode & Equipment (N-04)
-          _buildSectionHeader('محیط و تجهیزات'),
+          _buildSectionHeader(l10n.mv_settings_env_equipment),
           _buildCard(
             children: [
               SwitchListTile(
                 title: Text(
-                  'حالت همسایه‌پسند (آپارتمانی)',
+                  l10n.mv_settings_neighbor_mode,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  'حذف خودکار تمام حرکات پرشی و پرصدا',
+                  l10n.mv_settings_neighbor_desc,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -213,18 +215,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           SizedBox(height: metrics.spaceLg),
 
           // 3. Audio & Voice cues
-          _buildSectionHeader('راهنمای صوتی و انیمیشن'),
+          _buildSectionHeader(l10n.mv_settings_audio_section),
           _buildCard(
             children: [
               SwitchListTile(
                 title: Text(
-                  'راهنمای صوتی مربی',
+                  l10n.mv_settings_voice_cues,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  'پخش پیام‌های شروع، استراحت و شمارش معکوس',
+                  l10n.mv_settings_voice_desc,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -237,18 +239,18 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
           SizedBox(height: metrics.spaceLg),
 
           // 4. Privacy & Menstrual Cycle Consent (AC-12, Rule 35)
-          _buildSectionHeader('حریم خصوصی و داده‌های فیزیولوژیک'),
+          _buildSectionHeader(l10n.mv_settings_privacy_section),
           _buildCard(
             children: [
               SwitchListTile(
                 title: Text(
-                  'تطبیق شدت با چرخهٔ فیزیولوژیک',
+                  l10n.mv_settings_cycle_consent,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  'پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)',
+                  l10n.mv_settings_cycle_desc,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -262,19 +264,19 @@ class _MvSettingsScreenState extends State<MvSettingsScreen> {
 
           // 5. Advanced Actions
           if (widget.onRegenerateProgram != null) ...[
-            _buildSectionHeader('پیشرفته'),
+            _buildSectionHeader(l10n.mv_settings_advanced_section),
             _buildCard(
               children: [
                 ListTile(
                   leading: Icon(Icons.refresh_rounded, color: colors.primary),
                   title: Text(
-                    'بازسازی برنامهٔ هفتگی',
+                    l10n.mv_settings_regen_title,
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: Text(
-                    'برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.',
+                    l10n.mv_settings_regen_desc,
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),

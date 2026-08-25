@@ -1458,11 +1458,13 @@ class AppLocalizationsFa extends AppLocalizations {
       'تمرین ثابت لنگر با توجه به محدودیت ثبت‌شده';
 
   @override
-  String get mv_tomorrow_anchor_notice => 'یادآوری: فردا جلسهٔ ثابت لنگر دارید';
+  String mv_tomorrow_anchor_notice(String title, String time) {
+    return 'یادآوری: فردا $title (ساعت $time)';
+  }
 
   @override
   String get mv_conflict_back_to_back =>
-      'هشدار: دو جلسهٔ سنگین متوالی برنامه‌ریزی شده است';
+      'توجه: دو روز ورزش متوالی با تعهد ثابت تنظیم شده است.';
 
   @override
   String get mv_reason_anchor => 'جلسهٔ ثابت لنگر برنامه‌ریزی شده شما';
@@ -1730,4 +1732,122 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get mv_week_regenerate => 'بازتولید برنامه';
+
+  @override
+  String get mv_week_deload_badge => 'هفته سبک';
+
+  @override
+  String get mv_week_deload_subtitle => 'هفتهٔ سبک برای بازیابی بدنی';
+
+  @override
+  String get mv_week_regular_subtitle => 'برنامهٔ منظم تمرین و ریکاوری';
+
+  @override
+  String get mv_settings_title => 'تنظیمات ورزشی';
+
+  @override
+  String get mv_settings_save => 'ذخیره';
+
+  @override
+  String get mv_settings_program_goals => 'برنامه و اهداف';
+
+  @override
+  String get mv_settings_days_per_week => 'تعداد روزهای تمرین در هفته:';
+
+  @override
+  String mv_settings_n_days(int days) {
+    return '$days روز';
+  }
+
+  @override
+  String get mv_settings_session_duration => 'مدت هر جلسه:';
+
+  @override
+  String get mv_settings_dur_short => 'کوتاه (۱۵ دقیقه)';
+
+  @override
+  String get mv_settings_dur_medium => 'متوسط (۳۰ دقیقه)';
+
+  @override
+  String get mv_settings_dur_long => 'بلند (۴۵+ دقیقه)';
+
+  @override
+  String get mv_settings_default_intensity => 'شدت پیش‌فرض:';
+
+  @override
+  String get mv_settings_env_equipment => 'محیط و تجهیزات';
+
+  @override
+  String get mv_settings_neighbor_mode => 'حالت همسایه‌پسند (آپارتمانی)';
+
+  @override
+  String get mv_settings_neighbor_desc => 'حذف خودکار تمام حرکات پرشی و پرصدا';
+
+  @override
+  String get mv_settings_audio_section => 'راهنمای صوتی و انیمیشن';
+
+  @override
+  String get mv_settings_voice_cues => 'راهنمای صوتی مربی';
+
+  @override
+  String get mv_settings_voice_desc =>
+      'پخش پیام‌های شروع، استراحت و شمارش معکوس';
+
+  @override
+  String get mv_settings_privacy_section => 'حریم خصوصی و داده‌های فیزیولوژیک';
+
+  @override
+  String get mv_settings_cycle_consent => 'تطبیق شدت با چرخهٔ فیزیولوژیک';
+
+  @override
+  String get mv_settings_cycle_desc =>
+      'پیشنهاد روزهای سبک در فاز استراحت چرخه (کاملاً آفلاین و با رضایت کاربر)';
+
+  @override
+  String get mv_settings_advanced_section => 'پیشرفته';
+
+  @override
+  String get mv_settings_regen_title => 'بازسازی برنامهٔ هفتگی';
+
+  @override
+  String get mv_settings_regen_desc =>
+      'برنامهٔ روزها را بازسازی می‌کند بدون اینکه سوابق ورزشی قبلی حذف شود.';
+
+  @override
+  String get mv_quick_log_title => 'ثبت سریع فعالیت';
+
+  @override
+  String get mv_quick_log_subtitle =>
+      'مدت‌زمان فعالیتت را مشخص کن تا در آمار هفتگی ثبت شود.';
+
+  @override
+  String get mv_quick_log_kind => 'نوع فعالیت';
+
+  @override
+  String get mv_quick_log_more => 'بیشتر...';
+
+  @override
+  String get mv_quick_log_duration => 'مدت‌زمان (دقیقه)';
+
+  @override
+  String mv_quick_log_duration_min(int minutes) {
+    return '$minutes دقیقه';
+  }
+
+  @override
+  String get mv_quick_log_feeling_prompt => 'احساس چطور بود؟ (اختیاری)';
+
+  @override
+  String get mv_quick_log_feeling_easy => 'راحت / جا داشتم';
+
+  @override
+  String get mv_quick_log_feeling_good => 'خوب و متناسب';
+
+  @override
+  String get mv_quick_log_feeling_hard => 'سخت و چالشی';
+
+  @override
+  String mv_quick_log_submit(int minutes) {
+    return 'ثبت فعالیت ($minutes دقیقه)';
+  }
 }

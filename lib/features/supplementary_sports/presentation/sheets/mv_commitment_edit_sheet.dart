@@ -118,26 +118,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
     return '$h:$m';
   }
 
-  String _dayLabel(int sat0) {
-    switch (sat0) {
-      case 0:
-        return 'شنبه';
-      case 1:
-        return '۱شنبه';
-      case 2:
-        return '۲شنبه';
-      case 3:
-        return '۳شنبه';
-      case 4:
-        return '۴شنبه';
-      case 5:
-        return '۵شنبه';
-      case 6:
-        return 'جمعه';
-      default:
-        return '';
-    }
-  }
+  String _dayLabel(int sat0) => MvCalendar.persianWeekdayName(sat0);
 
   String _recurrenceLabel(CommitmentRecurrence r) {
     switch (r) {

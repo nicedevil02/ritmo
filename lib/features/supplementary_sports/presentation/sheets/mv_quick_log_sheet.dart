@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import 'mv_kind_picker_sheet.dart';
 
@@ -79,10 +80,10 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
   bool _isLoading = false;
 
   List<Map<String, String>> _quickKinds = [
-    {'code': 'WALKING', 'title': 'پیاده‌روی', 'emoji': '🚶'},
-    {'code': 'RUNNING', 'title': 'دویدن', 'emoji': '🏃'},
-    {'code': 'CYCLING', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
-    {'code': 'SWIMMING', 'title': 'شنا', 'emoji': '🏊'},
+    {'code': 'WALKING', 'title': '', 'emoji': '🚶'},
+    {'code': 'RUNNING', 'title': '', 'emoji': '🏃'},
+    {'code': 'CYCLING', 'title': '', 'emoji': '🚴'},
+    {'code': 'SWIMMING', 'title': '', 'emoji': '🏊'},
   ];
 
   final List<int> _durationPresets = const [10, 15, 20, 30, 45, 60];
@@ -104,27 +105,39 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
 
   Future<void> _loadRecentKinds() async {
     try {
+      final allKinds = await _kindUseCase.getAllKinds();
+      final kindMap = {for (final k in allKinds) k.code: k};
+
       final recent = await _kindUseCase.getRecentKinds(limit: 4);
-      if (recent.isNotEmpty && mounted) {
-        final List<Map<String, String>> items = recent
-            .map((k) => {'code': k.code, 'title': k.titleFa, 'emoji': k.emoji})
-            .toList();
+      final List<Map<String, String>> items = [];
 
-        // If fewer than 4, fill with fallback
-        const fallback = [
-          {'code': 'WALKING', 'title': 'پیاده‌روی', 'emoji': '🚶'},
-          {'code': 'RUNNING', 'title': 'دویدن', 'emoji': '🏃'},
-          {'code': 'CYCLING', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
-          {'code': 'SWIMMING', 'title': 'شنا', 'emoji': '🏊'},
-        ];
-
-        for (final fb in fallback) {
-          if (items.length >= 4) break;
-          if (!items.any((it) => it['code'] == fb['code'])) {
-            items.add(fb);
-          }
+      if (recent.isNotEmpty) {
+        for (final k in recent) {
+          items.add({'code': k.code, 'title': k.titleFa, 'emoji': k.emoji});
         }
+      }
 
+      // If fewer than 4, fill with fallback
+      const fallbackCodes = [
+        {'code': 'WALKING', 'emoji': '🚶'},
+        {'code': 'RUNNING', 'emoji': '🏃'},
+        {'code': 'CYCLING', 'emoji': '🚴'},
+        {'code': 'SWIMMING', 'emoji': '🏊'},
+      ];
+
+      for (final fb in fallbackCodes) {
+        if (items.length >= 4) break;
+        if (!items.any((it) => it['code'] == fb['code'])) {
+          final resolved = kindMap[fb['code']];
+          items.add({
+            'code': fb['code']!,
+            'title': resolved?.titleFa ?? fb['code']!,
+            'emoji': resolved?.emoji ?? fb['emoji']!,
+          });
+        }
+      }
+
+      if (mounted) {
         setState(() {
           _quickKinds = items;
         });
@@ -140,32 +153,34 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
 
     if (!mounted) return;
 
-    final picked = await MvKindPickerSheet.show(
+    final selected = await MvKindPickerSheet.show(
       context: context,
       useCase: _kindUseCase,
       initialCode: _selectedKind,
       initialKinds: allKinds,
     );
 
-    if (picked != null && mounted) {
+    if (selected != null && mounted) {
       setState(() {
-        _selectedKind = picked.code;
-        if (!_quickKinds.any((k) => k['code'] == picked.code)) {
-          _quickKinds = [
-            {
-              'code': picked.code,
-              'title': picked.titleFa,
-              'emoji': picked.emoji,
-            },
-            ..._quickKinds.take(3),
-          ];
+        _selectedKind = selected.code;
+        if (!_quickKinds.any((k) => k['code'] == selected.code)) {
+          _quickKinds.insert(0, {
+            'code': selected.code,
+            'title': selected.titleFa,
+            'emoji': selected.emoji,
+          });
+          if (_quickKinds.length > 4) {
+            _quickKinds = _quickKinds.sublist(0, 4);
+          }
         }
       });
     }
   }
 
   Future<void> _handleSave() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
+
     try {
       await widget.onSave(
         _selectedKind,
@@ -175,8 +190,20 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
             ? null
             : _noteController.text.trim(),
       );
-      if (mounted) Navigator.pop(context);
-    } catch (_) {
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: context.ritmoColors.error,
+          ),
+        );
+      }
+    } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -186,10 +213,11 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return MvSheetScaffold(
-      title: 'ثبت سریع فعالیت',
-      subtitle: 'مدت‌زمان فعالیتت را مشخص کن تا در آمار هفتگی ثبت شود.',
+      title: l10n.mv_quick_log_title,
+      subtitle: l10n.mv_quick_log_subtitle,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +225,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
           children: [
             // 1. Kind Selector
             Text(
-              'نوع فعالیت',
+              l10n.mv_quick_log_kind,
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -212,9 +240,11 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                   final isSel = k['code'] == _selectedKind;
                   return MvChip(
                     key: ValueKey('kind_chip_${k['code']}'),
-                    label: k['title']!,
+                    label: k['title']?.isNotEmpty == true
+                        ? k['title']!
+                        : k['code']!,
                     icon: Text(
-                      k['emoji']!,
+                      k['emoji'] ?? '🏃',
                       style: const TextStyle(fontSize: 14),
                     ),
                     isSelected: isSel,
@@ -224,7 +254,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                 // 5th Chip: "بیشتر..."
                 MvChip(
                   key: const ValueKey('quick_log_more_kinds'),
-                  label: 'بیشتر...',
+                  label: l10n.mv_quick_log_more,
                   icon: const Icon(Icons.apps_rounded, size: 16),
                   isSelected: false,
                   onTap: _openKindPicker,
@@ -235,7 +265,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
 
             // 2. Duration Presets
             Text(
-              'مدت‌زمان (دقیقه)',
+              l10n.mv_quick_log_duration,
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -249,7 +279,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                 final isSel = d == _duration;
                 return MvChip(
                   key: ValueKey('duration_$d'),
-                  label: '$d دقیقه',
+                  label: l10n.mv_quick_log_duration_min(d),
                   isSelected: isSel,
                   onTap: () => setState(() => _duration = d),
                 );
@@ -259,7 +289,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
 
             // 3. Optional Feeling
             Text(
-              'احساس چطور بود؟ (اختیاری)',
+              l10n.mv_quick_log_feeling_prompt,
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -271,16 +301,20 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                 _buildFeelingOption(
                   MvSessionFeeling.easy,
                   '😊',
-                  'راحت / جا داشتم',
+                  l10n.mv_quick_log_feeling_easy,
                 ),
                 SizedBox(width: metrics.spaceSm),
                 _buildFeelingOption(
                   MvSessionFeeling.good,
                   '💪',
-                  'خوب و متناسب',
+                  l10n.mv_quick_log_feeling_good,
                 ),
                 SizedBox(width: metrics.spaceSm),
-                _buildFeelingOption(MvSessionFeeling.hard, '🥵', 'سخت و چالشی'),
+                _buildFeelingOption(
+                  MvSessionFeeling.hard,
+                  '🥵',
+                  l10n.mv_quick_log_feeling_hard,
+                ),
               ],
             ),
             SizedBox(height: metrics.spaceLg),
@@ -289,7 +323,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
       ),
       bottomAction: MvPrimaryAction(
         key: const ValueKey('quick_log_save_action'),
-        label: 'ثبت فعالیت ($_duration دقیقه)',
+        label: l10n.mv_quick_log_submit(_duration),
         icon: Icons.check_circle_outline_rounded,
         isLoading: _isLoading,
         onPressed: _handleSave,

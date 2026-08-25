@@ -3,12 +3,15 @@
 library;
 
 /// Represents the type of daily program slot.
+/// Note: Stored in DB as uppercase string code (e.g. 'STRENGTH', 'CARDIO', 'SPORT', 'OUTDOOR').
 enum MvSlotType {
   strength,
   cardio,
   mobility,
   activeRest,
-  rest;
+  rest,
+  sport,
+  outdoor;
 
   String get code {
     switch (this) {
@@ -22,6 +25,10 @@ enum MvSlotType {
         return 'ACTIVE_REST';
       case MvSlotType.rest:
         return 'REST';
+      case MvSlotType.sport:
+        return 'SPORT';
+      case MvSlotType.outdoor:
+        return 'OUTDOOR';
     }
   }
 
@@ -37,6 +44,10 @@ enum MvSlotType {
         return 'بازیابی فعال';
       case MvSlotType.rest:
         return 'استراحت';
+      case MvSlotType.sport:
+        return 'ورزش و بازی';
+      case MvSlotType.outdoor:
+        return 'طبیعت و فضای باز';
     }
   }
 
@@ -57,6 +68,11 @@ enum MvSlotType {
       case 'REST':
       case 'RECOVERY':
         return MvSlotType.rest;
+      case 'SPORT':
+      case 'SPORTS':
+        return MvSlotType.sport;
+      case 'OUTDOOR':
+        return MvSlotType.outdoor;
       default:
         return MvSlotType.strength;
     }

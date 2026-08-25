@@ -57,7 +57,13 @@ class MvSlot {
     this.workoutLogId,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : assert(
+         (slotType != MvSlotType.sport &&
+                 slotType != MvSlotType.outdoor &&
+                 slotType != MvSlotType.cardio) ||
+             kindCode != null,
+         'kindCode is required when slotType is sport, outdoor, or cardio',
+       );
 
   bool get isRest => slotType == MvSlotType.rest;
   bool get isCompleted => status == MvSlotStatus.done;
@@ -154,7 +160,11 @@ class MvSlot {
     final rawFocus = map['focusCodes'] as String? ?? '';
     final focusList = rawFocus.isEmpty
         ? <String>[]
-        : rawFocus.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        : rawFocus
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
 
     return MvSlot(
       id: map['id'] as String,
@@ -180,8 +190,12 @@ class MvSlot {
       legacyPlanId: map['legacyPlanId'] as String?,
       workoutPlanId: map['workoutPlanId'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

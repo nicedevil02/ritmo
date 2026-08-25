@@ -601,6 +601,37 @@ class BloodPressureStats {
   }
 }
 
+enum BmiCategory {
+  underweight,
+  normal,
+  overweight,
+  obesityClass1,
+  obesityClass2,
+  obesityClass3,
+}
+
+enum TemperatureCategory {
+  hypothermia,
+  normal,
+  lowGradeFever,
+  moderateFever,
+  highFever,
+}
+
+enum Spo2Category {
+  optimal,
+  acceptable,
+  mildHypoxia,
+  severeHypoxia,
+}
+
+enum WaistCategory {
+  underweight,
+  healthy,
+  increasedRisk,
+  highRisk,
+}
+
 class VitalSignLog { // epoch ms
 
   VitalSignLog({
@@ -631,6 +662,185 @@ class VitalSignLog { // epoch ms
 
   String get formattedValue => '$value $unit';
 
+  // ─── Anthropometrics & Weight Helpers ───
+  double? calculateBmi(double? heightCm) {
+    if (heightCm == null || heightCm <= 0) return null;
+    final hMeter = heightCm / 100.0;
+    return value / (hMeter * hMeter);
+  }
+
+  BmiCategory? getBmiCategory(double? heightCm) {
+    final bmi = calculateBmi(heightCm);
+    if (bmi == null) return null;
+    if (bmi < 18.5) return BmiCategory.underweight;
+    if (bmi < 25.0) return BmiCategory.normal;
+    if (bmi < 30.0) return BmiCategory.overweight;
+    if (bmi < 35.0) return BmiCategory.obesityClass1;
+    if (bmi < 40.0) return BmiCategory.obesityClass2;
+    return BmiCategory.obesityClass3;
+  }
+
+  String getBmiLabel(double? heightCm) {
+    final cat = getBmiCategory(heightCm);
+    if (cat == null) return 'نامشخص (نیاز به قد)';
+    switch (cat) {
+      case BmiCategory.underweight:
+        return 'کم‌وزن';
+      case BmiCategory.normal:
+        return 'نرمال و سلامت';
+      case BmiCategory.overweight:
+        return 'اضافه‌وزن';
+      case BmiCategory.obesityClass1:
+        return 'چاقی درجه ۱';
+      case BmiCategory.obesityClass2:
+        return 'چاقی درجه ۲';
+      case BmiCategory.obesityClass3:
+        return 'چاقی مفرط (درجه ۳)';
+    }
+  }
+
+  Color getBmiColor(double? heightCm) {
+    final cat = getBmiCategory(heightCm);
+    if (cat == null) return const Color(0xFF64748B);
+    switch (cat) {
+      case BmiCategory.underweight:
+        return const Color(0xFF06B6D4);
+      case BmiCategory.normal:
+        return const Color(0xFF10B981);
+      case BmiCategory.overweight:
+        return const Color(0xFFF59E0B);
+      case BmiCategory.obesityClass1:
+        return const Color(0xFFF97316);
+      case BmiCategory.obesityClass2:
+      case BmiCategory.obesityClass3:
+        return const Color(0xFFDC2626);
+    }
+  }
+
+  static double? getIdealWeight(double? heightCm, {bool isFemale = false}) {
+    if (heightCm == null || heightCm < 140) return null;
+    final base = isFemale ? 45.5 : 50.0;
+    return base + 0.9 * (heightCm - 152);
+  }
+
+  // ─── Temperature Staging ───
+  TemperatureCategory get tempCategory {
+    if (value < 35.5) return TemperatureCategory.hypothermia;
+    if (value <= 37.2) return TemperatureCategory.normal;
+    if (value <= 38.0) return TemperatureCategory.lowGradeFever;
+    if (value <= 39.0) return TemperatureCategory.moderateFever;
+    return TemperatureCategory.highFever;
+  }
+
+  String get tempLabel {
+    switch (tempCategory) {
+      case TemperatureCategory.hypothermia:
+        return 'هیپوترمی (کاهش دما)';
+      case TemperatureCategory.normal:
+        return 'دمای نرمال بدن';
+      case TemperatureCategory.lowGradeFever:
+        return 'تب خفیف (Low-Grade)';
+      case TemperatureCategory.moderateFever:
+        return 'تب متوسط';
+      case TemperatureCategory.highFever:
+        return 'تب شدید و پرخطر';
+    }
+  }
+
+  Color get tempColor {
+    switch (tempCategory) {
+      case TemperatureCategory.hypothermia:
+        return const Color(0xFF06B6D4);
+      case TemperatureCategory.normal:
+        return const Color(0xFF10B981);
+      case TemperatureCategory.lowGradeFever:
+        return const Color(0xFFF59E0B);
+      case TemperatureCategory.moderateFever:
+        return const Color(0xFFF97316);
+      case TemperatureCategory.highFever:
+        return const Color(0xFFDC2626);
+    }
+  }
+
+  // ─── SpO2 Staging ───
+  Spo2Category get spo2Category {
+    if (value >= 96.0) return Spo2Category.optimal;
+    if (value >= 95.0) return Spo2Category.acceptable;
+    if (value >= 91.0) return Spo2Category.mildHypoxia;
+    return Spo2Category.severeHypoxia;
+  }
+
+  String get spo2Label {
+    switch (spo2Category) {
+      case Spo2Category.optimal:
+        return 'اکسیژن بهینه و عالی';
+      case Spo2Category.acceptable:
+        return 'محدوده قابل قبول';
+      case Spo2Category.mildHypoxia:
+        return 'هیپوکسی خفیف (افت اکسیژن)';
+      case Spo2Category.severeHypoxia:
+        return 'هیپوکسی حاد (هشدار فوری)';
+    }
+  }
+
+  Color get spo2Color {
+    switch (spo2Category) {
+      case Spo2Category.optimal:
+        return const Color(0xFF10B981);
+      case Spo2Category.acceptable:
+        return const Color(0xFF06B6D4);
+      case Spo2Category.mildHypoxia:
+        return const Color(0xFFF59E0B);
+      case Spo2Category.severeHypoxia:
+        return const Color(0xFFDC2626);
+    }
+  }
+
+  // ─── Waist & WHtR Helpers ───
+  double? calculateWhtr(double? heightCm) {
+    if (heightCm == null || heightCm <= 0) return null;
+    return value / heightCm;
+  }
+
+  WaistCategory? getWaistCategory(double? heightCm) {
+    final whtr = calculateWhtr(heightCm);
+    if (whtr == null) return null;
+    if (whtr < 0.4) return WaistCategory.underweight;
+    if (whtr < 0.5) return WaistCategory.healthy;
+    if (whtr < 0.6) return WaistCategory.increasedRisk;
+    return WaistCategory.highRisk;
+  }
+
+  String getWaistLabel(double? heightCm) {
+    final cat = getWaistCategory(heightCm);
+    if (cat == null) return 'محیط کمر';
+    switch (cat) {
+      case WaistCategory.underweight:
+        return 'لاغری مفرط';
+      case WaistCategory.healthy:
+        return 'توزیع چربی ایده‌آل (< نصف قد)';
+      case WaistCategory.increasedRisk:
+        return 'افزایش چربی احشایی (مرزی)';
+      case WaistCategory.highRisk:
+        return 'ریسک بالای قلبی-متابولیک';
+    }
+  }
+
+  Color getWaistColor(double? heightCm) {
+    final cat = getWaistCategory(heightCm);
+    if (cat == null) return const Color(0xFF64748B);
+    switch (cat) {
+      case WaistCategory.underweight:
+        return const Color(0xFF06B6D4);
+      case WaistCategory.healthy:
+        return const Color(0xFF10B981);
+      case WaistCategory.increasedRisk:
+        return const Color(0xFFF59E0B);
+      case WaistCategory.highRisk:
+        return const Color(0xFFDC2626);
+    }
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -640,6 +850,86 @@ class VitalSignLog { // epoch ms
       'note': note,
       'loggedAt': loggedAt,
     };
+  }
+}
+
+class VitalSignsStats {
+  VitalSignsStats({
+    required this.average,
+    required this.min,
+    required this.max,
+    this.latest,
+    this.oldest,
+    this.delta,
+    required this.totalCount,
+    required this.inRangeCount,
+    required this.inRangePercentage,
+  });
+
+  final double average;
+  final double min;
+  final double max;
+  final double? latest;
+  final double? oldest;
+  final double? delta;
+  final int totalCount;
+  final int inRangeCount;
+  final double inRangePercentage;
+
+  static VitalSignsStats? compute(List<VitalSignLog> logs, String type, {double? heightCm}) {
+    if (logs.isEmpty) return null;
+    final typeLogs = logs.where((l) => l.vitalType == type).toList();
+    if (typeLogs.isEmpty) return null;
+
+    double sum = 0;
+    double minV = typeLogs.first.value;
+    double maxV = typeLogs.first.value;
+    int inRange = 0;
+
+    for (final l in typeLogs) {
+      sum += l.value;
+      if (l.value < minV) minV = l.value;
+      if (l.value > maxV) maxV = l.value;
+
+      switch (type) {
+        case 'WEIGHT':
+          if (heightCm != null && heightCm > 0) {
+            final bmi = l.value / ((heightCm / 100) * (heightCm / 100));
+            if (bmi >= 18.5 && bmi < 25.0) inRange++;
+          } else {
+            inRange++;
+          }
+        case 'TEMPERATURE':
+          if (l.value >= 36.0 && l.value <= 37.2) inRange++;
+        case 'SPO2':
+          if (l.value >= 95.0) inRange++;
+        case 'WAIST':
+          if (heightCm != null && heightCm > 0) {
+            final ratio = l.value / heightCm;
+            if (ratio < 0.5) inRange++;
+          } else {
+            inRange++;
+          }
+      }
+    }
+
+    final avg = sum / typeLogs.length;
+    final latest = typeLogs.first.value;
+    final oldest = typeLogs.last.value;
+    final delta = latest - oldest;
+    final inRangePct = (inRange / typeLogs.length) * 100;
+
+    return VitalSignsStats(
+      average: avg,
+      min: minV,
+      max: maxV,
+      latest: latest,
+      oldest: oldest,
+      delta: delta,
+      totalCount: typeLogs.length,
+      inRangeCount: inRange,
+      inRangePercentage: inRangePct,
+    );
   }
 }
 

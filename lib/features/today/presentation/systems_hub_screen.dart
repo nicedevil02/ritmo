@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/systems_hub_logic.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/theme/theme_repository.dart';
@@ -83,6 +88,22 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   bool _sportsEnabled = false;
   bool _supplementarySportsEnabled = false;
   bool _notesEnabled = false;
+
+  // Grouping & custom order state
+  bool _groupingEnabled = true;
+  bool _showCustomOrderBanner = true;
+  List<String> _customModuleOrder = const [
+    'goals',
+    'notes',
+    'courses',
+    'konkur',
+    'religion',
+    'assistant',
+    'wellbeing',
+    'sports',
+    'medicine',
+    'cycle',
+  ];
 
   // Status flags resolved from db state
   ModuleStatus _konkurStatus = ModuleStatus.inactive;
@@ -227,6 +248,37 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
         _assistantEnabled,
       );
       _notesStatus = SystemsHubLogic.determineGenericStatus(_notesEnabled);
+
+      // 4.5. Grouping & Custom Order Settings
+      _groupingEnabled = _settingsMap['systems_grouping_enabled'] != 'false';
+      final customOrderRaw = _settingsMap['systems_custom_order'];
+      if (customOrderRaw != null && customOrderRaw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(customOrderRaw);
+          if (decoded is List) {
+            final parsed = decoded.map((e) => e.toString()).toList();
+            const allStandardKeys = [
+              'goals',
+              'notes',
+              'courses',
+              'konkur',
+              'religion',
+              'assistant',
+              'wellbeing',
+              'sports',
+              'medicine',
+              'cycle',
+            ];
+            for (final k in allStandardKeys) {
+              if (!parsed.contains(k)) {
+                parsed.add(k);
+              }
+            }
+            _customModuleOrder = parsed;
+          }
+        } catch (_) {}
+      }
+      _showCustomOrderBanner = _settingsMap['systems_custom_order_banner_dismissed'] != 'true';
 
       // 5. Check user avatar existence asynchronously
       final avatarPath = _settingsMap['user_avatar_path'];
@@ -673,250 +725,557 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     );
   }
 
-  Widget _buildGridItem({
-    required int index,
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String description,
-    required ModuleStatus status,
-    required VoidCallback onTap,
-    required RitmoColors colors,
-    required bool isDarkMode,
-    required String illustrationAsset,
-    bool overlayText = false,
-  }) {
+  Future<void> _handleCardLongPressInGroupedMode() async {
+    await HapticFeedback.mediumImpact();
+    final confirmed = await _showDisableGroupingConfirmationDialog();
+    if (confirmed == true && mounted) {
+      await _setGroupingEnabled(false);
+    }
+  }
+
+  Future<bool> _showDisableGroupingConfirmationDialog() async {
+    final colors = context.ritmoColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xff1E1E2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xff3B82F6).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(CupertinoIcons.square_grid_2x2, color: Color(0xff3B82F6), size: 22),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'تغییر چیدمان کارت‌ها',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          'با جابجایی دستی کارت‌ها، گروه‌بندی خودکار سیستم‌ها (رشد، سلامت، معنویت) غیرفعال می‌شود و کارت‌ها بر اساس ترتیب دلخواه شما قرار می‌گیرند.\n\nآیا مایل به ادامه هستید؟',
+          style: TextStyle(
+            fontSize: 13.5,
+            height: 1.6,
+            color: colors.textSecondary,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('انصراف', style: TextStyle(color: colors.textTertiary, fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff3B82F6),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('تایید و جابجایی', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _setGroupingEnabled(bool enabled) async {
+    await HapticFeedback.mediumImpact();
+    setState(() {
+      _groupingEnabled = enabled;
+    });
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.insert('app_settings', {
+        'key': 'systems_grouping_enabled',
+        'value': enabled ? 'true' : 'false',
+        'updatedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await SettingsService.instance.set('systems_grouping_enabled', enabled);
+    } catch (_) {}
+
+    if (mounted) {
+      RitmoToast.show(
+        context,
+        enabled
+            ? 'گروه‌بندی خودکار سیستم‌ها فعال شد.'
+            : 'گروه‌بندی غیرفعال شد. اکنون می‌توانید کارت‌ها را با نگه داشتن انگشت جابجا کنید.',
+        icon: Icons.check_circle_outline,
+      );
+    }
+  }
+
+  Future<void> _saveCustomOrder(List<String> order) async {
+    final jsonStr = jsonEncode(order);
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.insert('app_settings', {
+        'key': 'systems_custom_order',
+        'value': jsonStr,
+        'updatedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await SettingsService.instance.set('systems_custom_order', jsonStr);
+    } catch (_) {}
+  }
+
+  void _onReorderModules(String fromKey, String toKey) {
+    if (fromKey == toKey) return;
+    unawaited(HapticFeedback.lightImpact());
+
+    final newOrder = List<String>.from(_customModuleOrder);
+    final fromIndex = newOrder.indexOf(fromKey);
+    final toIndex = newOrder.indexOf(toKey);
+
+    if (fromIndex != -1 && toIndex != -1) {
+      newOrder.removeAt(fromIndex);
+      newOrder.insert(toIndex, fromKey);
+      setState(() {
+        _customModuleOrder = newOrder;
+      });
+      unawaited(_saveCustomOrder(newOrder));
+    }
+  }
+
+  Widget _buildModuleItemWidget(
+    int index,
+    _SystemModuleItem item,
+    RitmoColors colors,
+    bool isDarkMode,
+  ) {
     return _buildAnimatedModuleCard(
       index: index,
       child: PressableGlassCard(
-        onTap: onTap,
+        onTap: item.onTap,
+        onLongPress: () => _handleCardLongPressInGroupedMode(),
         child: _buildModuleCard(
-          icon: icon,
-          iconColor: iconColor,
-          title: title,
-          description: description,
-          status: status,
-          onTap: onTap,
+          icon: item.icon,
+          iconColor: item.iconColor,
+          title: item.title,
+          description: item.description,
+          status: item.status,
+          onTap: item.onTap,
           colors: colors,
           isDarkMode: isDarkMode,
-          illustrationAsset: illustrationAsset,
-          overlayText: overlayText,
+          illustrationAsset: item.illustrationAsset,
+          overlayText: item.overlayText,
         ),
       ),
     );
   }
 
+  Widget _buildReorderableCustomGrid({
+    required List<_SystemModuleItem> items,
+    required RitmoColors colors,
+    required bool isDarkMode,
+  }) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Custom order notification banner
+        if (_showCustomOrderBanner) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.hand_draw, color: colors.primary, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'کارت‌ها در حالت چیدمان آزاد هستند. برای جابجایی، انگشت خود را روی کارت نگه دارید و بکشید.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.textPrimary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    backgroundColor: colors.primary.withValues(alpha: 0.12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () => _setGroupingEnabled(true),
+                  child: Text(
+                    'گروه‌بندی خودکار',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    setState(() {
+                      _showCustomOrderBanner = false;
+                    });
+                    try {
+                      final db = await DatabaseHelper.instance.database;
+                      final now = DateTime.now().millisecondsSinceEpoch;
+                      await db.insert('app_settings', {
+                        'key': 'systems_custom_order_banner_dismissed',
+                        'value': 'true',
+                        'updatedAt': now,
+                      }, conflictAlgorithm: ConflictAlgorithm.replace);
+                    } catch (_) {}
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      CupertinoIcons.xmark,
+                      size: 16,
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // 2-Column Reorderable Grid
+        RitmoAdaptiveGrid(
+          minTileWidth: 140,
+          spacing: 10,
+          maxColumns: 2,
+          children: items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            return AspectRatio(
+              aspectRatio: 1.05,
+              child: DragTarget<String>(
+                onWillAcceptWithDetails: (details) => details.data != item.key,
+                onAcceptWithDetails: (details) => _onReorderModules(details.data, item.key),
+                builder: (context, candidateData, rejectedData) {
+                  final isHovered = candidateData.isNotEmpty;
+
+                  return LongPressDraggable<String>(
+                    data: item.key,
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Transform.scale(
+                        scale: 1.06,
+                        child: SizedBox(
+                          width: 170,
+                          height: 160,
+                          child: _buildModuleCard(
+                            icon: item.icon,
+                            iconColor: item.iconColor,
+                            title: item.title,
+                            description: item.description,
+                            status: item.status,
+                            onTap: () {},
+                            colors: colors,
+                            isDarkMode: isDarkMode,
+                            illustrationAsset: item.illustrationAsset,
+                            overlayText: item.overlayText,
+                          ),
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: _buildModuleCard(
+                        icon: item.icon,
+                        iconColor: item.iconColor,
+                        title: item.title,
+                        description: item.description,
+                        status: item.status,
+                        onTap: () {},
+                        colors: colors,
+                        isDarkMode: isDarkMode,
+                        illustrationAsset: item.illustrationAsset,
+                        overlayText: item.overlayText,
+                      ),
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22),
+                        border: isHovered
+                            ? Border.all(color: colors.primary, width: 2.2)
+                            : null,
+                      ),
+                      child: _buildAnimatedModuleCard(
+                        index: index,
+                        child: PressableGlassCard(
+                          onTap: item.onTap,
+                          child: _buildModuleCard(
+                            icon: item.icon,
+                            iconColor: item.iconColor,
+                            title: item.title,
+                            description: item.description,
+                            status: item.status,
+                            onTap: item.onTap,
+                            colors: colors,
+                            isDarkMode: isDarkMode,
+                            illustrationAsset: item.illustrationAsset,
+                            overlayText: item.overlayText,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   Widget _buildModulesGrid(RitmoColors colors, bool isDarkMode) {
-    final healthCards = <Widget>[];
-    final growthCards = <Widget>[];
-    final spiritualityCards = <Widget>[];
-    final assistantCards = <Widget>[];
-    var cardIndex = 0;
+    final allItemsMap = <String, _SystemModuleItem>{};
 
     // 1. Cycle Module (Female Only)
     if (_isFemale && _matchesSearch('چرخه بدن', 'سلامت بانوان')) {
-      healthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.heart_fill,
-          iconColor: const Color(0xffEC4899),
-          title: 'چرخه بدن',
-          description: 'سلامت بانوان',
-          status: _cycleEnabled ? ModuleStatus.active : ModuleStatus.inactive,
-          illustrationAsset: 'assets/images/cycle_card_top.png',
-          onTap: () => _handleCycleTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-          overlayText: true,
-        ),
+      allItemsMap['cycle'] = _SystemModuleItem(
+        key: 'cycle',
+        icon: CupertinoIcons.heart_fill,
+        iconColor: const Color(0xffEC4899),
+        title: 'چرخه بدن',
+        description: 'سلامت بانوان',
+        status: _cycleEnabled ? ModuleStatus.active : ModuleStatus.inactive,
+        illustrationAsset: 'assets/images/cycle_card_top.png',
+        onTap: () => _handleCycleTap(colors),
+        overlayText: true,
       );
     }
 
     // 2. Medicine Module
     if (_matchesSearch('دارو', 'مراقبت سلامتی باش')) {
-      healthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.bandage_fill,
-          iconColor: const Color(0xffEF4444),
-          title: 'دارو و سلامت',
-          description: 'مراقبت سلامتی باش',
-          status: _medicineEnabled
-              ? ModuleStatus.active
-              : ModuleStatus.inactive,
-          illustrationAsset: 'assets/images/medicine_card_top.png',
-          onTap: () => _handleMedicineTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
+      allItemsMap['medicine'] = _SystemModuleItem(
+        key: 'medicine',
+        icon: CupertinoIcons.bandage_fill,
+        iconColor: const Color(0xffEF4444),
+        title: 'دارو و سلامت',
+        description: 'مراقبت سلامتی باش',
+        status: _medicineEnabled ? ModuleStatus.active : ModuleStatus.inactive,
+        illustrationAsset: 'assets/images/medicine_card_top.png',
+        onTap: () => _handleMedicineTap(colors),
       );
     }
 
     // 3. Wellbeing Module (Combined Energy, Sleep, and Reflection)
     if (_matchesSearch('حال و تعادل', 'انرژی، خواب و بازتاب در یک نگاه')) {
-      healthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.waveform_path_ecg,
-          iconColor: const Color(0xff8B5CF6),
-          title: 'حال و تعادل',
-          description: 'انرژی، خواب و بازتاب در یک نگاه',
-          status: ModuleStatus.active,
-          illustrationAsset: 'assets/images/energy_card_top.png',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const WellbeingScreen()),
-            ).then((_) => _loadAllData());
-          },
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
+      allItemsMap['wellbeing'] = _SystemModuleItem(
+        key: 'wellbeing',
+        icon: CupertinoIcons.waveform_path_ecg,
+        iconColor: const Color(0xff8B5CF6),
+        title: 'حال و تعادل',
+        description: 'انرژی، خواب و بازتاب در یک نگاه',
+        status: ModuleStatus.active,
+        illustrationAsset: 'assets/images/energy_card_top.png',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WellbeingScreen()),
+          ).then((_) => _loadAllData());
+        },
       );
     }
 
-    // 4.5. Supplementary Sports Module (سیستم ورزش قبلی)
+    // 4. Supplementary Sports Module
     if (_matchesSearch('ورزش تکمیلی', 'برنامه تمرین هوشمند فیتنس') ||
         _matchesSearch('ورزش', 'قدرت امروز، سلامتی فردا')) {
-      healthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: Icons.fitness_center,
-          iconColor: const Color(0xff10B981),
-          title: 'ورزش تکمیلی',
-          description: 'برنامه تمرین هوشمند و بودجهٔ حرکت هفتگی',
-          status: (_sportsEnabled || _supplementarySportsEnabled)
-              ? ModuleStatus.active
-              : ModuleStatus.inactive,
-          illustrationAsset: 'assets/images/sports_card_top.png',
-          onTap: () => _handleSupplementarySportsTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
+      allItemsMap['sports'] = _SystemModuleItem(
+        key: 'sports',
+        icon: Icons.fitness_center,
+        iconColor: const Color(0xff10B981),
+        title: 'ورزش تکمیلی',
+        description: 'برنامه تمرین هوشمند و بودجهٔ حرکت هفتگی',
+        status: (_sportsEnabled || _supplementarySportsEnabled)
+            ? ModuleStatus.active
+            : ModuleStatus.inactive,
+        illustrationAsset: 'assets/images/sports_card_top.png',
+        onTap: () => _handleSupplementarySportsTap(colors),
       );
     }
 
-    // 5. Courses Module
-    if (_matchesSearch('دوره‌های آموزشی', 'یادگیری مداوم، رشد بی‌پایان')) {
-      growthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.book_fill,
-          iconColor: const Color(0xff3B82F6),
-          title: 'دوره‌های آموزشی',
-          description: 'یادگیری مداوم، رشد بی‌پایان',
-          status: _coursesEnabled ? ModuleStatus.active : ModuleStatus.inactive,
-          illustrationAsset: 'assets/images/courses_card_top.png',
-          onTap: () => _handleCoursesTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
-      );
-    }
-
-    // 6. Study Module (formerly Konkur)
-    if (_matchesSearch('درس و مطالعه', 'برنامه‌ریزی دروس و سرفصل‌ها')) {
-      growthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.book_fill,
-          iconColor: const Color(0xff8B5CF6),
-          title: 'درس و مطالعه',
-          description: 'برنامه‌ریزی دروس و سرفصل‌ها',
-          status: _konkurStatus,
-          illustrationAsset: 'assets/images/goals_card_top.png',
-          onTap: () => _handleStudyTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
-      );
-    }
-
-    // 7. Notebook & Experiences Module (R-08)
-    if (_matchesSearch('دفترچه و تجربه‌ها', 'یادداشت‌ها و درس‌های زندگی')) {
-      growthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.doc_text_fill,
-          iconColor: colors.warning,
-          title: 'دفترچه و تجربه‌ها',
-          description: 'یادداشت‌ها و درس‌های زندگی',
-          status: _notesStatus,
-          illustrationAsset: 'assets/images/notes_card_top.png',
-          onTap: () => _handleNotesTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
-      );
-    }
-
-    // 7. Goals Module
+    // 5. Goals Module
     if (_matchesSearch('اهداف و برنامه‌ها', 'برنامه‌ریزی برای بهترین خود')) {
-      growthCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.flag_fill,
-          iconColor: const Color(0xffF59E0B),
-          title: 'اهداف و برنامه‌ها',
-          description: 'برنامه‌ریزی برای بهترین خود',
-          status: _goalsStatus,
-          illustrationAsset: 'assets/images/konkur_card_top.png',
-          onTap: () => _handleGoalsTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
+      allItemsMap['goals'] = _SystemModuleItem(
+        key: 'goals',
+        icon: CupertinoIcons.flag_fill,
+        iconColor: const Color(0xffF59E0B),
+        title: 'اهداف و برنامه‌ها',
+        description: 'برنامه‌ریزی برای بهترین خود',
+        status: _goalsStatus,
+        illustrationAsset: 'assets/images/konkur_card_top.png',
+        onTap: () => _handleGoalsTap(colors),
       );
     }
 
-    // 8. Religion Module
+    // 6. Notebook & Experiences Module (R-08)
+    if (_matchesSearch('دفترچه و تجربه‌ها', 'یادداشت‌ها و درس‌های زندگی')) {
+      allItemsMap['notes'] = _SystemModuleItem(
+        key: 'notes',
+        icon: CupertinoIcons.doc_text_fill,
+        iconColor: colors.warning,
+        title: 'دفترچه و تجربه‌ها',
+        description: 'یادداشت‌ها و درس‌های زندگی',
+        status: _notesStatus,
+        illustrationAsset: 'assets/images/notes_card_top.png',
+        onTap: () => _handleNotesTap(colors),
+      );
+    }
+
+    // 7. Courses Module
+    if (_matchesSearch('دوره‌های آموزشی', 'یادگیری مداوم، رشد بی‌پایان')) {
+      allItemsMap['courses'] = _SystemModuleItem(
+        key: 'courses',
+        icon: CupertinoIcons.book_fill,
+        iconColor: const Color(0xff3B82F6),
+        title: 'دوره‌های آموزشی',
+        description: 'یادگیری مداوم، رشد بی‌پایان',
+        status: _coursesEnabled ? ModuleStatus.active : ModuleStatus.inactive,
+        illustrationAsset: 'assets/images/courses_card_top.png',
+        onTap: () => _handleCoursesTap(colors),
+      );
+    }
+
+    // 8. Study Module (formerly Konkur)
+    if (_matchesSearch('درس و مطالعه', 'برنامه‌ریزی دروس و سرفصل‌ها')) {
+      allItemsMap['konkur'] = _SystemModuleItem(
+        key: 'konkur',
+        icon: CupertinoIcons.book_fill,
+        iconColor: const Color(0xff8B5CF6),
+        title: 'درس و مطالعه',
+        description: 'برنامه‌ریزی دروس و سرفصل‌ها',
+        status: _konkurStatus,
+        illustrationAsset: 'assets/images/goals_card_top.png',
+        onTap: () => _handleStudyTap(colors),
+      );
+    }
+
+    // 9. Religion Module
     if (_matchesSearch('عبادت', 'رشد روح، آرامش قلب')) {
-      spiritualityCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.circle_grid_hex,
-          iconColor: const Color(0xffFBBF24),
-          title: 'عبادت',
-          description: 'رشد روح، آرامش قلب',
-          status: SystemsHubLogic.determineReligionStatus(
-            _religionEnabled,
-            _settingsMap['religion_city_id'],
-          ),
-          illustrationAsset: 'assets/images/worship_card_top.png',
-          onTap: () => _handleReligionTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
+      allItemsMap['religion'] = _SystemModuleItem(
+        key: 'religion',
+        icon: CupertinoIcons.circle_grid_hex,
+        iconColor: const Color(0xffFBBF24),
+        title: 'عبادت',
+        description: 'رشد روح، آرامش قلب',
+        status: SystemsHubLogic.determineReligionStatus(
+          _religionEnabled,
+          _settingsMap['religion_city_id'],
         ),
+        illustrationAsset: 'assets/images/worship_card_top.png',
+        onTap: () => _handleReligionTap(colors),
       );
     }
 
     // 10. AI Assistant Module
     if (_matchesSearch('دستیار هوشمند', 'همراه هوشمند ریتمو')) {
-      assistantCards.add(
-        _buildGridItem(
-          index: cardIndex++,
-          icon: CupertinoIcons.sparkles,
-          iconColor: const Color(0xff06B6D4),
-          title: 'دستیار هوشمند',
-          description: 'همراه هوشمند ریتمو',
-          status: _assistantStatus,
-          illustrationAsset: 'assets/images/assistant_card_top.png',
-          onTap: () => _handleAssistantTap(colors),
-          colors: colors,
-          isDarkMode: isDarkMode,
-        ),
+      allItemsMap['assistant'] = _SystemModuleItem(
+        key: 'assistant',
+        icon: CupertinoIcons.sparkles,
+        iconColor: const Color(0xff06B6D4),
+        title: 'دستیار هوشمند',
+        description: 'همراه هوشمند ریتمو',
+        status: _assistantStatus,
+        illustrationAsset: 'assets/images/assistant_card_top.png',
+        onTap: () => _handleAssistantTap(colors),
       );
+    }
+
+    // --- CASE A: Ungrouped Custom Drag-and-Drop View ---
+    if (!_groupingEnabled && _searchQuery.isEmpty) {
+      final orderedItems = <_SystemModuleItem>[];
+      for (final key in _customModuleOrder) {
+        if (allItemsMap.containsKey(key)) {
+          orderedItems.add(allItemsMap[key]!);
+        }
+      }
+      for (final entry in allItemsMap.entries) {
+        if (!orderedItems.any((it) => it.key == entry.key)) {
+          orderedItems.add(entry.value);
+        }
+      }
+
+      return _buildReorderableCustomGrid(
+        items: orderedItems,
+        colors: colors,
+        isDarkMode: isDarkMode,
+      );
+    }
+
+    // --- CASE B: Grouped Hierarchy View ---
+    final growthCards = <Widget>[];
+    final spiritualityCards = <Widget>[];
+    final assistantCards = <Widget>[];
+    final healthCards = <Widget>[];
+    var cardIndex = 0;
+
+    // Growth & Planning: Goals -> Notes -> Courses -> Konkur
+    if (allItemsMap.containsKey('goals')) {
+      growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['goals']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('notes')) {
+      growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['notes']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('courses')) {
+      growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['courses']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('konkur')) {
+      growthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['konkur']!, colors, isDarkMode));
+    }
+
+    // Spirituality & Assistant
+    if (allItemsMap.containsKey('religion')) {
+      spiritualityCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['religion']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('assistant')) {
+      assistantCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['assistant']!, colors, isDarkMode));
+    }
+
+    // Health & Biology: Wellbeing -> Sports -> Medicine -> Cycle
+    if (allItemsMap.containsKey('wellbeing')) {
+      healthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['wellbeing']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('sports')) {
+      healthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['sports']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('medicine')) {
+      healthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['medicine']!, colors, isDarkMode));
+    }
+    if (allItemsMap.containsKey('cycle')) {
+      healthCards.add(_buildModuleItemWidget(cardIndex++, allItemsMap['cycle']!, colors, isDarkMode));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildCategorySection(
-          title: 'سلامت و بیولوژی',
-          accentColor: const Color(0xff10B981),
-          cards: healthCards,
-          colors: colors,
-        ),
-        const SizedBox(height: 14),
+        // 1. رشد و برنامه‌ریزی
         _buildCategorySection(
           title: 'رشد و برنامه‌ریزی',
           accentColor: const Color(0xff3B82F6),
@@ -924,6 +1283,8 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           colors: colors,
         ),
         const SizedBox(height: 14),
+
+        // 2. توازن و معنویت و بستر هوشمند
         _buildSideBySideCategorySection(
           rightTitle: 'توازن و معنویت',
           rightAccentColor: const Color(0xffF59E0B),
@@ -931,6 +1292,15 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           leftTitle: 'بستر هوشمند',
           leftAccentColor: const Color(0xff06B6D4),
           leftCards: assistantCards,
+          colors: colors,
+        ),
+        const SizedBox(height: 14),
+
+        // 3. سلامت و بیولوژی
+        _buildCategorySection(
+          title: 'سلامت و بیولوژی',
+          accentColor: const Color(0xff10B981),
+          cards: healthCards,
           colors: colors,
         ),
       ],
@@ -1491,104 +1861,145 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       barrierColor: Colors.black.withValues(alpha: 0.4),
       isScrollControlled: true,
       builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xff12141C).withValues(alpha: 0.85)
-                  : Colors.white.withValues(alpha: 0.88),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.4),
-                  width: 1.5,
+        final isDark = context.isDark;
+        final isGlass = context.isGlassEnabled;
+        final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+        const sheetRadius = BorderRadius.vertical(top: Radius.circular(30));
+
+        final content = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: iconColor.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: iconColor, size: 38),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await ModuleManagementService.instance.setModuleEnabled(
+                      settingKey,
+                      true,
+                    );
+                    await _loadAllData();
+                    onActivated();
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'فعال‌سازی سیستم',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: colors.textSecondary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: iconColor.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
                     ],
-                  ),
-                  child: Icon(icon, color: iconColor, size: 38),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+                    stops: const [0.0, 0.45],
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      await ModuleManagementService.instance.setModuleEnabled(
-                        settingKey,
-                        true,
-                      );
-                      await _loadAllData();
-                      onActivated();
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text(
-                      'فعال‌سازی سیستم',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                child: sheetBody,
+              ),
             ),
           ),
         );
@@ -1609,9 +2020,11 @@ class PressableGlassCard extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
+    this.onLongPress,
   });
   final Widget child;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   State<PressableGlassCard> createState() => _PressableGlassCardState();
@@ -1624,6 +2037,7 @@ class _PressableGlassCardState extends State<PressableGlassCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onLongPress: widget.onLongPress,
       onTapDown: (_) {
         setState(() {
           scale = 0.97;
@@ -1659,6 +2073,30 @@ class _PressableGlassCardState extends State<PressableGlassCard> {
       ),
     );
   }
+}
+
+class _SystemModuleItem {
+  const _SystemModuleItem({
+    required this.key,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.description,
+    required this.status,
+    required this.onTap,
+    required this.illustrationAsset,
+    this.overlayText = false,
+  });
+
+  final String key;
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String description;
+  final ModuleStatus status;
+  final VoidCallback onTap;
+  final String illustrationAsset;
+  final bool overlayText;
 }
 
 class ParallaxImage extends StatelessWidget {

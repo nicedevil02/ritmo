@@ -17,25 +17,25 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
     required this.latestEnergy,
     required this.latestSleep,
     required this.todayReflection,
-    VoidCallback? onMoodEnergyTap,
+    this.onMoodEnergyTap,
     this.onMoodTap,
     this.onEnergyTap,
     required this.onSleepTap,
     required this.onReflectionTap,
-  }) : _onMoodEnergyTap = onMoodEnergyTap;
+  });
 
   final MoodLog? latestMood;
   final EnergyLog? latestEnergy;
   final SleepLog? latestSleep;
   final ReflectionEntry? todayReflection;
 
-  final VoidCallback? _onMoodEnergyTap;
+  final VoidCallback? onMoodEnergyTap;
   final VoidCallback? onMoodTap;
   final VoidCallback? onEnergyTap;
   final VoidCallback onSleepTap;
   final VoidCallback onReflectionTap;
 
-  VoidCallback get onMoodEnergyTap => _onMoodEnergyTap ?? onMoodTap ?? onEnergyTap ?? () {};
+  VoidCallback get handleMoodEnergyTap => onMoodEnergyTap ?? onMoodTap ?? onEnergyTap ?? () {};
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +111,7 @@ class WellbeingQuickCheckinBar extends StatelessWidget {
             isRecorded: latestMood != null || latestEnergy != null,
             activeColor: const Color(0xffEC4899),
             colors: colors,
-            onTap: onMoodEnergyTap,
+            onTap: handleMoodEnergyTap,
           ),
           const SizedBox(height: 10),
 

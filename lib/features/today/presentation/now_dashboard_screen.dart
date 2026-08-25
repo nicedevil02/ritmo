@@ -60,8 +60,9 @@ import 'package:ritmo/features/today/presentation/widgets/daily_reflection_sheet
 import 'package:ritmo/features/today/presentation/widgets/dashboard/ai_day_planner_launcher.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/assistant_card.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_header.dart';
+import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/features/energy/presentation/widgets/quick_log_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/dashboard_module_summary.dart';
-import 'package:ritmo/features/today/presentation/widgets/dashboard/energy_management_sheet.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_focus_hero.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_notice_cards.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/home_pulse_strip.dart';
@@ -1668,10 +1669,15 @@ class _NowDashboardScreenState extends State<NowDashboardScreen>
   }
 
   void _showEnergyManagementSheet(bool isDarkMode) async {
-    final result = await EnergyManagementSheet.present(context);
-    if (result == true) {
-      await _loadDashboardData();
-    }
+    await RitmoSheetScaffold.present(
+      context: context,
+      title: 'ثبت حال روحی و انرژی',
+      builder: (_) => QuickLogSheet(
+        onSaved: () {
+          _loadDashboardData();
+        },
+      ),
+    );
   }
 
   /// بازچینی هوشمند باقیماندهٔ روز — از میانبر و از کارت پیشنهاد.

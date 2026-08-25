@@ -30,19 +30,16 @@ void main() {
           latestEnergy: null,
           latestSleep: null,
           todayReflection: null,
-          onMoodTap: () {},
-          onEnergyTap: () {},
+          onMoodEnergyTap: () {},
           onSleepTap: () {},
           onReflectionTap: () {},
         ),
       ));
 
       expect(find.text('ارزیابی و چک‌این سریع امروز'), findsOneWidget);
-      expect(find.text('حس‌وحال الان'), findsOneWidget);
-      expect(find.text('ثبت حس الان +'), findsOneWidget);
-
-      expect(find.text('سطح انرژی'), findsOneWidget);
-      expect(find.text('ثبت انرژی +'), findsOneWidget);
+      expect(find.text('۳ ستون تعادل'), findsOneWidget);
+      expect(find.text('حال روحی و انرژی'), findsOneWidget);
+      expect(find.text('ثبت خلق و انرژی الان +'), findsOneWidget);
 
       expect(find.text('خواب دیشب'), findsOneWidget);
       expect(find.text('ثبت خواب +'), findsOneWidget);
@@ -86,22 +83,19 @@ void main() {
           latestEnergy: energy,
           latestSleep: sleep,
           todayReflection: reflection,
-          onMoodTap: () {},
-          onEnergyTap: () {},
+          onMoodEnergyTap: () {},
           onSleepTap: () {},
           onReflectionTap: () {},
         ),
       ));
 
-      expect(find.text('خوب و آرام'), findsOneWidget);
-      expect(find.text('انرژی بالا ⚡'), findsOneWidget);
+      expect(find.text('خوب و آرام • انرژی بالا ⚡'), findsOneWidget);
       expect(find.text('۸ ساعت'), findsOneWidget);
       expect(find.text('ثبت شد ✓'), findsOneWidget);
     });
 
-    testWidgets('3. Tapping each pillar invokes its corresponding callback', (tester) async {
-      bool moodTapped = false;
-      bool energyTapped = false;
+    testWidgets('3. Triggers callbacks on tap', (tester) async {
+      bool moodEnergyTapped = false;
       bool sleepTapped = false;
       bool reflectionTapped = false;
 
@@ -111,23 +105,22 @@ void main() {
           latestEnergy: null,
           latestSleep: null,
           todayReflection: null,
-          onMoodTap: () => moodTapped = true,
-          onEnergyTap: () => energyTapped = true,
+          onMoodEnergyTap: () => moodEnergyTapped = true,
           onSleepTap: () => sleepTapped = true,
           onReflectionTap: () => reflectionTapped = true,
         ),
       ));
 
-      await tester.tap(find.text('حس‌وحال الان'));
-      expect(moodTapped, isTrue);
-
-      await tester.tap(find.text('سطح انرژی'));
-      expect(energyTapped, isTrue);
+      await tester.tap(find.text('حال روحی و انرژی'));
+      await tester.pumpAndSettle();
+      expect(moodEnergyTapped, isTrue);
 
       await tester.tap(find.text('خواب دیشب'));
+      await tester.pumpAndSettle();
       expect(sleepTapped, isTrue);
 
       await tester.tap(find.text('بازتاب روز'));
+      await tester.pumpAndSettle();
       expect(reflectionTapped, isTrue);
     });
   });

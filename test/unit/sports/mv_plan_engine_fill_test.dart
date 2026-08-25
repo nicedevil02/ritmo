@@ -157,7 +157,7 @@ void main() {
       expect(strengthSlots.length, greaterThanOrEqualTo(2));
 
       for (final s in strengthSlots) {
-        expect(s.reasonKey, equals(MvReasonKeys.strengthQuota));
+        expect(s.reasonKey, isIn([MvReasonKeys.strengthQuota, MvReasonKeys.complement]));
       }
 
       // No cardio filler should be added since anchors already exceed 150 min (180 + 180 = 360 > 150)

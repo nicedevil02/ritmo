@@ -130,14 +130,91 @@ class PlanEngine {
       ),
     );
 
-    return MvPlanResult(
+    // 5. COMPLEMENT (S3-T8: _addComplements)
+    final complementSlots = _addComplements(
       slots: filledSlots,
+      kinds: kinds,
+      kindProfiles: kindProfiles,
+    );
+
+    stageDecisions.add(
+      MvDecision<List<MvSlot>>(
+        value: complementSlots,
+        reasonFa:
+            'تمرکز قدرتی روزهای مکمل بر اساس نیازهای بیومکانیکی لنگرها تنظیم شد.',
+        reasonKey: MvReasonKeys.complement,
+        sources: const ['kindProfiles', 'commitments'],
+      ),
+    );
+
+    return MvPlanResult(
+      slots: complementSlots,
       stageDecisions: stageDecisions,
       notes: notes,
       allowedKinds: hardLimits.allowedKinds,
       hasConflict: adjacency.hasConflict,
       conflictNote: adjacency.conflictNote,
     );
+  }
+
+  /// مرحلهٔ ۵: COMPLEMENT (قدرتی پشتیبان لنگر) (S3-T8)
+  List<MvSlot> _addComplements({
+    required List<MvSlot> slots,
+    required Map<String, MvMovementKind> kinds,
+    required Map<String, MvKindProfile> kindProfiles,
+  }) {
+    final updatedSlots = List<MvSlot>.from(slots);
+
+    // Find all anchor slots
+    final anchorSlots = updatedSlots
+        .where((s) => s.isLocked && s.kindCode != null)
+        .toList();
+    if (anchorSlots.isEmpty) return updatedSlots;
+
+    // Collect complement focuses from anchors
+    final complementFocuses = <String, List<String>>{};
+    for (final anchor in anchorSlots) {
+      final code = anchor.kindCode!;
+      final profile = kindProfiles[code];
+      if (profile != null && profile.complementFocus.isNotEmpty) {
+        complementFocuses[code] = profile.complementFocus;
+      }
+    }
+
+    if (complementFocuses.isEmpty) return updatedSlots;
+
+    // Distribute complement focus onto non-locked strength slots
+    final strengthSlots = <int>[];
+    for (int i = 0; i < updatedSlots.length; i++) {
+      if (!updatedSlots[i].isLocked &&
+          updatedSlots[i].slotType == MvSlotType.strength) {
+        strengthSlots.add(i);
+      }
+    }
+
+    if (strengthSlots.isEmpty) return updatedSlots;
+
+    final anchorCodes = complementFocuses.keys.toList();
+    for (int idx = 0; idx < strengthSlots.length; idx++) {
+      final slotIndex = strengthSlots[idx];
+      final anchorCode = anchorCodes[idx % anchorCodes.length];
+      final focus = complementFocuses[anchorCode]!;
+      final anchorKind = kinds[anchorCode];
+      final kindTitle = anchorKind?.titleFa ?? anchorCode;
+
+      final existingSlot = updatedSlots[slotIndex];
+      updatedSlots[slotIndex] = existingSlot.copyWith(
+        focusCodes: focus,
+        headlineFa: 'قدرتی مکمل $kindTitle: تقویت ${focus.join("، ")}',
+        reasonKey: MvReasonKeys.complement,
+        reasonParams: {
+          'kind': kindTitle,
+          'focus': focus.join('، '),
+        },
+      );
+    }
+
+    return updatedSlots;
   }
 
   /// مرحلهٔ ۴: پرکردن تا هدف بودجهٔ هفتگی با سقف رشد و حداقل ۲ روز قدرتی (S3-T7)

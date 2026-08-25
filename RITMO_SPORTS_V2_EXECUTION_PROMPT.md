@@ -1103,7 +1103,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T3 — رکورد شخصی به تفکیک نوع ورزش
+### - [x] S5-T3 — رکورد شخصی به تفکیک نوع ورزش — 7418187b
 
 **فایل‌ها:** `data/repositories/mv_pr_repository.dart`، `presentation/screens/mv_progress_tab.dart`
 
@@ -1471,7 +1471,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S4-T8 | DONE | aeabdede | تست جامع سراسری گلدن‌پث اسپرینت ۴: اسلات لنگر -> مود route -> ثبت متریک‌ها و تلاش سخت -> ذخیره در DB -> بروزرسانی مسیر و بودجه |
 | S5-T1 | DONE | d6e2d70e | فعال‌سازی جدول movement_campaigns و پیاده‌سازی کامل MvCampaignRepository و تست‌های مربوطه |
 | S5-T2 | DONE | 715cabf0 | پیاده‌سازی CampaignEngine با دوره‌بندی معکوس ۳ مرحله‌ای و بارگذاری پله‌ای وزن کوله و تست جدولی |
-| S5-T3 |  |  |  |
+| S5-T3 | DONE | 7418187b | پیاده‌سازی رکوردهای شخصی به تفکیک نوع ورزش در MvPrRepository و ProgressionEngine و MvFinishSessionUseCase |
 | S5-T4 |  |  |  |
 | S5-T5 |  |  |  |
 | S5-T6 |  |  |  |

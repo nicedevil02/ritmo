@@ -1,3 +1,4 @@
+import 'package:shamsi_date/shamsi_date.dart';
 import '../models/models.dart';
 
 /// 7.3 PlanEngine: Generates and harmonizes weekly workout and movement plans.
@@ -22,12 +23,23 @@ class PlanEngine {
     final weekDays = MvCalendar.getWeekDays(weekStartSat);
 
     // 1. ANCHORS
-    final anchorSlots = _placeAnchors(
+    final initialAnchorSlots = _placeAnchors(
       weekStartSat: weekStartSat,
       commitments: commitments,
       overrides: overrides,
       kinds: kinds,
     );
+
+    // 2. HARD_LIMITS (S3-T5)
+    final hardLimits = _applyHardLimits(
+      weekStartSat: weekStartSat,
+      profile: profile,
+      anchorSlots: initialAnchorSlots,
+      kinds: kinds,
+    );
+
+    final anchorSlots = hardLimits.annotatedSlots;
+    final notes = List<String>.from(hardLimits.notes);
 
     final stageDecisions = <MvDecision>[
       MvDecision<List<MvSlot>>(
@@ -35,6 +47,12 @@ class PlanEngine {
         reasonFa: 'اسلات‌های لنگر ثابت هفتگی جانمایی شدند.',
         reasonKey: MvReasonKeys.anchor,
         sources: const ['commitments', 'overrides'],
+      ),
+      MvDecision<Map<String, MvMovementKind>>(
+        value: hardLimits.allowedKinds,
+        reasonFa: 'فیلتر محدودیت‌های قطعی جسمی، آپارتمان و فصل اعمال شد.',
+        reasonKey: MvReasonKeys.seasonFit,
+        sources: const ['profile', 'season'],
       ),
     ];
 
@@ -76,7 +94,94 @@ class PlanEngine {
     return MvPlanResult(
       slots: fullWeekSlots,
       stageDecisions: stageDecisions,
+      notes: notes,
+      allowedKinds: hardLimits.allowedKinds,
     );
+  }
+
+  /// مرحلهٔ ۲: اعمال محدودیت‌های قطعی تقویم، جسمی، آپارتمان و فصل (S3-T5)
+  _HardLimitsOutput _applyHardLimits({
+    required DateTime weekStartSat,
+    required MvUserProfile profile,
+    required List<MvSlot> anchorSlots,
+    required Map<String, MvMovementKind> kinds,
+  }) {
+    final notes = <String>[];
+    final annotatedAnchors = <MvSlot>[];
+
+    final hasKneeLimitation = profile.physicalLimitations.any(
+      (l) =>
+          l.toLowerCase().contains('knee') ||
+          l.toLowerCase().contains('زانو'),
+    );
+    final isNeighborFriendly = profile.neighborFriendly;
+
+    // 1. Check anchor constraints (Anchors are exempt from removal, but annotated)
+    for (final slot in anchorSlots) {
+      final kind = kinds[slot.kindCode];
+      bool hasConstraintConflict = false;
+      String? constraintWarning;
+
+      if (hasKneeLimitation && kind != null && kind.jointImpact >= 3) {
+        hasConstraintConflict = true;
+        constraintWarning =
+            'محدودیت زانو: لطفاً با گرم‌کردن کافی و احتیاط تمرین کنید.';
+      }
+
+      if (hasConstraintConflict) {
+        notes.add('mv_anchor_constraint_note');
+        annotatedAnchors.add(
+          slot.copyWith(
+            coachNoteFa: constraintWarning ?? slot.coachNoteFa,
+            reasonParams: {
+              ...?slot.reasonParams,
+              'constraintNote': 'mv_anchor_constraint_note',
+            },
+          ),
+        );
+      } else {
+        annotatedAnchors.add(slot);
+      }
+    }
+
+    // 2. Filter allowed filler kinds
+    final allowedKinds = <String, MvMovementKind>{};
+
+    for (final entry in kinds.entries) {
+      final kind = entry.value;
+
+      // Season filter: check month matching if seasonMask specified
+      if (!_isKindInSeason(kind, weekStartSat)) {
+        continue; // Out of season
+      }
+
+      // Knee physical limitation: exclude high joint impact (>= 3)
+      if (hasKneeLimitation && kind.jointImpact >= 3) {
+        continue;
+      }
+
+      // Neighbor friendly (apartment mode): exclude high impact if indoors
+      if (isNeighborFriendly && !kind.isOutdoor && kind.jointImpact >= 3) {
+        continue;
+      }
+
+      allowedKinds[entry.key] = kind;
+    }
+
+    return _HardLimitsOutput(
+      annotatedSlots: annotatedAnchors,
+      allowedKinds: allowedKinds,
+      notes: notes,
+    );
+  }
+
+  static bool _isKindInSeason(MvMovementKind kind, DateTime date) {
+    if (kind.seasonMask == null || kind.seasonMask!.trim().isEmpty) return true;
+    final jDate = Jalali.fromDateTime(date);
+    final currentMonth = jDate.month.toString(); // 1..12
+    final months =
+        kind.seasonMask!.split(',').map((m) => m.trim()).where((m) => m.isNotEmpty);
+    return months.contains(currentMonth);
   }
 
   /// مرحلهٔ ۱: جانمایی لنگرها (S3-T4)
@@ -343,4 +448,16 @@ class PlanEngine {
     if (focus.contains('CORE')) return '$prefixتمرین مرکز بدن و شکم';
     return '$prefixجلسهٔ قدرتی';
   }
+}
+
+class _HardLimitsOutput {
+  final List<MvSlot> annotatedSlots;
+  final Map<String, MvMovementKind> allowedKinds;
+  final List<String> notes;
+
+  const _HardLimitsOutput({
+    required this.annotatedSlots,
+    required this.allowedKinds,
+    this.notes = const [],
+  });
 }

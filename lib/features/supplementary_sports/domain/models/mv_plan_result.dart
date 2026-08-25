@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'mv_decision.dart';
+import 'mv_movement_kind.dart';
 import 'mv_slot.dart';
 
 /// نتیجهٔ تولید برنامهٔ هفتگی در PlanEngine v2 (S3-T4).
@@ -10,6 +11,7 @@ class MvPlanResult {
   final List<String> notes;
   final bool hasConflict;
   final String? conflictNote;
+  final Map<String, MvMovementKind> allowedKinds;
 
   const MvPlanResult({
     required this.slots,
@@ -17,6 +19,7 @@ class MvPlanResult {
     this.notes = const [],
     this.hasConflict = false,
     this.conflictNote,
+    this.allowedKinds = const {},
   });
 
   @override
@@ -28,7 +31,8 @@ class MvPlanResult {
           listEquals(stageDecisions, other.stageDecisions) &&
           listEquals(notes, other.notes) &&
           hasConflict == other.hasConflict &&
-          conflictNote == other.conflictNote;
+          conflictNote == other.conflictNote &&
+          mapEquals(allowedKinds, other.allowedKinds);
 
   @override
   int get hashCode =>

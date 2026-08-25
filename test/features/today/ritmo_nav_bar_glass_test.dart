@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
@@ -9,64 +7,68 @@ import 'package:ritmo/features/today/presentation/widgets/ritmo_nav_bar.dart';
 
 void main() {
   Widget buildNavBarHarness({
-    bool reduceTransparency = false,
-    bool highContrast = false,
+    Brightness brightness = Brightness.light,
+    AppMode mode = AppMode.full,
+    int? currentIndex,
   }) {
     final theme = RitmoTheme.build(
       palette: RitmoPalette.jadeNoir,
-      brightness: Brightness.dark,
-      reduceTransparency: reduceTransparency,
+      brightness: brightness,
     );
 
     return MaterialApp(
       theme: theme,
-      home: Builder(
-        builder: (context) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              highContrast: highContrast,
-            ),
-            child: Scaffold(
-              body: Align(
-                alignment: Alignment.bottomCenter,
-                child: RitmoNavBar(
-                  mode: AppMode.full,
-                  currentIndex: RitmoShellMetrics.defaultTabFor(AppMode.full),
-                  onSelectTab: (_) {},
-                  onCenterTap: () {},
-                ),
-              ),
-            ),
-          );
-        },
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: RitmoNavBar(
+            mode: mode,
+            currentIndex: currentIndex ?? RitmoShellMetrics.defaultTabFor(mode),
+            onSelectTab: (_) {},
+            onCenterTap: () {},
+          ),
+        ),
       ),
     );
   }
 
-  group('RitmoNavBar Glassmorphism Tests', () {
-    testWidgets('renders BackdropFilter and ClipPath when glass is enabled', (tester) async {
-      await tester.pumpWidget(buildNavBarHarness(reduceTransparency: false));
+  group('RitmoNavBar Neumorphic Visual Tests', () {
+    testWidgets('renders in light mode without errors', (tester) async {
+      await tester.pumpWidget(buildNavBarHarness(brightness: Brightness.light));
       await tester.pumpAndSettle();
 
-      expect(find.byType(BackdropFilter), findsOneWidget);
-      expect(find.byType(ClipPath), findsOneWidget);
-
-      final backdrop = tester.widget<BackdropFilter>(find.byType(BackdropFilter));
-      expect(backdrop.filter, isA<ImageFilter>());
+      expect(find.byType(RitmoNavBar), findsOneWidget);
+      expect(find.byType(CustomPaint), findsWidgets);
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('omits BackdropFilter when reduceTransparency is enabled in theme behavior', (tester) async {
-      await tester.pumpWidget(buildNavBarHarness(reduceTransparency: true));
+    testWidgets('renders in dark mode without errors', (tester) async {
+      await tester.pumpWidget(buildNavBarHarness(brightness: Brightness.dark));
       await tester.pumpAndSettle();
 
-      expect(find.byType(BackdropFilter), findsNothing);
+      expect(find.byType(RitmoNavBar), findsOneWidget);
+      expect(find.byType(CustomPaint), findsWidgets);
+      expect(tester.takeException(), isNull);
     });
 
-    testWidgets('omits BackdropFilter when highContrast is active', (tester) async {
-      await tester.pumpWidget(buildNavBarHarness(highContrast: true));
+    testWidgets('renders all 5 tabs in full mode', (tester) async {
+      await tester.pumpWidget(buildNavBarHarness(mode: AppMode.full));
       await tester.pumpAndSettle();
 
-      expect(find.byType(BackdropFilter), findsNothing);
+      expect(find.text('خانه'), findsOneWidget);
+      expect(find.text('تقویم'), findsOneWidget);
+      expect(find.text('دستیار'), findsOneWidget);
+      expect(find.text('سیستم‌ها'), findsOneWidget);
+      expect(find.text('بینش‌ها'), findsOneWidget);
+    });
+
+    testWidgets('renders all 3 tabs in simple mode', (tester) async {
+      await tester.pumpWidget(buildNavBarHarness(mode: AppMode.simple));
+      await tester.pumpAndSettle();
+
+      expect(find.text('کارها'), findsOneWidget);
+      expect(find.text('خانه'), findsOneWidget);
+      expect(find.text('تقویم'), findsOneWidget);
     });
   });
 }

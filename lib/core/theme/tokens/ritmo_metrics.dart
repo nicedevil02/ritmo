@@ -73,7 +73,7 @@ class RitmoMetrics extends ThemeExtension<RitmoMetrics> {
           iconXl: 30.0,
           touchTarget: 48.0,
           rowHeight: 52.0,
-          navBarHeight: 40.0, // پایه 42 (42 * 0.92)
+          navBarHeight: 66.0, // نئومورفیک (72 * 0.92)
           hourSlotHeight: 52.0,
         );
       case RitmoDensityLevel.comfortable:
@@ -97,7 +97,7 @@ class RitmoMetrics extends ThemeExtension<RitmoMetrics> {
           iconXl: 32.0,
           touchTarget: 48.0,
           rowHeight: 56.0,
-          navBarHeight: 42.0, // پایه 42
+          navBarHeight: 72.0, // نئومورفیک (پایه)
           hourSlotHeight: 56.0,
         );
       case RitmoDensityLevel.spacious:
@@ -121,7 +121,7 @@ class RitmoMetrics extends ThemeExtension<RitmoMetrics> {
           iconXl: 36.0,
           touchTarget: 54.0,
           rowHeight: 62.0,
-          navBarHeight: 48.0, // پایه 42 (42 * 1.12)
+          navBarHeight: 76.0, // نئومورفیک (72 * 1.06)
           hourSlotHeight: 62.0,
         );
       case RitmoDensityLevel.xl:
@@ -145,7 +145,7 @@ class RitmoMetrics extends ThemeExtension<RitmoMetrics> {
           iconXl: 40.0,
           touchTarget: 60.0,
           rowHeight: 68.0,
-          navBarHeight: 52.0, // پایه 42 (42 * 1.24)
+          navBarHeight: 80.0, // نئومورفیک (72 * 1.11)
           hourSlotHeight: 68.0,
         );
     }

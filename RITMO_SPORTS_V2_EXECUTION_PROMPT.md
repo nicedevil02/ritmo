@@ -804,7 +804,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T6 — مرحلهٔ ۳: `ADJACENCY` (ADJ-1..ADJ-7)
+### - [x] S3-T6 — مرحلهٔ ۳: `ADJACENCY` (ADJ-1..ADJ-7) — 2ebdd84c
 
 **کار:** `_applyAdjacency()` را دقیقاً طبق جدول §۴٫۵ پیاده کن. ترتیب اعمال دقیقاً ADJ-1 تا ADJ-7.
 
@@ -1456,7 +1456,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
 | S3-T4 | DONE | 47ab1859 | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
 | S3-T5 | DONE | 2a339dfd | پیاده‌سازی مرحله ۲ HARD_LIMITS در PlanEngine، فیلتر فصل و محدودیت‌های جسمی و معافیت لنگرها با یادداشت |
-| S3-T6 |  |  |  |
+| S3-T6 | DONE | 2ebdd84c | پیاده‌سازی مرحله ۳ ADJACENCY در PlanEngine طبق قواعد قطعی ADJ-1 تا ADJ-7 شامل تحرک قبل و ریکاوری بعد و تعارض لنگرهای متوالی |
 | S3-T7 |  |  |  |
 | S3-T8 |  |  |  |
 | S3-T9 |  |  |  |

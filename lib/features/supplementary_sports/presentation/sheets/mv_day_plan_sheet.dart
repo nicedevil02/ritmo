@@ -164,10 +164,18 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       setState(() {
         _kind = picked;
         _kindCode = picked.code;
-        if (_titleController.text.isEmpty ||
-            _titleController.text == _slotType.titleFa) {
-          _titleController.text = picked.titleFa;
+        if (picked.family == MovementFamily.sport) {
+          _slotType = MvSlotType.sport;
+        } else if (picked.family == MovementFamily.endurance) {
+          _slotType = MvSlotType.cardio;
+        } else if (picked.family == MovementFamily.outdoor) {
+          _slotType = MvSlotType.outdoor;
+        } else if (picked.family == MovementFamily.strength) {
+          _slotType = MvSlotType.strength;
+        } else if (picked.family == MovementFamily.mindBody) {
+          _slotType = MvSlotType.mobility;
         }
+        _titleController.text = picked.titleFa;
       });
     }
   }
@@ -262,8 +270,10 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 
-    final isKindRequired =
-        _slotType != MvSlotType.rest && _slotType != MvSlotType.strength;
+    final isRest = _slotType == MvSlotType.rest;
+    final isSport =
+        _slotType == MvSlotType.sport ||
+        (_kind != null && _kind!.family == MovementFamily.sport);
     final isStrength =
         _slotType == MvSlotType.strength ||
         (_kind != null && _kind!.family == MovementFamily.strength);
@@ -300,8 +310,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             ),
             SizedBox(height: metrics.spaceMd),
 
-            // ۱. انتخاب نوع ورزش (اجباری اگر != REST و != STRENGTH)
-            if (isKindRequired) ...[
+            // ۱. انتخاب نوع ورزش (برای تمام حالت‌های غیر استراحت)
+            if (!isRest) ...[
               Text(
                 'نوع ورزش / فعالیت',
                 style: textTheme.labelLarge?.copyWith(
@@ -332,20 +342,87 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                       ),
                       SizedBox(width: metrics.spaceSm),
                       Expanded(
-                        child: Text(
-                          _kind?.titleFa ?? 'انتخاب از ۴۹ ورزش...',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _kind?.titleFa ?? 'انتخاب نوع حرکت...',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (_kind != null)
+                              Text(
+                                'ضریب MET: ${_kind!.baseMet}',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      TextButton.icon(
+                        key: const ValueKey('mv_change_kind_btn'),
+                        onPressed: _openKindPicker,
+                        icon: Icon(
+                          Icons.swap_horiz_rounded,
+                          size: metrics.iconSm,
+                          color: colors.accent,
+                        ),
+                        label: Text(
+                          'تغییر',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: colors.accent,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_left_rounded,
-                        color: colors.textSecondary,
-                      ),
                     ],
                   ),
+                ),
+              ),
+              SizedBox(height: metrics.spaceMd),
+            ],
+
+            // کارت توضیحات ورزش تخصصی (S8-T6)
+            if (isSport && _kind != null) ...[
+              Container(
+                key: const ValueKey('mv_sport_kind_info_card'),
+                padding: EdgeInsets.all(metrics.spaceMd),
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(metrics.radiusCard),
+                  border: Border.all(
+                    color: colors.border.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(_kind!.emoji, style: textTheme.titleLarge),
+                    SizedBox(width: metrics.spaceMd),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ورزش تخصصی ${_kind!.titleFa}',
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: metrics.spaceXs),
+                          Text(
+                            'ورزش توپی/تخصصی — کالری‌سوزی و ردیابی زمان جلسه بر اساس ضریب مت (${_kind!.baseMet} MET)',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: metrics.spaceMd),
@@ -412,7 +489,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                       Icon(
                         Icons.access_time_rounded,
                         color: colors.textSecondary,
-                        size: 20,
+                        size: metrics.iconSm,
                       ),
                       SizedBox(width: metrics.spaceSm),
                       Text(

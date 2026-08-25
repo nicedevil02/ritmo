@@ -1152,7 +1152,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T6 — بینش‌های مبتنی بر دادهٔ واقعی
+### - [x] S5-T6 — بینش‌های مبتنی بر دادهٔ واقعی — aeae8770
 
 **فایل:** `domain/engines/insight_engine.dart` (موجود)
 
@@ -1474,7 +1474,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S5-T3 | DONE | 7418187b | پیاده‌سازی رکوردهای شخصی به تفکیک نوع ورزش در MvPrRepository و ProgressionEngine و MvFinishSessionUseCase |
 | S5-T4 | DONE | bf4f18a6 | پیاده‌سازی ۵ کارت تب پیشرفت با دو ارز سلامت، بار تمرینی ACWR، توزیع ورزش‌ها، رکوردهای تفکیکی و زبان فرضیه‌ای |
 | S5-T5 | BLOCKED | cf8e5f53 | ایجاد مخزن MvStationBundleRepository و تست‌های مربوطه؛ اتصال مسدود به دلیل نبود seed در اسکیما |
-| S5-T6 |  |  |  |
+| S5-T6 | DONE | aeae8770 | پیاده‌سازی متد generateInsights در InsightEngine برای ۵ بینش قطعی مبتنی بر داده با لحن فرضیه‌ای |
 | S5-T7 |  |  |  |
 | S6-T1 |  |  |  |
 | S6-T2 |  |  |  |

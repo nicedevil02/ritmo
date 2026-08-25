@@ -52,47 +52,72 @@ void main() {
       expect(customBudget.maxWrites, 5);
     });
 
-    test('C-5: pauseClock and resumeClock with reentrancy depth pause wallClock', () async {
-      final budget = AgentBudget(wallClock: const Duration(milliseconds: 50));
-      budget.pauseClock();
-      budget.pauseClock(); // Depth 2
-      await Future<void>.delayed(const Duration(milliseconds: 70));
-      expect(budget.isTimedOut, isFalse);
-
-      budget.resumeClock(); // Depth 1, still paused
-      expect(budget.isTimedOut, isFalse);
-
-      budget.resumeClock(); // Depth 0, resumed
-      expect(budget.isTimedOut, isFalse);
-    });
-
-    test('C-6: unadmit refunds toolCalls and removes signature', () {
+    test('B1: admit -> unadmit restores toolCalls capacity', () {
       final budget = AgentBudget(maxToolCalls: 2);
       final admission1 = budget.admit('tool_a', {'k': 'v'});
       expect(admission1.allowed, isTrue);
-      expect(budget.toolCallsUsed, 1);
+      expect(budget.toolCallsUsed, equals(1));
 
-      // Repeat admission should be denied
-      final admission2 = budget.admit('tool_a', {'k': 'v'});
-      expect(admission2.allowed, isFalse);
-
-      // Unadmit
       budget.unadmit('tool_a', {'k': 'v'});
-      expect(budget.toolCallsUsed, 0);
-
-      // Now admission should be allowed again
-      final admission3 = budget.admit('tool_a', {'k': 'v'});
-      expect(admission3.allowed, isTrue);
-      expect(budget.toolCallsUsed, 1);
+      expect(budget.toolCallsUsed, equals(0));
+      expect(budget.toolCallsLeft, equals(2));
     });
 
-    test('C-6: clearReadSignatures allows re-inspection of read-only tools', () {
-      final budget = AgentBudget();
-      budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true);
-      expect(budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true).allowed, isFalse);
+    test('B2: admit -> unadmit -> wasRejected is true and repeat admission with same args is rejected', () {
+      final budget = AgentBudget(maxToolCalls: 2);
+      budget.admit('tool_a', {'k': 'v'});
+      budget.unadmit('tool_a', {'k': 'v'});
 
+      expect(budget.wasRejected('tool_a', {'k': 'v'}), isTrue);
+      final repeatAdmission = budget.admit('tool_a', {'k': 'v'});
+      expect(repeatAdmission.allowed, isFalse, reason: 'Duplicate rejected call signature must not be admitted');
+    });
+
+    test('B3: admit -> unadmit -> admission with different args is accepted', () {
+      final budget = AgentBudget(maxToolCalls: 2);
+      budget.admit('tool_a', {'k': 'v1'});
+      budget.unadmit('tool_a', {'k': 'v1'});
+
+      expect(budget.wasRejected('tool_a', {'k': 'v2'}), isFalse);
+      final newAdmission = budget.admit('tool_a', {'k': 'v2'});
+      expect(newAdmission.allowed, isTrue);
+      expect(budget.toolCallsUsed, equals(1));
+    });
+
+    test('B4: nested pauseClock (2 pause, 2 resume) pauses wallClock and resumes only on final resume', () async {
+      final budget = AgentBudget(wallClock: const Duration(milliseconds: 60));
+      budget.pauseClock();
+      budget.pauseClock(); // Depth 2
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(budget.isTimedOut, isFalse);
+
+      budget.resumeClock(); // Depth 1 (still paused)
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(budget.isTimedOut, isFalse);
+
+      budget.resumeClock(); // Depth 0 (resumed)
+      expect(budget.isTimedOut, isFalse);
+    });
+
+    test('B5: clearReadSignatures only clears read signatures, retaining write and rejected signatures', () {
+      final budget = AgentBudget(maxToolCalls: 5);
+      budget.admit('verify_state', {'check': 'routine'}, isReadOnly: true);
+      budget.admit('create_new_routine', {'title': 'Morning Run'}, isReadOnly: false);
+      budget.admit('delete_routine', {'id': '123'}, isReadOnly: false);
+      budget.unadmit('delete_routine', {'id': '123'});
+
+      // Clear read signatures only
       budget.clearReadSignatures();
-      expect(budget.admit('verify_state', {'check': 'routine_in_day'}, isReadOnly: true).allowed, isTrue);
+
+      // Read tool is allowed again
+      expect(budget.admit('verify_state', {'check': 'routine'}, isReadOnly: true).allowed, isTrue);
+
+      // Mutating tool signature is still remembered
+      expect(budget.admit('create_new_routine', {'title': 'Morning Run'}, isReadOnly: false).allowed, isFalse);
+
+      // Rejected signature is still remembered
+      expect(budget.wasRejected('delete_routine', {'id': '123'}), isTrue);
+      expect(budget.admit('delete_routine', {'id': '123'}, isReadOnly: false).allowed, isFalse);
     });
   });
 }

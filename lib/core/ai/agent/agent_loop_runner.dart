@@ -440,6 +440,16 @@ class AgentLoopRunner {
           continue;
         }
 
+        if (budget.wasRejected(tool.name, validatedArgs)) {
+          turnResults.add(AgentToolResult.failure(
+            toolName: tool.name,
+            errorMessage:
+                'کاربر همین عملیات را رد کرد؛ دوباره پیشنهاد نده و راه دیگری بیندیش.',
+          ));
+          RitmoLog.debug('Agent', 'previously rejected tool call blocked | ${tool.name}');
+          continue;
+        }
+
         final admission = budget.admit(
           tool.name,
           validatedArgs,

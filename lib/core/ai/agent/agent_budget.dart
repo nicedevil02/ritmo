@@ -50,6 +50,7 @@ class AgentBudget {
   final DateTime _startedAt = DateTime.now();
   final Set<String> _signatures = <String>{};
   final Set<String> _readSignatures = <String>{};
+  final Set<String> _rejectedSignatures = <String>{};
   int _turns = 0;
   int _toolCalls = 0;
 
@@ -64,6 +65,10 @@ class AgentBudget {
   int get toolCallsLeft => maxToolCalls - _toolCalls;
 
   bool get canRunMoreTools => _toolCalls < maxToolCalls;
+
+  bool wasRejected(String toolName, Map<String, dynamic> args) {
+    return _rejectedSignatures.contains(signature(toolName, args));
+  }
 
   Duration get elapsed {
     final total = DateTime.now().difference(_startedAt);
@@ -102,12 +107,13 @@ class AgentBudget {
     _readSignatures.clear();
   }
 
-  /// بازگردانی بودجه و امضا در صورت انصراف کاربر، رد شدن کارت یا تایم‌اوت
+  /// بازگردانی بودجه در صورت انصراف کاربر، رد شدن کارت یا تایم‌اوت
+  /// نکته مهم: امضا از _signatures حذف نمی‌شود و در _rejectedSignatures ثبت می‌شود
+  /// تا مدل نتواند همان درخواست رد شده را مکرراً تکرار کند.
   void unadmit(String toolName, Map<String, dynamic> args) {
     final sig = signature(toolName, args);
-    if (_signatures.remove(sig)) {
-      if (_toolCalls > 0) _toolCalls--;
-    }
+    _rejectedSignatures.add(sig);
+    if (_toolCalls > 0) _toolCalls--;
     _readSignatures.remove(sig);
   }
 

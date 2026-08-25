@@ -595,7 +595,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T5 — سوال لنگر در آنبوردینگ
+### - [x] S2-T5 — سوال لنگر در آنبوردینگ — 26d840fd
 
 **فایل:** `presentation/screens/mv_onboarding_screen.dart`
 
@@ -1447,7 +1447,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
 | S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
 | S2-T4 | DONE | 50d71ac9 | پیاده‌سازی ساخت تعهد از شیت برنامه روز و یوزکیس MvSaveCommitmentUseCase و تست‌های مربوطه |
-| S2-T5 |  |  |  |
+| S2-T5 | DONE | 26d840fd | پیاده‌سازی سوال لنگر در آنبوردینگ با امکان ثبت تا ۳ تعهد و MvCommitmentUseCase |
 | S2-T6 |  |  |  |
 | S2-T7 |  |  |  |
 | S2-T8 |  |  |  |

@@ -225,7 +225,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T3 — حذف «هفته‌های پیوستهٔ ساختگی»
+### - [x] S0-T3 — حذف «هفته‌های پیوستهٔ ساختگی» — 141df7a2
 
 **فایل:** `application/mv_hub_controller.dart`
 
@@ -1428,7 +1428,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
 | S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
 | S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
-| S0-T3 |  |  |  |
+| S0-T3 | DONE | 141df7a2 | محاسبهٔ واقعی هفته‌های پیوسته و بازگشت null در صورت عدم سابقه |
 | S0-T4 |  |  |  |
 | S0-T5 |  |  |  |
 | S0-T6 |  |  |  |

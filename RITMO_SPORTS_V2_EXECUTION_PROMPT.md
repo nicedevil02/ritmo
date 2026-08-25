@@ -949,7 +949,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T4 — انتخاب حالت پلیر از داده
+### - [x] S4-T4 — انتخاب حالت پلیر از داده — f5fa60b7
 
 **فایل:** `application/mv_start_session_use_case.dart`
 
@@ -1464,7 +1464,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S4-T1 | DONE | 0a51fa65 | مایگریشن v127 برای ۷ ستون متریک جلسه در movement_sessions و ایندکس نوع ورزش و تاریخ |
 | S4-T2 | DONE | 30672336 | افزودن ۷ فیلد متریک به MvSession با تبدیل toMap/fromMap و گترهای محاسباتی sessionLoad و paceSecPerKm |
 | S4-T3 | DONE | 81dd2655 | پورت ۵ قالب پلیر (timed, distance, route, laps, match) با رابط تعاملی و ویجت تست کامل |
-| S4-T4 |  |  |  |
+| S4-T4 | DONE | f5fa60b7 | پیاده‌سازی متد resolveSessionMode در MvStartSessionUseCase و تست جدولی ۸ ورزش و گاردتست معماری |
 | S4-T5 |  |  |  |
 | S4-T6 |  |  |  |
 | S4-T7 |  |  |  |

@@ -12,6 +12,7 @@ import 'package:ritmo/core/domain/engines/systems_hub_logic.dart';
 import 'package:ritmo/core/localization/locale_repository.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -280,7 +281,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           }
         } catch (_) {}
       }
-      _showCustomOrderBanner = _settingsMap['systems_custom_order_banner_dismissed'] != 'true';
+      final prefs = await SharedPreferences.getInstance();
+      final isDismissedInPrefs = prefs.getBool('systems_custom_order_banner_dismissed') ?? false;
+      final isDismissedInDb = _settingsMap['systems_custom_order_banner_dismissed'] == 'true';
+      _showCustomOrderBanner = !isDismissedInPrefs && !isDismissedInDb;
 
       // 5. Check user avatar existence asynchronously
       final avatarPath = _settingsMap['user_avatar_path'];
@@ -846,20 +850,22 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                 const SizedBox(width: 4),
                 InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    setState(() {
-                      _showCustomOrderBanner = false;
-                    });
-                    try {
-                      final db = await DatabaseHelper.instance.database;
-                      final now = DateTime.now().millisecondsSinceEpoch;
-                      await db.insert('app_settings', {
-                        'key': 'systems_custom_order_banner_dismissed',
-                        'value': 'true',
-                        'updatedAt': now,
-                      }, conflictAlgorithm: ConflictAlgorithm.replace);
-                    } catch (_) {}
-                  },
+                    onTap: () async {
+                      setState(() {
+                        _showCustomOrderBanner = false;
+                      });
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('systems_custom_order_banner_dismissed', true);
+                        final db = await DatabaseHelper.instance.database;
+                        final now = DateTime.now().millisecondsSinceEpoch;
+                        await db.insert('app_settings', {
+                          'key': 'systems_custom_order_banner_dismissed',
+                          'value': 'true',
+                          'updatedAt': now,
+                        }, conflictAlgorithm: ConflictAlgorithm.replace);
+                      } catch (_) {}
+                    },
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: Icon(

@@ -634,49 +634,52 @@ ${jsonEncode(digest.json)}
         },
         child: Scaffold(
           backgroundColor: colors.background,
-          body: RefreshIndicator(
-            onRefresh: _loadAnalytics,
-            color: colors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(m.spaceMd, m.spaceXl, m.spaceMd, 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Custom Header Row
-                  _buildHeader(colors),
-                  SizedBox(height: m.spaceLg),
+          body: SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              onRefresh: _loadAnalytics,
+              color: colors.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(m.spaceMd, m.spaceMd, m.spaceMd, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Custom Header Row
+                    _buildHeader(colors),
+                    SizedBox(height: m.spaceLg),
 
-                  // Time Window Ruler (ط۵)
-                  InsightsTimeWindowRuler(
-                    selectedWindow: _selectedWindow,
-                    onWindowChanged: (w) {
-                      setState(() {
-                        _selectedWindow = w;
-                      });
-                      _loadAnalytics();
-                    },
-                  ),
-                  SizedBox(height: m.spaceXl),
-
-                  // AI Briefing section
-                  PremiumGate(
-                    feature: PremiumFeature.unlimitedAi,
-                    child: _buildAIBriefingSection(colors, isDarkMode),
-                  ),
-                  SizedBox(height: m.spaceXl),
-
-                  // Maturity Gate Dispatcher
-                  if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
-                    _buildEarlyStageView(colors, isDarkMode)
-                  else
-                    PremiumGate(
-                      feature: PremiumFeature.advancedInsights,
-                      child: _buildAdvancedView(colors, isDarkMode),
+                    // Time Window Ruler (ط۵)
+                    InsightsTimeWindowRuler(
+                      selectedWindow: _selectedWindow,
+                      onWindowChanged: (w) {
+                        setState(() {
+                          _selectedWindow = w;
+                        });
+                        _loadAnalytics();
+                      },
                     ),
-                  SizedBox(height: m.spaceXl),
-                  AdService.instance.getBannerAd(),
-                ],
+                    SizedBox(height: m.spaceXl),
+
+                    // AI Briefing section
+                    PremiumGate(
+                      feature: PremiumFeature.unlimitedAi,
+                      child: _buildAIBriefingSection(colors, isDarkMode),
+                    ),
+                    SizedBox(height: m.spaceXl),
+
+                    // Maturity Gate Dispatcher
+                    if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
+                      _buildEarlyStageView(colors, isDarkMode)
+                    else
+                      PremiumGate(
+                        feature: PremiumFeature.advancedInsights,
+                        child: _buildAdvancedView(colors, isDarkMode),
+                      ),
+                    SizedBox(height: m.spaceXl),
+                    AdService.instance.getBannerAd(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -692,9 +695,12 @@ ${jsonEncode(digest.json)}
       children: [
         if (canPop) ...[
           IconButton(
-            icon: const Icon(CupertinoIcons.back),
+            icon: const Icon(CupertinoIcons.back, size: 22),
             color: colors.textPrimary,
             tooltip: 'بازگشت',
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: 4),
@@ -702,6 +708,7 @@ ${jsonEncode(digest.json)}
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'بینش‌ها',
@@ -709,34 +716,51 @@ ${jsonEncode(digest.json)}
                   colors.textPrimary,
                 ).copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 'درک روندها و الگوهای زندگی شما',
                 style: RitmoTextStyles.caption(colors.textSecondary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
+        const SizedBox(width: 6),
         // Header Actions
-        IconButton(
-          icon: const Icon(CupertinoIcons.calendar_today, size: 20),
-          color: colors.textSecondary,
-          tooltip: 'انتخاب بازه زمانی',
-          onPressed: () => _showDateRangePicker(colors),
-        ),
-        IconButton(
-          icon: const Icon(CupertinoIcons.arrow_down_doc, size: 20),
-          color: colors.textSecondary,
-          tooltip: 'خروجی گرفتن',
-          onPressed: () => _showExportSheet(colors),
-        ),
-        Builder(
-          builder: (btnCtx) => IconButton(
-            icon: const Icon(CupertinoIcons.share, size: 20),
-            color: colors.textSecondary,
-            tooltip: 'اشتراک‌گذاری',
-            onPressed: () => _simulateShare(btnCtx, colors),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(CupertinoIcons.calendar_today, size: 18),
+              color: colors.textSecondary,
+              tooltip: 'انتخاب بازه زمانی',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: () => _showDateRangePicker(colors),
+            ),
+            IconButton(
+              icon: const Icon(CupertinoIcons.arrow_down_doc, size: 18),
+              color: colors.textSecondary,
+              tooltip: 'خروجی گرفتن',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              onPressed: () => _showExportSheet(colors),
+            ),
+            Builder(
+              builder: (btnCtx) => IconButton(
+                icon: const Icon(CupertinoIcons.share, size: 18),
+                color: colors.textSecondary,
+                tooltip: 'اشتراک‌گذاری',
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () => _simulateShare(btnCtx, colors),
+              ),
+            ),
+          ],
         ),
       ],
     );

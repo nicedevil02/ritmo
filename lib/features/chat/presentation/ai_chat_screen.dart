@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -343,10 +344,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
-        final colors = context.colors;
+      builder: (modalCtx) {
+        final colors = modalCtx.colors;
+        final isDark = modalCtx.isDark;
+        final isGlass = modalCtx.isGlassEnabled;
+        final blur = modalCtx.glassBlurSigma.clamp(0.0, 50.0);
+        const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (ctx, setModalState) {
             return FutureBuilder<List<Map<String, dynamic>>>(
               future: DatabaseHelper.instance.database.then(
                 (db) => db.query(
@@ -355,160 +361,248 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   limit: 20,
                 ),
               ),
-              builder: (context, snapshot) {
+              builder: (ctx, snapshot) {
+                Widget innerContent;
+
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return RitmoTheme.glassCardLight(
-                    child: const SizedBox(
-                      height: 400,
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
+                  innerContent = const SizedBox(
+                    height: 200,
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
+                } else {
+                  final logs = snapshot.data ?? [];
+
+                  innerContent = Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colors.textSecondary.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.12),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  CupertinoIcons.doc_text_search,
+                                  color: colors.primary,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'دفتر ممیزی و تغییرات دستیار',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              CupertinoIcons.xmark,
+                              color: colors.textSecondary,
+                              size: 20,
+                            ),
+                            onPressed: () => Navigator.pop(modalCtx),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (logs.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text(
+                              'هیچ تغییری توسط دستیار ثبت نشده است.',
+                              style: TextStyle(
+                                color: colors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Flexible(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: logs.length,
+                            separatorBuilder: (context, index) =>
+                                Divider(color: colors.border, height: 1),
+                            itemBuilder: (context, index) {
+                              final log = logs[index];
+                              final type = log['actionType']?.toString() ?? '';
+                              final key = log['targetKey']?.toString() ?? '';
+                              final oldValue = log['oldValue']?.toString() ?? '';
+                              final newValue = log['newValue']?.toString() ?? '';
+                              final appliedAt = log['appliedAt'] as int;
+
+                              final date = DateTime.fromMillisecondsSinceEpoch(appliedAt);
+                              final timeStr =
+                                  '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+
+                              var actionLabel = type;
+                              if (type == 'updateSetting') actionLabel = 'تغییر تنظیمات';
+                              if (type == 'completeRoutine') actionLabel = 'انجام روتین';
+                              if (type == 'skipRoutine') actionLabel = 'تعویق روتین';
+                              if (type == 'editRoutine') actionLabel = 'ویرایش روتین';
+                              if (type == 'deleteRoutine') actionLabel = 'حذف روتین';
+                              if (type == 'editGoal') actionLabel = 'ویرایش هدف';
+                              if (type == 'completeGoalStep') actionLabel = 'تکمیل گام هدف';
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '$actionLabel - $key',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: colors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            type == 'updateSetting'
+                                                ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue ($timeStr)'
+                                                : 'تغییر: $newValue ($timeStr)',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: colors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (type == 'updateSetting' &&
+                                        oldValue.isNotEmpty &&
+                                        oldValue != 'null')
+                                      TextButton(
+                                        onPressed: () async {
+                                          final success = await applySettingChange(
+                                            key,
+                                            oldValue,
+                                          );
+                                          if (success) {
+                                            setModalState(() {});
+                                          }
+                                        },
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: colors.primary,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: const Text(
+                                          'بازگردانی',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   );
                 }
 
-                final logs = snapshot.data ?? [];
-
-                return Directionality(
+                final sheetBody = Directionality(
                   textDirection: TextDirection.rtl,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.viewInsetsOf(context).bottom,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: innerContent,
                     ),
-                    child: RitmoTheme.glassCardLight(
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxHeight: RitmoBreakpoints.sheetMaxHeight(
-                            context,
-                            factor: 0.85,
+                  ),
+                );
+
+                if (!isGlass) {
+                  return Container(
+                    constraints: BoxConstraints(
+                      maxHeight: RitmoBreakpoints.sheetMaxHeight(
+                        modalCtx,
+                        factor: 0.85,
+                      ),
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      borderRadius: sheetRadius,
+                      border: Border.all(
+                        color: isDark ? colors.border : colors.divider,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: sheetBody,
+                  );
+                }
+
+                return Container(
+                  constraints: BoxConstraints(
+                    maxHeight: RitmoBreakpoints.sheetMaxHeight(
+                      modalCtx,
+                      factor: 0.85,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: sheetRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.glassTint,
+                          borderRadius: sheetRadius,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.70),
+                            width: 1.0,
                           ),
                         ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'دفتر ممیزی و تغییرات دستیار',
-                                  style: RitmoTextStyles.titleMedium(
-                                    colors.textPrimary,
-                                  ).copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    CupertinoIcons.xmark,
-                                    color: colors.textSecondary,
-                                  ),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: sheetRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                Colors.white.withValues(alpha: 0.0),
                               ],
+                              stops: const [0.0, 0.45],
                             ),
-                            const Divider(),
-                            if (logs.isEmpty)
-                              Expanded(
-                                child: Center(
-                                  child: Text(
-                                    'هیچ تغییری توسط دستیار ثبت نشده است.',
-                                    style: TextStyle(
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: logs.length,
-                                  itemBuilder: (context, index) {
-                                    final log = logs[index];
-                                    final type =
-                                        log['actionType']?.toString() ?? '';
-                                    final key =
-                                        log['targetKey']?.toString() ?? '';
-                                    final oldValue =
-                                        log['oldValue']?.toString() ?? '';
-                                    final newValue =
-                                        log['newValue']?.toString() ?? '';
-                                    final appliedAt = log['appliedAt'] as int;
-
-                                    final date =
-                                        DateTime.fromMillisecondsSinceEpoch(
-                                          appliedAt,
-                                        );
-                                    final timeStr =
-                                        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-
-                                    var actionLabel = type;
-                                    if (type == 'updateSetting')
-                                      actionLabel = 'تغییر تنظیمات';
-                                    if (type == 'completeRoutine')
-                                      actionLabel = 'انجام روتین';
-                                    if (type == 'skipRoutine')
-                                      actionLabel = 'تعویق روتین';
-                                    if (type == 'editRoutine')
-                                      actionLabel = 'ویرایش روتین';
-                                    if (type == 'deleteRoutine')
-                                      actionLabel = 'حذف روتین';
-                                    if (type == 'editGoal')
-                                      actionLabel = 'ویرایش هدف';
-                                    if (type == 'completeGoalStep')
-                                      actionLabel = 'تکمیل گام هدف';
-
-                                    return Card(
-                                      color: colors.card,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 6,
-                                      ),
-                                      child: ListTile(
-                                        title: Text(
-                                          '$actionLabel - $key',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.textPrimary,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          type == 'updateSetting'
-                                              ? 'مقدار قبلی: $oldValue ➔ مقدار جدید: $newValue\nساعت: $timeStr'
-                                              : 'تغییر: $newValue\nساعت: $timeStr',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: colors.textSecondary,
-                                          ),
-                                        ),
-                                        trailing:
-                                            type == 'updateSetting' &&
-                                                oldValue.isNotEmpty &&
-                                                oldValue != 'null'
-                                            ? TextButton(
-                                                onPressed: () async {
-                                                  final success =
-                                                      await applySettingChange(
-                                                        key,
-                                                        oldValue,
-                                                      );
-                                                  if (success) {
-                                                    setModalState(() {});
-                                                  }
-                                                },
-                                                child: const Text(
-                                                  'بازگردانی',
-                                                  style: TextStyle(
-                                                    color: Color(0xff06B6D4),
-                                                  ),
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                          ],
+                          ),
+                          child: sheetBody,
                         ),
                       ),
                     ),

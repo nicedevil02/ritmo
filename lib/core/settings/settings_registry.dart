@@ -1320,6 +1320,13 @@ class SettingsRegistry {
       labelFa: 'نمای پیش‌فرض تقویم',
       group: SettingsGroup.calendar,
       allowed: ['agenda', 'day', 'week', 'month', 'year'],
+      optionLabelsFa: {
+        'agenda': 'برنامه (رویدادها و کارها)',
+        'day': 'روزانه (خط زمان)',
+        'week': 'هفتگی',
+        'month': 'ماهانه',
+        'year': 'سالانه',
+      },
       descriptionFa:
           'مقیاس اولیه تقویم هنگام ورود به برنامه (برنامه، روز، هفته، ماه، سال)',
       searchTerms: ['نمای تقویم', 'پیش‌فرض تقویم', 'مقیاس'],

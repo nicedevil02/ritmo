@@ -52,139 +52,255 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     super.dispose();
   }
 
-
-
   Future<void> _pickAvatar() async {
     RitmoHapticsPolicy.selection();
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    await showCupertinoModalPopup<void>(
+    await showModalBottomSheet<void>(
       context: context,
-      barrierColor: colors.overlay,
-      builder: (ctx) => CupertinoActionSheet(
-        title: Text(
-          'ویرایش عکس پروفایل',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: colors.textPrimary,
-          ),
-        ),
-        message: Text(
-          'یک تصویر برای نمایهٔ کاربری خود انتخاب کنید',
-          style: TextStyle(
-            fontSize: 13,
-            color: colors.textSecondary,
-          ),
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final picker = ImagePicker();
-              final picked = await picker.pickImage(
-                source: ImageSource.gallery,
-                imageQuality: 85,
-              );
-              if (picked != null) {
-                setState(() => _avatarPath = picked.path);
-                await SettingsService.instance.set('user_avatar_path', picked.path);
-                RitmoHapticsPolicy.success();
-                if (mounted) {
-                  RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد ✨');
-                }
-              }
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(CupertinoIcons.photo_on_rectangle, size: 20, color: colors.primary),
-                const SizedBox(width: 10),
-                Text(
-                  'انتخاب از گالری',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ],
-            ),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final picker = ImagePicker();
-              final picked = await picker.pickImage(
-                source: ImageSource.camera,
-                imageQuality: 85,
-              );
-              if (picked != null) {
-                setState(() => _avatarPath = picked.path);
-                await SettingsService.instance.set('user_avatar_path', picked.path);
-                RitmoHapticsPolicy.success();
-                if (mounted) {
-                  RitmoToast.show(context, 'عکس پروفایل با موفقیت ثبت شد 📸');
-                }
-              }
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(CupertinoIcons.camera_fill, size: 20, color: colors.primary),
-                const SizedBox(width: 10),
-                Text(
-                  'ثبت عکس با دوربین',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'ویرایش عکس نمایه',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'یک تصویر برای حساب و نمایه کاربری خود انتخاب کنید',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // Gallery Button
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
                   ),
                 ),
-              ],
-            ),
-          ),
-          if (_avatarPath.isNotEmpty)
-            CupertinoActionSheetAction(
-              isDestructiveAction: true,
-              onPressed: () async {
-                Navigator.pop(ctx);
-                setState(() => _avatarPath = '');
-                await SettingsService.instance.set('user_avatar_path', '');
-                RitmoHapticsPolicy.warning();
-                if (mounted) {
-                  RitmoToast.show(context, 'عکس پروفایل حذف شد.');
-                }
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(CupertinoIcons.trash, size: 20, color: colors.medicalRed),
-                  const SizedBox(width: 10),
-                  Text(
-                    'حذف عکس پروفایل',
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(CupertinoIcons.photo_on_rectangle, size: 20, color: colors.primary),
+                  ),
+                  title: Text(
+                    'انتخاب از گالری',
                     style: TextStyle(
-                      color: colors.medicalRed,
-                      fontSize: 15,
+                      color: colors.textPrimary,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                    );
+                    if (picked != null) {
+                      setState(() => _avatarPath = picked.path);
+                      await SettingsService.instance.set('user_avatar_path', picked.path);
+                      RitmoHapticsPolicy.success();
+                      if (mounted) {
+                        RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد ✨');
+                      }
+                    }
+                  },
+                ),
+              ),
+
+              // Camera Button
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(CupertinoIcons.camera_fill, size: 20, color: colors.primary),
+                  ),
+                  title: Text(
+                    'ثبت عکس با دوربین',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                    );
+                    if (picked != null) {
+                      setState(() => _avatarPath = picked.path);
+                      await SettingsService.instance.set('user_avatar_path', picked.path);
+                      RitmoHapticsPolicy.success();
+                      if (mounted) {
+                        RitmoToast.show(context, 'عکس پروفایل با موفقیت ثبت شد 📸');
+                      }
+                    }
+                  },
+                ),
+              ),
+
+              // Delete avatar button if exists
+              if (_avatarPath.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: colors.medicalRed.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colors.medicalRed.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.medicalRed.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(CupertinoIcons.trash, size: 20, color: colors.medicalRed),
+                    ),
+                    title: Text(
+                      'حذف عکس پروفایل',
+                      style: TextStyle(
+                        color: colors.medicalRed,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      setState(() => _avatarPath = '');
+                      await SettingsService.instance.set('user_avatar_path', '');
+                      RitmoHapticsPolicy.warning();
+                      if (mounted) {
+                        RitmoToast.show(context, 'عکس پروفایل حذف شد.');
+                      }
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
               ),
             ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(
-            'انصراف',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: colors.textSecondary,
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -192,6 +308,9 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     RitmoHapticsPolicy.tap();
     final colors = context.colors;
     final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     _nameController.text = _userName;
     String? localError;
 
@@ -202,201 +321,245 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
       builder: (bottomSheetContext) {
         return StatefulBuilder(
           builder: (modalCtx, setModalState) {
+            final content = Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: colors.textSecondary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          CupertinoIcons.person_crop_circle_fill,
+                          color: colors.primary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'ویرایش نام کاربری',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              'نامی که در پیام‌ها و تبریک‌ها نمایش داده می‌شود',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: localError != null
+                            ? colors.medicalRed
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.08)),
+                      ),
+                    ),
+                    child: CupertinoTextField(
+                      controller: _nameController,
+                      autofocus: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      placeholder: 'نام و نام خانوادگی خود را وارد کنید',
+                      placeholderStyle: TextStyle(
+                        fontSize: 14,
+                        color: colors.textTertiary,
+                      ),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: null,
+                      onChanged: (_) {
+                        if (localError != null) {
+                          setModalState(() => localError = null);
+                        }
+                      },
+                    ),
+                  ),
+                  if (localError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      localError!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.medicalRed,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CupertinoButton(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(14),
+                          onPressed: () => Navigator.pop(bottomSheetContext),
+                          child: Text(
+                            'انصراف',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: CupertinoButton(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(14),
+                          onPressed: () async {
+                            final text = _nameController.text.trim();
+                            if (text.isEmpty) {
+                              setModalState(() {
+                                localError = 'نام نمی‌تواند خالی باشد.';
+                              });
+                              RitmoHapticsPolicy.error();
+                              return;
+                            }
+
+                            setState(() => _userName = text);
+                            await SettingsService.instance.set('user_name', text);
+                            RitmoHapticsPolicy.success();
+                            if (bottomSheetContext.mounted) {
+                              Navigator.pop(bottomSheetContext);
+                            }
+                            if (mounted) {
+                              RitmoToast.show(
+                                context,
+                                'نام با موفقیت ذخیره شد ✨',
+                              );
+                            }
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.checkmark_alt, size: 18, color: Colors.white),
+                              SizedBox(width: 6),
+                              Text(
+                                'ذخیره تغییرات',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+
+            final sheetBody = Directionality(
+              textDirection: TextDirection.rtl,
+              child: Material(
+                type: MaterialType.transparency,
+                child: content,
+              ),
+            );
+
+            if (!isGlass) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colors.surfaceElevated,
+                    borderRadius: sheetRadius,
+                    border: Border.all(
+                      color: isDark ? colors.border : colors.divider,
+                      width: 1.0,
+                    ),
+                  ),
+                  child: sheetBody,
+                ),
+              );
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: sheetRadius,
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                  filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1C1C1E).withValues(alpha: 0.94)
-                          : Colors.white.withValues(alpha: 0.94),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                      color: colors.glassTint,
+                      borderRadius: sheetRadius,
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.12)
-                            : Colors.black.withValues(alpha: 0.08),
+                            ? Colors.white.withValues(alpha: 0.18)
+                            : Colors.white.withValues(alpha: 0.70),
+                        width: 1.0,
                       ),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Handle bar
-                        Center(
-                          child: Container(
-                            width: 36,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: colors.textSecondary.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                CupertinoIcons.person_crop_circle_fill,
-                                color: colors.primary,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'ویرایش نام کاربری',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    'نامی که در پیام‌ها و تبریک‌ها نمایش داده می‌شود',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: sheetRadius,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                            Colors.white.withValues(alpha: 0.0),
                           ],
+                          stops: const [0.0, 0.45],
                         ),
-                        const SizedBox(height: 24),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : Colors.black.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: localError != null
-                                  ? colors.medicalRed
-                                  : (isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.08)),
-                            ),
-                          ),
-                          child: CupertinoTextField(
-                            controller: _nameController,
-                            autofocus: true,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            placeholder: 'نام و نام خانوادگی خود را وارد کنید',
-                            placeholderStyle: TextStyle(
-                              fontSize: 14,
-                              color: colors.textTertiary,
-                            ),
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            decoration: null,
-                            onChanged: (_) {
-                              if (localError != null) {
-                                setModalState(() => localError = null);
-                              }
-                            },
-                          ),
-                        ),
-                        if (localError != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            localError!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.medicalRed,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: CupertinoButton(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(14),
-                                onPressed: () => Navigator.pop(bottomSheetContext),
-                                child: Text(
-                                  'انصراف',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: CupertinoButton(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                color: colors.primary,
-                                borderRadius: BorderRadius.circular(14),
-                                onPressed: () async {
-                                  final text = _nameController.text.trim();
-                                  if (text.isEmpty) {
-                                    setModalState(() {
-                                      localError = 'نام نمی‌تواند خالی باشد.';
-                                    });
-                                    RitmoHapticsPolicy.error();
-                                    return;
-                                  }
-
-                                  setState(() => _userName = text);
-                                  await SettingsService.instance.set('user_name', text);
-                                  RitmoHapticsPolicy.success();
-                                  if (bottomSheetContext.mounted) {
-                                    Navigator.pop(bottomSheetContext);
-                                  }
-                                  if (mounted) {
-                                    RitmoToast.show(
-                                      context,
-                                      'نام با موفقیت ذخیره شد ✨',
-                                    );
-                                  }
-                                },
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(CupertinoIcons.checkmark_alt, size: 18, color: Colors.white),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'ذخیره تغییرات',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
+                      child: sheetBody,
                     ),
                   ),
                 ),
@@ -438,167 +601,211 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
         'key': 'MALE',
         'title': 'آقا (مرد)',
         'subtitle': 'تنظیمات و ماژول‌های متناسب با آقایان',
+        'label': 'آقا (مرد)',
+        'desc': 'تنظیمات و ماژول‌های متناسب با آقایان',
         'icon': CupertinoIcons.person_crop_circle_fill,
         'color': const Color(0xFF3B82F6),
       },
       {
         'key': 'FEMALE',
-        'title': 'خانم (زن)',
-        'subtitle': 'فعال‌سازی هوشمند چرخه سلامت بانوان',
+        'label': 'خانم (زن)',
+        'desc': 'فعال‌سازی هوشمند چرخه سلامت بانوان',
         'icon': CupertinoIcons.sparkles,
         'color': const Color(0xFFEC4899),
       },
       {
         'key': 'OTHER',
-        'title': 'ترجیح می‌دهم نگویم',
-        'subtitle': 'استفاده عمومی بدون تفکیک جنسیتی',
+        'label': 'ترجیح می‌دهم نگویم',
+        'desc': 'استفاده عمومی بدون تفکیک جنسیتی',
         'icon': CupertinoIcons.circle_grid_hex_fill,
         'color': const Color(0xFF8B5CF6),
       },
     ];
 
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1C1C1E).withValues(alpha: 0.94)
-                    : Colors.white.withValues(alpha: 0.94),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.08),
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'انتخاب جنسیت',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'برای تنظیم هوشمند ماژول‌های مرتبط (مانند چرخه سلامت)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ...options.map((opt) {
-                    final isSelected = _gender == opt['key'] ||
-                        (_gender == 'male' && opt['key'] == 'MALE') ||
-                        (_gender == 'female' && opt['key'] == 'FEMALE') ||
-                        (_gender == 'other' && opt['key'] == 'OTHER');
+              const SizedBox(height: 18),
+              Text(
+                'انتخاب جنسیت',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'برای تنظیم هوشمند ماژول‌های مرتبط (مانند چرخه سلامت)',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ...options.map((opt) {
+                final isSelected = _gender == opt['key'] ||
+                    (_gender == 'male' && opt['key'] == 'MALE') ||
+                    (_gender == 'female' && opt['key'] == 'FEMALE') ||
+                    (_gender == 'other' && opt['key'] == 'OTHER');
 
-                    final optColor = opt['color'] as Color;
+                final optColor = opt['color'] as Color;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          _changeGender(opt['key'] as String);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? optColor.withValues(alpha: 0.12)
-                                : (isDark
-                                    ? Colors.white.withValues(alpha: 0.05)
-                                    : Colors.black.withValues(alpha: 0.03)),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isSelected
-                                  ? optColor.withValues(alpha: 0.6)
-                                  : (isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.06)),
-                              width: isSelected ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: optColor.withValues(alpha: isSelected ? 0.2 : 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  opt['icon'] as IconData,
-                                  color: optColor,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      opt['title'] as String,
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                        color: isSelected ? optColor : colors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      opt['subtitle'] as String,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: colors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isSelected)
-                                Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: optColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.checkmark,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                            ],
-                          ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _changeGender(opt['key'] as String);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? optColor.withValues(alpha: 0.12)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.03)),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected
+                              ? optColor.withValues(alpha: 0.6)
+                              : (isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.06)),
+                          width: isSelected ? 1.5 : 1,
                         ),
                       ),
-                    );
-                  }),
-                ],
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: optColor.withValues(alpha: isSelected ? 0.2 : 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              opt['icon'] as IconData,
+                              color: optColor,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  opt['label'] as String,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                    color: isSelected ? optColor : colors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  opt['desc'] as String,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isSelected)
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: optColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.checkmark,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
               ),
             ),
           ),
@@ -611,114 +818,158 @@ class _IdentityGroupScreenState extends State<IdentityGroupScreen> {
     RitmoHapticsPolicy.tap();
     final colors = context.colors;
     final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     int tempAge = _age;
 
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final content = SizedBox(
+          height: 330,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              children: [
+                Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(
+                        'انصراف',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'انتخاب سن',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () async {
+                        setState(() => _age = tempAge);
+                        await SettingsService.instance.set('user_age', tempAge);
+                        await SettingsService.instance.set('identity_age_asked', true);
+                        RitmoHapticsPolicy.success();
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          RitmoToast.show(context, 'سن با موفقیت ثبت شد.');
+                        }
+                      },
+                      child: Text(
+                        'تأیید',
+                        style: TextStyle(
+                          color: colors.primary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+                Expanded(
+                  child: CupertinoPicker(
+                    itemExtent: 42,
+                    scrollController: FixedExtentScrollController(
+                      initialItem: (_age >= 10 && _age <= 120) ? _age - 10 : 15,
+                    ),
+                    onSelectedItemChanged: (index) {
+                      tempAge = 10 + index;
+                      RitmoHapticsPolicy.selection();
+                    },
+                    children: List.generate(
+                      111,
+                      (i) => Center(
+                        child: Text(
+                          '${toPersianDigits(10 + i)} سال',
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
         return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: sheetRadius,
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-            child: Container(
-              height: 330,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1C1C1E).withValues(alpha: 0.94)
-                    : Colors.white.withValues(alpha: 0.94),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.08),
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
                 ),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () => Navigator.pop(ctx),
-                        child: Text(
-                          'انصراف',
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        'انتخاب سن',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () async {
-                          setState(() => _age = tempAge);
-                          await SettingsService.instance.set('user_age', tempAge);
-                          await SettingsService.instance.set('identity_age_asked', true);
-                          RitmoHapticsPolicy.success();
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (mounted) {
-                            RitmoToast.show(context, 'سن با موفقیت ثبت شد.');
-                          }
-                        },
-                        child: Text(
-                          'تأیید',
-                          style: TextStyle(
-                            color: colors.primary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
                     ],
+                    stops: const [0.0, 0.45],
                   ),
-                  const Divider(height: 20),
-                  Expanded(
-                    child: CupertinoPicker(
-                      itemExtent: 42,
-                      scrollController: FixedExtentScrollController(
-                        initialItem: (_age >= 10 && _age <= 120) ? _age - 10 : 15,
-                      ),
-                      onSelectedItemChanged: (index) {
-                        tempAge = 10 + index;
-                        RitmoHapticsPolicy.selection();
-                      },
-                      children: List.generate(
-                        111,
-                        (i) => Center(
-                          child: Text(
-                            '${toPersianDigits(10 + i)} سال',
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+                child: sheetBody,
               ),
             ),
           ),

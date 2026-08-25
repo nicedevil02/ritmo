@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
@@ -371,24 +373,168 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                     title: 'مهلت قفل خودکار',
                     subtitle: timeoutLabels[_timeoutSeconds] ?? '${toPersianDigits(_timeoutSeconds)} ثانیه',
                     onTap: () {
-                      showCupertinoModalPopup<void>(
+                      showModalBottomSheet<void>(
                         context: context,
-                        builder: (ctx) => CupertinoActionSheet(
-                          title: const Text('انتخاب مهلت قفل خودکار'),
-                          actions: timeoutLabels.entries.map((e) {
-                            return CupertinoActionSheetAction(
-                              onPressed: () {
-                                _update('app_lock_timeout_seconds', e.key);
-                                Navigator.pop(ctx);
-                              },
-                              child: Text(e.value),
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (modalCtx) {
+                          final modalColors = modalCtx.colors;
+                          final isDark = modalCtx.isDark;
+                          final isGlass = modalCtx.isGlassEnabled;
+                          final blur = modalCtx.glassBlurSigma.clamp(0.0, 50.0);
+                          const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+                          final content = Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: modalColors.textSecondary.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: modalColors.primary.withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.timer,
+                                        color: modalColors.primary,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'انتخاب مهلت قفل خودکار',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: modalColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                ...timeoutLabels.entries.map((e) {
+                                  final isCurrent = _timeoutSeconds == e.key;
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    decoration: BoxDecoration(
+                                      color: isCurrent
+                                          ? modalColors.primary.withValues(alpha: isDark ? 0.18 : 0.12)
+                                          : (isDark
+                                              ? Colors.white.withValues(alpha: 0.04)
+                                              : Colors.black.withValues(alpha: 0.03)),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isCurrent
+                                            ? modalColors.primary.withValues(alpha: 0.5)
+                                            : (isDark
+                                                ? Colors.white.withValues(alpha: 0.08)
+                                                : Colors.black.withValues(alpha: 0.06)),
+                                        width: isCurrent ? 1.5 : 1.0,
+                                      ),
+                                    ),
+                                    child: ListTile(
+                                      dense: true,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      title: Text(
+                                        e.value,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                                          color: isCurrent ? modalColors.primary : modalColors.textPrimary,
+                                        ),
+                                      ),
+                                      trailing: isCurrent
+                                          ? Icon(
+                                              CupertinoIcons.checkmark_circle_fill,
+                                              color: modalColors.primary,
+                                              size: 20,
+                                            )
+                                          : null,
+                                      onTap: () {
+                                        RitmoHapticsPolicy.selection();
+                                        _update('app_lock_timeout_seconds', e.key);
+                                        Navigator.pop(modalCtx);
+                                      },
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          );
+
+                          final sheetBody = Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Material(
+                              type: MaterialType.transparency,
+                              child: content,
+                            ),
+                          );
+
+                          if (!isGlass) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: modalColors.surfaceElevated,
+                                borderRadius: sheetRadius,
+                                border: Border.all(
+                                  color: isDark ? modalColors.border : modalColors.divider,
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: sheetBody,
                             );
-                          }).toList(),
-                          cancelButton: CupertinoActionSheetAction(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('انصراف'),
-                          ),
-                        ),
+                          }
+
+                          return ClipRRect(
+                            borderRadius: sheetRadius,
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: modalColors.glassTint,
+                                  borderRadius: sheetRadius,
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.18)
+                                        : Colors.white.withValues(alpha: 0.70),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    borderRadius: sheetRadius,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                        Colors.white.withValues(alpha: 0.0),
+                                      ],
+                                      stops: const [0.0, 0.45],
+                                    ),
+                                  ),
+                                  child: sheetBody,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

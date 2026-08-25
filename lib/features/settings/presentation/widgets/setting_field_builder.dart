@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
@@ -113,34 +115,176 @@ class _SettingFieldState extends State<SettingField>
   }
 
   void _showResetSheet(BuildContext context, SettingDescriptor desc) {
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (modalCtx) => CupertinoActionSheet(
-        title: const Text(
-          'بازنشانی به مقدار پیش‌فرض',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        message: Text(
-          'آیا می‌خواهید «${desc.labelFa}» به مقدار پیش‌فرض بازگردد؟',
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.pop(modalCtx);
-              await SettingsService.instance.resetToDefault(desc.key);
-              if (context.mounted) {
-                RitmoToast.show(context, 'تنظیم به حالت پیش‌فرض بازگشت');
-              }
-            },
-            child: const Text('بازنشانی به پیش‌فرض'),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (modalCtx) {
+        final modalColors = modalCtx.colors;
+        final isDark = modalCtx.isDark;
+        final isGlass = modalCtx.isGlassEnabled;
+        final blur = modalCtx.glassBlurSigma.clamp(0.0, 50.0);
+        const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: modalColors.textSecondary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: modalColors.warning.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.arrow_counterclockwise,
+                      color: modalColors.warning,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'بازنشانی به مقدار پیش‌فرض',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: modalColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'آیا می‌خواهید «${desc.labelFa}» به مقدار پیش‌فرض بازگردد؟',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: modalColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        side: BorderSide(color: modalColors.border),
+                      ),
+                      onPressed: () => Navigator.pop(modalCtx),
+                      child: Text(
+                        'انصراف',
+                        style: TextStyle(color: modalColors.textSecondary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: modalColors.error,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(modalCtx);
+                        await SettingsService.instance.resetToDefault(desc.key);
+                        if (context.mounted) {
+                          RitmoToast.show(context, 'تنظیم به حالت پیش‌فرض بازگشت');
+                        }
+                      },
+                      child: const Text(
+                        'بازنشانی',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(modalCtx),
-          child: const Text('انصراف'),
-        ),
-      ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: modalColors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? modalColors.border : modalColors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: modalColors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -385,41 +529,200 @@ class _SettingFieldState extends State<SettingField>
       onTap: isEnabled
           ? () async {
               RitmoHaptics.tap();
-              final selected = await showCupertinoModalPopup<String>(
+              final selected = await showModalBottomSheet<String>(
                 context: context,
-                builder: (modalCtx) => CupertinoActionSheet(
-                  title: Text(
-                    desc.labelFa,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  message: desc.descriptionFa != null
-                      ? Text(desc.descriptionFa!)
-                      : null,
-                  actions: allowed.map((opt) {
-                    final label = desc.optionLabelsFa?[opt] ?? opt;
-                    final isCurrent = opt == currentVal;
-                    return CupertinoActionSheetAction(
-                      isDefaultAction: isCurrent,
-                      onPressed: () => Navigator.pop(modalCtx, opt),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: isCurrent
-                              ? colors.primary
-                              : colors.textPrimary,
-                          fontWeight: isCurrent
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (modalCtx) {
+                  final modalColors = modalCtx.colors;
+                  final isDark = modalCtx.isDark;
+                  final isGlass = modalCtx.isGlassEnabled;
+                  final blur = modalCtx.glassBlurSigma.clamp(0.0, 50.0);
+                  const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+                  final content = Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: modalColors.textSecondary.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: modalColors.primary.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                desc.icon ?? CupertinoIcons.list_bullet,
+                                color: modalColors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    desc.labelFa,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: modalColors.textPrimary,
+                                    ),
+                                  ),
+                                  if (desc.descriptionFa != null) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      desc.descriptionFa!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: modalColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: allowed.map((opt) {
+                                final label = desc.optionLabelsFa?[opt] ?? opt;
+                                final isCurrent = opt == currentVal;
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: isCurrent
+                                        ? modalColors.primary.withValues(alpha: isDark ? 0.18 : 0.12)
+                                        : (isDark
+                                            ? Colors.white.withValues(alpha: 0.04)
+                                            : Colors.black.withValues(alpha: 0.03)),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isCurrent
+                                          ? modalColors.primary.withValues(alpha: 0.5)
+                                          : (isDark
+                                              ? Colors.white.withValues(alpha: 0.08)
+                                              : Colors.black.withValues(alpha: 0.06)),
+                                      width: isCurrent ? 1.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    title: Text(
+                                      label,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                                        color: isCurrent ? modalColors.primary : modalColors.textPrimary,
+                                      ),
+                                    ),
+                                    trailing: isCurrent
+                                        ? Icon(
+                                            CupertinoIcons.checkmark_circle_fill,
+                                            color: modalColors.primary,
+                                            size: 20,
+                                          )
+                                        : null,
+                                    onTap: () {
+                                      RitmoHapticsPolicy.selection();
+                                      Navigator.pop(modalCtx, opt);
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  final sheetBody = Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: content,
+                    ),
+                  );
+
+                  if (!isGlass) {
+                    return Container(
+                      constraints: BoxConstraints(
+                        maxHeight: RitmoBreakpoints.sheetMaxHeight(modalCtx, factor: 0.7),
+                      ),
+                      decoration: BoxDecoration(
+                        color: modalColors.surfaceElevated,
+                        borderRadius: sheetRadius,
+                        border: Border.all(
+                          color: isDark ? modalColors.border : modalColors.divider,
+                          width: 1.0,
                         ),
                       ),
+                      child: sheetBody,
                     );
-                  }).toList(),
-                  cancelButton: CupertinoActionSheetAction(
-                    isDestructiveAction: true,
-                    onPressed: () => Navigator.pop(modalCtx),
-                    child: const Text('انصراف'),
-                  ),
-                ),
+                  }
+
+                  return Container(
+                    constraints: BoxConstraints(
+                      maxHeight: RitmoBreakpoints.sheetMaxHeight(modalCtx, factor: 0.7),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: sheetRadius,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: modalColors.glassTint,
+                            borderRadius: sheetRadius,
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.white.withValues(alpha: 0.70),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: sheetRadius,
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                  Colors.white.withValues(alpha: 0.0),
+                                ],
+                                stops: const [0.0, 0.45],
+                              ),
+                            ),
+                            child: sheetBody,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
 
               if (selected != null &&
@@ -707,28 +1010,61 @@ class _SettingFieldState extends State<SettingField>
                 minutes: minute,
               );
 
-              final picked = await showCupertinoModalPopup<String>(
+              final picked = await showModalBottomSheet<String>(
                 context: context,
-                builder: (modalCtx) => Container(
-                  height: 280,
-                  padding: const EdgeInsets.only(top: 6.0),
-                  margin: EdgeInsets.only(
-                    bottom: MediaQuery.of(modalCtx).viewInsets.bottom,
-                  ),
-                  color: CupertinoColors.systemBackground.resolveFrom(modalCtx),
-                  child: SafeArea(
-                    top: false,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (modalCtx) {
+                  final modalColors = modalCtx.colors;
+                  final isDark = modalCtx.isDark;
+                  final isGlass = modalCtx.isGlassEnabled;
+                  final blur = modalCtx.glassBlurSigma.clamp(0.0, 50.0);
+                  const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+                  final content = Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: modalColors.textSecondary.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            CupertinoButton(
-                              child: const Text('انصراف'),
+                            TextButton(
                               onPressed: () => Navigator.pop(modalCtx),
+                              child: Text(
+                                'انصراف',
+                                style: TextStyle(color: modalColors.textSecondary),
+                              ),
                             ),
-                            CupertinoButton(
-                              child: const Text('تایید'),
+                            Text(
+                              desc.labelFa,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: modalColors.textPrimary,
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: modalColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
                               onPressed: () {
                                 final h = selectedDuration.inHours
                                     .toString()
@@ -738,10 +1074,13 @@ class _SettingFieldState extends State<SettingField>
                                     .padLeft(2, '0');
                                 Navigator.pop(modalCtx, '$h:$m');
                               },
+                              child: const Text('تایید'),
                             ),
                           ],
                         ),
-                        Expanded(
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 180,
                           child: CupertinoTimerPicker(
                             mode: CupertinoTimerPickerMode.hm,
                             initialTimerDuration: selectedDuration,
@@ -752,8 +1091,64 @@ class _SettingFieldState extends State<SettingField>
                         ),
                       ],
                     ),
-                  ),
-                ),
+                  );
+
+                  final sheetBody = Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: content,
+                    ),
+                  );
+
+                  if (!isGlass) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: modalColors.surfaceElevated,
+                        borderRadius: sheetRadius,
+                        border: Border.all(
+                          color: isDark ? modalColors.border : modalColors.divider,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: sheetBody,
+                    );
+                  }
+
+                  return ClipRRect(
+                    borderRadius: sheetRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: modalColors.glassTint,
+                          borderRadius: sheetRadius,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.70),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: sheetRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.45],
+                            ),
+                          ),
+                          child: sheetBody,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
 
               if (picked != null && picked != value && context.mounted) {

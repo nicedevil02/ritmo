@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -119,52 +120,244 @@ class _IdentityHeaderState extends State<IdentityHeader>
   /// باز کردن شیت تعاملی انتخاب عکس پروفایل
   Future<void> _pickAvatar() async {
     RitmoHapticsPolicy.selection();
-    await showCupertinoModalPopup<void>(
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+    await showModalBottomSheet<void>(
       context: context,
-      builder: (ctx) => CupertinoActionSheet(
-        title: const Text('ویرایش عکس پروفایل'),
-        message: const Text('تصویر جدیدی از گالری انتخاب کنید یا عکس بگیرید.'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final picker = ImagePicker();
-              final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-              if (picked != null) {
-                await SettingsService.instance.set('user_avatar_path', picked.path);
-                if (mounted) RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
-              }
-            },
-            child: const Text('انتخاب از گالری'),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final content = Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'ویرایش عکس نمایه',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'یک تصویر جدید برای نمایهٔ خود انتخاب کنید',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // Gallery Button
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(CupertinoIcons.photo_on_rectangle, size: 20, color: colors.primary),
+                  ),
+                  title: Text(
+                    'انتخاب از گالری',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                    if (picked != null) {
+                      await SettingsService.instance.set('user_avatar_path', picked.path);
+                      if (mounted) {
+                        setState(() => _avatarPath = picked.path);
+                        RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
+                      }
+                    }
+                  },
+                ),
+              ),
+
+              // Camera Button
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(CupertinoIcons.camera_fill, size: 20, color: colors.primary),
+                  ),
+                  title: Text(
+                    'گرفتن عکس جدید (دوربین)',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final picker = ImagePicker();
+                    final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+                    if (picked != null) {
+                      await SettingsService.instance.set('user_avatar_path', picked.path);
+                      if (mounted) {
+                        setState(() => _avatarPath = picked.path);
+                        RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
+                      }
+                    }
+                  },
+                ),
+              ),
+
+              // Delete avatar button if exists
+              if (_avatarPath.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: colors.medicalRed.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colors.medicalRed.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.medicalRed.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(CupertinoIcons.trash, size: 20, color: colors.medicalRed),
+                    ),
+                    title: Text(
+                      'حذف عکس پروفایل',
+                      style: TextStyle(
+                        color: colors.medicalRed,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await SettingsService.instance.set('user_avatar_path', '');
+                      if (mounted) {
+                        setState(() => _avatarPath = '');
+                        RitmoToast.show(context, 'عکس پروفایل حذف شد.');
+                      }
+                    },
+                  ),
+                ),
+            ],
           ),
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final picker = ImagePicker();
-              final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
-              if (picked != null) {
-                await SettingsService.instance.set('user_avatar_path', picked.path);
-                if (mounted) RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
-              }
-            },
-            child: const Text('گرفتن عکس جدید (دوربین)'),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
           ),
-          if (_avatarPath.isNotEmpty)
-            CupertinoActionSheetAction(
-              isDestructiveAction: true,
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await SettingsService.instance.set('user_avatar_path', '');
-                if (mounted) RitmoToast.show(context, 'عکس پروفایل حذف شد.');
-              },
-              child: const Text('حذف عکس پروفایل'),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
             ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(ctx),
-          child: const Text('انصراف'),
-        ),
-      ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

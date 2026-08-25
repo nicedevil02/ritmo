@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/platform/alarm_platform.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class AlarmDiagnosticsSheet extends StatefulWidget {
   const AlarmDiagnosticsSheet({super.key});
@@ -100,89 +103,155 @@ class _AlarmDiagnosticsSheetState extends State<AlarmDiagnosticsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    final content = Padding(
       padding: const EdgeInsets.all(20),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'عیب‌یابی و سلامت آلارم‌ها',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else ...[
-              _buildStatusCard(
-                title: 'مجوز آلارم دقیق (Exact Alarm)',
-                status: _hasExactAlarmPermission ? 'فعال' : 'غیرفعال (نیازمند مجوز)',
-                isOk: _hasExactAlarmPermission,
-                onTap: _hasExactAlarmPermission
-                    ? null
-                    : () => sl<AlarmPlatform>().requestExactAlarmPermission(),
-              ),
-              const SizedBox(height: 10),
-              _buildStatusCard(
-                title: 'یادآورهای در انتظار (Pending)',
-                status: '$_pendingCount عدد',
-                isOk: true,
-              ),
-              const SizedBox(height: 10),
-              _buildStatusCard(
-                title: 'خطاهای ثبت نیتیو (Native Failures)',
-                status: '$_nativeFailureCount خطا',
-                isOk: _nativeFailureCount == 0,
-              ),
-              const SizedBox(height: 10),
-              _buildStatusCard(
-                title: 'ناهمخوانی ثبت نیتیو',
-                status: _discrepancies.isEmpty ? 'هیچ' : '${_discrepancies.length} مورد ثبت نشده',
-                isOk: _discrepancies.isEmpty,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _triggerTestAlarm,
-                icon: const Icon(Icons.alarm_on),
-                label: const Text('تست آلارم ۵ ثانیه‌ای (صفحه قفل)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'عیب‌یابی و سلامت آلارم‌ها',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: colors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _repairSyncAlarms,
-                icon: const Icon(Icons.build),
-                label: const Text('بازسازی و همگام‌سازی مجدد آلارم‌ها'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+              IconButton(
+                icon: Icon(Icons.close, color: colors.textSecondary),
+                onPressed: () => Navigator.pop(context),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          if (_isLoading)
+            Center(child: CircularProgressIndicator(color: colors.primary))
+          else ...[
+            _buildStatusCard(
+              title: 'مجوز آلارم دقیق (Exact Alarm)',
+              status: _hasExactAlarmPermission ? 'فعال' : 'غیرفعال (نیازمند مجوز)',
+              isOk: _hasExactAlarmPermission,
+              onTap: _hasExactAlarmPermission
+                  ? null
+                  : () => sl<AlarmPlatform>().requestExactAlarmPermission(),
+            ),
+            const SizedBox(height: 10),
+            _buildStatusCard(
+              title: 'یادآورهای در انتظار (Pending)',
+              status: '$_pendingCount عدد',
+              isOk: true,
+            ),
+            const SizedBox(height: 10),
+            _buildStatusCard(
+              title: 'یادآورهای از دست رفته (Missed)',
+              status: '$_missedCount عدد',
+              isOk: _missedCount == 0,
+            ),
+            const SizedBox(height: 10),
+            _buildStatusCard(
+              title: 'خطاهای ثبت نیتیو (Native Failures)',
+              status: '$_nativeFailureCount خطا',
+              isOk: _nativeFailureCount == 0,
+            ),
+            const SizedBox(height: 10),
+            _buildStatusCard(
+              title: 'ناهمخوانی ثبت نیتیو',
+              status: _discrepancies.isEmpty ? 'هیچ' : '${_discrepancies.length} مورد ثبت نشده',
+              isOk: _discrepancies.isEmpty,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _triggerTestAlarm,
+              icon: const Icon(Icons.alarm_on),
+              label: const Text('تست آلارم ۵ ثانیه‌ای (صفحه قفل)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _repairSyncAlarms,
+              icon: const Icon(Icons.build),
+              label: const Text('بازسازی و همگام‌سازی مجدد آلارم‌ها'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: BorderSide(color: colors.border),
+                foregroundColor: colors.textPrimary,
+              ),
+            ),
           ],
+        ],
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          top: false,
+          child: content,
+        ),
+      ),
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
+          ),
         ),
       ),
     );

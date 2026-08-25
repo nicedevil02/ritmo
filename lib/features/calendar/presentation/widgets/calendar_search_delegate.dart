@@ -70,10 +70,15 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
 
         final hits = snapshot.data ?? [];
         if (hits.isEmpty) {
-          return const Directionality(
+          return Directionality(
             textDirection: TextDirection.rtl,
             child: Center(
-              child: Text('هیچ نتیجه‌ای یافت نشد.', style: TextStyle()),
+              child: Text(
+                'هیچ نتیجه‌ای یافت نشد.',
+                style: context.t.bodyMedium?.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+              ),
             ),
           );
         }
@@ -95,7 +100,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
                   title: 'امروز (${toPersianDigits(todayHits.length)})',
                 ),
                 ...todayHits.map((h) => _HitTile(hit: h, onSelected: close)),
-                const SizedBox(height: 12),
+                SizedBox(height: context.metrics.spaceMd),
               ],
               if (recurringHits.isNotEmpty) ...[
                 _SearchSectionHeader(
@@ -105,7 +110,7 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
                 ...recurringHits.map(
                   (h) => _HitTile(hit: h, onSelected: close),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: context.metrics.spaceMd),
               ],
               if (otherHits.isNotEmpty) ...[
                 _SearchSectionHeader(
@@ -145,9 +150,20 @@ class CalendarSearchDelegate extends SearchDelegate<AgendaItem?> {
             final icon = domainIcon(item.domain);
             return ListTile(
               leading: Icon(icon, color: color),
-              title: Text(item.title, style: const TextStyle()),
+              title: Text(
+                item.title,
+                style: context.t.titleSmall?.copyWith(
+                  color: context.colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               subtitle: item.subtitle != null
-                  ? Text(item.subtitle!, style: const TextStyle())
+                  ? Text(
+                      item.subtitle!,
+                      style: context.t.bodySmall?.copyWith(
+                        color: context.colors.textSecondary,
+                      ),
+                    )
                   : null,
               onTap: () {
                 onItemSelected?.call(item);
@@ -167,16 +183,14 @@ class _SearchSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+      padding: EdgeInsets.symmetric(
+        vertical: context.metrics.spaceSm,
+        horizontal: context.metrics.spaceXs,
+      ),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 13.0,
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.primary,
-        ),
+        style: RitmoTextStyles.sectionHeader(context.colors.primary),
       ),
     );
   }
@@ -196,13 +210,18 @@ class _HitTile extends StatelessWidget {
       leading: Icon(icon, color: color),
       title: Text(
         hit.title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: context.t.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: context.colors.textPrimary,
+        ),
       ),
       subtitle: Text(
         hit.isRecurring
             ? 'تکرارشونده${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}'
             : '${hit.dateStr != null ? toPersianDigits(hit.dateStr) : 'بدون تاریخ'}${hit.subtitle != null ? ' · ${hit.subtitle}' : ''}',
-        style: const TextStyle(fontSize: 12),
+        style: context.t.bodySmall?.copyWith(
+          color: context.colors.textSecondary,
+        ),
       ),
       onTap: () {
         // Construct target item for router

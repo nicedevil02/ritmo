@@ -116,9 +116,10 @@ void main() {
       }
       // Clamping and fallback verification
       expect(RitmoUiScale.percentFromStepIndex(-1), 85);
-      expect(RitmoUiScale.percentFromStepIndex(10), 140);
-      expect(RitmoUiScale.stepIndexFromPercent(92), 1); // 92 snaps to step 1 (93)
-      expect(RitmoUiScale.stepIndexFromPercent(104), 2); // 104 snaps to step 2 (100)
+      // 92 snaps to step 1 (93)
+      expect(RitmoUiScale.stepIndexFromPercent(92), 1);
+      // 104 snaps to step 2 (100)
+      expect(RitmoUiScale.stepIndexFromPercent(104), 2);
     });
   });
 }

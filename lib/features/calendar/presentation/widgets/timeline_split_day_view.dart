@@ -4,7 +4,6 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_geometry.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
-import 'package:ritmo/features/calendar/presentation/logic/direct_manipulation_eligibility.dart';
 import 'package:ritmo/features/calendar/presentation/logic/split_day_scroll_helper.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_column_header.dart';
 import 'package:ritmo/features/calendar/presentation/widgets/timeline_grid.dart';

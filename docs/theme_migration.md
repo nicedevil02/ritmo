@@ -1,6 +1,6 @@
 # Ritmo Aurora Theme Migration Audit Report
 
-Generated At: 2026-08-25T08:18:11.182278
+Generated At: 2026-08-25T09:46:53.451930
 
 ## Audit Metrics Summary
 
@@ -21,8 +21,8 @@ Generated At: 2026-08-25T08:18:11.182278
 | Core Local Font Family | `coreDuplicateFont` | `lib/core/` | 146 | 146 | OK |
 | Core Scattered BackdropFilter | `coreScatteredBlur` | `lib/core/` | 6 | 6 | OK |
 | Core Manual BoxShadow | `coreManualShadow` | `lib/core/` | 9 | 9 | OK |
-| Raw Font Size | `rawFontSize` | `lib/features/` | 3493 | 3493 | OK |
-| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4380 | 4395 | IMPROVED (4380 < 4395) |
+| Raw Font Size | `rawFontSize` | `lib/features/` | 3491 | 3493 | IMPROVED (3491 < 3493) |
+| Raw Geometry Literals | `rawGeometryLiteral` | `lib/features/` | 4379 | 4380 | IMPROVED (4379 < 4380) |
 
 ## Top Offenders by Metric
 
@@ -186,7 +186,7 @@ Total: 9 occurrences
 | `lib/core/utils/ritmo_date_picker.dart` | 1 |
 
 ### Raw Font Size (`rawFontSize`)
-Total: 3493 occurrences
+Total: 3491 occurrences
 
 | File | Occurrences |
 |---|---|
@@ -197,7 +197,7 @@ Total: 3493 occurrences
 | `lib/features/notes/presentation/screens/notebook_screen.dart` | 47 |
 
 ### Raw Geometry Literals (`rawGeometryLiteral`)
-Total: 4380 occurrences
+Total: 4379 occurrences
 
 | File | Occurrences |
 |---|---|

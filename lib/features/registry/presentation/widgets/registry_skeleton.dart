@@ -93,8 +93,8 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
               borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
             ),
             child: SizedBox(
-              width: CalendarGeometry.effectiveIconContainerSize(context),
-              height: CalendarGeometry.effectiveIconContainerSize(context),
+              width: 40.0 * context.metrics.densityFactor,
+              height: 40.0 * context.metrics.densityFactor,
             ),
           ),
 

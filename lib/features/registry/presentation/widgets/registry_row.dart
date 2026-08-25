@@ -92,8 +92,8 @@ class _RegistryRowState extends State<RegistryRow> {
             children: [
               // Domain icon container (dynamic, rounded rect)
               Container(
-                width: CalendarGeometry.effectiveIconContainerSize(context),
-                height: CalendarGeometry.effectiveIconContainerSize(context),
+                width: 40.0 * context.metrics.densityFactor,
+                height: 40.0 * context.metrics.densityFactor,
                 decoration: BoxDecoration(
                   color: domainColor.withValues(alpha: isDark ? 0.12 : 0.08),
                   borderRadius: BorderRadius.circular(RitmoRadius.iconButton),

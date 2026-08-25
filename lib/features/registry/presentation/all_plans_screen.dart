@@ -384,7 +384,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),
       child: SizedBox(
-        height: CalendarGeometry.effectiveSearchBarHeight(context),
+        height: context.metrics.touchTarget,
         child: TextField(
           controller: _searchController,
           onChanged: _onSearchChanged,

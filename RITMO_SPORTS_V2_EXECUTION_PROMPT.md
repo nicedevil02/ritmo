@@ -838,7 +838,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T8 — مرحلهٔ ۵: `COMPLEMENT` (قدرتی پشتیبان لنگر)
+### - [x] S3-T8 — مرحلهٔ ۵: `COMPLEMENT` (قدرتی پشتیبان لنگر) — 64b8bba2
 
 **کار:** `_addComplements()`: برای هر لنگر، از `mv_kind_profile.complementFocus` تمرکز قدرتی روزهای قدرتی را تعیین کن و `reasonKey = 'mv_reason_complement'` با پارامترهای `kind` و `focus` بگذار.
 
@@ -1458,7 +1458,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T5 | DONE | 2a339dfd | پیاده‌سازی مرحله ۲ HARD_LIMITS در PlanEngine، فیلتر فصل و محدودیت‌های جسمی و معافیت لنگرها با یادداشت |
 | S3-T6 | DONE | 2ebdd84c | پیاده‌سازی مرحله ۳ ADJACENCY در PlanEngine طبق قواعد قطعی ADJ-1 تا ADJ-7 شامل تحرک قبل و ریکاوری بعد و تعارض لنگرهای متوالی |
 | S3-T7 | DONE | 838d3f20 | پیاده‌سازی مرحله ۴ FILL با سقف رشد و اولویت ۲ روز قدرتی و جبران کسری فعالیت معادل متوسط |
-| S3-T8 |  |  |  |
+| S3-T8 | DONE | 64b8bba2 | پیاده‌سازی مرحله ۵ COMPLEMENT برای تمرکز قدرتی پشتیبان لنگرها با reasonKey = mv_reason_complement |
 | S3-T9 |  |  |  |
 | S3-T10 |  |  |  |
 | S4-T1 |  |  |  |

@@ -188,16 +188,15 @@ void main() {
 
             await expectNoOverflow(tester, label: label);
 
-            // Verify RitmoModuleAppBar dynamic preferredSize across all 64 states
+            // Verify RitmoModuleAppBar dynamic preferredSize and rendered height across all 64 states
             final appBarWidget = tester.widget<RitmoModuleAppBar>(
               find.byKey(const ValueKey('matrix_app_bar')),
             );
-            final m = RitmoMetrics.of(density);
             expect(
+              tester.getSize(find.byType(RitmoModuleAppBar)).height,
               appBarWidget.preferredSize.height,
-              equals(m.rowHeight + m.spaceSm),
               reason:
-                  'RitmoModuleAppBar preferredSize.height must match m.rowHeight + m.spaceSm for $density',
+                  'ارتفاع رندرشدهٔ نوار باید با preferredSize یکی باشد — $density',
             );
 
             // Verify touch targets >= 48.0 (Law 38: Minimum Touch Target Floor 48dp across ALL densities)

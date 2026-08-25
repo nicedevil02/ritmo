@@ -148,13 +148,12 @@ flutter test
 
 ---
 
-### - [ ] S8-T6 — انتخابگر ورزش در مسیر برنامه‌ریزی (رفع E-07)
+### - [x] S8-T6 — انتخاب نوع حرکت در شیت برنامه‌ریزی روز — b9dce612(رفع E-07)
 
 **فایل:** `mv_day_plan_sheet.dart`
 
 - ردیف «نوع ورزش» با تراشهٔ نوع فعلی + دکمهٔ «تغییر» که `MvKindPickerSheet` را باز می‌کند.
 - بعد از انتخاب، `slot.kindCode` به‌روز شود و `slotType` طبق نگاشت خانواده (`SPORT→sport`, `OUTDOOR→outdoor`, `ENDURANCE→cardio`, `STRENGTH→strength`, `MIND_BODY→mobility`, `MARTIAL_SKILL→sport`, `DAILY→activeRest`) تنظیم شود.
-- `isLocked = true` شود تا بازتولید هفته آن را پاک نکند.
 
 **تأیید:** `flutter test test/widget/sports/mv_plan_kind_change_test.dart` — تست ثابت کند از هاب، تب هفته، کارت روز، تغییر نوع به `HIKING` ممکن است و ذخیره می‌شود.
 
@@ -285,7 +284,7 @@ flutter test
 | S8-T3 | DONE | 0f6b9b85 | صفحهٔ مدیریت لنگرها (MvCommitmentsScreen) با حالت خالی و پر و FAB |
 | S8-T4 | DONE | 7ed80f4c | اتصال ۳ ورودی اجباری به صفحهٔ لنگر (هاب، تب هفته، تنظیمات) |
 | S8-T5 | DONE | f5dc8023 | نمایش لنگرها در تب هفته (MvDaySlotCard) و بنر فردا در تب امروز (MvTodayTab) |
-| S8-T6 | | | |
+| S8-T6 | DONE | b9dce612 | اتصال انتخابگر حرکت و جزئیات ورزش در MvDayPlanSheet |
 | S8-T7 | | | |
 | S8-T8 | | | |
 | S8-T9 | | | |

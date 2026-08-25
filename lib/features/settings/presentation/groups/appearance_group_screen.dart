@@ -703,9 +703,15 @@ class _PalettePreviewCard extends StatelessWidget {
                     // Header with name and radio
                     Row(
                       children: [
-                        _PaletteColorStrips(
-                          palette: palette,
-                          brightness: activeBrightness,
+                        Wrap(
+                          spacing: innerMetrics.spaceXs,
+                          runSpacing: innerMetrics.spaceXs,
+                          children: [
+                            _ColorDot(color: innerColors.primary),
+                            _ColorDot(color: innerColors.accent),
+                            _ColorDot(color: innerColors.surface),
+                            _ColorDot(color: innerColors.card),
+                          ],
                         ),
                         SizedBox(width: innerMetrics.spaceSm),
                         Expanded(
@@ -723,7 +729,7 @@ class _PalettePreviewCard extends StatelessWidget {
                         ),
                         if (isSelected)
                           Container(
-                            padding: EdgeInsets.all(innerMetrics.spaceXxs),
+                            padding: EdgeInsets.all(innerMetrics.spaceXs),
                             decoration: BoxDecoration(
                               color: innerColors.primary,
                               shape: BoxShape.circle,
@@ -746,7 +752,7 @@ class _PalettePreviewCard extends StatelessWidget {
                         color: innerColors.textPrimary,
                       ),
                     ),
-                    SizedBox(height: innerMetrics.spaceXxs),
+                    SizedBox(height: innerMetrics.spaceXs),
                     Text(
                       'این پیش‌نمایش نحوه رندر رنگ‌های پالت را نشان می‌دهد',
                       style: innerContext.t.bodySmall?.copyWith(

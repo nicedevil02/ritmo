@@ -109,7 +109,7 @@ class StreamingChatService {
     var errorCode = '';
 
     final config = await AiConnectionRepository.instance.load(
-      slot: persona?.inferenceProfile.slot ?? AiSlot.assistant,
+      slot: AiSlot.assistant,
     );
     final isChatGptWeb =
         config.providerPresetId == 'chatgpt_web' ||
@@ -146,12 +146,12 @@ class StreamingChatService {
         personaId: personaId,
         personaTitle: persona?.displayName,
         personaSystemPrompt: systemPrompt,
-        inferenceProfile: persona?.inferenceProfile,
+        inferenceProfile: null,
         contextSummary: contextLines.isNotEmpty
             ? contextLines.join('\n')
             : null,
         recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-        slot: persona?.inferenceProfile.slot ?? AiSlot.assistant,
+        slot: AiSlot.assistant,
       );
 
       var isTruncated = false;

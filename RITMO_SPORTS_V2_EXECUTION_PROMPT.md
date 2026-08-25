@@ -904,7 +904,7 @@ CREATE INDEX IF NOT EXISTS idx_movement_sessions_kind_date
 
 ---
 
-### - [ ] S4-T2 — متریک‌ها در `MvSession`
+### - [x] S4-T2 — متریک‌ها در `MvSession` — 30672336
 
 **فایل:** `domain/models/mv_session.dart`
 
@@ -1462,7 +1462,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T9 | DONE | a0c9e048 | پیاده‌سازی مرحله ۶ FALLBACK با گارد ۱۰ دقیقه حداقل مؤثر و پاس‌شدن تست ۸ پروفایل حاد |
 | S3-T10 | DONE | e8163245 | پیاده‌سازی سویت ۳ مسیر طلایی سرتاسری و تأیید کامل اجرای شش مرحله PlanEngine |
 | S4-T1 | DONE | 0a51fa65 | مایگریشن v127 برای ۷ ستون متریک جلسه در movement_sessions و ایندکس نوع ورزش و تاریخ |
-| S4-T2 |  |  |  |
+| S4-T2 | DONE | 30672336 | افزودن ۷ فیلد متریک به MvSession با تبدیل toMap/fromMap و گترهای محاسباتی sessionLoad و paceSecPerKm |
 | S4-T3 |  |  |  |
 | S4-T4 |  |  |  |
 | S4-T5 |  |  |  |

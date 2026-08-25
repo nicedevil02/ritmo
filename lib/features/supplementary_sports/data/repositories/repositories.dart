@@ -1,6 +1,7 @@
 export 'mv_commitment_repository.dart';
 export 'mv_daily_checkin_repository.dart';
 export 'mv_exercise_repository.dart';
+export 'mv_kind_profile_repository.dart';
 export 'mv_kind_repository.dart';
 export 'mv_pr_repository.dart';
 export 'mv_prescription_repository.dart';

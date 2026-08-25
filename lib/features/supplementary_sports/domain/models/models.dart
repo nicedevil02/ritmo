@@ -5,6 +5,7 @@ export 'mv_daily_checkin.dart';
 export 'mv_decision.dart';
 export 'mv_enums.dart';
 export 'mv_exercise.dart';
+export 'mv_kind_profile.dart';
 export 'mv_movement_kind.dart';
 export 'mv_personal_record.dart';
 export 'mv_session.dart';

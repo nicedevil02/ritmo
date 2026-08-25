@@ -336,6 +336,8 @@ class SupplementarySportsTables {
         legacyPlanId TEXT,
         workoutPlanId TEXT,
         workoutLogId TEXT,
+        reasonKey TEXT,
+        reasonParams TEXT,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       );
@@ -345,6 +347,8 @@ class SupplementarySportsTables {
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'routineId', 'TEXT');
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'plannedTime', 'TEXT');
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'sourceRef', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'reasonKey', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'reasonParams', 'TEXT');
 
     await db.execute(
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',

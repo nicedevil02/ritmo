@@ -8,6 +8,7 @@ export 'mv_exercise.dart';
 export 'mv_kind_profile.dart';
 export 'mv_movement_kind.dart';
 export 'mv_personal_record.dart';
+export 'mv_reason_keys.dart';
 export 'mv_session.dart';
 export 'mv_set_log.dart';
 export 'mv_slot.dart';

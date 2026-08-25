@@ -44,7 +44,11 @@ class PlanEngine {
           .where((s) => s.dateIso == dayIso && s.isLocked)
           .firstOrNull;
       if (existingLocked != null) {
-        slots.add(existingLocked);
+        slots.add(
+          existingLocked.copyWith(
+            reasonKey: existingLocked.reasonKey ?? MvReasonKeys.anchor,
+          ),
+        );
         continue;
       }
 
@@ -63,6 +67,7 @@ class PlanEngine {
             coachNoteFa:
                 'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
             source: 'GENERATED',
+            reasonKey: MvReasonKeys.restGuaranteed,
             status: MvSlotStatus.planned,
             createdAt: now,
             updatedAt: now,
@@ -92,6 +97,8 @@ class PlanEngine {
                 ? 'این هفته سبک‌تر تمرین می‌کنیم تا بدنت ریکاوری شود و برای هفتهٔ بعد آماده باشی.'
                 : 'تمرکز روی کنترل حرکت و انقباض مناسب عضلات.',
             source: 'GENERATED',
+            reasonKey: MvReasonKeys.strengthQuota,
+            reasonParams: {'days': profile.trainingDays.length.toString()},
             status: MvSlotStatus.planned,
             createdAt: now,
             updatedAt: now,
@@ -109,6 +116,8 @@ class PlanEngine {
     return MvDecision<List<MvSlot>>(
       value: slots,
       reasonFa: reasonFa,
+      reasonKey: MvReasonKeys.strengthQuota,
+      reasonParams: {'days': profile.trainingDays.length.toString()},
       sources: const ['profile', 'calendar'],
       confidence: 1.0,
       hasEnoughData: true,

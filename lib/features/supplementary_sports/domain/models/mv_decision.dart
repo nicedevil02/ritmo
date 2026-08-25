@@ -17,12 +17,20 @@ class MvDecision<T> {
   /// Indicates whether sufficient baseline data existed to make an informed decision.
   final bool hasEnoughData;
 
+  /// Key identifier for the reason (from MvReasonKeys).
+  final String? reasonKey;
+
+  /// Parameters for templating reason string.
+  final Map<String, String>? reasonParams;
+
   const MvDecision({
     required this.value,
     required this.reasonFa,
     this.sources = const [],
     this.confidence = 1.0,
     this.hasEnoughData = true,
+    this.reasonKey,
+    this.reasonParams,
   });
 
   MvDecision<R> map<R>(R Function(T v) transform) {
@@ -32,9 +40,12 @@ class MvDecision<T> {
       sources: sources,
       confidence: confidence,
       hasEnoughData: hasEnoughData,
+      reasonKey: reasonKey,
+      reasonParams: reasonParams,
     );
   }
 
   @override
-  String toString() => 'MvDecision(value: $value, reasonFa: "$reasonFa", confidence: $confidence, hasEnoughData: $hasEnoughData)';
+  String toString() =>
+      'MvDecision(value: $value, reasonKey: $reasonKey, reasonFa: "$reasonFa", confidence: $confidence, hasEnoughData: $hasEnoughData)';
 }

@@ -17,8 +17,15 @@ class MvSession {
   final String? targetJson;
   final String? liveJson;
   final String? workoutLogId;
-  final MvSessionFeeling? overallFeeling;
+  final int? overallFeeling;
   final String? note;
+  final double? distanceM;
+  final double? elevationGainM;
+  final int? laps;
+  final double? packWeightKg;
+  final int? rpe1To10;
+  final String? effortSource;
+  final int? routeId;
   final int createdAt;
   final int updatedAt;
 
@@ -38,13 +45,21 @@ class MvSession {
     this.workoutLogId,
     this.overallFeeling,
     this.note,
+    this.distanceM,
+    this.elevationGainM,
+    this.laps,
+    this.packWeightKg,
+    this.rpe1To10,
+    this.effortSource,
+    this.routeId,
     required this.createdAt,
     required this.updatedAt,
   });
 
   bool get isActive => status == MvSessionStatus.active;
   bool get isPaused => status == MvSessionStatus.paused;
-  bool get isFinished => status == MvSessionStatus.completed || status == MvSessionStatus.partial;
+  bool get isFinished =>
+      status == MvSessionStatus.completed || status == MvSessionStatus.partial;
 
   int get elapsedMs {
     final now = endedAt ?? DateTime.now().millisecondsSinceEpoch;
@@ -54,6 +69,15 @@ class MvSession {
   }
 
   int get elapsedMinutes => (elapsedMs / 60000).round();
+
+  int? get sessionLoad => (rpe1To10 != null && elapsedMinutes > 0)
+      ? rpe1To10! * elapsedMinutes
+      : null;
+
+  double? get paceSecPerKm =>
+      (distanceM != null && distanceM! > 0 && elapsedMs > 0)
+      ? (elapsedMs / 1000.0) / (distanceM! / 1000.0)
+      : null;
 
   MvSession copyWith({
     String? id,
@@ -69,8 +93,15 @@ class MvSession {
     String? targetJson,
     String? liveJson,
     String? workoutLogId,
-    MvSessionFeeling? overallFeeling,
+    int? overallFeeling,
     String? note,
+    double? distanceM,
+    double? elevationGainM,
+    int? laps,
+    double? packWeightKg,
+    int? rpe1To10,
+    String? effortSource,
+    int? routeId,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -90,6 +121,13 @@ class MvSession {
       workoutLogId: workoutLogId ?? this.workoutLogId,
       overallFeeling: overallFeeling ?? this.overallFeeling,
       note: note ?? this.note,
+      distanceM: distanceM ?? this.distanceM,
+      elevationGainM: elevationGainM ?? this.elevationGainM,
+      laps: laps ?? this.laps,
+      packWeightKg: packWeightKg ?? this.packWeightKg,
+      rpe1To10: rpe1To10 ?? this.rpe1To10,
+      effortSource: effortSource ?? this.effortSource,
+      routeId: routeId ?? this.routeId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -110,6 +148,15 @@ class MvSession {
       'targetJson': targetJson,
       'liveJson': liveJson,
       'workoutLogId': workoutLogId,
+      'overallFeeling': overallFeeling,
+      'note': note,
+      'distanceM': distanceM,
+      'elevationGainM': elevationGainM,
+      'laps': laps,
+      'packWeightKg': packWeightKg,
+      'rpe1To10': rpe1To10,
+      'effortSource': effortSource,
+      'routeId': routeId,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -118,7 +165,7 @@ class MvSession {
   factory MvSession.fromMap(Map<String, dynamic> map) {
     return MvSession(
       id: map['id'] as String,
-      kindCode: (map['kindCode'] as String?) ?? 'bodyweight',
+      kindCode: (map['kindCode'] as String?) ?? 'BODYWEIGHT',
       routineId: map['routineId'] as String?,
       occurrenceId: map['occurrenceId'] as String?,
       prescriptionId: map['prescriptionId'] as String?,
@@ -130,8 +177,21 @@ class MvSession {
       targetJson: map['targetJson'] as String?,
       liveJson: map['liveJson'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      overallFeeling: (map['overallFeeling'] as num?)?.toInt(),
+      note: map['note'] as String?,
+      distanceM: (map['distanceM'] as num?)?.toDouble(),
+      elevationGainM: (map['elevationGainM'] as num?)?.toDouble(),
+      laps: (map['laps'] as num?)?.toInt(),
+      packWeightKg: (map['packWeightKg'] as num?)?.toDouble(),
+      rpe1To10: (map['rpe1To10'] as num?)?.toInt(),
+      effortSource: map['effortSource'] as String?,
+      routeId: (map['routeId'] as num?)?.toInt(),
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

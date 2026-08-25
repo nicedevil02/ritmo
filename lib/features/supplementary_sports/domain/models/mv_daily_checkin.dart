@@ -1,10 +1,10 @@
 /// Daily Check-in Model (Single Source of Truth: ss_daily_checkin).
 class MvDailyCheckin {
   final String dateIso;
-  final int? energy;         // 1..5
-  final int? soreness;       // 1..5
-  final int? fatigue;        // 1..5
-  final int? painLevel;      // 0..10
+  final int? energy; // 1..5
+  final int? soreness; // 1..5
+  final int? fatigue; // 1..5
+  final int? painLevel; // 0..10
   final int? availableMinutes;
   final String? note;
   final int createdAt;
@@ -45,8 +45,12 @@ class MvDailyCheckin {
       painLevel: (map['painLevel'] as num?)?.toInt(),
       availableMinutes: (map['availableMinutes'] as num?)?.toInt(),
       note: map['note'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

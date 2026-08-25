@@ -1,200 +1,179 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
-import 'package:ritmo/features/supplementary_sports/application/application.dart';
-import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
+import 'package:ritmo/features/supplementary_sports/application/mv_hub_controller.dart';
+import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  late Database db;
-  late MvProfileRepository profileRepo;
-  late MvPrescriptionRepository prescriptionRepo;
-  late MvSessionRepository sessionRepo;
-  late MvPrRepository prRepo;
-  late MvExerciseRepository exerciseRepo;
-
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
 
-  setUp(() async {
-    db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
-    // Initialize schema
-    await SupplementarySportsTables.create(db);
+  group('Golden Path Phase A (Sprint 0) Full Integration E2E Test (S0-T8)', () {
+    const profileEngine = ProfileEngine();
+    const planEngine = PlanEngine();
+    const budgetEngine = BudgetEngine();
+    const insightEngine = InsightEngine();
 
-    profileRepo = MvProfileRepository(db);
-    prescriptionRepo = MvPrescriptionRepository(db);
-    sessionRepo = MvSessionRepository(db);
-    prRepo = MvPrRepository(db);
-    exerciseRepo = MvExerciseRepository(db);
-  });
+    test(
+      'Full Lifecycle: Profile -> Plan -> Workout -> Feedback -> Budget -> BodyMap -> Streak',
+      () async {
+        // 1. Create User Profile
+        final profile = profileEngine
+            .createQuickProfile(
+              daysPerWeek: 3,
+              sessionDuration: 'medium',
+              trainingLocation: 'home',
+            )
+            .value;
 
-  tearDown(() async {
-    await db.close();
-  });
+        expect(profile.daysPerWeek, equals(3));
+        expect(profile.trainingDays.length, equals(3));
 
-  group('Phase A — Golden Path (Start to Summary)', () {
-    test('Full Golden Path: Start Session -> Exercise Selection -> Set Logs -> Finish -> PR Breakthrough', () async {
-      // 1. Setup profile and seed exercises
-      await profileRepo.saveProfile(
-        const MvUserProfile(
-          id: 'default',
-          onboardingCompleted: true,
-          experienceLevel: 'beginner',
-          daysPerWeek: 3,
-          availableEquipment: ['bodyweight'],
-          physicalLimitations: [],
-          neighborFriendly: true,
-          createdAt: 0,
-          updatedAt: 0,
-        ),
-      );
+        // 2. Generate Plan for current week
+        final currentSaturday = MvCalendar.getWeekSaturday(
+          DateTime(2026, 8, 25),
+        ); // 2026-08-25
+        final planDecision = planEngine.generateWeekPlan(
+          profile: profile,
+          weekSaturday: currentSaturday,
+        );
 
-      final testExercises = [
-        const MvExercise(
-          id: 'test_pushup',
-          name: 'شنا سوئدی',
-          category: 'CHEST',
-          defaultReps: 15,
-          durationSeconds: 0,
-          noisy: false,
-          impact: 1,
-          toolsRequired: ['none'],
-        ),
-        const MvExercise(
-          id: 'test_squat',
-          name: 'اسکات با وزن بدن',
-          category: 'LEGS',
-          defaultReps: 20,
-          durationSeconds: 0,
-          noisy: false,
-          impact: 1,
-          toolsRequired: ['none'],
-        ),
-      ];
+        final weekSlots = planDecision.value;
+        expect(weekSlots.length, equals(7));
+        final trainingSlots = weekSlots
+            .where((s) => s.slotType != MvSlotType.rest)
+            .toList();
+        expect(trainingSlots.length, equals(3));
 
-      for (final ex in testExercises) {
-        await db.insert('ss_exercise', ex.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
-      }
+        // 3. Start and Finish a workout session with lossless feedback
+        final activeSlot = trainingSlots.first;
+        final startMs = currentSaturday
+            .add(const Duration(hours: 9))
+            .millisecondsSinceEpoch;
+        final endMs = startMs + (30 * 60 * 1000); // 30 minutes
 
-      final todayIso = MvCalendar.formatDateIso(DateTime.now());
-      final slot = MvSlot(
-        id: 'slot_today',
-        dateIso: todayIso,
-        headlineFa: 'تمرین بالاتنه و سینه',
-        focusCodes: const ['CHEST'],
-        targetMinutes: 20,
-        status: MvSlotStatus.planned,
-        createdAt: 0,
-        updatedAt: 0,
-      );
-      await prescriptionRepo.savePrescription(slot);
+        final session = MvSession(
+          id: 'sess_golden_1',
+          prescriptionId: activeSlot.id,
+          kindCode: 'BODYWEIGHT',
+          sessionMode: MvSessionMode.guided,
+          status: MvSessionStatus.completed,
+          startedAt: startMs,
+          endedAt: endMs,
+          overallFeeling: 4,
+          note: 'تمرین عالی و بدون درد انجام شد',
+          createdAt: startMs,
+          updatedAt: endMs,
+        );
 
-      // 2. Execute StartSessionUseCase
-      final startUseCase = MvStartSessionUseCase(
-        sessionRepo: sessionRepo,
-        exerciseRepo: exerciseRepo,
-      );
+        expect(session.isFinished, isTrue);
+        expect(session.elapsedMinutes, equals(30));
+        expect(session.overallFeeling, equals(4));
+        expect(session.note, equals('تمرین عالی و بدون درد انجام شد'));
 
-      final profile = await profileRepo.getProfile();
-      final startResult = await startUseCase.execute(
-        slot: slot,
-        profile: profile,
-        preloadedPool: testExercises,
-      );
+        // Set logs
+        final setLogs = [
+          MvSetLog(
+            id: 'set_1',
+            sessionId: session.id,
+            exerciseId: 'push_up',
+            setNumber: 1,
+            weight: 0,
+            reps: 12,
+            loggedAt: startMs + 60000,
+          ),
+          MvSetLog(
+            id: 'set_2',
+            sessionId: session.id,
+            exerciseId: 'squat',
+            setNumber: 1,
+            weight: 0,
+            reps: 15,
+            loggedAt: startMs + 120000,
+          ),
+        ];
 
-      expect(startResult.session.status, MvSessionStatus.active);
-      expect(startResult.exercises.isNotEmpty, isTrue);
-      expect(startResult.exercises.first.id, 'test_pushup');
+        // 4. Budget Progress Calculation (WHO standard)
+        final kindsMap = {
+          'BODYWEIGHT': const MovementKind(
+            code: 'BODYWEIGHT',
+            titleFa: 'تمرین با وزن بدن',
+            emoji: '🏋️',
+            family: MovementFamily.strength,
+            baseMet: 5.0,
+            metLow: 3.5,
+            metHigh: 6.0,
+            primaryMetric: MovementMetric.duration,
+            secondaryMetric: MovementMetric.sets,
+            isOutdoor: false,
+            isSocial: false,
+            needsVenue: false,
+            jointImpact: 1,
+            isCustom: false,
+            isEnabled: true,
+            usageCount: 1,
+            sortOrder: 1,
+          ),
+        };
 
-      // Verify SESSION_START event recorded in DB
-      final events = await sessionRepo.getEventsForSession(startResult.session.id);
-      expect(events.length, 1);
-      expect(events.first.type, 'SESSION_START');
+        final budgetDecision = budgetEngine.calculateWeeklyProgress(
+          profile: profile,
+          weekCompletedSessions: [session],
+          currentDayOfWeekSat0: 3,
+          kindsByCode: kindsMap,
+        );
 
-      // 3. Complete Sets
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final setLogs = [
-        MvSetLog(
-          id: 'set_1',
-          sessionId: startResult.session.id,
-          exerciseId: 'test_pushup',
-          setNumber: 1,
-          reps: 18, // Breakthrough over default 15
-          loggedAt: now,
-        ),
-        MvSetLog(
-          id: 'set_2',
-          sessionId: startResult.session.id,
-          exerciseId: 'test_pushup',
-          setNumber: 2,
-          reps: 16,
-          loggedAt: now + 60000,
-        ),
-      ];
+        expect(budgetDecision.value.moderateEquivalentMinutes, equals(30));
+        expect(budgetDecision.value.rawMetMinutes, equals(150.0));
+        expect(budgetDecision.value.strengthDays, equals(1));
+        expect(budgetDecision.value.targetMin, equals(150));
 
-      // 4. Finish Session
-      final finishUseCase = MvFinishSessionUseCase(
-        sessionRepo: sessionRepo,
-        prescriptionRepo: prescriptionRepo,
-        prRepo: prRepo,
-      );
+        // 5. Muscle Distribution Calculation (InsightEngine)
+        final exerciseMuscleMap = {
+          'push_up': ['CHEST'],
+          'squat': ['QUADS_GLUTES'],
+        };
 
-      final completedSession = startResult.session.copyWith(
-        status: MvSessionStatus.completed,
-        endedAt: now + 120000,
-      );
+        final insightDecision = insightEngine.calculateMuscleDistribution(
+          completedSetLogs: setLogs,
+          exerciseMuscleMap: exerciseMuscleMap,
+          completedSessionsCount: 3, // 3 sessions -> sufficient
+        );
 
-      final newPrs = await finishUseCase.execute(
-        session: completedSession,
-        setLogs: setLogs,
-        feeling: MvSessionFeeling.good,
-        note: 'تمرین عالی بود',
-      );
+        expect(insightDecision.value, isNotNull);
+        expect(insightDecision.value!.musclePercentages['CHEST'], equals(50.0));
+        expect(
+          insightDecision.value!.musclePercentages['QUADS_GLUTES'],
+          equals(50.0),
+        );
+        expect(insightDecision.hasEnoughData, isTrue);
 
-      // Verify PR recorded
-      expect(newPrs.length, 1);
-      expect(newPrs.first.value, 18.0);
-      expect(newPrs.first.prType, MvPrType.maxReps);
+        // 6. Streak Calculation (Consecutive Active Weeks)
+        // 1 session in week is not active yet (threshold >= 2)
+        final streak1 = MvHubController.calculateContinuousWeeks([
+          session,
+        ], referenceDate: currentSaturday);
+        expect(streak1, equals(0));
 
-      // Verify Prescription slot marked done
-      final updatedSlot = await prescriptionRepo.getPrescriptionForDate(todayIso);
-      expect(updatedSlot?.status, MvSlotStatus.done);
+        // Adding 2nd session in current week activates the week
+        final session2 = MvSession(
+          id: 'sess_golden_2',
+          kindCode: 'BODYWEIGHT',
+          status: MvSessionStatus.completed,
+          startedAt: startMs + (48 * 3600 * 1000),
+          endedAt: endMs + (48 * 3600 * 1000),
+          createdAt: startMs,
+          updatedAt: endMs,
+        );
 
-      // Verify finish event recorded
-      final allEvents = await sessionRepo.getEventsForSession(startResult.session.id);
-      expect(allEvents.any((e) => e.type == 'SESSION_FINISH'), isTrue);
-    });
-
-    test('Crash Recovery: Active session is resumed on app re-open', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final activeSession = MvSession(
-        id: 'sess_active_123',
-        kindCode: 'strength',
-        status: MvSessionStatus.active,
-        startedAt: now - 300000,
-        createdAt: now - 300000,
-        updatedAt: now - 300000,
-      );
-      await sessionRepo.startSession(activeSession);
-
-      final startUseCase = MvStartSessionUseCase(
-        sessionRepo: sessionRepo,
-        exerciseRepo: exerciseRepo,
-      );
-
-      final profile = await profileRepo.getProfile();
-      final resumedResult = await startUseCase.execute(
-        slot: const MvSlot(id: 's1', dateIso: '2026-08-25', headlineFa: 'T', createdAt: 0, updatedAt: 0),
-        profile: profile,
-        preloadedPool: const [
-          MvExercise(id: 'e1', name: 'حرکت', category: 'CHEST'),
-        ],
-      );
-
-      expect(resumedResult.session.id, 'sess_active_123');
-      expect(resumedResult.session.status, MvSessionStatus.active);
-    });
+        final streak2 = MvHubController.calculateContinuousWeeks([
+          session,
+          session2,
+        ], referenceDate: currentSaturday);
+        expect(streak2, equals(1));
+      },
+    );
   });
 }

@@ -110,14 +110,18 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _showDeepSliders ? 'بستن جزئیات دقیق‌تر' : 'ثبت دقیق‌تر (درد، کوفتگی و خستگی)...',
+                      _showDeepSliders
+                          ? 'بستن جزئیات دقیق‌تر'
+                          : 'ثبت دقیق‌تر (درد، کوفتگی و خستگی)...',
                       style: textTheme.labelMedium?.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Icon(
-                      _showDeepSliders ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                      _showDeepSliders
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
                       color: colors.primary,
                       size: metrics.iconSm,
                     ),
@@ -128,14 +132,39 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
 
             if (_showDeepSliders) ...[
               SizedBox(height: metrics.spaceMd),
-              _buildSliderRow('سطح انرژی (۱ تا ۵):', _energy.toDouble(), 1, 5, (v) => setState(() => _energy = v.round())),
-              _buildSliderRow('کوفتگی عضلانی (۱ تا ۵):', _soreness.toDouble(), 1, 5, (v) => setState(() => _soreness = v.round())),
-              _buildSliderRow('خستگی عمومی (۱ تا ۵):', _fatigue.toDouble(), 1, 5, (v) => setState(() => _fatigue = v.round())),
-              _buildSliderRow('میزان درد موضعی (۰ تا ۱۰):', _pain.toDouble(), 0, 10, (v) => setState(() => _pain = v.round())),
+              _buildSliderRow(
+                'سطح انرژی (۱ تا ۵):',
+                _energy.toDouble(),
+                1,
+                5,
+                (v) => setState(() => _energy = v.round()),
+              ),
+              _buildSliderRow(
+                'کوفتگی عضلانی (۱ تا ۵):',
+                _soreness.toDouble(),
+                1,
+                5,
+                (v) => setState(() => _soreness = v.round()),
+              ),
+              _buildSliderRow(
+                'خستگی عمومی (۱ تا ۵):',
+                _fatigue.toDouble(),
+                1,
+                5,
+                (v) => setState(() => _fatigue = v.round()),
+              ),
+              _buildSliderRow(
+                'میزان درد موضعی (۰ تا ۱۰):',
+                _pain.toDouble(),
+                0,
+                10,
+                (v) => setState(() => _pain = v.round()),
+              ),
               SizedBox(height: metrics.spaceLg),
               MvPrimaryAction(
                 label: 'ثبت جزئیات دقیق',
-                onPressed: () => _handleQuickOption(_energy, _soreness, _fatigue),
+                onPressed: () =>
+                    _handleQuickOption(_energy, _soreness, _fatigue),
               ),
             ],
             SizedBox(height: metrics.spaceMd),
@@ -163,7 +192,10 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(metrics.radiusCard),
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: metrics.spaceLg, horizontal: metrics.spaceXs),
+            padding: EdgeInsets.symmetric(
+              vertical: metrics.spaceLg,
+              horizontal: metrics.spaceXs,
+            ),
             decoration: BoxDecoration(
               color: colors.surfaceElevated,
               borderRadius: BorderRadius.circular(metrics.radiusCard),
@@ -198,7 +230,13 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
     );
   }
 
-  Widget _buildSliderRow(String label, double value, double min, double max, ValueChanged<double> onChanged) {
+  Widget _buildSliderRow(
+    String label,
+    double value,
+    double min,
+    double max,
+    ValueChanged<double> onChanged,
+  ) {
     final textTheme = Theme.of(context).textTheme;
     final colors = context.ritmoColors;
 
@@ -208,8 +246,20 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: textTheme.bodySmall?.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w600)),
-            Text(value.round().toString(), style: textTheme.labelMedium?.copyWith(color: colors.primary, fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              value.round().toString(),
+              style: textTheme.labelMedium?.copyWith(
+                color: colors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
         Slider(

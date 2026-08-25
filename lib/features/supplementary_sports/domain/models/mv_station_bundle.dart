@@ -46,8 +46,12 @@ class MvStationBundle {
       itemsJson: (map['itemsJson'] as String?) ?? '[]',
       isUserTemplate: (map['isUserTemplate'] as num?)?.toInt() == 1,
       usageCount: (map['usageCount'] as num?)?.toInt() ?? 0,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

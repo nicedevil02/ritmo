@@ -18,7 +18,7 @@ class MvCalendar {
     // Thu=5 -> 4
     // Fri=6 -> 5
     if (sat0 == 0) return DateTime.saturday; // 6
-    if (sat0 == 1) return DateTime.sunday;   // 7
+    if (sat0 == 1) return DateTime.sunday; // 7
     return sat0 - 1; // Mon(2)->1, Tue(3)->2, Wed(4)->3, Thu(5)->4, Fri(6)->5
   }
 

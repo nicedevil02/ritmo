@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 
@@ -62,6 +63,165 @@ class RitmoSheetScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(
+      top: Radius.circular(RitmoRadius.card),
+    );
+
+    final sheetContent = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Handle bar
+        Center(
+          child: Container(
+            margin: const EdgeInsets.only(
+              top: RitmoSpacing.md,
+              bottom: RitmoSpacing.xs,
+            ),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textTertiary.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        // Header
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: RitmoSpacing.xl,
+            vertical: RitmoSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: RitmoTextStyles.cardTitle(colors.textPrimary),
+                    ),
+                    if (subtitle != null && subtitle!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        style: RitmoTextStyles.caption(
+                          colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.close, color: colors.textSecondary),
+                tooltip: 'بستن',
+              ),
+            ],
+          ),
+        ),
+        Divider(color: colors.divider, height: 1),
+        // Body
+        Flexible(
+          child: childIsScrollable
+              ? Padding(
+                  padding: const EdgeInsets.all(RitmoSpacing.xl),
+                  child: child,
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(RitmoSpacing.xl),
+                  child: child,
+                ),
+        ),
+        // Optional Footer
+        if (footer != null) ...[
+          Divider(color: colors.divider, height: 1),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: RitmoSpacing.xl,
+                vertical: RitmoSpacing.md,
+              ),
+              child: footer,
+            ),
+          ),
+        ],
+      ],
+    );
+
+    final sheetBody = Material(
+      type: MaterialType.transparency,
+      child: sheetContent,
+    );
+
+    Widget containerWidget;
+    if (!isGlass) {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(
+            context,
+            factor: maxHeightFactor,
+          ),
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    } else {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(
+            context,
+            factor: maxHeightFactor,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: EdgeInsets.only(
@@ -69,105 +229,7 @@ class RitmoSheetScaffold extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(
-              context,
-              factor: maxHeightFactor,
-            ),
-          ),
-          decoration: BoxDecoration(
-            color: colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(RitmoRadius.card),
-            ),
-            border: Border.all(color: colors.border, width: 1.0),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(
-                    top: RitmoSpacing.md,
-                    bottom: RitmoSpacing.xs,
-                  ),
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textTertiary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: RitmoSpacing.xl,
-                  vertical: RitmoSpacing.md,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: RitmoTextStyles.cardTitle(colors.textPrimary),
-                          ),
-                          if (subtitle != null && subtitle!.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle!,
-                              style: RitmoTextStyles.caption(
-                                colors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(Icons.close, color: colors.textSecondary),
-                      tooltip: 'بستن',
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              // Body
-              Flexible(
-                child: childIsScrollable
-                    ? Padding(
-                        padding: const EdgeInsets.all(RitmoSpacing.xl),
-                        child: child,
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(RitmoSpacing.xl),
-                        child: child,
-                      ),
-              ),
-              // Optional Footer
-              if (footer != null) ...[
-                const Divider(height: 1),
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: RitmoSpacing.xl,
-                      vertical: RitmoSpacing.md,
-                    ),
-                    child: footer!,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
+        child: containerWidget,
       ),
     );
   }

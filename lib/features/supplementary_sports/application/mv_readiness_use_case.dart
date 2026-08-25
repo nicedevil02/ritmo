@@ -10,8 +10,8 @@ class MvReadinessUseCase {
   MvReadinessUseCase({
     MvDailyCheckinRepository? checkinRepo,
     ReadinessEngine? readinessEngine,
-  })  : _checkinRepo = checkinRepo ?? MvDailyCheckinRepository(),
-        _readinessEngine = readinessEngine ?? const ReadinessEngine();
+  }) : _checkinRepo = checkinRepo ?? MvDailyCheckinRepository(),
+       _readinessEngine = readinessEngine ?? const ReadinessEngine();
 
   /// Evaluates readiness for given [dateIso] and [profile].
   Future<MvDecision<MvReadinessTier>> execute({
@@ -32,5 +32,6 @@ class MvReadinessUseCase {
   }
 
   /// Saves a new daily check-in.
-  Future<void> saveCheckin(MvDailyCheckin checkin) => _checkinRepo.saveCheckin(checkin);
+  Future<void> saveCheckin(MvDailyCheckin checkin) =>
+      _checkinRepo.saveCheckin(checkin);
 }

@@ -6,10 +6,8 @@ class MvAudioCuePlayer {
   final AudioPlayer _player;
   bool isEnabled;
 
-  MvAudioCuePlayer({
-    AudioPlayer? customPlayer,
-    this.isEnabled = true,
-  }) : _player = customPlayer ?? AudioPlayer();
+  MvAudioCuePlayer({AudioPlayer? customPlayer, this.isEnabled = true})
+    : _player = customPlayer ?? AudioPlayer();
 
   Future<void> playGo() async {
     if (!isEnabled) return;

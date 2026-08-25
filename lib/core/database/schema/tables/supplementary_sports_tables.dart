@@ -1,10 +1,14 @@
 import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/seed/mv_kind_profile_seed.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SupplementarySportsTables {
   static Future<void> create(DatabaseExecutor db) async {
     await MovementKindsSeed.ensureSchema(db);
+    await MovementKindsSeed.seed(db);
+    await ensureCommitmentTables(db);
+    await ensureKindProfileTables(db);
 
     // 1. ss_exercise
     await db.execute('''
@@ -332,6 +336,8 @@ class SupplementarySportsTables {
         legacyPlanId TEXT,
         workoutPlanId TEXT,
         workoutLogId TEXT,
+        reasonKey TEXT,
+        reasonParams TEXT,
         createdAt INTEGER NOT NULL,
         updatedAt INTEGER NOT NULL
       );
@@ -341,6 +347,8 @@ class SupplementarySportsTables {
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'routineId', 'TEXT');
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'plannedTime', 'TEXT');
     await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'sourceRef', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'reasonKey', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'ss_session_prescription', 'reasonParams', 'TEXT');
 
     await db.execute(
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_ss_prescription_date ON ss_session_prescription(dateIso);',
@@ -479,6 +487,74 @@ class SupplementarySportsTables {
           UNIQUE(kind, prType)
       );
     ''');
+
+    // 9. mv_commitments (S2-T1)
+    await ensureCommitmentTables(db);
+
+    // 10. mv_routes (S4-T7)
+    await ensureRoutesTables(db);
+  }
+
+  /// Ensures mv_commitments table and index exist safely.
+  static Future<void> ensureCommitmentTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS mv_commitments (
+          id                INTEGER PRIMARY KEY AUTOINCREMENT,
+          kindCode          TEXT    NOT NULL,
+          titleFa           TEXT,
+          dayOfWeekSat0     INTEGER NOT NULL,
+          startTime         TEXT    NOT NULL,
+          durationMinutes   INTEGER NOT NULL,
+          venueNote         TEXT,
+          partnerNote       TEXT,
+          recurrence        TEXT    NOT NULL DEFAULT 'WEEKLY',
+          isActive          INTEGER NOT NULL DEFAULT 1,
+          isFlexible        INTEGER NOT NULL DEFAULT 0,
+          startDateIso      TEXT,
+          endDateIso        TEXT,
+          reminderMinutes   INTEGER,
+          createdAt         TEXT    NOT NULL,
+          updatedAt         TEXT    NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(dayOfWeekSat0, isActive);
+      ''');
+    } catch (_) {}
+  }
+
+  /// Ensures mv_kind_profile table exists and is seeded.
+  static Future<void> ensureKindProfileTables(DatabaseExecutor db) async {
+    try {
+      await MvKindProfileSeed.ensureSchema(db);
+      await MvKindProfileSeed.ensureSeed(db);
+    } catch (_) {}
+  }
+
+  /// Ensures mv_routes table and index exist safely (S4-T7).
+  static Future<void> ensureRoutesTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS mv_routes (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          titleFa         TEXT    NOT NULL,
+          kindCode        TEXT    NOT NULL,
+          distanceM       REAL,
+          elevationGainM  REAL,
+          notes           TEXT,
+          timesCompleted  INTEGER NOT NULL DEFAULT 0,
+          bestDurationMin INTEGER,
+          lastDoneAt      TEXT,
+          createdAt       TEXT    NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_mv_routes_kind ON mv_routes(kindCode);
+      ''');
+    } catch (_) {}
   }
 
   /// Ensures movement_sessions, movement_session_events, and movement_campaigns tables exist safely.
@@ -499,14 +575,38 @@ class SupplementarySportsTables {
           targetJson    TEXT,
           liveJson      TEXT,
           workoutLogId  TEXT,
+          overallFeeling INTEGER,
+          note          TEXT,
+          distanceM     REAL,
+          elevationGainM REAL,
+          laps          INTEGER,
+          packWeightKg  REAL,
+          rpe1To10      INTEGER,
+          effortSource  TEXT,
+          routeId       INTEGER,
           createdAt     INTEGER NOT NULL,
           updatedAt     INTEGER NOT NULL
         );
       ''');
 
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'overallFeeling', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'note', 'TEXT');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'distanceM', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'elevationGainM', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'laps', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'packWeightKg', 'REAL');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'rpe1To10', 'INTEGER');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'effortSource', 'TEXT');
+      await SchemaManager.safeAddColumn(db, 'movement_sessions', 'routeId', 'INTEGER');
+
       await db.execute('''
         CREATE UNIQUE INDEX IF NOT EXISTS idx_movement_sessions_active
           ON movement_sessions(status) WHERE status IN ('ACTIVE', 'PAUSED');
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_movement_sessions_kind_date
+          ON movement_sessions(kindCode, startedAt);
       ''');
 
       await db.execute('''

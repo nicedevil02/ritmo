@@ -731,5 +731,109 @@
   "cycleSemanticsOvulation": "، روز تخمک‌گذاری",
   "cycleSemanticsFertileWindow": "، پنجره باروری",
   "cycleSemanticsPms": "، روزهای پیش از عادت",
-  "cycleSemanticsHasLogs": "، دارای علائم ثبت‌شده"
+  "cycleSemanticsHasLogs": "، دارای علائم ثبت‌شده",
+
+  "mv_kind_picker_title": "انتخاب نوع ورزش",
+  "mv_kind_picker_search_hint": "جستجوی ورزش...",
+  "mv_kind_picker_recent": "ورزش‌های اخیر",
+  "mv_kind_picker_seasonal": "ورزش‌های فصلی / پیشنهادی",
+  "mv_kind_picker_all": "همهٔ ورزش‌ها",
+  "mv_kind_picker_create_custom": "ورزش جدید دلخواه",
+  "mv_kind_picker_empty": "ورزشی با این عنوان یافت نشد.",
+
+  "mv_custom_kind_title": "ساخت نوع ورزش سفارشی",
+  "mv_custom_kind_name": "نام ورزش",
+  "mv_custom_kind_family": "دسته‌بندی اصلی",
+  "mv_custom_kind_metric": "متریک اصلی اندازه‌گیری",
+  "mv_custom_kind_intensity": "شدت پیش‌فرض (MET)",
+  "mv_custom_kind_saved": "ورزش سفارشی با موفقیت ذخیره شد.",
+
+  "mv_onboarding_anchor_title": "ورزش‌های ثابت هفتگی (لنگر)",
+  "mv_onboarding_anchor_add": "افزودن زمان ثابت",
+  "mv_onboarding_anchor_skip": "بعداً اضافه می‌کنم",
+  "mv_commitment_saved": "تعهد ثابت ثبت شد",
+  "mv_commitment_repeat_weekly": "تکرار هفتگی",
+  "mv_commitment_venue": "محل یا سالن تمرین",
+  "mv_commitment_partner": "هم‌تمرینی / تیم",
+  "mv_anchor_cancelled_this_week": "این هفته لغو شد",
+  "mv_anchor_suggest_deactivate": "آیا می‌خواهید این تعهد به طور کامل غیرفعال شود؟",
+  "mv_anchor_constraint_note": "تمرین ثابت لنگر با توجه به محدودیت ثبت‌شده",
+  "mv_tomorrow_anchor_notice": "یادآوری: فردا جلسهٔ ثابت لنگر دارید",
+  "mv_conflict_back_to_back": "هشدار: دو جلسهٔ سنگین متوالی برنامه‌ریزی شده است",
+
+  "mv_reason_anchor": "جلسهٔ ثابت لنگر برنامه‌ریزی شده شما",
+  "mv_reason_pre_anchor_taper": "کاهش حجم تمرینی جهت حفظ توان برای جلسهٔ لنگر فردا",
+  "mv_reason_post_anchor_recovery": "ریکاوری و بازتوانی پس از جلسهٔ فشردهٔ لنگر دیروز",
+  "mv_reason_complement": "تمرین مکمل قدرتی جهت تعادل عضلانی و حمایت از ورزش اصلی",
+  "mv_reason_who_gap": "جبران کسری فعالیت معادل متوسط جهت دستیابی به هدف ۱۵۰ دقیقه در هفته",
+  "mv_reason_strength_quota": "تکمیل سهمیهٔ ۲ جلسه تمرین تقویتی عضلانی در هفته",
+  "mv_reason_rest_guaranteed": "روز استراحت ضروری جهت بازسازی فیزیولوژیک",
+  "mv_reason_readiness_low": "تعدیل فشار تمرین به دلیل سطح آمادگی پایین امروز",
+  "mv_reason_load_cap": "کنترل سقف افزایش بار هفتگی برای پیشگیری از خستگی مفرط",
+  "mv_reason_fallback_minimum": "حداقل فعالیت مؤثر ۱۰ دقیقه‌ای برای حفظ زنجیره",
+  "mv_reason_season_fit": "ورزش متناسب با فصل جاری",
+  "mv_reason_constraint_relaxed": "تطبیق تمرین با شرایط و امکانات فعلی",
+
+  "mv_metric_distance": "مسافت (کیلومتر)",
+  "mv_metric_elevation": "ارتفاع (متر)",
+  "mv_metric_laps": "تعداد دور / طول",
+  "mv_metric_pack_weight": "وزن کوله (کیلوگرم)",
+  "mv_metric_duration": "مدت زمان (دقیقه)",
+  "mv_effort_question": "فشار این تمرین چطور بود؟",
+  "mv_effort_easy": "آسان",
+  "mv_effort_good": "مناسب",
+  "mv_effort_hard": "سخت",
+  "mv_effort_refine": "تنظیم دقیق با اسلایدر RPE",
+  "mv_new_personal_record": "رکورد شخصی جدید! 🎉",
+
+  "mv_load_band_low": "بار سبک",
+  "mv_load_band_optimal": "بار بهینه و سازنده",
+  "mv_load_band_watch": "بار رو به افزایش",
+  "mv_load_band_spike": "جهش بار تمرینی (نیازمند احتیاط)",
+  "mv_budget_moderate_minutes": "دقیقه فعالیت معادل متوسط",
+  "mv_budget_strength_days": "روز تمرین قدرتی",
+  "mv_budget_remaining": "باقیمانده تا هدف سلامت هفتگی",
+
+  "mv_streak_insufficient": "برای محاسبهٔ تداوم، حداقل ۲ هفته فعالیت لازم است",
+  "mv_readiness_no_checkin": "سطح آمادگی امروز هنوز ثبت نشده است",
+  "mv_need_n_more_sessions": "چند جلسهٔ دیگر برای ارزیابی دقیق مورد نیاز است",
+  "mv_insufficient_data_generic": "دادهٔ کافی ثبت نشده است",
+
+  "mv_insight_best_day": "روز طلایی تمرین",
+  "mv_insight_anchor_adherence": "پایبندی به لنگرها",
+  "mv_insight_effort_drift": "روند ادراک فشار",
+  "mv_insight_kind_mix": "تنوع ورزشی ماهانه",
+  "mv_insight_route_progress": "پیشرفت در مسیر تکراری",
+
+  "mv_campaign_title": "دورهٔ هدف‌دار",
+  "mv_campaign_target_date": "تاریخ رویداد هدف",
+  "mv_campaign_phase_base": "مرحله پایه",
+  "mv_campaign_phase_build": "مرحله بارگذاری تدریجی",
+  "mv_campaign_phase_taper": "مرحله کاهش حجم و آماده‌سازی",
+  "mv_campaign_too_short": "زمان باقیمانده تا رویداد کمتر از ۴ هفته است",
+
+  "mv_route_select": "انتخاب مسیر",
+  "mv_route_new": "ثبت مسیر جدید",
+  "mv_route_times_done": "دفعات انجام: {count}",
+  "@mv_route_times_done": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_route_best_time": "بهترین زمان: {minutes} دقیقه",
+  "@mv_route_best_time": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "mv_day_plan_title": "برنامهٔ روز",
+  "mv_library_title": "کتابخانهٔ حرکات و ورزش‌ها",
+  "mv_week_plan_title": "برنامهٔ هفته",
+  "mv_library_tab_kinds": "ورزش‌ها",
+  "mv_library_tab_exercises": "حرکات"
 }

@@ -7,8 +7,8 @@ import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_day_of_week_selector.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_duration_picker.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_timeline_picker.dart';
-import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/mv_kind_repository.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
 class SportsStep2Form extends StatefulWidget {
   const SportsStep2Form({super.key, required this.controller});
@@ -19,7 +19,7 @@ class SportsStep2Form extends StatefulWidget {
 }
 
 class _SportsStep2FormState extends State<SportsStep2Form> {
-  List<MovementKind> _availableKinds = [];
+  List<MvMovementKind> _availableKinds = [];
   bool _isLoadingKinds = true;
 
   @override
@@ -29,7 +29,7 @@ class _SportsStep2FormState extends State<SportsStep2Form> {
   }
 
   Future<void> _loadKinds() async {
-    final kinds = await MovementRepository.instance.getKinds();
+    final kinds = await MvKindRepository().getAll();
     if (mounted) {
       setState(() {
         _availableKinds = kinds;

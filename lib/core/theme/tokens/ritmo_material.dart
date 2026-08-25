@@ -50,26 +50,31 @@ class RitmoMaterials extends ThemeExtension<RitmoMaterials> {
   final RitmoMaterialSpec regular;
   final RitmoMaterialSpec thick;
 
-  factory RitmoMaterials.fromColors(RitmoColors? colors) {
+  factory RitmoMaterials.fromColors(
+    RitmoColors? colors, {
+    double blurSigma = 20.0,
+    int opacityPercent = 35,
+  }) {
     // وقتی تم ثبت نشده (مثل تست‌های ایزوله)، یک سطح مات تیره‌ی خنثی برمی‌گردانیم.
     final fallback = colors?.surfaceElevated ?? const Color(0xFF14171C);
+    final baseAlpha = (opacityPercent / 100.0).clamp(0.05, 0.95);
     return RitmoMaterials(
       thin: RitmoMaterialSpec(
-        sigma: 8,
-        tintAlpha: 0.55,
-        highlightAlpha: 0.10,
+        sigma: (blurSigma * 0.6).clamp(0.0, 50.0),
+        tintAlpha: (baseAlpha * 0.8).clamp(0.05, 0.95),
+        highlightAlpha: 0.16,
         opaqueFallback: fallback,
       ),
       regular: RitmoMaterialSpec(
-        sigma: 18,
-        tintAlpha: 0.65,
-        highlightAlpha: 0.14,
+        sigma: blurSigma.clamp(0.0, 50.0),
+        tintAlpha: baseAlpha,
+        highlightAlpha: 0.22,
         opaqueFallback: fallback,
       ),
       thick: RitmoMaterialSpec(
-        sigma: 32,
-        tintAlpha: 0.78,
-        highlightAlpha: 0.18,
+        sigma: (blurSigma * 1.5).clamp(0.0, 60.0),
+        tintAlpha: (baseAlpha * 1.3).clamp(0.05, 0.95),
+        highlightAlpha: 0.28,
         opaqueFallback: fallback,
       ),
     );

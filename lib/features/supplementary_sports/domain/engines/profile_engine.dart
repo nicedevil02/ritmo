@@ -43,7 +43,8 @@ class ProfileEngine {
 
     return MvDecision<MvUserProfile>(
       value: updated,
-      reasonFa: 'پروفایل ورزشی با $effectiveDays روز تمرین در هفته و تجهیزات ${updated.availableEquipment.join("، ")} تنظیم شد.',
+      reasonFa:
+          'پروفایل ورزشی با $effectiveDays روز تمرین در هفته و تجهیزات ${updated.availableEquipment.join("، ")} تنظیم شد.',
       sources: const ['profile'],
       confidence: 1.0,
       hasEnoughData: true,
@@ -53,7 +54,8 @@ class ProfileEngine {
   /// Creates a functional profile from the 20-second 3-question quick onboarding (Section 5.6).
   MvDecision<MvUserProfile> createQuickProfile({
     required int daysPerWeek,
-    required String sessionDuration, // 'short' (15m), 'medium' (30m), 'long' (45m+)
+    required String
+    sessionDuration, // 'short' (15m), 'medium' (30m), 'long' (45m+)
     required String trainingLocation, // 'home', 'gym', 'outdoor'
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -63,7 +65,9 @@ class ProfileEngine {
       goal: 'generalFitness',
       experienceLevel: 'beginner',
       trainingLocation: trainingLocation,
-      availableEquipment: trainingLocation == 'gym' ? const ['fullGym'] : const ['none'],
+      availableEquipment: trainingLocation == 'gym'
+          ? const ['fullGym']
+          : const ['none'],
       daysPerWeek: daysPerWeek,
       sessionDuration: sessionDuration,
       onboardingCompleted: true,
@@ -75,7 +79,8 @@ class ProfileEngine {
 
     return MvDecision<MvUserProfile>(
       value: profile,
-      reasonFa: 'برنامهٔ اولیه بر اساس $daysPerWeek روز در هفته، مدت $sessionDuration و محیط $trainingLocation ساخته شد.',
+      reasonFa:
+          'برنامهٔ اولیه بر اساس $daysPerWeek روز در هفته، مدت $sessionDuration و محیط $trainingLocation ساخته شد.',
       sources: const ['quick_onboarding'],
       confidence: 1.0,
       hasEnoughData: true,

@@ -52,7 +52,9 @@ class MvWeekRail extends StatelessWidget {
           }
 
           final textColor = isSelected ? colors.onPrimary : colors.textPrimary;
-          final subTextColor = isSelected ? colors.onPrimary.withValues(alpha: 0.8) : colors.textSecondary;
+          final subTextColor = isSelected
+              ? colors.onPrimary.withValues(alpha: 0.8)
+              : colors.textSecondary;
 
           return Material(
             color: Colors.transparent,
@@ -64,7 +66,10 @@ class MvWeekRail extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: bgColor,
                   borderRadius: BorderRadius.circular(metrics.radiusCard),
-                  border: Border.all(color: borderColor, width: isToday ? 1.5 : 1.0),
+                  border: Border.all(
+                    color: borderColor,
+                    width: isToday ? 1.5 : 1.0,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -85,19 +90,28 @@ class MvWeekRail extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: metrics.spaceXs),
-                    // Status dot
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: slot.isCompleted
-                            ? (isSelected ? colors.onPrimary : colors.success)
-                            : slot.isRest
-                                ? Colors.transparent
-                                : (isSelected ? colors.onPrimary.withValues(alpha: 0.4) : colors.primary.withValues(alpha: 0.4)),
+                    // Status dot or Lock indicator
+                    if (slot.isLocked)
+                      Icon(
+                        Icons.lock_rounded,
+                        size: 9,
+                        color: isSelected ? colors.onPrimary : colors.accent,
+                      )
+                    else
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: slot.isCompleted
+                              ? (isSelected ? colors.onPrimary : colors.success)
+                              : slot.isRest
+                              ? Colors.transparent
+                              : (isSelected
+                                    ? colors.onPrimary.withValues(alpha: 0.4)
+                                    : colors.primary.withValues(alpha: 0.4)),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),

@@ -10,8 +10,8 @@ class MvWeekRegenUseCase {
   MvWeekRegenUseCase({
     MvPrescriptionRepository? prescriptionRepo,
     PlanEngine? planEngine,
-  })  : _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
-        _planEngine = planEngine ?? const PlanEngine();
+  }) : _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _planEngine = planEngine ?? const PlanEngine();
 
   /// Executes week plan generation.
   Future<List<MvSlot>> execute({

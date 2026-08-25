@@ -81,9 +81,18 @@ class MvExercise {
   factory MvExercise.fromMap(Map<String, dynamic> map) {
     List<String> parseTools(dynamic val) {
       if (val == null) return [];
-      final s = val.toString().replaceAll('[', '').replaceAll(']', '').replaceAll('"', '').trim();
+      final s = val
+          .toString()
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('"', '')
+          .trim();
       if (s.isEmpty) return [];
-      return s.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return s
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     return MvExercise(
@@ -129,18 +138,90 @@ class MvMuscleGroup {
   });
 
   static const List<MvMuscleGroup> all = [
-    MvMuscleGroup(code: 'CHEST', titleFa: 'سینه', region: 'UPPER', emoji: '🫁', sortOrder: 1),
-    MvMuscleGroup(code: 'SHOULDER', titleFa: 'سرشانه', region: 'UPPER', emoji: '🎯', sortOrder: 2),
-    MvMuscleGroup(code: 'BICEPS', titleFa: 'جلوبازو', region: 'UPPER', emoji: '💪', sortOrder: 3),
-    MvMuscleGroup(code: 'TRICEPS', titleFa: 'پشت‌بازو', region: 'UPPER', emoji: '🦾', sortOrder: 4),
-    MvMuscleGroup(code: 'BACK', titleFa: 'زیربغل و پشت', region: 'UPPER', emoji: '🪽', sortOrder: 5),
-    MvMuscleGroup(code: 'CORE', titleFa: 'شکم و مرکز', region: 'CORE', emoji: '🎽', sortOrder: 6),
-    MvMuscleGroup(code: 'QUADS_GLUTES', titleFa: 'ران و باسن', region: 'LOWER', emoji: '🦵', sortOrder: 7),
-    MvMuscleGroup(code: 'HAMSTRINGS', titleFa: 'پشت ران', region: 'LOWER', emoji: '🦿', sortOrder: 8),
-    MvMuscleGroup(code: 'CALVES', titleFa: 'ساق پا', region: 'LOWER', emoji: '🎯', sortOrder: 9),
-    MvMuscleGroup(code: 'CARDIO', titleFa: 'هوازی', region: 'CARDIO', emoji: '🫀', sortOrder: 10),
-    MvMuscleGroup(code: 'MOBILITY', titleFa: 'تحرک و کشش', region: 'MOBILITY', emoji: '🧘', sortOrder: 11),
-    MvMuscleGroup(code: 'FULL_BODY', titleFa: 'کل بدن', region: 'FULL', emoji: '🔥', sortOrder: 12),
+    MvMuscleGroup(
+      code: 'CHEST',
+      titleFa: 'سینه',
+      region: 'UPPER',
+      emoji: '🫁',
+      sortOrder: 1,
+    ),
+    MvMuscleGroup(
+      code: 'SHOULDER',
+      titleFa: 'سرشانه',
+      region: 'UPPER',
+      emoji: '🎯',
+      sortOrder: 2,
+    ),
+    MvMuscleGroup(
+      code: 'BICEPS',
+      titleFa: 'جلوبازو',
+      region: 'UPPER',
+      emoji: '💪',
+      sortOrder: 3,
+    ),
+    MvMuscleGroup(
+      code: 'TRICEPS',
+      titleFa: 'پشت‌بازو',
+      region: 'UPPER',
+      emoji: '🦾',
+      sortOrder: 4,
+    ),
+    MvMuscleGroup(
+      code: 'BACK',
+      titleFa: 'زیربغل و پشت',
+      region: 'UPPER',
+      emoji: '🪽',
+      sortOrder: 5,
+    ),
+    MvMuscleGroup(
+      code: 'CORE',
+      titleFa: 'شکم و مرکز',
+      region: 'CORE',
+      emoji: '🎽',
+      sortOrder: 6,
+    ),
+    MvMuscleGroup(
+      code: 'QUADS_GLUTES',
+      titleFa: 'ران و باسن',
+      region: 'LOWER',
+      emoji: '🦵',
+      sortOrder: 7,
+    ),
+    MvMuscleGroup(
+      code: 'HAMSTRINGS',
+      titleFa: 'پشت ران',
+      region: 'LOWER',
+      emoji: '🦿',
+      sortOrder: 8,
+    ),
+    MvMuscleGroup(
+      code: 'CALVES',
+      titleFa: 'ساق پا',
+      region: 'LOWER',
+      emoji: '🎯',
+      sortOrder: 9,
+    ),
+    MvMuscleGroup(
+      code: 'CARDIO',
+      titleFa: 'هوازی',
+      region: 'CARDIO',
+      emoji: '🫀',
+      sortOrder: 10,
+    ),
+    MvMuscleGroup(
+      code: 'MOBILITY',
+      titleFa: 'تحرک و کشش',
+      region: 'MOBILITY',
+      emoji: '🧘',
+      sortOrder: 11,
+    ),
+    MvMuscleGroup(
+      code: 'FULL_BODY',
+      titleFa: 'کل بدن',
+      region: 'FULL',
+      emoji: '🔥',
+      sortOrder: 12,
+    ),
   ];
 
   static MvMuscleGroup? findByCode(String code) {

@@ -12,6 +12,8 @@ class ThemePreferences {
     required this.paletteId,
     required this.reduceTransparency,
     required this.trueBlack,
+    this.glassBlurSigma = 20.0,
+    this.glassOpacityPercent = 35,
     this.autoDarkAtMaghrib = false, // Hook رزروشده بر اساس اوقات شرعی
     this.textScalePercent = RitmoUiScale.defaultTextPercent,
     this.followOsTextScale = true,
@@ -22,6 +24,8 @@ class ThemePreferences {
   final RitmoPaletteId paletteId;
   final bool reduceTransparency;
   final bool trueBlack;
+  final double glassBlurSigma;
+  final int glassOpacityPercent;
   final bool autoDarkAtMaghrib;
   final int textScalePercent;
   final bool followOsTextScale;
@@ -32,6 +36,8 @@ class ThemePreferences {
     paletteId: RitmoPaletteId.jadeNoir,
     reduceTransparency: false,
     trueBlack: false,
+    glassBlurSigma: 20.0,
+    glassOpacityPercent: 35,
     autoDarkAtMaghrib: false,
     textScalePercent: RitmoUiScale.defaultTextPercent,
     followOsTextScale: true,
@@ -43,6 +49,8 @@ class ThemePreferences {
     RitmoPaletteId? paletteId,
     bool? reduceTransparency,
     bool? trueBlack,
+    double? glassBlurSigma,
+    int? glassOpacityPercent,
     bool? autoDarkAtMaghrib,
     int? textScalePercent,
     bool? followOsTextScale,
@@ -53,6 +61,8 @@ class ThemePreferences {
       paletteId: paletteId ?? this.paletteId,
       reduceTransparency: reduceTransparency ?? this.reduceTransparency,
       trueBlack: trueBlack ?? this.trueBlack,
+      glassBlurSigma: glassBlurSigma ?? this.glassBlurSigma,
+      glassOpacityPercent: glassOpacityPercent ?? this.glassOpacityPercent,
       autoDarkAtMaghrib: autoDarkAtMaghrib ?? this.autoDarkAtMaghrib,
       textScalePercent: textScalePercent ?? this.textScalePercent,
       followOsTextScale: followOsTextScale ?? this.followOsTextScale,
@@ -69,6 +79,8 @@ class ThemePreferences {
           paletteId == other.paletteId &&
           reduceTransparency == other.reduceTransparency &&
           trueBlack == other.trueBlack &&
+          glassBlurSigma == other.glassBlurSigma &&
+          glassOpacityPercent == other.glassOpacityPercent &&
           autoDarkAtMaghrib == other.autoDarkAtMaghrib &&
           textScalePercent == other.textScalePercent &&
           followOsTextScale == other.followOsTextScale &&
@@ -80,6 +92,8 @@ class ThemePreferences {
     paletteId,
     reduceTransparency,
     trueBlack,
+    glassBlurSigma,
+    glassOpacityPercent,
     autoDarkAtMaghrib,
     textScalePercent,
     followOsTextScale,

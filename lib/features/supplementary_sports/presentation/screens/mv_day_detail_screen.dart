@@ -26,7 +26,9 @@ class MvDayDetailScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final dt = MvCalendar.parseDateIso(slot.dateIso);
-    final dayName = MvCalendar.persianWeekdayName(MvCalendar.dateTimeToSat0(dt));
+    final dayName = MvCalendar.persianWeekdayName(
+      MvCalendar.dateTimeToSat0(dt),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -63,33 +65,47 @@ class MvDayDetailScreen extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(RitmoRadius.pill),
                       ),
                       child: Text(
                         slot.slotType.titleFa,
-                        style: textTheme.labelSmall?.copyWith(color: colors.primary, fontWeight: FontWeight.w700),
+                        style: textTheme.labelSmall?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const Spacer(),
                     Text(
                       '${slot.targetMinutes} دقیقه',
-                      style: textTheme.titleMedium?.copyWith(color: colors.primary, fontWeight: FontWeight.w800),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
                 SizedBox(height: metrics.spaceMd),
                 Text(
                   slot.headlineFa,
-                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                if (slot.coachNoteFa != null && slot.coachNoteFa!.isNotEmpty) ...[
+                if (slot.coachNoteFa != null &&
+                    slot.coachNoteFa!.isNotEmpty) ...[
                   SizedBox(height: metrics.spaceSm),
                   Text(
                     slot.coachNoteFa!,
-                    style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ],
@@ -101,7 +117,9 @@ class MvDayDetailScreen extends StatelessWidget {
           if (!slot.isRest && plannedExercises.isNotEmpty) ...[
             Text(
               'حرکات این جلسه (${plannedExercises.length} حرکت)',
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             SizedBox(height: metrics.spaceSm),
             ...plannedExercises.map((ex) {
@@ -120,17 +138,32 @@ class MvDayDetailScreen extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         color: colors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(metrics.radiusField),
+                        borderRadius: BorderRadius.circular(
+                          metrics.radiusField,
+                        ),
                       ),
-                      child: Icon(Icons.fitness_center_rounded, color: colors.primary),
+                      child: Icon(
+                        Icons.fitness_center_rounded,
+                        color: colors.primary,
+                      ),
                     ),
                     SizedBox(width: metrics.spaceMd),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(ex.name, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
-                          Text('${ex.category} · ${ex.defaultReps > 0 ? "${ex.defaultReps} تکرار" : "زمان‌دار"}', style: textTheme.bodySmall?.copyWith(color: colors.textSecondary)),
+                          Text(
+                            ex.name,
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            '${ex.category} · ${ex.defaultReps > 0 ? "${ex.defaultReps} تکرار" : "زمان‌دار"}',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),

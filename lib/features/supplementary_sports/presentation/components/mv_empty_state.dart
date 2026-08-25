@@ -37,7 +37,11 @@ class MvEmptyState extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: colors.primary.withValues(alpha: 0.1),
               ),
-              child: Icon(icon, size: metrics.iconXl * 1.5, color: colors.primary),
+              child: Icon(
+                icon,
+                size: metrics.iconXl * 1.5,
+                color: colors.primary,
+              ),
             ),
             SizedBox(height: metrics.spaceLg),
             Text(
@@ -58,10 +62,7 @@ class MvEmptyState extends StatelessWidget {
             ),
             if (actionLabel != null && onAction != null) ...[
               SizedBox(height: metrics.spaceXl),
-              MvPrimaryAction(
-                label: actionLabel!,
-                onPressed: onAction,
-              ),
+              MvPrimaryAction(label: actionLabel!, onPressed: onAction),
             ],
           ],
         ),

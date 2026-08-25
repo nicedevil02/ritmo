@@ -45,7 +45,8 @@ class ReminderEngine {
 
     final scheduledTime = slot.plannedTime ?? defaultTime;
     final headline = slot.headlineFa;
-    final messageFa = 'وقت ${headline.replaceAll("سبک: ", "")} رسیده است. هر زمان آماده بودی شروع کن.';
+    final messageFa =
+        'وقت ${headline.replaceAll("سبک: ", "")} رسیده است. هر زمان آماده بودی شروع کن.';
 
     final reminder = MvScheduledReminder(
       dateIso: slot.dateIso,

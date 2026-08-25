@@ -26,16 +26,14 @@ class SportsDetailMode {
   static Future<void> setEnabled(bool enabled) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert(
-        'app_settings',
-        {
-          'key': 'sports_detail_mode',
-          'value': enabled ? 'true' : 'false',
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('app_settings', {
+        'key': 'sports_detail_mode',
+        'value': enabled ? 'true' : 'false',
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       notifier.value = enabled;
-    } catch (e) { debugPrint('[ss] sports_detail_mode.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] sports_detail_mode.dart: $e');
+    }
   }
 }

@@ -7,9 +7,8 @@ import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
-import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_event.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/mv_session_repository.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
@@ -48,16 +47,20 @@ class CompletionGateway {
   }
 
   Future<CompletionOutcome> _handleMovementCompletion(MovementCompletion req) async {
-    final event = MovementEvent(
+    final now = DateTime.tryParse(req.dateStr)?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch;
+    final session = MvSession(
       id: RitmoIdFactory.movementLog(),
-      kindCode: req.kindCode,
-      durationMinutes: req.durationMinutes,
-      intensity: MovementIntensity.fromCode(req.intensity),
-      loggedAt: DateTime.tryParse(req.dateStr)?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch,
+      kindCode: req.kindCode.toUpperCase(),
+      sessionMode: MvSessionMode.timed,
+      status: MvSessionStatus.completed,
+      startedAt: now,
+      endedAt: now + (req.durationMinutes * 60 * 1000),
+      createdAt: now,
+      updatedAt: now,
     );
-    await MovementRepository.instance.logEvent(event);
-    _notifySuccess(domain: 'movement', itemId: event.id, dateStr: req.dateStr, result: 'FULL');
-    return CompletionOutcome.success(undoToken: 'movement:${event.id}');
+    await MvSessionRepository().finishSession(session);
+    _notifySuccess(domain: 'movement', itemId: session.id, dateStr: req.dateStr, result: 'FULL');
+    return CompletionOutcome.success(undoToken: 'movement:${session.id}');
   }
 
   Future<CompletionOutcome> _handleRoutineCompletion(RoutineCompletion req) async {
@@ -495,7 +498,7 @@ class CompletionGateway {
           return CompletionOutcome.failure('توکن لغو روتین یافت نشد');
 
         case 'movement':
-          await MovementRepository.instance.deleteEvent(idPayload);
+          await MvSessionRepository().deleteSession(idPayload);
           return CompletionOutcome.success();
 
         case 'course':

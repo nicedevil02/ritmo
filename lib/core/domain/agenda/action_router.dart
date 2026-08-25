@@ -30,9 +30,8 @@ import 'package:ritmo/features/routines/shared/widgets/routine_progressive_sheet
 import 'package:ritmo/features/routines/shared/widgets/routine_dependent_sheet.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_as_needed_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
-import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
-import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_quick_log_sheet.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';
 import 'package:ritmo/features/worship/domain/prayer_target.dart';
 import 'package:ritmo/features/worship/presentation/widgets/prayer_sheet.dart';
@@ -113,11 +112,10 @@ class ActionRouter {
         break;
 
       case AgendaDomain.sport:
-        await showMovementLogSheet(
-          context,
-          presetDate: DateTime.tryParse(item.dateStr) ?? DateTime.now(),
-          presetDurationMinutes: item.durationMinutes,
-          onLogged: () {
+        await MvQuickLogSheet.show(
+          context: context,
+          initialDurationMinutes: item.durationMinutes,
+          onSessionLogged: () {
             if (context.mounted) {
               ActionFeedback.success(
                 context,

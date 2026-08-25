@@ -17,10 +17,7 @@ import 'mv_week_tab.dart';
 class MvHubScreen extends StatefulWidget {
   final MvHubController? controller;
 
-  const MvHubScreen({
-    super.key,
-    this.controller,
-  });
+  const MvHubScreen({super.key, this.controller});
 
   @override
   State<MvHubScreen> createState() => _MvHubScreenState();
@@ -92,9 +89,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
   @override
   Widget build(BuildContext context) {
     if (_controller.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // If onboarding not completed, route directly to 20-second Onboarding
@@ -110,7 +105,10 @@ class _MvHubScreenState extends State<MvHubScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     final todayIso = MvCalendar.formatDateIso(DateTime.now());
-    final currentSlot = _controller.weekSlots.where((s) => s.dateIso == _controller.selectedDateIso).firstOrNull ??
+    final currentSlot =
+        _controller.weekSlots
+            .where((s) => s.dateIso == _controller.selectedDateIso)
+            .firstOrNull ??
         _controller.weekSlots.where((s) => s.dateIso == todayIso).firstOrNull ??
         MvSlot(
           id: 'temp_$todayIso',
@@ -135,7 +133,8 @@ class _MvHubScreenState extends State<MvHubScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MvLibraryScreen(allExercises: _controller.allExercises),
+                  builder: (_) =>
+                      MvLibraryScreen(allExercises: _controller.allExercises),
                 ),
               );
             },
@@ -178,19 +177,24 @@ class _MvHubScreenState extends State<MvHubScreen> {
           MvTodayTab(
             weekSlots: _controller.weekSlots,
             todaySlot: currentSlot,
-            readinessDecision: _controller.readinessDecision ??
+            readinessDecision:
+                _controller.readinessDecision ??
                 const MvDecision<MvReadinessTier>(
                   value: MvReadinessTier.full,
                   reasonFa: 'آمادگی کامل برای تمرین',
                 ),
-            budgetProgress: _controller.budgetProgress ??
+            budgetProgress:
+                _controller.budgetProgress ??
                 const MvWeeklyBudgetProgress(
-                  targetMetMinutes: 500,
-                  targetActiveDays: 3,
-                  currentMetMinutes: 0,
-                  currentActiveDays: 0,
+                  moderateEquivalentMinutes: 0,
+                  rawMetMinutes: 0,
+                  strengthDays: 0,
+                  targetMin: 150,
+                  targetOptimal: 300,
+                  strengthDaysTarget: 2,
                 ),
-            bodyMapDistribution: _controller.bodyMapDistribution ??
+            bodyMapDistribution:
+                _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
             heroAnimationAsset: _heroAnimationAsset,
             onStartSession: () => _handleStartOrResumeSession(currentSlot),
@@ -213,10 +217,13 @@ class _MvHubScreenState extends State<MvHubScreen> {
           // Tab 2: پیشرفت
           MvProgressTab(
             continuousActiveWeeks: _controller.continuousActiveWeeks,
-            totalSessionsCount: _controller.weekSlots.where((s) => s.isCompleted).length,
+            totalSessionsCount: _controller.weekSlots
+                .where((s) => s.isCompleted)
+                .length,
             totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
             personalRecords: _controller.prs,
-            bodyMapDistribution: _controller.bodyMapDistribution ??
+            bodyMapDistribution:
+                _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
           ),
         ],

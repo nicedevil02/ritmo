@@ -1,10 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_row.dart';
+import 'package:ritmo/core/widgets/ritmo_energy_dial.dart';
 import 'package:ritmo/features/today/presentation/widgets/dashboard/realm_countdown_widget.dart';
 import 'package:ritmo/features/today/presentation/widgets/realm_management_sheet.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -62,7 +61,6 @@ class ZoneCard extends StatelessWidget {
 
     final Color energyColor;
     final IconData energyIcon;
-    final List<Color> energyRingColors;
 
     final isHigh = currentEnergyLabel == 'بالا' || currentEnergyLabel == 'High';
     final isLow = currentEnergyLabel == 'پایین' || currentEnergyLabel == 'Low';
@@ -70,15 +68,12 @@ class ZoneCard extends StatelessWidget {
     if (isHigh) {
       energyColor = colors.success;
       energyIcon = CupertinoIcons.flame_fill;
-      energyRingColors = [colors.success, colors.primary];
     } else if (isLow) {
       energyColor = colors.medicalRed;
       energyIcon = CupertinoIcons.moon_fill;
-      energyRingColors = [colors.medicalRed, colors.warning];
     } else {
-      energyColor = colors.warning;
+      energyColor = colors.energyAccent;
       energyIcon = CupertinoIcons.bolt_fill;
-      energyRingColors = [colors.warning, colors.success];
     }
 
     final energyLabel = isHigh
@@ -150,38 +145,14 @@ class ZoneCard extends StatelessWidget {
               SizedBox(height: m.spaceMd),
               Row(
                 children: [
-                  // Circle Indicator
-                  SizedBox(
-                    width: m.touchTarget,
-                    height: m.touchTarget,
-                    child: CustomPaint(
-                      painter: _EnergyRingPainter(
-                        // G-9: در حالت ثبتنشده حلقه خالی (صفر) رسم میشود.
-                        percentage: currentEnergyPercent ?? 0,
-                        colors: energyRingColors,
-                        strokeWidth: 5.0 * m.densityFactor,
-                      ),
-                      child: Center(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4.0),
-                            child: Text(
-                              // G-9: ارقام فارسی + حالت صادقانهٔ «ثبتنشده»
-                              currentEnergyPercent == null
-                                  ? '—'
-                                  : toPersianDigits(
-                                      '${currentEnergyPercent!.toInt()}٪'),
-                              style: RitmoTextStyles.badge(
-                                colors.textPrimary,
-                              ).copyWith(fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  // Modern Thermostat-Style Energy Dial
+                  RitmoEnergyDial(
+                    percentage: currentEnergyPercent,
+                    isDarkMode: isDarkMode,
+                    size: 78.0 * m.densityFactor,
+                    activeColor: energyColor,
                   ),
-                  SizedBox(width: m.spaceSm),
+                  SizedBox(width: m.spaceMd),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,68 +386,5 @@ class ZoneCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       expandSecondary: true,
     );
-  }
-}
-
-class _EnergyRingPainter extends CustomPainter {
-  _EnergyRingPainter({
-    required this.percentage,
-    required this.colors,
-    this.strokeWidth = 5.0,
-  });
-
-  final double percentage;
-  final List<Color> colors;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 4;
-
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    // Draw background track
-    final paintBg = Paint()
-      ..color = colors.first.withValues(alpha: 0.08)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-    canvas.drawCircle(center, radius, paintBg);
-
-    // Create gradient
-    final gradient = SweepGradient(
-      colors: colors,
-      startAngle: -math.pi / 2,
-      endAngle: 3 * math.pi / 2,
-    );
-
-    // Glow effect
-    final paintGlow = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth + 3.0
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
-
-    // Foreground track
-    final paintFg = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final sweepAngle = 2 * math.pi * (percentage / 100);
-
-    // Draw glow first
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintGlow);
-    // Draw crisp path on top
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintFg);
-  }
-
-  @override
-  bool shouldRepaint(covariant _EnergyRingPainter oldDelegate) {
-    return oldDelegate.percentage != percentage ||
-        oldDelegate.colors != colors ||
-        oldDelegate.strokeWidth != strokeWidth;
   }
 }

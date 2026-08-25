@@ -1,7 +1,6 @@
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 
 class WorkoutSessionLog {
-
   WorkoutSessionLog({
     required this.id,
     this.planId,
@@ -46,14 +45,15 @@ class WorkoutSessionLog {
       'durationSeconds': durationSeconds,
       'completedExercisesCount': completedExercisesCount,
       'totalExercisesCount': totalExercisesCount,
-      'overallFeeling': overallFeeling != null ? _feelingToString(overallFeeling!) : null,
+      'overallFeeling': overallFeeling != null
+          ? _feelingToString(overallFeeling!)
+          : null,
       'note': note,
     };
   }
 }
 
 class ExerciseFeelingLog {
-
   ExerciseFeelingLog({
     required this.id,
     required this.sessionLogId,
@@ -89,7 +89,6 @@ class ExerciseFeelingLog {
 }
 
 class ExerciseReadyForIncrease {
-
   ExerciseReadyForIncrease({
     required this.exerciseId,
     required this.exerciseName,
@@ -101,7 +100,6 @@ class ExerciseReadyForIncrease {
 }
 
 class DecisionLog {
-
   DecisionLog({
     required this.id,
     this.userId = 'default',
@@ -127,7 +125,8 @@ class DecisionLog {
   final String userId;
   final String? sessionId;
   final String? exerciseId;
-  final String decisionType; // «AI پیشنهاد داد» | «کاربر رد کرد» | «برنامه بازسازی شد»
+  final String
+  decisionType; // «AI پیشنهاد داد» | «کاربر رد کرد» | «برنامه بازسازی شد»
   final String? rejectionReason;
   final int createdAt;
 
@@ -148,18 +147,25 @@ class DecisionLog {
 
 String _feelingToString(Feeling feeling) {
   switch (feeling) {
-    case Feeling.easy: return 'EASY';
-    case Feeling.good: return 'GOOD';
-    case Feeling.hard: return 'HARD';
+    case Feeling.easy:
+      return 'EASY';
+    case Feeling.good:
+      return 'GOOD';
+    case Feeling.hard:
+      return 'HARD';
   }
 }
 
 Feeling? _stringToFeeling(String? val) {
   if (val == null) return null;
   switch (val.toUpperCase()) {
-    case 'EASY': return Feeling.easy;
-    case 'GOOD': return Feeling.good;
-    case 'HARD': return Feeling.hard;
-    default: return null;
+    case 'EASY':
+      return Feeling.easy;
+    case 'GOOD':
+      return Feeling.good;
+    case 'HARD':
+      return Feeling.hard;
+    default:
+      return null;
   }
 }

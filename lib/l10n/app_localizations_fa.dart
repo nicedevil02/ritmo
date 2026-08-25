@@ -1385,4 +1385,261 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get cycleSemanticsHasLogs => '، دارای علائم ثبت‌شده';
+
+  @override
+  String get mv_kind_picker_title => 'انتخاب نوع ورزش';
+
+  @override
+  String get mv_kind_picker_search_hint => 'جستجوی ورزش...';
+
+  @override
+  String get mv_kind_picker_recent => 'ورزش‌های اخیر';
+
+  @override
+  String get mv_kind_picker_seasonal => 'ورزش‌های فصلی / پیشنهادی';
+
+  @override
+  String get mv_kind_picker_all => 'همهٔ ورزش‌ها';
+
+  @override
+  String get mv_kind_picker_create_custom => 'ورزش جدید دلخواه';
+
+  @override
+  String get mv_kind_picker_empty => 'ورزشی با این عنوان یافت نشد.';
+
+  @override
+  String get mv_custom_kind_title => 'ساخت نوع ورزش سفارشی';
+
+  @override
+  String get mv_custom_kind_name => 'نام ورزش';
+
+  @override
+  String get mv_custom_kind_family => 'دسته‌بندی اصلی';
+
+  @override
+  String get mv_custom_kind_metric => 'متریک اصلی اندازه‌گیری';
+
+  @override
+  String get mv_custom_kind_intensity => 'شدت پیش‌فرض (MET)';
+
+  @override
+  String get mv_custom_kind_saved => 'ورزش سفارشی با موفقیت ذخیره شد.';
+
+  @override
+  String get mv_onboarding_anchor_title => 'ورزش‌های ثابت هفتگی (لنگر)';
+
+  @override
+  String get mv_onboarding_anchor_add => 'افزودن زمان ثابت';
+
+  @override
+  String get mv_onboarding_anchor_skip => 'بعداً اضافه می‌کنم';
+
+  @override
+  String get mv_commitment_saved => 'تعهد ثابت ثبت شد';
+
+  @override
+  String get mv_commitment_repeat_weekly => 'تکرار هفتگی';
+
+  @override
+  String get mv_commitment_venue => 'محل یا سالن تمرین';
+
+  @override
+  String get mv_commitment_partner => 'هم‌تمرینی / تیم';
+
+  @override
+  String get mv_anchor_cancelled_this_week => 'این هفته لغو شد';
+
+  @override
+  String get mv_anchor_suggest_deactivate =>
+      'آیا می‌خواهید این تعهد به طور کامل غیرفعال شود؟';
+
+  @override
+  String get mv_anchor_constraint_note =>
+      'تمرین ثابت لنگر با توجه به محدودیت ثبت‌شده';
+
+  @override
+  String get mv_tomorrow_anchor_notice => 'یادآوری: فردا جلسهٔ ثابت لنگر دارید';
+
+  @override
+  String get mv_conflict_back_to_back =>
+      'هشدار: دو جلسهٔ سنگین متوالی برنامه‌ریزی شده است';
+
+  @override
+  String get mv_reason_anchor => 'جلسهٔ ثابت لنگر برنامه‌ریزی شده شما';
+
+  @override
+  String get mv_reason_pre_anchor_taper =>
+      'کاهش حجم تمرینی جهت حفظ توان برای جلسهٔ لنگر فردا';
+
+  @override
+  String get mv_reason_post_anchor_recovery =>
+      'ریکاوری و بازتوانی پس از جلسهٔ فشردهٔ لنگر دیروز';
+
+  @override
+  String get mv_reason_complement =>
+      'تمرین مکمل قدرتی جهت تعادل عضلانی و حمایت از ورزش اصلی';
+
+  @override
+  String get mv_reason_who_gap =>
+      'جبران کسری فعالیت معادل متوسط جهت دستیابی به هدف ۱۵۰ دقیقه در هفته';
+
+  @override
+  String get mv_reason_strength_quota =>
+      'تکمیل سهمیهٔ ۲ جلسه تمرین تقویتی عضلانی در هفته';
+
+  @override
+  String get mv_reason_rest_guaranteed =>
+      'روز استراحت ضروری جهت بازسازی فیزیولوژیک';
+
+  @override
+  String get mv_reason_readiness_low =>
+      'تعدیل فشار تمرین به دلیل سطح آمادگی پایین امروز';
+
+  @override
+  String get mv_reason_load_cap =>
+      'کنترل سقف افزایش بار هفتگی برای پیشگیری از خستگی مفرط';
+
+  @override
+  String get mv_reason_fallback_minimum =>
+      'حداقل فعالیت مؤثر ۱۰ دقیقه‌ای برای حفظ زنجیره';
+
+  @override
+  String get mv_reason_season_fit => 'ورزش متناسب با فصل جاری';
+
+  @override
+  String get mv_reason_constraint_relaxed =>
+      'تطبیق تمرین با شرایط و امکانات فعلی';
+
+  @override
+  String get mv_metric_distance => 'مسافت (کیلومتر)';
+
+  @override
+  String get mv_metric_elevation => 'ارتفاع (متر)';
+
+  @override
+  String get mv_metric_laps => 'تعداد دور / طول';
+
+  @override
+  String get mv_metric_pack_weight => 'وزن کوله (کیلوگرم)';
+
+  @override
+  String get mv_metric_duration => 'مدت زمان (دقیقه)';
+
+  @override
+  String get mv_effort_question => 'فشار این تمرین چطور بود؟';
+
+  @override
+  String get mv_effort_easy => 'آسان';
+
+  @override
+  String get mv_effort_good => 'مناسب';
+
+  @override
+  String get mv_effort_hard => 'سخت';
+
+  @override
+  String get mv_effort_refine => 'تنظیم دقیق با اسلایدر RPE';
+
+  @override
+  String get mv_new_personal_record => 'رکورد شخصی جدید! 🎉';
+
+  @override
+  String get mv_load_band_low => 'بار سبک';
+
+  @override
+  String get mv_load_band_optimal => 'بار بهینه و سازنده';
+
+  @override
+  String get mv_load_band_watch => 'بار رو به افزایش';
+
+  @override
+  String get mv_load_band_spike => 'جهش بار تمرینی (نیازمند احتیاط)';
+
+  @override
+  String get mv_budget_moderate_minutes => 'دقیقه فعالیت معادل متوسط';
+
+  @override
+  String get mv_budget_strength_days => 'روز تمرین قدرتی';
+
+  @override
+  String get mv_budget_remaining => 'باقیمانده تا هدف سلامت هفتگی';
+
+  @override
+  String get mv_streak_insufficient =>
+      'برای محاسبهٔ تداوم، حداقل ۲ هفته فعالیت لازم است';
+
+  @override
+  String get mv_readiness_no_checkin => 'سطح آمادگی امروز هنوز ثبت نشده است';
+
+  @override
+  String get mv_need_n_more_sessions =>
+      'چند جلسهٔ دیگر برای ارزیابی دقیق مورد نیاز است';
+
+  @override
+  String get mv_insufficient_data_generic => 'دادهٔ کافی ثبت نشده است';
+
+  @override
+  String get mv_insight_best_day => 'روز طلایی تمرین';
+
+  @override
+  String get mv_insight_anchor_adherence => 'پایبندی به لنگرها';
+
+  @override
+  String get mv_insight_effort_drift => 'روند ادراک فشار';
+
+  @override
+  String get mv_insight_kind_mix => 'تنوع ورزشی ماهانه';
+
+  @override
+  String get mv_insight_route_progress => 'پیشرفت در مسیر تکراری';
+
+  @override
+  String get mv_campaign_title => 'دورهٔ هدف‌دار';
+
+  @override
+  String get mv_campaign_target_date => 'تاریخ رویداد هدف';
+
+  @override
+  String get mv_campaign_phase_base => 'مرحله پایه';
+
+  @override
+  String get mv_campaign_phase_build => 'مرحله بارگذاری تدریجی';
+
+  @override
+  String get mv_campaign_phase_taper => 'مرحله کاهش حجم و آماده‌سازی';
+
+  @override
+  String get mv_campaign_too_short =>
+      'زمان باقیمانده تا رویداد کمتر از ۴ هفته است';
+
+  @override
+  String get mv_route_select => 'انتخاب مسیر';
+
+  @override
+  String get mv_route_new => 'ثبت مسیر جدید';
+
+  @override
+  String mv_route_times_done(int count) {
+    return 'دفعات انجام: $count';
+  }
+
+  @override
+  String mv_route_best_time(int minutes) {
+    return 'بهترین زمان: $minutes دقیقه';
+  }
+
+  @override
+  String get mv_day_plan_title => 'برنامهٔ روز';
+
+  @override
+  String get mv_library_title => 'کتابخانهٔ حرکات و ورزش‌ها';
+
+  @override
+  String get mv_week_plan_title => 'برنامهٔ هفته';
+
+  @override
+  String get mv_library_tab_kinds => 'ورزش‌ها';
+
+  @override
+  String get mv_library_tab_exercises => 'حرکات';
 }

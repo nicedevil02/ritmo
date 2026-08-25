@@ -330,7 +330,7 @@ class _RitmoAppState extends State<RitmoApp> {
     final inputsKey =
         '${prefs.paletteId}|${prefs.mode}|${prefs.reduceTransparency}'
         '|${prefs.trueBlack}|${prefs.density}|${prefs.textScalePercent}'
-        '|${prefs.followOsTextScale}';
+        '|${prefs.followOsTextScale}|${prefs.glassBlurSigma}|${prefs.glassOpacityPercent}';
     if (_themeInputsKey == inputsKey &&
         _lightCache != null &&
         _darkCache != null) {
@@ -341,6 +341,8 @@ class _RitmoAppState extends State<RitmoApp> {
       palette: palette,
       brightness: Brightness.light,
       reduceTransparency: prefs.reduceTransparency,
+      glassBlurSigma: prefs.glassBlurSigma,
+      glassOpacityPercent: prefs.glassOpacityPercent,
       density: prefs.density,
     );
     _darkCache = RitmoTheme.build(
@@ -348,6 +350,8 @@ class _RitmoAppState extends State<RitmoApp> {
       brightness: Brightness.dark,
       reduceTransparency: prefs.reduceTransparency,
       trueBlack: prefs.trueBlack,
+      glassBlurSigma: prefs.glassBlurSigma,
+      glassOpacityPercent: prefs.glassOpacityPercent,
       density: prefs.density,
     );
   }

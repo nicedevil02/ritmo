@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -168,106 +169,165 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     final controller = TextEditingController(text: '1');
     final count = await showDialog<int>(
       context: context,
-      builder: (context) {
-        final colors = context.colors;
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: Text(
-              'ثبت چندتایی قضای ${debt.title}',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+      builder: (dialogCtx) {
+        final colors = dialogCtx.colors;
+        final isDark = dialogCtx.isDark;
+        final isGlass = dialogCtx.isGlassEnabled;
+        final blur = dialogCtx.glassBlurSigma.clamp(0.0, 50.0);
+        const dialogRadius = BorderRadius.all(Radius.circular(24));
+
+        final content = Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'ثبت چندتایی قضای ${debt.title}',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'تعداد ادای امروز (حداکثر ${toPersianDigits(debt.remainingCount.toString())} مورد):',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 13,
+              const SizedBox(height: 12),
+              Text(
+                'تعداد ادای امروز (حداکثر ${toPersianDigits(debt.remainingCount.toString())} مورد):',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                decoration: InputDecoration(
+                  fillColor: colors.surfaceSunken,
+                  filled: true,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.primary, width: 1.8),
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
-                  decoration: InputDecoration(
-                    fillColor: isDark ? colors.surfaceSunken : colors.surfaceSunken,
-                    filled: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colors.primary, width: 1.8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                // Quick Increment Chips
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [1, 2, 3, 5, 10].map((n) {
-                    return InkWell(
-                      onTap: () {
-                        unawaited(HapticFeedback.selectionClick());
-                        controller.text = '$n';
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
-                        ),
-                        child: Text(
-                          toPersianDigits('+$n'),
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            color: colors.primary,
-                          ),
+              ),
+              const SizedBox(height: 14),
+              // Quick Increment Chips
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [1, 2, 3, 5, 10].map((n) {
+                  return InkWell(
+                    onTap: () {
+                      unawaited(HapticFeedback.selectionClick());
+                      controller.text = '$n';
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        toPersianDigits('+$n'),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, null),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                    ),
+                  );
+                }).toList(),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  final val = int.tryParse(controller.text) ?? 0;
-                  if (val > 0) {
-                    Navigator.pop(context, val);
-                  }
-                },
-                child: Text('ثبت ادا', style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary)),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx, null),
+                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      final val = int.tryParse(controller.text) ?? 0;
+                      if (val > 0) {
+                        Navigator.pop(dialogCtx, val);
+                      }
+                    },
+                    child: Text('ثبت ادا', style: TextStyle(fontWeight: FontWeight.bold, color: colors.onPrimary)),
+                  ),
+                ],
               ),
             ],
+          ),
+        );
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            child: !isGlass
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      borderRadius: dialogRadius,
+                      border: Border.all(
+                        color: isDark ? colors.border : colors.divider,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: content,
+                  )
+                : ClipRRect(
+                    borderRadius: dialogRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.glassTint,
+                          borderRadius: dialogRadius,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.70),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: dialogRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.45],
+                            ),
+                          ),
+                          child: content,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         );
       },
@@ -306,36 +366,103 @@ class _WorshipDebtsSectionState extends State<WorshipDebtsSection> {
     final colors = context.colors;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        final colors = context.colors;
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: colors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            title: const Text(
-              'حذف مورد قضای عبادات',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              'آیا از حذف "${debt.title}" اطمینان دارید؟ تمام سوابق مربوط به این بدهی پاک خواهد شد.',
-              style: TextStyle(fontSize: 13.5, color: colors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+      builder: (dialogCtx) {
+        final colors = dialogCtx.colors;
+        final isDark = dialogCtx.isDark;
+        final isGlass = dialogCtx.isGlassEnabled;
+        final blur = dialogCtx.glassBlurSigma.clamp(0.0, 50.0);
+        const dialogRadius = BorderRadius.all(Radius.circular(24));
+
+        final content = Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'حذف مورد قضای عبادات',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.error,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('حذف دائم', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Text(
+                'آیا از حذف "${debt.title}" اطمینان دارید؟ تمام سوابق مربوط به این بدهی پاک خواهد شد.',
+                style: TextStyle(fontSize: 13.5, color: colors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx, false),
+                    child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.error,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    onPressed: () => Navigator.pop(dialogCtx, true),
+                    child: const Text('حذف دائم', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
             ],
+          ),
+        );
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+            child: !isGlass
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      borderRadius: dialogRadius,
+                      border: Border.all(
+                        color: isDark ? colors.border : colors.divider,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: content,
+                  )
+                : ClipRRect(
+                    borderRadius: dialogRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.glassTint,
+                          borderRadius: dialogRadius,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.18)
+                                : Colors.white.withValues(alpha: 0.70),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: dialogRadius,
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                                Colors.white.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.45],
+                            ),
+                          ),
+                          child: content,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         );
       },
@@ -1066,191 +1193,240 @@ class _AddDebtSheetState extends State<_AddDebtSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
     final presets = _debtType == 'PRAYER'
         ? _prayerPresets
         : (_debtType == 'FAST' ? _fastPresets : _atonementPresets);
 
-    return Directionality(
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.balance_rounded, size: 20, color: colors.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'ثبت بدهی (قضای) جدید',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Debt Type Picker
+          Row(
+            children: [
+              _buildTypeOption('PRAYER', 'نماز قضا', '📿'),
+              const SizedBox(width: 8),
+              _buildTypeOption('FAST', 'روزه قضا', '🌙'),
+              const SizedBox(width: 8),
+              _buildTypeOption('ATONEMENT', 'کفاره / سایر', '⚖️'),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Presets Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: presets.map((p) {
+                return Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () {
+                      unawaited(HapticFeedback.selectionClick());
+                      setState(() {
+                        _titleController.text = p;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceSunken,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                      ),
+                      child: Text(
+                        p,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Title Field
+          TextField(
+            controller: _titleController,
+            style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: 'عنوان بدهی (مثلاً: نماز قضای صبح)',
+              hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
+              fillColor: colors.surfaceSunken,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Total count & Target Count Row
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _countController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: 'تعداد کل قضاها',
+                    hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                    fillColor: colors.surfaceSunken,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.primary, width: 1.8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _targetController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: 'هدف انجام در روز',
+                    hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                    fillColor: colors.surfaceSunken,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.primary, width: 1.8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 0,
+            ),
+            onPressed: _save,
+            child: Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
+          ),
+        ],
+      ),
+    );
+
+    final sheetBody = Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Container(
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: sheetRadius,
           border: Border.all(
-            color: colors.border,
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.balance_rounded, size: 20, color: colors.primary),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'ثبت بدهی (قضای) جدید',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                        ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
+        child: sheetBody,
+      );
+    }
 
-            // Debt Type Picker
-            Row(
-              children: [
-                _buildTypeOption('PRAYER', 'نماز قضا', '📿'),
-                const SizedBox(width: 8),
-                _buildTypeOption('FAST', 'روزه قضا', '🌙'),
-                const SizedBox(width: 8),
-                _buildTypeOption('ATONEMENT', 'کفاره / سایر', '⚖️'),
-              ],
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
             ),
-            const SizedBox(height: 14),
-
-            // Presets Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: presets.map((p) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 6),
-                    child: InkWell(
-                      onTap: () {
-                        unawaited(HapticFeedback.selectionClick());
-                        setState(() {
-                          _titleController.text = p;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
-                        ),
-                        child: Text(
-                          p,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: colors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Title Field
-            TextField(
-              controller: _titleController,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: 'عنوان بدهی (مثلاً: نماز قضای صبح)',
-                hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-                fillColor: colors.surfaceSunken,
-                filled: true,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.primary, width: 1.8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Total count & Target Count Row
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _countController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      hintText: 'تعداد کل قضاها',
-                      hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
-                      fillColor: colors.surfaceSunken,
-                      filled: true,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.primary, width: 1.8),
-                      ),
-                    ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(
+                    alpha: isDark ? 0.08 : 0.20,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _targetController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      hintText: 'هدف انجام در روز',
-                      hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
-                      fillColor: colors.surfaceSunken,
-                      filled: true,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.primary, width: 1.8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
               ),
-              onPressed: _save,
-              child: Text('ثبت بدهی جدید', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
             ),
-          ],
+            child: sheetBody,
+          ),
         ),
       ),
     );
@@ -1392,172 +1568,221 @@ class _EditDebtSheetState extends State<_EditDebtSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    return Directionality(
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ویرایش و مدیریت بدهی',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                ),
+              ),
+              IconButton(
+                icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          TextField(
+            controller: _titleController,
+            style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              labelText: 'عنوان',
+              labelStyle: TextStyle(color: colors.textSecondary),
+              fillColor: colors.surfaceSunken,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Total & Remaining
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _totalController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    labelText: 'تعداد کل',
+                    labelStyle: TextStyle(color: colors.textSecondary),
+                    fillColor: colors.surfaceSunken,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.primary, width: 1.8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _remainingController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    labelText: 'باقیمانده',
+                    labelStyle: TextStyle(color: colors.textSecondary),
+                    fillColor: colors.surfaceSunken,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: colors.primary, width: 1.8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Daily Target
+          TextField(
+            controller: _targetController,
+            keyboardType: TextInputType.number,
+            style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              labelText: 'هدف روزانه',
+              labelStyle: TextStyle(color: colors.textSecondary),
+              fillColor: colors.surfaceSunken,
+              filled: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+
+          Row(
+            children: [
+              // Delete Button
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  widget.onDeleted();
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Icon(CupertinoIcons.trash, color: colors.error, size: 20),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Save Button
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: _update,
+                  child: Text('ذخیره تغییرات', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final sheetBody = Directionality(
       textDirection: TextDirection.rtl,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Container(
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: sheetRadius,
           border: Border.all(
-            color: colors.border,
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'ویرایش و مدیریت بدهی',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                    ),
-                ),
-                IconButton(
-                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+        child: sheetBody,
+      );
+    }
 
-            // Title
-            TextField(
-              controller: _titleController,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                labelText: 'عنوان',
-                labelStyle: TextStyle(color: colors.textSecondary),
-                fillColor: colors.surfaceSunken,
-                filled: true,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.primary, width: 1.8),
-                ),
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(
+                    alpha: isDark ? 0.08 : 0.20,
+                  ),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
               ),
             ),
-            const SizedBox(height: 12),
-
-            // Total & Remaining
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _totalController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      labelText: 'تعداد کل',
-                      labelStyle: TextStyle(color: colors.textSecondary),
-                      fillColor: colors.surfaceSunken,
-                      filled: true,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.primary, width: 1.8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _remainingController,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-                    decoration: InputDecoration(
-                      labelText: 'باقیمانده',
-                      labelStyle: TextStyle(color: colors.textSecondary),
-                      fillColor: colors.surfaceSunken,
-                      filled: true,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: colors.primary, width: 1.8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Daily Target
-            TextField(
-              controller: _targetController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: colors.textPrimary, fontSize: 14.5, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                labelText: 'هدف روزانه',
-                labelStyle: TextStyle(color: colors.textSecondary),
-                fillColor: colors.surfaceSunken,
-                filled: true,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.border.withValues(alpha: 0.5)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: colors.primary, width: 1.8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 22),
-
-            Row(
-              children: [
-                // Delete Button
-                InkWell(
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.onDeleted();
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colors.error.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
-                    ),
-                    child: Icon(CupertinoIcons.trash, color: colors.error, size: 20),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Save Button
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary,
-                      foregroundColor: colors.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    onPressed: _update,
-                    child: Text('ذخیره تغییرات', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: colors.onPrimary)),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            child: sheetBody,
+          ),
         ),
       ),
     );

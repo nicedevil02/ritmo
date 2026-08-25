@@ -34,6 +34,18 @@ class MvPrRepository {
     return MvPersonalRecord.fromMap(rows.first);
   }
 
+  /// Retrieves all recorded PRs for a specific sport/kind code.
+  Future<List<MvPersonalRecord>> getPrsForKind(String kind) async {
+    final db = await _db;
+    final rows = await db.query(
+      'movement_pr',
+      where: 'kind = ?',
+      whereArgs: [kind],
+      orderBy: 'achievedAt DESC',
+    );
+    return rows.map((r) => MvPersonalRecord.fromMap(r)).toList();
+  }
+
   /// Saves or updates a personal record.
   Future<void> recordPr(MvPersonalRecord pr) async {
     final db = await _db;

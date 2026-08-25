@@ -1,7 +1,7 @@
-import 'dart:ui';
-
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/widgets/ritmo/ritmo_glass_surface.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -22,6 +22,7 @@ class RitmoDatePicker {
 
     return showDialog<DateTime>(
       context: context,
+      useSafeArea: true,
       builder: (context) {
         return _RitmoDatePickerDialog(
           initialDate: initialDate,
@@ -163,215 +164,216 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
     final jalaliFirstLimit = Jalali.fromDateTime(widget.firstDate);
     final jalaliLastLimit = Jalali.fromDateTime(widget.lastDate);
 
+    final minYear = math.min(jalaliFirstLimit.year, jalaliLastLimit.year);
+    final maxYear = math.max(jalaliFirstLimit.year, jalaliLastLimit.year);
     final yearsList = List<int>.generate(
-      (jalaliLastLimit.year - jalaliFirstLimit.year) + 1,
-      (index) => jalaliFirstLimit.year + index,
+      (maxYear - minYear) + 1,
+      (index) => minYear + index,
     );
 
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF111424).withValues(alpha: 0.85)
-                : Colors.white.withValues(alpha: 0.9),
+    final canGoPrev = Jalali(_viewDate.year, _viewDate.month, 1)
+        .toDateTime()
+        .isAfter(widget.firstDate);
+    final canGoNext = Jalali(_viewDate.year, _viewDate.month, _viewDate.monthLength)
+        .toDateTime()
+        .isBefore(widget.lastDate);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      elevation: 0,
+      child: Material(
+        type: MaterialType.transparency,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: RitmoGlassSurface(
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: colors.border.withValues(alpha: isDark ? 0.12 : 0.4),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
             child: Directionality(
               textDirection: TextDirection.rtl,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Header Selected Date Display
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header Selected Date Display
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'انتخاب تاریخ',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 12.5,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_getPersianWeekdayName(_selectedDate.toDateTime().weekday)}، '
+                              '${_selectedDate.day} '
+                              '${_persianMonths[_selectedDate.month - 1]} '
+                              '${_selectedDate.year}',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: colors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(
+                        color: colors.border.withValues(
+                          alpha: isDark ? 0.12 : 0.4,
+                        ),
+                        height: 1,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Month/Year navigation row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'انتخاب تاریخ',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 12.5,
-                              color: colors.textSecondary,
+                          IconButton(
+                            icon: Icon(
+                              Icons.chevron_right_rounded,
+                              color: canGoPrev
+                                  ? colors.textPrimary
+                                  : colors.textSecondary.withValues(alpha: 0.3),
+                            ),
+                            onPressed: canGoPrev
+                                ? () {
+                                    setState(() {
+                                      if (!_showYearMonthPicker) {
+                                        _viewDate = _addMonths(_viewDate, -1);
+                                        _selectedYearPicker = _viewDate.year;
+                                      }
+                                    });
+                                  }
+                                : null,
+                          ),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _showYearMonthPicker = !_showYearMonthPicker;
+                                if (_showYearMonthPicker) {
+                                  _selectedYearPicker = _viewDate.year;
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '${_persianMonths[_viewDate.month - 1]} '
+                                    '${_viewDate.year}',
+                                    style: TextStyle(
+                                      fontFamily: 'Vazirmatn',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    _showYearMonthPicker
+                                        ? Icons.arrow_drop_up_rounded
+                                        : Icons.arrow_drop_down_rounded,
+                                    color: colors.textSecondary,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${_getPersianWeekdayName(_selectedDate.toDateTime().weekday)}، '
-                            '${_selectedDate.day} '
-                            '${_persianMonths[_selectedDate.month - 1]} '
-                            '${_selectedDate.year}',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: colors.primary,
+                          IconButton(
+                            icon: Icon(
+                              Icons.chevron_left_rounded,
+                              color: canGoNext
+                                  ? colors.textPrimary
+                                  : colors.textSecondary.withValues(alpha: 0.3),
+                            ),
+                            onPressed: canGoNext
+                                ? () {
+                                    setState(() {
+                                      if (!_showYearMonthPicker) {
+                                        _viewDate = _addMonths(_viewDate, 1);
+                                        _selectedYearPicker = _viewDate.year;
+                                      }
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Content panel (Grid or Selector)
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: _showYearMonthPicker
+                            ? _buildYearMonthPanel(yearsList, colors, isDark)
+                            : _buildDaysPanel(
+                                totalCells,
+                                startOffset,
+                                daysInMonth,
+                                jalaliFirstLimit,
+                                jalaliLastLimit,
+                                colors,
+                                isDark,
+                              ),
+                      ),
+
+                      const SizedBox(height: 16),
+                      // Actions
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              'لغو',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(
+                              context,
+                              _selectedDate.toDateTime(),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'تایید',
+                              style: TextStyle(
+                                fontFamily: 'Vazirmatn',
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Divider(
-                      color: colors.border.withValues(
-                        alpha: isDark ? 0.12 : 0.4,
-                      ),
-                      height: 1,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Month/Year navigation row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.chevron_right_rounded,
-                            color: colors.textPrimary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              if (_showYearMonthPicker) {
-                                // Shift years page
-                              } else {
-                                _viewDate = _addMonths(_viewDate, -1);
-                                _selectedYearPicker = _viewDate.year;
-                              }
-                            });
-                          },
-                        ),
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _showYearMonthPicker = !_showYearMonthPicker;
-                              if (_showYearMonthPicker) {
-                                _selectedYearPicker = _viewDate.year;
-                              }
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  '${_persianMonths[_viewDate.month - 1]} '
-                                  '${_viewDate.year}',
-                                  style: TextStyle(
-                                    fontFamily: 'Vazirmatn',
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  _showYearMonthPicker
-                                      ? Icons.arrow_drop_up_rounded
-                                      : Icons.arrow_drop_down_rounded,
-                                  color: colors.textSecondary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.chevron_left_rounded,
-                            color: colors.textPrimary,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              if (_showYearMonthPicker) {
-                                // Shift years page
-                              } else {
-                                _viewDate = _addMonths(_viewDate, 1);
-                                _selectedYearPicker = _viewDate.year;
-                              }
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Content panel (Grid or Selector)
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: _showYearMonthPicker
-                          ? _buildYearMonthPanel(yearsList, colors, isDark)
-                          : _buildDaysPanel(
-                              totalCells,
-                              startOffset,
-                              daysInMonth,
-                              jalaliFirstLimit,
-                              jalaliLastLimit,
-                              colors,
-                              isDark,
-                            ),
-                    ),
-
-                    const SizedBox(height: 16),
-                    // Actions
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'لغو',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(
-                            context,
-                            _selectedDate.toDateTime(),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            'تایید',
-                            style: TextStyle(
-                              fontFamily: 'Vazirmatn',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -414,10 +416,9 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
         LayoutBuilder(
           builder: (context, constraints) {
             const columns = 7;
-            const spacing = 6.0;
+            const spacing = 4.0;
             final cellWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
-            final scale = context.textScale;
-            final cellHeight = (cellWidth * 0.95).clamp(34.0 * scale, 52.0 * scale);
+            final cellHeight = (cellWidth * 0.95).clamp(32.0, 48.0);
 
             return GridView.builder(
               shrinkWrap: true,
@@ -481,15 +482,15 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
                       '$dayNum',
                       style: TextStyle(
                         fontFamily: 'Vazirmatn',
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
                         color: isSelected
                             ? Colors.white
                             : (isEnabled
-                                  ? colors.textPrimary
-                                  : colors.textSecondary.withValues(alpha: 0.3)),
+                                ? colors.textPrimary
+                                : colors.textSecondary.withValues(alpha: 0.3)),
                       ),
                     ),
                   ),
@@ -512,7 +513,7 @@ class _RitmoDatePickerDialogState extends State<_RitmoDatePickerDialog> {
       children: [
         // Year selection row
         SizedBox(
-          height: 40,
+          height: 42,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: yearsList.length,

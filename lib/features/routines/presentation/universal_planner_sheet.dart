@@ -20,8 +20,8 @@ import 'package:ritmo/features/routines/presentation/planner_controller.dart';
 import 'package:ritmo/features/routines/presentation/widgets/confetti_widget.dart';
 import 'package:ritmo/features/routines/presentation/widgets/dedicated_builder_sheet.dart';
 import 'package:ritmo/features/notes/presentation/screens/note_editor_screen.dart';
-import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_category_grid.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_quick_log_sheet.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_header.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_journey_preview.dart';
 import 'package:ritmo/features/routines/presentation/widgets/planner_natural_input.dart';
@@ -175,13 +175,9 @@ class _UniversalPlannerSheetState extends State<UniversalPlannerSheet> {
 
     _controller.setSportsLogSheetOpener(({durationMinutes}) {
       if (!mounted) return;
-      showMovementLogSheet(
-        context,
-        presetDurationMinutes: durationMinutes,
-        onLogged: () {
-          widget.onSaved?.call();
-          if (mounted) Navigator.of(context).pop();
-        },
+      MvQuickLogSheet.show(
+        context: context,
+        initialDuration: durationMinutes ?? 20,
       );
     });
 

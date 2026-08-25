@@ -9,11 +9,7 @@ class MvAiCoachSheet extends StatefulWidget {
   final MvUserProfile profile;
   final MvSlot? currentSlot;
 
-  const MvAiCoachSheet({
-    super.key,
-    required this.profile,
-    this.currentSlot,
-  });
+  const MvAiCoachSheet({super.key, required this.profile, this.currentSlot});
 
   static Future<void> show({
     required BuildContext context,
@@ -22,10 +18,8 @@ class MvAiCoachSheet extends StatefulWidget {
   }) {
     return MvSheetScaffold.show(
       context: context,
-      builder: (ctx) => MvAiCoachSheet(
-        profile: profile,
-        currentSlot: currentSlot,
-      ),
+      builder: (ctx) =>
+          MvAiCoachSheet(profile: profile, currentSlot: currentSlot),
     );
   }
 
@@ -51,7 +45,15 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
     // Initial welcome tip from CoachEngine
     final initialTip = _engine.generateTip(
       profile: widget.profile,
-      slot: widget.currentSlot ?? const MvSlot(id: '0', dateIso: '', headlineFa: 'ورزش', createdAt: 0, updatedAt: 0),
+      slot:
+          widget.currentSlot ??
+          const MvSlot(
+            id: '0',
+            dateIso: '',
+            headlineFa: 'ورزش',
+            createdAt: 0,
+            updatedAt: 0,
+          ),
     );
     _messages.add({
       'role': 'assistant',
@@ -75,13 +77,17 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
     // Instant smart response based on keywords
     String reply;
     if (query.contains('سبک') || query.contains('خسته')) {
-      reply = 'می‌توانی از گزینهٔ «حداقل مؤثر ۱۰ دقیقه‌ای» استفاده کنی تا بدون خستگی، پیوستگی تمرینت حفظ شود.';
+      reply =
+          'می‌توانی از گزینهٔ «حداقل مؤثر ۱۰ دقیقه‌ای» استفاده کنی تا بدون خستگی، پیوستگی تمرینت حفظ شود.';
     } else if (query.contains('آپارتمان') || query.contains('صدا')) {
-      reply = 'در تنظیمات کلید «حالت همسایه‌پسند» را روشن کن تا تمام حرکات پرشی و پرصدا به‌طور خودکار فیلتر شوند.';
+      reply =
+          'در تنظیمات کلید «حالت همسایه‌پسند» را روشن کن تا تمام حرکات پرشی و پرصدا به‌طور خودکار فیلتر شوند.';
     } else if (query.contains('گرفتگی') || query.contains('کشش')) {
-      reply = 'کشش ۵ دقیقه‌ای عضلات همسترینگ و پشت همراه با نوشیدن آب به کاهش اسید لاکتیک کمک زیادی می‌کند.';
+      reply =
+          'کشش ۵ دقیقه‌ای عضلات همسترینگ و پشت همراه با نوشیدن آب به کاهش اسید لاکتیک کمک زیادی می‌کند.';
     } else {
-      reply = 'مهم‌ترین اصل در ورزش پیوستگی است؛ حتی ۵ دقیقه فعالیت سبک بهتر از انجام ندادن است.';
+      reply =
+          'مهم‌ترین اصل در ورزش پیوستگی است؛ حتی ۵ دقیقه فعالیت سبک بهتر از انجام ندادن است.';
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -104,7 +110,10 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
       subtitle: 'راهنما و همراه تمرینی تو (قواعد ایمنی و علمی)',
       headerActions: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: metrics.spaceSm, vertical: metrics.spaceXs),
+          padding: EdgeInsets.symmetric(
+            horizontal: metrics.spaceSm,
+            vertical: metrics.spaceXs,
+          ),
           decoration: BoxDecoration(
             color: colors.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(RitmoRadius.pill),
@@ -116,7 +125,10 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
               SizedBox(width: metrics.spaceXs),
               Text(
                 'AI Coach',
-                style: textTheme.labelSmall?.copyWith(color: colors.primary, fontWeight: FontWeight.w700),
+                style: textTheme.labelSmall?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -136,14 +148,20 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                   final isUser = msg['role'] == 'user';
 
                   return Align(
-                    alignment: isUser ? Alignment.centerLeft : Alignment.centerRight,
+                    alignment: isUser
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
                     child: Container(
                       padding: EdgeInsets.all(metrics.spaceMd),
-                      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width * 0.75,
+                      ),
                       decoration: BoxDecoration(
                         color: isUser ? colors.primary : colors.surface,
                         borderRadius: BorderRadius.circular(metrics.radiusCard),
-                        border: isUser ? null : Border.all(color: colors.border),
+                        border: isUser
+                            ? null
+                            : Border.all(color: colors.border),
                       ),
                       child: Text(
                         msg['text']!,
@@ -186,10 +204,15 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                       filled: true,
                       fillColor: colors.surface,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(metrics.radiusField),
+                        borderRadius: BorderRadius.circular(
+                          metrics.radiusField,
+                        ),
                         borderSide: BorderSide(color: colors.border),
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: metrics.spaceMd, vertical: metrics.spaceSm),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceMd,
+                        vertical: metrics.spaceSm,
+                      ),
                     ),
                     onSubmitted: _sendMessage,
                   ),
@@ -200,7 +223,11 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                     backgroundColor: colors.primary,
                     minimumSize: Size(metrics.touchTarget, metrics.touchTarget),
                   ),
-                  icon: Icon(Icons.send_rounded, color: colors.onPrimary, size: metrics.iconMd),
+                  icon: Icon(
+                    Icons.send_rounded,
+                    color: colors.onPrimary,
+                    size: metrics.iconMd,
+                  ),
                   onPressed: () => _sendMessage(_textController.text),
                 ),
               ],

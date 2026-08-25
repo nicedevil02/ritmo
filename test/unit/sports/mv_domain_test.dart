@@ -3,13 +3,16 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
 void main() {
   group('MvCalendar Tests (P1 Domain)', () {
-    test('sat0ToDartWeekday and dartWeekdayToSat0 roundtrip for all 7 days', () {
-      for (int sat0 = 0; sat0 <= 6; sat0++) {
-        final dartWeekday = MvCalendar.sat0ToDartWeekday(sat0);
-        final backToSat0 = MvCalendar.dartWeekdayToSat0(dartWeekday);
-        expect(backToSat0, equals(sat0));
-      }
-    });
+    test(
+      'sat0ToDartWeekday and dartWeekdayToSat0 roundtrip for all 7 days',
+      () {
+        for (int sat0 = 0; sat0 <= 6; sat0++) {
+          final dartWeekday = MvCalendar.sat0ToDartWeekday(sat0);
+          final backToSat0 = MvCalendar.dartWeekdayToSat0(dartWeekday);
+          expect(backToSat0, equals(sat0));
+        }
+      },
+    );
 
     test('dateTimeToSat0 returns correct Sat0 index', () {
       // 2026-08-22 is a Saturday (Sat0 = 0)
@@ -48,8 +51,22 @@ void main() {
       final week1 = DateTime(2026, 8, 3);
       final week4 = DateTime(2026, 8, 24);
 
-      expect(MvCalendar.cycleWeekFor(targetDate: week1, programStartDate: start, totalWeeks: 4), equals(1));
-      expect(MvCalendar.cycleWeekFor(targetDate: week4, programStartDate: start, totalWeeks: 4), equals(4));
+      expect(
+        MvCalendar.cycleWeekFor(
+          targetDate: week1,
+          programStartDate: start,
+          totalWeeks: 4,
+        ),
+        equals(1),
+      );
+      expect(
+        MvCalendar.cycleWeekFor(
+          targetDate: week4,
+          programStartDate: start,
+          totalWeeks: 4,
+        ),
+        equals(4),
+      );
 
       expect(MvCalendar.isDeloadWeek(1, deloadEveryNWeeks: 4), isFalse);
       expect(MvCalendar.isDeloadWeek(4, deloadEveryNWeeks: 4), isTrue);
@@ -138,7 +155,7 @@ void main() {
         sessionMode: MvSessionMode.distance,
         status: MvSessionStatus.active,
         startedAt: now - 600000, // 10 minutes ago
-        pausedMs: 60000,        // 1 min paused
+        pausedMs: 60000, // 1 min paused
         createdAt: now - 600000,
         updatedAt: now,
       );

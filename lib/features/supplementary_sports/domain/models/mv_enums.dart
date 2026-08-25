@@ -3,12 +3,15 @@
 library;
 
 /// Represents the type of daily program slot.
+/// Note: Stored in DB as uppercase string code (e.g. 'STRENGTH', 'CARDIO', 'SPORT', 'OUTDOOR').
 enum MvSlotType {
   strength,
   cardio,
   mobility,
   activeRest,
-  rest;
+  rest,
+  sport,
+  outdoor;
 
   String get code {
     switch (this) {
@@ -22,6 +25,10 @@ enum MvSlotType {
         return 'ACTIVE_REST';
       case MvSlotType.rest:
         return 'REST';
+      case MvSlotType.sport:
+        return 'SPORT';
+      case MvSlotType.outdoor:
+        return 'OUTDOOR';
     }
   }
 
@@ -37,6 +44,10 @@ enum MvSlotType {
         return 'بازیابی فعال';
       case MvSlotType.rest:
         return 'استراحت';
+      case MvSlotType.sport:
+        return 'ورزش و بازی';
+      case MvSlotType.outdoor:
+        return 'طبیعت و فضای باز';
     }
   }
 
@@ -57,6 +68,11 @@ enum MvSlotType {
       case 'REST':
       case 'RECOVERY':
         return MvSlotType.rest;
+      case 'SPORT':
+      case 'SPORTS':
+        return MvSlotType.sport;
+      case 'OUTDOOR':
+        return MvSlotType.outdoor;
       default:
         return MvSlotType.strength;
     }
@@ -245,10 +261,7 @@ enum MvReadinessTier {
   final double multiplier;
   final String titleFa;
 
-  const MvReadinessTier({
-    required this.multiplier,
-    required this.titleFa,
-  });
+  const MvReadinessTier({required this.multiplier, required this.titleFa});
 
   String get code => name;
 
@@ -266,60 +279,6 @@ enum MvReadinessTier {
         return MvReadinessTier.rest;
       default:
         return MvReadinessTier.full;
-    }
-  }
-}
-
-/// 7 Movement activity families.
-enum MvMovementFamily {
-  cardio,
-  strength,
-  mobility,
-  sports,
-  walking,
-  recovery,
-  custom;
-
-  String get code => name;
-
-  String get titleFa {
-    switch (this) {
-      case MvMovementFamily.cardio:
-        return 'هوازی';
-      case MvMovementFamily.strength:
-        return 'قدرتی';
-      case MvMovementFamily.mobility:
-        return 'انعطاف و کشش';
-      case MvMovementFamily.sports:
-        return 'ورزش و بازی';
-      case MvMovementFamily.walking:
-        return 'پیاده‌روی و روزمره';
-      case MvMovementFamily.recovery:
-        return 'ریکاوری و آرام‌سازی';
-      case MvMovementFamily.custom:
-        return 'سفارشی';
-    }
-  }
-
-  static MvMovementFamily fromCode(String? code) {
-    if (code == null) return MvMovementFamily.sports;
-    final lower = code.toLowerCase().trim();
-    switch (lower) {
-      case 'cardio':
-        return MvMovementFamily.cardio;
-      case 'strength':
-        return MvMovementFamily.strength;
-      case 'mobility':
-        return MvMovementFamily.mobility;
-      case 'sports':
-        return MvMovementFamily.sports;
-      case 'walking':
-        return MvMovementFamily.walking;
-      case 'recovery':
-        return MvMovementFamily.recovery;
-      case 'custom':
-      default:
-        return MvMovementFamily.custom;
     }
   }
 }
@@ -361,12 +320,17 @@ enum MvMovementMetric {
   }
 }
 
-/// Personal Record types.
+/// Personal Record types (S5-T3).
 enum MvPrType {
   maxWeight,
   maxReps,
   longestDuration,
+  monthlyFrequency,
   longestDistance,
+  bestPace5k,
+  maxElevation,
+  maxPackWeight,
+  maxLaps,
   fastestPace;
 
   String get code => name;
@@ -378,11 +342,21 @@ enum MvPrType {
       case MvPrType.maxReps:
         return 'بیشترین تکرار';
       case MvPrType.longestDuration:
-        return 'بیشترین مدت';
+        return 'بلندترین جلسه';
+      case MvPrType.monthlyFrequency:
+        return 'بیشترین تکرار در ماه';
       case MvPrType.longestDistance:
         return 'بیشترین مسافت';
+      case MvPrType.bestPace5k:
+        return 'بهترین تمپو ۵+ ک‌م';
+      case MvPrType.maxElevation:
+        return 'بیشترین ارتفاع';
+      case MvPrType.maxPackWeight:
+        return 'بیشترین وزن پشتی';
+      case MvPrType.maxLaps:
+        return 'بیشترین تعداد دور';
       case MvPrType.fastestPace:
-        return 'سریع‌ترین رکورد';
+        return 'بهترین سرعت';
     }
   }
 
@@ -394,8 +368,18 @@ enum MvPrType {
         return 'تکرار';
       case MvPrType.longestDuration:
         return 'دقیقه';
+      case MvPrType.monthlyFrequency:
+        return 'جلسه';
       case MvPrType.longestDistance:
         return 'متر';
+      case MvPrType.bestPace5k:
+        return 'ث/ک‌م';
+      case MvPrType.maxElevation:
+        return 'متر';
+      case MvPrType.maxPackWeight:
+        return 'کیلوگرم';
+      case MvPrType.maxLaps:
+        return 'دور';
       case MvPrType.fastestPace:
         return 'سرعت';
     }
@@ -416,11 +400,27 @@ enum MvPrType {
       case 'longestduration':
       case 'duration':
         return MvPrType.longestDuration;
+      case 'monthlyfrequency':
+      case 'monthly_frequency':
+        return MvPrType.monthlyFrequency;
       case 'longestdistance':
       case 'distance':
         return MvPrType.longestDistance;
+      case 'bestpace5k':
+      case 'pace5k':
+        return MvPrType.bestPace5k;
+      case 'maxelevation':
+      case 'elevation':
+        return MvPrType.maxElevation;
+      case 'maxpackweight':
+      case 'packweight':
+      case 'pack_weight':
+        return MvPrType.maxPackWeight;
+      case 'maxlaps':
+      case 'laps':
+        return MvPrType.maxLaps;
       case 'fastestpace':
-      case 'pace':
+      case 'fastest_pace':
         return MvPrType.fastestPace;
       default:
         return MvPrType.maxWeight;
@@ -437,10 +437,7 @@ enum MvSessionFeeling {
   final int rirValue;
   final String titleFa;
 
-  const MvSessionFeeling({
-    required this.rirValue,
-    required this.titleFa,
-  });
+  const MvSessionFeeling({required this.rirValue, required this.titleFa});
 
   String get code => name;
 

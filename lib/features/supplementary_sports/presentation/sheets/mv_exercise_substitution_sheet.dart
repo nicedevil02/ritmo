@@ -49,10 +49,12 @@ class MvExerciseSubstitutionSheet extends StatefulWidget {
   }
 
   @override
-  State<MvExerciseSubstitutionSheet> createState() => _MvExerciseSubstitutionSheetState();
+  State<MvExerciseSubstitutionSheet> createState() =>
+      _MvExerciseSubstitutionSheetState();
 }
 
-class _MvExerciseSubstitutionSheetState extends State<MvExerciseSubstitutionSheet> {
+class _MvExerciseSubstitutionSheetState
+    extends State<MvExerciseSubstitutionSheet> {
   static const _engine = SubstitutionEngine();
   String _selectedReason = 'too_hard';
   late MvDecision<List<MvExercise>> _decision;
@@ -125,7 +127,11 @@ class _MvExerciseSubstitutionSheetState extends State<MvExerciseSubstitutionShee
               ),
               child: Row(
                 children: [
-                  Icon(Icons.auto_awesome_rounded, color: colors.primary, size: metrics.iconMd),
+                  Icon(
+                    Icons.auto_awesome_rounded,
+                    color: colors.primary,
+                    size: metrics.iconMd,
+                  ),
                   SizedBox(width: metrics.spaceSm),
                   Expanded(
                     child: Text(
@@ -157,7 +163,9 @@ class _MvExerciseSubstitutionSheetState extends State<MvExerciseSubstitutionShee
                 child: Center(
                   child: Text(
                     'حرکت جایگزین دیگری با این شرایط یافت نشد.',
-                    style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ),
               )
@@ -175,7 +183,9 @@ class _MvExerciseSubstitutionSheetState extends State<MvExerciseSubstitutionShee
                         padding: EdgeInsets.all(metrics.spaceMd),
                         decoration: BoxDecoration(
                           color: colors.surface,
-                          borderRadius: BorderRadius.circular(metrics.radiusCard),
+                          borderRadius: BorderRadius.circular(
+                            metrics.radiusCard,
+                          ),
                           border: Border.all(color: colors.border),
                         ),
                         child: Row(
@@ -185,9 +195,14 @@ class _MvExerciseSubstitutionSheetState extends State<MvExerciseSubstitutionShee
                               height: 48,
                               decoration: BoxDecoration(
                                 color: colors.surfaceElevated,
-                                borderRadius: BorderRadius.circular(metrics.radiusField),
+                                borderRadius: BorderRadius.circular(
+                                  metrics.radiusField,
+                                ),
                               ),
-                              child: Icon(Icons.fitness_center_rounded, color: colors.primary),
+                              child: Icon(
+                                Icons.fitness_center_rounded,
+                                color: colors.primary,
+                              ),
                             ),
                             SizedBox(width: metrics.spaceMd),
                             Expanded(

@@ -56,10 +56,7 @@ class MvUserProfile {
   /// Factory for empty/fresh profile.
   factory MvUserProfile.empty() {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return MvUserProfile(
-      createdAt: now,
-      updatedAt: now,
-    );
+    return MvUserProfile(createdAt: now, updatedAt: now);
   }
 
   MvUserProfile copyWith({
@@ -147,7 +144,11 @@ class MvUserProfile {
       if (val == null) return [];
       final s = val.toString().trim();
       if (s.isEmpty) return [];
-      return s.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return s
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
 
     List<int> parseDays(dynamic val) {
@@ -175,12 +176,20 @@ class MvUserProfile {
       deloadEveryNWeeks: (map['deloadEveryNWeeks'] as num?)?.toInt() ?? 4,
       trainingDays: parseDays(map['trainingDays']),
       splitPattern: (map['splitPattern'] as String?) ?? 'AUTO',
-      defaultIntensity: MvIntensityTier.fromCode(map['defaultIntensity'] as String?),
+      defaultIntensity: MvIntensityTier.fromCode(
+        map['defaultIntensity'] as String?,
+      ),
       usesExternalApp: (map['usesExternalApp'] as num?)?.toInt() == 1,
-      voiceCuesEnabled: map['voiceCuesEnabled'] != null ? (map['voiceCuesEnabled'] as num).toInt() == 1 : true,
+      voiceCuesEnabled: map['voiceCuesEnabled'] != null
+          ? (map['voiceCuesEnabled'] as num).toInt() == 1
+          : true,
       cycleConsentGranted: (map['cycleConsentGranted'] as num?)?.toInt() == 1,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
 }

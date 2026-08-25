@@ -1386,4 +1386,262 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cycleSemanticsHasLogs => ', Has recorded symptoms';
+
+  @override
+  String get mv_kind_picker_title => 'Select Sport';
+
+  @override
+  String get mv_kind_picker_search_hint => 'Search sport...';
+
+  @override
+  String get mv_kind_picker_recent => 'Recent Sports';
+
+  @override
+  String get mv_kind_picker_seasonal => 'Seasonal / Suggested Sports';
+
+  @override
+  String get mv_kind_picker_all => 'All Sports';
+
+  @override
+  String get mv_kind_picker_create_custom => 'New Custom Sport';
+
+  @override
+  String get mv_kind_picker_empty => 'No sport found with this name.';
+
+  @override
+  String get mv_custom_kind_title => 'Create Custom Sport';
+
+  @override
+  String get mv_custom_kind_name => 'Sport Name';
+
+  @override
+  String get mv_custom_kind_family => 'Main Category';
+
+  @override
+  String get mv_custom_kind_metric => 'Primary Tracking Metric';
+
+  @override
+  String get mv_custom_kind_intensity => 'Default Intensity (MET)';
+
+  @override
+  String get mv_custom_kind_saved => 'Custom sport saved successfully.';
+
+  @override
+  String get mv_onboarding_anchor_title => 'Weekly Fixed Sports (Anchors)';
+
+  @override
+  String get mv_onboarding_anchor_add => 'Add Fixed Slot';
+
+  @override
+  String get mv_onboarding_anchor_skip => 'I\'ll add later';
+
+  @override
+  String get mv_commitment_saved => 'Fixed commitment saved';
+
+  @override
+  String get mv_commitment_repeat_weekly => 'Repeat weekly';
+
+  @override
+  String get mv_commitment_venue => 'Venue / location';
+
+  @override
+  String get mv_commitment_partner => 'Partner / team';
+
+  @override
+  String get mv_anchor_cancelled_this_week => 'Cancelled for this week';
+
+  @override
+  String get mv_anchor_suggest_deactivate =>
+      'Do you want to completely deactivate this commitment?';
+
+  @override
+  String get mv_anchor_constraint_note =>
+      'Fixed anchor session with regard to recorded limitation';
+
+  @override
+  String get mv_tomorrow_anchor_notice =>
+      'Reminder: You have a fixed anchor session tomorrow';
+
+  @override
+  String get mv_conflict_back_to_back =>
+      'Warning: Two intensive sessions scheduled back-to-back';
+
+  @override
+  String get mv_reason_anchor => 'Your scheduled fixed anchor session';
+
+  @override
+  String get mv_reason_pre_anchor_taper =>
+      'Volume tapered to preserve energy for tomorrow\'s anchor';
+
+  @override
+  String get mv_reason_post_anchor_recovery =>
+      'Recovery after yesterday\'s intense anchor session';
+
+  @override
+  String get mv_reason_complement =>
+      'Complementary strength training for muscle balance and anchor support';
+
+  @override
+  String get mv_reason_who_gap =>
+      'Covering moderate-equivalent deficit towards 150 min weekly WHO goal';
+
+  @override
+  String get mv_reason_strength_quota =>
+      'Fulfilling 2-day muscle-strengthening weekly quota';
+
+  @override
+  String get mv_reason_rest_guaranteed =>
+      'Essential rest day for physiological recovery';
+
+  @override
+  String get mv_reason_readiness_low =>
+      'Adjusted load due to low readiness today';
+
+  @override
+  String get mv_reason_load_cap =>
+      'Weekly load growth cap applied to prevent overtraining';
+
+  @override
+  String get mv_reason_fallback_minimum =>
+      '10-minute minimum effective session to preserve streak';
+
+  @override
+  String get mv_reason_season_fit => 'Sport fits the current season';
+
+  @override
+  String get mv_reason_constraint_relaxed =>
+      'Session adapted to current conditions and equipment';
+
+  @override
+  String get mv_metric_distance => 'Distance (km)';
+
+  @override
+  String get mv_metric_elevation => 'Elevation (m)';
+
+  @override
+  String get mv_metric_laps => 'Laps / Lengths';
+
+  @override
+  String get mv_metric_pack_weight => 'Pack Weight (kg)';
+
+  @override
+  String get mv_metric_duration => 'Duration (min)';
+
+  @override
+  String get mv_effort_question => 'How did this workout feel?';
+
+  @override
+  String get mv_effort_easy => 'Easy';
+
+  @override
+  String get mv_effort_good => 'Good';
+
+  @override
+  String get mv_effort_hard => 'Hard';
+
+  @override
+  String get mv_effort_refine => 'Fine-tune with RPE slider';
+
+  @override
+  String get mv_new_personal_record => 'New Personal Record! 🎉';
+
+  @override
+  String get mv_load_band_low => 'Low Load';
+
+  @override
+  String get mv_load_band_optimal => 'Optimal & Productive';
+
+  @override
+  String get mv_load_band_watch => 'Increasing Load';
+
+  @override
+  String get mv_load_band_spike => 'Load Spike (Caution)';
+
+  @override
+  String get mv_budget_moderate_minutes => 'Moderate-equivalent minutes';
+
+  @override
+  String get mv_budget_strength_days => 'Strength training days';
+
+  @override
+  String get mv_budget_remaining => 'Remaining to weekly health goal';
+
+  @override
+  String get mv_streak_insufficient =>
+      'At least 2 weeks of activity required for continuity';
+
+  @override
+  String get mv_readiness_no_checkin => 'Today\'s readiness not yet recorded';
+
+  @override
+  String get mv_need_n_more_sessions =>
+      'A few more sessions needed for accurate evaluation';
+
+  @override
+  String get mv_insufficient_data_generic => 'Insufficient data recorded';
+
+  @override
+  String get mv_insight_best_day => 'Golden Training Day';
+
+  @override
+  String get mv_insight_anchor_adherence => 'Anchor Adherence';
+
+  @override
+  String get mv_insight_effort_drift => 'Effort Perception Trend';
+
+  @override
+  String get mv_insight_kind_mix => 'Monthly Sport Variety';
+
+  @override
+  String get mv_insight_route_progress => 'Recurring Route Progress';
+
+  @override
+  String get mv_campaign_title => 'Goal-Oriented Campaign';
+
+  @override
+  String get mv_campaign_target_date => 'Target Event Date';
+
+  @override
+  String get mv_campaign_phase_base => 'Base Phase';
+
+  @override
+  String get mv_campaign_phase_build => 'Progressive Build Phase';
+
+  @override
+  String get mv_campaign_phase_taper => 'Taper & Preparation Phase';
+
+  @override
+  String get mv_campaign_too_short =>
+      'Remaining time to event is under 4 weeks';
+
+  @override
+  String get mv_route_select => 'Select Route';
+
+  @override
+  String get mv_route_new => 'Log New Route';
+
+  @override
+  String mv_route_times_done(int count) {
+    return 'Times completed: $count';
+  }
+
+  @override
+  String mv_route_best_time(int minutes) {
+    return 'Best time: $minutes min';
+  }
+
+  @override
+  String get mv_day_plan_title => 'Day Plan';
+
+  @override
+  String get mv_library_title => 'Exercise & Sports Library';
+
+  @override
+  String get mv_week_plan_title => 'Week Plan';
+
+  @override
+  String get mv_library_tab_kinds => 'Sports';
+
+  @override
+  String get mv_library_tab_exercises => 'Exercises';
 }

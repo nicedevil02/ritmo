@@ -15,7 +15,13 @@ class MvSessionPlayerScreen extends StatefulWidget {
   final List<MvExercise> plannedExercises;
   final List<MvExercise> allCandidatePool;
   final bool initialAudioEnabled;
-  final Future<void> Function(MvSession session, List<MvSetLog> logs, MvSessionFeeling feeling, String? note)? onSessionCompleted;
+  final Future<void> Function(
+    MvSession session,
+    List<MvSetLog> logs,
+    MvSessionFeeling feeling,
+    String? note,
+  )?
+  onSessionCompleted;
   final MvSessionController? controller;
 
   const MvSessionPlayerScreen({
@@ -80,7 +86,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     _ticker?.cancel();
     final currentEx = _currentExercise;
     if (currentEx != null && currentEx.isTimeBased) {
-      _timerSeconds = currentEx.durationSeconds > 0 ? currentEx.durationSeconds : 30;
+      _timerSeconds = currentEx.durationSeconds > 0
+          ? currentEx.durationSeconds
+          : 30;
     } else {
       _timerSeconds = 0;
     }
@@ -119,8 +127,8 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
 
   MvExercise? get _currentExercise =>
       _exercises.isNotEmpty && _currentExerciseIndex < _exercises.length
-          ? _exercises[_currentExerciseIndex]
-          : null;
+      ? _exercises[_currentExerciseIndex]
+      : null;
 
   void _handleSetComplete() {
     final currentEx = _currentExercise;
@@ -133,7 +141,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
       exerciseId: currentEx.id,
       setNumber: _currentSet,
       reps: currentEx.isTimeBased ? null : currentEx.defaultReps,
-      durationSeconds: currentEx.isTimeBased ? currentEx.durationSeconds : _timerSeconds,
+      durationSeconds: currentEx.isTimeBased
+          ? currentEx.durationSeconds
+          : _timerSeconds,
       loggedAt: now,
     );
     _setLogs.add(log);
@@ -234,7 +244,10 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   }
 
   Future<void> _handleExitMidSession() async {
-    await _sessionController.savePartialExit(session: _session, setLogs: _setLogs);
+    await _sessionController.savePartialExit(
+      session: _session,
+      setLogs: _setLogs,
+    );
     if (mounted) Navigator.pop(context);
   }
 
@@ -250,23 +263,39 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (_) => MvSessionSummaryScreen(
           session: finishedSession,
           setLogs: _setLogs,
-          onFinish: (feeling, note) async {
-            if (widget.onSessionCompleted != null) {
-              await widget.onSessionCompleted!(finishedSession, _setLogs, feeling, note);
-            } else {
-              await _sessionController.finishSession(
-                session: finishedSession,
-                setLogs: _setLogs,
-                feeling: feeling,
-                note: note,
-              );
-            }
-            if (mounted) Navigator.pop(context);
-          },
+          onFinish:
+              ({
+                required feeling,
+                required rpe1To10,
+                required effortSource,
+                note,
+              }) async {
+                if (widget.onSessionCompleted != null) {
+                  await widget.onSessionCompleted!(
+                    finishedSession.copyWith(
+                      rpe1To10: rpe1To10,
+                      effortSource: effortSource,
+                    ),
+                    _setLogs,
+                    feeling,
+                    note,
+                  );
+                } else {
+                  await _sessionController.finishSession(
+                    session: finishedSession,
+                    setLogs: _setLogs,
+                    feeling: feeling,
+                    rpe1To10: rpe1To10,
+                    effortSource: effortSource,
+                    note: note,
+                  );
+                }
+                if (mounted) Navigator.pop(context);
+              },
         ),
       ),
     );
@@ -278,7 +307,8 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 
-    final currentEx = _currentExercise ??
+    final currentEx =
+        _currentExercise ??
         const MvExercise(id: '0', name: 'تمرین', category: 'تمرین');
 
     return Scaffold(
@@ -329,11 +359,18 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.self_improvement_rounded, size: metrics.iconXl * 1.5, color: colors.primary),
+                        Icon(
+                          Icons.self_improvement_rounded,
+                          size: metrics.iconXl * 1.5,
+                          color: colors.primary,
+                        ),
                         SizedBox(height: metrics.spaceSm),
                         Text(
                           'نفس عمیق بکش و آماده شو',
-                          style: textTheme.titleSmall?.copyWith(color: colors.primary, fontWeight: FontWeight.w700),
+                          style: textTheme.titleSmall?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
@@ -347,7 +384,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                 children: [
                   Text(
                     'حرکت ${_currentExerciseIndex + 1} از ${_exercises.length}',
-                    style: textTheme.labelMedium?.copyWith(color: colors.textSecondary),
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                    ),
                   ),
                   Text(
                     'ست $_currentSet از $_totalSets',
@@ -370,8 +409,8 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                         _isResting
                             ? '$_restSecondsRemaining ثانیه'
                             : currentEx.isTimeBased
-                                ? '$_timerSeconds ثانیه'
-                                : '${currentEx.defaultReps} تکرار',
+                            ? '$_timerSeconds ثانیه'
+                            : '${currentEx.defaultReps} تکرار',
                         style: textTheme.displayMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: colors.textPrimary,
@@ -380,7 +419,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                       SizedBox(height: metrics.spaceSm),
                       Text(
                         _isResting ? 'استراحت' : 'تمرکز روی انقباض عضله',
-                        style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -395,17 +436,20 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                       style: OutlinedButton.styleFrom(
                         minimumSize: Size(double.infinity, metrics.touchTarget),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(metrics.radiusField),
+                          borderRadius: BorderRadius.circular(
+                            metrics.radiusField,
+                          ),
                         ),
                       ),
                       icon: const Icon(Icons.swap_horiz_rounded),
                       label: const Text('جایگزینی حرکت'),
                       onPressed: () async {
                         // Fetch similar candidates from controller
-                        final similar = await _sessionController.getSimilarCandidates(
-                          currentEx.id,
-                          fallbackPool: widget.allCandidatePool,
-                        );
+                        final similar = await _sessionController
+                            .getSimilarCandidates(
+                              currentEx.id,
+                              fallbackPool: widget.allCandidatePool,
+                            );
                         if (!context.mounted) return;
 
                         await MvExerciseSubstitutionSheet.show(
@@ -421,9 +465,16 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                   SizedBox(width: metrics.spaceSm),
                   IconButton.outlined(
                     style: IconButton.styleFrom(
-                      minimumSize: Size(metrics.touchTarget, metrics.touchTarget),
+                      minimumSize: Size(
+                        metrics.touchTarget,
+                        metrics.touchTarget,
+                      ),
                     ),
-                    icon: Icon(_isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+                    icon: Icon(
+                      _isPaused
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                    ),
                     onPressed: _togglePause,
                   ),
                 ],

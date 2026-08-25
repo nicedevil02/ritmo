@@ -59,8 +59,8 @@ class MvHubController extends ChangeNotifier {
   String _selectedDateIso = MvCalendar.formatDateIso(DateTime.now());
   String get selectedDateIso => _selectedDateIso;
 
-  int _continuousActiveWeeks = 0;
-  int get continuousActiveWeeks => _continuousActiveWeeks;
+  int? _continuousActiveWeeks;
+  int? get continuousActiveWeeks => _continuousActiveWeeks;
 
   MvHubController({
     MvProfileRepository? profileRepo,
@@ -76,40 +76,40 @@ class MvHubController extends ChangeNotifier {
     PlanEngine? planEngine,
     BudgetEngine? budgetEngine,
     InsightEngine? insightEngine,
-  })  : _profileRepo = profileRepo ?? MvProfileRepository(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
-        _sessionRepo = sessionRepo ?? MvSessionRepository(),
-        _exerciseRepo = exerciseRepo ?? MvExerciseRepository(),
-        _prRepo = prRepo ?? MvPrRepository(),
-        startSessionUseCase = MvStartSessionUseCase(
-          sessionRepo: sessionRepo,
-          exerciseRepo: exerciseRepo,
-          selectionEngine: selectionEngine,
-        ),
-        finishSessionUseCase = MvFinishSessionUseCase(
-          sessionRepo: sessionRepo,
-          prescriptionRepo: prescriptionRepo,
-          prRepo: prRepo,
-          progressionEngine: progressionEngine,
-        ),
-        quickLogUseCase = MvQuickLogUseCase(
-          sessionRepo: sessionRepo,
-          prescriptionRepo: prescriptionRepo,
-        ),
-        cantTodayUseCase = MvCantTodayUseCase(
-          prescriptionRepo: prescriptionRepo,
-          adaptationEngine: adaptationEngine,
-        ),
-        readinessUseCase = MvReadinessUseCase(
-          checkinRepo: checkinRepo,
-          readinessEngine: readinessEngine,
-        ),
-        weekRegenUseCase = MvWeekRegenUseCase(
-          prescriptionRepo: prescriptionRepo,
-          planEngine: planEngine,
-        ),
-        _budgetEngine = budgetEngine ?? const BudgetEngine(),
-        _insightEngine = insightEngine ?? const InsightEngine();
+  }) : _profileRepo = profileRepo ?? MvProfileRepository(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _sessionRepo = sessionRepo ?? MvSessionRepository(),
+       _exerciseRepo = exerciseRepo ?? MvExerciseRepository(),
+       _prRepo = prRepo ?? MvPrRepository(),
+       startSessionUseCase = MvStartSessionUseCase(
+         sessionRepo: sessionRepo,
+         exerciseRepo: exerciseRepo,
+         selectionEngine: selectionEngine,
+       ),
+       finishSessionUseCase = MvFinishSessionUseCase(
+         sessionRepo: sessionRepo,
+         prescriptionRepo: prescriptionRepo,
+         prRepo: prRepo,
+         progressionEngine: progressionEngine,
+       ),
+       quickLogUseCase = MvQuickLogUseCase(
+         sessionRepo: sessionRepo,
+         prescriptionRepo: prescriptionRepo,
+       ),
+       cantTodayUseCase = MvCantTodayUseCase(
+         prescriptionRepo: prescriptionRepo,
+         adaptationEngine: adaptationEngine,
+       ),
+       readinessUseCase = MvReadinessUseCase(
+         checkinRepo: checkinRepo,
+         readinessEngine: readinessEngine,
+       ),
+       weekRegenUseCase = MvWeekRegenUseCase(
+         prescriptionRepo: prescriptionRepo,
+         planEngine: planEngine,
+       ),
+       _budgetEngine = budgetEngine ?? const BudgetEngine(),
+       _insightEngine = insightEngine ?? const InsightEngine();
 
   /// Loads all required data for the hub.
   Future<void> loadAllData() async {
@@ -148,30 +148,102 @@ class MvHubController extends ChangeNotifier {
       profile: _profile,
     );
 
-    // Calculate MET-min progress
-    final weekSessions = await _sessionRepo.getRecentSessions(limit: 20);
-    _budgetProgress = _budgetEngine.calculateWeeklyProgress(
-      profile: _profile,
-      weekCompletedSessions: weekSessions,
-      currentDayOfWeekSat0: MvCalendar.dateTimeToSat0(today),
-    ).value;
+    // Calculate MET-min progress (week-bounded from Saturday 00:00 to Friday 23:59:59)
+    final weekStart = DateTime(
+      weekStartSat.year,
+      weekStartSat.month,
+      weekStartSat.day,
+      0,
+      0,
+      0,
+    );
+    final weekEnd = DateTime(
+      weekStartSat.year,
+      weekStartSat.month,
+      weekStartSat.day + 6,
+      23,
+      59,
+      59,
+      999,
+    );
+    final weekSessions = await _sessionRepo.getCompletedSessionsBetween(
+      weekStart,
+      weekEnd,
+    );
+    _budgetProgress = _budgetEngine
+        .calculateWeeklyProgress(
+          profile: _profile,
+          weekCompletedSessions: weekSessions,
+          currentDayOfWeekSat0: MvCalendar.dateTimeToSat0(today),
+        )
+        .value;
 
     // Calculate Muscle distribution
-    _bodyMapDistribution = _insightEngine.calculateMuscleDistribution(
-      completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
-    ).value;
+    _bodyMapDistribution = _insightEngine
+        .calculateMuscleDistribution(
+          completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
+        )
+        .value;
 
     // Calculate continuous active weeks (real streak)
-    _continuousActiveWeeks = _calculateContinuousWeeks(weekSessions);
+    final historySessions = await _sessionRepo.getSessionHistory(limit: 100);
+    _continuousActiveWeeks = calculateContinuousWeeks(
+      historySessions,
+      referenceDate: today,
+    );
 
     _isLoading = false;
     notifyListeners();
   }
 
-  int _calculateContinuousWeeks(List<MvSession> sessions) {
-    if (sessions.isEmpty) return 0;
-    // Count distinct active weeks in last 3 months
-    return (sessions.length / 3).ceil().clamp(1, 52);
+  /// Calculates real consecutive active weeks (>= 2 completed sessions per week).
+  /// Returns null if no completed sessions exist.
+  static int? calculateContinuousWeeks(
+    List<MvSession> sessions, {
+    DateTime? referenceDate,
+  }) {
+    final completed = sessions
+        .where(
+          (s) =>
+              s.status == MvSessionStatus.completed ||
+              s.status == MvSessionStatus.partial,
+        )
+        .toList();
+    if (completed.isEmpty) return null;
+
+    final ref = referenceDate ?? DateTime.now();
+    var currentWeekSat = MvCalendar.getWeekSaturday(ref);
+    int streak = 0;
+
+    for (int w = 0; w < 52; w++) {
+      final weekStartMs = DateTime(
+        currentWeekSat.year,
+        currentWeekSat.month,
+        currentWeekSat.day,
+      ).millisecondsSinceEpoch;
+      final weekEndMs = DateTime(
+        currentWeekSat.year,
+        currentWeekSat.month,
+        currentWeekSat.day + 6,
+        23,
+        59,
+        59,
+        999,
+      ).millisecondsSinceEpoch;
+
+      final count = completed
+          .where((s) => s.startedAt >= weekStartMs && s.startedAt <= weekEndMs)
+          .length;
+
+      if (count >= 2) {
+        streak++;
+        currentWeekSat = currentWeekSat.subtract(const Duration(days: 7));
+      } else {
+        break;
+      }
+    }
+
+    return streak;
   }
 
   void selectDate(String dateIso) {
@@ -187,7 +259,9 @@ class MvHubController extends ChangeNotifier {
 
   Future<void> updateSlot(MvSlot updated) async {
     await _prescriptionRepo.savePrescription(updated);
-    final idx = _weekSlots.indexWhere((s) => s.id == updated.id || s.dateIso == updated.dateIso);
+    final idx = _weekSlots.indexWhere(
+      (s) => s.id == updated.id || s.dateIso == updated.dateIso,
+    );
     if (idx != -1) {
       _weekSlots[idx] = updated;
       notifyListeners();
@@ -203,7 +277,12 @@ class MvHubController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveQuickLog(String kindCode, int durationMinutes, MvSessionFeeling? feeling, String? note) async {
+  Future<void> saveQuickLog(
+    String kindCode,
+    int durationMinutes,
+    MvSessionFeeling? feeling,
+    String? note,
+  ) async {
     await quickLogUseCase.execute(
       kindCode: kindCode,
       durationMinutes: durationMinutes,

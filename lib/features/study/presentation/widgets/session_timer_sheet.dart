@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
@@ -21,8 +23,7 @@ class SessionTimerSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       isDismissible: false,
-      backgroundColor: context.colors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: Colors.transparent,
       builder: (_) => SessionTimerSheet(subject: subject, topic: topic),
     );
   }
@@ -68,7 +69,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
         pomodoroPhase: 'FOCUS',
         pomodoroCycle: 1,
         targetSeconds: 0, // 0 = Stopwatch free mode by default
-      );
+      ).catchError((Object _) {});
     }
   }
 
@@ -177,6 +178,10 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final elapsedSec = _state?.elapsedSeconds(nowMs) ?? 0;
     final isPaused = _state?.isPaused ?? false;
@@ -195,11 +200,11 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
     final seconds = displaySeconds % 60;
     final timeStr = '${RitmoNumber.faInt(minutes)}:${seconds.toString().padLeft(2, '0')}';
 
-    return Padding(
+    final content = Padding(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
-        top: 20,
+        top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       child: SingleChildScrollView(
@@ -207,6 +212,17 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.border.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -229,21 +245,56 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(CupertinoIcons.xmark_circle_fill, color: colors.textSecondary.withValues(alpha: 0.5), size: 24),
                   onPressed: () async {
                     final confirm = await showDialog<bool>(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('لغو مطالعه', style: TextStyle(fontWeight: FontWeight.bold)),
-                        content: const Text('آیا می‌خواهید این جلسه مطالعه را بدون ذخیره لغو کنید؟'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('خیر')),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                            child: const Text('بله، لغو شود', style: TextStyle(color: Colors.white)),
+                      builder: (ctx) => Dialog(
+                        backgroundColor: Colors.transparent,
+                        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: isDark ? colors.surfaceElevated : colors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: colors.border.withValues(alpha: 0.3)),
                           ),
-                        ],
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'لغو مطالعه',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'آیا می‌خواهید این جلسه مطالعه را بدون ذخیره لغو کنید؟',
+                                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: Text('خیر', style: TextStyle(color: colors.textSecondary)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colors.error,
+                                      foregroundColor: colors.onPrimary,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: Text('بله، لغو شود', style: TextStyle(color: colors.onPrimary)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                     if (confirm == true) {
@@ -255,10 +306,9 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            // Timer Mode Switcher
             SegmentedButton<TimerModeType>(
               segments: const [
-                ButtonSegment(value: TimerModeType.stopwatch, label: Text('کرونومتر آزاد', style: TextStyle(fontSize: 11))),
+                ButtonSegment(value: TimerModeType.stopwatch, label: Text('کرنومتر', style: TextStyle(fontSize: 11))),
                 ButtonSegment(value: TimerModeType.pomodoro25, label: Text('پومودورو ۲۵/۵', style: TextStyle(fontSize: 11))),
                 ButtonSegment(value: TimerModeType.pomodoro50, label: Text('پومودورو ۵۰/۱۰', style: TextStyle(fontSize: 11))),
               ],
@@ -268,71 +318,38 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
             const SizedBox(height: 16),
             if (isPomodoro) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isBreak ? Colors.green.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  color: isBreak ? Colors.teal.withValues(alpha: 0.15) : colors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isBreak ? Icons.coffee_rounded : Icons.psychology_rounded,
-                      size: 16,
-                      color: isBreak ? Colors.green : colors.primary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isBreak
-                          ? 'فاز استراحت'
-                          : 'فاز تمرکز (دور ${RitmoNumber.faInt(_state?.pomodoroCycle ?? 1)} از ۴)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isBreak ? Colors.green : colors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            // Timer Circle Display
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isBreak
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : colors.primary.withValues(alpha: 0.1),
-                border: Border.all(
-                  color: isBreak ? Colors.green : colors.primary,
-                  width: 4,
-                ),
-              ),
-              child: Center(
                 child: Text(
-                  timeStr,
+                  isBreak ? '☕ استراحت' : '🎯 تمرکز و مطالعه',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isBreak ? Colors.green : colors.primary,
+                    color: isBreak ? Colors.teal : colors.primary,
                   ),
                 ),
               ),
+              const SizedBox(height: 8),
+            ],
+            Text(
+              timeStr,
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: isBreak ? Colors.teal : colors.textPrimary,
+              ),
             ),
-            const SizedBox(height: 16),
-            // Controls Row
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  iconSize: 44,
-                  icon: Icon(
-                    isPaused ? Icons.play_circle_fill : Icons.pause_circle_filled,
-                    color: isBreak ? Colors.green : colors.primary,
-                  ),
+                IconButton.filledTonal(
+                  icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                  iconSize: 32,
                   onPressed: () {
                     if (isPaused) {
                       StudyTimerService.instance.resumeSession();
@@ -344,72 +361,53 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                 if (isPomodoro) ...[
                   const SizedBox(width: 8),
                   IconButton(
-                    iconSize: 36,
+                    iconSize: 28,
                     tooltip: isBreak ? 'شروع تمرکز بعدی' : 'شروع استراحت',
                     icon: Icon(Icons.skip_next_rounded, color: colors.textSecondary),
                     onPressed: _togglePomodoroPhase,
                   ),
                 ],
                 const SizedBox(width: 16),
-                ElevatedButton.icon(
+                IconButton.filled(
+                  icon: const Icon(Icons.stop),
+                  iconSize: 32,
+                  style: IconButton.styleFrom(backgroundColor: colors.primary, foregroundColor: colors.onPrimary),
                   onPressed: _finishSession,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.success,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  icon: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
-                  label: const Text('پایان جلسه', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            // In-Session Scratchpad
+            const SizedBox(height: 16),
             TextField(
               controller: _noteController,
-              maxLines: 2,
-              decoration: InputDecoration(
-                labelText: 'یادداشت سریع حین مطالعه (نکات، سوالات و صفحات)',
-                hintText: 'مثلاً: حل تست‌های مبحث کار و انرژی، نیاز به مرور فرمول پتانسیل',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: const InputDecoration(
+                labelText: 'یادداشت این جلسه (اختیاری)',
+                prefixIcon: Icon(Icons.note_alt_outlined),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
             ),
-            const SizedBox(height: 12),
-            // Test Performance Tracking Collapsible
-            Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: colors.border.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Row(
-                  children: [
-                    Icon(Icons.checklist_rounded, size: 18, color: _includeTests ? colors.primary : colors.textSecondary),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ثبت عملکرد تستی (اختیاری)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: _includeTests ? colors.primary : colors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: Switch(
-                  value: _includeTests,
-                  onChanged: (val) => setState(() => _includeTests = val),
-                  activeTrackColor: colors.primary.withValues(alpha: 0.5),
-                ),
+                title: const Text('ثبت تست‌های حل‌شده در این جلسه', style: TextStyle(fontSize: 12)),
+                leading: const Icon(Icons.check_circle_outline, size: 18),
+                initiallyExpanded: _includeTests,
+                onExpansionChanged: (val) => setState(() => _includeTests = val),
                 children: [
                   if (_includeTests) ...[
                     Row(
                       children: [
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                             controller: _testsTotalController,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'تعداد کل تست',
+                              labelText: 'کل تست‌ها',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                             ),
@@ -439,6 +437,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -446,8 +445,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            // Feedback Options
+            const SizedBox(height: 16),
             Text('میزان تسلط و کیفیت یادگیری:', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
             const SizedBox(height: 6),
             SegmentedButton<SessionFeedback>(
@@ -460,6 +458,62 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
               onSelectionChanged: (set) => setState(() => _feedback = set.first),
             ),
           ],
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
+          ),
         ),
       ),
     );

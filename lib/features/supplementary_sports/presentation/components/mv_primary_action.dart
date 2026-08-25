@@ -62,10 +62,7 @@ class MvPrimaryAction extends StatelessWidget {
           ? SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: fgColor,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: fgColor),
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,

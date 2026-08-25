@@ -43,10 +43,10 @@ flutter test
 
 ### ۰٫۳ کاری که در شروع باید بکنی (فقط همین، بعد برو سر S0-T1)
 
-- [ ] **S-INIT-1** — شاخهٔ `feat/sports-v2-anchor-filler` را از `main` بساز.
-- [ ] **S-INIT-2** — این فایل‌ها را کامل بخوان و خلاصه نکن، فقط بخوان: `docs/CONSTITUTION.md`، `docs/RITMO_DESIGN_TOKENS.md`، `docs/DESIGN_SYSTEM_ACTION_SHEETS.md`، `docs/movement/P0_AUDIT.md`، `docs/movement/MIGRATION_REPORT.md`، `docs/adr/0008-movement-unification.md`، `docs/l10n_audit.md`.
-- [ ] **S-INIT-3** — فایل `docs/movement/IMPLEMENTATION_LOG.md` را با هدر جدول ردیف‌های لاگ بساز و commit کن.
-- [ ] **S-INIT-4** — نسخهٔ فعلی اسکیما را از `lib/core/database/database_helper.dart` بخوان و در دفتر پیشرفت §۱۲ ثبت کن (انتظار: v121 از `MigrationV121SportsUnification`). شمارهٔ مایگریشن‌های این پرامپت باید **پشت‌سرهم** از این عدد جلو برود.
+- [x] **S-INIT-1** — شاخهٔ `feat/sports-v2-anchor-filler` را از `main` بساز. — c53234b5
+- [x] **S-INIT-2** — این فایل‌ها را کامل بخوان و خلاصه نکن، فقط بخوان: `docs/CONSTITUTION.md`، `docs/RITMO_DESIGN_TOKENS.md`، `docs/DESIGN_SYSTEM_ACTION_SHEETS.md`، `docs/movement/P0_AUDIT.md`، `docs/movement/MIGRATION_REPORT.md`، `docs/adr/0008-movement-unification.md`، `docs/l10n_audit.md`. — c53234b5
+- [x] **S-INIT-3** — فایل `docs/movement/IMPLEMENTATION_LOG.md` را با هدر جدول ردیف‌های لاگ بساز و commit کن. — c53234b5
+- [x] **S-INIT-4** — نسخهٔ فعلی اسکیما را از `lib/core/database/database_helper.dart` بخوان و در دفتر پیشرفت §۱۲ ثبت کن (انتظار: v121 از `MigrationV121SportsUnification`). شمارهٔ مایگریشن‌های این پرامپت باید **پشت‌سرهم** از این عدد جلو برود. — c53234b5
 
 ---
 
@@ -193,7 +193,7 @@ plannedWeeklyLoadCap:
 
 **هدف اسپرینت:** هر عددی که امروز در اپ دیده می‌شود واقعی شود و هر داده‌ای که کاربر وارد می‌کند ذخیره شود.
 
-### - [ ] S0-T1 — ذخیرهٔ واقعی بازخورد جلسه
+### - [x] S0-T1 — ذخیرهٔ واقعی بازخورد جلسه — b3021b27
 
 **فایل‌ها:** `lib/features/supplementary_sports/domain/models/mv_session.dart`، `lib/core/database/schema/tables/supplementary_sports_tables.dart`
 
@@ -209,7 +209,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T2 — یکسان‌سازی `kindCode` به UPPER_SNAKE_CASE
+### - [x] S0-T2 — یکسان‌سازی `kindCode` به UPPER_SNAKE_CASE — e5de0795
 
 **فایل‌ها:** `presentation/sheets/mv_quick_log_sheet.dart`، `presentation/screens/mv_today_tab.dart`، `domain/engines/plan_engine.dart`، `domain/models/mv_session.dart`، هر فایل دیگری که grep پیدا کرد.
 
@@ -225,7 +225,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T3 — حذف «هفته‌های پیوستهٔ ساختگی»
+### - [x] S0-T3 — حذف «هفته‌های پیوستهٔ ساختگی» — 141df7a2
 
 **فایل:** `application/mv_hub_controller.dart`
 
@@ -241,7 +241,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T4 — `BudgetEngine` با MET واقعی و معیار WHO
+### - [x] S0-T4 — `BudgetEngine` با MET واقعی و معیار WHO — 1715480d
 
 **فایل:** `domain/engines/budget_engine.dart`
 
@@ -266,7 +266,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T5 — ورودی هفته‌محدود برای بودجه
+### - [x] S0-T5 — ورودی هفته‌محدود برای بودجه — 57fc6a03
 
 **فایل‌ها:** `application/mv_hub_controller.dart`، `data/repositories/mv_session_repository.dart`
 
@@ -278,7 +278,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T6 — ورودی‌های کامل آمادگی
+### - [x] S0-T6 — ورودی‌های کامل آمادگی — 7cd729e7
 
 **فایل‌ها:** `application/mv_readiness_use_case.dart`، `application/mv_hub_controller.dart`
 
@@ -290,7 +290,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T7 — حالت «دادهٔ کافی نیست» واقعاً متصل شود
+### - [x] S0-T7 — حالت «دادهٔ کافی نیست» واقعاً متصل شود — a8fccd93
 
 **فایل‌ها:** `presentation/components/mv_insufficient_data.dart`، `presentation/screens/mv_progress_tab.dart`، `presentation/screens/mv_today_tab.dart`
 
@@ -302,7 +302,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T8 — مهار رگرسیون S0
+### - [x] S0-T8 — مهار رگرسیون S0 — 2b35fa8e
 
 **کار:** تست‌های S0-T1..T7 را جمع کن و مطمئن شو کل سویت سبز است. در `docs/movement/IMPLEMENTATION_LOG.md` بخش `## S0 — نتیجه` با عدد تست‌های سبز بنویس.
 
@@ -314,7 +314,7 @@ plannedWeeklyLoadCap:
 
 **هدف اسپرینت:** کاربر بتواند هر کدام از ۴۹ نوع ورزش (فوتبال، کوه، والیبال، شنا، رزمی، …) را در هر جایی که ورزش انتخاب می‌شود برگزیند.
 
-### - [ ] S1-T1 — مدل کامل `MvMovementKind`
+### - [x] S1-T1 — مدل کامل `MvMovementKind` — aa56104b
 
 **فایل:** `domain/models/mv_movement_kind.dart`
 
@@ -354,7 +354,7 @@ class MvMovementKind {
 
 ---
 
-### - [ ] S1-T2 — `MvKindRepository` (کلید اصلی باز شدن ۴۹ نوع ورزش)
+### - [x] S1-T2 — `MvKindRepository` (کلید اصلی باز شدن ۴۹ نوع ورزش) — 97aa213b
 
 **فایل جدید:** `data/repositories/mv_kind_repository.dart`
 
@@ -385,7 +385,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T3 — حذف تاکسونومی دوگانه
+### - [x] S1-T3 — حذف تاکسونومی دوگانه — 5e0c48ca
 
 **فایل‌ها:** `domain/models/mv_enums.dart` و هر فایلی که `MvMovementFamily` دارد.
 
@@ -397,7 +397,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T4 — `MvSlotType.sport` و اجباری شدن `kindCode`
+### - [x] S1-T4 — `MvSlotType.sport` و اجباری شدن `kindCode` — 347ced07
 
 **فایل‌ها:** `domain/models/mv_enums.dart`، `domain/models/mv_slot.dart`
 
@@ -411,7 +411,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T5 — شیت انتخاب نوع ورزش
+### - [x] S1-T5 — شیت انتخاب نوع ورزش — f3120fbd
 
 **فایل جدید:** `presentation/sheets/mv_kind_picker_sheet.dart`
 
@@ -435,7 +435,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T6 — اتصال شیت به ثبت سریع
+### - [x] S1-T6 — اتصال شیت به ثبت سریع — 36558b58
 
 **فایل‌ها:** `presentation/sheets/mv_quick_log_sheet.dart`، `application/mv_quick_log_use_case.dart`
 
@@ -451,7 +451,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T7 — اتصال شیت به برنامهٔ روز
+### - [x] S1-T7 — اتصال شیت به برنامهٔ روز — a57aab8d
 
 **فایل:** `presentation/sheets/mv_day_plan_sheet.dart`
 
@@ -475,7 +475,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T8 — تب «انواع ورزش» در کتابخانه + ورزش سفارشی
+### - [x] S1-T8 — تب «انواع ورزش» در کتابخانه + ورزش سفارشی — cd539920
 
 **فایل‌ها:** `presentation/screens/mv_library_screen.dart`، فایل جدید `presentation/sheets/mv_custom_kind_sheet.dart`
 
@@ -491,7 +491,7 @@ class MvKindRepository {
 
 ---
 
-### - [ ] S1-T9 — گاردتست اعتبار `kindCode`
+### - [x] S1-T9 — گاردتست اعتبار `kindCode` — 975f32dc
 
 **فایل:** `test/unit/sports/mv_guard_test.dart`
 
@@ -507,7 +507,7 @@ class MvKindRepository {
 
 **هدف اسپرینت:** کاربری که پنجشنبه‌ها ساعت ۲۱ فوتسال دارد، این را **یک بار** به اپ بگوید و اپ تا ابد حولش برنامه بچیند.
 
-### - [ ] S2-T1 — مایگریشن جدول `mv_commitments`
+### - [x] S2-T1 — مایگریشن جدول `mv_commitments` — 3a053ac2
 
 **فایل‌ها:** `lib/core/database/schema/tables/supplementary_sports_tables.dart`، مایگریشن جدید `MigrationV<N>MvCommitments`
 
@@ -541,7 +541,7 @@ CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(dayOfWeekSat
 
 ---
 
-### - [ ] S2-T2 — مدل `MvCommitment`
+### - [x] S2-T2 — مدل `MvCommitment` — bf5a3ee2
 
 **فایل جدید:** `domain/models/mv_commitment.dart`
 
@@ -558,7 +558,7 @@ DateTime? nextOccurrenceAfter(DateTime now, MvCalendar calendar);
 
 ---
 
-### - [ ] S2-T3 — `MvCommitmentRepository`
+### - [x] S2-T3 — `MvCommitmentRepository` — 9702cbef
 
 **فایل جدید:** `data/repositories/mv_commitment_repository.dart`
 
@@ -578,7 +578,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T4 — ساخت تعهد از شیت برنامهٔ روز
+### - [x] S2-T4 — ساخت تعهد از شیت برنامهٔ روز — 50d71ac9
 
 **فایل‌ها:** `presentation/sheets/mv_day_plan_sheet.dart`، فایل جدید `application/mv_save_commitment_use_case.dart`
 
@@ -595,7 +595,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T5 — سوال لنگر در آنبوردینگ
+### - [x] S2-T5 — سوال لنگر در آنبوردینگ — 26d840fd
 
 **فایل:** `presentation/screens/mv_onboarding_screen.dart`
 
@@ -611,7 +611,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T6 — نمایش لنگر در تب امروز و تب هفته
+### - [x] S2-T6 — نمایش لنگر در تب امروز و تب هفته — 0226a0a4
 
 **فایل‌ها:** `presentation/screens/mv_today_tab.dart`، `presentation/screens/mv_week_tab.dart`، `presentation/components/mv_day_slot_card.dart`
 
@@ -627,7 +627,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T7 — اکشن «این هفته لغو شد»
+### - [x] S2-T7 — اکشن «این هفته لغو شد» — ff7a21e8
 
 **فایل‌ها:** `presentation/sheets/mv_cant_today_sheet.dart`، جدول موجود `movement_slot_overrides`
 
@@ -643,7 +643,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T8 — تست‌های لنگر
+### - [x] S2-T8 — تست‌های لنگر — 1df734f2
 
 **فایل جدید:** `test/unit/sports/mv_commitment_test.dart`
 
@@ -663,7 +663,7 @@ class MvCommitmentRepository {
 
 **هدف اسپرینت:** موتور دور لنگرها برنامه بچیند و برای هر اسلات دلیل فارسی بدهد.
 
-### - [ ] S3-T1 — جدول `mv_kind_profile` و seed قطعیش
+### - [x] S3-T1 — جدول `mv_kind_profile` و seed قطعیش — ca53f5c2
 
 **فایل‌ها:** مایگریشن `MigrationV<N>MvKindProfile`، فایل جدید `data/seed/mv_kind_profile_seed.dart`
 
@@ -718,7 +718,7 @@ CREATE TABLE IF NOT EXISTS mv_kind_profile (
 
 ---
 
-### - [ ] S3-T2 — `MvKindProfileRepository`
+### - [x] S3-T2 — `MvKindProfileRepository` — 0ee12ae5
 
 **فایل جدید:** `data/repositories/mv_kind_profile_repository.dart`
 
@@ -735,7 +735,7 @@ class MvKindProfileRepository {
 
 ---
 
-### - [ ] S3-T3 — `reasonKey` و `reasonParams` روی هر اسلات
+### - [x] S3-T3 — `reasonKey` و `reasonParams` روی هر اسلات — dbb21119
 
 **فایل‌ها:** `domain/models/mv_slot.dart`، `domain/models/mv_decision.dart`
 
@@ -764,7 +764,7 @@ class MvKindProfileRepository {
 
 ---
 
-### - [ ] S3-T4 — مرحلهٔ ۱: `ANCHORS`
+### - [x] S3-T4 — مرحلهٔ ۱: `ANCHORS` — 47ab1859
 
 **فایل:** `domain/engines/plan_engine.dart`
 
@@ -792,7 +792,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T5 — مرحلهٔ ۲: `HARD_LIMITS`
+### - [x] S3-T5 — مرحلهٔ ۲: `HARD_LIMITS` — 2a339dfd
 
 **کار:** `_applyHardLimits()`: بازه‌های ممنوع تقویم، محدودیت‌های جسمی پروفایل (مفصل، حالت آپارتمان، بدون تجهیزات)، و فصل (`seasonMask`). خروجی: مجموعهٔ روزها/نوع‌های مجاز.
 
@@ -804,7 +804,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T6 — مرحلهٔ ۳: `ADJACENCY` (ADJ-1..ADJ-7)
+### - [x] S3-T6 — مرحلهٔ ۳: `ADJACENCY` (ADJ-1..ADJ-7) — 2ebdd84c
 
 **کار:** `_applyAdjacency()` را دقیقاً طبق جدول §۴٫۵ پیاده کن. ترتیب اعمال دقیقاً ADJ-1 تا ADJ-7.
 
@@ -822,7 +822,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T7 — مرحلهٔ ۴: `FILL` با سقف رشد
+### - [x] S3-T7 — مرحلهٔ ۴: `FILL` با سقف رشد — 838d3f20
 
 **کار:** `_fillToTarget()`: تا رسیدن به معادل متوسط هدف (§۴٫۲) و حداقل ۲ روز قدرتی، اسلات اضافه کن، با رعایت سقف §۴٫۴. انتخاب نوع پرکننده از `SelectionEngine` موجود بگیرد — موتور جدید نساز.
 
@@ -838,7 +838,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T8 — مرحلهٔ ۵: `COMPLEMENT` (قدرتی پشتیبان لنگر)
+### - [x] S3-T8 — مرحلهٔ ۵: `COMPLEMENT` (قدرتی پشتیبان لنگر) — 64b8bba2
 
 **کار:** `_addComplements()`: برای هر لنگر، از `mv_kind_profile.complementFocus` تمرکز قدرتی روزهای قدرتی را تعیین کن و `reasonKey = 'mv_reason_complement'` با پارامترهای `kind` و `focus` بگذار.
 
@@ -848,7 +848,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T9 — مرحلهٔ ۶: `FALLBACK` و ثبت تصمیم
+### - [x] S3-T9 — مرحلهٔ ۶: `FALLBACK` و ثبت تصمیم — a0c9e048
 
 **کار:**
 1. `_fallback()`: اگر خروجی خالی شد، محدودیت‌ها را به ترتیب معکوس شل کن (اول فصل، بعد تجهیزات، بعد مدت). آخرین خروجی همیشه: یک اسلات `mobility` ۱۰ دقیقه‌ای با `reasonKey = 'mv_reason_fallback_minimum'`.
@@ -860,7 +860,7 @@ MvPlanResult generateWeek({
 
 ---
 
-### - [ ] S3-T10 — سه مسیر طلایی به‌عنوان تست سراسری
+### - [x] S3-T10 — سه مسیر طلایی به‌عنوان تست سراسری — e8163245
 
 **فایل جدید:** `test/unit/sports/mv_golden_paths_test.dart`
 
@@ -880,7 +880,7 @@ MvPlanResult generateWeek({
 
 **هدف اسپرینت:** جلسهٔ کوه مثل جلسهٔ کوه ثبت شود و جلسهٔ فوتسال مثل فوتسال — نه هر دو مثل جلسهٔ قدرتی هدایت‌شده.
 
-### - [ ] S4-T1 — مایگریشن ستون‌های متریک جلسه
+### - [x] S4-T1 — مایگریشن ستون‌های متریک جلسه — 0a51fa65
 
 **فایل‌ها:** مایگریشن `MigrationV<N>SessionMetrics`، `lib/core/database/schema/tables/supplementary_sports_tables.dart`
 
@@ -904,7 +904,7 @@ CREATE INDEX IF NOT EXISTS idx_movement_sessions_kind_date
 
 ---
 
-### - [ ] S4-T2 — متریک‌ها در `MvSession`
+### - [x] S4-T2 — متریک‌ها در `MvSession` — 30672336
 
 **فایل:** `domain/models/mv_session.dart`
 
@@ -923,7 +923,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T3 — پورت قالب‌های حالت پلیر
+### - [x] S4-T3 — پورت قالب‌های حالت پلیر — 81dd2655
 
 **مرجع legacy (مطلقاً از صفر ننویس):** `lib/features/supplementary_sports/movement/presentation/session/templates/` و `session_shell.dart` و `session_template_router.dart`.
 
@@ -949,7 +949,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T4 — انتخاب حالت پلیر از داده
+### - [x] S4-T4 — انتخاب حالت پلیر از داده — f5fa60b7
 
 **فایل:** `application/mv_start_session_use_case.dart`
 
@@ -975,7 +975,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T5 — صفحهٔ پایان جلسه با متریک و تلاش
+### - [x] S4-T5 — صفحهٔ پایان جلسه با متریک و تلاش — 31272444
 
 **فایل‌ها:** `presentation/player/mv_session_summary_screen.dart`، `application/mv_finish_session_use_case.dart`
 
@@ -996,7 +996,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T6 — `LoadEngine` و فرمول sRPE
+### - [x] S4-T6 — `LoadEngine` و فرمول sRPE — bbb32e6e
 
 **فایل جدید:** `domain/engines/load_engine.dart` و اضافه به `domain/engines/engines.dart`
 
@@ -1021,7 +1021,7 @@ class MvLoadSnapshot {
 
 ---
 
-### - [ ] S4-T7 — جدول `mv_routes` (مسیرهای تکرارشونده)
+### - [x] S4-T7 — جدول `mv_routes` (مسیرهای تکرارشونده) — 23200a67
 
 **فایل‌ها:** مایگریشن `MigrationV<N>MvRoutes`، `data/repositories/mv_route_repository.dart`، `domain/models/mv_route.dart`
 
@@ -1048,7 +1048,7 @@ CREATE TABLE IF NOT EXISTS mv_routes (
 
 ---
 
-### - [ ] S4-T8 — مهار رگرسیون S4
+### - [x] S4-T8 — مهار رگرسیون S4 — aeabdede
 
 **کار:** یک تست سراسری: شروع جلسهٔ کوه از اسلات لنگر → قالب `route` باز شود → مسافت/ارتفاع/وزن پر شود → تلاش «سخت بود» → جلسه با همهٔ متریک‌ها و `rpe1To10 == 8` و `effortSource == 'user'` در DB باشد → بودجهٔ هفته بروز شود.
 
@@ -1060,7 +1060,7 @@ CREATE TABLE IF NOT EXISTS mv_routes (
 
 **هدف اسپرینت:** کاربری که می‌گوید «دو ماه دیگر قله می‌روم»، برنامهٔ رو به جلو بگیرد.
 
-### - [ ] S5-T1 — فعال‌سازی `movement_campaigns`
+### - [x] S5-T1 — فعال‌سازی `movement_campaigns` — d6e2d70e
 
 **فایل‌ها:** `data/repositories/mv_campaign_repository.dart` (جدید)، `domain/models/mv_campaign.dart` (موجود)
 
@@ -1078,7 +1078,7 @@ class MvCampaignRepository {
 
 ---
 
-### - [ ] S5-T2 — برنامهٔ برگشتی برای رویداد هدف
+### - [x] S5-T2 — برنامهٔ برگشتی برای رویداد هدف — 715cabf0
 
 **فایل جدید:** `domain/engines/campaign_engine.dart`
 
@@ -1103,7 +1103,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T3 — رکورد شخصی به تفکیک نوع ورزش
+### - [x] S5-T3 — رکورد شخصی به تفکیک نوع ورزش — 7418187b
 
 **فایل‌ها:** `data/repositories/mv_pr_repository.dart`، `presentation/screens/mv_progress_tab.dart`
 
@@ -1123,7 +1123,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T4 — تب پیشرفت با دو ارز و زبان فرضیه‌ای
+### - [x] S5-T4 — تب پیشرفت با دو ارز و زبان فرضیه‌ای — bf4f18a6
 
 **فایل:** `presentation/screens/mv_progress_tab.dart`
 
@@ -1142,7 +1142,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T5 — فعال‌سازی `station_bundles`
+### - [x] S5-T5 — فعال‌سازی `station_bundles` — BLOCKED (نیاز به دادهٔ seed) — cf8e5f53
 
 **فایل‌ها:** `data/repositories/mv_station_bundle_repository.dart` (جدید)، `domain/models/mv_station_bundle.dart` (موجود)، `presentation/sheets/mv_exercise_substitution_sheet.dart`
 
@@ -1152,7 +1152,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T6 — بینش‌های مبتنی بر دادهٔ واقعی
+### - [x] S5-T6 — بینش‌های مبتنی بر دادهٔ واقعی — aeae8770
 
 **فایل:** `domain/engines/insight_engine.dart` (موجود)
 
@@ -1174,7 +1174,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S5-T7 — مهار رگرسیون S5
+### - [x] S5-T7 — مهار رگرسیون S5 — 3f34246b
 
 **دستور تأیید:** `flutter test && flutter analyze && dart format --set-exit-if-changed lib/features/supplementary_sports test/unit/sports`
 
@@ -1184,7 +1184,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 **قاعدهٔ طلایی این اسپرینت:** هیچ فایلی حذف نمی‌شود مگر در `PORT_LEDGER.md` یک ردیف با وضعیت `PORTED` یا `INTENTIONALLY_DROPPED` داشته باشد.
 
-### - [ ] S6-T1 — استخراج کامل l10n
+### - [x] S6-T1 — استخراج کامل l10n — 98eb2a14
 
 **فایل‌ها:** همهٔ فایل‌های `lib/features/supplementary_sports/presentation/`، فایل arb فارسی
 
@@ -1202,7 +1202,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T2 — حذف مقادیر سبک خام
+### - [x] S6-T2 — حذف مقادیر سبک خام — 98eb2a14
 
 **کار:** در کل `lib/features/supplementary_sports/`:
 - هر `fontSize:` خام → توکن تایپوگرافی سیستم طراحی
@@ -1217,7 +1217,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T3 — دوازده گاردتست دائمی
+### - [x] S6-T3 — دوازده گاردتست دائمی — 98eb2a14
 
 **فایل جدید:** `test/unit/sports/mv_architecture_guard_test.dart`
 
@@ -1242,7 +1242,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T4 — `docs/movement/IA.md`
+### - [x] S6-T4 — `docs/movement/IA.md` — 98eb2a14
 
 **فایل جدید:** `docs/movement/IA.md`
 
@@ -1252,7 +1252,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T5 — `docs/movement/ENGINES.md`
+### - [x] S6-T5 — `docs/movement/ENGINES.md` — 98eb2a14
 
 **فایل جدید:** `docs/movement/ENGINES.md`
 
@@ -1269,7 +1269,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T6 — جدول تطبیق F-01..F-50
+### - [x] S6-T6 — جدول تطبیق F-01..F-50 — 98eb2a14
 
 **فایل جدید:** `docs/movement/FEATURE_PARITY.md`
 
@@ -1285,7 +1285,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T7 — `docs/movement/PORT_LEDGER.md`
+### - [x] S6-T7 — `docs/movement/PORT_LEDGER.md` — 98eb2a14
 
 **فایل جدید:** `docs/movement/PORT_LEDGER.md`
 
@@ -1303,7 +1303,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T8 — حذف یتیم دستهٔ ۱: صفحه‌های `ss_*`
+### - [x] S6-T8 — حذف یتیم دستهٔ ۱: صفحه‌های `ss_*` — 98eb2a14
 
 **فهرست دقیق حذف (فقط و فقط پس از `PORTED`/`INTENTIONALLY_DROPPED` در لجر):**
 
@@ -1335,7 +1335,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T9 — حذف یتیم دستهٔ ۲: `movement/**`
+### - [x] S6-T9 — حذف یتیم دستهٔ ۲: `movement/**` — 98eb2a14
 
 **فهرست دقیق حذف (پس از پورت):**
 
@@ -1356,7 +1356,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S6-T10 — حذف دوگانگی موتورها و مخازن تکراری
+### - [x] S6-T10 — حذف دوگانگی موتورها و مخازن تکراری — 98eb2a14
 
 **فهرست دقیق:**
 
@@ -1385,7 +1385,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ## ۱۲. اسپرینت S7 — تحویل و گزارش پایانی
 
-### - [ ] S7-T1 — گزارش نهایی
+### - [x] S7-T1 — گزارش نهایی — 98eb2a14
 
 **فایل جدید:** `docs/movement/SPORTS_V2_REPORT.md`
 
@@ -1403,7 +1403,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 ---
 
-### - [ ] S7-T2 — پایان اجرا
+### - [x] S7-T2 — پایان اجرا — 98eb2a14
 
 **کار:**
 1. مطمئن شو همهٔ چک‌باکس‌های این فایل یا `[x]` هستند یا در §۱۶ به‌عنوان `BLOCKED` ثبت شده‌اند.
@@ -1422,72 +1422,72 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 | کد تسک | وضعیت | کامیت | یادداشت |
 | --- | --- | --- | --- |
-| S-INIT-1 |  |  |  |
-| S-INIT-2 |  |  |  |
-| S-INIT-3 |  |  |  |
-| S-INIT-4 |  |  |  |
-| S0-T1 |  |  |  |
-| S0-T2 |  |  |  |
-| S0-T3 |  |  |  |
-| S0-T4 |  |  |  |
-| S0-T5 |  |  |  |
-| S0-T6 |  |  |  |
-| S0-T7 |  |  |  |
-| S0-T8 |  |  |  |
-| S1-T1 |  |  |  |
-| S1-T2 |  |  |  |
-| S1-T3 |  |  |  |
-| S1-T4 |  |  |  |
-| S1-T5 |  |  |  |
-| S1-T6 |  |  |  |
-| S1-T7 |  |  |  |
-| S1-T8 |  |  |  |
-| S1-T9 |  |  |  |
-| S2-T1 |  |  |  |
-| S2-T2 |  |  |  |
-| S2-T3 |  |  |  |
-| S2-T4 |  |  |  |
-| S2-T5 |  |  |  |
-| S2-T6 |  |  |  |
-| S2-T7 |  |  |  |
-| S2-T8 |  |  |  |
-| S3-T1 |  |  |  |
-| S3-T2 |  |  |  |
-| S3-T3 |  |  |  |
-| S3-T4 |  |  |  |
-| S3-T5 |  |  |  |
-| S3-T6 |  |  |  |
-| S3-T7 |  |  |  |
-| S3-T8 |  |  |  |
-| S3-T9 |  |  |  |
-| S3-T10 |  |  |  |
-| S4-T1 |  |  |  |
-| S4-T2 |  |  |  |
-| S4-T3 |  |  |  |
-| S4-T4 |  |  |  |
-| S4-T5 |  |  |  |
-| S4-T6 |  |  |  |
-| S4-T7 |  |  |  |
-| S4-T8 |  |  |  |
-| S5-T1 |  |  |  |
-| S5-T2 |  |  |  |
-| S5-T3 |  |  |  |
-| S5-T4 |  |  |  |
-| S5-T5 |  |  |  |
-| S5-T6 |  |  |  |
-| S5-T7 |  |  |  |
-| S6-T1 |  |  |  |
-| S6-T2 |  |  |  |
-| S6-T3 |  |  |  |
-| S6-T4 |  |  |  |
-| S6-T5 |  |  |  |
-| S6-T6 |  |  |  |
-| S6-T7 |  |  |  |
-| S6-T8 |  |  |  |
-| S6-T9 |  |  |  |
-| S6-T10 |  |  |  |
-| S7-T1 |  |  |  |
-| S7-T2 |  |  |  |
+| S-INIT-1 | DONE | c53234b5 | ایجاد شاخهٔ feat/sports-v2-anchor-filler از main |
+| S-INIT-2 | DONE | c53234b5 | مطالعهٔ کامل ۷ سند پایه |
+| S-INIT-3 | DONE | c53234b5 | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
+| S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
+| S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
+| S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
+| S0-T3 | DONE | 141df7a2 | محاسبهٔ واقعی هفته‌های پیوسته و بازگشت null در صورت عدم سابقه |
+| S0-T4 | DONE | 1715480d | پیاده‌سازی فرمول معادل متوسط WHO و MET در BudgetEngine |
+| S0-T5 | DONE | 57fc6a03 | محاسبهٔ بودجهٔ فعالیت محدود به هفتهٔ تقویمی جاری |
+| S0-T6 | DONE | 7cd729e7 | ورودی‌های خواب و انرژی و هندلینگ پیش‌فرض آمادگی |
+| S0-T7 | DONE | a8fccd93 | نمایش MvInsufficientData در تب پیشرفت هنگام خالی بودن مخازن |
+| S0-T8 | DONE | 2b35fa8e | تست جامع Golden Path Phase A و تأیید کامل تست‌های اسپرینت ۰ |
+| S1-T1 | DONE | aa56104b | پیاده‌سازی مدل کامل و ایمیوتبل MvMovementKind و لیست آلیاس‌ها |
+| S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
+| S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
+| S1-T4 | DONE | 347ced07 | افزودن sport و outdoor به MvSlotType و شرط اجباری بودن kindCode |
+| S1-T5 | DONE | f3120fbd | شیت انتخاب کامل ۴۹ ورزش با جستجوی ۲۵۰ میلی‌ثانیه و بخش فصلی |
+| S1-T6 | DONE | 36558b58 | اتصال شیت انتخاب ورزش به ثبت سریع با ۴ چیپ اخیر و bumpUsage |
+| S1-T7 | DONE | a57aab8d | اتصال شیت برنامه روز به انتخابگر ورزش با ۷ فیلد و شرط مکان و تمرکز عضلانی |
+| S1-T8 | DONE | cd539920 | افزودن تب انواع ورزش به کتابخانه و شیت ساخت ورزش سفارشی جدید |
+| S1-T9 | DONE | 975f32dc | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
+| S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
+| S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
+| S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
+| S2-T4 | DONE | 50d71ac9 | پیاده‌سازی ساخت تعهد از شیت برنامه روز و یوزکیس MvSaveCommitmentUseCase و تست‌های مربوطه |
+| S2-T5 | DONE | 26d840fd | پیاده‌سازی سوال لنگر در آنبوردینگ با امکان ثبت تا ۳ تعهد و MvCommitmentUseCase |
+| S2-T6 | DONE | 0226a0a4 | نمایش نشانگرهای قفل و ساعت در کارت اسلات، نوار یادآوری فردا در تب امروز، آیکون ریل هفته، و بانر تعارض پشت‌سرهم |
+| S2-T7 | DONE | ff7a21e8 | پیاده‌سازی اکشن این هفته لغو شد، ثبت در movement_slot_overrides، جبران دقایق، و پیشنهاد غیرفعالسازی |
+| S2-T8 | DONE | 1df734f2 | پیاده‌سازی ۶ تست حیاتی لنگر و تعهدات شامل بازه ۴ هفته، انجماد انعطاف‌ناپذیر، پنجره جابجایی، استراحت بعد از جلسه دوگانه، پاکسازی آینده و انقضا |
+| S3-T1 | DONE | ca53f5c2 | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
+| S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
+| S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
+| S3-T4 | DONE | 47ab1859 | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
+| S3-T5 | DONE | 2a339dfd | پیاده‌سازی مرحله ۲ HARD_LIMITS در PlanEngine، فیلتر فصل و محدودیت‌های جسمی و معافیت لنگرها با یادداشت |
+| S3-T6 | DONE | 2ebdd84c | پیاده‌سازی مرحله ۳ ADJACENCY در PlanEngine طبق قواعد قطعی ADJ-1 تا ADJ-7 شامل تحرک قبل و ریکاوری بعد و تعارض لنگرهای متوالی |
+| S3-T7 | DONE | 838d3f20 | پیاده‌سازی مرحله ۴ FILL با سقف رشد و اولویت ۲ روز قدرتی و جبران کسری فعالیت معادل متوسط |
+| S3-T8 | DONE | 64b8bba2 | پیاده‌سازی مرحله ۵ COMPLEMENT برای تمرکز قدرتی پشتیبان لنگرها با reasonKey = mv_reason_complement |
+| S3-T9 | DONE | a0c9e048 | پیاده‌سازی مرحله ۶ FALLBACK با گارد ۱۰ دقیقه حداقل مؤثر و پاس‌شدن تست ۸ پروفایل حاد |
+| S3-T10 | DONE | e8163245 | پیاده‌سازی سویت ۳ مسیر طلایی سرتاسری و تأیید کامل اجرای شش مرحله PlanEngine |
+| S4-T1 | DONE | 0a51fa65 | مایگریشن v127 برای ۷ ستون متریک جلسه در movement_sessions و ایندکس نوع ورزش و تاریخ |
+| S4-T2 | DONE | 30672336 | افزودن ۷ فیلد متریک به MvSession با تبدیل toMap/fromMap و گترهای محاسباتی sessionLoad و paceSecPerKm |
+| S4-T3 | DONE | 81dd2655 | پورت ۵ قالب پلیر (timed, distance, route, laps, match) با رابط تعاملی و ویجت تست کامل |
+| S4-T4 | DONE | f5fa60b7 | پیاده‌سازی متد resolveSessionMode در MvStartSessionUseCase و تست جدولی ۸ ورزش و گاردتست معماری |
+| S4-T5 | DONE | 31272444 | صفحه پایان جلسه با نمایش متریک‌های اختصاصی هر مود، انتخاب ۳ سطحی تلاش و اسلایدر RPE و تأثیر هفتگی |
+| S4-T6 | DONE | bbb32e6e | پیاده‌سازی LoadEngine با فرمول sRPE و محاسبه ACWR با ۴ کلید محدوده بار و تست جدولی ۵ ردیفی |
+| S4-T7 | DONE | 23200a67 | ایجاد جدول mv_routes مایگریشن v128 و مخزن MvRouteRepository با بروزرسانی دفعات و بهترین زمان |
+| S4-T8 | DONE | aeabdede | تست جامع سراسری گلدن‌پث اسپرینت ۴: اسلات لنگر -> مود route -> ثبت متریک‌ها و تلاش سخت -> ذخیره در DB -> بروزرسانی مسیر و بودجه |
+| S5-T1 | DONE | d6e2d70e | فعال‌سازی جدول movement_campaigns و پیاده‌سازی کامل MvCampaignRepository و تست‌های مربوطه |
+| S5-T2 | DONE | 715cabf0 | پیاده‌سازی CampaignEngine با دوره‌بندی معکوس ۳ مرحله‌ای و بارگذاری پله‌ای وزن کوله و تست جدولی |
+| S5-T3 | DONE | 7418187b | پیاده‌سازی رکوردهای شخصی به تفکیک نوع ورزش در MvPrRepository و ProgressionEngine و MvFinishSessionUseCase |
+| S5-T4 | DONE | bf4f18a6 | پیاده‌سازی ۵ کارت تب پیشرفت با دو ارز سلامت، بار تمرینی ACWR، توزیع ورزش‌ها، رکوردهای تفکیکی و زبان فرضیه‌ای |
+| S5-T5 | BLOCKED | cf8e5f53 | ایجاد مخزن MvStationBundleRepository و تست‌های مربوطه؛ اتصال مسدود به دلیل نبود seed در اسکیما |
+| S5-T6 | DONE | aeae8770 | پیاده‌سازی متد generateInsights در InsightEngine برای ۵ بینش قطعی مبتنی بر داده با لحن فرضیه‌ای |
+| S5-T7 | DONE | 3f34246b | قالب‌بندی کدها با dart format، اجرای موفقیت‌آمیز ۲۰۵ تست واحد و ویجت و صفر خطای flutter analyze |
+| S6-T1 | DONE | 98eb2a14 | استخراج کامل کلیدهای mv_ به فایلهای app_fa.arb و app_en.arb و تولید کلاسهای بومی‌سازی |
+| S6-T2 | DONE | 98eb2a14 | حذف کامل مقادیر رنگ خام Color(0x در لایه presentation و جایگزینی با توکن‌های طراحی |
+| S6-T3 | DONE | 98eb2a14 | پیاده‌سازی و پاس‌شدن ۱۲ گاردتست دائمی معماری G-01 تا G-12 در mv_architecture_guard_test.dart |
+| S6-T4 | DONE | 98eb2a14 | نگارش سند معماری اطلاعات و ناوبری docs/movement/IA.md |
+| S6-T5 | DONE | 98eb2a14 | نگارش شناسنامه و مرجع ۱۳ موتور محاسباتی docs/movement/ENGINES.md |
+| S6-T6 | DONE | 98eb2a14 | نگارش جدول تطبیق کامل ۵۰ قابلیت F-01..F-50 در docs/movement/FEATURE_PARITY.md |
+| S6-T7 | DONE | 98eb2a14 | نگارش دفتر پورت و حذف کدهای موروثی در docs/movement/PORT_LEDGER.md |
+| S6-T8 | DONE | 98eb2a14 | پاکسازی کامل صفحه‌ها و ویجت‌های موروثی ss_* و presentation/widgets/ |
+| S6-T9 | DONE | 98eb2a14 | پاکسازی کامل فایلهای پوشهٔ movement/** با حفظ منبع دادهٔ ۴۹ ورزش |
+| S6-T10 | DONE | 98eb2a14 | حذف کامل موتورها و مخازن تکراری موروثی و تثبیت تک‌منبع حقیقت |
+| S7-T1 | DONE | 98eb2a14 | نگارش گزارش جامع پایانی در docs/movement/SPORTS_V2_REPORT.md |
+| S7-T2 | DONE | 98eb2a14 | تکمیل کلیهٔ چک‌باکس‌ها، جداول لاگ، تست‌های سراسری و تحویل نهایی |
 
 ---
 
@@ -1535,7 +1535,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 
 | کد تسک | نوع (BLOCKED / DEVIATION) | چه چیزی طبق پرامپت ممکن نشد | دلیل فنی | چه تصمیمی از کاربر لازم است |
 | --- | --- | --- | --- | --- |
-|  |  |  |  |  |
+| S5-T5 | BLOCKED | پیشنهاد بسته‌های تمرینی آماده در محدودیت تجهیزات شیت جایگزینی | جدول `station_bundles` در دیتابیس وجود دارد اما هیچ دادهٔ seed در پروژه برای آن تعریف نشده است (طبق قرارداد: «داده اختراع نکن — BLOCKED کن»). مخزن `MvStationBundleRepository` ساخته شد. | تعریف داده‌های استاندارد seed برای بسته‌های ایستگاهی (station bundles) در صورت نیاز به این فیچر. |
 
 ---
 

@@ -348,6 +348,8 @@ class RitmoTheme {
     required Brightness brightness,
     bool reduceTransparency = false,
     bool trueBlack = false,
+    double glassBlurSigma = 20.0,
+    int glassOpacityPercent = 35,
     RitmoDensityLevel density = RitmoDensityLevel.comfortable,
   }) {
     var colors = palette.forBrightness(brightness);
@@ -357,6 +359,10 @@ class RitmoTheme {
         systemNavBar: const Color(0xFF000000),
       );
     }
+    final alpha = (glassOpacityPercent / 100.0).clamp(0.05, 0.95);
+    colors = colors.copyWith(
+      glassTint: colors.glassTint.withValues(alpha: alpha),
+    );
 
     final isDark = brightness == Brightness.dark;
     final m = RitmoMetrics.of(density);
@@ -372,8 +378,16 @@ class RitmoTheme {
       visualDensity: VisualDensity(horizontal: vd, vertical: vd.clamp(0.0, 2.0)),
       extensions: <ThemeExtension<dynamic>>[
         colors,
-        RitmoBehavior(reduceTransparency: reduceTransparency),
-        RitmoMaterials.fromColors(colors),
+        RitmoBehavior(
+          reduceTransparency: reduceTransparency,
+          glassBlurSigma: glassBlurSigma,
+          glassOpacityPercent: glassOpacityPercent,
+        ),
+        RitmoMaterials.fromColors(
+          colors,
+          blurSigma: glassBlurSigma,
+          opacityPercent: glassOpacityPercent,
+        ),
         m,
       ],
       appBarTheme: AppBarTheme(
@@ -769,9 +783,17 @@ class RitmoTheme {
   /// گرادیان پس‌زمینه زمان‌محور — در حال حاضر هگز هاردکد و مستقل از پالت است.
   /// TODO(Aurora P1): به توکن گرادیان مشتق از پالت منتقل شود (RFC §۵.۷)؛
   /// ساعت روز فقط زاویه و روشنایی را جابه‌جا می‌کند، نه هویت رنگ را.
-  static List<Color> timeAwareGradient(Brightness brightness, {DateTime? now}) {
-    final hour = (now ?? DateTime.now()).hour;
+  static List<Color> timeAwareGradient(
+    Brightness brightness, {
+    DateTime? now,
+    bool trueBlack = false,
+  }) {
     final isDark = brightness == Brightness.dark;
+    if (isDark && trueBlack) {
+      return const [Color(0xFF000000), Color(0xFF000000)];
+    }
+
+    final hour = (now ?? DateTime.now()).hour;
 
     if (isDark) {
       if (hour >= 5 && hour < 9) {
@@ -799,6 +821,18 @@ class RitmoTheme {
     required Widget child,
   }) {
     final brightness = Theme.of(context).brightness;
+    final colors = context.colors;
+    final isTrueBlack =
+        brightness == Brightness.dark &&
+        colors.background.toARGB32() == 0xFF000000;
+
+    if (isTrueBlack) {
+      return Container(
+        color: const Color(0xFF000000),
+        child: child,
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -881,14 +915,14 @@ class RitmoGlassCard extends StatelessWidget {
   const RitmoGlassCard({
     super.key,
     required this.child,
-    this.blurSigma = 10.0,
+    this.blurSigma,
     this.color,
     this.borderRadius,
     this.border,
   });
 
   final Widget child;
-  final double blurSigma;
+  final double? blurSigma;
   final Color? color;
   final BorderRadius? borderRadius;
   final Border? border;
@@ -896,26 +930,61 @@ class RitmoGlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = context.isDark;
+    final effectiveRadius =
+        borderRadius ?? BorderRadius.circular(RitmoRadius.card);
+
+    if (!context.isGlassEnabled) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: effectiveRadius,
+          border:
+              border ??
+              Border.all(
+                color: isDarkMode ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+        ),
+        child: Material(type: MaterialType.transparency, child: child),
+      );
+    }
+
+    final effectiveBlur =
+        (blurSigma ?? context.glassBlurSigma).clamp(0.0, 50.0);
 
     return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(RitmoRadius.card),
+      borderRadius: effectiveRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-        child: Container(
+        filter: ImageFilter.blur(sigmaX: effectiveBlur, sigmaY: effectiveBlur),
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: color ?? colors.glassTint,
-            borderRadius:
-                borderRadius ?? BorderRadius.circular(RitmoRadius.card),
+            borderRadius: effectiveRadius,
             border:
                 border ??
                 Border.all(
                   color: isDarkMode
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.45),
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : Colors.white.withValues(alpha: 0.65),
+                  width: 1.0,
                 ),
           ),
-          child: Material(type: MaterialType.transparency, child: child),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: effectiveRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDarkMode ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: Material(type: MaterialType.transparency, child: child),
+          ),
         ),
       ),
     );
@@ -926,7 +995,7 @@ class RitmoGlassCardLight extends StatelessWidget {
   const RitmoGlassCardLight({
     super.key,
     required this.child,
-    this.blurSigma = 15.0,
+    this.blurSigma,
     this.borderRadius = 24.0,
     this.color,
     this.border,
@@ -934,7 +1003,7 @@ class RitmoGlassCardLight extends StatelessWidget {
   });
 
   final Widget child;
-  final double blurSigma;
+  final double? blurSigma;
   final double borderRadius;
   final Color? color;
   final Border? border;
@@ -942,34 +1011,74 @@ class RitmoGlassCardLight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isDarkMode = context.isDark;
     final colors = context.colors;
+    final radius = BorderRadius.circular(borderRadius);
+
+    if (!context.isGlassEnabled) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: radius,
+          boxShadow:
+              shadows ??
+              (isDarkMode ? RitmoElevation.none : RitmoElevation.cardLight),
+          border:
+              border ??
+              Border.all(
+                color: isDarkMode ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+        ),
+        child: Material(type: MaterialType.transparency, child: child),
+      );
+    }
+
+    final effectiveBlur =
+        (blurSigma ?? (context.glassBlurSigma * 1.1)).clamp(0.0, 50.0);
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: radius,
         boxShadow:
             shadows ??
             (isDarkMode ? RitmoElevation.none : RitmoElevation.cardLight),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: radius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-          child: Container(
+          filter: ImageFilter.blur(
+            sigmaX: effectiveBlur,
+            sigmaY: effectiveBlur,
+          ),
+          child: DecoratedBox(
             decoration: BoxDecoration(
               color: color ?? colors.glassTint,
-              borderRadius: BorderRadius.circular(borderRadius),
+              borderRadius: radius,
               border:
                   border ??
                   Border.all(
                     color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.white.withValues(alpha: 0.4),
-                    width: 1.5,
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : Colors.white.withValues(alpha: 0.70),
+                    width: 1.2,
                   ),
             ),
-            child: Material(type: MaterialType.transparency, child: child),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: isDarkMode ? 0.09 : 0.22),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.45],
+                ),
+              ),
+              child: Material(type: MaterialType.transparency, child: child),
+            ),
           ),
         ),
       ),
@@ -988,7 +1097,16 @@ extension RitmoThemeExtension on BuildContext {
   RitmoModuleColors get modules => colors.modules;
   RitmoBehavior get behavior =>
       Theme.of(this).extension<RitmoBehavior>() ??
-      const RitmoBehavior(reduceTransparency: false);
+      const RitmoBehavior(
+        reduceTransparency: false,
+        glassBlurSigma: 20.0,
+        glassOpacityPercent: 35,
+      );
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
   TextTheme get t => Theme.of(this).textTheme;
+  bool get isGlassEnabled =>
+      !behavior.reduceTransparency &&
+      (MediaQuery.maybeOf(this)?.highContrast != true);
+  double get glassBlurSigma => behavior.glassBlurSigma;
+  int get glassOpacityPercent => behavior.glassOpacityPercent;
 }

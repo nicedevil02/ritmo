@@ -9,8 +9,8 @@ class MvSessionController {
   MvSessionController({
     MvSessionRepository? sessionRepo,
     MvExerciseRepository? exerciseRepo,
-  })  : _sessionRepo = sessionRepo ?? MvSessionRepository(),
-        _exerciseRepo = exerciseRepo ?? MvExerciseRepository();
+  }) : _sessionRepo = sessionRepo ?? MvSessionRepository(),
+       _exerciseRepo = exerciseRepo ?? MvExerciseRepository();
 
   Future<void> recordEvent({
     required String sessionId,
@@ -35,7 +35,9 @@ class MvSessionController {
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final partialSession = session.copyWith(
-      status: setLogs.isNotEmpty ? MvSessionStatus.partial : MvSessionStatus.active,
+      status: setLogs.isNotEmpty
+          ? MvSessionStatus.partial
+          : MvSessionStatus.active,
       endedAt: now,
       updatedAt: now,
     );
@@ -46,23 +48,37 @@ class MvSessionController {
     required MvSession session,
     required List<MvSetLog> setLogs,
     required MvSessionFeeling feeling,
+    int? rpe1To10,
+    String? effortSource,
     String? note,
   }) async {
+    final updated = session.copyWith(
+      rpe1To10: rpe1To10 ?? session.rpe1To10,
+      effortSource: effortSource ?? session.effortSource,
+      overallFeeling: feeling.rirValue,
+      note: note ?? session.note,
+    );
     await _sessionRepo.finishSession(
-      session,
+      updated,
       setLogs: setLogs,
       feeling: feeling,
       note: note,
     );
   }
 
-  Future<List<MvExercise>> getSimilarCandidates(String exerciseId, {List<MvExercise> fallbackPool = const []}) async {
+  Future<List<MvExercise>> getSimilarCandidates(
+    String exerciseId, {
+    List<MvExercise> fallbackPool = const [],
+  }) async {
     final similar = await _exerciseRepo.getSimilarExercises(exerciseId);
     if (similar.isNotEmpty) return similar;
 
     // Fallback: pick matching category from fallbackPool
     final target = await _exerciseRepo.getExerciseById(exerciseId);
     final cat = target?.category ?? 'CHEST';
-    return fallbackPool.where((e) => e.id != exerciseId && e.category == cat).take(5).toList();
+    return fallbackPool
+        .where((e) => e.id != exerciseId && e.category == cat)
+        .take(5)
+        .toList();
   }
 }

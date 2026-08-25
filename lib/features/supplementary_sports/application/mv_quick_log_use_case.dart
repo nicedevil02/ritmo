@@ -5,17 +5,41 @@ import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 class MvQuickLogUseCase {
   final MvSessionRepository _sessionRepo;
   final MvPrescriptionRepository _prescriptionRepo;
+  final MvKindRepository _kindRepo;
 
   MvQuickLogUseCase({
     MvSessionRepository? sessionRepo,
     MvPrescriptionRepository? prescriptionRepo,
-  })  : _sessionRepo = sessionRepo ?? MvSessionRepository(),
-        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository();
+    MvKindRepository? kindRepo,
+  }) : _sessionRepo = sessionRepo ?? MvSessionRepository(),
+       _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
+       _kindRepo = kindRepo ?? MvKindRepository();
 
   /// Retrieves the most recent completed activity for quick re-log preset.
-  Future<MvSession?> getLastCompletedActivity() => _sessionRepo.getLastCompletedSession();
+  Future<MvSession?> getLastCompletedActivity() =>
+      _sessionRepo.getLastCompletedSession();
 
-  /// Logs a quick activity in 2 taps.
+  /// Returns 4 quick kind candidates from recent usage or standard fallbacks.
+  Future<List<MvMovementKind>> getQuickKinds() async {
+    final recent = await _kindRepo.getRecent(limit: 4);
+    if (recent.length >= 4) return recent;
+
+    const fallbackCodes = ['WALKING', 'RUNNING', 'CYCLING', 'SWIMMING'];
+    final fallbackMap = await _kindRepo.getMapByCodes(fallbackCodes);
+    final result = <MvMovementKind>[...recent];
+    final seenCodes = recent.map((k) => k.code).toSet();
+
+    for (final code in fallbackCodes) {
+      if (result.length >= 4) break;
+      if (!seenCodes.contains(code) && fallbackMap.containsKey(code)) {
+        result.add(fallbackMap[code]!);
+        seenCodes.add(code);
+      }
+    }
+    return result;
+  }
+
+  /// Logs a quick activity in 2 taps and updates kind usage statistics.
   Future<MvSession> execute({
     required String kindCode,
     required int durationMinutes,
@@ -33,7 +57,7 @@ class MvQuickLogUseCase {
       status: MvSessionStatus.completed,
       startedAt: now - (durationMinutes * 60000),
       endedAt: now,
-      overallFeeling: feeling ?? MvSessionFeeling.good,
+      overallFeeling: feeling?.index ?? 1,
       note: note,
       createdAt: now,
       updatedAt: now,
@@ -41,6 +65,9 @@ class MvQuickLogUseCase {
 
     // Save session
     await _sessionRepo.finishSession(session);
+
+    // Bump kind usage in movement_kinds
+    await _kindRepo.bumpUsage(kindCode);
 
     // Update corresponding date slot if exists
     final slot = await _prescriptionRepo.getPrescriptionForDate(targetDateIso);

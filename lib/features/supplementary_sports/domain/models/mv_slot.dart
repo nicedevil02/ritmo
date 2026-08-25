@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'mv_enums.dart';
 
 /// Unified Daily Prescription / Slot Model ("برنامهٔ روز").
@@ -28,6 +30,8 @@ class MvSlot {
   final String? legacyPlanId;
   final String? workoutPlanId;
   final String? workoutLogId;
+  final String? reasonKey;
+  final Map<String, String>? reasonParams;
   final int createdAt;
   final int updatedAt;
 
@@ -55,9 +59,17 @@ class MvSlot {
     this.legacyPlanId,
     this.workoutPlanId,
     this.workoutLogId,
+    this.reasonKey,
+    this.reasonParams,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : assert(
+         (slotType != MvSlotType.sport &&
+                 slotType != MvSlotType.outdoor &&
+                 slotType != MvSlotType.cardio) ||
+             kindCode != null,
+         'kindCode is required when slotType is sport, outdoor, or cardio',
+       );
 
   bool get isRest => slotType == MvSlotType.rest;
   bool get isCompleted => status == MvSlotStatus.done;
@@ -89,6 +101,8 @@ class MvSlot {
     String? legacyPlanId,
     String? workoutPlanId,
     String? workoutLogId,
+    String? reasonKey,
+    Map<String, String>? reasonParams,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -116,6 +130,8 @@ class MvSlot {
       legacyPlanId: legacyPlanId ?? this.legacyPlanId,
       workoutPlanId: workoutPlanId ?? this.workoutPlanId,
       workoutLogId: workoutLogId ?? this.workoutLogId,
+      reasonKey: reasonKey ?? this.reasonKey,
+      reasonParams: reasonParams ?? this.reasonParams,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -133,7 +149,7 @@ class MvSlot {
       'focusCodes': focusCodes.join(','),
       'targetMinutes': targetMinutes,
       'intensityTier': intensityTier.code,
-      'targetRpe': targetRpe ?? intensityTier.targetRpe,
+      'targetRpe': targetRpe,
       'actualRpe': actualRpe,
       'headlineFa': headlineFa,
       'coachNoteFa': coachNoteFa,
@@ -145,16 +161,38 @@ class MvSlot {
       'legacyPlanId': legacyPlanId,
       'workoutPlanId': workoutPlanId,
       'workoutLogId': workoutLogId,
+      'reasonKey': reasonKey,
+      'reasonParams': reasonParams != null ? jsonEncode(reasonParams) : null,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
+  }
+
+  static Map<String, String>? _parseReasonParams(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is Map) {
+      return raw.map((k, v) => MapEntry(k.toString(), v.toString()));
+    }
+    if (raw is String && raw.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          return decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
+        }
+      } catch (_) {}
+    }
+    return null;
   }
 
   factory MvSlot.fromMap(Map<String, dynamic> map) {
     final rawFocus = map['focusCodes'] as String? ?? '';
     final focusList = rawFocus.isEmpty
         ? <String>[]
-        : rawFocus.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        : rawFocus
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
 
     return MvSlot(
       id: map['id'] as String,
@@ -180,8 +218,77 @@ class MvSlot {
       legacyPlanId: map['legacyPlanId'] as String?,
       workoutPlanId: map['workoutPlanId'] as String?,
       workoutLogId: map['workoutLogId'] as String?,
-      createdAt: (map['createdAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: (map['updatedAt'] as num?)?.toInt() ?? DateTime.now().millisecondsSinceEpoch,
+      reasonKey: map['reasonKey'] as String?,
+      reasonParams: _parseReasonParams(map['reasonParams']),
+      createdAt:
+          (map['createdAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          (map['updatedAt'] as num?)?.toInt() ??
+          DateTime.now().millisecondsSinceEpoch,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MvSlot &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          dateIso == other.dateIso &&
+          cycleWeek == other.cycleWeek &&
+          slotType == other.slotType &&
+          kindCode == other.kindCode &&
+          routineId == other.routineId &&
+          occurrenceId == other.occurrenceId &&
+          plannedTime == other.plannedTime &&
+          listEquals(focusCodes, other.focusCodes) &&
+          targetMinutes == other.targetMinutes &&
+          intensityTier == other.intensityTier &&
+          targetRpe == other.targetRpe &&
+          actualRpe == other.actualRpe &&
+          headlineFa == other.headlineFa &&
+          coachNoteFa == other.coachNoteFa &&
+          source == other.source &&
+          sourceRef == other.sourceRef &&
+          isLocked == other.isLocked &&
+          status == other.status &&
+          movedToDateIso == other.movedToDateIso &&
+          legacyPlanId == other.legacyPlanId &&
+          workoutPlanId == other.workoutPlanId &&
+          workoutLogId == other.workoutLogId &&
+          reasonKey == other.reasonKey &&
+          mapEquals(reasonParams, other.reasonParams) &&
+          createdAt == other.createdAt &&
+          updatedAt == other.updatedAt;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      dateIso.hashCode ^
+      cycleWeek.hashCode ^
+      slotType.hashCode ^
+      kindCode.hashCode ^
+      routineId.hashCode ^
+      occurrenceId.hashCode ^
+      plannedTime.hashCode ^
+      Object.hashAll(focusCodes) ^
+      targetMinutes.hashCode ^
+      intensityTier.hashCode ^
+      targetRpe.hashCode ^
+      actualRpe.hashCode ^
+      headlineFa.hashCode ^
+      coachNoteFa.hashCode ^
+      source.hashCode ^
+      sourceRef.hashCode ^
+      isLocked.hashCode ^
+      status.hashCode ^
+      movedToDateIso.hashCode ^
+      legacyPlanId.hashCode ^
+      workoutPlanId.hashCode ^
+      workoutLogId.hashCode ^
+      reasonKey.hashCode ^
+      (reasonParams != null ? Object.hashAll(reasonParams!.entries) : 0) ^
+      createdAt.hashCode ^
+      updatedAt.hashCode;
 }

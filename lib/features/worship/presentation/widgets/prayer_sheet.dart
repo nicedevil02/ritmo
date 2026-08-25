@@ -42,39 +42,43 @@ class _PrayerSheetState extends State<PrayerSheet> {
   }
 
   Future<void> _initQuality() async {
-    final now = DateTime.now();
-    final pTimes = await WorshipEngine.instance.prayerTimes(widget.target.date);
-    final dayCtx = await WorshipEngine.instance.dayContext(widget.target.date);
-    _isExempt = dayCtx.prayerExempt;
-    
-    // Always group Dhuhr/Asr together and Maghrib/Isha together for time windows
-    if (widget.target.groupKey.contains('FAJR')) {
-      _startTime = pTimes.fajr;
-      _deadlineTime = pTimes.sunrise;
-    } else if (widget.target.groupKey.contains('DHUHR') || widget.target.groupKey.contains('ASR')) {
-      _startTime = pTimes.dhuhr;
-      _deadlineTime = pTimes.sunset;
-    } else if (widget.target.groupKey.contains('MAGHRIB') || widget.target.groupKey.contains('ISHA')) {
-      _startTime = pTimes.maghrib;
-      _deadlineTime = pTimes.midnightShari;
-    } else {
-      _startTime = widget.target.date;
-      _deadlineTime = null;
-    }
-    
-    if (now.isBefore(_startTime!)) {
-      _isFuture = true;
-    }
-    
-    // Check if the prayer deadline has passed (can mark as qada)
-    if (_deadlineTime != null && now.isAfter(_deadlineTime!)) {
-      _isDeadlinePassed = true;
-    }
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    try {
+      final now = DateTime.now();
+      final pTimes = await WorshipEngine.instance.prayerTimes(widget.target.date);
+      final dayCtx = await WorshipEngine.instance.dayContext(widget.target.date);
+      _isExempt = dayCtx.prayerExempt;
+      
+      // Always group Dhuhr/Asr together and Maghrib/Isha together for time windows
+      if (widget.target.groupKey.contains('FAJR')) {
+        _startTime = pTimes.fajr;
+        _deadlineTime = pTimes.sunrise;
+      } else if (widget.target.groupKey.contains('DHUHR') || widget.target.groupKey.contains('ASR')) {
+        _startTime = pTimes.dhuhr;
+        _deadlineTime = pTimes.sunset;
+      } else if (widget.target.groupKey.contains('MAGHRIB') || widget.target.groupKey.contains('ISHA')) {
+        _startTime = pTimes.maghrib;
+        _deadlineTime = pTimes.midnightShari;
+      } else {
+        _startTime = widget.target.date;
+        _deadlineTime = null;
+      }
+      
+      if (now.isBefore(_startTime!)) {
+        _isFuture = true;
+      }
+      
+      // Check if the prayer deadline has passed (can mark as qada)
+      if (_deadlineTime != null && now.isAfter(_deadlineTime!)) {
+        _isDeadlinePassed = true;
+      }
+    } catch (e) {
+      debugPrint('Error initializing prayer quality: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -110,212 +114,248 @@ class _PrayerSheetState extends State<PrayerSheet> {
     WorshipCacheBus.invalidateAll(dateStr: dateStr);
     nav.pop(true);
   }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(32));
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          decoration: BoxDecoration(
-            color: colors.surfaceElevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(
-              color: colors.border,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: isDark ? 0.4 : 0.12),
-                blurRadius: 30,
-                offset: const Offset(0, -6),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Grab Handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.border.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+    final content = Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Grab Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.target.titleFa,
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: colors.textSecondary,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        widget.target.titleFa,
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.close_rounded, color: colors.textSecondary),
-                        style: IconButton.styleFrom(
-                          backgroundColor: colors.surfaceSunken,
-                          padding: const EdgeInsets.all(8),
+                      const SizedBox(height: 2),
+                      Text(
+                        _startTime != null ? 'اذان: ${_formatTime(_startTime)}' : 'ثبت مستقیم با لمس گزینه',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 20),
-
-                  if (_isLoading)
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: colors.primary),
-                    )
-                  else ...[
-                    if (_isExempt)
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.shield_rounded, color: colors.primary, size: 22),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'وضعیت معافیت شرعی فعال است',
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.primary,
-                                      ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'در این دوران خواندن نماز تکلیف شرعی ندارد.',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: colors.primary,
-                                      ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    if (_isFuture)
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'هنوز وقت این نماز نرسیده است',
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.primary,
-                                      ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'زمان اذان: ${_formatTime(_startTime)}',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: colors.primary.withValues(alpha: 0.8),
-                                      ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    _buildOptionCard(
-                      context,
-                      quality: PrayerLogQuality.onTime,
-                      title: 'اول وقت (فضیلت)',
-                      subtitle: 'خوندن در بازه زمانی طلایی فضیلت اول وقت',
-                      icon: Icons.stars_rounded,
-                      accentColor: colors.success,
-                      isDisabled: _isFuture,
-                      disabledReason: 'وقت اذان نرسیده',
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                    style: IconButton.styleFrom(
+                      backgroundColor: colors.surfaceSunken.withValues(alpha: isDark ? 0.5 : 0.7),
+                      padding: const EdgeInsets.all(8),
                     ),
-                    const SizedBox(height: 10),
-                    _buildOptionCard(
-                      context,
-                      quality: PrayerLogQuality.inTime,
-                      title: 'در وقت مقرر',
-                      subtitle: 'خوندن ادا قبل از پایان زمان شرعی',
-                      icon: Icons.check_circle_rounded,
-                      accentColor: colors.warning,
-                      isDisabled: _isFuture,
-                      disabledReason: 'وقت اذان نرسیده',
-                    ),
-                    const SizedBox(height: 10),
-                    _buildOptionCard(
-                      context,
-                      quality: PrayerLogQuality.qada,
-                      title: 'نماز قضا',
-                      subtitle: _isDeadlinePassed
-                          ? 'ثبت به عنوان نماز قضاشده بعد از وقت'
-                          : 'هنوز وقت خواندن نماز باقیست (مهلت: ${_formatTime(_deadlineTime)})',
-                      icon: Icons.history_rounded,
-                      accentColor: colors.error,
-                      isDisabled: !_isDeadlinePassed,
-                      disabledReason: 'هنوز وقت خواندن نماز باقیست',
-                    ),
-                  ],
+                  ),
                 ],
               ),
+
+              const SizedBox(height: 20),
+
+              if (_isLoading)
+                Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: CircularProgressIndicator(color: colors.primary),
+                )
+              else ...[
+                if (_isExempt)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.shield_rounded, color: colors.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'وضعیت معافیت شرعی فعال است',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'در این دوران خواندن نماز تکلیف شرعی ندارد.',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: colors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (_isFuture)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline_rounded, color: colors.primary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'هنوز وقت این نماز نرسیده است',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'زمان اذان: ${_formatTime(_startTime)}',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: colors.primary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                _buildOptionCard(
+                  context,
+                  quality: PrayerLogQuality.onTime,
+                  title: 'اول وقت (فضیلت)',
+                  subtitle: 'خوندن در بازه زمانی طلایی فضیلت اول وقت',
+                  icon: Icons.stars_rounded,
+                  accentColor: colors.success,
+                  isDisabled: _isFuture,
+                  disabledReason: 'وقت اذان نرسیده',
+                ),
+                const SizedBox(height: 10),
+                _buildOptionCard(
+                  context,
+                  quality: PrayerLogQuality.inTime,
+                  title: 'در وقت مقرر',
+                  subtitle: 'خوندن ادا قبل از پایان زمان شرعی',
+                  icon: Icons.check_circle_rounded,
+                  accentColor: colors.warning,
+                  isDisabled: _isFuture,
+                  disabledReason: 'وقت اذان نرسیده',
+                ),
+                const SizedBox(height: 10),
+                _buildOptionCard(
+                  context,
+                  quality: PrayerLogQuality.qada,
+                  title: 'نماز قضا',
+                  subtitle: _isDeadlinePassed
+                      ? 'ثبت به عنوان نماز قضاشده بعد از وقت'
+                      : 'هنوز وقت خواندن نماز باقیست (مهلت: ${_formatTime(_deadlineTime)})',
+                  icon: Icons.history_rounded,
+                  accentColor: colors.error,
+                  isDisabled: !_isDeadlinePassed,
+                  disabledReason: 'هنوز وقت خواندن نماز باقیست',
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
             ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(
+                    alpha: isDark ? 0.08 : 0.20,
+                  ),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
           ),
         ),
       ),
@@ -333,7 +373,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
     String? disabledReason,
   }) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
     final effectiveColor = isDisabled ? colors.textTertiary : accentColor;
 
     return Opacity(
@@ -348,7 +388,7 @@ class _PrayerSheetState extends State<PrayerSheet> {
           child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isDark ? colors.surfaceSunken.withValues(alpha: 0.7) : colors.surface,
+              color: colors.surfaceSunken.withValues(alpha: isDark ? 0.45 : 0.65),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: effectiveColor.withValues(alpha: isDisabled ? 0.15 : 0.35),

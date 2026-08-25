@@ -35,15 +35,21 @@ class MvExerciseRepository {
   }
 
   /// Retrieves similar exercises ordered by similarity score using `ss_exercise_similarity`.
-  Future<List<MvExercise>> getSimilarExercises(String exerciseId, {int limit = 3}) async {
+  Future<List<MvExercise>> getSimilarExercises(
+    String exerciseId, {
+    int limit = 3,
+  }) async {
     final db = await _db;
-    final rows = await db.rawQuery('''
+    final rows = await db.rawQuery(
+      '''
       SELECT e.* FROM ss_exercise e
       INNER JOIN ss_exercise_similarity s ON s.similarExerciseId = e.id
       WHERE s.exerciseId = ?
       ORDER BY s.similarityScore DESC
       LIMIT ?
-    ''', [exerciseId, limit]);
+    ''',
+      [exerciseId, limit],
+    );
     return rows.map((r) => MvExercise.fromMap(r)).toList();
   }
 

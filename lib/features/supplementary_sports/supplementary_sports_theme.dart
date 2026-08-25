@@ -52,10 +52,13 @@ class SupplementarySportsTheme {
   );
 
   // Dynamic getters mapped to Ritmo central tokens
-  static Color getBackgroundColor(BuildContext context) => context.colors.background;
+  static Color getBackgroundColor(BuildContext context) =>
+      context.colors.background;
   static Color getSurfaceColor(BuildContext context) => context.colors.surface;
-  static Color getTextPrimary(BuildContext context) => context.colors.textPrimary;
-  static Color getTextSecondary(BuildContext context) => context.colors.textSecondary;
+  static Color getTextPrimary(BuildContext context) =>
+      context.colors.textPrimary;
+  static Color getTextSecondary(BuildContext context) =>
+      context.colors.textSecondary;
   static Color getSuccessColor(BuildContext context) => context.colors.success;
   static Color getWarningColor(BuildContext context) => context.colors.warning;
   static Color getDangerColor(BuildContext context) => context.colors.error;
@@ -105,9 +108,15 @@ class SupplementarySportsTheme {
   static const double radiusCard = RitmoRadius.card;
   static const double radiusBottomSheet = RitmoRadius.sheet;
 
-  static const BorderRadius borderRadiusButton = BorderRadius.all(Radius.circular(radiusButton));
-  static const BorderRadius borderRadiusField = BorderRadius.all(Radius.circular(radiusField));
-  static const BorderRadius borderRadiusCard = BorderRadius.all(Radius.circular(radiusCard));
+  static const BorderRadius borderRadiusButton = BorderRadius.all(
+    Radius.circular(radiusButton),
+  );
+  static const BorderRadius borderRadiusField = BorderRadius.all(
+    Radius.circular(radiusField),
+  );
+  static const BorderRadius borderRadiusCard = BorderRadius.all(
+    Radius.circular(radiusCard),
+  );
   static const BorderRadius borderRadiusBottomSheet = BorderRadius.only(
     topLeft: Radius.circular(radiusBottomSheet),
     topRight: Radius.circular(radiusBottomSheet),
@@ -128,14 +137,24 @@ class SupplementarySportsTheme {
 
   static LinearGradient getWorkoutGradient(String workoutName) {
     final nameLower = workoutName.toLowerCase();
-    if (nameLower.contains('recovery') || nameLower.contains('yoga') || nameLower.contains('stretch') || nameLower.contains('کشش') || nameLower.contains('یوگا') || nameLower.contains('ریکاوری')) {
+    if (nameLower.contains('recovery') ||
+        nameLower.contains('yoga') ||
+        nameLower.contains('stretch') ||
+        nameLower.contains('کشش') ||
+        nameLower.contains('یوگا') ||
+        nameLower.contains('ریکاوری')) {
       return const LinearGradient(
         colors: [Color(0xFF10B981), Color(0xFF047857)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );
     }
-    if (nameLower.contains('cardio') || nameLower.contains('run') || nameLower.contains('hiit') || nameLower.contains('هوازی') || nameLower.contains('دویدن') || nameLower.contains('سرعتی')) {
+    if (nameLower.contains('cardio') ||
+        nameLower.contains('run') ||
+        nameLower.contains('hiit') ||
+        nameLower.contains('هوازی') ||
+        nameLower.contains('دویدن') ||
+        nameLower.contains('سرعتی')) {
       return const LinearGradient(
         colors: [Color(0xFFEC4899), Color(0xFFBE185D)],
         begin: Alignment.topLeft,

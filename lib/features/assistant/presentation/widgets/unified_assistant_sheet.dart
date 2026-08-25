@@ -1078,36 +1078,22 @@ class _AssistantSheetState extends State<AssistantSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            constraints: BoxConstraints(
-              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-            ),
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated.withValues(alpha: 0.92),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              border: Border.all(color: colors.border, width: 1.2),
-            ),
-            child: Column(
-              children: [
-                // Header with Glass Style & Avatar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: colors.border)),
-                  ),
+    final content = Column(
+      children: [
+        // Header with Glass Style & Avatar
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 10,
+          ),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: colors.border)),
+          ),
                   child: Row(
                     children: [
                       Expanded(
@@ -1200,9 +1186,7 @@ class _AssistantSheetState extends State<AssistantSheet> {
                     margin: const EdgeInsets.all(16),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2C2C3E).withValues(alpha: 0.7)
-                          : Colors.blue.shade50.withValues(alpha: 0.8),
+                      color: colors.primary.withValues(alpha: isDark ? 0.10 : 0.07),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: colors.primary.withValues(alpha: 0.25),
@@ -1245,8 +1229,11 @@ class _AssistantSheetState extends State<AssistantSheet> {
                                 style: const TextStyle(fontSize: 12),
                               ),
                               backgroundColor: isDark
-                                  ? const Color(0xFF38384E)
+                                  ? colors.surfaceElevated
                                   : Colors.white,
+                              side: BorderSide(
+                                color: isDark ? colors.border : colors.divider,
+                              ),
                               onPressed: () =>
                                   unawaited(_sendMessage(skill.queryPrompt)),
                             );
@@ -1494,6 +1481,69 @@ class _AssistantSheetState extends State<AssistantSheet> {
                   ),
                 ),
               ],
+            );
+
+    final wrappedContent = Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+      ),
+      child: content,
+    );
+
+    if (!isGlass) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark ? colors.border : colors.divider,
+              width: 1.0,
+            ),
+          ),
+          child: wrappedContent,
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: ClipRRect(
+        borderRadius: sheetRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.glassTint,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.70),
+                width: 1.0,
+              ),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: sheetRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(
+                      alpha: isDark ? 0.08 : 0.20,
+                    ),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.45],
+                ),
+              ),
+              child: wrappedContent,
             ),
           ),
         ),

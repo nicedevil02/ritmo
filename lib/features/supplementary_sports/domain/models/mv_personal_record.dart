@@ -5,7 +5,7 @@ import 'mv_enums.dart';
 /// Stores PRs for both exercises (`EXERCISE:<exerciseId>`) and general movement activities.
 class MvPersonalRecord {
   final String id;
-  final String kind; // e.g. 'running', 'cycling', or 'EXERCISE:push_up'
+  final String kind; // e.g. 'RUNNING', 'CYCLING', or 'EXERCISE:push_up'
   final MvPrType prType;
   final double value;
   final String? logId;
@@ -21,8 +21,10 @@ class MvPersonalRecord {
   });
 
   bool get isExercisePr => kind.startsWith('EXERCISE:');
-  String get exerciseId => isExercisePr ? kind.substring('EXERCISE:'.length) : '';
-  String get formattedValue => '${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1)} ${prType.unitFa}';
+  String get exerciseId =>
+      isExercisePr ? kind.substring('EXERCISE:'.length) : '';
+  String get formattedValue =>
+      '${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1)} ${prType.unitFa}';
 
   Map<String, dynamic> toMap() {
     return {

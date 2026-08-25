@@ -1,3 +1,4 @@
+export 'mv_commitment_repository.dart';
 export 'mv_daily_checkin_repository.dart';
 export 'mv_exercise_repository.dart';
 export 'mv_kind_repository.dart';

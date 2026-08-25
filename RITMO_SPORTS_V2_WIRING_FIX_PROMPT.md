@@ -182,7 +182,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T9 — ورودی دورهٔ هدف‌دار (`CampaignEngine`)
+### - [x] S8-T9 — ورودی دورهٔ هدف‌دار (`CampaignEngine`) — 91aed1a6
 
 1. در تب پیشرفت، کارت «دورهٔ هدف‌دار»:
    - اگر دورهٔ فعال نیست: دکمهٔ «ساخت دورهٔ تمرینی» با کلید `mv_campaign_create`.
@@ -287,7 +287,7 @@ flutter test
 | S8-T6 | DONE | b9dce612 | اتصال انتخابگر حرکت و جزئیات ورزش در MvDayPlanSheet |
 | S8-T7 | DONE | 786cbdcc | اتصال LoadEngine به تب پیشرفت با محاسبه ACWR و مدیریت داده ناکافی |
 | S8-T8 | DONE | 15fe6ce2 | اتصال InsightEngine به تب پیشرفت با رندر بینش‌های معتبر |
-| S8-T9 | | | |
+| S8-T9 | DONE | 91aed1a6 | ورودی و دیالوگ ساخت دورهٔ هدف‌دار بر مبنای CampaignEngine |
 | S8-T10 | | | |
 | S8-T11 | | | |
 | S8-T12 | | | |

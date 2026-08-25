@@ -1,79 +1,129 @@
+import '../../movement/domain/movement_kind.dart';
 import '../models/models.dart';
 
-/// Weekly Activity Progress Summary.
+/// Weekly Activity Progress Summary based on WHO Physical Activity Guidelines.
 class MvWeeklyBudgetProgress {
-  final double targetMetMinutes;
-  final int targetActiveDays;
-  final double currentMetMinutes;
-  final int currentActiveDays;
-  final double? forecastedMetMinutes;
+  final int moderateEquivalentMinutes;
+  final double rawMetMinutes;
+  final int strengthDays;
+  final int targetMin; // 150
+  final int targetOptimal; // 300
+  final int strengthDaysTarget; // 2
+  final double? forecastedModerateMinutes;
   final bool hasEnoughDataForForecast;
+  final int currentActiveDays;
+  final int targetActiveDays;
 
   const MvWeeklyBudgetProgress({
-    required this.targetMetMinutes,
-    required this.targetActiveDays,
-    required this.currentMetMinutes,
-    required this.currentActiveDays,
-    this.forecastedMetMinutes,
+    required this.moderateEquivalentMinutes,
+    required this.rawMetMinutes,
+    required this.strengthDays,
+    this.targetMin = 150,
+    this.targetOptimal = 300,
+    this.strengthDaysTarget = 2,
+    this.forecastedModerateMinutes,
     this.hasEnoughDataForForecast = false,
-  });
+    int? currentActiveDays,
+    int? targetActiveDays,
+  })  : currentActiveDays = currentActiveDays ?? strengthDays,
+        targetActiveDays = targetActiveDays ?? strengthDaysTarget;
 
-  double get percentage => targetMetMinutes > 0
-      ? (currentMetMinutes / targetMetMinutes).clamp(0.0, 1.5)
+  double get targetMetMinutes => targetMin.toDouble();
+  double get currentMetMinutes => rawMetMinutes;
+  double? get forecastedMetMinutes => forecastedModerateMinutes;
+
+  double get percentage => targetMin > 0
+      ? (moderateEquivalentMinutes / targetMin).clamp(0.0, 1.5)
       : 0.0;
 }
 
-/// 7.8 BudgetEngine: Evaluates weekly active minutes (MET-min) budget and progress.
+/// 7.8 BudgetEngine: Evaluates weekly active minutes (WHO moderate-equivalent & MET-min) budget and progress.
 class BudgetEngine {
   const BudgetEngine();
 
-  /// Calculates weekly target and accumulated progress.
+  /// Calculates weekly target and accumulated WHO progress.
   MvDecision<MvWeeklyBudgetProgress> calculateWeeklyProgress({
-    required MvUserProfile profile,
+    MvUserProfile? profile,
     required List<MvSession> weekCompletedSessions,
     required int currentDayOfWeekSat0, // 0=Sat .. 6=Fri
+    Map<String, MvMovementKind> kindsByCode = const {},
   }) {
-    // 1. Calculate target
-    final daysTarget = profile.daysPerWeek.clamp(1, 7);
-    final targetMetMinutes = daysTarget * 30.0 * 5.0; // standard 30 min at moderate MET 5.0 = 150 MET-min per session
-
-    // 2. Aggregate completed sessions
-    double currentMet = 0.0;
+    int totalModerateEquivalent = 0;
+    double totalRawMet = 0.0;
     final activeDaysSet = <String>{};
+    final strengthDaysSet = <String>{};
 
     for (final sess in weekCompletedSessions) {
-      final minutes = sess.elapsedMinutes > 0 ? sess.elapsedMinutes : 30;
-      currentMet += minutes * 5.0; // standard MET factor
-      final dateIso = MvCalendar.formatDateIso(DateTime.fromMillisecondsSinceEpoch(sess.startedAt));
+      if (!sess.isFinished) continue;
+      final minutes = sess.elapsedMinutes;
+      if (minutes <= 0) continue;
+
+      final kind = kindsByCode[sess.kindCode.toUpperCase()];
+      final baseMet = kind?.baseMet ?? 5.0;
+
+      // Moderate Equivalent minutes per §4.2:
+      // met < 3.0 -> 0 (light, not counted)
+      // met < 6.0 -> minutes (moderate)
+      // else      -> minutes * 2 (vigorous)
+      int sessionModEquiv = 0;
+      if (baseMet < 3.0) {
+        sessionModEquiv = 0;
+      } else if (baseMet < 6.0) {
+        sessionModEquiv = minutes;
+      } else {
+        sessionModEquiv = minutes * 2;
+      }
+
+      totalModerateEquivalent += sessionModEquiv;
+      totalRawMet += minutes * baseMet;
+
+      final dateIso = MvCalendar.formatDateIso(
+        DateTime.fromMillisecondsSinceEpoch(sess.startedAt),
+      );
       activeDaysSet.add(dateIso);
+
+      final isStrength = (kind != null && kind.family == MovementFamily.strength) ||
+          sess.kindCode.toUpperCase() == 'BODYWEIGHT' ||
+          sess.sessionMode == MvSessionMode.guided ||
+          sess.sessionMode == MvSessionMode.structured;
+
+      if (isStrength) {
+        strengthDaysSet.add(dateIso);
+      }
     }
 
+    final strengthDays = strengthDaysSet.length;
     final activeDaysCount = activeDaysSet.length;
 
-    // 3. Forecast calculation (Only after day 3, Rule 7)
+    // 5. Forecast calculation (Only after at least 3 days have passed: currentDayOfWeekSat0 >= 2)
     final bool canForecast = currentDayOfWeekSat0 >= 2 && activeDaysCount > 0;
     double? forecast;
     if (canForecast) {
       final elapsedDays = currentDayOfWeekSat0 + 1;
-      final dailyRate = currentMet / elapsedDays;
-      forecast = currentMet + (dailyRate * (7 - elapsedDays));
+      final dailyRate = totalModerateEquivalent / elapsedDays;
+      forecast = (totalModerateEquivalent + (dailyRate * (7 - elapsedDays))).roundToDouble();
     }
 
     final progress = MvWeeklyBudgetProgress(
-      targetMetMinutes: targetMetMinutes,
-      targetActiveDays: daysTarget,
-      currentMetMinutes: currentMet,
-      currentActiveDays: activeDaysCount,
-      forecastedMetMinutes: forecast,
+      moderateEquivalentMinutes: totalModerateEquivalent,
+      rawMetMinutes: totalRawMet,
+      strengthDays: strengthDays,
+      targetMin: 150,
+      targetOptimal: 300,
+      strengthDaysTarget: 2,
+      forecastedModerateMinutes: forecast,
       hasEnoughDataForForecast: canForecast,
+      currentActiveDays: activeDaysCount,
+      targetActiveDays: profile?.daysPerWeek.clamp(1, 7) ?? 2,
     );
 
-    final reasonFa = '$activeDaysCount از $daysTarget روز فعال این هفته تکمیل شده است.';
+    final reasonFa =
+        'مجموع معادل متوسط: $totalModerateEquivalent دقیقه از حداقل ۱۵۰ دقیقه و $strengthDays روز قدرتی از ۲ روز.';
 
     return MvDecision<MvWeeklyBudgetProgress>(
       value: progress,
       reasonFa: reasonFa,
-      sources: const ['profile', 'session_history'],
+      sources: const ['session_history', 'movement_kinds', 'who_guidelines'],
       confidence: 1.0,
       hasEnoughData: true,
     );

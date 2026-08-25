@@ -71,6 +71,13 @@ void main() {
           'workoutLogId',
           'overallFeeling',
           'note',
+          'distanceM',
+          'elevationGainM',
+          'laps',
+          'packWeightKg',
+          'rpe1To10',
+          'effortSource',
+          'routeId',
           'createdAt',
           'updatedAt',
         };
@@ -97,6 +104,13 @@ void main() {
         expect(roundtrip.workoutLogId, equals(session.workoutLogId));
         expect(roundtrip.overallFeeling, equals(session.overallFeeling));
         expect(roundtrip.note, equals(session.note));
+        expect(roundtrip.distanceM, equals(session.distanceM));
+        expect(roundtrip.elevationGainM, equals(session.elevationGainM));
+        expect(roundtrip.laps, equals(session.laps));
+        expect(roundtrip.packWeightKg, equals(session.packWeightKg));
+        expect(roundtrip.rpe1To10, equals(session.rpe1To10));
+        expect(roundtrip.effortSource, equals(session.effortSource));
+        expect(roundtrip.routeId, equals(session.routeId));
         expect(roundtrip.createdAt, equals(session.createdAt));
         expect(roundtrip.updatedAt, equals(session.updatedAt));
       },

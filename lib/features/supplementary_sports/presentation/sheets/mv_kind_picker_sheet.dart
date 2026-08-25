@@ -38,6 +38,21 @@ class MvKindPickerSheet extends StatefulWidget {
     );
   }
 
+  static Future<String?> showCode({
+    required BuildContext context,
+    MvKindUseCase? useCase,
+    String? initialCode,
+    List<MvMovementKind>? initialKinds,
+  }) async {
+    final kind = await show(
+      context: context,
+      useCase: useCase,
+      initialCode: initialCode,
+      initialKinds: initialKinds,
+    );
+    return kind?.code;
+  }
+
   @override
   State<MvKindPickerSheet> createState() => _MvKindPickerSheetState();
 }
@@ -165,6 +180,63 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
 
   void _selectKind(MvMovementKind kind) {
     Navigator.of(context).pop(kind);
+  }
+
+  Future<void> _openCreateCustomDialog() async {
+    final titleController = TextEditingController();
+    final customKind = await showDialog<MvMovementKind>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تعریف ورزش جدید'),
+        content: TextField(
+          controller: titleController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'نام فعالیت ورزشی (مثلاً بدمینتون ساحلی)',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('انصراف'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final title = titleController.text.trim();
+              if (title.isEmpty) return;
+              final code = 'CUSTOM_${DateTime.now().millisecondsSinceEpoch}';
+              final newKind = MvMovementKind(
+                code: code,
+                titleFa: title,
+                emoji: '⚡',
+                family: MovementFamily.daily,
+                baseMet: 4.0,
+                metLow: 3.0,
+                metHigh: 5.0,
+                primaryMetric: MovementMetric.duration,
+                isOutdoor: false,
+                isSocial: false,
+                needsVenue: false,
+                jointImpact: 1,
+                isCustom: true,
+                isEnabled: true,
+                usageCount: 1,
+                sortOrder: 999,
+              );
+              Navigator.of(ctx).pop(newKind);
+            },
+            child: const Text('ثبت'),
+          ),
+        ],
+      ),
+    );
+
+    if (customKind != null && mounted) {
+      final saved = await _useCase.saveCustomKind(customKind);
+      if (mounted) {
+        Navigator.of(context).pop(saved);
+      }
+    }
   }
 
   @override
@@ -420,10 +492,19 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                       );
                     },
                   ),
-                  SizedBox(height: metrics.spaceXl),
-                ],
-              ),
+                SizedBox(height: metrics.spaceLg),
+
+                // 6. Create Custom Sport Button
+                OutlinedButton.icon(
+                  key: const ValueKey('mv_kind_picker_create_custom'),
+                  onPressed: _openCreateCustomDialog,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('تعریف ورزش یا فعالیت جدید'),
+                ),
+                SizedBox(height: metrics.spaceXl),
+              ],
             ),
+          ),
     );
   }
 }

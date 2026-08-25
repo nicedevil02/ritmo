@@ -59,7 +59,7 @@ void main() {
     });
 
     test('Creating MvSlot with valid kindCode succeeds for sport, outdoor, cardio, and strength', () {
-      final sportSlot = MvSlot(
+      const sportSlot = MvSlot(
         id: 'test_sport_valid',
         dateIso: '2026-08-25',
         slotType: MvSlotType.sport,
@@ -70,7 +70,7 @@ void main() {
       );
       expect(sportSlot.kindCode, equals('FOOTBALL'));
 
-      final outdoorSlot = MvSlot(
+      const outdoorSlot = MvSlot(
         id: 'test_outdoor_valid',
         dateIso: '2026-08-25',
         slotType: MvSlotType.outdoor,
@@ -81,7 +81,7 @@ void main() {
       );
       expect(outdoorSlot.kindCode, equals('HIKING'));
 
-      final strengthSlot = MvSlot(
+      const strengthSlot = MvSlot(
         id: 'test_strength_valid',
         dateIso: '2026-08-25',
         slotType: MvSlotType.strength,

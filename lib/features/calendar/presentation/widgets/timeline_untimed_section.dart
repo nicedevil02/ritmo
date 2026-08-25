@@ -195,15 +195,14 @@ class _TimelineUntimedSectionState extends State<TimelineUntimedSection> {
                           isHovered
                               ? 'رها کنید برای لغو زمان‌بندی'
                               : 'بدون زمان‌بندی (${toPersianDigits(untimedItems.length.toString())})',
-                          style: TextStyle(
-                            fontSize: 11.0,
-                            fontWeight: FontWeight.w600,
-                            color: isHovered
+                          style: RitmoTextStyles.badge(
+                            isHovered
                                 ? colorScheme.primary
-                                : theme.textTheme.bodySmall?.color?.withValues(
-                                    alpha: 0.75,
-                                  ),
-                          ),
+                                : (theme.textTheme.bodySmall?.color?.withValues(
+                                        alpha: 0.75,
+                                      ) ??
+                                      colors.textSecondary),
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),

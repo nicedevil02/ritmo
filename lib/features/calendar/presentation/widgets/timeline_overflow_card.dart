@@ -122,11 +122,9 @@ class TimelineOverflowCard extends StatelessWidget {
         child: Text(
           '+${toPersianDigits(overflowCount.toString())} مورد دیگر',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11.0,
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: RitmoTextStyles.badge(
+            colorScheme.onSurfaceVariant,
+          ).copyWith(fontWeight: FontWeight.w600),
         ),
       ),
     );

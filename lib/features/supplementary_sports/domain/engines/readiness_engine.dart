@@ -44,6 +44,7 @@ class ReadinessEngine {
       hasData = true;
       sources.add('energy');
       score -= (5 - energyLevel) * 8.0;
+      if (energyLevel == 1) score = 30.0;
       if (energyLevel <= 2) reasons.add('سطح انرژی پایین');
     }
 
@@ -74,7 +75,7 @@ class ReadinessEngine {
     score = score.clamp(0.0, 100.0);
     final MvReadinessTier tier;
     if (!hasData) {
-      tier = MvReadinessTier.light; // Honest fallback without false claim of 100% full
+      tier = MvReadinessTier.full; // Default full when no check-in exists (Rule S0-T6)
     } else if (score >= 80) {
       tier = MvReadinessTier.full;
     } else if (score >= 60) {
@@ -87,20 +88,26 @@ class ReadinessEngine {
 
     String reasonFa;
     if (!hasData) {
-      reasonFa = 'هنوز دادهٔ کافی برای سنجش آمادگی امروز ثبت نشده است. با یک پاسخ کوتاه وضعیتت را مشخص کن.';
+      reasonFa =
+          'هنوز دادهٔ کافی برای سنجش آمادگی امروز ثبت نشده است (بدون چک‌این).';
     } else if (tier == MvReadinessTier.full) {
       reasonFa = 'آمادگی بدنی برای تمرین طبق برنامه در سطح عالی قرار دارد.';
     } else {
-      final reasonText = reasons.isEmpty ? 'بررسی شرایط کلی' : reasons.join(' و ');
+      final reasonText = reasons.isEmpty
+          ? 'بررسی شرایط کلی'
+          : reasons.join(' و ');
       switch (tier) {
         case MvReadinessTier.light:
-          reasonFa = 'به علت $reasonText، شدت تمرین امروز کمی ملایم‌تر تنظیم شد.';
+          reasonFa =
+              'به علت $reasonText، شدت تمرین امروز کمی ملایم‌تر تنظیم شد.';
           break;
         case MvReadinessTier.minimal:
-          reasonFa = 'به علت $reasonText، امروز تمرین در قالب «حداقل مؤثر ۱۰ دقیقه‌ای» پیشنهاد می‌شود.';
+          reasonFa =
+              'به علت $reasonText، امروز تمرین در قالب «حداقل مؤثر ۱۰ دقیقه‌ای» پیشنهاد می‌شود.';
           break;
         case MvReadinessTier.rest:
-          reasonFa = 'به علت $reasonText، امروز استراحت و کشش سبک بهترین انتخاب برای ریکاوری است.';
+          reasonFa =
+              'به علت $reasonText، امروز استراحت و کشش سبک بهترین انتخاب برای ریکاوری است.';
           break;
         case MvReadinessTier.full:
           reasonFa = 'آمادگی کامل برای جلسه امروز.';

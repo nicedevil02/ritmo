@@ -486,44 +486,50 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoTheme.glassCardLight(
-        borderRadius: 28,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-          ),
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'انتخاب شهر و موقعیت مکانی',
-                    style: TextStyle(
-                      fontSize: 17.5,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
+      child: AnimatedPadding(
+        padding: EdgeInsets.only(bottom: viewInsetsBottom),
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+        child: RitmoTheme.glassCardLight(
+          borderRadius: 28,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.88),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'انتخاب شهر و موقعیت مکانی',
+                      style: TextStyle(
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+                    IconButton(
+                      icon: Icon(CupertinoIcons.xmark, color: colors.textSecondary, size: 20),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
 
-              // Content Area: Direct City List
-              Expanded(
-                child: _buildCityTab(colors),
-              ),
-            ],
+                // Content Area: Direct City List
+                Expanded(
+                  child: _buildCityTab(colors),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -531,6 +537,8 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
   }
 
   Widget _buildCityTab(RitmoColors colors) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoadingCities) {
       return Center(
         child: CircularProgressIndicator(color: colors.textPrimary),
@@ -545,18 +553,31 @@ class _PrayerCityPickerState extends State<PrayerCityPicker> {
           style: TextStyle(color: colors.textPrimary, fontSize: 14.5),
           decoration: InputDecoration(
             hintText: 'جستجوی نام شهر یا استان...',
-            hintStyle: TextStyle(color: colors.textSecondary.withValues(alpha: 0.5), fontSize: 13.5),
-            prefixIcon: Icon(CupertinoIcons.search, color: colors.textSecondary, size: 20),
-            fillColor: colors.textSecondary.withValues(alpha: 0.02),
+            hintStyle: TextStyle(
+              color: colors.textSecondary.withValues(alpha: 0.7),
+              fontSize: 13.5,
+            ),
+            prefixIcon: Icon(CupertinoIcons.search, color: colors.primary, size: 20),
+            fillColor: isDark
+                ? colors.surfaceElevated.withValues(alpha: 0.6)
+                : colors.surface.withValues(alpha: 0.85),
             filled: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colors.textSecondary.withValues(alpha: 0.06)),
+              borderSide: BorderSide(
+                color: isDark
+                    ? colors.border.withValues(alpha: 0.5)
+                    : colors.border.withValues(alpha: 0.8),
+                width: 1.0,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
+              borderSide: BorderSide(
+                color: colors.primary,
+                width: 1.5,
+              ),
             ),
           ),
         ),

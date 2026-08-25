@@ -15,3 +15,12 @@
 ## 3. No Laziness & Full Completion
 - Fulfill 100% of user directives without cutting corners, skipping tasks, or using placeholder code.
 - Always run static analysis (`flutter analyze`) and verify zero errors/warnings after making changes.
+
+## 4. Surgical Edits & UI Preservation
+- Always use targeted diffs/edits instead of full-file rewrites.
+- Never overwrite, delete, or revert previously customized UI, merged components, or domain logic.
+
+## 5. Safe & Targeted Git Commits (Multi-Agent Safe)
+- After verifying changes with `flutter analyze`, commit the modified files with a clear, descriptive Git message.
+- **Targeted Staging Only**: ALWAYS stage only the specific files modified by the task (e.g. `git add path/to/file.dart`). NEVER run blanket staging commands like `git add .`, `git add -A`, or `git commit -a` so ongoing work by other concurrent agents or human dev is never polluted or committed prematurely.
+- **Strictly No Destructive Commands**: NEVER run `git reset --hard`, `git checkout .`, `git restore .`, or `git clean -fd` as they destroy uncommitted work from concurrent agents.

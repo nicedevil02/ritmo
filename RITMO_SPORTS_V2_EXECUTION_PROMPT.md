@@ -1021,7 +1021,7 @@ class MvLoadSnapshot {
 
 ---
 
-### - [ ] S4-T7 — جدول `mv_routes` (مسیرهای تکرارشونده)
+### - [x] S4-T7 — جدول `mv_routes` (مسیرهای تکرارشونده) — 23200a67
 
 **فایل‌ها:** مایگریشن `MigrationV<N>MvRoutes`، `data/repositories/mv_route_repository.dart`، `domain/models/mv_route.dart`
 
@@ -1467,7 +1467,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S4-T4 | DONE | f5fa60b7 | پیاده‌سازی متد resolveSessionMode در MvStartSessionUseCase و تست جدولی ۸ ورزش و گاردتست معماری |
 | S4-T5 | DONE | 31272444 | صفحه پایان جلسه با نمایش متریک‌های اختصاصی هر مود، انتخاب ۳ سطحی تلاش و اسلایدر RPE و تأثیر هفتگی |
 | S4-T6 | DONE | bbb32e6e | پیاده‌سازی LoadEngine با فرمول sRPE و محاسبه ACWR با ۴ کلید محدوده بار و تست جدولی ۵ ردیفی |
-| S4-T7 |  |  |  |
+| S4-T7 | DONE | 23200a67 | ایجاد جدول mv_routes مایگریشن v128 و مخزن MvRouteRepository با بروزرسانی دفعات و بهترین زمان |
 | S4-T8 |  |  |  |
 | S5-T1 |  |  |  |
 | S5-T2 |  |  |  |

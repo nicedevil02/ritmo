@@ -27,6 +27,7 @@ class StudyPlanner {
     required List<StudySession> todaySessions,
     required DateTime today,
     int dailyCapacityMinutes = 90,
+    bool reviewEnabled = true,
   }) {
     if (subjects.isEmpty || topics.isEmpty) return [];
 
@@ -46,7 +47,7 @@ class StudyPlanner {
       if (subject == null || subject.isArchived) continue;
 
       // Rule 0: Mastered topics that are NOT due for review should not clutter recommendations
-      final isReviewDue = topic.nextReviewDateIso != null && topic.nextReviewDateIso!.compareTo(todayStr) <= 0;
+      final isReviewDue = reviewEnabled && topic.nextReviewDateIso != null && topic.nextReviewDateIso!.compareTo(todayStr) <= 0;
       if (topic.mastery == StudyMastery.mastered && !isReviewDue) {
         continue;
       }

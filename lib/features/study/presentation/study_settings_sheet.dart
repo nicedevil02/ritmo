@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/study/data/study_settings_repository.dart';
-import 'package:ritmo/features/study/study_module_entry.dart';
 
 class StudySettingsSheet extends StatefulWidget {
   const StudySettingsSheet({super.key, required this.settings});
 
   final StudySettings settings;
 
-  static Future<void> show(BuildContext context, {required StudySettings settings}) {
-    return showModalBottomSheet<void>(
+  static Future<bool?> show(BuildContext context, {required StudySettings settings}) {
+    return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: context.colors.surface,
@@ -62,8 +61,7 @@ class _StudySettingsSheetState extends State<StudySettingsSheet> {
 
     setState(() => _konkurMode = val);
     if (!mounted) return;
-    Navigator.of(context).pop(); // Dismiss bottom sheet
-    await StudyModuleEntry.switchMode(context, konkur: val);
+    Navigator.of(context).pop(val); // Dismiss bottom sheet and return new mode
   }
 
   @override

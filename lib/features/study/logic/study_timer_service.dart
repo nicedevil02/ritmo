@@ -148,8 +148,8 @@ class StudyTimerService {
 
       final subjectId = _currentSession!.subjectId ?? '';
       if (subjectId.isNotEmpty) {
-        final now = DateTime.now();
-        final dateIso = RitmoDate.dayKey(now);
+        final startDt = DateTime.fromMillisecondsSinceEpoch(_currentSession!.createdAtMs);
+        final dateIso = RitmoDate.dayKey(startDt);
         final id = const Uuid().v4();
 
         final session = StudySession(

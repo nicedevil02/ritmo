@@ -8,14 +8,17 @@ void main() {
   group('CourseScheduler Unit Tests (C4 & Phase 2 K-14 to K-24)', () {
     test('distributeSessions: 7 sessions, weeklyTarget=3, preferredDays=[6,1,3] -> 7 dates, max 3 per week', () {
       final start = DateTime(2026, 8, 1); // Saturday
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 7,
         from: start,
         weeklyTarget: 3,
         preferredDays: [6, 1, 3],
       );
+      final dates = scheduleResult.dates;
 
       expect(dates.length, equals(7));
+      expect(scheduleResult.unscheduledCount, equals(0));
+      expect(scheduleResult.isFullyScheduled, isTrue);
 
       // Group by Saturday of week
       final weekCounts = <DateTime, int>{};
@@ -30,13 +33,14 @@ void main() {
     });
 
     test('K-14: distributeSessions with pendingCount=0 returns empty list', () {
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 0,
         from: DateTime(2026, 8, 1),
         weeklyTarget: 3,
         preferredDays: [6, 1, 3],
       );
-      expect(dates, isEmpty);
+      expect(scheduleResult.dates, isEmpty);
+      expect(scheduleResult.unscheduledCount, equals(0));
     });
 
     test('K-14: distributeSessions with weeklyTarget=0 throws CourseValidationException', () {
@@ -52,27 +56,29 @@ void main() {
     });
 
     test('K-20: distributeSessions with preferredDays=[9] normalizes to default without crash', () {
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 3,
         from: DateTime(2026, 8, 1),
         weeklyTarget: 3,
         preferredDays: [9],
       );
 
-      expect(dates.length, equals(3));
+      expect(scheduleResult.dates.length, equals(3));
+      expect(scheduleResult.unscheduledCount, equals(0));
     });
 
     test('distributeSessions respects occupiedWeeklyCounts filling current week', () {
       final start = DateTime(2026, 8, 1); // Saturday
       final sat = CourseScheduler.getSaturdayOfWeek(start);
 
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 3,
         from: start,
         weeklyTarget: 3,
         preferredDays: [6, 1, 3],
         occupiedWeeklyCounts: {sat: 3}, // current week is full!
       );
+      final dates = scheduleResult.dates;
 
       expect(dates.length, equals(3));
       for (final d in dates) {
@@ -84,13 +90,14 @@ void main() {
       final start = DateTime(2026, 8, 1, 14, 30); // Saturday with time
       final blocked = DateTime(2026, 8, 1, 0, 0); // Midnight
 
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 1,
         from: start,
         weeklyTarget: 3,
         preferredDays: [6, 1, 3],
         blockedDates: {blocked},
       );
+      final dates = scheduleResult.dates;
 
       expect(dates.first, isNot(equals(DateTime(2026, 8, 1))));
       expect(CourseDate.toDayKey(dates.first), isNot(equals('2026-08-01')));
@@ -98,12 +105,13 @@ void main() {
 
     test('K-15: estimatedEndDate is 100% consistent with distributeSessions', () {
       final start = DateTime(2026, 8, 1);
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 10,
         from: start,
         weeklyTarget: 3,
         preferredDays: [6, 1, 3],
       );
+      final dates = scheduleResult.dates;
 
       final estimatedEnd = CourseScheduler.estimatedEndDate(
         remaining: 10,
@@ -249,14 +257,16 @@ void main() {
     test('K-21: Multiple sessions per day when weeklyTarget > preferredDays.length', () {
       final start = DateTime(2026, 8, 1); // Saturday
       // 1 preferred day (Saturday) with weeklyTarget = 2 -> 2 sessions on Saturday
-      final dates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: 4,
         from: start,
         weeklyTarget: 2,
         preferredDays: [6],
       );
+      final dates = scheduleResult.dates;
 
       expect(dates.length, equals(4));
+      expect(scheduleResult.unscheduledCount, equals(0));
       // First two should be on 2026-08-01 (Saturday)
       expect(CourseDate.toDayKey(dates[0]), equals('2026-08-01'));
       expect(CourseDate.toDayKey(dates[1]), equals('2026-08-01'));

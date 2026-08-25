@@ -214,7 +214,7 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
       if (confirmShort != true || !mounted) return;
     }
 
-    final roundedMinutes = (_secondsElapsed / 60).round();
+    final roundedMinutes = CourseDurationFormat.minutesFromSeconds(_secondsElapsed);
     final actualDuration = roundedMinutes > 0 ? roundedMinutes : 1;
 
     final result = await showDialog<bool>(

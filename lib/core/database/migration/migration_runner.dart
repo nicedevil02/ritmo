@@ -60,6 +60,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v118_medicati
 import 'package:ritmo/core/database/migration/migrations/migration_v119_konkur_study_isolation.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v120_study_deadlines_and_pomodoro.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v121_sports_unification.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v122_courses_hardening.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -183,6 +184,7 @@ class MigrationRunner {
     MigrationV119KonkurStudyIsolation(), // Strict isolation between Konkur presets/custom subjects and study mode
     MigrationV120StudyDeadlinesAndPomodoro(), // Study exams, assignments, deadlines table & pomodoro active session fields
     MigrationV121SportsUnification(), // Unified Sports & Movement: M1-M7 migrations
+    MigrationV122CoursesHardening(), // Hardening courses schema & course_adaptive_snapshots
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

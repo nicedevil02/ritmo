@@ -60,6 +60,48 @@ void main() {
       expect(deadlinePast.isOverdue(now), isTrue);
     });
 
+    test('StudyDeadline priority ordering in SQL respects HIGH > MEDIUM > LOW', () async {
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final dMedium = StudyDeadline(
+        id: 'dl_med',
+        title: 'ددلاین متوسط',
+        dueDateIso: '2026-09-01',
+        priority: DeadlinePriority.medium,
+        createdAtMs: nowMs,
+        updatedAtMs: nowMs,
+      );
+      final dHigh = StudyDeadline(
+        id: 'dl_high',
+        title: 'ددلاین مهم و فوری',
+        dueDateIso: '2026-09-01',
+        priority: DeadlinePriority.high,
+        createdAtMs: nowMs,
+        updatedAtMs: nowMs,
+      );
+      final dLow = StudyDeadline(
+        id: 'dl_low',
+        title: 'ددلاین کم‌اهمیت',
+        dueDateIso: '2026-09-01',
+        priority: DeadlinePriority.low,
+        createdAtMs: nowMs,
+        updatedAtMs: nowMs,
+      );
+
+      await db.insert('study_deadlines', dMedium.toMap());
+      await db.insert('study_deadlines', dHigh.toMap());
+      await db.insert('study_deadlines', dLow.toMap());
+
+      final rows = await db.query(
+        'study_deadlines',
+        orderBy: "dueDateIso ASC, CASE priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC",
+      );
+
+      final ordered = rows.map(StudyDeadline.fromMap).toList();
+      expect(ordered[0].priority, DeadlinePriority.high);
+      expect(ordered[1].priority, DeadlinePriority.medium);
+      expect(ordered[2].priority, DeadlinePriority.low);
+    });
+
     test('StudyDeadline CRUD operations work in sqlite', () async {
       final nowMs = DateTime.now().millisecondsSinceEpoch;
       final deadline = StudyDeadline(

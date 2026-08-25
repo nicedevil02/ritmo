@@ -58,9 +58,12 @@ class _BulkTopicsSheetState extends State<BulkTopicsSheet> {
       if (line.trim().isEmpty) continue;
 
       final isSub = rawLine.startsWith('  ') || rawLine.startsWith('\t') || line.trimLeft().startsWith('-') || line.trimLeft().startsWith('*');
-      final cleanName = line.replaceAll(RegExp(r'^[\s\-\*\•]+'), '').trim();
+      var cleanName = line.replaceAll(RegExp(r'^[\s\-\*\•]+'), '').trim();
 
       if (cleanName.isEmpty) continue;
+      if (cleanName.length > 120) {
+        cleanName = cleanName.substring(0, 120).trim();
+      }
 
       final id = uuid.v4();
       if (isSub && lastParentId != null) {

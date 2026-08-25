@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_date.dart';
 
 class StudyWeekHeatmap extends StatelessWidget {
   const StudyWeekHeatmap({super.key, required this.sessionsByDate});
@@ -42,7 +43,7 @@ class StudyWeekHeatmap extends StatelessWidget {
             itemCount: 56,
             itemBuilder: (context, index) {
               final dt = days[index];
-              final dateIso = dt.toIso8601String().substring(0, 10);
+              final dateIso = RitmoDate.dayKey(dt);
               final minutes = sessionsByDate[dateIso] ?? 0;
 
               Color cellColor = colors.surfaceElevated;

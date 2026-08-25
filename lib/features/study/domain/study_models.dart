@@ -148,8 +148,8 @@ class StudySubject {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+  Map<String, dynamic> toMap({int? nowMsOverride}) {
+    final nowMs = nowMsOverride ?? DateTime.now().millisecondsSinceEpoch;
     return {
       'id': id,
       'name': name,
@@ -163,7 +163,7 @@ class StudySubject {
       'examQuestionCount': examQuestionCount,
       'subjectGroup': subjectGroup,
       'createdAt': createdAtMs ?? nowMs,
-      'updatedAt': updatedAtMs ?? nowMs,
+      'updatedAt': nowMs,
     };
   }
 
@@ -255,8 +255,8 @@ class StudyTopic {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
+  Map<String, dynamic> toMap({int? nowMsOverride}) {
+    final nowMs = nowMsOverride ?? DateTime.now().millisecondsSinceEpoch;
     return {
       'id': id,
       'subjectId': subjectId,
@@ -272,7 +272,7 @@ class StudyTopic {
       'chapter': chapter,
       'reviewCount': reviewCount,
       'createdAt': createdAtMs ?? nowMs,
-      'updatedAt': updatedAtMs ?? nowMs,
+      'updatedAt': nowMs,
     };
   }
 
@@ -460,7 +460,8 @@ class StudyDeadline {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({int? nowMsOverride}) {
+    final nowMs = nowMsOverride ?? DateTime.now().millisecondsSinceEpoch;
     return {
       'id': id,
       'subjectId': subjectId,
@@ -472,8 +473,8 @@ class StudyDeadline {
       'isCompleted': isCompleted ? 1 : 0,
       'weight': weight,
       'note': note,
-      'createdAt': createdAtMs,
-      'updatedAt': updatedAtMs,
+      'createdAt': createdAtMs > 0 ? createdAtMs : nowMs,
+      'updatedAt': nowMs,
     };
   }
 

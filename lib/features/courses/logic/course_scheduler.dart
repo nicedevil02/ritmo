@@ -3,6 +3,19 @@ import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_validation.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 
+class ScheduleResult {
+  const ScheduleResult({
+    required this.dates,
+    required this.unscheduledCount,
+  });
+
+  final List<DateTime> dates;
+  final int unscheduledCount;
+
+  bool get hasUnscheduled => unscheduledCount > 0;
+  bool get isFullyScheduled => unscheduledCount == 0;
+}
+
 class CourseScheduler {
   /// Sunday = 0, Monday = 1, Tuesday = 2, Wednesday = 3, Thursday = 4, Friday = 5, Saturday = 6
   static int getFarsiWeekday(DateTime dt) {
@@ -15,7 +28,8 @@ class CourseScheduler {
     return ShamsiWeek.saturdayOf(dt);
   }
 
-  /// Calculates weekly occupancy map (SaturdayOfWeek -> count) for sessions already scheduled/completed.
+  /// Maps each session's plannedDate (or completedAt) to its Jalali/Farsi start-of-week Saturday.
+  /// Used for calculating current occupancy within the course's own schedule.
   static Map<DateTime, int> weeklyOccupancy({
     required List<CourseSession> sessions,
   }) {
@@ -33,17 +47,19 @@ class CourseScheduler {
 
   /// Distributes pendingCount session dates starting from 'from'
   /// respecting weeklyTarget limit, preferredDays, occupiedWeeklyCounts, and blockedDates.
-  /// (Fixes K-14, K-19, K-20, K-21, K-22, K-23, C6)
-  static List<DateTime> distributeSessions({
+  /// Returns a [ScheduleResult] containing the successfully scheduled dates and any unscheduled count.
+  /// (Fixes K-14, K-19, K-20, K-21, K-22, K-23, C6, N2)
+  static ScheduleResult distributeSessions({
     required int pendingCount,
     required DateTime from,
     required int weeklyTarget,
     required List<int> preferredDays,
     Map<DateTime, int> occupiedWeeklyCounts = const {},
     Set<DateTime> blockedDates = const {},
-    bool throwOnIncomplete = false,
   }) {
-    if (pendingCount <= 0) return const [];
+    if (pendingCount <= 0) {
+      return const ScheduleResult(dates: [], unscheduledCount: 0);
+    }
     if (weeklyTarget < CourseLimits.minWeeklyTarget || weeklyTarget > CourseLimits.maxWeeklyTarget) {
       throw CourseValidationException(
         'INVALID_WEEKLY_TARGET',
@@ -100,14 +116,10 @@ class CourseScheduler {
       currentDate = CourseDate.addDays(currentDate, 1);
     }
 
-    if (result.length != pendingCount && throwOnIncomplete) {
-      throw CourseValidationException(
-        'SCHEDULE_INCOMPLETE',
-        'امکان زمان‌بندی کامل $pendingCount جلسه در بازه زمانی مجاز ($maxDaysLimit روز) وجود ندارد.',
-      );
-    }
-
-    return result;
+    return ScheduleResult(
+      dates: result,
+      unscheduledCount: remaining,
+    );
   }
 
   /// Calculates number of PENDING sessions whose plannedDate is before today.
@@ -139,7 +151,7 @@ class CourseScheduler {
   }) {
     if (remaining <= 0) return null;
     try {
-      final dates = distributeSessions(
+      final scheduleResult = distributeSessions(
         pendingCount: remaining,
         from: from,
         weeklyTarget: weeklyTarget,
@@ -147,14 +159,14 @@ class CourseScheduler {
         occupiedWeeklyCounts: occupiedWeeklyCounts,
         blockedDates: blockedDates,
       );
-      if (dates.isEmpty) return null;
-      return dates.last;
+      if (scheduleResult.dates.isEmpty) return null;
+      return scheduleResult.dates.last;
     } catch (_) {
       return null;
     }
   }
 
-  /// Reschedules all pending, non-user-scheduled sessions starting from [from] (Fixes K-18)
+  /// Reschedules all pending, non-user-scheduled sessions starting from [from] (Fixes K-18, N2)
   static List<CourseSession> reschedulePendingSessions({
     required List<CourseSession> sessions,
     required DateTime from,
@@ -169,7 +181,7 @@ class CourseScheduler {
       sessions: sessions.where((s) => s.isCompleted || s.isUserScheduled).toList(),
     );
 
-    final newDates = distributeSessions(
+    final scheduleResult = distributeSessions(
       pendingCount: pending.length,
       from: from,
       weeklyTarget: weeklyTarget,
@@ -177,10 +189,15 @@ class CourseScheduler {
       occupiedWeeklyCounts: occupied,
       blockedDates: blockedDates,
     );
+    final newDates = scheduleResult.dates;
 
-    final dateMap = <String, String>{};
-    for (var i = 0; i < pending.length && i < newDates.length; i++) {
-      dateMap[pending[i].id] = CourseDate.toDayKey(newDates[i]);
+    final dateMap = <String, String?>{};
+    for (var i = 0; i < pending.length; i++) {
+      if (i < newDates.length) {
+        dateMap[pending[i].id] = CourseDate.toDayKey(newDates[i]);
+      } else {
+        dateMap[pending[i].id] = null;
+      }
     }
 
     return sessions.map((s) {

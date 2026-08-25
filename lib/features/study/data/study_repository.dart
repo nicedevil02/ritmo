@@ -69,6 +69,7 @@ class StudyRepository {
       await txn.delete('konkur_topics', where: 'subjectId = ?', whereArgs: [id]);
       await txn.delete('konkur_study_sessions', where: 'subjectId = ?', whereArgs: [id]);
       await txn.delete('study_active_session', where: 'subjectId = ?', whereArgs: [id]);
+      await txn.delete('study_deadlines', where: 'subjectId = ?', whereArgs: [id]);
     });
   }
 
@@ -282,7 +283,7 @@ class StudyRepository {
       'study_deadlines',
       where: whereStr,
       whereArgs: args.isNotEmpty ? args : null,
-      orderBy: 'dueDateIso ASC, priority DESC',
+      orderBy: "dueDateIso ASC, CASE priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC",
     );
     return rows.map(StudyDeadline.fromMap).toList();
   }
@@ -298,7 +299,7 @@ class StudyRepository {
       'study_deadlines',
       where: 'isCompleted = 0 AND dueDateIso >= ? AND dueDateIso <= ?',
       whereArgs: [todayIso, limitIso],
-      orderBy: 'dueDateIso ASC, priority DESC',
+      orderBy: "dueDateIso ASC, CASE priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC",
     );
     return rows.map(StudyDeadline.fromMap).toList();
   }
@@ -310,15 +311,6 @@ class StudyRepository {
       deadline.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    _eventBus.fire(RitmoEvent(
-      type: RitmoEventType.completionRecorded.code,
-      timestamp: DateTime.now(),
-      payload: {
-        'domain': 'study_deadline',
-        'deadlineId': deadline.id,
-        'action': 'save',
-      },
-    ));
   }
 
   Future<void> toggleDeadlineCompleted(String id, bool isCompleted) async {
@@ -333,6 +325,18 @@ class StudyRepository {
       where: 'id = ?',
       whereArgs: [id],
     );
+
+    if (isCompleted) {
+      _eventBus.fire(RitmoEvent(
+        type: RitmoEventType.completionRecorded.code,
+        timestamp: DateTime.now(),
+        payload: {
+          'domain': 'study_deadline',
+          'deadlineId': id,
+          'action': 'complete',
+        },
+      ));
+    }
   }
 
   Future<void> deleteDeadline(String id) async {

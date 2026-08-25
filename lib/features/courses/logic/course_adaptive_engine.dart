@@ -83,9 +83,19 @@ class CourseAdaptiveEngine {
     );
   }
 
-  /// Applies a proposed adaptive adjustment to the course in DB
+  /// Applies a proposed adaptive adjustment to the course in DB with 24h rollback snapshot (Fixes H3)
   static Future<void> applyAdjustment(Course course, AdaptiveAdjustmentResult proposal) async {
     final nowMs = proposal.appliedAt.millisecondsSinceEpoch;
+
+    // Save snapshot of current session dates for 24h rollback support
+    final currentSessions = await CoursesRepository.instance.getSessionsForCourse(course.id);
+    await CoursesRepository.instance.saveAdaptiveSnapshot(
+      courseId: course.id,
+      oldWeeklyTarget: proposal.oldWeeklyTarget,
+      newWeeklyTarget: proposal.newWeeklyTarget,
+      sessions: currentSessions,
+    );
+
     final updatedCourse = course.copyWith(
       weeklyTargetSessions: proposal.newWeeklyTarget,
       adaptiveLastAppliedAt: nowMs,
@@ -112,7 +122,7 @@ class CourseAdaptiveEngine {
     required Course course,
     required List<CourseSession> sessions,
     required DateTime today,
-    bool autoApply = true,
+    bool autoApply = false,
   }) async {
     final proposal = proposeAdjustment(
       course: course,

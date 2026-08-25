@@ -105,6 +105,21 @@ class CourseTables {
         createdAt INTEGER NOT NULL
       );
     ''');
+
+    // 13. course_adaptive_snapshots table (Fixes H3)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS course_adaptive_snapshots (
+          id TEXT PRIMARY KEY,
+          courseId TEXT NOT NULL,
+          oldWeeklyTarget INTEGER NOT NULL,
+          newWeeklyTarget INTEGER NOT NULL,
+          snapshotJson TEXT NOT NULL,
+          createdAt INTEGER NOT NULL,
+          FOREIGN KEY(courseId) REFERENCES courses(id) ON DELETE CASCADE
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_adaptive_snapshots_courseId ON course_adaptive_snapshots(courseId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_adaptive_snapshots_createdAt ON course_adaptive_snapshots(createdAt);');
   }
 
   /// Self-healing schema validation to ensure course tables, columns, and indexes exist. (Fixes K-13 & M1)
@@ -213,7 +228,22 @@ class CourseTables {
       );
     ''');
 
-    // 5. Data Normalization Migrations (Fixes C1, C2)
+    // 5. Ensure course_adaptive_snapshots table (Fixes H3)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS course_adaptive_snapshots (
+          id TEXT PRIMARY KEY,
+          courseId TEXT NOT NULL,
+          oldWeeklyTarget INTEGER NOT NULL,
+          newWeeklyTarget INTEGER NOT NULL,
+          snapshotJson TEXT NOT NULL,
+          createdAt INTEGER NOT NULL,
+          FOREIGN KEY(courseId) REFERENCES courses(id) ON DELETE CASCADE
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_adaptive_snapshots_courseId ON course_adaptive_snapshots(courseId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_course_adaptive_snapshots_createdAt ON course_adaptive_snapshots(createdAt);');
+
+    // 6. Data Normalization Migrations (Fixes C1, C2)
     try {
       await db.execute("UPDATE courses SET courseType = UPPER(courseType) WHERE courseType IS NOT NULL;");
       await db.execute("UPDATE courses SET energyRule = 'ALL' WHERE energyRule IN ('NONE', '', 'all', 'none') OR energyRule IS NULL;");

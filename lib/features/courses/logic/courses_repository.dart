@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
@@ -19,7 +20,14 @@ class CoursesRepository {
   CoursesRepository._init();
   static final CoursesRepository instance = CoursesRepository._init();
 
-  Future<Database> get _database async => DatabaseHelper.instance.database;
+  Database? _testDatabase;
+
+  @visibleForTesting
+  void overrideDatabaseForTesting(Database? db) {
+    _testDatabase = db;
+  }
+
+  Future<Database> get _database async => _testDatabase ?? await DatabaseHelper.instance.database;
 
   Stream<RitmoEvent> get events => RitmoEventBus().onEvents.where((e) => e.type == 'CoursesChanged' || e.type == 'CourseSessionCompleted');
 
@@ -49,28 +57,44 @@ class CoursesRepository {
     }
   }
 
-  /// Fetch all active and paused courses
+  /// Fetch all active and paused non-archived courses (Fixes N1)
   Future<List<Course>> getActiveCourses() async {
     final db = await _database;
     final maps = await db.query(
       'courses',
       where: 'isArchived = 0 AND status != ?',
       whereArgs: [CourseStatus.completed],
-      orderBy: 'createdAt DESC',
+      orderBy: 'updatedAt DESC',
     );
     return maps.map(Course.fromMap).toList();
   }
 
-  /// Fetch all completed courses (Hall of Fame) (Fixes M11)
-  Future<List<Course>> getCompletedAndArchivedCourses() async {
+  /// Fetch all completed, non-archived courses (Hall of Fame) (Fixes N1 & M11)
+  Future<List<Course>> getCompletedCourses() async {
     final db = await _database;
     final maps = await db.query(
       'courses',
-      where: 'status = ?',
+      where: 'status = ? AND isArchived = 0',
       whereArgs: [CourseStatus.completed],
-      orderBy: 'completedAt DESC, createdAt DESC',
+      orderBy: 'completedAt DESC, updatedAt DESC',
     );
     return maps.map(Course.fromMap).toList();
+  }
+
+  /// Fetch all archived courses regardless of status (Fixes N1)
+  Future<List<Course>> getArchivedCourses() async {
+    final db = await _database;
+    final maps = await db.query(
+      'courses',
+      where: 'isArchived = 1',
+      orderBy: 'updatedAt DESC',
+    );
+    return maps.map(Course.fromMap).toList();
+  }
+
+  /// Deprecated helper for backward compatibility
+  Future<List<Course>> getCompletedAndArchivedCourses() async {
+    return getCompletedCourses();
   }
 
   /// Fetch a single course by ID
@@ -160,12 +184,13 @@ class CoursesRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      final sessionDates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: course.totalSessions,
         from: now,
         weeklyTarget: course.weeklyTargetSessions,
         preferredDays: course.preferredDays,
       );
+      final sessionDates = scheduleResult.dates;
 
       for (var i = 0; i < course.totalSessions; i++) {
         final sessionId = 'sess_${now.millisecondsSinceEpoch}_${course.id}_${i}_${DateTime.now().microsecondsSinceEpoch % 10000}';
@@ -214,12 +239,13 @@ class CoursesRepository {
       );
 
       final pendingCount = draftSessions.length;
-      final sessionDates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: pendingCount,
         from: now,
         weeklyTarget: syncedCourse.weeklyTargetSessions,
         preferredDays: syncedCourse.preferredDays,
       );
+      final sessionDates = scheduleResult.dates;
 
       for (var i = 0; i < draftSessions.length; i++) {
         final draft = draftSessions[i];
@@ -278,11 +304,11 @@ class CoursesRepository {
 
     if (updatedCourse.totalSessions < existingSessions.length) {
       final countToRemove = existingSessions.length - updatedCourse.totalSessions;
-      final pendingFromEnd = existingSessions.reversed.where((s) => !s.isCompleted && !s.isSkipped).take(countToRemove).toList();
+      final pendingFromEnd = existingSessions.reversed.where((s) => !s.isCompleted && !s.isSkipped && !s.isReview).take(countToRemove).toList();
       if (pendingFromEnd.length < countToRemove) {
         throw CourseValidationException(
           'CANNOT_SHRINK_BELOW_LOCKED',
-          'نمی‌توان تعداد جلسات را به ${updatedCourse.totalSessions} کاهش داد زیرا تنها ${pendingFromEnd.length} جلسه قابل حذف وجود دارد.',
+          'نمی‌توان تعداد جلسات را به ${updatedCourse.totalSessions} کاهش داد زیرا تنها ${pendingFromEnd.length} جلسه عادی قابل حذف وجود دارد.',
         );
       }
     }
@@ -332,7 +358,7 @@ class CoursesRepository {
         }
       } else if (updatedCourse.totalSessions < existingCourse.totalSessions) {
         final countToRemove = existingCourse.totalSessions - updatedCourse.totalSessions;
-        final pendingFromEnd = existingSessions.reversed.where((s) => !s.isCompleted && !s.isSkipped).take(countToRemove).toList();
+        final pendingFromEnd = existingSessions.reversed.where((s) => !s.isCompleted && !s.isSkipped && !s.isReview).take(countToRemove).toList();
         for (final s in pendingFromEnd) {
           final rems = await txn.query('pending_reminders', where: 'courseSessionId = ?', whereArgs: [s.id]);
           for (final r in rems) {
@@ -389,13 +415,14 @@ class CoursesRepository {
         final pendingToSchedule = currentSessions.where((s) => !s.isCompleted && !s.isSkipped && !s.isUserScheduled).toList();
 
         if (pendingToSchedule.isNotEmpty) {
-          final newDates = CourseScheduler.distributeSessions(
+          final scheduleResult = CourseScheduler.distributeSessions(
             pendingCount: pendingToSchedule.length,
             from: now,
             weeklyTarget: syncedCourse.weeklyTargetSessions,
             preferredDays: syncedCourse.preferredDays,
             occupiedWeeklyCounts: occupiedMap,
           );
+          final newDates = scheduleResult.dates;
 
           for (var i = 0; i < pendingToSchedule.length; i++) {
             final session = pendingToSchedule[i];
@@ -483,40 +510,68 @@ class CoursesRepository {
       if (courseMaps.isNotEmpty) {
         final course = Course.fromMap(courseMaps.first);
 
-        // SM-2 Review Session Generation (Fixes H6)
+        // SM-2 Review Session Generation (Fixes H6 & N3)
         if ((needsReview || (understandingScore != null && understandingScore <= 2)) && course.reviewEnabled) {
-          final prevReviews = await txn.query(
+          final openReviewRes = await txn.query(
             'course_sessions',
-            where: 'sourceSessionId = ? AND activityKind = ?',
-            whereArgs: [sessionId, CourseActivityKind.review.dbValue],
+            columns: ['id'],
+            where: 'courseId = ? AND sourceSessionId = ? AND completionStatus = ?',
+            whereArgs: [courseId, sessionId, SessionStatus.pending.dbValue],
           );
-          final sm2Result = SM2ReviewEngine.calculateNextReview(
-            qualityScore: understandingScore ?? 3,
-            previousRepetitions: prevReviews.length,
-            fromDate: now,
+
+          final activeReviewsRes = await txn.rawQuery(
+            'SELECT COUNT(*) as cnt FROM course_sessions WHERE courseId = ? AND activityKind = ? AND completionStatus = ?',
+            [courseId, CourseActivityKind.review.dbValue, SessionStatus.pending.dbValue],
           );
-          final reviewDateStr = CourseDate.toDayKey(sm2Result.nextReviewDate);
-          final maxNumRes = await txn.rawQuery(
-            'SELECT COALESCE(MAX(sessionNumber), 0) + 1 as nextNum, COALESCE(MAX(displayOrder), 0) + 1 as nextOrder FROM course_sessions WHERE courseId = ?',
-            [courseId],
-          );
-          final nextNum = (maxNumRes.first['nextNum'] as int?) ?? 1;
-          final nextOrder = (maxNumRes.first['nextOrder'] as int?) ?? nextNum;
-          final reviewSessionId = 'sess_${now.millisecondsSinceEpoch}_${courseId}_rev_$nextNum';
-          final reviewSession = CourseSession(
-            id: reviewSessionId,
-            courseId: courseId!,
-            sessionNumber: nextNum,
-            displayOrder: nextOrder,
-            plannedDate: reviewDateStr,
-            activityKind: CourseActivityKind.review,
-            sourceSessionId: sessionId,
-            createdAt: now.millisecondsSinceEpoch,
-            updatedAt: now.millisecondsSinceEpoch,
-            sessionTitle: 'مرور: ${session.sessionTitle ?? '${course.unitLabelResolved} ${session.sessionNumber}'}',
-          );
-          await txn.insert('course_sessions', reviewSession.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+          final activeReviewsCount = (activeReviewsRes.first['cnt'] as int? ?? 0);
+
+          if (openReviewRes.isEmpty && activeReviewsCount < CourseLimits.maxActiveReviewSessions) {
+            final prevReviews = await txn.query(
+              'course_sessions',
+              where: 'sourceSessionId = ? AND activityKind = ?',
+              whereArgs: [sessionId, CourseActivityKind.review.dbValue],
+            );
+            final sm2Result = SM2ReviewEngine.calculateNextReview(
+              qualityScore: understandingScore ?? 3,
+              previousRepetitions: prevReviews.length,
+              fromDate: now,
+            );
+            final reviewDateStr = CourseDate.toDayKey(sm2Result.nextReviewDate);
+            final maxNumRes = await txn.rawQuery(
+              'SELECT COALESCE(MAX(sessionNumber), 0) + 1 as nextNum, COALESCE(MAX(displayOrder), 0) + 1 as nextOrder FROM course_sessions WHERE courseId = ?',
+              [courseId],
+            );
+            final nextNum = (maxNumRes.first['nextNum'] as int?) ?? 1;
+            final nextOrder = (maxNumRes.first['nextOrder'] as int?) ?? nextNum;
+            final reviewSessionId = 'sess_${now.millisecondsSinceEpoch}_${courseId}_rev_$nextNum';
+            final reviewSession = CourseSession(
+              id: reviewSessionId,
+              courseId: courseId!,
+              sessionNumber: nextNum,
+              displayOrder: nextOrder,
+              plannedDate: reviewDateStr,
+              activityKind: CourseActivityKind.review,
+              sourceSessionId: sessionId,
+              createdAt: now.millisecondsSinceEpoch,
+              updatedAt: now.millisecondsSinceEpoch,
+              sessionTitle: 'مرور: ${session.sessionTitle ?? '${course.unitLabelResolved} ${session.sessionNumber}'}',
+            );
+            await txn.insert('course_sessions', reviewSession.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
+          }
         }
+
+        // Sync courses.totalSessions with actual row count in same transaction (Fixes N3)
+        final totalCountRes = await txn.rawQuery(
+          'SELECT COUNT(*) as cnt FROM course_sessions WHERE courseId = ?',
+          [courseId],
+        );
+        final actualTotal = totalCountRes.first['cnt'] as int;
+        await txn.update(
+          'courses',
+          {'totalSessions': actualTotal, 'updatedAt': now.millisecondsSinceEpoch},
+          where: 'id = ?',
+          whereArgs: [courseId],
+        );
 
         // Update Course Mastery Score (Fixes H6)
         final scoredSessions = await txn.rawQuery(
@@ -614,15 +669,51 @@ class CoursesRepository {
         whereArgs: [sessionId],
       );
 
+      // Delete any pending review session created from this session (Fixes N3)
+      final pendingReviews = await txn.query(
+        'course_sessions',
+        columns: ['id'],
+        where: 'courseId = ? AND sourceSessionId = ? AND completionStatus = ?',
+        whereArgs: [courseId, sessionId, SessionStatus.pending.dbValue],
+      );
+      for (final r in pendingReviews) {
+        final rId = r['id'] as String;
+        final rems = await txn.query('pending_reminders', columns: ['id'], where: 'courseSessionId = ?', whereArgs: [rId]);
+        for (final rem in rems) {
+          if (rem['id'] != null) alarmsToCancel.add(rem['id']! as String);
+        }
+        await txn.delete('pending_reminders', where: 'courseSessionId = ?', whereArgs: [rId]);
+        await txn.delete('course_sessions', where: 'id = ?', whereArgs: [rId]);
+      }
+
       final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
       if (courseMaps.isNotEmpty) {
         final course = Course.fromMap(courseMaps.first);
+
+        // Sync courses.totalSessions via COUNT(*) in same transaction (Fixes N3)
+        final totalCountRes = await txn.rawQuery(
+          'SELECT COUNT(*) as cnt FROM course_sessions WHERE courseId = ?',
+          [courseId],
+        );
+        final actualTotal = totalCountRes.first['cnt'] as int;
+
         if (course.status == CourseStatus.completed && !course.isArchived) {
           await txn.update(
             'courses',
             {
               'status': CourseStatus.active,
               'completedAt': null,
+              'totalSessions': actualTotal,
+              'updatedAt': now.millisecondsSinceEpoch,
+            },
+            where: 'id = ?',
+            whereArgs: [courseId],
+          );
+        } else {
+          await txn.update(
+            'courses',
+            {
+              'totalSessions': actualTotal,
               'updatedAt': now.millisecondsSinceEpoch,
             },
             where: 'id = ?',
@@ -720,7 +811,11 @@ class CoursesRepository {
       final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
       if (courseMaps.isNotEmpty) {
         final course = Course.fromMap(courseMaps.first);
-        final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+        final rebuildAlarms = await _rebuildReminderForSession(
+          txn,
+          course,
+          session.copyWith(completionStatus: SessionStatus.skipped),
+        );
         alarmsToCancel.addAll(rebuildAlarms);
       }
       return CourseMutationResult.applied;
@@ -909,7 +1004,11 @@ class CoursesRepository {
       final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
       if (courseMaps.isNotEmpty) {
         final course = Course.fromMap(courseMaps.first);
-        final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+        final rebuildAlarms = await _rebuildReminderForSession(
+          txn,
+          course,
+          session.copyWith(plannedDate: newDateStr, plannedDateSet: true),
+        );
         alarmsToCancel.addAll(rebuildAlarms);
       }
       return CourseMutationResult.applied;
@@ -923,6 +1022,56 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('RESCHEDULE', courseId: courseId, sessionId: sessionId);
+    return CourseMutationResult.applied;
+  }
+
+  /// Reschedule all pending, non-user-scheduled sessions of a course starting from today (Fixes N2)
+  Future<CourseMutationResult> rescheduleCoursePendingSessions(String courseId) async {
+    final db = await _database;
+    final now = DateTime.now();
+    final alarmsToCancel = <String>[];
+
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
+      final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
+      if (courseMaps.isEmpty) return CourseMutationResult.notFound;
+      final course = Course.fromMap(courseMaps.first);
+
+      final sessionMaps = await txn.query(
+        'course_sessions',
+        where: 'courseId = ?',
+        whereArgs: [courseId],
+        orderBy: 'displayOrder ASC, sessionNumber ASC',
+      );
+      final sessions = sessionMaps.map(CourseSession.fromMap).toList();
+      final updatedSessions = CourseScheduler.reschedulePendingSessions(
+        sessions: sessions,
+        from: now,
+        weeklyTarget: course.weeklyTargetSessions,
+        preferredDays: course.preferredDays,
+      );
+
+      for (final s in updatedSessions) {
+        await txn.update(
+          'course_sessions',
+          {'plannedDate': s.plannedDate, 'updatedAt': now.millisecondsSinceEpoch},
+          where: 'id = ?',
+          whereArgs: [s.id],
+        );
+      }
+
+      final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+      alarmsToCancel.addAll(rebuildAlarms);
+      return CourseMutationResult.applied;
+    });
+
+    if (!mutation.isApplied) return mutation;
+
+    for (final id in alarmsToCancel) {
+      await sl<AlarmPlatform>().cancelAlarm(id);
+    }
+
+    await syncCourseAlarms();
+    _fireEvent('RESCHEDULE', courseId: courseId);
     return CourseMutationResult.applied;
   }
 
@@ -977,6 +1126,106 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('CATCHUP', courseId: courseId);
+  }
+
+  /// Save pre-adjustment snapshot for 24h rollback support (Fixes H3)
+  Future<void> saveAdaptiveSnapshot({
+    required String courseId,
+    required int oldWeeklyTarget,
+    required int newWeeklyTarget,
+    required List<CourseSession> sessions,
+  }) async {
+    final db = await _database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final snapshotList = sessions.map((s) => {'id': s.id, 'plannedDate': s.plannedDate}).toList();
+    final snapshotJson = jsonEncode(snapshotList);
+    final id = 'snap_${now}_$courseId';
+
+    await db.insert('course_adaptive_snapshots', {
+      'id': id,
+      'courseId': courseId,
+      'oldWeeklyTarget': oldWeeklyTarget,
+      'newWeeklyTarget': newWeeklyTarget,
+      'snapshotJson': snapshotJson,
+      'createdAt': now,
+    });
+  }
+
+  /// Rollback an adaptive schedule adjustment within 24 hours (Fixes H3)
+  Future<CourseMutationResult> rollbackAdaptiveAdjustment(String courseId) async {
+    final db = await _database;
+    final now = DateTime.now();
+    final alarmsToCancel = <String>[];
+
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
+      final snapMaps = await txn.query(
+        'course_adaptive_snapshots',
+        where: 'courseId = ?',
+        whereArgs: [courseId],
+        orderBy: 'createdAt DESC',
+        limit: 1,
+      );
+      if (snapMaps.isEmpty) {
+        return CourseMutationResult.notFound;
+      }
+
+      final snap = snapMaps.first;
+      final createdAt = snap['createdAt'] as int;
+      final ageMs = now.millisecondsSinceEpoch - createdAt;
+      if (ageMs > 24 * 60 * 60 * 1000) {
+        throw CourseValidationException(
+          'ROLLBACK_EXPIRED',
+          'مهلت بازگردانی تغییرات تطبیقی (۲۴ ساعت) به پایان رسیده است.',
+        );
+      }
+
+      final oldWeeklyTarget = snap['oldWeeklyTarget'] as int;
+      final snapshotJsonStr = snap['snapshotJson'] as String;
+      final snapshotList = (jsonDecode(snapshotJsonStr) as List).cast<Map<String, dynamic>>();
+
+      for (final item in snapshotList) {
+        final sId = item['id'] as String;
+        final pDate = item['plannedDate'] as String?;
+        await txn.update(
+          'course_sessions',
+          {'plannedDate': pDate, 'updatedAt': now.millisecondsSinceEpoch},
+          where: 'id = ?',
+          whereArgs: [sId],
+        );
+      }
+
+      final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
+      if (courseMaps.isNotEmpty) {
+        final course = Course.fromMap(courseMaps.first);
+        await txn.update(
+          'courses',
+          {
+            'weeklyTargetSessions': oldWeeklyTarget,
+            'updatedAt': now.millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [courseId],
+        );
+        final updatedCourse = course.copyWith(weeklyTargetSessions: oldWeeklyTarget);
+        final rebuildAlarms = await _rebuildRemindersForCourse(txn, updatedCourse);
+        alarmsToCancel.addAll(rebuildAlarms);
+      }
+
+      // Delete the used snapshot
+      await txn.delete('course_adaptive_snapshots', where: 'id = ?', whereArgs: [snap['id']]);
+
+      return CourseMutationResult.applied;
+    });
+
+    if (!mutation.isApplied) return mutation;
+
+    for (final id in alarmsToCancel) {
+      await sl<AlarmPlatform>().cancelAlarm(id);
+    }
+
+    await syncCourseAlarms();
+    _fireEvent('UPDATE', courseId: courseId);
+    return CourseMutationResult.applied;
   }
 
   /// Delete a course and cancel in-memory timers and alarms (Fixes C5 & M6)
@@ -1068,12 +1317,13 @@ class CoursesRepository {
         );
         final pendingSessions = pendingMaps.map(CourseSession.fromMap).toList();
         if (pendingSessions.isNotEmpty) {
-          final newDates = CourseScheduler.distributeSessions(
+          final scheduleResult = CourseScheduler.distributeSessions(
             pendingCount: pendingSessions.length,
             from: DateTime.now(),
             weeklyTarget: course.weeklyTargetSessions,
             preferredDays: course.preferredDays,
           );
+          final newDates = scheduleResult.dates;
           for (var i = 0; i < pendingSessions.length; i++) {
             String? newDateStr;
             if (i < newDates.length) {
@@ -1099,6 +1349,137 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('STATUS', courseId: courseId);
+  }
+
+  /// Restore an archived course with automatic status resolution based on pending sessions (Fixes N1)
+  Future<CourseMutationResult> restoreCourse(String courseId) async {
+    final db = await _database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final alarmsToCancel = <String>[];
+
+    final mutation = await db.transaction<CourseMutationResult>((txn) async {
+      final courseMaps = await txn.query('courses', where: 'id = ?', whereArgs: [courseId]);
+      if (courseMaps.isEmpty) return CourseMutationResult.notFound;
+      final course = Course.fromMap(courseMaps.first);
+
+      final pendingCountRes = await txn.rawQuery(
+        'SELECT COUNT(*) as cnt FROM course_sessions WHERE courseId = ? AND completionStatus = ?',
+        [courseId, SessionStatus.pending.dbValue],
+      );
+      final hasPending = (pendingCountRes.first['cnt'] as int? ?? 0) > 0;
+      final targetStatus = hasPending ? CourseStatus.active : CourseStatus.completed;
+
+      await txn.update(
+        'courses',
+        {
+          'isArchived': 0,
+          'status': targetStatus,
+          'completedAt': targetStatus == CourseStatus.active ? null : course.completedAt,
+          'updatedAt': now,
+        },
+        where: 'id = ?',
+        whereArgs: [courseId],
+      );
+
+      final updatedCourse = course.copyWith(
+        isArchived: false,
+        status: targetStatus,
+        completedAtSet: true,
+        completedAt: targetStatus == CourseStatus.active ? null : course.completedAt,
+        updatedAt: now,
+      );
+
+      if (targetStatus == CourseStatus.active) {
+        final rebuildAlarms = await _rebuildRemindersForCourse(txn, updatedCourse);
+        alarmsToCancel.addAll(rebuildAlarms);
+      }
+
+      return CourseMutationResult.applied;
+    });
+
+    if (!mutation.isApplied) return mutation;
+
+    for (final id in alarmsToCancel) {
+      await sl<AlarmPlatform>().cancelAlarm(id);
+    }
+
+    await syncCourseAlarms();
+    _fireEvent('STATUS', courseId: courseId);
+    return CourseMutationResult.applied;
+  }
+
+  /// Point reminder rebuild for a single session without wiping course reminders (Fixes H7)
+  Future<List<String>> _rebuildReminderForSession(Transaction txn, Course course, CourseSession session) async {
+    final alarmsToCancel = <String>[];
+
+    final existingRems = await txn.query(
+      'pending_reminders',
+      columns: ['id'],
+      where: 'courseSessionId = ?',
+      whereArgs: [session.id],
+    );
+
+    for (final row in existingRems) {
+      if (row['id'] != null) {
+        alarmsToCancel.add(row['id']! as String);
+      }
+    }
+
+    await txn.delete(
+      'pending_reminders',
+      where: 'courseSessionId = ?',
+      whereArgs: [session.id],
+    );
+
+    if (course.status == CourseStatus.paused ||
+        course.status == CourseStatus.completed ||
+        course.isArchived ||
+        !course.reminderEnabled ||
+        course.preferredTime == null ||
+        session.isCompleted ||
+        session.isSkipped ||
+        session.plannedDate == null) {
+      return alarmsToCancel;
+    }
+
+    final dateStr = session.plannedDate!;
+    final timeStr = session.plannedStartTime ?? course.preferredTime!;
+    final parts = timeStr.split(':');
+    if (parts.length != 2) return alarmsToCancel;
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+
+    final dateParts = dateStr.split('-');
+    if (dateParts.length != 3) return alarmsToCancel;
+    final year = int.tryParse(dateParts[0]) ?? 0;
+    final month = int.tryParse(dateParts[1]) ?? 0;
+    final day = int.tryParse(dateParts[2]) ?? 0;
+
+    final reminderDateTime = DateTime(year, month, day, hour, minute);
+    final reminderTimeMs = reminderDateTime.millisecondsSinceEpoch;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+    if (reminderTimeMs > nowMs) {
+      final reminderId = 'rem_${nowMs}_${session.id}_${DateTime.now().microsecondsSinceEpoch % 10000}';
+      await txn.insert(
+        'pending_reminders',
+        {
+          'id': reminderId,
+          'routineId': null,
+          'scheduleId': null,
+          'courseSessionId': session.id,
+          'originalTime': reminderTimeMs,
+          'scheduledTime': reminderTimeMs,
+          'state': 'SCHEDULED',
+          'deferCount': 0,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    return alarmsToCancel;
   }
 
   /// Unified method to rebuild reminders for a course, gathering alarm IDs to cancel before delete (Fixes Root 2, D-2, H7, M8)
@@ -1273,16 +1654,17 @@ class CoursesRepository {
   Future<void> syncCourseAlarms() async {
     final db = await _database;
     final now = DateTime.now().millisecondsSinceEpoch;
+    final horizonEndMs = now + (14 * 24 * 60 * 60 * 1000);
 
     final reminders = await db.rawQuery('''
       SELECT pr.id, pr.scheduledTime, c.title
       FROM pending_reminders pr
       JOIN course_sessions cs ON pr.courseSessionId = cs.id
       JOIN courses c ON cs.courseId = c.id
-      WHERE pr.state = 'SCHEDULED' AND pr.scheduledTime > ? AND c.status = 'ACTIVE' AND c.isArchived = 0
+      WHERE pr.state = 'SCHEDULED' AND pr.scheduledTime > ? AND pr.scheduledTime <= ? AND c.status = 'ACTIVE' AND c.isArchived = 0
       ORDER BY pr.scheduledTime ASC
       LIMIT 150
-    ''', [now]);
+    ''', [now, horizonEndMs]);
 
     for (final r in reminders) {
       final alarmId = r['id']! as String;

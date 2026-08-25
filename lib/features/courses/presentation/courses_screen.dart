@@ -37,6 +37,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
   bool _isLoading = true;
   List<Course> _activeCourses = [];
   List<Course> _completedCourses = [];
+  List<Course> _archivedCourses = [];
   final Map<String, List<CourseSession>> _courseSessionsMap = {};
 
   String _currentEnergyLevel = 'MEDIUM';
@@ -44,18 +45,25 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   bool _coursesEnabled = true;
   StreamSubscription<dynamic>? _eventSub;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _loadAllData();
     _eventSub = CoursesRepository.instance.events.listen((_) {
-      _loadAllData();
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _loadAllData();
+        }
+      });
     });
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _eventSub?.cancel();
     super.dispose();
   }
@@ -72,11 +80,12 @@ class _CoursesScreenState extends State<CoursesScreen> {
       // 1. Fetch real dynamic energy level today (Fixes D-8)
       _currentEnergyLevel = await CoursesRepository.instance.getCurrentEnergyLevel();
 
-      // 2. Fetch active and completed courses
+      // 2. Fetch active, completed, and archived courses (Fixes N1)
       _activeCourses = await CoursesRepository.instance.getActiveCourses();
-      _completedCourses = await CoursesRepository.instance.getCompletedAndArchivedCourses();
+      _completedCourses = await CoursesRepository.instance.getCompletedCourses();
+      _archivedCourses = await CoursesRepository.instance.getArchivedCourses();
 
-      final allCourses = [..._activeCourses, ..._completedCourses];
+      final allCourses = [..._activeCourses, ..._completedCourses, ..._archivedCourses];
 
       _courseSessionsMap.clear();
       final courseIds = allCourses.map((c) => c.id).toSet();
@@ -84,16 +93,20 @@ class _CoursesScreenState extends State<CoursesScreen> {
       _courseSessionsMap.addAll(sessionsBatchMap);
       final allSessions = sessionsBatchMap.values.expand((element) => element).toList();
 
-      // 4. Run CoursesEngine
+      // 4. Run CoursesEngine (Fixes M13)
       final engine = CoursesEngine();
-      _engineOutput = await engine.calculate(
-        CoursesEngineInput(
-          courses: allCourses,
-          sessions: allSessions,
-          currentEnergyLevel: _currentEnergyLevel,
-          today: DateTime.now(),
-        ),
-      );
+      if (allCourses.isNotEmpty) {
+        _engineOutput = await engine.calculate(
+          CoursesEngineInput(
+            courses: allCourses,
+            sessions: allSessions,
+            currentEnergyLevel: _currentEnergyLevel,
+            today: DateTime.now(),
+          ),
+        );
+      } else {
+        _engineOutput = null;
+      }
     } catch (e, st) {
       RitmoLog.error('COURSES', 'Error loading courses data', e, st);
     } finally {
@@ -311,9 +324,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
                         const SizedBox(height: 24),
 
-                        // 6. Completed Courses List
+                        // 6. Completed and Archived Courses List (Fixes N1)
                         CompletedCoursesSection(
                           completedCourses: _completedCourses,
+                          archivedCourses: _archivedCourses,
                           courseSessionsMap: _courseSessionsMap,
                           onRefresh: _loadAllData,
                         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/study/data/study_settings_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_review_policy.dart';
 import 'package:ritmo/features/study/logic/study_timer_service.dart';
@@ -138,8 +139,9 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
       }
     }
 
+    final settings = await StudySettingsRepository.instance.load();
     String? nextReviewDateIso;
-    if (reviewRes != null) {
+    if (reviewRes != null && settings.reviewEnabled) {
       final nextDt = DateTime.now().add(Duration(days: reviewRes.nextReviewDays));
       nextReviewDateIso = RitmoDate.dayKey(nextDt);
     }
@@ -152,6 +154,9 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
       total = int.tryParse(_testsTotalController.text.trim()) ?? 0;
       correct = int.tryParse(_testsCorrectController.text.trim()) ?? 0;
       wrong = int.tryParse(_testsWrongController.text.trim()) ?? 0;
+      if (correct + wrong > total) {
+        total = correct + wrong;
+      }
       empty = (total - correct - wrong) > 0 ? (total - correct - wrong) : 0;
     }
 
@@ -181,8 +186,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
 
     int displaySeconds;
     if (isPomodoro && targetSec > 0) {
-      final rem = targetSec - elapsedSec;
-      displaySeconds = rem > 0 ? rem : 0;
+      displaySeconds = _state?.remainingSeconds(nowMs) ?? 0;
     } else {
       displaySeconds = elapsedSec;
     }

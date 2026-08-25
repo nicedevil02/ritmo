@@ -49,15 +49,15 @@ class CourseCatchupEngine {
       CourseLimits.maxWeeklyTarget,
     );
 
-    // For catch-up, all non-completed, non-skipped sessions are rescheduled
-    final pendingToReschedule = sessions.where((s) => !s.isCompleted && !s.isSkipped).toList();
+    // For catch-up, only non-user-scheduled pending sessions are automatically rescheduled
+    final pendingToReschedule = sessions.where((s) => !s.isCompleted && !s.isSkipped && !s.isUserScheduled).toList();
     final occupiedWeekly = CourseScheduler.weeklyOccupancy(
-      sessions: sessions.where((s) => s.isCompleted).toList(),
+      sessions: sessions.where((s) => s.isCompleted || (!s.isSkipped && s.isUserScheduled)).toList(),
     );
 
     List<DateTime> newDates;
     try {
-      newDates = CourseScheduler.distributeSessions(
+      final scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: pendingToReschedule.length,
         from: today,
         weeklyTarget: proposedTarget,
@@ -65,6 +65,7 @@ class CourseCatchupEngine {
         occupiedWeeklyCounts: occupiedWeekly,
         blockedDates: blockedDates,
       );
+      newDates = scheduleResult.dates;
     } on CourseValidationException catch (e) {
       return CatchupPlan(
         courseId: course.id,

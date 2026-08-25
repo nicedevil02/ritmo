@@ -38,6 +38,35 @@ void main() {
       expect(recs.first.reason, contains('مرور'));
     });
 
+    test('reviewEnabled=false ignores review date', () {
+      const topic1 = StudyTopic(
+        id: 't1',
+        subjectId: 's1',
+        name: 'مشتّق',
+        mastery: StudyMastery.learning,
+        orderIndex: 1,
+      );
+
+      const topic2 = StudyTopic(
+        id: 't2',
+        subjectId: 's1',
+        name: 'حد',
+        mastery: StudyMastery.mastered,
+        nextReviewDateIso: todayStr,
+        orderIndex: 2,
+      );
+
+      final recs = StudyPlanner.evaluate(
+        subjects: [subject],
+        topics: [topic1, topic2],
+        todaySessions: [],
+        today: now,
+        reviewEnabled: false,
+      );
+
+      expect(recs.first.topic.id, equals('t1'));
+    });
+
     test('Studied topic today is penalized', () {
       const topic1 = StudyTopic(id: 't1', subjectId: 's1', name: 'مشتّق');
       const topic2 = StudyTopic(id: 't2', subjectId: 's1', name: 'حد');

@@ -65,6 +65,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
         todaySessions: todaySessions,
         today: DateTime.now(),
         dailyCapacityMinutes: settings.dailyTargetMinutes,
+        reviewEnabled: settings.reviewEnabled,
       );
 
       final heatmapData = <String, int>{};
@@ -216,8 +217,12 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
               tooltip: 'تنظیمات مطالعه',
               onPressed: () async {
                 if (_settings != null) {
-                  await StudySettingsSheet.show(context, settings: _settings!);
-                  await _loadData();
+                  final newKonkur = await StudySettingsSheet.show(context, settings: _settings!);
+                  if (newKonkur != null && newKonkur != _settings!.konkurMode && context.mounted) {
+                    await StudyModuleEntry.switchMode(context, konkur: newKonkur);
+                  } else {
+                    await _loadData();
+                  }
                 }
               },
             ),

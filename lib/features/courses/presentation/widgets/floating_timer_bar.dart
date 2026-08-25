@@ -200,14 +200,40 @@ class _FloatingTimerBarState extends State<FloatingTimerBar> {
                 IconButton(
                   icon: const Icon(CupertinoIcons.checkmark_circle_fill, size: 22, color: Colors.green),
                   onPressed: () async {
-                    final elapsedMin = (elapsedSec / 60).ceil().clamp(1, 480);
+                    if (elapsedSec < 30) {
+                      final proceed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: AlertDialog(
+                            title: const Text('جلسه بسیار کوتاه'),
+                            content: Text(
+                              'مدت زمان مطالعه شما کمتر از ۳۰ ثانیه است (${toPersianDigits(elapsedSec)} ثانیه). آیا مایل به ثبت این جلسه هستید؟',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('ادامه تایمر'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('ثبت جلسه'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                      if (proceed != true || !context.mounted) return;
+                    }
+                    final elapsedMin = CourseDurationFormat.minutesFromSeconds(elapsedSec);
+                    final actualMin = elapsedMin > 0 ? elapsedMin : 1;
                     await timerService.stopTimer();
                     if (context.mounted && _session != null) {
                       unawaited(
                         SessionDebriefSheet.show(
                           context,
                           session: _session!,
-                          actualDurationMinutes: elapsedMin,
+                          actualDurationMinutes: actualMin,
                         ),
                       );
                     }

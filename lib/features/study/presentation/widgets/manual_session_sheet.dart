@@ -104,6 +104,9 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
       total = int.tryParse(_testsTotalController.text.trim()) ?? 0;
       correct = int.tryParse(_testsCorrectController.text.trim()) ?? 0;
       wrong = int.tryParse(_testsWrongController.text.trim()) ?? 0;
+      if (correct + wrong > total) {
+        total = correct + wrong;
+      }
       empty = (total - correct - wrong) > 0 ? (total - correct - wrong) : 0;
     }
 

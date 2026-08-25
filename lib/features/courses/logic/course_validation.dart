@@ -1,3 +1,4 @@
+import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 
 class CourseValidationException implements Exception {
@@ -38,9 +39,31 @@ class CourseValidator {
       if (c.weeklyTargetSessions > maxWeeklyPossible) {
         throw CourseValidationException(
           'TARGET_EXCEEDS_CAPACITY',
-          'هدف هفتگی (${c.weeklyTargetSessions}) بیش از حداکثر ظرفیت روزهای انتخابی ($maxWeeklyPossible جلسه) است.',
+          'هدف هفتگی (${RitmoNumber.toFa(c.weeklyTargetSessions)}) بیش از حداکثر ظرفیت روزهای انتخابی (${RitmoNumber.toFa(maxWeeklyPossible)} جلسه) است.',
         );
       }
+    }
+
+    // Horizon Capacity Check (Fixes N2)
+    final effectiveDays = validDaysCount > 0 ? validDaysCount : 3;
+    const maxHorizonWeeks = CourseLimits.maxScheduleHorizonDays ~/ 7;
+    final maxPerDay = (c.weeklyTargetSessions > effectiveDays)
+        ? ((c.weeklyTargetSessions + effectiveDays - 1) ~/ effectiveDays).clamp(1, CourseLimits.maxSessionsPerDay)
+        : 1;
+    final effectiveWeeklyCapacity = c.weeklyTargetSessions < (effectiveDays * maxPerDay)
+        ? c.weeklyTargetSessions
+        : (effectiveDays * maxPerDay);
+    final maxHorizonCapacity = maxHorizonWeeks * effectiveWeeklyCapacity;
+
+    if (c.totalSessions > maxHorizonCapacity) {
+      final neededWeeklyTarget = ((c.totalSessions + maxHorizonWeeks - 1) ~/ maxHorizonWeeks).clamp(
+        CourseLimits.minWeeklyTarget,
+        CourseLimits.maxWeeklyTarget,
+      );
+      throw CourseValidationException(
+        'TOTAL_EXCEEDS_HORIZON',
+        'تعداد کل جلسات (${RitmoNumber.toFa(c.totalSessions)}) در بازه ۲ ساله (${RitmoNumber.toFa(CourseLimits.maxScheduleHorizonDays)} روز) با هدف هفتگی فعلی (${RitmoNumber.toFa(c.weeklyTargetSessions)} جلسه) جا نمی‌شود. حداکثر ظرفیت قابل زمان‌بندی: ${RitmoNumber.toFa(maxHorizonCapacity)} جلسه. برای ثبت دوره، هدف هفتگی را حداقل به ${RitmoNumber.toFa(neededWeeklyTarget)} جلسه در هفته افزایش دهید.',
+      );
     }
 
     if (c.reminderEnabled) {

@@ -11,6 +11,7 @@ abstract final class CourseLimits {
   static const int maxScheduleHorizonDays = 730;
   static const int maxTimerSeconds = 28800; // 8 hours
   static const int suggestedSkipOverdueThreshold = 10;
+  static const int maxActiveReviewSessions = 10;
 }
 
 abstract final class CourseDefaults {
@@ -489,6 +490,10 @@ class Course {
     );
   }
 
+  bool get isCompleted => status == CourseStatus.completed;
+  bool get isPaused => status == CourseStatus.paused;
+  bool get isActive => status == CourseStatus.active;
+
   String get statusLabel {
     switch (status) {
       case CourseStatus.completed:
@@ -656,6 +661,7 @@ class CourseSession {
 
   bool get isCompleted => completionStatus == SessionStatus.completed;
   bool get isSkipped => completionStatus == SessionStatus.skipped;
+  bool get isReview => activityKind == CourseActivityKind.review || sourceSessionId != null;
 
   bool isScheduledToday(String todayStr) => plannedDate == todayStr;
 

@@ -109,36 +109,73 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
   Future<void> _addBulkTopics() async {
     final bulkList = await BulkTopicsSheet.show(context, subjectId: widget.subject.id);
     if (bulkList != null && bulkList.isNotEmpty) {
-      await StudyRepository.instance.saveTopicsBulk(bulkList);
-      await _loadAll();
+      try {
+        await StudyRepository.instance.saveTopicsBulk(bulkList);
+        await _loadAll();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('خطا در ذخیره سرفصل‌ها: $e')),
+          );
+        }
+      }
     }
   }
 
   Future<void> _advanceMastery(StudyTopic topic) async {
     StudyMastery next;
     int nextReviewCount;
-    switch (topic.mastery) {
-      case StudyMastery.notStarted:
-        next = StudyMastery.learning;
-        nextReviewCount = 0;
-        break;
-      case StudyMastery.learning:
-        next = StudyMastery.review;
-        nextReviewCount = 1;
-        break;
-      case StudyMastery.review:
-        next = StudyMastery.mastered;
-        nextReviewCount = 3;
-        break;
-      case StudyMastery.mastered:
-        next = StudyMastery.notStarted;
-        nextReviewCount = 0;
-        break;
+    String? nextReviewDate = topic.nextReviewDateIso;
+
+    if (topic.mastery == StudyMastery.mastered) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('بازنشانی وضعیت تسلط', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('آیا می‌خواهید وضعیت تسلط سرفصل «${topic.name}» به حالت اولیه بازگردد؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('انصراف'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.error),
+              child: const Text('بازنشانی', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+      next = StudyMastery.notStarted;
+      nextReviewCount = 0;
+      nextReviewDate = null;
+    } else {
+      switch (topic.mastery) {
+        case StudyMastery.notStarted:
+          next = StudyMastery.learning;
+          nextReviewCount = 0;
+          break;
+        case StudyMastery.learning:
+          next = StudyMastery.review;
+          nextReviewCount = 1;
+          break;
+        case StudyMastery.review:
+          next = StudyMastery.mastered;
+          nextReviewCount = 3;
+          break;
+        case StudyMastery.mastered:
+          next = StudyMastery.notStarted;
+          nextReviewCount = 0;
+          nextReviewDate = null;
+          break;
+      }
     }
 
     final updated = topic.copyWith(
       mastery: next,
       reviewCount: nextReviewCount,
+      nextReviewDateIso: nextReviewDate,
       updatedAtMs: DateTime.now().millisecondsSinceEpoch,
     );
 

@@ -174,11 +174,11 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       } else {
         if (_kindCode == null) {
           if (type == MvSlotType.cardio) {
-            _kindCode = 'RUNNING';
+            _kindCode = MvKindCodes.running;
           } else if (type == MvSlotType.sport) {
-            _kindCode = 'FOOTBALL';
+            _kindCode = MvKindCodes.football;
           } else if (type == MvSlotType.outdoor) {
-            _kindCode = 'HIKING';
+            _kindCode = MvKindCodes.hiking;
           }
           _loadKindDetails();
           _titleController.text = _kind?.titleFa ?? type.titleFa;
@@ -194,11 +194,11 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     String? finalKindCode = _kindCode;
     if (!isRest && _slotType != MvSlotType.strength && finalKindCode == null) {
       if (_slotType == MvSlotType.sport) {
-        finalKindCode = 'FOOTBALL';
+        finalKindCode = MvKindCodes.football;
       } else if (_slotType == MvSlotType.outdoor) {
-        finalKindCode = 'HIKING';
+        finalKindCode = MvKindCodes.hiking;
       } else if (_slotType == MvSlotType.cardio) {
-        finalKindCode = 'RUNNING';
+        finalKindCode = MvKindCodes.running;
       }
     }
 

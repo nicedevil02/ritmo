@@ -21,7 +21,6 @@ import 'package:ritmo/features/supplementary_sports/domain/prescription/session_
 
 /// Screen summarizing the results of a completed supplementary sports workout session.
 class SSSessionSummaryScreen extends StatefulWidget {
-
   /// Constructs an [SSSessionSummaryScreen].
   const SSSessionSummaryScreen({
     super.key,
@@ -31,6 +30,7 @@ class SSSessionSummaryScreen extends StatefulWidget {
     required this.durationSeconds,
     this.overallFeeling,
   });
+
   /// Unique identifier of the session log.
   final String sessionId;
 
@@ -47,11 +47,11 @@ class SSSessionSummaryScreen extends StatefulWidget {
   final Feeling? overallFeeling;
 
   @override
-  State<SSSessionSummaryScreen> createState() =>
-      _SSSessionSummaryScreenState();
+  State<SSSessionSummaryScreen> createState() => _SSSessionSummaryScreenState();
 }
 
-class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with SingleTickerProviderStateMixin {
+class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen>
+    with SingleTickerProviderStateMixin {
   List<bool> _continuity = List.filled(7, false);
   bool _isLoading = true;
   double _caloriesBurned = 0;
@@ -82,8 +82,9 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
     try {
       final db = await DatabaseHelper.instance.database;
       final today = DateTime.now();
-      final last7DaysStart =
-          today.subtract(const Duration(days: 7)).millisecondsSinceEpoch;
+      final last7DaysStart = today
+          .subtract(const Duration(days: 7))
+          .millisecondsSinceEpoch;
 
       // 1. Fetch continuity
       final recentLogs = await db.query(
@@ -94,8 +95,11 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
 
       final contList = List<bool>.generate(7, (i) {
         final date = today.subtract(Duration(days: i));
-        final start =
-            DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
+        final start = DateTime(
+          date.year,
+          date.month,
+          date.day,
+        ).millisecondsSinceEpoch;
         final end = DateTime(
           date.year,
           date.month,
@@ -113,7 +117,10 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
 
       // 2. Load weight & MET
       _userWeight = await MovementLoadCalculator.getUserWeightKg(db);
-      final avgMet = await MovementLoadCalculator.metForSsSession(db, widget.sessionId);
+      final avgMet = await MovementLoadCalculator.metForSsSession(
+        db,
+        widget.sessionId,
+      );
       final durationMins = (widget.durationSeconds / 60).round();
       _caloriesBurned = MovementLoadCalculator.calories(
         met: avgMet,
@@ -132,7 +139,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
 
       final kindRows = await db.query('movement_kinds');
       final kindsMap = {
-        for (final r in kindRows) r['code'] as String: r['titleFa'] as String
+        for (final r in kindRows) r['code'] as String: r['titleFa'] as String,
       };
 
       setState(() {
@@ -158,7 +165,8 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
     try {
       final db = await DatabaseHelper.instance.database;
       final today = DateTime.now();
-      final todayIso = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final todayIso =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       // 1. Update ss_plan_schedule
       await db.update(
@@ -173,8 +181,16 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
       );
 
       // 2. Anti-duplicate guard for workout_logs today
-      final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
-      final startOfTomorrow = DateTime(today.year, today.month, today.day + 1).millisecondsSinceEpoch;
+      final startOfToday = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).millisecondsSinceEpoch;
+      final startOfTomorrow = DateTime(
+        today.year,
+        today.month,
+        today.day + 1,
+      ).millisecondsSinceEpoch;
 
       final existingLogs = await db.query(
         'workout_logs',
@@ -188,7 +204,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
         await MovementRepository.instance.logEvent(
           MovementEvent(
             id: logId,
-            kindCode: 'WEIGHTLIFTING',
+            kindCode: 'BODYWEIGHT',
             durationMinutes: durMins,
             intensity: MovementIntensity.medium,
             loggedAt: today.millisecondsSinceEpoch,
@@ -202,13 +218,17 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
           final presRepo = SsPrescriptionRepository.instance;
           final pres = await presRepo.getPrescriptionForDate(todayIso);
           if (pres != null) {
-            await presRepo.savePrescription(pres.copyWith(
-              status: PrescriptionStatus.done,
-              workoutLogId: logId,
-              updatedAt: today.millisecondsSinceEpoch,
-            ));
+            await presRepo.savePrescription(
+              pres.copyWith(
+                status: PrescriptionStatus.done,
+                workoutLogId: logId,
+                updatedAt: today.millisecondsSinceEpoch,
+              ),
+            );
           }
-        } catch (e) { debugPrint('[ss] ss_session_summary_screen.dart: $e'); }
+        } catch (e) {
+          debugPrint('[ss] ss_session_summary_screen.dart: $e');
+        }
       }
 
       // 3. Fire event to live sync calendar views
@@ -293,10 +313,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
         textDirection: TextDirection.rtl,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               children: [
                 Expanded(
@@ -368,7 +385,7 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                             ),
                           ],
                         ),
-                         const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
                         if (_newPrs.isNotEmpty) ...[
                           Container(
@@ -380,7 +397,9 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                  color: const Color(
+                                    0xFF8B5CF6,
+                                  ).withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -392,7 +411,11 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   textDirection: TextDirection.rtl,
                                   children: [
-                                    Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 24),
+                                    Icon(
+                                      Icons.emoji_events_rounded,
+                                      color: Colors.amber,
+                                      size: 24,
+                                    ),
                                     SizedBox(width: 8),
                                     Text(
                                       'رکوردهای جدید ثبت‌شده 🏆',
@@ -405,21 +428,36 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                 ..._newPrs.map((pr) {
-                                   final type = pr['prType']?.toString() ?? '';
-                                   final val = (pr['value'] as num?)?.toStringAsFixed(1) ?? '0';
-                                   final kindCode = pr['kind']?.toString() ?? '';
-                                   final kindTitle = _kindsMap[kindCode] ?? kindCode;
-                                   
-                                   var label = 'رکورد جدید';
-                                   if (type == 'MAX_DISTANCE') label = '$kindTitle - بیشترین مسافت: $val کیلومتر';
-                                   if (type == 'MAX_DURATION') label = '$kindTitle - طولانی‌ترین زمان: $val دقیقه';
-                                   if (type == 'MAX_ELEVATION') label = '$kindTitle - بیشترین ارتفاع: $val متر';
-                                   if (type == 'MAX_LAPS') label = '$kindTitle - بیشترین دور: $val';
+                                ..._newPrs.map((pr) {
+                                  final type = pr['prType']?.toString() ?? '';
+                                  final val =
+                                      (pr['value'] as num?)?.toStringAsFixed(
+                                        1,
+                                      ) ??
+                                      '0';
+                                  final kindCode = pr['kind']?.toString() ?? '';
+                                  final kindTitle =
+                                      _kindsMap[kindCode] ?? kindCode;
+
+                                  var label = 'رکورد جدید';
+                                  if (type == 'MAX_DISTANCE')
+                                    label =
+                                        '$kindTitle - بیشترین مسافت: $val کیلومتر';
+                                  if (type == 'MAX_DURATION')
+                                    label =
+                                        '$kindTitle - طولانی‌ترین زمان: $val دقیقه';
+                                  if (type == 'MAX_ELEVATION')
+                                    label =
+                                        '$kindTitle - بیشترین ارتفاع: $val متر';
+                                  if (type == 'MAX_LAPS')
+                                    label = '$kindTitle - بیشترین دور: $val';
 
                                   return Container(
                                     margin: const EdgeInsets.only(top: 6),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.black26,
                                       borderRadius: BorderRadius.circular(10),
@@ -466,8 +504,9 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton.icon(
-                          onPressed:
-                              _isRegistering ? null : _registerInMainCalendar,
+                          onPressed: _isRegistering
+                              ? null
+                              : _registerInMainCalendar,
                           icon: _isRegistering
                               ? const SizedBox(
                                   width: 16,
@@ -503,7 +542,9 @@ class _SSSessionSummaryScreenState extends State<SSSessionSummaryScreen> with Si
                         width: double.infinity,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D5B).withValues(alpha: 0.12),
+                          color: const Color(
+                            0xFF2E7D5B,
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: const Color(0xFF2E7D5B)),
                         ),

@@ -14,7 +14,7 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
     final id = 'session_${planId}_$now';
-    
+
     await db.insert('ss_workout_session_log', {
       'id': id,
       'planId': planId,
@@ -28,10 +28,15 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
   }
 
   @override
-  Future<void> logExerciseFeeling(String sessionId, String exerciseId, Feeling feeling) async {
+  Future<void> logExerciseFeeling(
+    String sessionId,
+    String exerciseId,
+    Feeling feeling,
+  ) async {
     final db = await DatabaseHelper.instance.database;
-    final logId = 'feel_${sessionId}_${exerciseId}_${DateTime.now().millisecondsSinceEpoch}';
-    
+    final logId =
+        'feel_${sessionId}_${exerciseId}_${DateTime.now().millisecondsSinceEpoch}';
+
     await db.insert('ss_exercise_feeling_log', {
       'id': logId,
       'sessionLogId': sessionId,
@@ -42,48 +47,74 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
   }
 
   @override
-  Future<void> finishSession(String sessionId, {required int completedCount, required int totalCount, String? overallFeeling}) async {
+  Future<void> finishSession(
+    String sessionId, {
+    required int completedCount,
+    required int totalCount,
+    String? overallFeeling,
+  }) async {
     final db = await DatabaseHelper.instance.database;
     final finishedAt = DateTime.now().millisecondsSinceEpoch;
-    
+
     // Find startedAt
-    final logs = await db.query('ss_workout_session_log', where: 'id = ?', whereArgs: [sessionId]);
+    final logs = await db.query(
+      'ss_workout_session_log',
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
     if (logs.isEmpty) return;
-    
+
     final startedAt = logs.first['startedAt']! as int;
     final durationSec = ((finishedAt - startedAt) / 1000).round();
     final durationMins = (durationSec / 60).ceil().clamp(1, 300);
-    
-    await db.update('ss_workout_session_log', {
-      'finishedAt': finishedAt,
-      'durationSeconds': durationSec,
-      'completedExercisesCount': completedCount,
-      'totalExercisesCount': totalCount,
-      'overallFeeling': overallFeeling,
-    }, where: 'id = ?', whereArgs: [sessionId]);
+
+    await db.update(
+      'ss_workout_session_log',
+      {
+        'finishedAt': finishedAt,
+        'durationSeconds': durationSec,
+        'completedExercisesCount': completedCount,
+        'totalExercisesCount': totalCount,
+        'overallFeeling': overallFeeling,
+      },
+      where: 'id = ?',
+      whereArgs: [sessionId],
+    );
 
     // SPORTS-01: Synchronize with Movement Layer workout_logs
     try {
       final event = MovementEvent(
         id: 'ss_mvt_$sessionId',
-        kindCode: 'STRENGTH_TRAINING',
+        kindCode: 'BODYWEIGHT',
         sourceModule: 'sports',
         sourceEntityId: sessionId,
         loggedAt: startedAt,
         durationMinutes: durationMins,
         intensity: MovementIntensity.high,
-        note: overallFeeling != null ? 'احساس تمرین: $overallFeeling' : 'تمرین بدنسازی با $completedCount حرکت',
+        note: overallFeeling != null
+            ? 'احساس تمرین: $overallFeeling'
+            : 'تمرین بدنسازی با $completedCount حرکت',
       );
       await MovementRepository.instance.logEvent(event);
-    } catch (e) { debugPrint('[ss] ss_session_repository_impl.dart: $e'); }
+    } catch (e) {
+      debugPrint('[ss] ss_session_repository_impl.dart: $e');
+    }
   }
 
   @override
   Future<bool> isTodaySessionLogged() async {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now();
-    final startOfToday = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
-    final startOfTomorrow = DateTime(today.year, today.month, today.day + 1).millisecondsSinceEpoch;
+    final startOfToday = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).millisecondsSinceEpoch;
+    final startOfTomorrow = DateTime(
+      today.year,
+      today.month,
+      today.day + 1,
+    ).millisecondsSinceEpoch;
 
     final result = await db.query(
       'ss_workout_session_log',
@@ -122,16 +153,20 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
     var streak = 0;
     var checkDate = todayMidnight;
 
-    final todayIso = '${todayMidnight.year}-${todayMidnight.month.toString().padLeft(2, '0')}-${todayMidnight.day.toString().padLeft(2, '0')}';
+    final todayIso =
+        '${todayMidnight.year}-${todayMidnight.month.toString().padLeft(2, '0')}-${todayMidnight.day.toString().padLeft(2, '0')}';
     if (!loggedDates.contains(todayIso) && scheduleMap[todayIso] != 'REST') {
       checkDate = todayMidnight.subtract(const Duration(days: 1));
     }
 
     while (true) {
-      final dateIso = '${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
+      final dateIso =
+          '${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
       final status = scheduleMap[dateIso];
 
-      if (loggedDates.contains(dateIso) || status == 'COMPLETED' || status == 'SHIFTED') {
+      if (loggedDates.contains(dateIso) ||
+          status == 'COMPLETED' ||
+          status == 'SHIFTED') {
         streak++;
       } else if (status == 'REST') {
         // Rest day maintains streak
@@ -158,20 +193,24 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now();
     final todayMidnight = DateTime(today.year, today.month, today.day);
-    
+
     final logs = await db.query(
       'ss_workout_session_log',
       where: 'finishedAt IS NOT NULL',
     );
-    
+
     final loggedMidnights = logs.map((log) {
       final dt = DateTime.fromMillisecondsSinceEpoch(log['startedAt']! as int);
       return DateTime(dt.year, dt.month, dt.day);
     }).toSet();
-    
+
     return List.generate(7, (i) {
       final targetDate = todayMidnight.subtract(Duration(hours: i * 26));
-      final targetMidnight = DateTime(targetDate.year, targetDate.month, targetDate.day);
+      final targetMidnight = DateTime(
+        targetDate.year,
+        targetDate.month,
+        targetDate.day,
+      );
       return loggedMidnights.contains(targetMidnight);
     });
   }
@@ -179,7 +218,9 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
   @override
   Future<int> getTotalSessionCount() async {
     final db = await DatabaseHelper.instance.database;
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM ss_workout_session_log WHERE finishedAt IS NOT NULL');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM ss_workout_session_log WHERE finishedAt IS NOT NULL',
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
@@ -187,18 +228,23 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
   Future<double> getMonthContinuityPercent() async {
     final db = await DatabaseHelper.instance.database;
     final today = DateTime.now();
-    final startOfMonth = DateTime(today.year, today.month).millisecondsSinceEpoch;
-    
+    final startOfMonth = DateTime(
+      today.year,
+      today.month,
+    ).millisecondsSinceEpoch;
+
     final logs = await db.query(
       'ss_workout_session_log',
       where: 'startedAt >= ? AND finishedAt IS NOT NULL',
       whereArgs: [startOfMonth],
     );
-    
+
     // Count days logged this month
     final loggedDays = <String>{};
     for (final log in logs) {
-      final date = DateTime.fromMillisecondsSinceEpoch(log['startedAt']! as int);
+      final date = DateTime.fromMillisecondsSinceEpoch(
+        log['startedAt']! as int,
+      );
       loggedDays.add('${date.year}-${date.month}-${date.day}');
     }
 
@@ -219,9 +265,12 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
   }
 
   @override
-  Future<List<ExerciseReadyForIncrease>> getExercisesReadyForProgression() async {
+  Future<List<ExerciseReadyForIncrease>>
+  getExercisesReadyForProgression() async {
     final db = await DatabaseHelper.instance.database;
-    final twelveWeeksAgo = DateTime.now().subtract(const Duration(days: 84)).millisecondsSinceEpoch;
+    final twelveWeeksAgo = DateTime.now()
+        .subtract(const Duration(days: 84))
+        .millisecondsSinceEpoch;
 
     // Load recent feelings from past 12 weeks
     final logs = await db.query(
@@ -244,11 +293,15 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
       final exerciseLogs = entry.value;
 
       final consecutiveWeeks = _calculateConsecutiveEasyWeeks(exerciseLogs);
-      
+
       // Rule: At least 2 consecutive easy weeks
       if (consecutiveWeeks >= 2) {
         // Fetch exercise name
-        final exercises = await db.query('ss_exercise', where: 'id = ?', whereArgs: [exId]);
+        final exercises = await db.query(
+          'ss_exercise',
+          where: 'id = ?',
+          whereArgs: [exId],
+        );
         if (exercises.isNotEmpty) {
           final name = exercises.first['name'].toString();
           readyList.add(
@@ -267,24 +320,24 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
 
   int _calculateConsecutiveEasyWeeks(List<Map<String, dynamic>> logs) {
     if (logs.isEmpty) return 0;
-    
+
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     const oneDayMs = 24 * 60 * 60 * 1000;
     const oneWeekMs = 7 * oneDayMs;
-    
+
     var consecutiveWeeks = 0;
     var currentBlock = 0;
-    
+
     // Check up to 12 weeks back
     while (currentBlock < 12) {
       final start = nowMs - (currentBlock + 1) * oneWeekMs;
       final end = nowMs - currentBlock * oneWeekMs;
-      
+
       final blockLogs = logs.where((log) {
         final time = log['loggedAt'] as int;
         return time >= start && time < end;
       }).toList();
-      
+
       if (blockLogs.isEmpty) {
         if (currentBlock == 0) {
           currentBlock++;
@@ -293,10 +346,12 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
           break;
         }
       }
-      
-      final easyCount = blockLogs.where((l) => l['feeling'].toString() == 'EASY').length;
+
+      final easyCount = blockLogs
+          .where((l) => l['feeling'].toString() == 'EASY')
+          .length;
       final easyRatio = easyCount / blockLogs.length;
-      
+
       if (easyRatio >= 0.7) {
         consecutiveWeeks++;
         currentBlock++;
@@ -304,15 +359,18 @@ class SSSessionRepositoryImpl implements SSSessionRepository {
         break;
       }
     }
-    
+
     return consecutiveWeeks;
   }
 
   String _feelingToString(Feeling feeling) {
     switch (feeling) {
-      case Feeling.easy: return 'EASY';
-      case Feeling.good: return 'GOOD';
-      case Feeling.hard: return 'HARD';
+      case Feeling.easy:
+        return 'EASY';
+      case Feeling.good:
+        return 'GOOD';
+      case Feeling.hard:
+        return 'HARD';
     }
   }
 }

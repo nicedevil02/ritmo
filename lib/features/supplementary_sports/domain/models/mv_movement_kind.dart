@@ -1,5 +1,24 @@
 import 'mv_enums.dart';
 
+/// Canonical uppercase movement kind codes for strong typing.
+abstract final class MvKindCodes {
+  static const walking = 'WALKING';
+  static const running = 'RUNNING';
+  static const cycling = 'CYCLING';
+  static const swimming = 'SWIMMING';
+  static const football = 'FOOTBALL';
+  static const futsal = 'FUTSAL';
+  static const basketball = 'BASKETBALL';
+  static const volleyball = 'VOLLEYBALL';
+  static const tennis = 'TENNIS';
+  static const padel = 'PADEL';
+  static const hiking = 'HIKING';
+  static const yoga = 'YOGA';
+  static const pilates = 'PILATES';
+  static const bodyweight = 'BODYWEIGHT';
+  static const stretching = 'STRETCHING';
+}
+
 enum MovementFamily {
   endurance('ENDURANCE', 'هوازی و استقامتی', '🏃'),
   sport('SPORT', 'ورزش و بازی‌های توپی', '⚽'),

@@ -143,10 +143,14 @@ class MvTodayTab extends StatelessWidget {
           Padding(
             padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
             child: MvQuickLogRow(
-              onQuickWalk: () =>
-                  onQuickLogSaved('WALKING', 30, MvSessionFeeling.good, null),
+              onQuickWalk: () => onQuickLogSaved(
+                MvKindCodes.walking,
+                30,
+                MvSessionFeeling.good,
+                null,
+              ),
               onQuickStretch: () => onQuickLogSaved(
-                'STRETCHING',
+                MvKindCodes.stretching,
                 15,
                 MvSessionFeeling.easy,
                 null,
@@ -154,7 +158,7 @@ class MvTodayTab extends StatelessWidget {
               onCustomLog: () {
                 MvQuickLogSheet.show(
                   context: context,
-                  initialKindCode: 'RUNNING',
+                  initialKindCode: MvKindCodes.running,
                   initialDuration: 30,
                   onSave: (kindCode, dur, feel, note) =>
                       onQuickLogSaved(kindCode, dur, feel, note),

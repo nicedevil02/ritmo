@@ -319,8 +319,8 @@ void main() {
         final decision = insight.calculateMuscleDistribution(
           completedSlots: slots,
         );
-        expect(decision.value.neglectedMuscleGroupCode, equals('BACK'));
-        expect(decision.value.suggestedActionFa, contains('عضلات پشت'));
+        expect(decision.value!.neglectedMuscleGroupCode, equals('BACK'));
+        expect(decision.value!.suggestedActionFa, contains('عضلات پشت'));
       });
 
       test('CoachEngine generates contextual tips', () {

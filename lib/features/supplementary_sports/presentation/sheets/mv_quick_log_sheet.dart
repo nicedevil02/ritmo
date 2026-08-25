@@ -33,12 +33,12 @@ class MvQuickLogSheet extends StatefulWidget {
     String initialKindCode = 'WALKING',
     int initialDuration = 20,
     MvKindUseCase? kindUseCase,
-    required Future<void> Function(
+    Future<void> Function(
       String kindCode,
       int durationMinutes,
       MvSessionFeeling? feeling,
       String? note,
-    )
+    )?
     onSave,
   }) {
     return MvSheetScaffold.show(
@@ -47,7 +47,16 @@ class MvQuickLogSheet extends StatefulWidget {
         initialKindCode: initialKindCode,
         initialDuration: initialDuration,
         kindUseCase: kindUseCase,
-        onSave: onSave,
+        onSave:
+            onSave ??
+            (kindCode, durationMinutes, feeling, note) async {
+              await MvQuickLogUseCase().execute(
+                kindCode: kindCode,
+                durationMinutes: durationMinutes,
+                feeling: feeling,
+                note: note,
+              );
+            },
       ),
     );
   }

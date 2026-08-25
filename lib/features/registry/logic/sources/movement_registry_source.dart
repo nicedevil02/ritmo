@@ -4,7 +4,8 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/logic/sources/registry_source.dart';
-import 'package:ritmo/features/supplementary_sports/movement/data/movement_repository.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/mv_kind_repository.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
 class MovementRegistrySource implements RegistrySource {
   @override
@@ -26,7 +27,7 @@ class MovementRegistrySource implements RegistrySource {
     required int offset,
     bool includeArchived = false,
   }) async {
-    final kinds = await MovementRepository.instance.getKinds();
+    final kinds = await MvKindRepository().getAll();
     final todayStr = DateTime.now().toIso8601String().split('T').first;
 
     final sliced = kinds.skip(offset).take(limit).toList();

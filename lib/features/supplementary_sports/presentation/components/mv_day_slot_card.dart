@@ -89,10 +89,10 @@ class MvDaySlotCard extends StatelessWidget {
                         ),
                         if (slot.isLocked) ...[
                           SizedBox(width: metrics.spaceXs),
-                          const Icon(
+                          Icon(
                             Icons.lock_rounded,
                             size: 14,
-                            color: Color(0xFFD4A843),
+                            color: colors.accent,
                           ),
                         ],
                         if (slot.isRest) ...[

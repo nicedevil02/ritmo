@@ -438,10 +438,10 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.lock_rounded,
                                   size: 18,
-                                  color: Color(0xFFD4A843),
+                                  color: colors.accent,
                                 ),
                                 SizedBox(width: metrics.spaceSm),
                                 Expanded(

@@ -218,4 +218,10 @@ class MvSessionRepository {
     if (rows.isEmpty) return null;
     return MvSession.fromMap(rows.first);
   }
+
+  /// Deletes a session by ID.
+  Future<void> deleteSession(String id) async {
+    final db = await _db;
+    await db.delete('movement_sessions', where: 'id = ?', whereArgs: [id]);
+  }
 }

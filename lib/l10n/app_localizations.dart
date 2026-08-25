@@ -2569,6 +2569,480 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'، دارای علائم ثبت‌شده'**
   String get cycleSemanticsHasLogs;
+
+  /// No description provided for @mv_kind_picker_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'انتخاب نوع ورزش'**
+  String get mv_kind_picker_title;
+
+  /// No description provided for @mv_kind_picker_search_hint.
+  ///
+  /// In fa, this message translates to:
+  /// **'جستجوی ورزش...'**
+  String get mv_kind_picker_search_hint;
+
+  /// No description provided for @mv_kind_picker_recent.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش‌های اخیر'**
+  String get mv_kind_picker_recent;
+
+  /// No description provided for @mv_kind_picker_seasonal.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش‌های فصلی / پیشنهادی'**
+  String get mv_kind_picker_seasonal;
+
+  /// No description provided for @mv_kind_picker_all.
+  ///
+  /// In fa, this message translates to:
+  /// **'همهٔ ورزش‌ها'**
+  String get mv_kind_picker_all;
+
+  /// No description provided for @mv_kind_picker_create_custom.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش جدید دلخواه'**
+  String get mv_kind_picker_create_custom;
+
+  /// No description provided for @mv_kind_picker_empty.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزشی با این عنوان یافت نشد.'**
+  String get mv_kind_picker_empty;
+
+  /// No description provided for @mv_custom_kind_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'ساخت نوع ورزش سفارشی'**
+  String get mv_custom_kind_title;
+
+  /// No description provided for @mv_custom_kind_name.
+  ///
+  /// In fa, this message translates to:
+  /// **'نام ورزش'**
+  String get mv_custom_kind_name;
+
+  /// No description provided for @mv_custom_kind_family.
+  ///
+  /// In fa, this message translates to:
+  /// **'دسته‌بندی اصلی'**
+  String get mv_custom_kind_family;
+
+  /// No description provided for @mv_custom_kind_metric.
+  ///
+  /// In fa, this message translates to:
+  /// **'متریک اصلی اندازه‌گیری'**
+  String get mv_custom_kind_metric;
+
+  /// No description provided for @mv_custom_kind_intensity.
+  ///
+  /// In fa, this message translates to:
+  /// **'شدت پیش‌فرض (MET)'**
+  String get mv_custom_kind_intensity;
+
+  /// No description provided for @mv_custom_kind_saved.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش سفارشی با موفقیت ذخیره شد.'**
+  String get mv_custom_kind_saved;
+
+  /// No description provided for @mv_onboarding_anchor_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش‌های ثابت هفتگی (لنگر)'**
+  String get mv_onboarding_anchor_title;
+
+  /// No description provided for @mv_onboarding_anchor_add.
+  ///
+  /// In fa, this message translates to:
+  /// **'افزودن زمان ثابت'**
+  String get mv_onboarding_anchor_add;
+
+  /// No description provided for @mv_onboarding_anchor_skip.
+  ///
+  /// In fa, this message translates to:
+  /// **'بعداً اضافه می‌کنم'**
+  String get mv_onboarding_anchor_skip;
+
+  /// No description provided for @mv_commitment_saved.
+  ///
+  /// In fa, this message translates to:
+  /// **'تعهد ثابت ثبت شد'**
+  String get mv_commitment_saved;
+
+  /// No description provided for @mv_commitment_repeat_weekly.
+  ///
+  /// In fa, this message translates to:
+  /// **'تکرار هفتگی'**
+  String get mv_commitment_repeat_weekly;
+
+  /// No description provided for @mv_commitment_venue.
+  ///
+  /// In fa, this message translates to:
+  /// **'محل یا سالن تمرین'**
+  String get mv_commitment_venue;
+
+  /// No description provided for @mv_commitment_partner.
+  ///
+  /// In fa, this message translates to:
+  /// **'هم‌تمرینی / تیم'**
+  String get mv_commitment_partner;
+
+  /// No description provided for @mv_anchor_cancelled_this_week.
+  ///
+  /// In fa, this message translates to:
+  /// **'این هفته لغو شد'**
+  String get mv_anchor_cancelled_this_week;
+
+  /// No description provided for @mv_anchor_suggest_deactivate.
+  ///
+  /// In fa, this message translates to:
+  /// **'آیا می‌خواهید این تعهد به طور کامل غیرفعال شود؟'**
+  String get mv_anchor_suggest_deactivate;
+
+  /// No description provided for @mv_anchor_constraint_note.
+  ///
+  /// In fa, this message translates to:
+  /// **'تمرین ثابت لنگر با توجه به محدودیت ثبت‌شده'**
+  String get mv_anchor_constraint_note;
+
+  /// No description provided for @mv_tomorrow_anchor_notice.
+  ///
+  /// In fa, this message translates to:
+  /// **'یادآوری: فردا جلسهٔ ثابت لنگر دارید'**
+  String get mv_tomorrow_anchor_notice;
+
+  /// No description provided for @mv_conflict_back_to_back.
+  ///
+  /// In fa, this message translates to:
+  /// **'هشدار: دو جلسهٔ سنگین متوالی برنامه‌ریزی شده است'**
+  String get mv_conflict_back_to_back;
+
+  /// No description provided for @mv_reason_anchor.
+  ///
+  /// In fa, this message translates to:
+  /// **'جلسهٔ ثابت لنگر برنامه‌ریزی شده شما'**
+  String get mv_reason_anchor;
+
+  /// No description provided for @mv_reason_pre_anchor_taper.
+  ///
+  /// In fa, this message translates to:
+  /// **'کاهش حجم تمرینی جهت حفظ توان برای جلسهٔ لنگر فردا'**
+  String get mv_reason_pre_anchor_taper;
+
+  /// No description provided for @mv_reason_post_anchor_recovery.
+  ///
+  /// In fa, this message translates to:
+  /// **'ریکاوری و بازتوانی پس از جلسهٔ فشردهٔ لنگر دیروز'**
+  String get mv_reason_post_anchor_recovery;
+
+  /// No description provided for @mv_reason_complement.
+  ///
+  /// In fa, this message translates to:
+  /// **'تمرین مکمل قدرتی جهت تعادل عضلانی و حمایت از ورزش اصلی'**
+  String get mv_reason_complement;
+
+  /// No description provided for @mv_reason_who_gap.
+  ///
+  /// In fa, this message translates to:
+  /// **'جبران کسری فعالیت معادل متوسط جهت دستیابی به هدف ۱۵۰ دقیقه در هفته'**
+  String get mv_reason_who_gap;
+
+  /// No description provided for @mv_reason_strength_quota.
+  ///
+  /// In fa, this message translates to:
+  /// **'تکمیل سهمیهٔ ۲ جلسه تمرین تقویتی عضلانی در هفته'**
+  String get mv_reason_strength_quota;
+
+  /// No description provided for @mv_reason_rest_guaranteed.
+  ///
+  /// In fa, this message translates to:
+  /// **'روز استراحت ضروری جهت بازسازی فیزیولوژیک'**
+  String get mv_reason_rest_guaranteed;
+
+  /// No description provided for @mv_reason_readiness_low.
+  ///
+  /// In fa, this message translates to:
+  /// **'تعدیل فشار تمرین به دلیل سطح آمادگی پایین امروز'**
+  String get mv_reason_readiness_low;
+
+  /// No description provided for @mv_reason_load_cap.
+  ///
+  /// In fa, this message translates to:
+  /// **'کنترل سقف افزایش بار هفتگی برای پیشگیری از خستگی مفرط'**
+  String get mv_reason_load_cap;
+
+  /// No description provided for @mv_reason_fallback_minimum.
+  ///
+  /// In fa, this message translates to:
+  /// **'حداقل فعالیت مؤثر ۱۰ دقیقه‌ای برای حفظ زنجیره'**
+  String get mv_reason_fallback_minimum;
+
+  /// No description provided for @mv_reason_season_fit.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش متناسب با فصل جاری'**
+  String get mv_reason_season_fit;
+
+  /// No description provided for @mv_reason_constraint_relaxed.
+  ///
+  /// In fa, this message translates to:
+  /// **'تطبیق تمرین با شرایط و امکانات فعلی'**
+  String get mv_reason_constraint_relaxed;
+
+  /// No description provided for @mv_metric_distance.
+  ///
+  /// In fa, this message translates to:
+  /// **'مسافت (کیلومتر)'**
+  String get mv_metric_distance;
+
+  /// No description provided for @mv_metric_elevation.
+  ///
+  /// In fa, this message translates to:
+  /// **'ارتفاع (متر)'**
+  String get mv_metric_elevation;
+
+  /// No description provided for @mv_metric_laps.
+  ///
+  /// In fa, this message translates to:
+  /// **'تعداد دور / طول'**
+  String get mv_metric_laps;
+
+  /// No description provided for @mv_metric_pack_weight.
+  ///
+  /// In fa, this message translates to:
+  /// **'وزن کوله (کیلوگرم)'**
+  String get mv_metric_pack_weight;
+
+  /// No description provided for @mv_metric_duration.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدت زمان (دقیقه)'**
+  String get mv_metric_duration;
+
+  /// No description provided for @mv_effort_question.
+  ///
+  /// In fa, this message translates to:
+  /// **'فشار این تمرین چطور بود؟'**
+  String get mv_effort_question;
+
+  /// No description provided for @mv_effort_easy.
+  ///
+  /// In fa, this message translates to:
+  /// **'آسان'**
+  String get mv_effort_easy;
+
+  /// No description provided for @mv_effort_good.
+  ///
+  /// In fa, this message translates to:
+  /// **'مناسب'**
+  String get mv_effort_good;
+
+  /// No description provided for @mv_effort_hard.
+  ///
+  /// In fa, this message translates to:
+  /// **'سخت'**
+  String get mv_effort_hard;
+
+  /// No description provided for @mv_effort_refine.
+  ///
+  /// In fa, this message translates to:
+  /// **'تنظیم دقیق با اسلایدر RPE'**
+  String get mv_effort_refine;
+
+  /// No description provided for @mv_new_personal_record.
+  ///
+  /// In fa, this message translates to:
+  /// **'رکورد شخصی جدید! 🎉'**
+  String get mv_new_personal_record;
+
+  /// No description provided for @mv_load_band_low.
+  ///
+  /// In fa, this message translates to:
+  /// **'بار سبک'**
+  String get mv_load_band_low;
+
+  /// No description provided for @mv_load_band_optimal.
+  ///
+  /// In fa, this message translates to:
+  /// **'بار بهینه و سازنده'**
+  String get mv_load_band_optimal;
+
+  /// No description provided for @mv_load_band_watch.
+  ///
+  /// In fa, this message translates to:
+  /// **'بار رو به افزایش'**
+  String get mv_load_band_watch;
+
+  /// No description provided for @mv_load_band_spike.
+  ///
+  /// In fa, this message translates to:
+  /// **'جهش بار تمرینی (نیازمند احتیاط)'**
+  String get mv_load_band_spike;
+
+  /// No description provided for @mv_budget_moderate_minutes.
+  ///
+  /// In fa, this message translates to:
+  /// **'دقیقه فعالیت معادل متوسط'**
+  String get mv_budget_moderate_minutes;
+
+  /// No description provided for @mv_budget_strength_days.
+  ///
+  /// In fa, this message translates to:
+  /// **'روز تمرین قدرتی'**
+  String get mv_budget_strength_days;
+
+  /// No description provided for @mv_budget_remaining.
+  ///
+  /// In fa, this message translates to:
+  /// **'باقیمانده تا هدف سلامت هفتگی'**
+  String get mv_budget_remaining;
+
+  /// No description provided for @mv_streak_insufficient.
+  ///
+  /// In fa, this message translates to:
+  /// **'برای محاسبهٔ تداوم، حداقل ۲ هفته فعالیت لازم است'**
+  String get mv_streak_insufficient;
+
+  /// No description provided for @mv_readiness_no_checkin.
+  ///
+  /// In fa, this message translates to:
+  /// **'سطح آمادگی امروز هنوز ثبت نشده است'**
+  String get mv_readiness_no_checkin;
+
+  /// No description provided for @mv_need_n_more_sessions.
+  ///
+  /// In fa, this message translates to:
+  /// **'چند جلسهٔ دیگر برای ارزیابی دقیق مورد نیاز است'**
+  String get mv_need_n_more_sessions;
+
+  /// No description provided for @mv_insufficient_data_generic.
+  ///
+  /// In fa, this message translates to:
+  /// **'دادهٔ کافی ثبت نشده است'**
+  String get mv_insufficient_data_generic;
+
+  /// No description provided for @mv_insight_best_day.
+  ///
+  /// In fa, this message translates to:
+  /// **'روز طلایی تمرین'**
+  String get mv_insight_best_day;
+
+  /// No description provided for @mv_insight_anchor_adherence.
+  ///
+  /// In fa, this message translates to:
+  /// **'پایبندی به لنگرها'**
+  String get mv_insight_anchor_adherence;
+
+  /// No description provided for @mv_insight_effort_drift.
+  ///
+  /// In fa, this message translates to:
+  /// **'روند ادراک فشار'**
+  String get mv_insight_effort_drift;
+
+  /// No description provided for @mv_insight_kind_mix.
+  ///
+  /// In fa, this message translates to:
+  /// **'تنوع ورزشی ماهانه'**
+  String get mv_insight_kind_mix;
+
+  /// No description provided for @mv_insight_route_progress.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیشرفت در مسیر تکراری'**
+  String get mv_insight_route_progress;
+
+  /// No description provided for @mv_campaign_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'دورهٔ هدف‌دار'**
+  String get mv_campaign_title;
+
+  /// No description provided for @mv_campaign_target_date.
+  ///
+  /// In fa, this message translates to:
+  /// **'تاریخ رویداد هدف'**
+  String get mv_campaign_target_date;
+
+  /// No description provided for @mv_campaign_phase_base.
+  ///
+  /// In fa, this message translates to:
+  /// **'مرحله پایه'**
+  String get mv_campaign_phase_base;
+
+  /// No description provided for @mv_campaign_phase_build.
+  ///
+  /// In fa, this message translates to:
+  /// **'مرحله بارگذاری تدریجی'**
+  String get mv_campaign_phase_build;
+
+  /// No description provided for @mv_campaign_phase_taper.
+  ///
+  /// In fa, this message translates to:
+  /// **'مرحله کاهش حجم و آماده‌سازی'**
+  String get mv_campaign_phase_taper;
+
+  /// No description provided for @mv_campaign_too_short.
+  ///
+  /// In fa, this message translates to:
+  /// **'زمان باقیمانده تا رویداد کمتر از ۴ هفته است'**
+  String get mv_campaign_too_short;
+
+  /// No description provided for @mv_route_select.
+  ///
+  /// In fa, this message translates to:
+  /// **'انتخاب مسیر'**
+  String get mv_route_select;
+
+  /// No description provided for @mv_route_new.
+  ///
+  /// In fa, this message translates to:
+  /// **'ثبت مسیر جدید'**
+  String get mv_route_new;
+
+  /// No description provided for @mv_route_times_done.
+  ///
+  /// In fa, this message translates to:
+  /// **'دفعات انجام: {count}'**
+  String mv_route_times_done(int count);
+
+  /// No description provided for @mv_route_best_time.
+  ///
+  /// In fa, this message translates to:
+  /// **'بهترین زمان: {minutes} دقیقه'**
+  String mv_route_best_time(int minutes);
+
+  /// No description provided for @mv_day_plan_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ روز'**
+  String get mv_day_plan_title;
+
+  /// No description provided for @mv_library_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'کتابخانهٔ حرکات و ورزش‌ها'**
+  String get mv_library_title;
+
+  /// No description provided for @mv_week_plan_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ هفته'**
+  String get mv_week_plan_title;
+
+  /// No description provided for @mv_library_tab_kinds.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش‌ها'**
+  String get mv_library_tab_kinds;
+
+  /// No description provided for @mv_library_tab_exercises.
+  ///
+  /// In fa, this message translates to:
+  /// **'حرکات'**
+  String get mv_library_tab_exercises;
 }
 
 class _AppLocalizationsDelegate

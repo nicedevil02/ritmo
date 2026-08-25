@@ -9,7 +9,7 @@ import 'package:ritmo/features/health/presentation/widgets/medication_form_sheet
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_study_sheet.dart';
 import 'package:ritmo/features/routines/presentation/universal_planner_sheet.dart';
-import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_quick_log_sheet.dart';
 
 class DomainSelectionSheet extends StatelessWidget {
   const DomainSelectionSheet({
@@ -218,7 +218,7 @@ class DomainSelectionSheet extends StatelessWidget {
                 color: colors.success,
                 onTap: () async {
                   Navigator.of(context).pop();
-                  await showMovementLogSheet(context);
+                  await MvQuickLogSheet.show(context: context);
                   DayAgendaService.instance.invalidateDate(dateStr);
                   onCreated();
                 },

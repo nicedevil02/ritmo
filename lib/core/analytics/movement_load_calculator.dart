@@ -1,7 +1,7 @@
 // lib/core/analytics/movement_load_calculator.dart
 
 import 'package:flutter/foundation.dart';
-import 'package:ritmo/features/supplementary_sports/movement/domain/movement_kind.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Single source of truth for all MET, MET-minute, and Calorie calculations across Ritmo.

@@ -10,8 +10,6 @@ import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
-// TODO(arch): Core layer dependency on supplementary_sports feature. Decouple in future via DatabaseHelper.warmupHooks or an event listener pattern.
-import 'package:ritmo/features/supplementary_sports/domain/ss_session_completion_gateway.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -316,13 +314,19 @@ class EndOfDaySweep {
             'note': 'مختومه به دلیل پایان روز',
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-          await SsSessionCompletionGateway.completeDetailedSessionInTransaction(
-            txn,
-            prescriptionId: activePlanId,
-            sessionId: activeSessionId,
-            actualMinutes: durationSec ~/ 60,
-            actualRpe: 5,
-            isPartial: true,
+          if (activePlanId != null) {
+            await txn.update(
+              'ss_session_prescription',
+              {'status': 'DONE', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+              where: 'id = ?',
+              whereArgs: [activePlanId],
+            );
+          }
+          await txn.update(
+            'movement_sessions',
+            {'status': 'COMPLETED', 'endedAt': finishedAt, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+            where: 'id = ?',
+            whereArgs: [activeSessionId],
           );
 
           // Clear preferences so it doesn't get swept again and dashboard doesn't show it as resumable

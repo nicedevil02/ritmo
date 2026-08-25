@@ -95,9 +95,7 @@ class MvWeekRail extends StatelessWidget {
                       Icon(
                         Icons.lock_rounded,
                         size: 9,
-                        color: isSelected
-                            ? colors.onPrimary
-                            : const Color(0xFFD4A843),
+                        color: isSelected ? colors.onPrimary : colors.accent,
                       )
                     else
                       Container(

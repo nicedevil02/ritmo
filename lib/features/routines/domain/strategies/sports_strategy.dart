@@ -5,7 +5,7 @@ import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/routines/domain/routine_recurrence.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_category_strategy.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_save_context.dart';
-import 'package:ritmo/features/supplementary_sports/movement/presentation/movement_log_sheet.dart';
+import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_quick_log_sheet.dart';
 
 class SportsStrategy implements PlannerCategoryStrategy {
   const SportsStrategy();
@@ -26,7 +26,7 @@ class SportsStrategy implements PlannerCategoryStrategy {
 
     // --- Case A: LOG mode ---
     if (c.sportsOpType == 'LOG') {
-      await showMovementLogSheet(context);
+      await MvQuickLogSheet.show(context: context);
       return;
     }
 

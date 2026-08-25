@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_gateway.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -729,124 +730,171 @@ class PlannerController extends ChangeNotifier {
       barrierColor: Colors.black.withValues(alpha: 0.45),
       isScrollControlled: true,
       builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            decoration: BoxDecoration(
-              color: isDark 
-                  ? const Color(0xff12141C).withValues(alpha: 0.9) 
-                  : Colors.white.withValues(alpha: 0.9),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-              border: Border(
-                top: BorderSide(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.4),
-                  width: 1.5,
+        final colors = context.colors;
+        final isDark = context.isDark;
+        final isGlass = context.isGlassEnabled;
+        final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+        const sheetRadius = BorderRadius.vertical(top: Radius.circular(30));
+
+        final content = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: colors.textSecondary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.25),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      )
-                    ],
-                  ),
-                  child: Icon(icon, color: color, size: 38),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'فعال‌سازی سیستم $name',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                    height: 1.5,
-                    ),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: BorderSide(
-                              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.15),
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'انصراف',
-                          style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black87,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          try {
-                            await ModuleManagementService.instance.setModuleEnabled(settingKey, true);
-                            await _loadModuleSettings();
-                            onActivated();
-                          } catch (e) {
-                            debugPrint('Error enabling module: $e');
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: color,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: const Text(
-                          'فعال‌سازی سیستم',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            ),
-                        ),
-                      ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.25),
+                      blurRadius: 20,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
-              ],
+                child: Icon(icon, color: color, size: 38),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'فعال‌سازی سیستم $name',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: colors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: colors.border.withValues(alpha: 0.25),
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'انصراف',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        try {
+                          await ModuleManagementService.instance.setModuleEnabled(settingKey, true);
+                          await _loadModuleSettings();
+                          onActivated();
+                        } catch (e) {
+                          debugPrint('Error enabling module: $e');
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: color,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: const Text(
+                        'فعال‌سازی سیستم',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
             ),
           ),
         );

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
@@ -70,9 +72,13 @@ class DayReviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final colors = context.colors;
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(
+      top: Radius.circular(RitmoRadius.sheet),
+    );
 
     final uncompleted = snapshot.items
         .where(
@@ -87,223 +93,280 @@ class DayReviewSheet extends StatelessWidget {
       if (item.completion == AgendaCompletion.overdue) overdueCount++;
     }
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-        ),
-        decoration: BoxDecoration(
-          color: isDark
-              ? theme.colorScheme.surfaceContainerHigh
-              : theme.cardColor,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(RitmoRadius.sheet),
-          ),
-        ),
+    final content = SafeArea(
+      child: Padding(
         padding: const EdgeInsets.all(RitmoSpacing.lg),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header: Date + Rhythm Score
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Header: Date + Rhythm Score
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'مرور روز',
+                      style: TextStyle(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _fullJalaliDateStr,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                // Rhythm Score Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Icon(Icons.bolt, size: 14, color: colors.primary),
+                      const SizedBox(width: 2),
                       Text(
-                        'مرور روز',
+                        'امتیاز: ${toPersianDigits(snapshot.rhythmScore.round())}٪',
                         style: TextStyle(
-                          fontSize: 15.0,
+                          fontSize: 12.0,
                           fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                          color: colors.primary,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _fullJalaliDateStr,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 2. Three Stats Row
+            Row(
+              children: [
+                Expanded(
+                  child: _StatBox(
+                    label: 'انجام‌شده',
+                    value: toPersianDigits(snapshot.completedCount),
+                    color: colors.success,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatBox(
+                    label: 'مانده',
+                    value: toPersianDigits(snapshot.remainingCount),
+                    color: colors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatBox(
+                    label: 'معوقه',
+                    value: toPersianDigits(overdueCount),
+                    color: colors.warning,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Narrative summary
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : colors.card.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(RitmoRadius.card),
+              ),
+              child: Text(
+                _narrativeSummary,
+                style: TextStyle(
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Divider(height: 1, color: colors.divider),
+            const SizedBox(height: 12),
+
+            // 4. Conflicts Section (if any)
+            if (snapshot.conflicts.isNotEmpty) ...[
+              Text(
+                'تداخل‌های زمانی (${toPersianDigits(snapshot.conflicts.length)})',
+                style: TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.bold,
+                  color: colors.warning,
+                ),
+              ),
+              const SizedBox(height: 6),
+              ...snapshot.conflicts.map((conflict) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.warning.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colors.warning.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${conflict.itemA.title} ↔ ${conflict.itemB.title}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onReviewed();
+                        },
+                        child: const Text(
+                          'رفع',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+
+            // 3. Uncompleted items list
+            Text(
+              'برنامه‌های مانده (${toPersianDigits(uncompleted.length)})',
+              style: TextStyle(
+                fontSize: 13.0,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            Expanded(
+              child: uncompleted.isEmpty
+                  ? Center(
+                      child: Text(
+                        'تمام برنامه‌های این روز انجام شده‌اند.',
                         style: TextStyle(
                           fontSize: 12.0,
                           color: colors.textSecondary,
                         ),
                       ),
-                    ],
-                  ),
-                  // Rhythm Score Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                    )
+                  : ListView.separated(
+                      itemCount: uncompleted.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, index) {
+                        final item = uncompleted[index];
+                        return _ReviewTile(
+                          item: item,
+                          dateStr: dateStr,
+                          onReviewed: onReviewed,
+                        );
+                      },
                     ),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(RitmoRadius.badge),
-                    ),
-                    child: Text(
-                      'امتیاز ریتم: ${toPersianDigits(snapshot.rhythmScore)}٪',
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.bold,
-                        color: colors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+            ),
+          ],
+        ),
+      ),
+    );
 
-              // 2. Three Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatBox(
-                      label: 'انجام‌شده',
-                      value: toPersianDigits(snapshot.completedCount),
-                      color: colors.success,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatBox(
-                      label: 'مانده',
-                      value: toPersianDigits(snapshot.remainingCount),
-                      color: colors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatBox(
-                      label: 'معوقه',
-                      value: toPersianDigits(overdueCount),
-                      color: colors.warning,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
 
-              // 5. News-tone narrative summary sentence
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? theme.colorScheme.surfaceContainerLow.withValues(
-                          alpha: 0.6,
-                        )
-                      : theme.colorScheme.surfaceContainerHighest.withValues(
-                          alpha: 0.4,
-                        ),
-                  borderRadius: BorderRadius.circular(RitmoRadius.card),
-                ),
-                child: Text(
-                  _narrativeSummary,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
+    if (!isGlass) {
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.85),
+      ),
+      child: ClipRRect(
+        borderRadius: sheetRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.glassTint,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.70),
+                width: 1.0,
+              ),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: sheetRadius,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.45],
                 ),
               ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: colors.border),
-              const SizedBox(height: 12),
-
-              // 4. Conflicts Section (if any)
-              if (snapshot.conflicts.isNotEmpty) ...[
-                Text(
-                  'تداخل‌های زمانی (${toPersianDigits(snapshot.conflicts.length)})',
-                  style: TextStyle(
-                    fontSize: 13.0,
-                    fontWeight: FontWeight.bold,
-                    color: colors.warning,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ...snapshot.conflicts.map((conflict) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.warning.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: colors.warning.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${conflict.itemA.title} ↔ ${conflict.itemB.title}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            onReviewed();
-                          },
-                          child: const Text(
-                            'رفع',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                const SizedBox(height: 8),
-              ],
-
-              // 3. Uncompleted items list
-              Text(
-                'برنامه‌های مانده (${toPersianDigits(uncompleted.length)})',
-                style: TextStyle(
-                  fontSize: 13.0,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              Expanded(
-                child: uncompleted.isEmpty
-                    ? Center(
-                        child: Text(
-                          'تمام برنامه‌های این روز انجام شده‌اند.',
-                          style: TextStyle(
-                            fontSize: 12.0,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: uncompleted.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (ctx, index) {
-                          final item = uncompleted[index];
-                          return _ReviewTile(
-                            item: item,
-                            dateStr: dateStr,
-                            onReviewed: onReviewed,
-                          );
-                        },
-                      ),
-              ),
-            ],
+              child: sheetBody,
+            ),
           ),
         ),
       ),

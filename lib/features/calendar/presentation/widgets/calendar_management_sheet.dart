@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -150,222 +151,281 @@ class _CalendarManagementSheetState extends State<CalendarManagementSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(
+      top: Radius.circular(RitmoRadius.sheet),
+    );
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
-          ),
-          decoration: BoxDecoration(
-            color: colors.sheetBackground,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(RitmoRadius.sheet),
+    final content = SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle Bar
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(
+                top: RitmoSpacing.md,
+                bottom: RitmoSpacing.sm,
+              ),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.textSecondary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            border: Border.all(
-              color: colors.border.withValues(alpha: isDark ? 0.2 : 0.1),
-            ),
           ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+
+          // Title Row
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: RitmoSpacing.lg,
+              vertical: RitmoSpacing.xs,
+            ),
+            child: Row(
               children: [
-                // Handle Bar
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.only(
-                      top: RitmoSpacing.md,
-                      bottom: RitmoSpacing.sm,
-                    ),
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.border.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(2),
+                Icon(Icons.tune_rounded, size: 20, color: colors.primary),
+                const SizedBox(width: RitmoSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'مدیریت تقویم',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
-
-                // Title Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: RitmoSpacing.lg,
-                    vertical: RitmoSpacing.xs,
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: colors.textSecondary,
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.tune_rounded, size: 20, color: colors.primary),
-                      const SizedBox(width: RitmoSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          'مدیریت تقویم',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close_rounded,
-                          size: 20,
-                          color: colors.textSecondary,
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const Divider(height: 1, thickness: 0.5),
-
-                // Scrollable Content
-                Flexible(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(
-                      RitmoSpacing.lg,
-                      RitmoSpacing.md,
-                      RitmoSpacing.lg,
-                      RitmoSpacing.lg,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section 1: Display / نماها
-                        _buildSectionHeader('نمایش و نماها', colors),
-                        const SizedBox(height: RitmoSpacing.xs),
-                        _buildActionTile(
-                          icon: Icons.view_week_outlined,
-                          title: 'نمای هفته',
-                          subtitle: 'بررسی کل هفته در یک نگاه',
-                          isSelected: widget.currentScale == JourneyScale.week,
-                          colors: colors,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onSelectScale(JourneyScale.week);
-                          },
-                        ),
-                        _buildActionTile(
-                          icon: Icons.calendar_view_month_outlined,
-                          title: 'نمای سال',
-                          subtitle: 'بررسی ۱۲ ماه سال و نقشه حرارتی',
-                          isSelected: widget.currentScale == JourneyScale.year,
-                          colors: colors,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onSelectScale(JourneyScale.year);
-                          },
-                        ),
-                        _buildSwitchTile(
-                          icon: Icons.unfold_less_rounded,
-                          title: 'فشرده‌سازی تکرارها',
-                          subtitle: 'تجمیع روتین‌های روزانه تکراری',
-                          value: _compressRecurring,
-                          colors: colors,
-                          onChanged: _toggleCompress,
-                        ),
-                        _buildSwitchTile(
-                          icon: Icons.nightlight_round,
-                          title: 'نمایش گاهشمار قمری',
-                          subtitle: 'نمایش مناسبت‌ها و روزهای قمری',
-                          value: _showHijri,
-                          colors: colors,
-                          onChanged: _toggleHijri,
-                        ),
-
-                        const SizedBox(height: RitmoSpacing.lg),
-
-                        // Section 2: Day Actions / روز
-                        _buildSectionHeader('روز', colors),
-                        const SizedBox(height: RitmoSpacing.xs),
-                        _buildActionTile(
-                          icon: Icons.auto_stories_outlined,
-                          title: 'روز من (مرور و خلاصه)',
-                          subtitle: 'بررسی عملکرد، امتیازها و کارهای انجام‌شده',
-                          colors: colors,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onOpenDayReview();
-                          },
-                        ),
-                        _buildActionTile(
-                          icon: Icons.flag_outlined,
-                          title: 'نشان روز',
-                          subtitle:
-                              'تعیین وضعیت روز (استراحت 🌴 / سفر ✈️ / خاص ⭐)',
-                          colors: colors,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onOpenDayMarkPicker();
-                          },
-                        ),
-
-                        const SizedBox(height: RitmoSpacing.lg),
-
-                        // Section 3: Tools / ابزارها
-                        _buildSectionHeader('ابزارها', colors),
-                        const SizedBox(height: RitmoSpacing.xs),
-                        _buildActionTile(
-                          icon: Icons.list_alt_rounded,
-                          title: 'همهٔ برنامه‌ها',
-                          subtitle: 'فهرست کامل دامنه‌ها و رجیستری',
-                          badgeCount: widget.healthIssueCount,
-                          colors: colors,
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            widget.onOpenAllPlans();
-                          },
-                        ),
-                        _buildActionTile(
-                          icon: Icons.wb_sunny_outlined,
-                          title: 'خلاصهٔ صبحگاهی',
-                          subtitle: 'متن خلاصه رویدادها و اولویت‌های امروز',
-                          colors: colors,
-                          onTap: _showMorningBrief,
-                        ),
-                        if (widget.onSaveDayTemplate != null)
-                          _buildActionTile(
-                            icon: Icons.bookmark_add_outlined,
-                            title: 'ذخیره به‌عنوان قالب روز',
-                            subtitle:
-                                'ذخیرهٔ چیدمان زمانی آیتم‌های این روز برای استفادهٔ مجدد',
-                            colors: colors,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              widget.onSaveDayTemplate!();
-                            },
-                          ),
-                        if (widget.onApplyDayTemplate != null)
-                          _buildActionTile(
-                            icon: Icons.dashboard_customize_outlined,
-                            title: 'اعمال قالب روز',
-                            subtitle:
-                                'بارگذاری و چینش زمان‌بندی از روی قالب‌های ذخیره‌شده',
-                            colors: colors,
-                            onTap: () {
-                              Navigator.of(context).pop();
-                              widget.onApplyDayTemplate!();
-                            },
-                          ),
-
-                        const SizedBox(height: RitmoSpacing.md),
-                      ],
-                    ),
-                  ),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
           ),
-        ),
+
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: colors.divider,
+          ),
+
+          // Scrollable Content
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                RitmoSpacing.lg,
+                RitmoSpacing.md,
+                RitmoSpacing.lg,
+                RitmoSpacing.lg,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section 1: Display / نماها
+                  _buildSectionHeader('نمایش و نماها', colors),
+                  const SizedBox(height: RitmoSpacing.xs),
+                  _buildActionTile(
+                    icon: Icons.view_week_outlined,
+                    title: 'نمای هفته',
+                    subtitle: 'بررسی کل هفته در یک نگاه',
+                    isSelected: widget.currentScale == JourneyScale.week,
+                    colors: colors,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onSelectScale(JourneyScale.week);
+                    },
+                  ),
+                  _buildActionTile(
+                    icon: Icons.calendar_view_month_outlined,
+                    title: 'نمای سال',
+                    subtitle: 'بررسی ۱۲ ماه سال و نقشه حرارتی',
+                    isSelected: widget.currentScale == JourneyScale.year,
+                    colors: colors,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onSelectScale(JourneyScale.year);
+                    },
+                  ),
+                  _buildSwitchTile(
+                    icon: Icons.unfold_less_rounded,
+                    title: 'فشرده‌سازی تکرارها',
+                    subtitle: 'تجمیع روتین‌های روزانه تکراری',
+                    value: _compressRecurring,
+                    colors: colors,
+                    onChanged: _toggleCompress,
+                  ),
+                  _buildSwitchTile(
+                    icon: Icons.nightlight_round,
+                    title: 'نمایش گاهشمار قمری',
+                    subtitle: 'نمایش مناسبت‌ها و روزهای قمری',
+                    value: _showHijri,
+                    colors: colors,
+                    onChanged: _toggleHijri,
+                  ),
+
+                  const SizedBox(height: RitmoSpacing.lg),
+
+                  // Section 2: Day Actions / روز
+                  _buildSectionHeader('روز', colors),
+                  const SizedBox(height: RitmoSpacing.xs),
+                  _buildActionTile(
+                    icon: Icons.auto_stories_outlined,
+                    title: 'روز من (مرور و خلاصه)',
+                    subtitle: 'بررسی عملکرد، امتیازها و کارهای انجام‌شده',
+                    colors: colors,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onOpenDayReview();
+                    },
+                  ),
+                  _buildActionTile(
+                    icon: Icons.flag_outlined,
+                    title: 'نشان روز',
+                    subtitle:
+                        'تعیین وضعیت روز (استراحت 🌴 / سفر ✈️ / خاص ⭐)',
+                    colors: colors,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onOpenDayMarkPicker();
+                    },
+                  ),
+
+                  const SizedBox(height: RitmoSpacing.lg),
+
+                  // Section 3: Tools / ابزارها
+                  _buildSectionHeader('ابزارها', colors),
+                  const SizedBox(height: RitmoSpacing.xs),
+                  _buildActionTile(
+                    icon: Icons.list_alt_rounded,
+                    title: 'همهٔ برنامه‌ها',
+                    subtitle: 'فهرست کامل دامنه‌ها و رجیستری',
+                    badgeCount: widget.healthIssueCount,
+                    colors: colors,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      widget.onOpenAllPlans();
+                    },
+                  ),
+                  _buildActionTile(
+                    icon: Icons.wb_sunny_outlined,
+                    title: 'خلاصهٔ صبحگاهی',
+                    subtitle: 'متن خلاصه رویدادها و اولویت‌های امروز',
+                    colors: colors,
+                    onTap: _showMorningBrief,
+                  ),
+                  if (widget.onSaveDayTemplate != null)
+                    _buildActionTile(
+                      icon: Icons.bookmark_add_outlined,
+                      title: 'ذخیره به‌عنوان قالب روز',
+                      subtitle:
+                          'ذخیرهٔ چیدمان زمانی آیتم‌های این روز برای استفادهٔ مجدد',
+                      colors: colors,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        widget.onSaveDayTemplate!();
+                      },
+                    ),
+                  if (widget.onApplyDayTemplate != null)
+                    _buildActionTile(
+                      icon: Icons.dashboard_customize_outlined,
+                      title: 'اعمال قالب روز',
+                      subtitle:
+                          'بارگذاری و چینش زمان‌بندی از روی قالب‌های ذخیره‌شده',
+                      colors: colors,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        widget.onApplyDayTemplate!();
+                      },
+                    ),
+
+                  const SizedBox(height: RitmoSpacing.md),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    Widget containerWidget;
+    if (!isGlass) {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    } else {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: containerWidget,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -1936,59 +1937,115 @@ ${jsonEncode(digest.json)}
 
   // Action: Export sheet
   void _showExportSheet(RitmoColors colors) {
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Directionality(
+        final content = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'خروجی از بینش‌ها',
+                style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'گزارش وضعیت روندها و تعادل ابعاد زندگی شما آماده خروجی گرفتن است.',
+                style: RitmoTextStyles.caption(colors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary.withValues(alpha: 0.1),
+                  foregroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(CupertinoIcons.doc_richtext, size: 18),
+                label: const Text('دانلود فایل متنی PDF', style: TextStyle()),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _executeExport(colors, 'PDF');
+                },
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary.withValues(alpha: 0.1),
+                  foregroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(CupertinoIcons.photo, size: 18),
+                label: const Text('ذخیره تصویر روندها (Image)', style: TextStyle()),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _executeExport(colors, 'IMAGE');
+                },
+              ),
+            ],
+          ),
+        );
+
+        final sheetBody = Directionality(
           textDirection: TextDirection.rtl,
-          child: RitmoTheme.glassCardLight(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'خروجی از بینش‌ها',
-                    style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'گزارش وضعیت روندها و تعادل ابعاد زندگی شما آماده خروجی گرفتن است.',
-                    style: RitmoTextStyles.caption(colors.textSecondary),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary.withValues(alpha: 0.1),
-                      foregroundColor: colors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    icon: const Icon(CupertinoIcons.doc_richtext, size: 18),
-                    label: const Text('دانلود فایل متنی PDF', style: TextStyle()),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _executeExport(colors, 'PDF');
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.primary.withValues(alpha: 0.1),
-                      foregroundColor: colors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    icon: const Icon(CupertinoIcons.photo, size: 18),
-                    label: const Text('ذخیره تصویر روندها (Image)', style: TextStyle()),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _executeExport(colors, 'IMAGE');
-                    },
-                  ),
-                ],
+                ),
+                child: sheetBody,
               ),
             ),
           ),
@@ -2040,19 +2097,17 @@ ${jsonEncode(digest.json)}
         'تداوم فعلی: ${toPersianDigits('$_currentStreak روز')}\n'
         'شاخص تعادل ابعاد: ${toPersianDigits('$_lifeBalanceScore٪')}';
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Container(
+      builder: (ctx) {
+        final content = Padding(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2235) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -2060,7 +2115,7 @@ ${jsonEncode(digest.json)}
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colors.textSecondary.withValues(alpha: 0.3),
+                  color: colors.textSecondary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -2095,6 +2150,7 @@ ${jsonEncode(digest.json)}
                   final box = buttonContext.findRenderObject() as RenderBox?;
                   final origin = (box != null && box.hasSize) ? (box.localToGlobal(Offset.zero) & box.size) : null;
                   try {
+                    // ignore: deprecated_member_use
                     await Share.share(text, sharePositionOrigin: origin).timeout(const Duration(seconds: 3));
                   } catch (_) {
                     await Clipboard.setData(ClipboardData(text: text));
@@ -2106,8 +2162,64 @@ ${jsonEncode(digest.json)}
               ),
             ],
           ),
-        ),
-      ),
+        );
+
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

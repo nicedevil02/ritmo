@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/features/calendar/presentation/utils/calendar_defaults.dart';
@@ -324,6 +325,7 @@ class _JourneyScreenState extends State<JourneyScreen>
     if (!ctx.mounted) return;
     final kind = await showModalBottomSheet<DayMarkKind>(
       context: ctx,
+      backgroundColor: Colors.transparent,
       builder: (_) =>
           _DayMarkSheet(current: existing?.kind ?? DayMarkKind.normal),
     );
@@ -1572,7 +1574,14 @@ class _DayMarkSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return SafeArea(
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(
+      top: Radius.circular(RitmoRadius.sheet),
+    );
+
+    final content = SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: RitmoSpacing.md),
         child: Column(
@@ -1583,7 +1592,7 @@ class _DayMarkSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: RitmoSpacing.md),
               decoration: BoxDecoration(
-                color: colors.borderSubtle,
+                color: colors.textSecondary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1625,6 +1634,62 @@ class _DayMarkSheet extends StatelessWidget {
               colors,
             ),
           ],
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
+            ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -180,174 +182,233 @@ class _PremiumUpgradeSheetState extends State<PremiumUpgradeSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
+
+    final content = Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Pull handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.textSecondary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        decoration: BoxDecoration(
-          color: colors.bg,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(28),
-            topRight: Radius.circular(28),
+          const SizedBox(height: 20),
+
+          // Icon 💎
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xffFFD700), Color(0xffFFA500), Color(0xffFF8C00)],
+            ).createShader(bounds),
+            child: const Icon(
+              Icons.diamond,
+              size: 64,
+              color: Colors.white,
+            ),
           ),
-          border: Border.all(color: colors.border.withValues(alpha: 0.15)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Pull handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
-            // Icon 💎
-            ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xffFFD700), Color(0xffFFA500), Color(0xffFF8C00)],
-              ).createShader(bounds),
-              child: const Icon(
-                Icons.diamond,
-                size: 64,
-                color: Colors.white,
-              ),
+          // Title
+          Text(
+            'ارتقا به نسخه پرمیوم ریتمو',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
             ),
-            const SizedBox(height: 12),
-
-            // Title
-            Text(
-              'ارتقا به نسخه پرمیوم ریتمو',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'باز کردن قفل تمام ویژگی‌های هوشمند اپلیکیشن',
+            style: TextStyle(
+              fontSize: 12,
+              color: colors.textSecondary,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'باز کردن قفل تمام ویژگی‌های هوشمند اپلیکیشن',
-              style: TextStyle(
-                fontSize: 12,
-                color: colors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 24),
 
-            // Features list
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildFeatureRow(context, '🧠', 'هوش مصنوعی نامحدود', 'دستیار شخصی، تحلیل‌های روزانه و چت هوشمند با سهمیه ۵۰۰ پیام در ماه'),
-                    _buildFeatureRow(context, '📅', 'روتین و اهداف نامحدود', 'تا ۵۰ روتین فعال و ۲۰ هدف همزمان — در نسخه رایگان: ۷ روتین و ۳ هدف'),
-                    _buildFeatureRow(context, '🔱', 'تمام ماژول‌ها همزمان', 'فعال‌سازی هر ۱۵ ماژول به طور همزمان — در نسخه رایگان: تنها ۴ ماژول'),
-                    _buildFeatureRow(context, '🔄', 'بازچینش هوشمند زمان', 'حل خودکار تداخل‌های زمانی با موتور تحلیل زمان ریتمو'),
-                    _buildFeatureRow(context, '📊', 'هوش رفتاری پیشرفته', 'بینش‌های Cross-Engine بین خواب، انرژی، نماز و کارها'),
-                    _buildFeatureRow(context, '🚫', 'بدون تبلیغ', 'محیط کاملاً خلوت بدون هیچ بنر تبلیغاتی'),
-                    const SizedBox(height: 24),
+          // Features list
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildFeatureRow(context, '🧠', 'هوش مصنوعی نامحدود', 'دستیار شخصی، تحلیل‌های روزانه و چت هوشمند با سهمیه ۵۰۰ پیام در ماه'),
+                  _buildFeatureRow(context, '📅', 'روتین و اهداف نامحدود', 'تا ۵۰ روتین فعال و ۲۰ هدف همزمان — در نسخه رایگان: ۷ روتین و ۳ هدف'),
+                  _buildFeatureRow(context, '🔱', 'تمام ماژول‌ها همزمان', 'فعال‌سازی هر ۱۵ ماژول به طور همزمان — در نسخه رایگان: تنها ۴ ماژول'),
+                  _buildFeatureRow(context, '🔄', 'بازچینش هوشمند زمان', 'حل خودکار تداخل‌های زمانی با موتور تحلیل زمان ریتمو'),
+                  _buildFeatureRow(context, '📊', 'هوش رفتاری پیشرفته', 'بینش‌های Cross-Engine بین خواب، انرژی، نماز و کارها'),
+                  _buildFeatureRow(context, '🚫', 'بدون تبلیغ', 'محیط کاملاً خلوت بدون هیچ بنر تبلیغاتی'),
+                  const SizedBox(height: 24),
 
-                    // Plans selection — 3 focused options
-                    _buildPlanCard(
-                      sku: 'premium_3month',
-                      title: 'پلان ۳ ماهه',
-                      price: _prices['premium_3month'] ?? '۱۹۹,۰۰۰ تومان',
-                      isRecommended: false,
-                      discountLabel: 'شروع اقتصادی',
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPlanCard(
-                      sku: 'premium_yearly',
-                      title: 'پلان سالانه',
-                      price: _prices['premium_yearly'] ?? '۴۶۹,۰۰۰ تومان',
-                      isRecommended: true,
-                      discountLabel: '۶۰٪ تخفیف',
-                    ),
-                    const SizedBox(height: 10),
-                    _buildPlanCard(
-                      sku: 'premium_lifetime',
-                      title: 'دسترسی مادام‌العمر',
-                      price: _prices['premium_lifetime'] ?? '۷۹۹,۰۰۰ تومان',
-                      isRecommended: false,
-                      discountLabel: 'ارزش استثنایی',
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-
-            // Action buttons
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (kDebugMode) ...[
-                  TextButton(
-                    onPressed: () async {
-                      final active = !PremiumService.instance.isDebugMockActive;
-                      await PremiumService.instance.toggleDebugMock(active);
-                      setState(() {});
-                      if (context.mounted) {
-                        if (active) {
-                          RitmoSnackbar.success(context, 'شبیه‌ساز پرمیوم فعال شد.');
-                        } else {
-                          RitmoSnackbar.warning(context, 'شبیه‌ساز غیرفعال شد.');
-                        }
-                      }
-                    },
-                    child: Text(
-                      PremiumService.instance.isDebugMockActive ? 'غیرفعال‌سازی شبیه‌ساز تست' : 'فعال‌سازی تست (شبیه‌ساز)',
-                      style: const TextStyle(color: Colors.amber),
-                    ),
+                  // Plans selection — 3 focused options
+                  _buildPlanCard(
+                    sku: 'premium_3month',
+                    title: 'پلان ۳ ماهه',
+                    price: _prices['premium_3month'] ?? '۱۹۹,۰۰۰ تومان',
+                    isRecommended: false,
+                    discountLabel: 'شروع اقتصادی',
                   ),
+                  const SizedBox(height: 10),
+                  _buildPlanCard(
+                    sku: 'premium_yearly',
+                    title: 'پلان سالانه',
+                    price: _prices['premium_yearly'] ?? '۴۶۹,۰۰۰ تومان',
+                    isRecommended: true,
+                    discountLabel: '۶۰٪ تخفیف',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildPlanCard(
+                    sku: 'premium_lifetime',
+                    title: 'دسترسی مادام‌العمر',
+                    price: _prices['premium_lifetime'] ?? '۷۹۹,۰۰۰ تومان',
+                    isRecommended: false,
+                    discountLabel: 'ارزش استثنایی',
+                  ),
+                  const SizedBox(height: 20),
                 ],
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _purchase,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const CupertinoActivityIndicator(color: Colors.white)
-                      : const Text(
-                          'تایید و خرید پرمیوم',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 8),
+              ),
+            ),
+          ),
+
+          // Action buttons
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (kDebugMode) ...[
                 TextButton(
-                  onPressed: _isLoading ? null : _restorePurchases,
+                  onPressed: () async {
+                    final active = !PremiumService.instance.isDebugMockActive;
+                    await PremiumService.instance.toggleDebugMock(active);
+                    setState(() {});
+                    if (context.mounted) {
+                      if (active) {
+                        RitmoSnackbar.success(context, 'شبیه‌ساز پرمیوم فعال شد.');
+                      } else {
+                        RitmoSnackbar.warning(context, 'شبیه‌ساز غیرفعال شد.');
+                      }
+                    }
+                  },
                   child: Text(
-                    'بازیابی خریدهای قبلی',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 13,
-                    ),
+                    PremiumService.instance.isDebugMockActive ? 'غیرفعال‌سازی شبیه‌ساز تست' : 'فعال‌سازی تست (شبیه‌ساز)',
+                    style: const TextStyle(color: Colors.amber),
                   ),
                 ),
               ],
-            ),
-          ],
+              ElevatedButton(
+                onPressed: _isLoading ? null : _purchase,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const CupertinoActivityIndicator(color: Colors.white)
+                    : const Text(
+                        'تایید و خرید پرمیوم',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _isLoading ? null : _restorePurchases,
+                child: Text(
+                  'بازیابی خریدهای قبلی',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    Widget containerWidget;
+    if (!isGlass) {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
         ),
-      ),),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    } else {
+      containerWidget = Container(
+        constraints: BoxConstraints(
+          maxHeight: RitmoBreakpoints.sheetMaxHeight(context, factor: 0.9),
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: sheetBody,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: containerWidget,
     );
   }
 

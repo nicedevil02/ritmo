@@ -1,3 +1,4 @@
+export 'mv_budget_snapshot.dart';
 export 'mv_calendar.dart';
 export 'mv_campaign.dart';
 export 'mv_commitment.dart';
@@ -6,8 +7,10 @@ export 'mv_decision.dart';
 export 'mv_enums.dart';
 export 'mv_exercise.dart';
 export 'mv_kind_profile.dart';
+export 'mv_load_snapshot.dart';
 export 'mv_movement_kind.dart';
 export 'mv_personal_record.dart';
+export 'mv_plan_result.dart';
 export 'mv_reason_keys.dart';
 export 'mv_session.dart';
 export 'mv_set_log.dart';

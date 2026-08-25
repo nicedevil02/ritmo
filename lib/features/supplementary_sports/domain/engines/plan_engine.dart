@@ -6,7 +6,165 @@ import '../models/models.dart';
 class PlanEngine {
   const PlanEngine();
 
-  /// Generates 7 slots for the week starting at [weekSaturday].
+  /// S3-T4: Six-stage week generation engine.
+  MvPlanResult generateWeek({
+    required DateTime weekStartSat,
+    required MvUserProfile profile,
+    required List<MvCommitment> commitments,
+    required List<MvSlotOverride> overrides,
+    required Map<String, MvMovementKind> kinds,
+    required Map<String, MvKindProfile> kindProfiles,
+    required MvBudgetSnapshot budget,
+    required MvLoadSnapshot? load,
+    required MvReadinessTier readiness,
+  }) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final weekDays = MvCalendar.getWeekDays(weekStartSat);
+
+    // 1. ANCHORS
+    final anchorSlots = _placeAnchors(
+      weekStartSat: weekStartSat,
+      commitments: commitments,
+      overrides: overrides,
+      kinds: kinds,
+    );
+
+    final stageDecisions = <MvDecision>[
+      MvDecision<List<MvSlot>>(
+        value: anchorSlots,
+        reasonFa: 'اسلات‌های لنگر ثابت هفتگی جانمایی شدند.',
+        reasonKey: MvReasonKeys.anchor,
+        sources: const ['commitments', 'overrides'],
+      ),
+    ];
+
+    final slotsByDay = <String, List<MvSlot>>{};
+    for (final slot in anchorSlots) {
+      slotsByDay.putIfAbsent(slot.dateIso, () => []).add(slot);
+    }
+
+    final fullWeekSlots = <MvSlot>[];
+    for (int i = 0; i < 7; i++) {
+      final dayDate = weekDays[i];
+      final dayIso = MvCalendar.formatDateIso(dayDate);
+      final dayAnchors = slotsByDay[dayIso];
+
+      if (dayAnchors != null && dayAnchors.isNotEmpty) {
+        fullWeekSlots.addAll(dayAnchors);
+      } else {
+        fullWeekSlots.add(
+          MvSlot(
+            id: 'slot_${dayIso}_rest',
+            dateIso: dayIso,
+            cycleWeek: 1,
+            slotType: MvSlotType.rest,
+            targetMinutes: 0,
+            intensityTier: MvIntensityTier.light,
+            headlineFa: 'روز استراحت و ریکاوری',
+            coachNoteFa:
+                'به عضلاتت فرصت بازسازی بده یا با پیاده‌روی سبک جریان خون را تقویت کن.',
+            source: 'GENERATED',
+            reasonKey: MvReasonKeys.restGuaranteed,
+            status: MvSlotStatus.planned,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    }
+
+    return MvPlanResult(
+      slots: fullWeekSlots,
+      stageDecisions: stageDecisions,
+    );
+  }
+
+  /// مرحلهٔ ۱: جانمایی لنگرها (S3-T4)
+  List<MvSlot> _placeAnchors({
+    required DateTime weekStartSat,
+    required List<MvCommitment> commitments,
+    required List<MvSlotOverride> overrides,
+    required Map<String, MvMovementKind> kinds,
+  }) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final placed = <MvSlot>[];
+
+    for (final c in commitments) {
+      if (!c.isActive) continue;
+
+      final dayDate = weekStartSat.add(Duration(days: c.dayOfWeekSat0));
+      final dayIso = MvCalendar.formatDateIso(dayDate);
+
+      // Check active date window
+      if (c.startDateIso != null && dayIso.compareTo(c.startDateIso!) < 0) {
+        continue;
+      }
+      if (c.endDateIso != null && dayIso.compareTo(c.endDateIso!) > 0) {
+        continue;
+      }
+
+      // Check if this date has a skip/cancellation override
+      final isOverridden = overrides.any(
+        (o) =>
+            o.dateIso == dayIso &&
+            (o.action.toUpperCase() == 'SKIP' ||
+                o.action.toUpperCase() == 'CANCEL'),
+      );
+      if (isOverridden) continue;
+
+      final kind = kinds[c.kindCode];
+      final family = kind?.family ?? MovementFamily.sport;
+      final slotType = _deriveSlotType(family);
+
+      placed.add(
+        MvSlot(
+          id: 'anchor_${dayIso}_${c.id ?? c.kindCode}',
+          dateIso: dayIso,
+          cycleWeek: 1,
+          slotType: slotType,
+          kindCode: c.kindCode,
+          plannedTime: c.startTime,
+          focusCodes: const [],
+          targetMinutes: c.durationMinutes,
+          intensityTier: MvIntensityTier.moderate,
+          headlineFa: (c.titleFa != null && c.titleFa!.isNotEmpty)
+              ? c.titleFa!
+              : (kind?.titleFa ?? 'ورزش لنگر'),
+          coachNoteFa: null,
+          source: 'ANCHOR',
+          sourceRef: c.id?.toString(),
+          isLocked: true,
+          status: MvSlotStatus.planned,
+          reasonKey: MvReasonKeys.anchor,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+
+    return placed;
+  }
+
+  static MvSlotType _deriveSlotType(MovementFamily family) {
+    switch (family) {
+      case MovementFamily.sport:
+        return MvSlotType.sport;
+      case MovementFamily.outdoor:
+        return MvSlotType.outdoor;
+      case MovementFamily.endurance:
+        return MvSlotType.cardio;
+      case MovementFamily.strength:
+        return MvSlotType.strength;
+      case MovementFamily.mindBody:
+        return MvSlotType.mobility;
+      case MovementFamily.martialSkill:
+        return MvSlotType.sport;
+      case MovementFamily.daily:
+        return MvSlotType.activeRest;
+    }
+  }
+
+  /// Generates 7 slots for the week starting at [weekSaturday] (Legacy compatibility).
   MvDecision<List<MvSlot>> generateWeekPlan({
     required MvUserProfile profile,
     required DateTime weekSaturday,
@@ -31,7 +189,6 @@ class PlanEngine {
     final targetMinutes = _parseDuration(profile.sessionDuration, isDeload);
     final slots = <MvSlot>[];
 
-    // Determine muscle focus sequence based on daysPerWeek and split pattern
     final musclePlan = _buildMuscleDistribution(profile.trainingDays, isDeload);
 
     for (int i = 0; i < 7; i++) {
@@ -39,7 +196,6 @@ class PlanEngine {
       final dayIso = MvCalendar.formatDateIso(dayDate);
       final sat0 = i;
 
-      // Check if there is an existing locked slot for this day
       final existingLocked = existingSlots
           .where((s) => s.dateIso == dayIso && s.isLocked)
           .firstOrNull;
@@ -54,7 +210,6 @@ class PlanEngine {
 
       final isTrainingDay = profile.trainingDays.contains(sat0);
       if (!isTrainingDay) {
-        // Rest / Active Recovery day
         slots.add(
           MvSlot(
             id: 'slot_${dayIso}_rest',
@@ -74,7 +229,6 @@ class PlanEngine {
           ),
         );
       } else {
-        // Training day
         final dayFocus = musclePlan[sat0] ?? ['FULL_BODY'];
         final headline = _generateHeadline(dayFocus, isDeload);
         final intensity = isDeload

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:ritmo/core/ai/memory/ai_memory_service.dart';
 import 'package:ritmo/core/database/legacy_database_recovery.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
@@ -20,7 +21,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 116;
+  static const int _dbVersion = 117;
   static int get dbVersionForTest => _dbVersion;
 
   /// Optional decoupled warmup hooks registered by application features.
@@ -77,6 +78,11 @@ class DatabaseHelper {
       await SeedService.seedSupplementarySports(db);
       await MockDataSeeder.purgeIfLegacyMock(db);
       await _checkDailySweep(db);
+      try {
+        await AiMemoryService.instance.backfillSensitiveFlags();
+      } catch (e) {
+        RitmoLog.warning('DatabaseHelper', 'backfillSensitiveFlags non-fatal error: $e');
+      }
       for (final hook in warmupHooks) {
         try {
           unawaited(hook());

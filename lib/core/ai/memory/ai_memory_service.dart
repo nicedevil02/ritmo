@@ -5,25 +5,57 @@ import 'package:ritmo/core/ai/ai_context_builder.dart';
 import 'package:ritmo/core/ai/memory/memory_models.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 
+enum _SensitiveKind { cycle, health, unknown }
+
+_SensitiveKind _classifySensitive(String content, String recordDomain) {
+  final d = recordDomain.toLowerCase().trim();
+  if (d == 'cycle' || AiMemoryService.isCycleContent(content)) {
+    return _SensitiveKind.cycle;
+  }
+  if (d == 'health' ||
+      d == 'medical' ||
+      AiMemoryService.isHealthContent(content)) {
+    return _SensitiveKind.health;
+  }
+  return _SensitiveKind.unknown;
+}
+
 class AiMemoryService {
   AiMemoryService._privateConstructor();
   static final AiMemoryService instance = AiMemoryService._privateConstructor();
 
   static const double _lambda = 0.0041258; // Exp decay for 7-day half-life (hours)
 
-  static final List<String> sensitiveKeywords = [
+  static final List<String> cycleKeywords = [
     'پریود',
     'قاعدگی',
+    'عادت ماهانه',
+    'عادت ماهیانه',
     'سیکل',
+    'سیکل قاعدگی',
+    'لکه بینی',
+    'لکهبینی',
+    'تخمک گذاری',
+    'تخمکگذاری',
     'خونریزی',
     'بارداری',
     'سقط',
+    'pms',
+    'period',
+    'menstrual',
+    'ovulation',
+    'pregnancy',
+  ];
+
+  static final List<String> healthKeywords = [
     'دارو',
+    'داروها',
     'قرص',
     'کپسول',
     'آمپول',
     'دوز',
     'بیماری',
+    'تشخیص',
     'پزشک',
     'دکتر',
     'درمان',
@@ -39,20 +71,41 @@ class AiMemoryService {
     'افسردگی',
     'اضطراب',
     'روانپزشک',
-    'period',
-    'menstrual',
-    'pregnancy',
     'medicine',
     'medication',
     'dose',
     'disease',
     'doctor',
+    'diagnosis',
+    'depression',
+    'anxiety',
+  ];
+
+  static final List<String> sensitiveKeywords = [
+    ...cycleKeywords,
+    ...healthKeywords,
   ];
 
   /// بررسی حساسیت محتوا بر مبنای کلیدواژه‌های سلامت و چرخه
   static bool isContentSensitive(String content) {
     final lower = content.toLowerCase();
     for (final kw in sensitiveKeywords) {
+      if (lower.contains(kw.toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  static bool isCycleContent(String content) {
+    final lower = content.toLowerCase();
+    for (final kw in cycleKeywords) {
+      if (lower.contains(kw.toLowerCase())) return true;
+    }
+    return false;
+  }
+
+  static bool isHealthContent(String content) {
+    final lower = content.toLowerCase();
+    for (final kw in healthKeywords) {
       if (lower.contains(kw.toLowerCase())) return true;
     }
     return false;
@@ -70,11 +123,17 @@ class AiMemoryService {
     caseSensitive: false,
   );
 
+  static final RegExp explicitPinRegex = RegExp(
+    r'(پین کن|سنجاق کن|یادت بمونه و پین کن|pin)',
+    caseSensitive: false,
+  );
+
   static String memoryInstruction() {
     return '\n---'
-        '\n[قانون حافظه صریح]'
-        '\nاگر کاربر صریحاً خواست چیزی به خاطر سپرده شود (مثلاً با عباراتی مثل «یادت باشه...» یا «فراموش نکن...»)، شما باید فکت مربوطه را استخراج کرده و در انتهای پاسخ خود خارج از متن اصلی، دقیقاً با فرمت تگ زیر بفرستید. در متن اصلی پاسخ نیز خیلی کوتاه و صمیمانه ذخیره شدن آن را تأیید کنید:'
-        '\n<memory_ops>[{"op":"ADD","content":"فکت استخراج‌شده به صورت جمله سوم‌شخص کوتاه فارسی","type":"preference","importance":10,"sensitive":false}]</memory_ops>'
+        '\n[قانون استخراج فکت و حافظه]'
+        '\nاگر کاربر صریحاً خواست موضوعی پایدار به خاطر سپرده شود (مثلاً با عباراتی مثل «یادت باشه...» یا «فراموش نکن...»)، فکت مربوطه را استخراج کرده و در انتهای پاسخ خود خارج از متن اصلی، دقیقاً با فرمت تگ زیر بفرستید. در متن اصلی پاسخ نیز خیلی کوتاه و صمیمانه ذخیره شدن آن را تأیید کنید.'
+        '\nدرجه اهمیت (importance) را بین ۱ تا ۱۰ بر اساس دوام واقعی موضوع انتخاب کنید (مقدار ۱۰ فقط برای حقایق هویتی پایدار کاربر مانند نام، شهر، یا اهداف کلیدی):'
+        '\n<memory_ops>[{"op":"ADD","content":"فکت استخراج‌شده به صورت جمله سوم‌شخص کوتاه فارسی","type":"preference","importance":7,"sensitive":false,"pin":false}]</memory_ops>'
         '\n---';
   }
 
@@ -95,6 +154,7 @@ class AiMemoryService {
         // Clean user text of keywords to extract the core memory statement
         var content = userText
             .replaceAll(explicitRememberRegex, '')
+            .replaceAll(explicitPinRegex, '')
             .replaceAll(RegExp('[،,.:!؟?()]+'), ' ')
             .trim();
 
@@ -106,13 +166,15 @@ class AiMemoryService {
           final isSensitive = domain == 'cycle' ||
               domain == 'health' ||
               isContentSensitive(content);
+          final shouldPin = explicitPinRegex.hasMatch(userText);
           final op = MemoryOp(
             op: 'ADD',
             content: content,
             type: MemoryType.preference,
             domain: domain,
-            importance: 10,
+            importance: shouldPin ? 9 : 7,
             sensitive: isSensitive,
+            pin: shouldPin,
           );
           await applyOperations([op]);
         }
@@ -165,24 +227,21 @@ class AiMemoryService {
 
       final allMemories = rows.map(MemoryEntry.fromMap).toList();
 
-      // 2. Filter based on Privacy check: sensitive memories only returned with explicit consent
+      // 2. Filter based on Privacy check: sensitive memories only returned with explicit consent (Fail-Closed)
       final allowedMemories = allMemories.where((m) {
-        if (m.sensitive) {
-          if (m.domain == 'health' || m.domain == 'medical' || isContentSensitive(m.content)) {
-            if (!consent.allowHealth) return false;
-          }
-          if (m.domain == 'cycle' || isContentSensitive(m.content)) {
-            if (m.domain == 'cycle' && !consent.allowCycle) return false;
-          }
-          if (m.domain == 'health' || m.domain == 'medical') return consent.allowHealth;
-          if (m.domain == 'cycle') return consent.allowCycle;
-          return m.domain == domain;
+        if (!m.sensitive) return true;
+        switch (_classifySensitive(m.content, m.domain)) {
+          case _SensitiveKind.cycle:
+            return consent.allowCycle;
+          case _SensitiveKind.health:
+            return consent.allowHealth;
+          case _SensitiveKind.unknown:
+            return consent.allowHealth && consent.allowCycle;
         }
-        return true;
       }).toList();
 
-      // 3. Separate pinned and unpinned memories
-      final pinned = allowedMemories.where((m) => m.pinned).take(20).toList();
+      // 3. Separate pinned and unpinned memories (max 6 pinned)
+      final pinned = allowedMemories.where((m) => m.pinned).take(6).toList();
       final unpinnedCandidates = allowedMemories.where((m) => !m.pinned).toList();
 
       // 4. Score unpinned candidates
@@ -330,7 +389,6 @@ class AiMemoryService {
             case 'ADD':
               // Generate unique ID
               final id = 'mem_${now}_${math.Random().nextInt(99999)}';
-              final isExplicit = op.importance == 10;
               final isSensitive = op.sensitive ||
                   op.domain == 'cycle' ||
                   op.domain == 'health' ||
@@ -340,9 +398,11 @@ class AiMemoryService {
                 'content': finalContent,
                 'type': op.type.name,
                 'domain': op.domain,
-                'source': isExplicit ? MemorySource.explicit.name : MemorySource.implicit.name,
+                'source': (op.pin || op.importance >= 8)
+                    ? MemorySource.explicit.name
+                    : MemorySource.implicit.name,
                 'importance': op.importance,
-                'pinned': isExplicit ? 1 : 0,
+                'pinned': op.pin ? 1 : 0,
                 'sensitive': isSensitive ? 1 : 0,
                 'status': MemoryStatus.active.name,
                 'createdAt': now,
@@ -416,35 +476,45 @@ class AiMemoryService {
         whereArgs: [sixtyDaysAgoMs],
       );
 
-      // 2. Enforce limits across all dynamic active domains (max 30 for 'core', max 15 for any other domain)
+      // 2. Query dynamic active domains (no hardcoded list)
       final domainRows = await db.rawQuery(
         "SELECT DISTINCT domain FROM ai_memory WHERE status = 'active'",
       );
       final activeDomains = domainRows
           .map((r) => r['domain']?.toString() ?? '')
           .where((d) => d.isNotEmpty)
-          .toSet();
-      activeDomains.addAll(const [
-        'core',
-        'health',
-        'cycle',
-        'worship',
-        'wellbeing',
-        'goals',
-        'konkur',
-        'courses',
-        'sports',
-      ]);
+          .toList();
 
       for (final d in activeDomains) {
-        final limit = d == 'core' ? 30 : 15;
+        // 2.1 Enforce max 10 pinned records per domain by UNPINNING excess
+        final List<Map<String, dynamic>> pinnedRows = await db.query(
+          'ai_memory',
+          where: "status = 'active' AND pinned = 1 AND domain = ?",
+          whereArgs: [d],
+          orderBy: 'importance DESC, lastAccessedAt DESC, createdAt DESC',
+        );
+        if (pinnedRows.length > 10) {
+          final excessPinned = pinnedRows.sublist(10);
+          final unpinBatch = db.batch();
+          for (final row in excessPinned) {
+            final id = row['id'] as String;
+            unpinBatch.update(
+              'ai_memory',
+              {'pinned': 0, 'updatedAt': now},
+              where: 'id = ?',
+              whereArgs: [id],
+            );
+          }
+          await unpinBatch.commit(noResult: true);
+        }
 
+        // 2.2 Enforce limits across active domains (max 30 for 'core', max 15 for any other domain)
+        final limit = d == 'core' ? 30 : 15;
         final List<Map<String, dynamic>> activeUnpinned = await db.query(
           'ai_memory',
           where: "status = 'active' AND pinned = 0 AND domain = ?",
           whereArgs: [d],
-          orderBy:
-              'importance ASC, createdAt ASC', // Prune least important and oldest first
+          orderBy: 'importance ASC, createdAt ASC',
         );
 
         if (activeUnpinned.length > limit) {

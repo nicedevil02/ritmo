@@ -229,7 +229,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T12 — توکن‌های طراحی (رفع E-09)
+### - [x] S8-T12 — توکن‌های طراحی (رفع E-09) — c45d9278
 
 1. هر `fontSize:` خام در پوشهٔ `presentation/` را با سبک از `Theme.of(context).textTheme` جایگزین کن.
 2. هر `size:` خام در آیکون‌ها را با `metrics.iconSm|iconMd|iconLg` جایگزین کن.
@@ -290,7 +290,7 @@ flutter test
 | S8-T9 | DONE | 91aed1a6 | ورودی و دیالوگ ساخت دورهٔ هدف‌دار بر مبنای CampaignEngine |
 | S8-T10 | DONE | d93dc28b | تأیید مسیردهی ۵ قالب پلیر (Route, Laps, Match, Distance, Timed) از هاب |
 | S8-T11 | DONE | d910b27f | پاک‌سازی کامل رشته‌های هاردکد در presentation و گاردتست mv_no_hardcoded_persian_test |
-| S8-T12 | | | |
+| S8-T12 | DONE | c45d9278 | پاک‌سازی کامل تایپوگرافی و اندازه‌های خام و گاردتست mv_no_raw_typography_test |
 | S8-T13 | | | |
 | S8-T14 | | | |
 

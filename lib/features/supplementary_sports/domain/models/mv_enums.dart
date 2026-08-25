@@ -320,12 +320,17 @@ enum MvMovementMetric {
   }
 }
 
-/// Personal Record types.
+/// Personal Record types (S5-T3).
 enum MvPrType {
   maxWeight,
   maxReps,
   longestDuration,
+  monthlyFrequency,
   longestDistance,
+  bestPace5k,
+  maxElevation,
+  maxPackWeight,
+  maxLaps,
   fastestPace;
 
   String get code => name;
@@ -337,11 +342,21 @@ enum MvPrType {
       case MvPrType.maxReps:
         return 'بیشترین تکرار';
       case MvPrType.longestDuration:
-        return 'بیشترین مدت';
+        return 'بلندترین جلسه';
+      case MvPrType.monthlyFrequency:
+        return 'بیشترین تکرار در ماه';
       case MvPrType.longestDistance:
         return 'بیشترین مسافت';
+      case MvPrType.bestPace5k:
+        return 'بهترین تمپو ۵+ ک‌م';
+      case MvPrType.maxElevation:
+        return 'بیشترین ارتفاع';
+      case MvPrType.maxPackWeight:
+        return 'بیشترین وزن پشتی';
+      case MvPrType.maxLaps:
+        return 'بیشترین تعداد دور';
       case MvPrType.fastestPace:
-        return 'سریع‌ترین رکورد';
+        return 'بهترین سرعت';
     }
   }
 
@@ -353,8 +368,18 @@ enum MvPrType {
         return 'تکرار';
       case MvPrType.longestDuration:
         return 'دقیقه';
+      case MvPrType.monthlyFrequency:
+        return 'جلسه';
       case MvPrType.longestDistance:
         return 'متر';
+      case MvPrType.bestPace5k:
+        return 'ث/ک‌م';
+      case MvPrType.maxElevation:
+        return 'متر';
+      case MvPrType.maxPackWeight:
+        return 'کیلوگرم';
+      case MvPrType.maxLaps:
+        return 'دور';
       case MvPrType.fastestPace:
         return 'سرعت';
     }
@@ -375,11 +400,27 @@ enum MvPrType {
       case 'longestduration':
       case 'duration':
         return MvPrType.longestDuration;
+      case 'monthlyfrequency':
+      case 'monthly_frequency':
+        return MvPrType.monthlyFrequency;
       case 'longestdistance':
       case 'distance':
         return MvPrType.longestDistance;
+      case 'bestpace5k':
+      case 'pace5k':
+        return MvPrType.bestPace5k;
+      case 'maxelevation':
+      case 'elevation':
+        return MvPrType.maxElevation;
+      case 'maxpackweight':
+      case 'packweight':
+      case 'pack_weight':
+        return MvPrType.maxPackWeight;
+      case 'maxlaps':
+      case 'laps':
+        return MvPrType.maxLaps;
       case 'fastestpace':
-      case 'pace':
+      case 'fastest_pace':
         return MvPrType.fastestPace;
       default:
         return MvPrType.maxWeight;

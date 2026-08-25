@@ -126,6 +126,17 @@ class MvFinishSessionUseCase {
       }
     }
 
+    // 3.2 Check for kind-specific session PR breakthroughs (S5-T3)
+    final existingKindPrs = await _prRepo.getPrsForKind(updatedSession.kindCode.toUpperCase());
+    final sessionPrs = _progressionEngine.evaluateSessionRecords(
+      session: updatedSession,
+      existingPrsForKind: existingKindPrs,
+    );
+    for (final spr in sessionPrs) {
+      await _prRepo.recordPr(spr);
+      newPrs.add(spr);
+    }
+
     // 4. Update prescription slot if linked
     if (session.prescriptionId != null) {
       await _prescriptionRepo.updateSlotStatus(

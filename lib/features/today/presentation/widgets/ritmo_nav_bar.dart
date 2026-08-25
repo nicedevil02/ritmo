@@ -17,7 +17,6 @@ const double _kBottomGap = 8.0; // gap between pill bottom and nav area bottom
 const double _kPillRadius = 26.0; // corner radius (capsule)
 const double _kMoundHeight = 11.0; // height of the crest mound above baseline
 const double _kMoundHW = 44.0; // mound half-width at baseline
-const double _kCraterSize = 62.0; // recessed socket crater diameter
 const double _kCenterBtnSize = 48.0; // center elevated button diameter
 const double _kCenterBtnRimW = 2.8; // metallic white rim width
 const double _kIconSize = 20.0; // inactive item icon size
@@ -150,9 +149,6 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
     final Color shadowDarkDirect = isDark
         ? Colors.black.withValues(alpha: 0.45)
         : const Color(0xFF8B98A8).withValues(alpha: 0.35);
-    final Color shadowLightTop = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.white.withValues(alpha: 0.95);
     final Color borderTop = isDark
         ? Colors.white.withValues(alpha: 0.18)
         : Colors.white.withValues(alpha: 0.95);
@@ -198,7 +194,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ─── 1. سایه‌های سه‌بعدی نئومورفیک (لایه عمقی + لایه مستقیم + هایلایت بالا) ───
+                  // ─── 1. سایه‌های سه‌بعدی نئومورفیک (لایه عمقی + لایه مستقیم) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -208,7 +204,6 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                       painter: _NeumorphicShadowPainter(
                         darkShadowAmbient: shadowDarkAmbient,
                         darkShadowDirect: shadowDarkDirect,
-                        lightShadowTop: shadowLightTop,
                         moundCenterX: ncx,
                       ),
                     ),
@@ -256,20 +251,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                           ),
                   ),
 
-                  // ─── 3. کاسه و گودی مقعر دور دکمه وسط (Recessed Crater Socket) ───
-                  Positioned(
-                    left: _kHMargin + ncx - _kCraterSize / 2,
-                    top: -(_kCraterSize - _kCenterBtnSize) / 2 - 2.0,
-                    width: _kCraterSize,
-                    height: _kCraterSize,
-                    child: CustomPaint(
-                      painter: _CraterSocketPainter(
-                        isDark: isDark,
-                      ),
-                    ),
-                  ),
-
-                  // ─── 4. آیتم‌های ناوبری (کاملاً متمرکز در راستای عمودی) ───
+                  // ─── 3. آیتم‌های ناوبری (کاملاً متمرکز در راستای عمودی) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -453,59 +435,6 @@ class _NeumorphicSlotItem extends StatelessWidget {
       ),
     );
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  کاسه و گودی مقعر دور دکمه وسط (Recessed Crater Socket Painter)
-// ═══════════════════════════════════════════════════════════════════
-
-class _CraterSocketPainter extends CustomPainter {
-  const _CraterSocketPainter({
-    required this.isDark,
-  });
-
-  final bool isDark;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-
-    // ۱. سایه فرورفتگی بالای گودی (Concave Inner Shadow)
-    final shadowPaint = Paint()
-      ..shader = ui.Gradient.radial(
-        Offset(center.dx, center.dy - radius * 0.4),
-        radius,
-        [
-          (isDark ? Colors.black : const Color(0xFF758295))
-              .withValues(alpha: isDark ? 0.45 : 0.30),
-          Colors.transparent,
-        ],
-        [0.4, 1.0],
-      );
-    canvas.drawCircle(center, radius, shadowPaint);
-
-    // ۲. هایلایت نوری نیم‌حلقه پایین گودی (Specular Rim Reflection)
-    final rimPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..shader = ui.Gradient.linear(
-        Offset(center.dx, center.dy - radius),
-        Offset(center.dx, center.dy + radius),
-        [
-          Colors.transparent,
-          (isDark ? Colors.white : Colors.white)
-              .withValues(alpha: isDark ? 0.15 : 0.85),
-        ],
-        [0.5, 1.0],
-      );
-
-    canvas.drawCircle(center, radius - 0.7, rimPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CraterSocketPainter oldDelegate) =>
-      oldDelegate.isDark != isDark;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -784,44 +713,33 @@ class _NeumorphicShadowPainter extends CustomPainter {
   const _NeumorphicShadowPainter({
     required this.darkShadowAmbient,
     required this.darkShadowDirect,
-    required this.lightShadowTop,
     required this.moundCenterX,
   });
 
   final Color darkShadowAmbient;
   final Color darkShadowDirect;
-  final Color lightShadowTop;
   final double moundCenterX;
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = _buildPillMoundPath(size.width, size.height, moundCenterX);
 
-    // ۱. سایه پخش‌شده محیطی (Ambient Diffused Shadow)
+    // ۱. سایه پخش‌شده محیطی در زیر نوار (Ambient Diffused Shadow)
     final ambientPaint = Paint()
       ..color = darkShadowAmbient
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
     canvas.save();
-    canvas.translate(0, 8);
+    canvas.translate(0, 7);
     canvas.drawPath(path, ambientPaint);
     canvas.restore();
 
-    // ۲. سایه مستقیم تماسی (Direct Contact Shadow)
+    // ۲. سایه مستقیم تماسی در زیر نوار (Direct Contact Shadow)
     final directPaint = Paint()
       ..color = darkShadowDirect
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     canvas.save();
     canvas.translate(0, 2);
     canvas.drawPath(path, directPaint);
-    canvas.restore();
-
-    // ۳. هالوی بازتاب نوری لبه بالا (Top Specular Halo)
-    final lightPaint = Paint()
-      ..color = lightShadowTop
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-    canvas.save();
-    canvas.translate(0, -2);
-    canvas.drawPath(path, lightPaint);
     canvas.restore();
   }
 
@@ -829,7 +747,6 @@ class _NeumorphicShadowPainter extends CustomPainter {
   bool shouldRepaint(covariant _NeumorphicShadowPainter oldDelegate) =>
       oldDelegate.darkShadowAmbient != darkShadowAmbient ||
       oldDelegate.darkShadowDirect != darkShadowDirect ||
-      oldDelegate.lightShadowTop != lightShadowTop ||
       oldDelegate.moundCenterX != moundCenterX;
 }
 

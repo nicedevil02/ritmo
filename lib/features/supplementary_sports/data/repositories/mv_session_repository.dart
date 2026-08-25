@@ -84,7 +84,7 @@ class MvSessionRepository {
           ? MvSessionStatus.completed
           : session.status,
       endedAt: session.endedAt ?? now,
-      overallFeeling: feeling ?? session.overallFeeling,
+      overallFeeling: feeling?.rirValue ?? session.overallFeeling,
       note: note ?? session.note,
       updatedAt: now,
     );
@@ -153,7 +153,10 @@ class MvSessionRepository {
   }
 
   /// Retrieves historical set logs for an exercise to power progression calculations.
-  Future<List<MvSetLog>> getSetLogsForExercise(String exerciseId, {int limit = 50}) async {
+  Future<List<MvSetLog>> getSetLogsForExercise(
+    String exerciseId, {
+    int limit = 50,
+  }) async {
     final db = await _db;
     final rows = await db.query(
       'ss_session_set_log',
@@ -166,7 +169,10 @@ class MvSessionRepository {
   }
 
   /// Retrieves completed sessions for history and analytics.
-  Future<List<MvSession>> getSessionHistory({int limit = 20, int offset = 0}) async {
+  Future<List<MvSession>> getSessionHistory({
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final db = await _db;
     final rows = await db.query(
       'movement_sessions',
@@ -178,8 +184,26 @@ class MvSessionRepository {
     return rows.map((r) => MvSession.fromMap(r)).toList();
   }
 
+  /// Retrieves completed sessions between two DateTime boundaries.
+  Future<List<MvSession>> getCompletedSessionsBetween(
+    DateTime from,
+    DateTime to,
+  ) async {
+    final db = await _db;
+    final fromMs = from.millisecondsSinceEpoch;
+    final toMs = to.millisecondsSinceEpoch;
+    final rows = await db.query(
+      'movement_sessions',
+      where: "status IN ('COMPLETED', 'PARTIAL') AND startedAt >= ? AND startedAt <= ?",
+      whereArgs: [fromMs, toMs],
+      orderBy: 'startedAt DESC',
+    );
+    return rows.map((r) => MvSession.fromMap(r)).toList();
+  }
+
   /// Alias for getSessionHistory.
-  Future<List<MvSession>> getRecentSessions({int limit = 20}) => getSessionHistory(limit: limit);
+  Future<List<MvSession>> getRecentSessions({int limit = 20}) =>
+      getSessionHistory(limit: limit);
 
   /// Retrieves the most recent completed session for quick re-log / favorites (N-12).
   Future<MvSession?> getLastCompletedSession() async {

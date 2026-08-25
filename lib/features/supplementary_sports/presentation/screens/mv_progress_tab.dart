@@ -7,7 +7,7 @@ import '../components/components.dart';
 /// Tab 3: "پیشرفت" (Section 5.3).
 /// Displays streak stats, body map, personal records, and honest trends.
 class MvProgressTab extends StatelessWidget {
-  final int continuousActiveWeeks;
+  final int? continuousActiveWeeks;
   final int totalSessionsCount;
   final double totalMetMinutes;
   final List<MvPersonalRecord> personalRecords;
@@ -35,53 +35,61 @@ class MvProgressTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Continuous Active Weeks Hero
-          Container(
-            padding: EdgeInsets.all(metrics.spaceLg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colors.primary,
-                  colors.primary.withValues(alpha: 0.8),
+          // 1. Continuous Active Weeks Hero / Insufficient Data State
+          if (continuousActiveWeeks == null)
+            const MvInsufficientData(
+              title: 'هفته‌های فعال پیوسته',
+              requirementDescription:
+                  'برای محاسبهٔ روند پیوستگی، حداقل به ثبت جلسات در هفته نیاز است.',
+            )
+          else
+            Container(
+              padding: EdgeInsets.all(metrics.spaceLg),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [colors.primary, colors.primary.withValues(alpha: 0.8)],
+                ),
+                borderRadius: BorderRadius.circular(metrics.radiusHero),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(metrics.spaceMd),
+                    decoration: BoxDecoration(
+                      color: colors.onPrimary.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.local_fire_department_rounded,
+                      color: colors.onPrimary,
+                      size: metrics.iconLg,
+                    ),
+                  ),
+                  SizedBox(width: metrics.spaceMd),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'هفته‌های فعال پیوسته',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: colors.onPrimary.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        SizedBox(height: metrics.spaceXs),
+                        Text(
+                          '$continuousActiveWeeks هفته',
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: colors.onPrimary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(metrics.radiusHero),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(metrics.spaceMd),
-                  decoration: BoxDecoration(
-                    color: colors.onPrimary.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.local_fire_department_rounded, color: colors.onPrimary, size: metrics.iconLg),
-                ),
-                SizedBox(width: metrics.spaceMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'هفته‌های فعال پیوسته',
-                        style: textTheme.labelMedium?.copyWith(
-                          color: colors.onPrimary.withValues(alpha: 0.9),
-                        ),
-                      ),
-                      SizedBox(height: metrics.spaceXs),
-                      Text(
-                        '$continuousActiveWeeks هفته',
-                        style: textTheme.headlineMedium?.copyWith(
-                          color: colors.onPrimary,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
           SizedBox(height: metrics.spaceLg),
 
           // 2. Stats Grid
@@ -133,7 +141,9 @@ class MvProgressTab extends StatelessWidget {
               child: Center(
                 child: Text(
                   'با انجام اولین جلسهٔ تمرینی، رکوردهایت اینجا ثبت می‌شود.',
-                  style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
             )
@@ -149,7 +159,11 @@ class MvProgressTab extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.emoji_events_rounded, color: colors.warning, size: metrics.iconMd),
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      color: colors.warning,
+                      size: metrics.iconMd,
+                    ),
                     SizedBox(width: metrics.spaceMd),
                     Expanded(
                       child: Column(
@@ -164,7 +178,9 @@ class MvProgressTab extends StatelessWidget {
                           ),
                           Text(
                             pr.prType.titleFa,
-                            style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -186,7 +202,8 @@ class MvProgressTab extends StatelessWidget {
           if (!hasEnoughDataForTrends)
             const MvInsufficientData(
               title: 'تحلیل جامع روند هفتگی',
-              requirementDescription: 'پس از ثبت حداقل ۴ هفته تمرین، نمودار پیشرفت و حجم نمایش داده می‌شود.',
+              requirementDescription:
+                  'پس از ثبت حداقل ۴ هفته تمرین، نمودار پیشرفت و حجم نمایش داده می‌شود.',
             ),
           SizedBox(height: metrics.spaceXxl),
         ],

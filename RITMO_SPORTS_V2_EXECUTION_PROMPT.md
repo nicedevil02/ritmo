@@ -923,7 +923,7 @@ double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معت�
 
 ---
 
-### - [ ] S4-T3 — پورت قالب‌های حالت پلیر
+### - [x] S4-T3 — پورت قالب‌های حالت پلیر — 81dd2655
 
 **مرجع legacy (مطلقاً از صفر ننویس):** `lib/features/supplementary_sports/movement/presentation/session/templates/` و `session_shell.dart` و `session_template_router.dart`.
 
@@ -1463,7 +1463,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S3-T10 | DONE | e8163245 | پیاده‌سازی سویت ۳ مسیر طلایی سرتاسری و تأیید کامل اجرای شش مرحله PlanEngine |
 | S4-T1 | DONE | 0a51fa65 | مایگریشن v127 برای ۷ ستون متریک جلسه در movement_sessions و ایندکس نوع ورزش و تاریخ |
 | S4-T2 | DONE | 30672336 | افزودن ۷ فیلد متریک به MvSession با تبدیل toMap/fromMap و گترهای محاسباتی sessionLoad و paceSecPerKm |
-| S4-T3 |  |  |  |
+| S4-T3 | DONE | 81dd2655 | پورت ۵ قالب پلیر (timed, distance, route, laps, match) با رابط تعاملی و ویجت تست کامل |
 | S4-T4 |  |  |  |
 | S4-T5 |  |  |  |
 | S4-T6 |  |  |  |

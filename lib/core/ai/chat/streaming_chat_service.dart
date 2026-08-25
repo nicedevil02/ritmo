@@ -58,7 +58,8 @@ class StreamingChatService {
         id: 'msg_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(99999)}',
         sessionId: sessionId,
         role: ChatRole.assistant,
-        content: rag.blockMessage ??
+        content:
+            rag.blockMessage ??
             'دسترسی به اطلاعات این بخش نیازمند مجوز در تنظیمات برنامه است.',
         timestamp: DateTime.now(),
       );
@@ -86,16 +87,15 @@ class StreamingChatService {
     );
 
     final persona = PersonaRegistry.instance.getPersona(personaId);
-    final charter = persona != null ? AssistantCharters.charters[persona.systemPromptKey] : null;
+    final charter = persona != null
+        ? AssistantCharters.charters[persona.systemPromptKey]
+        : null;
     final baseSystemPrompt = charter != null
         ? '$charter\n${AIPromptEngine.buildChatSystemPrompt()}'
         : AIPromptEngine.buildChatSystemPrompt();
     final systemPrompt = baseSystemPrompt + AiMemoryService.memoryInstruction();
 
-    final messages = ctx.toMessages(
-      systemPrompt,
-      userText,
-    );
+    final messages = ctx.toMessages(systemPrompt, userText);
 
     // 5) Start streaming
     final assistantId =
@@ -319,7 +319,8 @@ class StreamingChatService {
       assistantResponse: rawAnswer.trim().isNotEmpty ? rawAnswer : finalText,
       domain: 'core',
       sessionId: sessionId,
-      modelProducedMemoryOps: parsed.memoryOps != null && parsed.memoryOps!.trim().isNotEmpty,
+      modelProducedMemoryOps:
+          parsed.memoryOps != null && parsed.memoryOps!.trim().isNotEmpty,
     );
 
     final assistantMsg = ChatMessage(

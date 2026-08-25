@@ -190,7 +190,14 @@ class _SearchSectionHeader extends StatelessWidget {
       ),
       child: Text(
         title,
-        style: RitmoTextStyles.sectionHeader(context.colors.primary),
+        style:
+            context.t.titleSmall?.copyWith(
+              color: context.colors.primary,
+              fontWeight: FontWeight.bold,
+            ) ??
+            RitmoTextStyles.caption(
+              context.colors.primary,
+            ).copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }

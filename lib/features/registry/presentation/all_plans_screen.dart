@@ -696,7 +696,7 @@ class _AllPlansScreenState extends State<AllPlansScreen> {
 
   Widget _buildDomainFilterChips(ThemeData theme, bool isDark) {
     return SizedBox(
-      height: CalendarGeometry.chipHeight,
+      height: CalendarGeometry.effectiveChipHeight(context),
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: RitmoSpacing.lg),

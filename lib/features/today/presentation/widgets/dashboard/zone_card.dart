@@ -149,10 +149,10 @@ class ZoneCard extends StatelessWidget {
                   RitmoEnergyDial(
                     percentage: currentEnergyPercent,
                     isDarkMode: isDarkMode,
-                    size: 66.0 * m.densityFactor,
+                    size: 78.0 * m.densityFactor,
                     activeColor: energyColor,
                   ),
-                  SizedBox(width: m.spaceSm),
+                  SizedBox(width: m.spaceMd),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

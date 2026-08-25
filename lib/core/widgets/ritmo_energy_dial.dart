@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 
-/// Modern Thermostat-Style Energy Dial with top sweeping gradient arc,
-/// floating thumb pin, and elevated central disk with ambient glow.
+/// Modern Thermostat/Speedometer-Style Energy Dial with top sweeping gradient arc,
+/// automotive tick marks (0 to 100), floating thumb pin, and elevated central disk.
 class RitmoEnergyDial extends StatelessWidget {
   const RitmoEnergyDial({
     super.key,
     required this.percentage,
     required this.isDarkMode,
-    this.size = 66.0,
+    this.size = 78.0,
     this.activeColor,
   });
 
@@ -28,7 +28,7 @@ class RitmoEnergyDial extends StatelessWidget {
     final resolvedColor = activeColor ?? _resolveColor(percent);
 
     // Geometry calculations
-    final diskMargin = size * 0.12;
+    final diskMargin = size * 0.13;
     final diskSize = size - (diskMargin * 2);
 
     return SizedBox(
@@ -42,24 +42,24 @@ class RitmoEnergyDial extends StatelessWidget {
             Positioned(
               bottom: size * 0.02,
               child: Container(
-                width: diskSize * 0.85,
+                width: diskSize * 0.88,
                 height: diskSize * 0.45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(diskSize),
                   boxShadow: [
                     BoxShadow(
                       color: resolvedColor.withValues(
-                        alpha: isDarkMode ? 0.35 : 0.25,
+                        alpha: isDarkMode ? 0.38 : 0.28,
                       ),
-                      blurRadius: size * 0.32,
-                      spreadRadius: size * 0.04,
+                      blurRadius: size * 0.35,
+                      spreadRadius: size * 0.05,
                     ),
                   ],
                 ),
               ),
             ),
 
-          // 2. Sweeping Top Arc & Floating Thumb Pin (Custom Painted)
+          // 2. Sweeping Top Arc, Speedometer Ticks & Floating Thumb Pin (Custom Painted)
           CustomPaint(
             size: Size(size, size),
             painter: _EnergyDialArcPainter(
@@ -115,7 +115,7 @@ class RitmoEnergyDial extends StatelessWidget {
                               TextSpan(
                                 text: toPersianDigits('${percent.round()}'),
                                 style: TextStyle(
-                                  fontSize: size * 0.30,
+                                  fontSize: size * 0.29,
                                   fontWeight: FontWeight.w900,
                                   color: isDarkMode
                                       ? Colors.white
@@ -127,7 +127,7 @@ class RitmoEnergyDial extends StatelessWidget {
                               TextSpan(
                                 text: '٪',
                                 style: TextStyle(
-                                  fontSize: size * 0.16,
+                                  fontSize: size * 0.15,
                                   fontWeight: FontWeight.w800,
                                   color: isDarkMode
                                       ? Colors.white.withValues(alpha: 0.7)
@@ -170,18 +170,58 @@ class _EnergyDialArcPainter extends CustomPainter {
   final bool hasValue;
   final Color activeColor;
 
-  static const double _startAngle = -math.pi / 2; // 12 o'clock (Top)
-  static const double _totalSweep = 2 * math.pi; // 360° full circular sweep
+  static const double _startAngle = math.pi * 0.85; // 153°
+  static const double _totalSweep = math.pi * 1.30; // 234°
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width / 2) - 4.5;
+    final radius = (size.width / 2) - 6.0;
     final arcRect = Rect.fromCircle(center: center, radius: radius);
 
-    const strokeWidth = 3.5;
+    const strokeWidth = 3.6;
 
-    // 1. Draw Full Background Track
+    // 1. Draw Speedometer Gauge Ticks (0%, 12.5%, 25%, 37.5%, 50%, 62.5%, 75%, 87.5%, 100%)
+    const int tickCount = 9;
+    for (int i = 0; i < tickCount; i++) {
+      final tickPercent = (i / (tickCount - 1)) * 100.0;
+      final isMajor = i % 2 == 0; // 0, 25, 50, 75, 100
+      final tickAngle = _startAngle + (i / (tickCount - 1)) * _totalSweep;
+
+      final isActive = hasValue && tickPercent <= (percentage + 1.0);
+
+      final innerR = radius + (isMajor ? 1.5 : 3.0);
+      final outerR = radius + (isMajor ? 5.8 : 4.6);
+
+      final p1 = Offset(
+        center.dx + innerR * math.cos(tickAngle),
+        center.dy + innerR * math.sin(tickAngle),
+      );
+      final p2 = Offset(
+        center.dx + outerR * math.cos(tickAngle),
+        center.dy + outerR * math.sin(tickAngle),
+      );
+
+      final tickPaint = Paint()
+        ..color = isActive
+            ? (isMajor
+                ? activeColor.withValues(alpha: 0.85)
+                : activeColor.withValues(alpha: 0.50))
+            : (isDarkMode
+                ? (isMajor
+                    ? Colors.white.withValues(alpha: 0.28)
+                    : Colors.white.withValues(alpha: 0.14))
+                : (isMajor
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : Colors.black.withValues(alpha: 0.12)))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isMajor ? 1.6 : 1.0
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(p1, p2, tickPaint);
+    }
+
+    // 2. Draw Full Background Track
     final trackPaint = Paint()
       ..color = isDarkMode
           ? Colors.white.withValues(alpha: 0.10)
@@ -194,8 +234,8 @@ class _EnergyDialArcPainter extends CustomPainter {
 
     if (!hasValue) return;
 
-    // 2. Active Sweeping Gradient Arc
-    final currentSweep = _totalSweep * (percentage / 100.0).clamp(0.001, 1.0);
+    // 3. Active Sweeping Gradient Arc
+    final currentSweep = _totalSweep * (percentage / 100.0).clamp(0.01, 1.0);
 
     // Multi-stop rainbow/energy gradient
     const gradient = SweepGradient(
@@ -230,7 +270,7 @@ class _EnergyDialArcPainter extends CustomPainter {
 
     canvas.drawArc(arcRect, _startAngle, currentSweep, false, activePaint);
 
-    // 3. Floating Thumb Pin on the Arc
+    // 4. Floating Thumb Pin on the Arc
     final thumbAngle = _startAngle + currentSweep;
     final thumbCenter = Offset(
       center.dx + radius * math.cos(thumbAngle),
@@ -247,13 +287,13 @@ class _EnergyDialArcPainter extends CustomPainter {
     final thumbOuterPaint = Paint()
       ..color = isDarkMode ? const Color(0xffF1F5F9) : Colors.white
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 5.0, thumbOuterPaint);
+    canvas.drawCircle(thumbCenter, 5.2, thumbOuterPaint);
 
     // Thumb Inner Accent Core
     final thumbCorePaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(thumbCenter, 2.0, thumbCorePaint);
+    canvas.drawCircle(thumbCenter, 2.2, thumbCorePaint);
   }
 
   @override

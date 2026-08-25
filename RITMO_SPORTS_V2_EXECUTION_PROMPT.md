@@ -735,7 +735,7 @@ class MvKindProfileRepository {
 
 ---
 
-### - [ ] S3-T3 — `reasonKey` و `reasonParams` روی هر اسلات
+### - [x] S3-T3 — `reasonKey` و `reasonParams` روی هر اسلات — dbb21119
 
 **فایل‌ها:** `domain/models/mv_slot.dart`، `domain/models/mv_decision.dart`
 
@@ -1453,7 +1453,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S2-T8 | DONE | 1df734f2 | پیاده‌سازی ۶ تست حیاتی لنگر و تعهدات شامل بازه ۴ هفته، انجماد انعطاف‌ناپذیر، پنجره جابجایی، استراحت بعد از جلسه دوگانه، پاکسازی آینده و انقضا |
 | S3-T1 | DONE | ca53f5c2 | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
 | S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
-| S3-T3 |  |  |  |
+| S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
 | S3-T4 |  |  |  |
 | S3-T5 |  |  |  |
 | S3-T6 |  |  |  |

@@ -113,7 +113,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T3 — صفحهٔ مدیریت لنگرها
+### - [x] S8-T3 — صفحهٔ مدیریت لنگرها — 0f6b9b85
 
 **فایل جدید:** `lib/features/supplementary_sports/presentation/screens/mv_commitments_screen.dart`
 
@@ -282,7 +282,7 @@ flutter test
 | :-- | :-- | :-- | :-- |
 | S8-T1 | DONE | fa94daa7 | کنترلر: بارگذاری و انتشار لنگرها با cycleWeek و متدهای ذخیره/حذف |
 | S8-T2 | DONE | 47253578 | شیت ساخت و ویرایش لنگر (MvCommitmentEditSheet) با ۸ فیلد و توکن‌های طراحی |
-| S8-T3 | | | |
+| S8-T3 | DONE | 0f6b9b85 | صفحهٔ مدیریت لنگرها (MvCommitmentsScreen) با حالت خالی و پر و FAB |
 | S8-T4 | | | |
 | S8-T5 | | | |
 | S8-T6 | | | |

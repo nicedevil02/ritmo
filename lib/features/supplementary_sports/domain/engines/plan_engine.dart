@@ -102,20 +102,200 @@ class PlanEngine {
     stageDecisions.add(
       MvDecision<List<MvSlot>>(
         value: adjacency.slots,
-        reasonFa: 'قواعد مجاورت لنگرها، تحرک قبل، ریکاوری بعد و فواصل تمرینی اعمال شد.',
+        reasonFa:
+            'قواعد مجاورت لنگرها، تحرک قبل، ریکاوری بعد و فواصل تمرینی اعمال شد.',
         reasonKey: MvReasonKeys.preAnchorTaper,
         sources: const ['calendar', 'commitments'],
       ),
     );
 
-    return MvPlanResult(
+    // 4. FILL (S3-T7: _fillToTarget)
+    final filledSlots = _fillToTarget(
       slots: adjacency.slots,
+      profile: profile,
+      kinds: kinds,
+      allowedKinds: hardLimits.allowedKinds,
+      kindProfiles: kindProfiles,
+      budget: budget,
+      load: load,
+    );
+
+    stageDecisions.add(
+      MvDecision<List<MvSlot>>(
+        value: filledSlots,
+        reasonFa:
+            'اسلات‌های تکمیلی قدرتی و کسری فعالیت هفتگی تا سقف مجاز افزوده شدند.',
+        reasonKey: MvReasonKeys.whoGap,
+        sources: const ['budget', 'load'],
+      ),
+    );
+
+    return MvPlanResult(
+      slots: filledSlots,
       stageDecisions: stageDecisions,
       notes: notes,
       allowedKinds: hardLimits.allowedKinds,
       hasConflict: adjacency.hasConflict,
       conflictNote: adjacency.conflictNote,
     );
+  }
+
+  /// مرحلهٔ ۴: پرکردن تا هدف بودجهٔ هفتگی با سقف رشد و حداقل ۲ روز قدرتی (S3-T7)
+  List<MvSlot> _fillToTarget({
+    required List<MvSlot> slots,
+    required MvUserProfile profile,
+    required Map<String, MvMovementKind> kinds,
+    required Map<String, MvMovementKind> allowedKinds,
+    required Map<String, MvKindProfile> kindProfiles,
+    required MvBudgetSnapshot budget,
+    required MvLoadSnapshot? load,
+  }) {
+    final updatedSlots = List<MvSlot>.from(slots);
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // 1. Calculate current planned moderate equivalent minutes
+    int currentEquivMinutes = 0;
+    int currentStrengthDays = 0;
+
+    for (final s in updatedSlots) {
+      if (s.slotType == MvSlotType.strength) {
+        currentStrengthDays++;
+      }
+      final kind = allowedKinds[s.kindCode] ?? kinds[s.kindCode];
+      final baseMet = kind?.baseMet ??
+          (s.slotType == MvSlotType.strength
+              ? 4.5
+              : (s.slotType == MvSlotType.mobility ? 2.5 : 3.5));
+      if (s.targetMinutes > 0) {
+        if (baseMet >= 6.0) {
+          currentEquivMinutes += s.targetMinutes * 2;
+        } else if (baseMet >= 3.0) {
+          currentEquivMinutes += s.targetMinutes;
+        }
+      }
+    }
+
+    // 2. Priority 1: Strength Day Shortfall (up to strengthDaysTarget, default 2)
+    final strengthTarget = budget.strengthDaysTarget;
+    if (currentStrengthDays < strengthTarget) {
+      final neededStrengthDays = strengthTarget - currentStrengthDays;
+      int strengthAdded = 0;
+
+      // Pass 1: pure rest days
+      for (int i = 0; i < 7; i++) {
+        if (strengthAdded >= neededStrengthDays) break;
+        if (!updatedSlots[i].isLocked &&
+            updatedSlots[i].slotType == MvSlotType.rest) {
+          final nextDay = (i + 1) % 7;
+          if (updatedSlots[nextDay].isLocked) {
+            continue;
+          }
+
+          final strengthDuration =
+              _parseDuration(profile.sessionDuration, false);
+          updatedSlots[i] = MvSlot(
+            id: 'slot_${updatedSlots[i].dateIso}_strength',
+            dateIso: updatedSlots[i].dateIso,
+            cycleWeek: updatedSlots[i].cycleWeek,
+            slotType: MvSlotType.strength,
+            kindCode: 'BODYWEIGHT',
+            focusCodes: const ['FULL_BODY'],
+            targetMinutes: strengthDuration,
+            intensityTier: profile.defaultIntensity,
+            targetRpe: profile.defaultIntensity.targetRpe,
+            headlineFa: 'تمرین قدرتی و تقویت عضلات',
+            coachNoteFa: 'تقویت سیستم عضلانی و اسکلتی برای تثبیت فرم بدنی.',
+            source: 'GENERATED',
+            reasonKey: MvReasonKeys.strengthQuota,
+            reasonParams: {'days': strengthTarget.toString()},
+            status: MvSlotStatus.planned,
+            createdAt: now,
+            updatedAt: now,
+          );
+          strengthAdded++;
+          currentStrengthDays++;
+          currentEquivMinutes += strengthDuration;
+        }
+      }
+
+      // Pass 2: other non-locked days if needed (excluding day before anchor per ADJ-7)
+      if (strengthAdded < neededStrengthDays) {
+        for (int i = 0; i < 7; i++) {
+          if (strengthAdded >= neededStrengthDays) break;
+          if (!updatedSlots[i].isLocked &&
+              updatedSlots[i].slotType != MvSlotType.strength) {
+            final nextDay = (i + 1) % 7;
+            if (updatedSlots[nextDay].isLocked) {
+              continue;
+            }
+
+            final strengthDuration =
+                _parseDuration(profile.sessionDuration, false);
+            updatedSlots[i] = MvSlot(
+              id: 'slot_${updatedSlots[i].dateIso}_strength',
+              dateIso: updatedSlots[i].dateIso,
+              cycleWeek: updatedSlots[i].cycleWeek,
+              slotType: MvSlotType.strength,
+              kindCode: 'BODYWEIGHT',
+              focusCodes: const ['FULL_BODY'],
+              targetMinutes: strengthDuration,
+              intensityTier: profile.defaultIntensity,
+              targetRpe: profile.defaultIntensity.targetRpe,
+              headlineFa: 'تمرین قدرتی و تقویت عضلات',
+              coachNoteFa: 'تقویت سیستم عضلانی و اسکلتی برای تثبیت فرم بدنی.',
+              source: 'GENERATED',
+              reasonKey: MvReasonKeys.strengthQuota,
+              reasonParams: {'days': strengthTarget.toString()},
+              status: MvSlotStatus.planned,
+              createdAt: now,
+              updatedAt: now,
+            );
+            strengthAdded++;
+            currentStrengthDays++;
+            currentEquivMinutes += strengthDuration;
+          }
+        }
+      }
+    }
+
+    // 3. Priority 3: Moderate equivalent minutes gap (up to budget.targetMin, default 150)
+    final targetMin = budget.targetMin;
+    if (currentEquivMinutes < targetMin) {
+      final gap = targetMin - currentEquivMinutes;
+      // If there are still open rest days, add light aerobic / walking / cardio filler
+      for (int i = 0; i < 7; i++) {
+        if (currentEquivMinutes >= targetMin) break;
+        if (!updatedSlots[i].isLocked &&
+            updatedSlots[i].slotType == MvSlotType.rest) {
+          final nextDay = (i + 1) % 7;
+          if (updatedSlots[nextDay].isLocked) continue;
+
+          final fillMinutes = gap.clamp(15, 45);
+          updatedSlots[i] = MvSlot(
+            id: 'slot_${updatedSlots[i].dateIso}_filler',
+            dateIso: updatedSlots[i].dateIso,
+            cycleWeek: updatedSlots[i].cycleWeek,
+            slotType: MvSlotType.cardio,
+            kindCode: 'WALKING',
+            targetMinutes: fillMinutes,
+            intensityTier: MvIntensityTier.moderate,
+            targetRpe: 5,
+            headlineFa: 'پیاده‌روی تند و هوازی سبک',
+            coachNoteFa:
+                'تکمیل سهمیه هفتگی فعالیت بدنی برای ارتقای سلامت قلب و عروق.',
+            source: 'GENERATED',
+            reasonKey: MvReasonKeys.whoGap,
+            reasonParams: {'remaining': gap.toString()},
+            status: MvSlotStatus.planned,
+            createdAt: now,
+            updatedAt: now,
+          );
+          currentEquivMinutes += fillMinutes;
+        }
+      }
+    }
+
+    return updatedSlots;
   }
 
   /// مرحلهٔ ۳: اعمال قواعد مجاورت ADJ-1 تا ADJ-7 (S3-T6)

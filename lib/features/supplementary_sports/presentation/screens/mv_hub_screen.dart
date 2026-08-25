@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import '../player/player.dart';
 import '../sheets/sheets.dart';
 import 'mv_library_screen.dart';
 import 'mv_onboarding_screen.dart';
@@ -14,11 +15,11 @@ import 'mv_week_tab.dart';
 /// Screen 1: "هاب ورزشی ریتمو" (Section 4, 5.1, 5.2, 5.3).
 /// Unified hub hosting the 3 tabs (امروز، هفته، پیشرفت) and direct actions.
 class MvHubScreen extends StatefulWidget {
-  final VoidCallback? onOpenPlayer;
+  final MvHubController? controller;
 
   const MvHubScreen({
     super.key,
-    this.onOpenPlayer,
+    this.controller,
   });
 
   @override
@@ -26,187 +27,91 @@ class MvHubScreen extends StatefulWidget {
 }
 
 class _MvHubScreenState extends State<MvHubScreen> {
+  late final MvHubController _controller;
   int _selectedTabIndex = 0;
-  bool _isLoading = true;
-
-  // Repositories
-  final _profileRepo = MvProfileRepository();
-  final _prescriptionRepo = MvPrescriptionRepository();
-  final _sessionRepo = MvSessionRepository();
-  final _exerciseRepo = MvExerciseRepository();
-  final _prRepo = MvPrRepository();
-  final _checkinRepo = MvDailyCheckinRepository();
-
-  // Engines
-  static const _planEngine = PlanEngine();
-  static const _readinessEngine = ReadinessEngine();
-  static const _budgetEngine = BudgetEngine();
-  static const _insightEngine = InsightEngine();
-
-  // State
-  late MvUserProfile _profile;
-  List<MvSlot> _weekSlots = [];
-  List<MvExercise> _allExercises = [];
-  List<MvPersonalRecord> _prs = [];
-  MvDecision<MvReadinessTier>? _readinessDecision;
-  MvWeeklyBudgetProgress? _budgetProgress;
-  MvBodyMapDistribution? _bodyMapDistribution;
-  String _selectedDateIso = MvCalendar.formatDateIso(DateTime.now());
-  MvSession? _activeSession;
+  String? _heroAnimationAsset;
 
   @override
   void initState() {
     super.initState();
-    _loadAllData();
+    _controller = widget.controller ?? MvHubController();
+    _controller.addListener(_onControllerUpdated);
+    _controller.loadAllData();
   }
 
-  Future<void> _loadAllData() async {
-    setState(() => _isLoading = true);
-
-    _profile = await _profileRepo.getProfile();
-    if (!_profile.onboardingCompleted) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
+  @override
+  void dispose() {
+    if (widget.controller == null) {
+      _controller.dispose();
+    } else {
+      _controller.removeListener(_onControllerUpdated);
     }
+    super.dispose();
+  }
 
-    final today = DateTime.now();
-    final todayIso = MvCalendar.formatDateIso(today);
-    final weekStartSat = MvCalendar.getWeekDays(today).first;
+  void _onControllerUpdated() {
+    if (mounted) setState(() {});
+  }
 
-    // Load exercises & PRs
-    _allExercises = await _exerciseRepo.getAllExercises();
-    _prs = await _prRepo.getAllPrs();
-    _activeSession = await _sessionRepo.getActiveSession();
-
-    // Load or generate week plan
-    _weekSlots = await _prescriptionRepo.getWeekSlots(MvCalendar.formatDateIso(weekStartSat));
-    if (_weekSlots.isEmpty) {
-      final generated = _planEngine.generateWeekPlan(
-        profile: _profile,
-        weekSaturday: weekStartSat,
-      );
-      _weekSlots = generated.value;
-      for (final slot in _weekSlots) {
-        await _prescriptionRepo.savePrescription(slot);
-      }
-    }
-
-    // Load Daily Checkin & evaluate readiness
-    final checkin = await _checkinRepo.getCheckinForDate(todayIso);
-    _readinessDecision = _readinessEngine.evaluateReadiness(
-      checkin: checkin,
-      cycleConsentGranted: _profile.cycleConsentGranted,
+  Future<void> _handleStartOrResumeSession(MvSlot slot) async {
+    final result = await _controller.startSessionUseCase.execute(
+      slot: slot,
+      profile: _controller.profile,
+      preloadedPool: _controller.allExercises,
     );
 
-    // Calculate MET-min progress
-    final weekSessions = await _sessionRepo.getRecentSessions(limit: 20);
-    _budgetProgress = _budgetEngine.calculateWeeklyProgress(
-      profile: _profile,
-      weekCompletedSessions: weekSessions,
-      currentDayOfWeekSat0: MvCalendar.dateTimeToSat0(today),
-    ).value;
+    setState(() {
+      _heroAnimationAsset = result.heroAnimationAsset;
+    });
 
-    // Calculate Muscle distribution
-    _bodyMapDistribution = _insightEngine.calculateMuscleDistribution(
-      completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
-    ).value;
+    if (!mounted) return;
 
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  Future<void> _handleOnboardingComplete(MvUserProfile newProfile) async {
-    await _profileRepo.saveProfile(newProfile);
-    _profile = newProfile;
-    final weekStartSat = MvCalendar.getWeekDays(DateTime.now()).first;
-    final generated = _planEngine.generateWeekPlan(
-      profile: newProfile,
-      weekSaturday: weekStartSat,
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MvSessionPlayerScreen(
+          initialSession: result.session,
+          plannedExercises: result.exercises,
+          allCandidatePool: _controller.allExercises,
+          onSessionCompleted: (session, setLogs, feeling, note) async {
+            await _controller.finishSessionUseCase.execute(
+              session: session,
+              setLogs: setLogs,
+              feeling: feeling,
+              note: note,
+            );
+            await _controller.loadAllData();
+          },
+        ),
+      ),
     );
-    _weekSlots = generated.value;
-    for (final slot in _weekSlots) {
-      await _prescriptionRepo.savePrescription(slot);
-    }
-    await _loadAllData();
-  }
 
-  Future<void> _handleSlotUpdated(MvSlot updated) async {
-    await _prescriptionRepo.savePrescription(updated);
-    final idx = _weekSlots.indexWhere((s) => s.id == updated.id || s.dateIso == updated.dateIso);
-    if (idx != -1) {
-      setState(() {
-        _weekSlots[idx] = updated;
-      });
-    }
-  }
-
-  Future<void> _handleCheckinSaved(MvDailyCheckin checkin) async {
-    await _checkinRepo.saveCheckin(checkin);
-    _readinessDecision = _readinessEngine.evaluateReadiness(
-      checkin: checkin,
-      cycleConsentGranted: _profile.cycleConsentGranted,
-    );
-    setState(() {});
-  }
-
-  Future<void> _handleQuickLogSaved(String kindCode, int duration, MvSessionFeeling? feeling, String? note) async {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final session = MvSession(
-      id: 'log_$now',
-      kindCode: kindCode,
-      sessionMode: MvSessionMode.quickLog,
-      status: MvSessionStatus.completed,
-      startedAt: now - (duration * 60000),
-      endedAt: now,
-      overallFeeling: feeling,
-      note: note,
-      createdAt: now,
-      updatedAt: now,
-    );
-    await _sessionRepo.finishSession(session);
-
-    // Update today's slot as completed
-    final todayIso = MvCalendar.formatDateIso(DateTime.now());
-    final slot = _weekSlots.where((s) => s.dateIso == todayIso).firstOrNull;
-    if (slot != null) {
-      final doneSlot = slot.copyWith(status: MvSlotStatus.done);
-      await _handleSlotUpdated(doneSlot);
-    }
-    await _loadAllData();
-  }
-
-  Future<void> _regenerateWeek() async {
-    final weekStartSat = MvCalendar.getWeekDays(DateTime.now()).first;
-    final generated = _planEngine.generateWeekPlan(
-      profile: _profile,
-      weekSaturday: weekStartSat,
-      existingSlots: _weekSlots.where((s) => s.isLocked).toList(),
-    );
-    _weekSlots = generated.value;
-    for (final slot in _weekSlots) {
-      await _prescriptionRepo.savePrescription(slot);
-    }
-    setState(() {});
+    await _controller.loadAllData();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_controller.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     // If onboarding not completed, route directly to 20-second Onboarding
-    if (!_profile.onboardingCompleted) {
-      return MvOnboardingScreen(onComplete: _handleOnboardingComplete);
+    if (!_controller.profile.onboardingCompleted) {
+      return MvOnboardingScreen(
+        onComplete: (profile) async {
+          await _controller.saveProfile(profile);
+        },
+      );
     }
 
     final colors = context.ritmoColors;
     final textTheme = Theme.of(context).textTheme;
 
     final todayIso = MvCalendar.formatDateIso(DateTime.now());
-    final currentSlot = _weekSlots.where((s) => s.dateIso == _selectedDateIso).firstOrNull ??
-        _weekSlots.where((s) => s.dateIso == todayIso).firstOrNull ??
+    final currentSlot = _controller.weekSlots.where((s) => s.dateIso == _controller.selectedDateIso).firstOrNull ??
+        _controller.weekSlots.where((s) => s.dateIso == todayIso).firstOrNull ??
         MvSlot(
           id: 'temp_$todayIso',
           dateIso: todayIso,
@@ -230,7 +135,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MvLibraryScreen(allExercises: _allExercises),
+                  builder: (_) => MvLibraryScreen(allExercises: _controller.allExercises),
                 ),
               );
             },
@@ -241,7 +146,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
             onPressed: () {
               MvAiCoachSheet.show(
                 context: context,
-                profile: _profile,
+                profile: _controller.profile,
                 currentSlot: currentSlot,
               );
             },
@@ -254,13 +159,11 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => MvSettingsScreen(
-                    initialProfile: _profile,
+                    initialProfile: _controller.profile,
                     onProfileSaved: (p) async {
-                      await _profileRepo.saveProfile(p);
-                      _profile = p;
-                      await _loadAllData();
+                      await _controller.saveProfile(p);
                     },
-                    onRegenerateProgram: _regenerateWeek,
+                    onRegenerateProgram: _controller.regenerateWeek,
                   ),
                 ),
               );
@@ -273,46 +176,47 @@ class _MvHubScreenState extends State<MvHubScreen> {
         children: [
           // Tab 0: امروز
           MvTodayTab(
-            weekSlots: _weekSlots,
+            weekSlots: _controller.weekSlots,
             todaySlot: currentSlot,
-            readinessDecision: _readinessDecision ??
+            readinessDecision: _controller.readinessDecision ??
                 const MvDecision<MvReadinessTier>(
                   value: MvReadinessTier.full,
                   reasonFa: 'آمادگی کامل برای تمرین',
                 ),
-            budgetProgress: _budgetProgress ??
+            budgetProgress: _controller.budgetProgress ??
                 const MvWeeklyBudgetProgress(
                   targetMetMinutes: 500,
                   targetActiveDays: 3,
                   currentMetMinutes: 0,
                   currentActiveDays: 0,
                 ),
-            bodyMapDistribution: _bodyMapDistribution ??
+            bodyMapDistribution: _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
-            onStartSession: () => widget.onOpenPlayer?.call(),
-            onContinueSession: () => widget.onOpenPlayer?.call(),
-            isSessionInProgress: _activeSession != null,
-            onSlotUpdated: _handleSlotUpdated,
-            onCheckinSaved: _handleCheckinSaved,
-            onQuickLogSaved: _handleQuickLogSaved,
-            onDateSelected: (dateIso) => setState(() => _selectedDateIso = dateIso),
+            heroAnimationAsset: _heroAnimationAsset,
+            onStartSession: () => _handleStartOrResumeSession(currentSlot),
+            onContinueSession: () => _handleStartOrResumeSession(currentSlot),
+            isSessionInProgress: _controller.activeSession != null,
+            onSlotUpdated: _controller.updateSlot,
+            onCheckinSaved: _controller.saveCheckin,
+            onQuickLogSaved: _controller.saveQuickLog,
+            onDateSelected: _controller.selectDate,
           ),
 
           // Tab 1: هفته
           MvWeekTab(
-            weekSlots: _weekSlots,
+            weekSlots: _controller.weekSlots,
             cycleWeek: 1,
-            onSlotUpdated: _handleSlotUpdated,
-            onRegenerateWeek: _regenerateWeek,
+            onSlotUpdated: _controller.updateSlot,
+            onRegenerateWeek: _controller.regenerateWeek,
           ),
 
           // Tab 2: پیشرفت
           MvProgressTab(
-            continuousActiveWeeks: 3,
-            totalSessionsCount: _weekSlots.where((s) => s.isCompleted).length,
-            totalMetMinutes: _budgetProgress?.currentMetMinutes ?? 0,
-            personalRecords: _prs,
-            bodyMapDistribution: _bodyMapDistribution ??
+            continuousActiveWeeks: _controller.continuousActiveWeeks,
+            totalSessionsCount: _controller.weekSlots.where((s) => s.isCompleted).length,
+            totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
+            personalRecords: _controller.prs,
+            bodyMapDistribution: _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
           ),
         ],

@@ -3,6 +3,7 @@
 /// Follows ADR 0008, Section 1 to 13 of Supplementary Sports Redesign.
 library;
 
+export 'application/application.dart';
 export 'data/repositories/repositories.dart';
 export 'domain/engines/engines.dart';
 export 'domain/models/models.dart';

@@ -14,8 +14,12 @@ class KonkurSetupFlow extends StatefulWidget {
   const KonkurSetupFlow({
     super.key,
     required this.onSetupCompleted,
+    this.onCancel,
+    this.onSwitchToStudyMode,
   });
   final VoidCallback onSetupCompleted;
+  final VoidCallback? onCancel;
+  final VoidCallback? onSwitchToStudyMode;
 
   @override
   State<KonkurSetupFlow> createState() => _KonkurSetupFlowState();
@@ -169,6 +173,25 @@ class _KonkurSetupFlowState extends State<KonkurSetupFlow> {
                       onPressed: _isSaving ? null : _prevStep,
                       child: Text(
                         'مرحله قبل',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  else if (widget.onCancel != null || widget.onSwitchToStudyMode != null)
+                    TextButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () {
+                              if (widget.onCancel != null) {
+                                widget.onCancel!();
+                              } else if (widget.onSwitchToStudyMode != null) {
+                                widget.onSwitchToStudyMode!();
+                              }
+                            },
+                      child: Text(
+                        'انصراف و بازگشت',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontWeight: FontWeight.bold,

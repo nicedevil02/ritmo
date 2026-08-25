@@ -36,6 +36,10 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
   DateTime _selectedDate = DateTime.now();
   StudyMode _selectedMode = StudyMode.learn;
   final TextEditingController _noteController = TextEditingController();
+  final TextEditingController _testsTotalController = TextEditingController();
+  final TextEditingController _testsCorrectController = TextEditingController();
+  final TextEditingController _testsWrongController = TextEditingController();
+  bool _includeTests = false;
   bool _isLoadingTopics = false;
 
   @override
@@ -50,6 +54,9 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
   @override
   void dispose() {
     _noteController.dispose();
+    _testsTotalController.dispose();
+    _testsCorrectController.dispose();
+    _testsWrongController.dispose();
     super.dispose();
   }
 
@@ -89,6 +96,17 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
     final dateIso = RitmoDate.dayKey(_selectedDate);
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
+    int total = 0;
+    int correct = 0;
+    int wrong = 0;
+    int empty = 0;
+    if (_includeTests) {
+      total = int.tryParse(_testsTotalController.text.trim()) ?? 0;
+      correct = int.tryParse(_testsCorrectController.text.trim()) ?? 0;
+      wrong = int.tryParse(_testsWrongController.text.trim()) ?? 0;
+      empty = (total - correct - wrong) > 0 ? (total - correct - wrong) : 0;
+    }
+
     final session = StudySession(
       id: const Uuid().v4(),
       subjectId: _selectedSubjectId!,
@@ -98,6 +116,10 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
       mode: _selectedMode,
       source: 'MANUAL',
       note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+      testsTotal: total,
+      testsCorrect: correct,
+      testsWrong: wrong,
+      testsEmpty: empty,
       createdAtMs: nowMs,
     );
 
@@ -232,9 +254,91 @@ class _ManualSessionSheetState extends State<ManualSessionSheet> {
             ),
             Slider(
               value: _durationMinutes.toDouble(),
-              min: 5, max: 240, divisions: 47, // 5 min steps, 45 lands exactly on step
+              min: 5, max: 240, divisions: 47,
               activeColor: colors.primary,
               onChanged: (v) => setState(() => _durationMinutes = v.toInt()),
+            ),
+            const SizedBox(height: 12),
+            // Test Tracking Collapsible
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Row(
+                  children: [
+                    Icon(Icons.checklist_rounded, size: 18, color: _includeTests ? colors.primary : colors.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'ثبت عملکرد تستی (اختیاری)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _includeTests ? colors.primary : colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: Switch(
+                  value: _includeTests,
+                  onChanged: (val) => setState(() => _includeTests = val),
+                  activeTrackColor: colors.primary.withValues(alpha: 0.5),
+                ),
+                children: [
+                  if (_includeTests) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _testsTotalController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'تعداد کل تست',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _testsCorrectController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'درست',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _testsWrongController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'غلط',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Session Note
+            TextField(
+              controller: _noteController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                labelText: 'یادداشت یا نکات این جلسه (اختیاری)',
+                hintText: 'مثلاً: حل تست‌های زوج صفحه ۵۴',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

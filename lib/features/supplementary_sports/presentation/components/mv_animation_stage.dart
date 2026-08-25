@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/supplementary_sports/data/seed/ss_exercise_animation_map.dart';
-
 /// Full-width Animation Stage for Workout Sessions and Hero Cards (Section 5.10 & 6.3).
 class MvAnimationStage extends StatelessWidget {
   final String? animationAsset;
@@ -24,15 +22,12 @@ class MvAnimationStage extends StatelessWidget {
     final metrics = context.metrics;
 
     String? effectiveAsset = animationAsset;
-    if ((effectiveAsset == null || effectiveAsset.isEmpty) && exerciseId != null) {
-      final code = ssExerciseAnimationMap[exerciseId];
-      if (code != null) {
-        effectiveAsset = 'assets/animations/custom/$code.json';
-      }
-    }
-
     if (effectiveAsset == null || effectiveAsset.isEmpty) {
-      effectiveAsset = 'assets/animations/custom/hw_143.json';
+      if (exerciseId != null && exerciseId!.isNotEmpty) {
+        effectiveAsset = 'assets/animations/custom/$exerciseId.json';
+      } else {
+        effectiveAsset = 'assets/animations/custom/hw_143.json';
+      }
     }
 
     return Container(

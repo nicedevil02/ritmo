@@ -151,9 +151,11 @@ class KonkurSubject {
     this.orderIndex = 0,
     this.colorHex,
     this.isPreset = false,
-  });
+    String? origin,
+  }) : origin = origin ?? (isPreset ? 'KONKUR_PRESET' : 'KONKUR_CUSTOM');
 
   factory KonkurSubject.fromMap(Map<String, dynamic> map) {
+    final isPreset = (map['isPreset'] as int?) == 1;
     return KonkurSubject(
       id: map['id'] as String,
       name: map['name'] as String,
@@ -166,7 +168,8 @@ class KonkurSubject {
       examQuestionCount: map['examQuestionCount'] as int? ?? 0,
       orderIndex: map['orderIndex'] as int? ?? 0,
       colorHex: map['colorHex'] as String?,
-      isPreset: (map['isPreset'] as int?) == 1,
+      isPreset: isPreset,
+      origin: map['origin'] as String? ?? (isPreset ? 'KONKUR_PRESET' : 'KONKUR_CUSTOM'),
     );
   }
   final String id;
@@ -181,6 +184,7 @@ class KonkurSubject {
   final int orderIndex;
   final String? colorHex;
   final bool isPreset;
+  final String origin;
 
   Map<String, dynamic> toMap() {
     return {
@@ -196,6 +200,7 @@ class KonkurSubject {
       'orderIndex': orderIndex,
       'colorHex': colorHex,
       'isPreset': isPreset ? 1 : 0,
+      'origin': origin,
     };
   }
 }
@@ -226,6 +231,7 @@ class KonkurTopic {
     this.reviewCompletedMinutes = 0,
     this.reviewTargetMinutes = 0,
     this.chapter,
+    this.origin = 'KONKUR_PRESET',
   });
 
   factory KonkurTopic.fromMap(Map<String, dynamic> map) {
@@ -262,6 +268,7 @@ class KonkurTopic {
       reviewCompletedMinutes: map['reviewCompletedMinutes'] as int? ?? 0,
       reviewTargetMinutes: map['reviewTargetMinutes'] as int? ?? 0,
       chapter: map['chapter'] as String?,
+      origin: map['origin'] as String? ?? 'KONKUR_PRESET',
     );
   }
   final String id;
@@ -287,6 +294,7 @@ class KonkurTopic {
   final int reviewCompletedMinutes;
   final int reviewTargetMinutes;
   final String? chapter;
+  final String origin;
 
   bool isDue(DateTime today) {
     if (nextReviewDate == null || nextReviewDate!.isEmpty) return false;
@@ -324,6 +332,7 @@ class KonkurTopic {
       'reviewCompletedMinutes': reviewCompletedMinutes,
       'reviewTargetMinutes': reviewTargetMinutes,
       'chapter': chapter,
+      'origin': origin,
     };
   }
 

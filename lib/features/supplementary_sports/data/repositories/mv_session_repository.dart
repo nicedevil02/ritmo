@@ -65,7 +65,7 @@ class MvSessionRepository {
       'movement_session_events',
       where: 'sessionId = ?',
       whereArgs: [sessionId],
-      orderBy: 'timestamp ASC',
+      orderBy: 'at ASC',
     );
     return rows.map((r) => MvSessionEvent.fromMap(r)).toList();
   }

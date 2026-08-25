@@ -442,6 +442,8 @@ enum MvSessionFeeling {
     required this.titleFa,
   });
 
+  String get code => name;
+
   static MvSessionFeeling fromRir(int? rir) {
     if (rir == null) return MvSessionFeeling.good;
     if (rir >= 3) return MvSessionFeeling.easy;

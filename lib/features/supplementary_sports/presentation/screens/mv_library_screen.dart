@@ -24,14 +24,9 @@ class _MvLibraryScreenState extends State<MvLibraryScreen> {
   bool _onlyApartmentFriendly = false;
   bool _onlyNoEquipment = false;
 
-  final List<Map<String, String>> _categories = const [
-    {'code': 'ALL', 'title': 'همه'},
-    {'code': 'CHEST', 'title': 'سینه'},
-    {'code': 'BACK', 'title': 'پشت'},
-    {'code': 'QUADS_GLUTES', 'title': 'پا'},
-    {'code': 'CORE', 'title': 'مرکز بدن / شکم'},
-    {'code': 'SHOULDER', 'title': 'شانه و بازو'},
-    {'code': 'CARDIO', 'title': 'هوازی'},
+  final List<Map<String, String>> _categories = [
+    const {'code': 'ALL', 'title': 'همه'},
+    ...MvMuscleGroup.all.map((m) => {'code': m.code, 'title': m.titleFa}),
   ];
 
   @override

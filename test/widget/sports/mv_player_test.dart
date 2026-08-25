@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/player/player.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Widget createTestApp(Widget child) {
   return MaterialApp(
@@ -14,6 +15,11 @@ Widget createTestApp(Widget child) {
 }
 
 void main() {
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
+
   group('Phase P6 Unified Player & Summary Tests', () {
     const testExercise = MvExercise(
       id: 'push_up',

@@ -6,12 +6,12 @@ import 'package:ritmo/features/supplementary_sports/domain/sports_detail_mode.da
 void main() {
   group('Prompt 066 — Test 3: Independent Date Anchor Prescriptions (C-05)', () {
     test('Prescriptions with different dateIso are separate instances', () {
-      final p1 = SessionPrescription(
+      const p1 = SessionPrescription(
         id: 'pres_2026-08-10',
         dateIso: '2026-08-10',
         cycleWeek: 1,
         slotType: SlotType.strength,
-        focusCodes: const ['CHEST', 'TRICEPS'],
+        focusCodes: ['CHEST', 'TRICEPS'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه و پشت‌بازو',
@@ -20,12 +20,12 @@ void main() {
         updatedAt: 1000,
       );
 
-      final p2 = SessionPrescription(
+      const p2 = SessionPrescription(
         id: 'pres_2026-08-17',
         dateIso: '2026-08-17',
         cycleWeek: 2,
         slotType: SlotType.strength,
-        focusCodes: const ['CHEST', 'TRICEPS'],
+        focusCodes: ['CHEST', 'TRICEPS'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه و پشت‌بازو',
@@ -43,12 +43,12 @@ void main() {
 
   group('Prompt 066 — Test 4: Prescription Serialization (C-06)', () {
     test('SessionPrescription.toMap and fromMap perform lossless roundtrip', () {
-      final p = SessionPrescription(
+      const p = SessionPrescription(
         id: 'pres_test_1',
         dateIso: '2026-08-10',
         cycleWeek: 1,
         slotType: SlotType.strength,
-        focusCodes: const ['CHEST', 'SHOULDER'],
+        focusCodes: ['CHEST', 'SHOULDER'],
         targetMinutes: 60,
         intensityTier: IntensityTier.hard,
         targetRpe: 8,
@@ -111,12 +111,12 @@ void main() {
 
   group('Prompt 066 — Test 7: Locked Prescriptions Protection', () {
     test('copyWith isLocked toggles lock status', () {
-      final p = SessionPrescription(
+      const p = SessionPrescription(
         id: 'pres_lock_1',
         dateIso: '2026-08-10',
         cycleWeek: 1,
         slotType: SlotType.strength,
-        focusCodes: const ['CHEST'],
+        focusCodes: ['CHEST'],
         targetMinutes: 45,
         intensityTier: IntensityTier.moderate,
         headlineFa: '۴۵ دقیقه سینه',

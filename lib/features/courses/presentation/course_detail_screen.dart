@@ -770,6 +770,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           : 'غیرفعال',
                       colors,
                     ),
+                    const Divider(height: 20),
+                    _buildConfigItem(
+                      'مرور فاصله‌دار (SM-2)',
+                      _course.reviewEnabled ? 'فعال 🔄' : 'غیرفعال',
+                      colors,
+                    ),
                   ],
                 ),
               ),

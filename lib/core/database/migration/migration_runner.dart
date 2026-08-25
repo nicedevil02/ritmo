@@ -57,6 +57,9 @@ import 'package:ritmo/core/database/migration/migrations/migration_v115_my_day.d
 import 'package:ritmo/core/database/migration/migrations/migration_v116_tags_and_normalized_fields.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v117_cycle_hardening.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v118_medication_integrity_and_safety.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v119_konkur_study_isolation.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v120_study_deadlines_and_pomodoro.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v121_sports_unification.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -177,6 +180,9 @@ class MigrationRunner {
     MigrationV116TagsAndNormalizedFields(), // Simple Tasks: tagsJson, noteNormalized, titleNormalized
     MigrationV117CycleHardening(), // Cycle module hardening: autoClosed, indexes, normalization & cleanup
     MigrationV118MedicationIntegrityAndSafety(), // Medication integrity, stock tracking & safety indexes
+    MigrationV119KonkurStudyIsolation(), // Strict isolation between Konkur presets/custom subjects and study mode
+    MigrationV120StudyDeadlinesAndPomodoro(), // Study exams, assignments, deadlines table & pomodoro active session fields
+    MigrationV121SportsUnification(), // Unified Sports & Movement: M1-M7 migrations
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

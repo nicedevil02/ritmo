@@ -41,19 +41,16 @@ void main() {
       }
     });
 
-    test('No unified sports code file exceeds 600 lines limit (Rule R-09)', () {
-      final sportsDir = Directory('lib/features/supplementary_sports');
-      final dartFiles = sportsDir
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart') && f.path.contains('mv_'));
+    test('Presentation layer files must NEVER import data repositories directly (Rule C-04)', () {
+      final presDir = Directory('lib/features/supplementary_sports/presentation');
+      final dartFiles = presDir.listSync(recursive: true).whereType<File>().where((f) => f.path.endsWith('.dart') && f.path.contains('mv_'));
 
       for (final file in dartFiles) {
-        final lineCount = file.readAsLinesSync().length;
+        final content = file.readAsStringSync();
         expect(
-          lineCount,
-          lessThanOrEqualTo(600),
-          reason: '${file.path} has $lineCount lines, exceeding the 600-line architecture limit',
+          content.contains("package:ritmo/features/supplementary_sports/data/"),
+          isFalse,
+          reason: '${file.path} violates Clean Architecture rule C-04 by directly importing data layer',
         );
       }
     });

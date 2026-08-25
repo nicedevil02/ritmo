@@ -38,6 +38,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
   CourseType _selectedType = CourseType.video;
   int _weeklyTarget = 3;
   CourseEnergyRule _energyRule = CourseEnergyRule.all;
+  bool _reviewEnabled = false;
 
   // Saturday=6, Sunday=0, Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5
   final List<int> _preferredDays = [];
@@ -77,6 +78,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
       _selectedType = c.courseType;
       _weeklyTarget = c.weeklyTargetSessions;
       _energyRule = c.energyRule;
+      _reviewEnabled = c.reviewEnabled;
       _preferredDays.addAll(c.preferredDays);
       _reminderEnabled = c.reminderEnabled;
       if (c.preferredTime != null && c.preferredTime!.contains(':')) {
@@ -95,6 +97,9 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
       }
       if (iv?['energyRule'] != null) {
         _energyRule = CourseEnergyRuleExtension.fromString(iv?['energyRule'] as String?);
+      }
+      if (iv?['reviewEnabled'] != null) {
+        _reviewEnabled = iv?['reviewEnabled'] as bool;
       }
       if (iv?['preferredDays'] != null) {
         final days = iv?['preferredDays'] as List<dynamic>;
@@ -284,11 +289,12 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
         reminderEnabled: _reminderEnabled,
         preferredTime: timeStr,
         linkedGoalId: _linkedGoalId,
+        reviewEnabled: _reviewEnabled,
         updatedAt: now.millisecondsSinceEpoch,
       );
     } else {
       courseToSave = Course(
-        id: 'course_${now.millisecondsSinceEpoch}_${title.hashCode}',
+        id: 'course_${now.millisecondsSinceEpoch}_${now.microsecondsSinceEpoch % 10000}',
         title: title,
         totalSessions: totalSessions,
         sessionDurationMinutes: duration,
@@ -301,6 +307,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
         reminderEnabled: _reminderEnabled,
         preferredTime: timeStr,
         linkedGoalId: _linkedGoalId,
+        reviewEnabled: _reviewEnabled,
         createdAt: now.millisecondsSinceEpoch,
         updatedAt: now.millisecondsSinceEpoch,
       );
@@ -546,7 +553,7 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                             ),
                             IconButton(
                               icon: const Icon(CupertinoIcons.plus_circle, size: 20),
-                              onPressed: _weeklyTarget < 14
+                              onPressed: _weeklyTarget < CourseLimits.maxWeeklyTarget
                                   ? () => setState(() => _weeklyTarget++)
                                   : null,
                             ),
@@ -764,6 +771,27 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
                               ],
                             ),
                           ],
+                          const SizedBox(height: 16),
+
+                          // SM-2 Spaced Repetition Switch (Fixes H6)
+                          SwitchListTile(
+                            title: Text(
+                              'فعال‌سازی مرور فاصله‌دار (SM-2)',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                            ),
+                            subtitle: Text(
+                              'برنامه‌ریزی خودکار جلسات مرور بر اساس میزان تسلط و سختی جلسات',
+                              style: TextStyle(fontSize: 10.5, color: colors.textSecondary),
+                            ),
+                            value: _reviewEnabled,
+                            onChanged: (val) {
+                              setState(() {
+                                _reviewEnabled = val;
+                              });
+                            },
+                            activeThumbColor: colors.primary,
+                            contentPadding: EdgeInsets.zero,
+                          ),
                         ],
                       ),
                     ),

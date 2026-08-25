@@ -38,7 +38,7 @@ class CoachEngine {
 
     final tip = MvCoachTip(
       textFa: tipText,
-      isAiGenerated: isOnline,
+      isAiGenerated: false, // Honest flag for rule-based deterministic advice
       sourceContext: 'smart_rules',
     );
 

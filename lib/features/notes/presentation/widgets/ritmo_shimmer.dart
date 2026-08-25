@@ -191,14 +191,25 @@ class RitmoShimmerGrid extends StatelessWidget {
 
 class RitmoShimmerList extends StatelessWidget {
   final int count;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
+  final EdgeInsetsGeometry padding;
 
-  const RitmoShimmerList({super.key, this.count = 4});
+  const RitmoShimmerList({
+    super.key,
+    this.count = 4,
+    this.shrinkWrap = true,
+    this.physics = const NeverScrollableScrollPhysics(),
+    this.padding = const EdgeInsets.all(RitmoSpacing.lg),
+  });
 
   @override
   Widget build(BuildContext context) {
     return RitmoShimmer(
       child: ListView.separated(
-        padding: const EdgeInsets.all(RitmoSpacing.lg),
+        padding: padding,
+        shrinkWrap: shrinkWrap,
+        physics: physics,
         itemCount: count,
         separatorBuilder: (context, index) =>
             const SizedBox(height: RitmoSpacing.md),

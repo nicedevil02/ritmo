@@ -36,7 +36,7 @@ void main() {
     });
 
     test('MvPrescriptionRepository saves, retrieves and updates slot', () async {
-      final slot = MvSlot(
+      const slot = MvSlot(
         id: 'slot_1',
         dateIso: '2026-08-25',
         cycleWeek: 1,
@@ -49,7 +49,11 @@ void main() {
       await prescriptionRepo.savePrescription(slot);
       final retrieved = await prescriptionRepo.getPrescriptionForDate('2026-08-25');
       expect(retrieved, isNotNull);
-      expect(retrieved!.headlineFa, equals('قدرت بالاتنه'));
+      expect(retrieved!.id, equals('slot_1'));
+      expect(retrieved.headlineFa, equals('قدرت بالاتنه'));
+
+      final allExercises = await exerciseRepo.getAllExercises();
+      expect(allExercises, isNotNull);
 
       await prescriptionRepo.updateSlotStatus('slot_1', MvSlotStatus.done, actualRpe: 7);
       final updated = await prescriptionRepo.getPrescriptionForDate('2026-08-25');
@@ -130,7 +134,7 @@ void main() {
     });
 
     test('MvDailyCheckinRepository saves and retrieves daily checkin', () async {
-      final checkin = MvDailyCheckin(
+      const checkin = MvDailyCheckin(
         dateIso: '2026-08-25',
         energy: 4,
         soreness: 2,

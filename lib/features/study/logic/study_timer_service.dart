@@ -40,6 +40,9 @@ class StudyTimerService {
     String? topicId,
     StudyMode mode = StudyMode.learn,
     int? plannedMinutes,
+    String pomodoroPhase = 'FOCUS',
+    int pomodoroCycle = 1,
+    int targetSeconds = 1500,
   }) async {
     if (subjectId.trim().isEmpty) return;
 
@@ -53,11 +56,38 @@ class StudyTimerService {
       accumulatedSeconds: 0,
       isPaused: false,
       plannedMinutes: plannedMinutes,
+      pomodoroPhase: pomodoroPhase,
+      pomodoroCycle: pomodoroCycle,
+      targetSeconds: targetSeconds,
       createdAtMs: nowMs,
     );
 
     await _dao.saveActiveSession(state);
     _currentSession = state;
+    _startTicker();
+    _controller.add(_currentSession);
+  }
+
+  Future<void> switchPomodoroPhase({
+    required String phase,
+    int? nextCycle,
+    int? targetSeconds,
+  }) async {
+    if (_currentSession == null) return;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final currentElapsed = _currentSession!.elapsedSeconds(nowMs);
+
+    final updated = _currentSession!.copyWith(
+      startedAtMs: nowMs,
+      accumulatedSeconds: currentElapsed,
+      pomodoroPhase: phase,
+      pomodoroCycle: nextCycle ?? _currentSession!.pomodoroCycle,
+      targetSeconds: targetSeconds ?? _currentSession!.targetSeconds,
+      isPaused: false,
+    );
+
+    await _dao.saveActiveSession(updated);
+    _currentSession = updated;
     _startTicker();
     _controller.add(_currentSession);
   }
@@ -68,16 +98,10 @@ class StudyTimerService {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final elapsedSec = _currentSession!.elapsedSeconds(nowMs);
 
-    final updated = ActiveStudySessionState(
-      id: 'singleton',
-      subjectId: _currentSession!.subjectId,
-      topicId: _currentSession!.topicId,
-      mode: _currentSession!.mode,
+    final updated = _currentSession!.copyWith(
       startedAtMs: nowMs,
       accumulatedSeconds: elapsedSec,
       isPaused: true,
-      plannedMinutes: _currentSession!.plannedMinutes,
-      createdAtMs: _currentSession!.createdAtMs,
     );
 
     await _dao.saveActiveSession(updated);
@@ -90,16 +114,9 @@ class StudyTimerService {
     if (_currentSession == null || !_currentSession!.isPaused) return;
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final updated = ActiveStudySessionState(
-      id: 'singleton',
-      subjectId: _currentSession!.subjectId,
-      topicId: _currentSession!.topicId,
-      mode: _currentSession!.mode,
+    final updated = _currentSession!.copyWith(
       startedAtMs: nowMs,
-      accumulatedSeconds: _currentSession!.accumulatedSeconds,
       isPaused: false,
-      plannedMinutes: _currentSession!.plannedMinutes,
-      createdAtMs: _currentSession!.createdAtMs,
     );
 
     await _dao.saveActiveSession(updated);
@@ -115,6 +132,10 @@ class StudyTimerService {
     StudyMastery? newMastery,
     String? nextReviewDateIso,
     int? newReviewCount,
+    int testsTotal = 0,
+    int testsCorrect = 0,
+    int testsWrong = 0,
+    int testsEmpty = 0,
   }) async {
     if (_currentSession == null || _isSaving) return;
     _isSaving = true;
@@ -143,6 +164,10 @@ class StudyTimerService {
           endedAtMs: nowMs,
           quality: quality,
           note: note,
+          testsTotal: testsTotal,
+          testsCorrect: testsCorrect,
+          testsWrong: testsWrong,
+          testsEmpty: testsEmpty,
           createdAtMs: nowMs,
         );
 

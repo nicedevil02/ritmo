@@ -179,5 +179,45 @@ void main() {
 
       expect(res, isNull);
     });
+
+    test('H3: CourseAdaptiveEngine.proposeAdjustment calculates proposal without mutating DB', () {
+      final today = DateTime(2026, 8, 10);
+      final adaptiveCourse = Course(
+        id: 'c_ad_prop',
+        title: 'Adaptive Proposal Test',
+        totalSessions: 10,
+        sessionDurationMinutes: 30,
+        weeklyTargetSessions: 4,
+        isAdaptive: true,
+        createdAt: 0,
+        updatedAt: 0,
+        courseType: CourseType.video,
+        preferredDays: [6, 1, 3],
+      );
+
+      final overdueSessions = List.generate(
+        7,
+        (i) => CourseSession(
+          id: 's_od_$i',
+          courseId: 'c_ad_prop',
+          sessionNumber: i + 1,
+          plannedDate: '2026-08-0${i + 1}',
+          completionStatus: SessionStatus.pending,
+          createdAt: 0,
+          updatedAt: 0,
+        ),
+      );
+
+      final proposal = CourseAdaptiveEngine.proposeAdjustment(
+        course: adaptiveCourse,
+        sessions: overdueSessions,
+        today: today,
+      );
+
+      expect(proposal, isNotNull);
+      expect(proposal!.oldWeeklyTarget, equals(4));
+      expect(proposal.newWeeklyTarget, equals(3));
+      expect(proposal.reasonFa.contains('معوقه'), isTrue);
+    });
   });
 }

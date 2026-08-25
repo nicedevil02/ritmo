@@ -5,12 +5,12 @@ import 'package:ritmo/features/study/domain/study_planner.dart';
 void main() {
   group('StudyPlanner Unit Tests', () {
     final now = DateTime(2026, 8, 7);
-    final todayStr = '2026-08-07';
+    const todayStr = '2026-08-07';
 
-    final subject = const StudySubject(id: 's1', name: 'ریاضی');
+    const subject = StudySubject(id: 's1', name: 'ریاضی');
 
     test('Topic due for review takes precedence over unstudied topic', () {
-      final topic1 = const StudyTopic(
+      const topic1 = StudyTopic(
         id: 't1',
         subjectId: 's1',
         name: 'مشتّق',
@@ -18,7 +18,7 @@ void main() {
         orderIndex: 1,
       );
 
-      final topic2 = StudyTopic(
+      const topic2 = StudyTopic(
         id: 't2',
         subjectId: 's1',
         name: 'حد',
@@ -39,16 +39,16 @@ void main() {
     });
 
     test('Studied topic today is penalized', () {
-      final topic1 = const StudyTopic(id: 't1', subjectId: 's1', name: 'مشتّق');
-      final topic2 = const StudyTopic(id: 't2', subjectId: 's1', name: 'حد');
+      const topic1 = StudyTopic(id: 't1', subjectId: 's1', name: 'مشتّق');
+      const topic2 = StudyTopic(id: 't2', subjectId: 's1', name: 'حد');
 
-      final todaySession = StudySession(
+      const todaySession = StudySession(
         id: 'sess1',
         subjectId: 's1',
         topicId: 't1',
         durationMinutes: 30,
         dateIso: todayStr,
-        createdAtMs: now.millisecondsSinceEpoch,
+        createdAtMs: 0,
       );
 
       final recs = StudyPlanner.evaluate(

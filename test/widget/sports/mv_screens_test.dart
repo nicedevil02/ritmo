@@ -17,7 +17,7 @@ Widget createTestApp(Widget child) {
 
 void main() {
   group('Phase P5 Screens & Sheets Tests', () {
-    final testSlot = MvSlot(
+    const testSlot = MvSlot(
       id: 'slot_1',
       dateIso: '2026-08-25',
       slotType: MvSlotType.strength,
@@ -59,7 +59,7 @@ void main() {
             onStartSession: () {},
             onSlotUpdated: (_) {},
             onCheckinSaved: (_) {},
-            onQuickLogSaved: (_, __, ___, ____) async {},
+            onQuickLogSaved: (kind, dur, feel, note) async {},
             onDateSelected: (_) {},
           ),
         ),
@@ -138,7 +138,7 @@ void main() {
 
     testWidgets('MvSettingsScreen displays toggles and triggers save', (tester) async {
       MvUserProfile? savedProfile;
-      final profile = MvUserProfile(daysPerWeek: 3, createdAt: 100, updatedAt: 100);
+      const profile = MvUserProfile(daysPerWeek: 3, createdAt: 100, updatedAt: 100);
 
       await tester.pumpWidget(
         createTestApp(

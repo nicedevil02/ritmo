@@ -4,6 +4,7 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/widgets/ritmo_sheet_scaffold.dart';
+import 'package:ritmo/features/courses/logic/course_catchup_engine.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
@@ -54,7 +55,10 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
     final now = DateTime.now();
 
     // Plan 1: Express
-    final newWeeklyTarget1 = (widget.course.weeklyTargetSessions + 2).clamp(1, 14);
+    final newWeeklyTarget1 = (widget.course.weeklyTargetSessions + 2).clamp(
+      CourseLimits.minWeeklyTarget,
+      CourseLimits.maxWeeklyTarget,
+    );
     final estEnd1 = CourseScheduler.estimatedEndDate(
       remaining: pendingCount,
       weeklyTarget: newWeeklyTarget1,
@@ -194,9 +198,14 @@ class _RecoveryModeSheetState extends State<RecoveryModeSheet> {
     setState(() => _isApplying = true);
     try {
       if (_selectedPlanIndex == 0) {
-        // Express
-        final updated = widget.course.copyWith(weeklyTargetSessions: expressTarget);
-        await CoursesRepository.instance.updateCourse(updated);
+        // Express Catch-up plan (Fixes H2)
+        final catchupPlan = CourseCatchupEngine.generateCatchupPlan(
+          course: widget.course,
+          sessions: widget.sessions,
+          today: DateTime.now(),
+          maxAdditionalWeeklyTarget: 2,
+        );
+        await CourseCatchupEngine.applyCatchupPlan(catchupPlan);
       } else if (_selectedPlanIndex == 1) {
         // Extend
         final targetDateStr = extendEnd != null ? CourseDate.toDayKey(extendEnd) : null;

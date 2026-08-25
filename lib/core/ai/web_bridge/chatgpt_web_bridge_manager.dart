@@ -456,7 +456,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            if (_controller != null && _controller != controller) return;
+            if (_controller != controller || url == 'about:blank') return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading started: $url');
             // A-36: Early hook injection at page start
             controller.runJavaScript(ChatGptJsInjector.earlyHookScript).catchError((e) {
@@ -464,7 +464,7 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
             });
           },
           onPageFinished: (url) async {
-            if (_controller != null && _controller != controller) return;
+            if (_controller != controller || url == 'about:blank') return;
             RitmoLog.debug('ChatGptWebBridge', 'Page loading finished: $url');
             if (_status == ChatGptBridgeStatus.generating) {
               BridgeTraceLog.instance.addEntry(
@@ -478,12 +478,12 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
             await handlePageFinished(url, controller);
           },
           onWebResourceError: (error) {
-            if (_controller != null && _controller != controller) return;
+            if (_controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'Web resource error: ${error.description}');
             unawaited(handleWebResourceError(error));
           },
           onHttpError: (error) {
-            if (_controller != null && _controller != controller) return;
+            if (_controller != controller) return;
             RitmoLog.warning('ChatGptWebBridge', 'HTTP error: ${error.response?.statusCode}');
             unawaited(handleHttpError(error));
           },
@@ -522,8 +522,8 @@ class ChatGptWebBridgeManager with WidgetsBindingObserver {
   /// and if a generation is pending, attempts to re-attach the watcher or abort if looped.
   @visibleForTesting
   Future<void> handlePageFinished(String url, WebViewController controller) async {
-    if (_controller != null && _controller != controller) {
-      RitmoLog.debug('ChatGptWebBridge', 'Ignoring handlePageFinished on stale controller.');
+    if (_controller != controller || url == 'about:blank') {
+      RitmoLog.debug('ChatGptWebBridge', 'Ignoring handlePageFinished on stale controller or blank page.');
       return;
     }
     await controller.runJavaScript(ChatGptJsInjector.setupBridgeScript);

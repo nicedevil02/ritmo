@@ -69,22 +69,32 @@ extension StudyModeExtension on StudyMode {
   }
 }
 
-enum StudyOrigin { user, konkurPreset }
+enum StudyOrigin { user, konkurPreset, konkurCustom }
 
 extension StudyOriginExtension on StudyOrigin {
   String get dbValue {
     switch (this) {
       case StudyOrigin.konkurPreset:
         return 'KONKUR_PRESET';
+      case StudyOrigin.konkurCustom:
+        return 'KONKUR_CUSTOM';
       case StudyOrigin.user:
         return 'USER';
     }
   }
 
   static StudyOrigin fromDbValue(String? val) {
-    return val?.toUpperCase() == 'KONKUR_PRESET'
-        ? StudyOrigin.konkurPreset
-        : StudyOrigin.user;
+    switch (val?.toUpperCase()) {
+      case 'KONKUR_PRESET':
+      case 'PRESET':
+      case 'KONKUR':
+        return StudyOrigin.konkurPreset;
+      case 'KONKUR_CUSTOM':
+        return StudyOrigin.konkurCustom;
+      case 'USER':
+      default:
+        return StudyOrigin.user;
+    }
   }
 }
 
@@ -303,6 +313,201 @@ class StudyTopic {
   }
 }
 
+enum DeadlineType { exam, assignment, project, quiz }
+
+extension DeadlineTypeExtension on DeadlineType {
+  String get dbValue {
+    switch (this) {
+      case DeadlineType.exam:
+        return 'EXAM';
+      case DeadlineType.assignment:
+        return 'ASSIGNMENT';
+      case DeadlineType.project:
+        return 'PROJECT';
+      case DeadlineType.quiz:
+        return 'QUIZ';
+    }
+  }
+
+  String get labelFa {
+    switch (this) {
+      case DeadlineType.exam:
+        return 'امتحان';
+      case DeadlineType.assignment:
+        return 'تکلیف / تمرین';
+      case DeadlineType.project:
+        return 'پروژه تحویلی';
+      case DeadlineType.quiz:
+        return 'کوییز / پرسش';
+    }
+  }
+
+  static DeadlineType fromDbValue(String? val) {
+    switch (val?.toUpperCase()) {
+      case 'ASSIGNMENT':
+      case 'HOMEWORK':
+        return DeadlineType.assignment;
+      case 'PROJECT':
+        return DeadlineType.project;
+      case 'QUIZ':
+        return DeadlineType.quiz;
+      case 'EXAM':
+      default:
+        return DeadlineType.exam;
+    }
+  }
+}
+
+enum DeadlinePriority { high, medium, low }
+
+extension DeadlinePriorityExtension on DeadlinePriority {
+  String get dbValue {
+    switch (this) {
+      case DeadlinePriority.high:
+        return 'HIGH';
+      case DeadlinePriority.medium:
+        return 'MEDIUM';
+      case DeadlinePriority.low:
+        return 'LOW';
+    }
+  }
+
+  String get labelFa {
+    switch (this) {
+      case DeadlinePriority.high:
+        return 'مهم و فوری';
+      case DeadlinePriority.medium:
+        return 'عادی';
+      case DeadlinePriority.low:
+        return 'کم‌اهمیت';
+    }
+  }
+
+  static DeadlinePriority fromDbValue(String? val) {
+    switch (val?.toUpperCase()) {
+      case 'HIGH':
+        return DeadlinePriority.high;
+      case 'LOW':
+        return DeadlinePriority.low;
+      case 'MEDIUM':
+      default:
+        return DeadlinePriority.medium;
+    }
+  }
+}
+
+class StudyDeadline {
+  const StudyDeadline({
+    required this.id,
+    this.subjectId,
+    required this.title,
+    this.deadlineType = DeadlineType.exam,
+    required this.dueDateIso,
+    this.dueTime,
+    this.priority = DeadlinePriority.medium,
+    this.isCompleted = false,
+    this.weight = 1.0,
+    this.note,
+    required this.createdAtMs,
+    required this.updatedAtMs,
+  });
+
+  final String id;
+  final String? subjectId;
+  final String title;
+  final DeadlineType deadlineType;
+  final String dueDateIso; // 'YYYY-MM-DD'
+  final String? dueTime;   // 'HH:mm'
+  final DeadlinePriority priority;
+  final bool isCompleted;
+  final double weight;
+  final String? note;
+  final int createdAtMs;
+  final int updatedAtMs;
+
+  int daysRemaining(DateTime today) {
+    try {
+      final parts = dueDateIso.split('-');
+      final due = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      final current = DateTime(today.year, today.month, today.day);
+      return due.difference(current).inDays;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  bool isOverdue(DateTime today) => daysRemaining(today) < 0 && !isCompleted;
+  bool isToday(DateTime today) => daysRemaining(today) == 0 && !isCompleted;
+  bool isUpcoming(DateTime today, {int days = 14}) {
+    final diff = daysRemaining(today);
+    return diff >= 0 && diff <= days && !isCompleted;
+  }
+
+  factory StudyDeadline.fromMap(Map<String, dynamic> map) {
+    return StudyDeadline(
+      id: map['id'] as String,
+      subjectId: map['subjectId'] as String?,
+      title: map['title'] as String? ?? 'بدون عنوان',
+      deadlineType: DeadlineTypeExtension.fromDbValue(map['deadlineType'] as String?),
+      dueDateIso: map['dueDateIso'] as String? ?? '',
+      dueTime: map['dueTime'] as String?,
+      priority: DeadlinePriorityExtension.fromDbValue(map['priority'] as String?),
+      isCompleted: (map['isCompleted'] as int? ?? 0) == 1,
+      weight: (map['weight'] as num?)?.toDouble() ?? 1.0,
+      note: map['note'] as String?,
+      createdAtMs: map['createdAt'] as int? ?? 0,
+      updatedAtMs: map['updatedAt'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'subjectId': subjectId,
+      'title': title,
+      'deadlineType': deadlineType.dbValue,
+      'dueDateIso': dueDateIso,
+      'dueTime': dueTime,
+      'priority': priority.dbValue,
+      'isCompleted': isCompleted ? 1 : 0,
+      'weight': weight,
+      'note': note,
+      'createdAt': createdAtMs,
+      'updatedAt': updatedAtMs,
+    };
+  }
+
+  StudyDeadline copyWith({
+    String? id,
+    String? subjectId,
+    String? title,
+    DeadlineType? deadlineType,
+    String? dueDateIso,
+    String? dueTime,
+    DeadlinePriority? priority,
+    bool? isCompleted,
+    double? weight,
+    String? note,
+    int? createdAtMs,
+    int? updatedAtMs,
+  }) {
+    return StudyDeadline(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      title: title ?? this.title,
+      deadlineType: deadlineType ?? this.deadlineType,
+      dueDateIso: dueDateIso ?? this.dueDateIso,
+      dueTime: dueTime ?? this.dueTime,
+      priority: priority ?? this.priority,
+      isCompleted: isCompleted ?? this.isCompleted,
+      weight: weight ?? this.weight,
+      note: note ?? this.note,
+      createdAtMs: createdAtMs ?? this.createdAtMs,
+      updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+    );
+  }
+}
+
 class StudySession {
   const StudySession({
     required this.id,
@@ -316,6 +521,10 @@ class StudySession {
     this.endedAtMs,
     this.quality,
     this.note,
+    this.testsTotal = 0,
+    this.testsCorrect = 0,
+    this.testsWrong = 0,
+    this.testsEmpty = 0,
     required this.createdAtMs,
   });
 
@@ -330,7 +539,23 @@ class StudySession {
   final int? endedAtMs;
   final int? quality;
   final String? note;
+  final int testsTotal;
+  final int testsCorrect;
+  final int testsWrong;
+  final int testsEmpty;
   final int createdAtMs;
+
+  bool get hasTestResults => testsTotal > 0;
+
+  double get accuracyPercentage {
+    if (testsTotal <= 0) return 0.0;
+    return (testsCorrect / testsTotal) * 100.0;
+  }
+
+  double get konkurPercentage {
+    if (testsTotal <= 0) return 0.0;
+    return ((testsCorrect * 3 - testsWrong) / (testsTotal * 3)) * 100.0;
+  }
 
   factory StudySession.fromMap(Map<String, dynamic> map) {
     return StudySession(
@@ -345,6 +570,10 @@ class StudySession {
       endedAtMs: map['endedAtMs'] as int?,
       quality: map['quality'] as int?,
       note: map['note'] as String?,
+      testsTotal: map['testsTotal'] as int? ?? 0,
+      testsCorrect: map['testsCorrect'] as int? ?? 0,
+      testsWrong: map['testsWrong'] as int? ?? 0,
+      testsEmpty: map['testsEmpty'] as int? ?? 0,
       createdAtMs: map['createdAt'] as int? ?? 0,
     );
   }
@@ -362,6 +591,10 @@ class StudySession {
       'endedAtMs': endedAtMs,
       'quality': quality,
       'note': note,
+      'testsTotal': testsTotal,
+      'testsCorrect': testsCorrect,
+      'testsWrong': testsWrong,
+      'testsEmpty': testsEmpty,
       'createdAt': createdAtMs,
     };
   }
@@ -378,6 +611,10 @@ class StudySession {
     int? endedAtMs,
     int? quality,
     String? note,
+    int? testsTotal,
+    int? testsCorrect,
+    int? testsWrong,
+    int? testsEmpty,
     int? createdAtMs,
   }) {
     return StudySession(
@@ -392,6 +629,10 @@ class StudySession {
       endedAtMs: endedAtMs ?? this.endedAtMs,
       quality: quality ?? this.quality,
       note: note ?? this.note,
+      testsTotal: testsTotal ?? this.testsTotal,
+      testsCorrect: testsCorrect ?? this.testsCorrect,
+      testsWrong: testsWrong ?? this.testsWrong,
+      testsEmpty: testsEmpty ?? this.testsEmpty,
       createdAtMs: createdAtMs ?? this.createdAtMs,
     );
   }
@@ -407,6 +648,9 @@ class ActiveStudySessionState {
     this.accumulatedSeconds = 0,
     this.isPaused = false,
     this.plannedMinutes,
+    this.pomodoroPhase = 'FOCUS',
+    this.pomodoroCycle = 1,
+    this.targetSeconds = 1500,
     required this.createdAtMs,
   });
 
@@ -418,7 +662,13 @@ class ActiveStudySessionState {
   final int accumulatedSeconds;
   final bool isPaused;
   final int? plannedMinutes;
+  final String pomodoroPhase; // 'FOCUS' or 'BREAK'
+  final int pomodoroCycle;
+  final int targetSeconds;
   final int createdAtMs;
+
+  bool get isPomodoro => targetSeconds > 0;
+  bool get isBreak => pomodoroPhase == 'BREAK';
 
   int elapsedSeconds(int nowMs) {
     if (isPaused) {
@@ -426,6 +676,21 @@ class ActiveStudySessionState {
     }
     final runSec = ((nowMs - startedAtMs) / 1000).floor();
     return accumulatedSeconds + (runSec > 0 ? runSec : 0);
+  }
+
+  int phaseElapsedSeconds(int nowMs) {
+    if (isPaused) {
+      return 0;
+    }
+    final runSec = ((nowMs - startedAtMs) / 1000).floor();
+    return runSec > 0 ? runSec : 0;
+  }
+
+  int remainingSeconds(int nowMs) {
+    if (targetSeconds <= 0) return 0;
+    final phaseElapsed = phaseElapsedSeconds(nowMs);
+    final rem = targetSeconds - phaseElapsed;
+    return rem > 0 ? rem : 0;
   }
 
   factory ActiveStudySessionState.fromMap(Map<String, dynamic> map) {
@@ -438,6 +703,9 @@ class ActiveStudySessionState {
       accumulatedSeconds: map['accumulatedSeconds'] as int? ?? 0,
       isPaused: (map['isPaused'] as int? ?? 0) == 1,
       plannedMinutes: map['plannedMinutes'] as int?,
+      pomodoroPhase: map['pomodoroPhase'] as String? ?? 'FOCUS',
+      pomodoroCycle: map['pomodoroCycle'] as int? ?? 1,
+      targetSeconds: map['targetSeconds'] as int? ?? 1500,
       createdAtMs: map['createdAt'] as int? ?? 0,
     );
   }
@@ -452,6 +720,9 @@ class ActiveStudySessionState {
       'accumulatedSeconds': accumulatedSeconds,
       'isPaused': isPaused ? 1 : 0,
       'plannedMinutes': plannedMinutes,
+      'pomodoroPhase': pomodoroPhase,
+      'pomodoroCycle': pomodoroCycle,
+      'targetSeconds': targetSeconds,
       'createdAt': createdAtMs,
     };
   }
@@ -465,6 +736,9 @@ class ActiveStudySessionState {
     int? accumulatedSeconds,
     bool? isPaused,
     int? plannedMinutes,
+    String? pomodoroPhase,
+    int? pomodoroCycle,
+    int? targetSeconds,
     int? createdAtMs,
   }) {
     return ActiveStudySessionState(
@@ -476,6 +750,9 @@ class ActiveStudySessionState {
       accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
       isPaused: isPaused ?? this.isPaused,
       plannedMinutes: plannedMinutes ?? this.plannedMinutes,
+      pomodoroPhase: pomodoroPhase ?? this.pomodoroPhase,
+      pomodoroCycle: pomodoroCycle ?? this.pomodoroCycle,
+      targetSeconds: targetSeconds ?? this.targetSeconds,
       createdAtMs: createdAtMs ?? this.createdAtMs,
     );
   }

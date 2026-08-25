@@ -10,9 +10,7 @@ class StudyModuleEntry {
     final settings = await StudySettingsRepository.instance.load();
 
     final Widget root = settings.konkurMode
-        ? KonkurScreen(
-            onSwitchToStudyMode: () => switchMode(context, konkur: false),
-          )
+        ? const KonkurScreen()
         : const StudyHomeScreen();
 
     if (!context.mounted) return;
@@ -33,9 +31,7 @@ class StudyModuleEntry {
     if (!context.mounted) return;
 
     final Widget root = konkur
-        ? KonkurScreen(
-            onSwitchToStudyMode: () => switchMode(context, konkur: false),
-          )
+        ? const KonkurScreen()
         : const StudyHomeScreen();
 
     await Navigator.of(context).pushReplacement(

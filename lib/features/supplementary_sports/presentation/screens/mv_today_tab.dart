@@ -13,6 +13,7 @@ class MvTodayTab extends StatelessWidget {
   final MvDecision<MvReadinessTier> readinessDecision;
   final MvWeeklyBudgetProgress budgetProgress;
   final MvBodyMapDistribution bodyMapDistribution;
+  final String? heroAnimationAsset;
   final VoidCallback onStartSession;
   final VoidCallback? onContinueSession;
   final bool isSessionInProgress;
@@ -28,6 +29,7 @@ class MvTodayTab extends StatelessWidget {
     required this.readinessDecision,
     required this.budgetProgress,
     required this.bodyMapDistribution,
+    this.heroAnimationAsset,
     required this.onStartSession,
     this.onContinueSession,
     this.isSessionInProgress = false,
@@ -79,7 +81,9 @@ class MvTodayTab extends StatelessWidget {
               isInProgress: isSessionInProgress,
               animationWidget: MvAnimationStage(
                 height: 180,
-                exerciseId: todaySlot.focusCodes.isNotEmpty ? 'bo009_squats' : 'bo001_side_leg_lift',
+                exerciseId: heroAnimationAsset ??
+                    (todaySlot.focusCodes.isNotEmpty ? 'bo009_squats' : 'bo001_side_leg_lift'),
+                animationAsset: heroAnimationAsset,
               ),
               onStart: onStartSession,
               onContinue: onContinueSession,
@@ -120,52 +124,46 @@ class MvTodayTab extends StatelessWidget {
               },
             ),
           ),
-          SizedBox(height: metrics.spaceXl),
+          SizedBox(height: metrics.spaceLg),
 
-          // 4. Quick Log Activity Row
+          // 4. Quick Activity Log (Two-tap action, AC-06, N-01)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
             child: MvQuickLogRow(
-              onQuickWalk: () => onQuickLogSaved('walking', 20, MvSessionFeeling.good, null),
-              onQuickStretch: () => onQuickLogSaved('stretching', 10, MvSessionFeeling.good, null),
+              onQuickWalk: () => onQuickLogSaved('walking', 30, MvSessionFeeling.good, null),
+              onQuickStretch: () => onQuickLogSaved('stretching', 15, MvSessionFeeling.easy, null),
               onCustomLog: () {
                 MvQuickLogSheet.show(
                   context: context,
-                  onSave: onQuickLogSaved,
+                  initialKindCode: 'cardio',
+                  initialDuration: 30,
+                  onSave: (kindCode, dur, feel, note) => onQuickLogSaved(kindCode, dur, feel, note),
                 );
               },
             ),
           ),
-          SizedBox(height: metrics.spaceXl),
+          SizedBox(height: metrics.spaceLg),
 
-          // 5. Body Map Muscle Workload (N-03)
+          // 5. Weekly MET-min Budget Ring (AC-07, F-22)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
+            child: MvMetricRing(
+              currentMet: budgetProgress.currentMetMinutes.toDouble(),
+              targetMet: budgetProgress.targetMetMinutes.toDouble(),
+              activeDays: budgetProgress.currentActiveDays,
+              targetDays: budgetProgress.targetActiveDays,
+            ),
+          ),
+          SizedBox(height: metrics.spaceLg),
+
+          // 6. Anatomical Body Map (AC-08, F-21)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
             child: MvBodyMap(
               distribution: bodyMapDistribution,
               onSuggestedActionTap: () {
-                if (bodyMapDistribution.neglectedMuscleGroupCode != null) {
-                  final groupCode = bodyMapDistribution.neglectedMuscleGroupCode!;
-                  final adapted = todaySlot.copyWith(
-                    focusCodes: [groupCode],
-                    targetMinutes: 15,
-                    headlineFa: 'تقویت عضلات $groupCode',
-                  );
-                  onSlotUpdated(adapted);
-                }
+                // Focus neglected group in next planned session
               },
-            ),
-          ),
-          SizedBox(height: metrics.spaceXl),
-
-          // 6. Metric Ring (Weekly MET-min progress)
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
-            child: MvMetricRing(
-              currentMet: budgetProgress.currentMetMinutes,
-              targetMet: budgetProgress.targetMetMinutes,
-              activeDays: budgetProgress.currentActiveDays,
-              targetDays: budgetProgress.targetActiveDays,
             ),
           ),
           SizedBox(height: metrics.spaceXxl),

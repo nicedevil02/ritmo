@@ -305,7 +305,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                               MaterialPageRoute(
                                 builder: (context) => CourseDetailScreen(course: course),
                               ),
-                            ).then((_) => _loadAllData());
+                            );
                           },
                         ),
 

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -108,6 +109,18 @@ void main() {
       expect(prs.length, equals(1));
       expect(prs.first['value'], equals(25.0));
       expect(prs.first['prType'], equals('maxReps'));
+    });
+
+    test('MigrationRunner applies MigrationV121SportsUnification successfully', () async {
+      final migrationDb = await databaseFactory.openDatabase(inMemoryDatabasePath);
+      // Run from v120 to v121
+      await MigrationRunner.run(migrationDb, 120, 121);
+
+      final tables = await migrationDb.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='movement_sessions'",
+      );
+      expect(tables.isNotEmpty, isTrue);
+      await migrationDb.close();
     });
   });
 }

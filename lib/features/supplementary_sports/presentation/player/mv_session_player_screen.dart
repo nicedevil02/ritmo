@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
-import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
@@ -9,13 +9,14 @@ import 'mv_audio_cue_player.dart';
 import 'mv_session_summary_screen.dart';
 
 /// Screen 2: "پلیر واحد تمرین و حرکت" (Section 6 & Appendix A F-11 to F-20).
-/// Unified workout player supporting all 7 execution modes with audio cues and live substitution.
+/// Unified workout player supporting all 7 execution modes with audio cues, lifecycle events, and live substitution.
 class MvSessionPlayerScreen extends StatefulWidget {
   final MvSession initialSession;
   final List<MvExercise> plannedExercises;
   final List<MvExercise> allCandidatePool;
   final bool initialAudioEnabled;
   final Future<void> Function(MvSession session, List<MvSetLog> logs, MvSessionFeeling feeling, String? note)? onSessionCompleted;
+  final MvSessionController? controller;
 
   const MvSessionPlayerScreen({
     super.key,
@@ -24,6 +25,7 @@ class MvSessionPlayerScreen extends StatefulWidget {
     this.allCandidatePool = const [],
     this.initialAudioEnabled = true,
     this.onSessionCompleted,
+    this.controller,
   });
 
   @override
@@ -31,7 +33,7 @@ class MvSessionPlayerScreen extends StatefulWidget {
 }
 
 class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
-  final _sessionRepo = MvSessionRepository();
+  late final MvSessionController _sessionController;
   late MvAudioCuePlayer _audioPlayer;
 
   late MvSession _session;
@@ -52,10 +54,16 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    _sessionController = widget.controller ?? MvSessionController();
     _session = widget.initialSession;
     _exercises = List.from(widget.plannedExercises);
     _isAudioEnabled = widget.initialAudioEnabled;
     _audioPlayer = MvAudioCuePlayer(isEnabled: _isAudioEnabled);
+
+    _sessionController.recordEvent(
+      sessionId: _session.id,
+      type: 'SESSION_START',
+    );
 
     _startExerciseTimer();
     _audioPlayer.playGo();
@@ -119,16 +127,21 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     if (currentEx == null) return;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    _setLogs.add(
-      MvSetLog(
-        id: 'set_${now}_$_currentSet',
-        sessionId: _session.id,
-        exerciseId: currentEx.id,
-        setNumber: _currentSet,
-        reps: currentEx.isTimeBased ? null : currentEx.defaultReps,
-        durationSeconds: currentEx.isTimeBased ? currentEx.durationSeconds : _timerSeconds,
-        loggedAt: now,
-      ),
+    final log = MvSetLog(
+      id: 'set_${now}_$_currentSet',
+      sessionId: _session.id,
+      exerciseId: currentEx.id,
+      setNumber: _currentSet,
+      reps: currentEx.isTimeBased ? null : currentEx.defaultReps,
+      durationSeconds: currentEx.isTimeBased ? currentEx.durationSeconds : _timerSeconds,
+      loggedAt: now,
+    );
+    _setLogs.add(log);
+
+    _sessionController.recordEvent(
+      sessionId: _session.id,
+      type: 'SET_COMPLETE',
+      dataJson: '{"exerciseId": "${currentEx.id}", "set": $_currentSet}',
     );
 
     if (_currentSet < _totalSets) {
@@ -166,6 +179,12 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   }
 
   void _skipExercise() {
+    _sessionController.recordEvent(
+      sessionId: _session.id,
+      type: 'EXERCISE_SKIP',
+      dataJson: '{"exerciseId": "${_currentExercise?.id}"}',
+    );
+
     if (_currentExerciseIndex < _exercises.length - 1) {
       setState(() {
         _currentExerciseIndex++;
@@ -179,6 +198,14 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   }
 
   void _handleSubstitution(MvExercise substitute) {
+    final oldEx = _exercises[_currentExerciseIndex];
+
+    _sessionController.recordEvent(
+      sessionId: _session.id,
+      type: 'EXERCISE_SUBSTITUTE',
+      dataJson: '{"from": "${oldEx.id}", "to": "${substitute.id}"}',
+    );
+
     setState(() {
       _exercises[_currentExerciseIndex] = substitute;
       _currentSet = 1;
@@ -199,6 +226,16 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     setState(() {
       _isPaused = !_isPaused;
     });
+
+    _sessionController.recordEvent(
+      sessionId: _session.id,
+      type: _isPaused ? 'SESSION_PAUSE' : 'SESSION_RESUME',
+    );
+  }
+
+  Future<void> _handleExitMidSession() async {
+    await _sessionController.savePartialExit(session: _session, setLogs: _setLogs);
+    if (mounted) Navigator.pop(context);
   }
 
   void _finishWorkout() {
@@ -221,8 +258,8 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
             if (widget.onSessionCompleted != null) {
               await widget.onSessionCompleted!(finishedSession, _setLogs, feeling, note);
             } else {
-              await _sessionRepo.finishSession(
-                finishedSession,
+              await _sessionController.finishSession(
+                session: finishedSession,
                 setLogs: _setLogs,
                 feeling: feeling,
                 note: note,
@@ -248,7 +285,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _handleExitMidSession,
         ),
         title: Text(
           _isResting ? 'زمان استراحت' : currentEx.name,
@@ -323,7 +360,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
               ),
               SizedBox(height: metrics.spaceLg),
 
-              // Timer / Counter Display
+              // Timer / Counter Display (Token Typography, no hardcoded font size)
               Expanded(
                 child: Center(
                   child: Column(
@@ -335,8 +372,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                             : currentEx.isTimeBased
                                 ? '$_timerSeconds ثانیه'
                                 : '${currentEx.defaultReps} تکرار',
-                        style: textTheme.headlineLarge?.copyWith(
-                          fontSize: 48,
+                        style: textTheme.displayMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: colors.textPrimary,
                         ),
@@ -364,11 +400,18 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                       ),
                       icon: const Icon(Icons.swap_horiz_rounded),
                       label: const Text('جایگزینی حرکت'),
-                      onPressed: () {
-                        MvExerciseSubstitutionSheet.show(
+                      onPressed: () async {
+                        // Fetch similar candidates from controller
+                        final similar = await _sessionController.getSimilarCandidates(
+                          currentEx.id,
+                          fallbackPool: widget.allCandidatePool,
+                        );
+                        if (!context.mounted) return;
+
+                        await MvExerciseSubstitutionSheet.show(
                           context: context,
                           currentExercise: currentEx,
-                          similarCandidates: const [],
+                          similarCandidates: similar,
                           fullPool: widget.allCandidatePool,
                           onExerciseSubstituted: _handleSubstitution,
                         );

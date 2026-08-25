@@ -53,7 +53,7 @@ class MvBodyMap extends StatelessWidget {
           Wrap(
             spacing: metrics.spaceSm,
             runSpacing: metrics.spaceSm,
-            children: MvMuscleGroup.all.take(8).map((mg) {
+            children: MvMuscleGroup.all.map((mg) {
               final count = counts[mg.code] ?? 0;
               final isTrained = count > 0;
 

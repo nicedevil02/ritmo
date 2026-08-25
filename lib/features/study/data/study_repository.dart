@@ -11,12 +11,21 @@ class SubjectStats {
     required this.totalMinutes,
     required this.sessionCount,
     this.lastStudiedDateIso,
+    this.totalTests = 0,
+    this.totalCorrect = 0,
+    this.totalWrong = 0,
   });
 
   final String subjectId;
   final int totalMinutes;
   final int sessionCount;
   final String? lastStudiedDateIso;
+  final int totalTests;
+  final int totalCorrect;
+  final int totalWrong;
+
+  double get accuracyPercentage =>
+      totalTests > 0 ? (totalCorrect / totalTests) * 100.0 : 0.0;
 }
 
 class StudyRepository {
@@ -34,8 +43,8 @@ class StudyRepository {
   Future<List<StudySubject>> getSubjects({bool isKonkurMode = false}) async {
     final db = await _database;
     final whereStr = isKonkurMode
-        ? 'isArchived = 0'
-        : "isArchived = 0 AND (origin = 'USER' OR origin IS NULL)";
+        ? "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)"
+        : "isArchived = 0 AND origin = 'USER' AND (isPreset IS NULL OR isPreset = 0)";
     final rows = await db.query('konkur_subjects', where: whereStr, orderBy: 'orderIndex ASC');
     return rows.map(StudySubject.fromMap).toList();
   }
@@ -66,8 +75,8 @@ class StudyRepository {
   Future<List<StudyTopic>> getTopics({String? subjectId, bool isKonkurMode = false}) async {
     final db = await _database;
     String whereStr = isKonkurMode
-        ? 'subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0)'
-        : "(origin = 'USER' OR origin IS NULL) AND subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0)";
+        ? "subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1))"
+        : "origin = 'USER' AND subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0 AND origin = 'USER' AND (isPreset IS NULL OR isPreset = 0))";
     final args = <dynamic>[];
     if (subjectId != null) {
       whereStr += ' AND subjectId = ?';
@@ -219,7 +228,10 @@ class StudyRepository {
       SELECT subjectId,
              SUM(durationMinutes) AS totalMinutes,
              COUNT(*)             AS sessionCount,
-             MAX(dateIso)         AS lastStudiedDate
+             MAX(dateIso)         AS lastStudiedDate,
+             SUM(testsTotal)      AS totalTests,
+             SUM(testsCorrect)    AS totalCorrect,
+             SUM(testsWrong)      AS totalWrong
       FROM konkur_study_sessions
     ''';
     final args = <dynamic>[];
@@ -239,8 +251,92 @@ class StudyRepository {
         totalMinutes: (r['totalMinutes'] as num?)?.toInt() ?? 0,
         sessionCount: (r['sessionCount'] as num?)?.toInt() ?? 0,
         lastStudiedDateIso: r['lastStudiedDate'] as String?,
+        totalTests: (r['totalTests'] as num?)?.toInt() ?? 0,
+        totalCorrect: (r['totalCorrect'] as num?)?.toInt() ?? 0,
+        totalWrong: (r['totalWrong'] as num?)?.toInt() ?? 0,
       );
     }
     return map;
+  }
+
+  // --- STUDY DEADLINES & EXAMS CRUD ---
+
+  Future<List<StudyDeadline>> getDeadlines({
+    String? subjectId,
+    bool includeCompleted = false,
+  }) async {
+    final db = await _database;
+    final whereClauses = <String>[];
+    final args = <dynamic>[];
+
+    if (!includeCompleted) {
+      whereClauses.add('isCompleted = 0');
+    }
+    if (subjectId != null) {
+      whereClauses.add('subjectId = ?');
+      args.add(subjectId);
+    }
+
+    final whereStr = whereClauses.isNotEmpty ? whereClauses.join(' AND ') : null;
+    final rows = await db.query(
+      'study_deadlines',
+      where: whereStr,
+      whereArgs: args.isNotEmpty ? args : null,
+      orderBy: 'dueDateIso ASC, priority DESC',
+    );
+    return rows.map(StudyDeadline.fromMap).toList();
+  }
+
+  Future<List<StudyDeadline>> getUpcomingDeadlines({int daysLimit = 14}) async {
+    final db = await _database;
+    final today = DateTime.now();
+    final todayIso = RitmoDate.dayKey(today);
+    final limitDate = today.add(Duration(days: daysLimit));
+    final limitIso = RitmoDate.dayKey(limitDate);
+
+    final rows = await db.query(
+      'study_deadlines',
+      where: 'isCompleted = 0 AND dueDateIso >= ? AND dueDateIso <= ?',
+      whereArgs: [todayIso, limitIso],
+      orderBy: 'dueDateIso ASC, priority DESC',
+    );
+    return rows.map(StudyDeadline.fromMap).toList();
+  }
+
+  Future<void> saveDeadline(StudyDeadline deadline) async {
+    final db = await _database;
+    await db.insert(
+      'study_deadlines',
+      deadline.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    _eventBus.fire(RitmoEvent(
+      type: RitmoEventType.completionRecorded.code,
+      timestamp: DateTime.now(),
+      payload: {
+        'domain': 'study_deadline',
+        'deadlineId': deadline.id,
+        'action': 'save',
+      },
+    ));
+  }
+
+  Future<void> toggleDeadlineCompleted(String id, bool isCompleted) async {
+    final db = await _database;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    await db.update(
+      'study_deadlines',
+      {
+        'isCompleted': isCompleted ? 1 : 0,
+        'updatedAt': nowMs,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteDeadline(String id) async {
+    final db = await _database;
+    await db.delete('study_deadlines', where: 'id = ?', whereArgs: [id]);
   }
 }

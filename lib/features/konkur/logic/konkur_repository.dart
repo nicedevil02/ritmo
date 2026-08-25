@@ -92,13 +92,21 @@ class KonkurRepository {
   // READ METHODS
   Future<List<KonkurSubject>> getSubjects() async {
     final db = await _database;
-    final maps = await db.query('konkur_subjects', where: 'isArchived = 0', orderBy: 'orderIndex ASC');
+    final maps = await db.query(
+      'konkur_subjects',
+      where: "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)",
+      orderBy: 'orderIndex ASC',
+    );
     return maps.map(KonkurSubject.fromMap).toList();
   }
 
   Future<List<KonkurTopic>> getTopics() async {
     final db = await _database;
-    final maps = await db.query('konkur_topics', orderBy: 'orderIndex ASC');
+    final maps = await db.query(
+      'konkur_topics',
+      where: "origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR isPreset = 1))",
+      orderBy: 'orderIndex ASC',
+    );
     return maps.map(KonkurTopic.fromMap).toList();
   }
 

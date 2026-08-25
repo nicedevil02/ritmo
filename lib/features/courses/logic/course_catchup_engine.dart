@@ -129,14 +129,10 @@ class CourseCatchupEngine {
   }
 
   static Future<void> applyCatchupPlan(CatchupPlan plan) async {
-    final course = await CoursesRepository.instance.getCourseById(plan.courseId);
-    if (course == null) return;
-
-    final updatedCourse = course.copyWith(
-      weeklyTargetSessions: plan.proposedWeeklyTarget,
-      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    await CoursesRepository.instance.applyCatchupPlan(
+      courseId: plan.courseId,
+      proposedWeeklyTarget: plan.proposedWeeklyTarget,
+      rescheduledSessions: plan.rescheduledSessions,
     );
-
-    await CoursesRepository.instance.updateCourse(updatedCourse);
   }
 }

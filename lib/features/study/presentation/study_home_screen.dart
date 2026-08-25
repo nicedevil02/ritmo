@@ -12,6 +12,7 @@ import 'package:ritmo/features/study/presentation/study_settings_sheet.dart';
 import 'package:ritmo/features/study/presentation/subject_detail_screen.dart';
 import 'package:ritmo/features/study/presentation/widgets/manual_session_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
+import 'package:ritmo/features/study/presentation/widgets/study_deadlines_section.dart';
 import 'package:ritmo/features/study/presentation/widgets/study_week_heatmap.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 import 'package:uuid/uuid.dart';
@@ -27,6 +28,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
   StudySettings? _settings;
   List<StudySubject> _subjects = [];
   List<StudySession> _todaySessions = [];
+  List<StudyDeadline> _upcomingDeadlines = [];
   Map<String, SubjectStats> _subjectStats = {};
   Map<String, int> _weeklyHeatmapData = {};
   StudyRecommendation? _topRecommendation;
@@ -49,6 +51,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
       final isKonkur = settings.konkurMode;
       final subjects = await StudyRepository.instance.getSubjects(isKonkurMode: isKonkur);
       final topics = await StudyRepository.instance.getTopics(isKonkurMode: isKonkur);
+      final deadlines = await StudyRepository.instance.getUpcomingDeadlines(daysLimit: 30);
 
       final todayIso = RitmoDate.dayKey(DateTime.now());
       final todaySessions = await StudyRepository.instance.getSessions(dateIso: todayIso);
@@ -74,6 +77,7 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
           _settings = settings;
           _subjects = subjects;
           _todaySessions = todaySessions;
+          _upcomingDeadlines = deadlines;
           _subjectStats = stats;
           _weeklyHeatmapData = heatmapData;
           _topRecommendation = recs.isNotEmpty ? recs.first : null;
@@ -256,6 +260,12 @@ class _StudyHomeScreenState extends State<StudyHomeScreen> {
                                 const SizedBox(height: 16),
                                 _buildTodayProgressCard(todayMinutes, targetMinutes),
                                 const SizedBox(height: 20),
+                                StudyDeadlinesSection(
+                                  deadlines: _upcomingDeadlines,
+                                  subjects: _subjects,
+                                  onChanged: _loadData,
+                                ),
+                                const SizedBox(height: 24),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [

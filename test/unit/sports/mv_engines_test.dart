@@ -66,9 +66,9 @@ void main() {
 
     test('Generates 7 slots matching user training days and rest days', () {
       final now = DateTime(2026, 8, 22); // Saturday
-      final profile = MvUserProfile(
+      const profile = MvUserProfile(
         daysPerWeek: 3,
-        trainingDays: const [0, 2, 4], // Sat, Mon, Wed
+        trainingDays: [0, 2, 4], // Sat, Mon, Wed
         createdAt: 100,
         updatedAt: 100,
       );
@@ -90,7 +90,7 @@ void main() {
 
     test('Deload week reduces target minutes and sets light intensity', () {
       final now = DateTime(2026, 8, 22);
-      final profile = MvUserProfile(
+      const profile = MvUserProfile(
         daysPerWeek: 3,
         deloadEveryNWeeks: 1, // trigger deload
         sessionDuration: 'medium', // 30 min
@@ -227,7 +227,7 @@ void main() {
   group('7.8 BudgetEngine, 7.9 InsightEngine, 7.10 Coach, 7.11 Reminder Tests', () {
     test('BudgetEngine calculates MET-min progress and forecasts after day 3', () {
       const budget = BudgetEngine();
-      final profile = MvUserProfile(daysPerWeek: 3, createdAt: 100, updatedAt: 100);
+      const profile = MvUserProfile(daysPerWeek: 3, createdAt: 100, updatedAt: 100);
       final sessions = [
         MvSession(id: '1', kindCode: 'running', startedAt: DateTime(2026, 8, 22).millisecondsSinceEpoch, endedAt: DateTime(2026, 8, 22).millisecondsSinceEpoch + 1800000, createdAt: 100, updatedAt: 100),
       ];

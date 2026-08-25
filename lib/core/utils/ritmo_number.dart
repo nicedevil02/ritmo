@@ -25,6 +25,14 @@ class RitmoNumber {
   /// مثال: 62 -> ۶۲
   static String faInt(num value) => fa(value.round().toString());
 
+  /// مثال: 62.5 -> ۶۲٫۵
+  static String faDouble(num value, {int decimalPlaces = 1}) {
+    final text = decimalPlaces == 0
+        ? value.round().toString()
+        : value.toStringAsFixed(decimalPlaces).replaceAll('.', '٫');
+    return fa(text);
+  }
+
   /// مثال: 62 -> ۶۲٪
   static String faPercent(num value) => '${faInt(value)}٪';
 

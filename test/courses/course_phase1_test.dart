@@ -124,5 +124,21 @@ void main() {
 
       await db.close();
     });
+
+    test('M1: CourseTables.ensureSchema standalone creation creates tables with valid schema', () async {
+      final db = await openDatabase(inMemoryDatabasePath, version: 1);
+
+      // Self-healing schema validation alone
+      await CourseTables.ensureSchema(db);
+
+      final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'");
+      final tableNames = tables.map((t) => t['name'] as String).toSet();
+
+      expect(tableNames.contains('courses'), isTrue);
+      expect(tableNames.contains('course_sessions'), isTrue);
+      expect(tableNames.contains('course_active_timers'), isTrue);
+
+      await db.close();
+    });
   });
 }

@@ -24,6 +24,7 @@ import 'package:ritmo/features/konkur/presentation/widgets/konkur_hero.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_setup_flow.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_stats_section.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_today_section.dart';
+import 'package:ritmo/features/study/study_module_entry.dart';
 
 class KonkurScreen extends StatefulWidget {
   const KonkurScreen({super.key, this.onSwitchToStudyMode});
@@ -405,6 +406,15 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
     );
   }
 
+  Future<void> _switchToStudyMode() async {
+    if (widget.onSwitchToStudyMode != null) {
+      widget.onSwitchToStudyMode!();
+      return;
+    }
+    if (!mounted) return;
+    await StudyModuleEntry.switchMode(context, konkur: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -428,21 +438,66 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
           centerTitle: true,
           leading: IconButton(
             icon: RitmoIcons.back(context, color: colors.textPrimary),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                _switchToStudyMode();
+              }
+            },
           ),
+          actions: [
+            TextButton.icon(
+              onPressed: _switchToStudyMode,
+              icon: const Icon(Icons.menu_book_outlined, size: 18),
+              label: const Text(
+                'حالت مطالعه',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: _startSetup
-              ? KonkurSetupFlow(onSetupCompleted: _loadAllData)
+              ? KonkurSetupFlow(
+                  onSetupCompleted: _loadAllData,
+                  onCancel: () => setState(() => _startSetup = false),
+                  onSwitchToStudyMode: _switchToStudyMode,
+                )
               : Padding(
                   padding: const EdgeInsets.all(16),
-                  child: RitmoEmptyState(
-                    icon: Icons.school_outlined,
-                    title: 'ماژول کنکور فعال نشده است',
-                    description: 'برای دسترسی به زمان‌بندی هوشمند مطالعه، تحلیل کارنامه‌های آزمون آزمایشی و بودجه‌بندی دروس کنکور، مشخصات خود را وارد کنید.',
-                    ctaLabel: 'تنظیم و فعال‌سازی کنکور',
-                    onCta: () => setState(() => _startSetup = true),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: RitmoEmptyState(
+                          icon: Icons.school_outlined,
+                          title: 'ماژول کنکور فعال نشده است',
+                          description:
+                              'برای دسترسی به زمان‌بندی هوشمند مطالعه، تحلیل کارنامه‌های آزمون آزمایشی و بودجه‌بندی دروس کنکور، مشخصات خود را وارد کنید.',
+                          ctaLabel: 'تنظیم و فعال‌سازی کنکور',
+                          onCta: () => setState(() => _startSetup = true),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _switchToStudyMode,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          foregroundColor: colors.textPrimary,
+                          side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                        label: const Text(
+                          'بازگشت به حالت مطالعه عادی',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
                 ),
         ),
@@ -463,6 +518,11 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.menu_book_outlined),
+              tooltip: 'تغییر به حالت مطالعه عادی',
+              onPressed: _switchToStudyMode,
+            ),
             IconButton(
               icon: const Icon(Icons.school_outlined, color: Color(0xFF8B5CF6)),
               tooltip: 'بارگذاری سرفصل‌های کنکور',

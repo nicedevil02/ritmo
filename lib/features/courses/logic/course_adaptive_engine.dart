@@ -1,3 +1,5 @@
+import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
@@ -20,11 +22,12 @@ class AdaptiveAdjustmentResult {
 }
 
 class CourseAdaptiveEngine {
-  static Future<AdaptiveAdjustmentResult?> evaluateAndAdjustCourse({
+  /// Evaluates whether an adaptive course needs target adjustment without modifying DB
+  static AdaptiveAdjustmentResult? proposeAdjustment({
     required Course course,
     required List<CourseSession> sessions,
     required DateTime today,
-  }) async {
+  }) {
     if (!course.isAdaptive) return null;
 
     final nowMs = today.millisecondsSinceEpoch;
@@ -71,15 +74,6 @@ class CourseAdaptiveEngine {
       return null;
     }
 
-    final updatedCourse = course.copyWith(
-      weeklyTargetSessions: proposedTarget,
-      adaptiveLastAppliedAt: nowMs,
-      adaptiveLastAppliedAtSet: true,
-      updatedAt: nowMs,
-    );
-
-    await CoursesRepository.instance.updateCourse(updatedCourse);
-
     return AdaptiveAdjustmentResult(
       courseId: course.id,
       oldWeeklyTarget: course.weeklyTargetSessions,
@@ -87,5 +81,51 @@ class CourseAdaptiveEngine {
       reasonFa: reason,
       appliedAt: today,
     );
+  }
+
+  /// Applies a proposed adaptive adjustment to the course in DB
+  static Future<void> applyAdjustment(Course course, AdaptiveAdjustmentResult proposal) async {
+    final nowMs = proposal.appliedAt.millisecondsSinceEpoch;
+    final updatedCourse = course.copyWith(
+      weeklyTargetSessions: proposal.newWeeklyTarget,
+      adaptiveLastAppliedAt: nowMs,
+      adaptiveLastAppliedAtSet: true,
+      updatedAt: nowMs,
+    );
+
+    await CoursesRepository.instance.updateCourse(updatedCourse);
+    RitmoLog.info('COURSES', 'Applied adaptive course adjustment for ${course.id}: ${proposal.oldWeeklyTarget} -> ${proposal.newWeeklyTarget} (${proposal.reasonFa})');
+    RitmoEventBus().fire(RitmoEvent(
+      type: 'CoursesChanged',
+      payload: {
+        'courseId': course.id,
+        'reason': 'ADAPTIVE_ADJUSTMENT',
+        'oldWeeklyTarget': proposal.oldWeeklyTarget,
+        'newWeeklyTarget': proposal.newWeeklyTarget,
+        'explanation': proposal.reasonFa,
+      },
+    ));
+  }
+
+  /// Evaluates and optionally adjusts the course directly (backward compatible)
+  static Future<AdaptiveAdjustmentResult?> evaluateAndAdjustCourse({
+    required Course course,
+    required List<CourseSession> sessions,
+    required DateTime today,
+    bool autoApply = true,
+  }) async {
+    final proposal = proposeAdjustment(
+      course: course,
+      sessions: sessions,
+      today: today,
+    );
+
+    if (proposal == null) return null;
+
+    if (autoApply) {
+      await applyAdjustment(course, proposal);
+    }
+
+    return proposal;
   }
 }

@@ -73,7 +73,9 @@ class ReadinessEngine {
     // Determine Tier from score
     score = score.clamp(0.0, 100.0);
     final MvReadinessTier tier;
-    if (score >= 80) {
+    if (!hasData) {
+      tier = MvReadinessTier.light; // Honest fallback without false claim of 100% full
+    } else if (score >= 80) {
       tier = MvReadinessTier.full;
     } else if (score >= 60) {
       tier = MvReadinessTier.light;

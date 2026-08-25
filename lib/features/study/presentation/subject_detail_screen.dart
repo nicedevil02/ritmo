@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
+import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
 import 'package:ritmo/features/study/data/study_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_stats.dart';
 import 'package:ritmo/features/study/presentation/widgets/bulk_topics_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
-import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
-
+import 'package:ritmo/features/study/presentation/widgets/study_deadlines_section.dart';
 import 'package:uuid/uuid.dart';
 
 class SubjectDetailScreen extends StatefulWidget {
@@ -19,33 +19,43 @@ class SubjectDetailScreen extends StatefulWidget {
   State<SubjectDetailScreen> createState() => _SubjectDetailScreenState();
 }
 
-class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
+class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   List<StudyTopic> _topics = [];
+  List<StudyDeadline> _deadlines = [];
+  SubjectStats? _stats;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadTopics();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadAll();
   }
 
-  Future<void> _loadTopics() async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAll() async {
     setState(() => _isLoading = true);
     try {
       final topics = await StudyRepository.instance.getTopics(subjectId: widget.subject.id);
+      final deadlines = await StudyRepository.instance.getDeadlines(subjectId: widget.subject.id, includeCompleted: true);
+      final allStats = await StudyRepository.instance.getAggregatedSubjectStats();
       if (mounted) {
         setState(() {
           _topics = topics;
+          _deadlines = deadlines;
+          _stats = allStats[widget.subject.id];
         });
       }
     } catch (e, st) {
-      debugPrint('[SubjectDetailScreen] Error loading topics: $e\n$st');
+      debugPrint('[SubjectDetailScreen] Error loading data: $e\n$st');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -63,7 +73,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             decoration: const InputDecoration(hintText: 'نام سرفصل'),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف', style: TextStyle())),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('انصراف')),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, controller.text.trim()),
               style: ElevatedButton.styleFrom(backgroundColor: ctx.colors.primary),
@@ -85,7 +95,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
           orderIndex: _topics.length,
         );
         await StudyRepository.instance.saveTopic(topic);
-        await _loadTopics();
+        await _loadAll();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -100,7 +110,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final bulkList = await BulkTopicsSheet.show(context, subjectId: widget.subject.id);
     if (bulkList != null && bulkList.isNotEmpty) {
       await StudyRepository.instance.saveTopicsBulk(bulkList);
-      await _loadTopics();
+      await _loadAll();
     }
   }
 
@@ -133,78 +143,161 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     );
 
     await StudyRepository.instance.saveTopic(updated);
-    await _loadTopics();
+    await _loadAll();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final totalMinutes = _stats?.totalMinutes ?? 0;
+    final totalTests = _stats?.totalTests ?? 0;
+    final accuracy = _stats?.accuracyPercentage ?? 0.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.subject.name, style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
+          title: Text('${widget.subject.emoji ?? '📚'} ${widget.subject.name}', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
           backgroundColor: colors.surface,
           elevation: 0,
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'سرفصل‌ها و مطالعه'),
+              Tab(text: 'امتحانات و ددلاین‌ها'),
+            ],
+          ),
         ),
         body: _isLoading
             ? Center(child: CircularProgressIndicator(color: colors.primary))
-            : ListView(
-                padding: const EdgeInsets.all(16),
+            : TabBarView(
+                controller: _tabController,
                 children: [
-                  Row(
+                  // Tab 1: Topics & Stats
+                  ListView(
+                    padding: const EdgeInsets.all(16),
                     children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _addTopicSingle,
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text('افزودن سرفصل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: colors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
+                      // Stats Overview Card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                Text('${RitmoNumber.faInt(totalMinutes)} دقیقه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                const SizedBox(height: 2),
+                                Text('مجموع مطالعه', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                              ],
+                            ),
+                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                            Column(
+                              children: [
+                                Text('${RitmoNumber.faInt(totalTests)} تست', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                const SizedBox(height: 2),
+                                Text('تست‌های حل‌شده', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                              ],
+                            ),
+                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                            Column(
+                              children: [
+                                Text(RitmoNumber.faPercent(accuracy), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.success)),
+                                const SizedBox(height: 2),
+                                Text('درصد دقت', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _addBulkTopics,
-                          icon: Icon(Icons.playlist_add, color: colors.primary),
-                          label: Text('افزودن دسته‌جمعی', style: TextStyle(color: colors.primary)),
-                          style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-                        ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _addTopicSingle,
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text('افزودن سرفصل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                              style: ElevatedButton.styleFrom(backgroundColor: colors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _addBulkTopics,
+                              icon: Icon(Icons.playlist_add, color: colors.primary),
+                              label: Text('افزودن دسته‌جمعی', style: TextStyle(color: colors.primary)),
+                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 16),
+                      if (_topics.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Text(
+                              'هنوز هیچ سرفصلی برای این درس ثبت نشده است.',
+                              style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _topics.length,
+                          itemBuilder: (context, index) {
+                            final topic = _topics[index];
+                            return _buildTopicTile(topic);
+                          },
+                        ),
+                      const SizedBox(height: 24),
+                      Text('یادداشت‌های این درس', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                      const SizedBox(height: 8),
+                      ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  if (_topics.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          'هنوز هیچ سرفصلی برای این درس ثبت نشده است.',
-                          style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                        ),
+                  // Tab 2: Deadlines & Exams
+                  ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      StudyDeadlinesSection(
+                        deadlines: _deadlines.where((d) => !d.isCompleted).toList(),
+                        subjects: [widget.subject],
+                        onChanged: _loadAll,
                       ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _topics.length,
-                      itemBuilder: (context, index) {
-                        final topic = _topics[index];
-                        return _buildTopicTile(topic);
-                      },
-                    ),
-                  const SizedBox(height: 24),
-                  Text('یادداشت‌های این درس', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                  const SizedBox(height: 8),
-                  ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
+                      if (_deadlines.any((d) => d.isCompleted)) ...[
+                        const SizedBox(height: 24),
+                        Text('موارد انجام‌شده', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textSecondary)),
+                        const SizedBox(height: 8),
+                        ..._deadlines.where((d) => d.isCompleted).map((d) {
+                          return ListTile(
+                            leading: Icon(Icons.check_circle, color: colors.success, size: 20),
+                            title: Text(d.title, style: TextStyle(decoration: TextDecoration.lineThrough, color: colors.textSecondary, fontSize: 13)),
+                            subtitle: Text(StudyDate.formatRelative(d.dueDateIso), style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 18),
+                              onPressed: () async {
+                                await StudyRepository.instance.deleteDeadline(d.id);
+                                await _loadAll();
+                              },
+                            ),
+                          );
+                        }),
+                      ],
+                    ],
+                  ),
                 ],
               ),
       ),
     );
   }
-
 
   Widget _buildTopicTile(StudyTopic topic) {
     final colors = context.colors;
@@ -271,7 +364,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             icon: Icon(Icons.play_circle_fill, color: colors.primary, size: 28),
             onPressed: () async {
               await SessionTimerSheet.show(context, subject: widget.subject, topic: topic);
-              await _loadTopics();
+              await _loadAll();
             },
           ),
         ],

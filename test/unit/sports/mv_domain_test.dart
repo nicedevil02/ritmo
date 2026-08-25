@@ -65,7 +65,7 @@ void main() {
 
   group('MvSlot Model Tests', () {
     test('toMap and fromMap preserves all fields', () {
-      final slot = MvSlot(
+      const slot = MvSlot(
         id: 'slot_123',
         dateIso: '2026-08-25',
         cycleWeek: 2,
@@ -73,7 +73,7 @@ void main() {
         kindCode: 'bodyweight',
         routineId: 'rout_456',
         plannedTime: '08:30',
-        focusCodes: const ['CHEST', 'TRICEPS'],
+        focusCodes: ['CHEST', 'TRICEPS'],
         targetMinutes: 45,
         intensityTier: MvIntensityTier.hard,
         targetRpe: 8,

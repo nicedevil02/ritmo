@@ -373,6 +373,7 @@ class KonkurPresets {
           'examQuestionCount': pSub.examQuestionCount,
           'orderIndex': subjectIndex++,
           'isPreset': 1,
+          'origin': 'KONKUR_PRESET',
         });
 
         var topicIndex = 0;
@@ -395,6 +396,7 @@ class KonkurPresets {
             'nextReviewDate': null,
             'plannedDate': null,
             'orderIndex': topicIndex++,
+            'origin': 'KONKUR_PRESET',
           });
         }
       }

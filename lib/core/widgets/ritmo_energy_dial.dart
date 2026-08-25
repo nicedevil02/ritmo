@@ -170,8 +170,8 @@ class _EnergyDialArcPainter extends CustomPainter {
   final bool hasValue;
   final Color activeColor;
 
-  static const double _startAngle = math.pi * 0.85; // 153°
-  static const double _totalSweep = math.pi * 1.30; // 234°
+  static const double _startAngle = -math.pi / 2; // 12 o'clock (Top)
+  static const double _totalSweep = 2 * math.pi; // 360° full circular sweep
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -195,7 +195,7 @@ class _EnergyDialArcPainter extends CustomPainter {
     if (!hasValue) return;
 
     // 2. Active Sweeping Gradient Arc
-    final currentSweep = _totalSweep * (percentage / 100.0).clamp(0.01, 1.0);
+    final currentSweep = _totalSweep * (percentage / 100.0).clamp(0.001, 1.0);
 
     // Multi-stop rainbow/energy gradient
     const gradient = SweepGradient(

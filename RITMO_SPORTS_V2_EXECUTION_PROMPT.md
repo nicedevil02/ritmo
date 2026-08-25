@@ -266,7 +266,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T5 — ورودی هفته‌محدود برای بودجه
+### - [x] S0-T5 — ورودی هفته‌محدود برای بودجه — 57fc6a03
 
 **فایل‌ها:** `application/mv_hub_controller.dart`، `data/repositories/mv_session_repository.dart`
 
@@ -1430,7 +1430,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
 | S0-T3 | DONE | 141df7a2 | محاسبهٔ واقعی هفته‌های پیوسته و بازگشت null در صورت عدم سابقه |
 | S0-T4 | DONE | 1715480d | پیاده‌سازی فرمول معادل متوسط WHO و MET در BudgetEngine |
-| S0-T5 |  |  |  |
+| S0-T5 | DONE | 57fc6a03 | محاسبهٔ بودجهٔ فعالیت محدود به هفتهٔ تقویمی جاری |
 | S0-T6 |  |  |  |
 | S0-T7 |  |  |  |
 | S0-T8 |  |  |  |

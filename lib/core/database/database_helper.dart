@@ -21,7 +21,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 125;
+  static const int _dbVersion = 126;
   static int get dbVersionForTest => _dbVersion;
 
   /// Optional decoupled warmup hooks registered by application features.

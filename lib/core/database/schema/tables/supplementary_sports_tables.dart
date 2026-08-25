@@ -1,11 +1,14 @@
 import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/seed/mv_kind_profile_seed.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SupplementarySportsTables {
   static Future<void> create(DatabaseExecutor db) async {
     await MovementKindsSeed.ensureSchema(db);
+    await MovementKindsSeed.seed(db);
     await ensureCommitmentTables(db);
+    await ensureKindProfileTables(db);
 
     // 1. ss_exercise
     await db.execute('''
@@ -512,6 +515,14 @@ class SupplementarySportsTables {
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(dayOfWeekSat0, isActive);
       ''');
+    } catch (_) {}
+  }
+
+  /// Ensures mv_kind_profile table exists and is seeded.
+  static Future<void> ensureKindProfileTables(DatabaseExecutor db) async {
+    try {
+      await MvKindProfileSeed.ensureSchema(db);
+      await MvKindProfileSeed.ensureSeed(db);
     } catch (_) {}
   }
 

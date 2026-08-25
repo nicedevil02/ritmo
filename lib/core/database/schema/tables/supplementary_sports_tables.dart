@@ -479,6 +479,37 @@ class SupplementarySportsTables {
           UNIQUE(kind, prType)
       );
     ''');
+
+    // 9. mv_commitments (S2-T1)
+    await ensureCommitmentTables(db);
+  }
+
+  /// Ensures mv_commitments table and index exist safely.
+  static Future<void> ensureCommitmentTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS mv_commitments (
+          id                INTEGER PRIMARY KEY AUTOINCREMENT,
+          kindCode          TEXT    NOT NULL,
+          titleFa           TEXT,
+          ritmoDayOfWeek    INTEGER NOT NULL,
+          timeOfDay         TEXT    NOT NULL,
+          durationMinutes   INTEGER NOT NULL DEFAULT 60,
+          intensityTier     TEXT    NOT NULL DEFAULT 'MODERATE',
+          venueNote         TEXT,
+          isAnchor          INTEGER NOT NULL DEFAULT 1,
+          isActive          INTEGER NOT NULL DEFAULT 1,
+          effectiveFromIso  TEXT    NOT NULL,
+          effectiveUntilIso TEXT,
+          createdAt         INTEGER NOT NULL,
+          updatedAt         INTEGER NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(ritmoDayOfWeek, isActive);
+      ''');
+    } catch (_) {}
   }
 
   /// Ensures movement_sessions, movement_session_events, and movement_campaigns tables exist safely.

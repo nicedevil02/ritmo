@@ -98,6 +98,35 @@ class MvKindRepository {
     );
   }
 
+  Future<void> bumpUsage(String code) => recordUsage(code);
+
+  Future<List<MvMovementKind>> getSeasonal(int jalaliMonth) async {
+    final all = await getAll();
+    return all.where((k) {
+      final mask = k.seasonMask;
+      if (mask == null || mask.isEmpty) return true;
+      final months = mask.split(',').map((s) => int.tryParse(s.trim())).whereType<int>().toSet();
+      return months.contains(jalaliMonth);
+    }).toList();
+  }
+
+  Future<MvMovementKind> saveCustomKind(MvMovementKind kind) async {
+    final db = await _db;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final toSave = kind.copyWith(
+      isCustom: true,
+    );
+    final map = toSave.toMap();
+    map['updatedAt'] = now;
+    map['createdAt'] = map['createdAt'] ?? now;
+    await db.insert(
+      'movement_kinds',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    return toSave;
+  }
+
   Future<void> setEnabled(String code, bool isEnabled) async {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;

@@ -23,6 +23,15 @@ class MvKindUseCase {
   Future<void> recordKindUsage(String code) =>
       _repository.recordUsage(code);
 
+  Future<void> bumpKindUsage(String code) =>
+      _repository.bumpUsage(code);
+
+  Future<List<MvMovementKind>> getSeasonalKinds(int jalaliMonth) =>
+      _repository.getSeasonal(jalaliMonth);
+
+  Future<MvMovementKind> saveCustomKind(MvMovementKind kind) =>
+      _repository.saveCustomKind(kind);
+
   Future<void> setKindEnabled(String code, bool isEnabled) =>
       _repository.setEnabled(code, isEnabled);
 }

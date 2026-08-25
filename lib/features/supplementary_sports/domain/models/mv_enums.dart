@@ -245,10 +245,7 @@ enum MvReadinessTier {
   final double multiplier;
   final String titleFa;
 
-  const MvReadinessTier({
-    required this.multiplier,
-    required this.titleFa,
-  });
+  const MvReadinessTier({required this.multiplier, required this.titleFa});
 
   String get code => name;
 
@@ -266,60 +263,6 @@ enum MvReadinessTier {
         return MvReadinessTier.rest;
       default:
         return MvReadinessTier.full;
-    }
-  }
-}
-
-/// 7 Movement activity families.
-enum MvMovementFamily {
-  cardio,
-  strength,
-  mobility,
-  sports,
-  walking,
-  recovery,
-  custom;
-
-  String get code => name;
-
-  String get titleFa {
-    switch (this) {
-      case MvMovementFamily.cardio:
-        return 'هوازی';
-      case MvMovementFamily.strength:
-        return 'قدرتی';
-      case MvMovementFamily.mobility:
-        return 'انعطاف و کشش';
-      case MvMovementFamily.sports:
-        return 'ورزش و بازی';
-      case MvMovementFamily.walking:
-        return 'پیاده‌روی و روزمره';
-      case MvMovementFamily.recovery:
-        return 'ریکاوری و آرام‌سازی';
-      case MvMovementFamily.custom:
-        return 'سفارشی';
-    }
-  }
-
-  static MvMovementFamily fromCode(String? code) {
-    if (code == null) return MvMovementFamily.sports;
-    final lower = code.toLowerCase().trim();
-    switch (lower) {
-      case 'cardio':
-        return MvMovementFamily.cardio;
-      case 'strength':
-        return MvMovementFamily.strength;
-      case 'mobility':
-        return MvMovementFamily.mobility;
-      case 'sports':
-        return MvMovementFamily.sports;
-      case 'walking':
-        return MvMovementFamily.walking;
-      case 'recovery':
-        return MvMovementFamily.recovery;
-      case 'custom':
-      default:
-        return MvMovementFamily.custom;
     }
   }
 }
@@ -437,10 +380,7 @@ enum MvSessionFeeling {
   final int rirValue;
   final String titleFa;
 
-  const MvSessionFeeling({
-    required this.rirValue,
-    required this.titleFa,
-  });
+  const MvSessionFeeling({required this.rirValue, required this.titleFa});
 
   String get code => name;
 

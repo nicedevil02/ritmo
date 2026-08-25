@@ -2,7 +2,6 @@
 // (Premium Dynamic Glassmorphic Floating Pill Navigation Bar with Elevated Center Button)
 
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -649,10 +648,12 @@ class _PillMoundClipper extends CustomClipper<Path> {
       oldClipper.moundCenterX != moundCenterX;
 }
 
-/// مسیر قرص کپسولی با قوس ارگانیک رو به بالا پیرامون دکمه وسط
+/// مسیر قرص کپسولی با قوس برآمده هوشمند و انطباقی
+/// (در بخش تقویم فقط برآمدگی سمت چپ، در بخش بینش‌ها فقط برآمدگی سمت راست، و در تب‌های میانی برآمدگی دوطرفه)
 Path _buildPillMoundPath(double w, double h, double cx) {
   const r = _kPillRadius;
   const base = _kMoundHeight;
+  const mhw = _kMoundHW;
 
   // ۱. بدنه پایه کپسول (قرص کامل با گوشه‌های کاملاً گرد)
   final pillPath = Path()
@@ -663,49 +664,39 @@ Path _buildPillMoundPath(double w, double h, double cx) {
       ),
     );
 
-  // ۲. محاسبه فاصله از لبه‌های چپ و راست نوار
-  final distToEdge = math.min(cx, w - cx);
-  const minSafeDist = r + 14.0;
+  // ۲. محاسبه مرزهای شیب قوس (شیب نرم به سمت داخل، ادغام طبیعی با گوشه در سمت بیرونی)
+  final clampedCx = cx.clamp(r + 6.0, w - r - 6.0);
+  final mLeft = (clampedCx - mhw).clamp(r, w - r);
+  final mRight = (clampedCx + mhw).clamp(r, w - r);
 
-  // در تب‌های کناری، نوار کاملاً صاف، تمیز و قرص‌شکل می‌ماند تا گوشه‌ها دفورمه نشوند
-  if (distToEdge <= minSafeDist) {
-    return pillPath;
-  }
-
-  // ضریب محوشدگی نرم قوس گنبدی هنگام نزدیک شدن به گوشه‌ها
-  final t = ((distToEdge - minSafeDist) / (_kMoundHW * 0.8)).clamp(0.0, 1.0);
-  final smoothT = t * t * (3.0 - 2.0 * t); // Smoothstep
-  final moundH = _kMoundHeight * smoothT;
-
-  if (moundH <= 0.5) {
-    return pillPath;
-  }
-
-  final mhw = (_kMoundHW * (0.65 + 0.35 * smoothT)).clamp(16.0, distToEdge - r);
-  final mLeft = (cx - mhw).clamp(r, w - r);
-  final mRight = (cx + mhw).clamp(r, w - r);
-  final crestY = base - moundH;
+  final leftSpan = clampedCx - mLeft;
+  final rightSpan = mRight - clampedCx;
 
   final moundPath = Path();
   moundPath.moveTo(mLeft, base);
+
+  // شیب سمت چپ (صعود به قله)
   moundPath.cubicTo(
-    mLeft + 12.0 * smoothT,
+    mLeft + leftSpan * 0.45,
     base,
-    cx - mhw * 0.45,
-    crestY,
-    cx,
-    crestY,
+    clampedCx - leftSpan * 0.40,
+    0.0,
+    clampedCx,
+    0.0,
   );
+
+  // شیب سمت راست (نزول از قله)
   moundPath.cubicTo(
-    cx + mhw * 0.45,
-    crestY,
-    mRight - 12.0 * smoothT,
+    clampedCx + rightSpan * 0.40,
+    0.0,
+    mRight - rightSpan * 0.45,
     base,
     mRight,
     base,
   );
-  moundPath.lineTo(mRight, base + 8.0);
-  moundPath.lineTo(mLeft, base + 8.0);
+
+  moundPath.lineTo(mRight, base + 12.0);
+  moundPath.lineTo(mLeft, base + 12.0);
   moundPath.close();
 
   // ۳. پیوند و ادغام ریاضی بی‌نقص

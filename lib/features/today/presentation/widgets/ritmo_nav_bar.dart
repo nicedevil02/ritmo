@@ -130,42 +130,68 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final isDark = context.isDark;
     final behavior = context.behavior;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final isGlassEnabled = !behavior.reduceTransparency && !highContrast;
+    final glassBlur = behavior.glassBlurSigma.clamp(10.0, 35.0);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
     final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    // ── Neumorphic Colour Tokens ──
-    final Color pillTop =
-        isDark ? const Color(0xFF222B38) : const Color(0xFFF7F9FC);
-    final Color pillBottom =
-        isDark ? const Color(0xFF161B23) : const Color(0xFFE9EDF4);
+    // ── Neumorphic Dynamic Theme Colour Tokens ──
+    final Color pillTop = isDark
+        ? Color.alphaBlend(
+            colors.surfaceElevated.withValues(alpha: 0.85),
+            colors.background,
+          )
+        : Color.alphaBlend(
+            colors.surface.withValues(alpha: 0.90),
+            Colors.white,
+          );
+    final Color pillBottom = isDark
+        ? Color.alphaBlend(
+            colors.surface.withValues(alpha: 0.95),
+            colors.background,
+          )
+        : Color.alphaBlend(
+            colors.surfaceSunken.withValues(alpha: 0.80),
+            const Color(0xFFE2E8F0),
+          );
+
     final Color shadowDarkAmbient = isDark
         ? Colors.black.withValues(alpha: 0.60)
-        : const Color(0xFF9EABB9).withValues(alpha: 0.45);
+        : colors.shadow.withValues(alpha: 0.35);
     final Color shadowDarkDirect = isDark
         ? Colors.black.withValues(alpha: 0.45)
-        : const Color(0xFF8B98A8).withValues(alpha: 0.35);
+        : colors.shadow.withValues(alpha: 0.25);
+
     final Color borderTop = isDark
         ? Colors.white.withValues(alpha: 0.18)
         : Colors.white.withValues(alpha: 0.95);
     final Color borderBottom = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.white.withValues(alpha: 0.30);
-    final Color inactiveColor =
-        isDark ? const Color(0xFF6E7B8E) : const Color(0xFF8A93A2);
-    final Color indicatorColor =
-        isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E293B);
-    final Color centerBtnColorTop =
-        isDark ? const Color(0xFF202734) : const Color(0xFF242C38);
-    final Color centerBtnColorBottom =
-        isDark ? const Color(0xFF11151D) : const Color(0xFF161B22);
+        ? colors.border.withValues(alpha: 0.15)
+        : colors.divider.withValues(alpha: 0.45);
+
+    final Color inactiveColor = colors.textSecondary;
+    final Color indicatorColor = colors.primary;
+
+    final Color centerBtnColorTop = isDark
+        ? Color.alphaBlend(
+            colors.primary.withValues(alpha: 0.20),
+            const Color(0xFF222A36),
+          )
+        : const Color(0xFF222A36);
+    final Color centerBtnColorBottom = isDark
+        ? Color.alphaBlend(
+            colors.primaryPressed.withValues(alpha: 0.15),
+            const Color(0xFF10141B),
+          )
+        : const Color(0xFF141922);
     final Color centerBtnRim = isDark
-        ? Colors.white.withValues(alpha: 0.30)
+        ? colors.border.withValues(alpha: 0.40)
         : Colors.white.withValues(alpha: 0.95);
 
     final navH = context.metrics.navBarHeight;
@@ -223,8 +249,8 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                             ),
                             child: BackdropFilter(
                               filter: ui.ImageFilter.blur(
-                                sigmaX: 25.0,
-                                sigmaY: 25.0,
+                                sigmaX: glassBlur,
+                                sigmaY: glassBlur,
                               ),
                               child: CustomPaint(
                                 painter: _NeumorphicPillPainter(
@@ -426,6 +452,7 @@ class _NeumorphicSlotItem extends StatelessWidget {
                               fontSize: _kLabelSize,
                               fontWeight: FontWeight.w500,
                               color: inactiveColor,
+                              fontFamily: 'Vazirmatn',
                               letterSpacing: -0.2,
                               height: 1.0,
                             ),

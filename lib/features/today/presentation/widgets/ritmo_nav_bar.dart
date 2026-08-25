@@ -665,7 +665,7 @@ Path _buildPillMoundPath(double w, double h, double cx) {
 
   // ۲. محاسبه فاصله از لبه‌های چپ و راست نوار
   final distToEdge = math.min(cx, w - cx);
-  final minSafeDist = r + 14.0;
+  const minSafeDist = r + 14.0;
 
   // در تب‌های کناری، نوار کاملاً صاف، تمیز و قرص‌شکل می‌ماند تا گوشه‌ها دفورمه نشوند
   if (distToEdge <= minSafeDist) {

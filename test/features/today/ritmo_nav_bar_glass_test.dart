@@ -1,6 +1,3 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
@@ -49,7 +46,6 @@ void main() {
   group('RitmoNavBar Dynamic Glassmorphism Tests', () {
     testWidgets('Full Mode renders with BackdropFilter when glass is enabled', (tester) async {
       int selectedTab = 2; // Home
-      bool centerTapped = false;
 
       await tester.pumpWidget(
         _buildTestApp(
@@ -59,7 +55,7 @@ void main() {
             mode: AppMode.full,
             currentIndex: selectedTab,
             onSelectTab: (idx) => selectedTab = idx,
-            onCenterTap: () => centerTapped = true,
+            onCenterTap: () {},
           ),
         ),
       );

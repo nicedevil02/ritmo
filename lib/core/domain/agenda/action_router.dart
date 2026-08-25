@@ -30,6 +30,7 @@ import 'package:ritmo/features/routines/shared/widgets/routine_progressive_sheet
 import 'package:ritmo/features/routines/shared/widgets/routine_dependent_sheet.dart';
 import 'package:ritmo/features/routines/shared/widgets/routine_as_needed_sheet.dart';
 import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 import 'package:ritmo/features/simple_tasks/presentation/widgets/task_detail_sheet.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_quick_log_sheet.dart';
 import 'package:ritmo/features/today/presentation/active_timer_overlay.dart';

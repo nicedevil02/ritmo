@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import '../components/components.dart';
+import 'mv_kind_picker_sheet.dart';
 
-/// Sheet 2: Quick Log Sheet ("ثبت سریع" — Section 5.9 & N-01).
-/// 1 required field (duration in minutes) with preset chips.
+/// Sheet: Quick Log Sheet ("ثبت سریع" — Section 5.9, S1-T6 & N-01).
+///
+/// 1 required field (duration in minutes) with 4 quick kind presets + "بیشتر..." picker.
 class MvQuickLogSheet extends StatefulWidget {
   final String initialKindCode;
   final int initialDuration;
+  final MvKindUseCase? kindUseCase;
   final Future<void> Function(
     String kindCode,
     int durationMinutes,
@@ -20,6 +24,7 @@ class MvQuickLogSheet extends StatefulWidget {
     super.key,
     this.initialKindCode = 'WALKING',
     this.initialDuration = 20,
+    this.kindUseCase,
     required this.onSave,
   });
 
@@ -27,6 +32,7 @@ class MvQuickLogSheet extends StatefulWidget {
     required BuildContext context,
     String initialKindCode = 'WALKING',
     int initialDuration = 20,
+    MvKindUseCase? kindUseCase,
     required Future<void> Function(
       String kindCode,
       int durationMinutes,
@@ -40,6 +46,7 @@ class MvQuickLogSheet extends StatefulWidget {
       builder: (ctx) => MvQuickLogSheet(
         initialKindCode: initialKindCode,
         initialDuration: initialDuration,
+        kindUseCase: kindUseCase,
         onSave: onSave,
       ),
     );
@@ -50,19 +57,18 @@ class MvQuickLogSheet extends StatefulWidget {
 }
 
 class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
+  late final MvKindUseCase _kindUseCase;
   late String _selectedKind;
   late int _duration;
   MvSessionFeeling? _feeling;
   final _noteController = TextEditingController();
   bool _isLoading = false;
 
-  final List<Map<String, dynamic>> _quickKinds = const [
+  List<Map<String, String>> _quickKinds = [
     {'code': 'WALKING', 'title': 'پیاده‌روی', 'emoji': '🚶'},
     {'code': 'RUNNING', 'title': 'دویدن', 'emoji': '🏃'},
     {'code': 'CYCLING', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
-    {'code': 'BODYWEIGHT', 'title': 'تمرین خانگی', 'emoji': '🏋️'},
-    {'code': 'FOOTBALL', 'title': 'فوتبال / تیمی', 'emoji': '⚽'},
-    {'code': 'STRETCHING', 'title': 'کشش و یوگا', 'emoji': '🧘'},
+    {'code': 'SWIMMING', 'title': 'شنا', 'emoji': '🏊'},
   ];
 
   final List<int> _durationPresets = const [10, 15, 20, 30, 45, 60];
@@ -70,14 +76,76 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
   @override
   void initState() {
     super.initState();
+    _kindUseCase = widget.kindUseCase ?? MvKindUseCase();
     _selectedKind = widget.initialKindCode;
     _duration = widget.initialDuration;
+    _loadRecentKinds();
   }
 
   @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadRecentKinds() async {
+    try {
+      final recent = await _kindUseCase.getRecentKinds(limit: 4);
+      if (recent.isNotEmpty && mounted) {
+        final List<Map<String, String>> items = recent.map((k) => {
+          'code': k.code,
+          'title': k.titleFa,
+          'emoji': k.emoji,
+        }).toList();
+
+        // If fewer than 4, fill with fallback
+        const fallback = [
+          {'code': 'WALKING', 'title': 'پیاده‌روی', 'emoji': '🚶'},
+          {'code': 'RUNNING', 'title': 'دویدن', 'emoji': '🏃'},
+          {'code': 'CYCLING', 'title': 'دوچرخه‌سواری', 'emoji': '🚴'},
+          {'code': 'SWIMMING', 'title': 'شنا', 'emoji': '🏊'},
+        ];
+
+        for (final fb in fallback) {
+          if (items.length >= 4) break;
+          if (!items.any((it) => it['code'] == fb['code'])) {
+            items.add(fb);
+          }
+        }
+
+        setState(() {
+          _quickKinds = items;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _openKindPicker() async {
+    List<MvMovementKind>? allKinds;
+    try {
+      allKinds = await _kindUseCase.getAllKinds();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    final picked = await MvKindPickerSheet.show(
+      context: context,
+      useCase: _kindUseCase,
+      initialCode: _selectedKind,
+      initialKinds: allKinds,
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedKind = picked.code;
+        if (!_quickKinds.any((k) => k['code'] == picked.code)) {
+          _quickKinds = [
+            {'code': picked.code, 'title': picked.titleFa, 'emoji': picked.emoji},
+            ..._quickKinds.take(3),
+          ];
+        }
+      });
+    }
   }
 
   Future<void> _handleSave() async {
@@ -123,19 +191,30 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
             Wrap(
               spacing: metrics.spaceSm,
               runSpacing: metrics.spaceSm,
-              children: _quickKinds.map((k) {
-                final isSel = k['code'] == _selectedKind;
-                return MvChip(
-                  label: k['title'] as String,
-                  icon: Text(
-                    k['emoji'] as String,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  isSelected: isSel,
-                  onTap: () =>
-                      setState(() => _selectedKind = k['code'] as String),
-                );
-              }).toList(),
+              children: [
+                ..._quickKinds.map((k) {
+                  final isSel = k['code'] == _selectedKind;
+                  return MvChip(
+                    key: ValueKey('kind_chip_${k['code']}'),
+                    label: k['title']!,
+                    icon: Text(
+                      k['emoji']!,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    isSelected: isSel,
+                    onTap: () =>
+                        setState(() => _selectedKind = k['code']!),
+                  );
+                }),
+                // 5th Chip: "بیشتر..."
+                MvChip(
+                  key: const ValueKey('quick_log_more_kinds'),
+                  label: 'بیشتر...',
+                  icon: const Icon(Icons.apps_rounded, size: 16),
+                  isSelected: false,
+                  onTap: _openKindPicker,
+                ),
+              ],
             ),
             SizedBox(height: metrics.spaceLg),
 
@@ -154,6 +233,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
               children: _durationPresets.map((d) {
                 final isSel = d == _duration;
                 return MvChip(
+                  key: ValueKey('duration_$d'),
                   label: '$d دقیقه',
                   isSelected: isSel,
                   onTap: () => setState(() => _duration = d),
@@ -193,6 +273,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
         ),
       ),
       bottomAction: MvPrimaryAction(
+        key: const ValueKey('quick_log_save_action'),
         label: 'ثبت فعالیت ($_duration دقیقه)',
         icon: Icons.check_circle_outline_rounded,
         isLoading: _isLoading,
@@ -216,6 +297,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          key: ValueKey('feeling_${feeling.name}'),
           onTap: () => setState(() => _feeling = isSelected ? null : feeling),
           borderRadius: BorderRadius.circular(metrics.radiusCard),
           child: Container(

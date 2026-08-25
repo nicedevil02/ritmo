@@ -941,7 +941,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     });
 
     _sub = StreamingChatService()
-        .send(sessionId: _sessionId!, userText: text, consent: consent)
+        .send(sessionId: _sessionId!, userText: text, consent: consent, personaId: 'global')
         .listen(
           _onEvent,
           onError: (err) {

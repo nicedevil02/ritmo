@@ -106,11 +106,16 @@ void main() {
       },
     );
 
-    test('C-7: kAiPersonaScopeEnforced controls fail-open vs fail-closed for unknown personas', () {
+    test('C-7 (S1-S4): kAiPersonaScopeEnforced controls fail-open vs fail-closed across allowedToolNames and isAllowed', () {
+      addTearDown(() => kAiPersonaScopeEnforced = false);
+
+      // S4: When flag is false, fail-open behavior preserved
       kAiPersonaScopeEnforced = false;
       final failOpenTools = AgentToolScope.instance.allowedToolNames('unknown_persona_id');
       expect(failOpenTools.length, AgentToolRegistry.instance.allTools.length);
+      expect(AgentToolScope.instance.isAllowed('unknown_persona_id', 'create_goal_with_milestones'), isTrue);
 
+      // S2: When flag is true and persona unknown -> fail-closed (universal tools only)
       kAiPersonaScopeEnforced = true;
       final failClosedTools = AgentToolScope.instance.allowedToolNames('unknown_persona_id');
       expect(failClosedTools, contains('verify_state'));
@@ -120,8 +125,12 @@ void main() {
       expect(failClosedTools, contains('undo_last_action'));
       expect(failClosedTools.contains('get_sleep_diagnostics'), isFalse);
       expect(failClosedTools.contains('create_new_routine'), isFalse);
+      expect(AgentToolScope.instance.isAllowed('unknown_persona_id', 'create_goal_with_milestones'), isFalse);
+      expect(AgentToolScope.instance.isAllowed('unknown_persona_id', 'verify_state'), isTrue);
 
-      kAiPersonaScopeEnforced = false; // Reset
+      // S3: When flag is true and real persona, tool outside domain is blocked
+      expect(AgentToolScope.instance.isAllowed('sports', 'create_worship_practice'), isFalse);
+      expect(AgentToolScope.instance.isAllowed('sports', 'log_sports_session'), isTrue);
     });
   });
 }

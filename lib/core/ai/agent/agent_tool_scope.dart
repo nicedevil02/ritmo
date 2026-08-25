@@ -35,12 +35,8 @@ bool kAiPersonaScopeEnforced = false;
 
 /// محدوده اختیارات ابزار بر اساس پرسونا (فاز ۵ · P5-1)
 ///
-/// مسئله‌ای که حل می‌کند: تا امروز همه ـ ۲۳ ـ ابزار به هر دستیاری تزریق
-/// می‌شد؛ پس دستیار خواب هم فهرست ابزار ورزشی را می‌دید و وقتی مدل
-/// وسوسه می‌شد و صدایش می‌زد، PersonaGate در لایه فرمان با خطای خشک
-/// رد می‌کرد. این‌جا همان مرز یک پله جلوتر می‌آید: ابزار غیرمجاز از اول
-/// در پرامپت نمی‌آید و اگر مدل باز هم صدایش زد، حلقه با پیام فارسی روشن
-/// رد می‌کند (نه با خطای فنی).
+/// مسئله‌ای که حل می‌کند: ابزارهای غیرمجاز برای هر پرسونا از ابتدا
+/// در پرامپت نمی‌آیند و در زمان اجرا با لایه بررسی همگن کنترل می‌شوند.
 ///
 /// منبع حقیقت: خود `AssistantPersona` ـ `reads` و `commandIds` ـ نه یک لیست موازی.
 /// پس اگر پرسونایی فردا فرمان جدیدی بگیرد، ابزارش هم خودکار باز می‌شود.
@@ -110,15 +106,15 @@ class AgentToolScope {
     'undo_last_action': ToolScopeRequirement.universal(),
   };
 
-  AssistantPersona? _persona(String personaId) {
-    final id = personaId.trim().isEmpty ? 'global' : personaId.trim();
-    return PersonaRegistry.instance.getPersona(id);
+  AssistantPersona? _resolvePersona(String? personaId) {
+    if (personaId == null || personaId.trim().isEmpty) return null;
+    return PersonaRegistry.instance.getPersona(personaId.trim());
   }
 
   /// نام ابزارهای مجاز این پرسونا.
-  Set<String> allowedToolNames(String personaId) {
+  Set<String> allowedToolNames(String? personaId) {
     final all = AgentToolRegistry.instance.allTools;
-    final persona = _persona(personaId);
+    final persona = _resolvePersona(personaId);
     if (persona == null) {
       if (kAiPersonaScopeEnforced) {
         debugPrint(
@@ -141,8 +137,8 @@ class AgentToolScope {
   }
 
   /// ابزارهای مجاز (شیء‌های کامل، برای ساخت پرامپت)
-  List<AgentTool> allowedTools(String personaId) {
-    final persona = _persona(personaId);
+  List<AgentTool> allowedTools(String? personaId) {
+    final persona = _resolvePersona(personaId);
     final all = AgentToolRegistry.instance.allTools;
     if (persona == null) {
       if (kAiPersonaScopeEnforced) {
@@ -157,9 +153,14 @@ class AgentToolScope {
 
   bool hasRequirement(String toolName) => requirements.containsKey(toolName);
 
-  bool isAllowed(String personaId, String toolName) {
-    final persona = _persona(personaId);
-    if (persona == null) return true;
+  bool isAllowed(String? personaId, String toolName) {
+    final persona = _resolvePersona(personaId);
+    if (persona == null) {
+      if (kAiPersonaScopeEnforced) {
+        return requirements[toolName]?.isUniversal ?? false;
+      }
+      return true;
+    }
     final tool = AgentToolRegistry.instance.getTool(toolName);
     if (tool == null) return false;
     return _isToolAllowed(tool, persona);
@@ -193,7 +194,7 @@ class AgentToolScope {
 
   /// بلوک راهنمای ابزارها فقط با ابزارهای مجاز این پرسونا
   String promptFor(String personaId) {
-    final persona = _persona(personaId);
+    final persona = _resolvePersona(personaId);
     final tools = allowedTools(personaId);
     if (persona == null ||
         tools.length == AgentToolRegistry.instance.count) {
@@ -233,7 +234,7 @@ class AgentToolScope {
 
   /// راهنمای فشرده و بهینه ابزارهای مجاز پرسونا برای صرفه‌جویی در توکن‌ها
   String compactPromptFor(String personaId, {bool isNativeToolsActive = false}) {
-    final persona = _persona(personaId);
+    final persona = _resolvePersona(personaId);
     final tools = allowedTools(personaId);
     final roleName = persona?.displayName ?? 'دستیار سراسری';
 
@@ -261,7 +262,7 @@ class AgentToolScope {
 
   /// پیام رد فارسی وقتی مدل ابزار خارج از محدوده را صدا می‌زند
   String refusalReasonFa(String personaId, AgentTool tool) {
-    final persona = _persona(personaId);
+    final persona = _resolvePersona(personaId);
     final roleName = persona?.displayName ?? 'این دستیار';
     return 'ابزار «${tool.titleFa}» در محدوده اختیارات «$roleName» نیست، پس اجرا نشد و هیچ داده‌ای تغییر نکرد. اگر کاربر واقعا این را می‌خواهد، به او بگو از دستیار مربوطه استفاده کند؛ از خودت نتیجه نساز.';
   }

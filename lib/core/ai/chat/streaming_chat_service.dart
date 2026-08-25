@@ -22,6 +22,9 @@ import 'package:ritmo/core/ai/agent/agent_event.dart';
 import 'package:ritmo/core/ai/agent/agent_loop_runner.dart';
 import 'package:ritmo/core/ai/web_bridge/chatgpt_web_bridge_manager.dart';
 
+import 'package:ritmo/core/domain/personas/persona_registry.dart';
+import 'package:ritmo/core/ai/personas/assistant_charters.dart';
+
 class StreamingChatService {
   /// A-25: سقف مجاز برای طول پاسخ دستیار به کاراکتر/گرافم (۳۲۰۰۰ کاراکتر)
   static const int maxAssistantResponseChars = 32000;
@@ -30,7 +33,7 @@ class StreamingChatService {
     required String sessionId,
     required String userText,
     required ConsentProfile consent,
-    String personaId = 'global',
+    required String personaId,
   }) async* {
     // 1) Retrieve RAG & Privacy check
     final rag = await ConversationRAG().retrieve(
@@ -82,9 +85,15 @@ class StreamingChatService {
       consent: consent,
     );
 
+    final persona = PersonaRegistry.instance.getPersona(personaId);
+    final charter = persona != null ? AssistantCharters.charters[persona.systemPromptKey] : null;
+    final baseSystemPrompt = charter != null
+        ? '$charter\n${AIPromptEngine.buildChatSystemPrompt()}'
+        : AIPromptEngine.buildChatSystemPrompt();
+    final systemPrompt = baseSystemPrompt + AiMemoryService.memoryInstruction();
+
     final messages = ctx.toMessages(
-      AIPromptEngine.buildChatSystemPrompt() +
-          AiMemoryService.memoryInstruction(),
+      systemPrompt,
       userText,
     );
 
@@ -100,7 +109,7 @@ class StreamingChatService {
     var errorCode = '';
 
     final config = await AiConnectionRepository.instance.load(
-      slot: AiSlot.assistant,
+      slot: persona?.inferenceProfile.slot ?? AiSlot.assistant,
     );
     final isChatGptWeb =
         config.providerPresetId == 'chatgpt_web' ||
@@ -132,18 +141,17 @@ class StreamingChatService {
         recentHistory.add('$roleLabel: $content');
       }
 
-      final systemPrompt =
-          AIPromptEngine.buildChatSystemPrompt() +
-          AiMemoryService.memoryInstruction();
       final agentStream = AgentLoopRunner.instance.runAgent(
         prompt: userText,
         personaId: personaId,
+        personaTitle: persona?.displayName,
         personaSystemPrompt: systemPrompt,
+        inferenceProfile: persona?.inferenceProfile,
         contextSummary: contextLines.isNotEmpty
             ? contextLines.join('\n')
             : null,
         recentHistory: recentHistory.isNotEmpty ? recentHistory : null,
-        slot: AiSlot.assistant,
+        slot: persona?.inferenceProfile.slot ?? AiSlot.assistant,
       );
 
       var isTruncated = false;

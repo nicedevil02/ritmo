@@ -3,7 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import '../components/components.dart';
 
-/// Sheet 1: "امروز نمی‌تونم" (Section 4 & 5.1).
+/// Sheet 1: "امروز نمی‌تونم" (Section 4, 5.1 & S2-T7).
 /// Presents respectful non-guilt escape options from smallest effective dose to full rest.
 class MvCantTodaySheet extends StatelessWidget {
   final MvSlot slot;
@@ -11,6 +11,7 @@ class MvCantTodaySheet extends StatelessWidget {
   final VoidCallback onMoveToTomorrow;
   final VoidCallback onChangeToStretch;
   final VoidCallback onSkipEntirely;
+  final VoidCallback? onCancelAnchorThisWeek;
 
   const MvCantTodaySheet({
     super.key,
@@ -19,6 +20,7 @@ class MvCantTodaySheet extends StatelessWidget {
     required this.onMoveToTomorrow,
     required this.onChangeToStretch,
     required this.onSkipEntirely,
+    this.onCancelAnchorThisWeek,
   });
 
   static Future<void> show({
@@ -28,6 +30,7 @@ class MvCantTodaySheet extends StatelessWidget {
     required VoidCallback onMoveToTomorrow,
     required VoidCallback onChangeToStretch,
     required VoidCallback onSkipEntirely,
+    VoidCallback? onCancelAnchorThisWeek,
   }) {
     return MvSheetScaffold.show(
       context: context,
@@ -49,6 +52,12 @@ class MvCantTodaySheet extends StatelessWidget {
           Navigator.pop(ctx);
           onSkipEntirely();
         },
+        onCancelAnchorThisWeek: onCancelAnchorThisWeek != null
+            ? () {
+                Navigator.pop(ctx);
+                onCancelAnchorThisWeek();
+              }
+            : null,
       ),
     );
   }
@@ -63,13 +72,25 @@ class MvCantTodaySheet extends StatelessWidget {
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (slot.isLocked && onCancelAnchorThisWeek != null) ...[
+            _buildOption(
+              key: const ValueKey('mv_anchor_cancelled_this_week'),
+              context: context,
+              icon: Icons.event_busy_rounded,
+              title: 'این هفته لغو شد',
+              description: 'لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.',
+              onTap: onCancelAnchorThisWeek!,
+              isRecommended: true,
+            ),
+            SizedBox(height: metrics.spaceSm),
+          ],
           _buildOption(
             context: context,
             icon: Icons.timer_outlined,
             title: 'حداقل مؤثر (۱۰ دقیقه سبک)',
             description: 'فقط چند حرکت ساده برای حفظ زنجیره و جریان خون',
             onTap: onMinimalDose,
-            isRecommended: true,
+            isRecommended: !slot.isLocked,
           ),
           SizedBox(height: metrics.spaceSm),
           _buildOption(
@@ -103,6 +124,7 @@ class MvCantTodaySheet extends StatelessWidget {
   }
 
   Widget _buildOption({
+    Key? key,
     required BuildContext context,
     required IconData icon,
     required String title,
@@ -124,12 +146,13 @@ class MvCantTodaySheet extends StatelessWidget {
     final Color iconColor = isDestructive
         ? colors.textSecondary
         : isRecommended
-            ? colors.primary
-            : colors.textPrimary;
+        ? colors.primary
+        : colors.textPrimary;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        key: key,
         onTap: onTap,
         borderRadius: BorderRadius.circular(metrics.radiusCard),
         child: Container(
@@ -159,17 +182,24 @@ class MvCantTodaySheet extends StatelessWidget {
                         Text(
                           title,
                           style: textTheme.titleSmall?.copyWith(
-                            color: isDestructive ? colors.textSecondary : colors.textPrimary,
+                            color: isDestructive
+                                ? colors.textSecondary
+                                : colors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (isRecommended) ...[
                           SizedBox(width: metrics.spaceSm),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: colors.primary,
-                              borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                              borderRadius: BorderRadius.circular(
+                                RitmoRadius.pill,
+                              ),
                             ),
                             child: Text(
                               'پیشنهادی',
@@ -193,7 +223,11 @@ class MvCantTodaySheet extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: metrics.iconSm, color: colors.textSecondary),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: metrics.iconSm,
+                color: colors.textSecondary,
+              ),
             ],
           ),
         ),

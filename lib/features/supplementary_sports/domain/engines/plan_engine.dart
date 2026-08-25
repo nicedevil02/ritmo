@@ -61,16 +61,16 @@ class PlanEngine {
       slotsByDay.putIfAbsent(slot.dateIso, () => []).add(slot);
     }
 
-    final fullWeekSlots = <MvSlot>[];
+    final initialFullWeekSlots = <MvSlot>[];
     for (int i = 0; i < 7; i++) {
       final dayDate = weekDays[i];
       final dayIso = MvCalendar.formatDateIso(dayDate);
       final dayAnchors = slotsByDay[dayIso];
 
       if (dayAnchors != null && dayAnchors.isNotEmpty) {
-        fullWeekSlots.addAll(dayAnchors);
+        initialFullWeekSlots.addAll(dayAnchors);
       } else {
-        fullWeekSlots.add(
+        initialFullWeekSlots.add(
           MvSlot(
             id: 'slot_${dayIso}_rest',
             dateIso: dayIso,
@@ -91,11 +91,183 @@ class PlanEngine {
       }
     }
 
+    // 3. ADJACENCY (S3-T6: ADJ-1..ADJ-7)
+    final adjacency = _applyAdjacency(
+      weekStartSat: weekStartSat,
+      weekSlots: initialFullWeekSlots,
+      kinds: kinds,
+      kindProfiles: kindProfiles,
+    );
+
+    stageDecisions.add(
+      MvDecision<List<MvSlot>>(
+        value: adjacency.slots,
+        reasonFa: 'قواعد مجاورت لنگرها، تحرک قبل، ریکاوری بعد و فواصل تمرینی اعمال شد.',
+        reasonKey: MvReasonKeys.preAnchorTaper,
+        sources: const ['calendar', 'commitments'],
+      ),
+    );
+
     return MvPlanResult(
-      slots: fullWeekSlots,
+      slots: adjacency.slots,
       stageDecisions: stageDecisions,
       notes: notes,
       allowedKinds: hardLimits.allowedKinds,
+      hasConflict: adjacency.hasConflict,
+      conflictNote: adjacency.conflictNote,
+    );
+  }
+
+  /// مرحلهٔ ۳: اعمال قواعد مجاورت ADJ-1 تا ADJ-7 (S3-T6)
+  _AdjacencyOutput _applyAdjacency({
+    required DateTime weekStartSat,
+    required List<MvSlot> weekSlots,
+    required Map<String, MvMovementKind> kinds,
+    required Map<String, MvKindProfile> kindProfiles,
+  }) {
+    final updatedSlots = List<MvSlot>.from(weekSlots);
+    bool hasConflict = false;
+    String? conflictNote;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Find days with anchors
+    final anchorDayIndices = <int>[];
+    for (int i = 0; i < 7; i++) {
+      if (updatedSlots[i].isLocked) {
+        anchorDayIndices.add(i);
+      }
+    }
+
+    // ADJ-2 & ADJ-3: Taper (day before) and Recovery (day after) for each anchor
+    for (final dayIdx in anchorDayIndices) {
+      final anchorSlot = updatedSlots[dayIdx];
+      final kind = kinds[anchorSlot.kindCode];
+      final isHighImpact = (kind?.jointImpact ?? 2) >= 2 ||
+          (anchorSlot.targetMinutes >= 60);
+
+      // ADJ-2: Day before (i - 1) -> mobility, max 20 min, light
+      final dayBefore = (dayIdx - 1 + 7) % 7;
+      if (!updatedSlots[dayBefore].isLocked &&
+          updatedSlots[dayBefore].reasonKey !=
+              MvReasonKeys.postAnchorRecovery) {
+        final kindTitle = kind?.titleFa ?? 'ورزش لنگر';
+        updatedSlots[dayBefore] = MvSlot(
+          id: 'slot_${updatedSlots[dayBefore].dateIso}_mobility',
+          dateIso: updatedSlots[dayBefore].dateIso,
+          cycleWeek: updatedSlots[dayBefore].cycleWeek,
+          slotType: MvSlotType.mobility,
+          targetMinutes: 20,
+          intensityTier: MvIntensityTier.light,
+          headlineFa: 'تحرک و آمادگی قبل از $kindTitle',
+          coachNoteFa:
+              'تمرینات موبیلیتی سبک و کشش پویا برای آمادگی بهتر در روز لنگر.',
+          source: 'GENERATED',
+          reasonKey: MvReasonKeys.preAnchorTaper,
+          reasonParams: {'kind': kindTitle},
+          status: MvSlotStatus.planned,
+          createdAt: now,
+          updatedAt: now,
+        );
+      }
+
+      // ADJ-3: Day after (i + 1) -> activeRest, max 25 min (ONLY if high-impact anchor)
+      final dayAfter = (dayIdx + 1) % 7;
+      if (isHighImpact && !updatedSlots[dayAfter].isLocked) {
+        final kindTitle = kind?.titleFa ?? 'ورزش لنگر';
+        updatedSlots[dayAfter] = MvSlot(
+          id: 'slot_${updatedSlots[dayAfter].dateIso}_active_rest',
+          dateIso: updatedSlots[dayAfter].dateIso,
+          cycleWeek: updatedSlots[dayAfter].cycleWeek,
+          slotType: MvSlotType.activeRest,
+          targetMinutes: 25,
+          intensityTier: MvIntensityTier.light,
+          headlineFa: 'بازیابی فعال بعد از $kindTitle',
+          coachNoteFa:
+              'پیاده‌روی آرام و حرکات ریکاوری برای تخلیه لاکتات و رفع خستگی عضلانی.',
+          source: 'GENERATED',
+          reasonKey: MvReasonKeys.postAnchorRecovery,
+          reasonParams: {'kind': kindTitle},
+          status: MvSlotStatus.planned,
+          createdAt: now,
+          updatedAt: now,
+        );
+      }
+    }
+
+    // ADJ-6: Check for consecutive high-impact anchors
+    for (int idx = 0; idx < anchorDayIndices.length - 1; idx++) {
+      final dayA = anchorDayIndices[idx];
+      final dayB = anchorDayIndices[idx + 1];
+      if (dayB == dayA + 1) {
+        final kindA = kinds[updatedSlots[dayA].kindCode];
+        final kindB = kinds[updatedSlots[dayB].kindCode];
+        final isHighImpactA = (kindA?.jointImpact ?? 2) >= 2 ||
+            (updatedSlots[dayA].targetMinutes >= 60);
+        final isHighImpactB = (kindB?.jointImpact ?? 2) >= 2 ||
+            (updatedSlots[dayB].targetMinutes >= 60);
+
+        if (isHighImpactA && isHighImpactB) {
+          hasConflict = true;
+          conflictNote = 'mv_conflict_back_to_back';
+
+          // Day after the second anchor: mandatory activeRest
+          final dayAfterB = (dayB + 1) % 7;
+          if (!updatedSlots[dayAfterB].isLocked) {
+            final kindTitle = kindB?.titleFa ?? 'ورزش لنگر';
+            updatedSlots[dayAfterB] = MvSlot(
+              id: 'slot_${updatedSlots[dayAfterB].dateIso}_active_rest',
+              dateIso: updatedSlots[dayAfterB].dateIso,
+              cycleWeek: updatedSlots[dayAfterB].cycleWeek,
+              slotType: MvSlotType.activeRest,
+              targetMinutes: 25,
+              intensityTier: MvIntensityTier.light,
+              headlineFa: 'بازیابی فعال بعد از دو روز پرفشار',
+              coachNoteFa:
+                  'پیاده‌روی سبک یا حرکات کششی آرام برای تسریع بازسازی عضلانی.',
+              source: 'GENERATED',
+              reasonKey: MvReasonKeys.postAnchorRecovery,
+              reasonParams: {'kind': kindTitle},
+              status: MvSlotStatus.planned,
+              createdAt: now,
+              updatedAt: now,
+            );
+          }
+        }
+      }
+    }
+
+    // ADJ-5: If >= 3 anchors in the week, guarantee at least 1 full rest day
+    if (anchorDayIndices.length >= 3) {
+      final hasRest = updatedSlots.any((s) => !s.isLocked && s.slotType == MvSlotType.rest);
+      if (!hasRest) {
+        for (int i = 0; i < 7; i++) {
+          if (!updatedSlots[i].isLocked) {
+            updatedSlots[i] = MvSlot(
+              id: 'slot_${updatedSlots[i].dateIso}_rest',
+              dateIso: updatedSlots[i].dateIso,
+              cycleWeek: updatedSlots[i].cycleWeek,
+              slotType: MvSlotType.rest,
+              targetMinutes: 0,
+              intensityTier: MvIntensityTier.light,
+              headlineFa: 'روز استراحت و ریکاوری',
+              coachNoteFa:
+                  'به دلیل ۳ جلسه لنگر در این هفته، این روز برای استراحت کامل بدنت در نظر گرفته شده است.',
+              source: 'GENERATED',
+              reasonKey: MvReasonKeys.restGuaranteed,
+              status: MvSlotStatus.planned,
+              createdAt: now,
+              updatedAt: now,
+            );
+            break;
+          }
+        }
+      }
+    }
+
+    return _AdjacencyOutput(
+      slots: updatedSlots,
+      hasConflict: hasConflict,
+      conflictNote: conflictNote,
     );
   }
 
@@ -459,5 +631,17 @@ class _HardLimitsOutput {
     required this.annotatedSlots,
     required this.allowedKinds,
     this.notes = const [],
+  });
+}
+
+class _AdjacencyOutput {
+  final List<MvSlot> slots;
+  final bool hasConflict;
+  final String? conflictNote;
+
+  const _AdjacencyOutput({
+    required this.slots,
+    this.hasConflict = false,
+    this.conflictNote,
   });
 }

@@ -26,7 +26,7 @@ void main() {
     await db.close();
   });
 
-  group('MvKindPickerSheet Widget Verification (S1-T3)', () {
+  group('MvKindPickerSheet Widget Verification (S1-T5)', () {
     testWidgets('Full render, search filtering for شنا, and selection pop', (tester) async {
       MvMovementKind? pickedKind;
       late List<MvMovementKind> allKinds;
@@ -62,7 +62,7 @@ void main() {
       expect(find.text('انتخاب نوع ورزش و فعالیت'), findsOneWidget);
       expect(find.text('بدمینتون'), findsWidgets);
 
-      // 2. Type "شنا" in search bar and wait for 300ms debounce
+      // 2. Type "شنا" in search bar and wait for debounce
       await tester.enterText(find.byType(TextField), 'شنا');
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump();

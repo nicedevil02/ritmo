@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 import '../components/components.dart';
 
-/// Action Sheet: Full Taxonomy Movement Activity Picker (49 Sports - Sprint 1 & ADR 0008).
+/// Action Sheet: Full Taxonomy Movement Activity Picker (49 Sports - S1-T5 & ADR 0008).
 ///
-/// Provides live debounced search, family categorization tabs, and recently used shortcuts.
+/// Provides 250ms live debounced search, family categorization tabs with fixed order,
+/// recently used shortcuts, and seasonal recommendations.
 class MvKindPickerSheet extends StatefulWidget {
   final MvKindUseCase? useCase;
   final String? initialCode;
@@ -41,6 +43,16 @@ class MvKindPickerSheet extends StatefulWidget {
 }
 
 class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
+  static const List<MovementFamily> _orderedFamilies = [
+    MovementFamily.sport,
+    MovementFamily.outdoor,
+    MovementFamily.endurance,
+    MovementFamily.strength,
+    MovementFamily.martialSkill,
+    MovementFamily.mindBody,
+    MovementFamily.daily,
+  ];
+
   late final MvKindUseCase _useCase;
   final _searchController = TextEditingController();
   Timer? _debounceTimer;
@@ -48,6 +60,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
   bool _isLoading = true;
   List<MvMovementKind> _allKinds = [];
   List<MvMovementKind> _recentKinds = [];
+  List<MvMovementKind> _seasonalKinds = [];
   List<MvMovementKind> _displayedKinds = [];
   MovementFamily? _selectedFamily; // null == all
 
@@ -73,12 +86,15 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
 
   Future<void> _loadInitialData() async {
     try {
+      final currentMonth = Jalali.now().month;
       final all = await _useCase.getAllKinds();
       final recent = await _useCase.getRecentKinds(limit: 6);
+      final seasonal = await _useCase.getSeasonalKinds(currentMonth);
       if (mounted) {
         setState(() {
           _allKinds = all;
           _recentKinds = recent;
+          _seasonalKinds = seasonal.take(6).toList();
           _displayedKinds = all;
           _isLoading = false;
         });
@@ -92,7 +108,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
 
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () async {
       final clean = query.trim();
       if (clean.isEmpty) {
         _applyFamilyFilter();
@@ -196,7 +212,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                 ),
                 SizedBox(height: metrics.spaceMd),
 
-                // 2. Family Filter Chips
+                // 2. Family Filter Chips (7 ordered families)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -209,7 +225,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                           onSelected: (_) => _onFamilySelected(null),
                         ),
                       ),
-                      ...MovementFamily.values.map((family) {
+                      ..._orderedFamilies.map((family) {
                         return Padding(
                           padding: EdgeInsets.only(left: metrics.spaceSm),
                           child: FilterChip(
@@ -247,11 +263,35 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                     }).toList(),
                   ),
                   SizedBox(height: metrics.spaceMd),
+                ],
+
+                // 4. Seasonal Section (when no search query)
+                if (_searchController.text.isEmpty && _seasonalKinds.isNotEmpty && _selectedFamily == null) ...[
+                  Text(
+                    'مناسب این فصل',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: metrics.spaceSm),
+                  Wrap(
+                    spacing: metrics.spaceSm,
+                    runSpacing: metrics.spaceSm,
+                    children: _seasonalKinds.map((k) {
+                      return ActionChip(
+                        avatar: Text(k.emoji),
+                        label: Text(k.titleFa),
+                        onPressed: () => _selectKind(k),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: metrics.spaceMd),
                   const Divider(),
                   SizedBox(height: metrics.spaceSm),
                 ],
 
-                // 4. Kinds List
+                // 5. Kinds List
                 if (_displayedKinds.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(metrics.spaceXl),
@@ -306,7 +346,9 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                       ),
                                     ),
                                     SizedBox(height: metrics.spaceXs),
-                                    Row(
+                                    Wrap(
+                                      spacing: metrics.spaceSm,
+                                      runSpacing: 4,
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -321,16 +363,41 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: metrics.spaceSm),
-                                        if (kind.jointImpact > 0) ...[
+                                        if (kind.isOutdoor)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: colors.surfaceElevated,
+                                              borderRadius: BorderRadius.circular(metrics.radiusCard),
+                                            ),
+                                            child: Text(
+                                              'فضای باز 🌿',
+                                              style: textTheme.labelSmall?.copyWith(
+                                                color: colors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        if (kind.needsVenue)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: colors.surfaceElevated,
+                                              borderRadius: BorderRadius.circular(metrics.radiusCard),
+                                            ),
+                                            child: Text(
+                                              'نیازمند سالن 🏟',
+                                              style: textTheme.labelSmall?.copyWith(
+                                                color: colors.textSecondary,
+                                              ),
+                                            ),
+                                          ),
+                                        if (kind.jointImpact > 0)
                                           Text(
                                             'ضربه: ${kind.jointImpact}/3',
                                             style: textTheme.labelSmall?.copyWith(
                                               color: colors.textSecondary,
                                             ),
                                           ),
-                                          SizedBox(width: metrics.spaceSm),
-                                        ],
                                         if (kind.primaryMetric.unitFa.isNotEmpty)
                                           Text(
                                             'واحد: ${kind.primaryMetric.unitFa}',

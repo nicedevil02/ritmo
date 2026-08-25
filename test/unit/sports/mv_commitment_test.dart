@@ -182,5 +182,73 @@ void main() {
       expect(original.venueNote, isNull);
       expect(original.isFlexible, isFalse);
     });
+
+    test('occursOnWeek correctly filters weekly and biweekly recurrence', () {
+      final weekly = MvCommitment(
+        kindCode: 'FUTSAL',
+        dayOfWeekSat0: 5,
+        startTime: '21:00',
+        durationMinutes: 90,
+        recurrence: CommitmentRecurrence.weekly,
+      );
+
+      final biweekly = MvCommitment(
+        kindCode: 'FUTSAL',
+        dayOfWeekSat0: 5,
+        startTime: '21:00',
+        durationMinutes: 90,
+        recurrence: CommitmentRecurrence.biweekly,
+      );
+
+      expect(weekly.occursOnWeek(1), isTrue);
+      expect(weekly.occursOnWeek(2), isTrue);
+
+      expect(biweekly.occursOnWeek(1), isFalse); // Odd week -> does not occur
+      expect(biweekly.occursOnWeek(2), isTrue);  // Even week -> occurs
+      expect(biweekly.occursOnWeek(3), isFalse);
+      expect(biweekly.occursOnWeek(4), isTrue);
+    });
+
+    test('nextOccurrenceAfter computes next occurrence correctly', () {
+      // پنجشنبه ساعت ۲۱:۰۰ (dayOfWeekSat0 = 5)
+      final futsalThu = MvCommitment(
+        kindCode: 'FUTSAL',
+        dayOfWeekSat0: 5,
+        startTime: '21:00',
+        durationMinutes: 90,
+      );
+
+      // چهارشنبه ۲۰۲۶/۰۸/۲۶ ساعت ۱۰:۰۰ (Wednesday)
+      final wednesday = DateTime(2026, 8, 26, 10, 0);
+      final nextFromWed = futsalThu.nextOccurrenceAfter(wednesday);
+      expect(nextFromWed, isNotNull);
+      expect(nextFromWed!.weekday, equals(DateTime.thursday));
+      expect(nextFromWed.day, equals(27));
+      expect(nextFromWed.hour, equals(21));
+      expect(nextFromWed.minute, equals(0));
+
+      // جمعه ۲۰۲۶/۰۸/۲۸ ساعت ۱۰:۰۰ (Friday)
+      final friday = DateTime(2026, 8, 28, 10, 0);
+      final nextFromFri = futsalThu.nextOccurrenceAfter(friday);
+      expect(nextFromFri, isNotNull);
+      expect(nextFromFri!.weekday, equals(DateTime.thursday));
+      expect(nextFromFri.day, equals(3)); // Next week's Thursday (Sep 3)
+      expect(nextFromFri.month, equals(9));
+      expect(nextFromFri.hour, equals(21));
+
+      // همان روز پنجشنبه ۲۰۲۶/۰۸/۲۷ ساعت ۲۰:۰۰ (قبل از ۲۱:۰۰)
+      final thuBefore = DateTime(2026, 8, 27, 20, 0);
+      final nextFromThuBefore = futsalThu.nextOccurrenceAfter(thuBefore);
+      expect(nextFromThuBefore, isNotNull);
+      expect(nextFromThuBefore!.day, equals(27));
+      expect(nextFromThuBefore.hour, equals(21));
+
+      // همان روز پنجشنبه ۲۰۲۶/۰۸/۲۷ ساعت ۲۲:۰۰ (بعد از ۲۱:۰۰)
+      final thuAfter = DateTime(2026, 8, 27, 22, 0);
+      final nextFromThuAfter = futsalThu.nextOccurrenceAfter(thuAfter);
+      expect(nextFromThuAfter, isNotNull);
+      expect(nextFromThuAfter!.day, equals(3)); // Next Thursday
+      expect(nextFromThuAfter.month, equals(9));
+    });
   });
 }

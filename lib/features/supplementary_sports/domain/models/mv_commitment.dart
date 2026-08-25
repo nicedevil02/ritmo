@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/mv_calendar.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 enum CommitmentRecurrence {
   weekly('WEEKLY', 'هر هفته'),
@@ -18,7 +19,6 @@ enum CommitmentRecurrence {
 }
 
 /// مدل ایمیوتبل تعهد ورزشی ثابت (لنگر) کاربر
-@immutable
 class MvCommitment {
   static final RegExp _timeRegex = RegExp(r'^([01]\d|2[0-3]):[0-5]\d$');
   static const List<String> persianWeekdays = [
@@ -92,6 +92,64 @@ class MvCommitment {
 
   /// نام فارسی روز هفته (۰=شنبه .. ۶=جمعه)
   String get persianWeekdayName => persianWeekdays[dayOfWeekSat0];
+
+  /// بررسی رخ دادن در یک هفتهٔ مشخص با شاخص جلالی (۰ یا زوج/فرد)
+  bool occursOnWeek(int jalaliWeekIndex) {
+    if (!isActive) return false;
+    switch (recurrence) {
+      case CommitmentRecurrence.weekly:
+        return true;
+      case CommitmentRecurrence.biweekly:
+        return jalaliWeekIndex % 2 == 0;
+      case CommitmentRecurrence.once:
+        return true;
+    }
+  }
+
+  /// نزدیک‌ترین رخداد بعدی تعهد بعد از زمان [now].
+  DateTime? nextOccurrenceAfter(DateTime now, [MvCalendar? calendar]) {
+    if (!isActive) return null;
+
+    final parts = startTime.split(':');
+    final startHour = int.parse(parts[0]);
+    final startMinute = int.parse(parts[1]);
+
+    final targetDartWeekday = MvCalendar.sat0ToDartWeekday(dayOfWeekSat0);
+
+    for (int offset = 0; offset <= 28; offset++) {
+      final candidateDate = now.add(Duration(days: offset));
+      if (candidateDate.weekday == targetDartWeekday) {
+        final candidateDateTime = DateTime(
+          candidateDate.year,
+          candidateDate.month,
+          candidateDate.day,
+          startHour,
+          startMinute,
+        );
+
+        if (candidateDateTime.isAfter(now)) {
+          final candidateIso = MvCalendar.formatDateIso(candidateDate);
+          if (startDateIso != null && candidateIso.compareTo(startDateIso!) < 0) {
+            continue;
+          }
+          if (endDateIso != null && candidateIso.compareTo(endDateIso!) > 0) {
+            return null;
+          }
+
+          if (recurrence == CommitmentRecurrence.biweekly) {
+            final jDate = Jalali.fromDateTime(candidateDate);
+            final jalaliWeekIndex = ((jDate.dayOfYear - 1) ~/ 7) + 1;
+            if (!occursOnWeek(jalaliWeekIndex)) {
+              continue;
+            }
+          }
+
+          return candidateDateTime;
+        }
+      }
+    }
+    return null;
+  }
 
   MvCommitment copyWith({
     int? id,

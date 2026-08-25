@@ -611,7 +611,7 @@ class MvCommitmentRepository {
 
 ---
 
-### - [ ] S2-T6 — نمایش لنگر در تب امروز و تب هفته
+### - [x] S2-T6 — نمایش لنگر در تب امروز و تب هفته — 0226a0a4
 
 **فایل‌ها:** `presentation/screens/mv_today_tab.dart`، `presentation/screens/mv_week_tab.dart`، `presentation/components/mv_day_slot_card.dart`
 
@@ -1448,7 +1448,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
 | S2-T4 | DONE | 50d71ac9 | پیاده‌سازی ساخت تعهد از شیت برنامه روز و یوزکیس MvSaveCommitmentUseCase و تست‌های مربوطه |
 | S2-T5 | DONE | 26d840fd | پیاده‌سازی سوال لنگر در آنبوردینگ با امکان ثبت تا ۳ تعهد و MvCommitmentUseCase |
-| S2-T6 |  |  |  |
+| S2-T6 | DONE | 0226a0a4 | نمایش نشانگرهای قفل و ساعت در کارت اسلات، نوار یادآوری فردا در تب امروز، آیکون ریل هفته، و بانر تعارض پشت‌سرهم |
 | S2-T7 |  |  |  |
 | S2-T8 |  |  |  |
 | S3-T1 |  |  |  |

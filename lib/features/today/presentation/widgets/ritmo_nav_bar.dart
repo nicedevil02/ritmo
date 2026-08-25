@@ -135,63 +135,46 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
     final behavior = context.behavior;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
     final isGlassEnabled = !behavior.reduceTransparency && !highContrast;
-    final glassBlur = behavior.glassBlurSigma.clamp(10.0, 35.0);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
     final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    // ── Neumorphic Dynamic Theme Colour Tokens ──
+    // ── Dynamic Theme & Neumorphic Palette Tokens ──
     final Color pillTop = isDark
-        ? Color.alphaBlend(
-            colors.surfaceElevated.withValues(alpha: 0.85),
-            colors.background,
-          )
-        : Color.alphaBlend(
-            colors.surface.withValues(alpha: 0.90),
-            Colors.white,
-          );
+        ? colors.surfaceElevated
+        : colors.surface;
     final Color pillBottom = isDark
-        ? Color.alphaBlend(
-            colors.surface.withValues(alpha: 0.95),
-            colors.background,
-          )
-        : Color.alphaBlend(
-            colors.surfaceSunken.withValues(alpha: 0.80),
-            const Color(0xFFE2E8F0),
-          );
+        ? colors.surface
+        : colors.surfaceSunken;
 
     final Color shadowDarkAmbient = isDark
-        ? Colors.black.withValues(alpha: 0.60)
+        ? Colors.black.withValues(alpha: 0.55)
         : colors.shadow.withValues(alpha: 0.35);
     final Color shadowDarkDirect = isDark
-        ? Colors.black.withValues(alpha: 0.45)
+        ? Colors.black.withValues(alpha: 0.40)
         : colors.shadow.withValues(alpha: 0.25);
 
     final Color borderTop = isDark
         ? Colors.white.withValues(alpha: 0.18)
         : Colors.white.withValues(alpha: 0.95);
     final Color borderBottom = isDark
-        ? colors.border.withValues(alpha: 0.15)
-        : colors.divider.withValues(alpha: 0.45);
+        ? Colors.white.withValues(alpha: 0.04)
+        : colors.border.withValues(alpha: 0.35);
 
-    final Color inactiveColor = colors.textSecondary;
+    final Color inactiveColor = colors.textTertiary;
     final Color indicatorColor = colors.primary;
 
-    final Color centerBtnColorTop = isDark
-        ? Color.alphaBlend(
-            colors.primary.withValues(alpha: 0.20),
-            const Color(0xFF222A36),
-          )
-        : const Color(0xFF222A36);
-    final Color centerBtnColorBottom = isDark
-        ? Color.alphaBlend(
-            colors.primaryPressed.withValues(alpha: 0.15),
-            const Color(0xFF10141B),
-          )
-        : const Color(0xFF141922);
+    // ── Active Center Floating Button Colors from Active Palette ──
+    final Color centerBtnColorTop = colors.brandGradient.isNotEmpty
+        ? colors.brandGradient.first
+        : colors.primary;
+    final Color centerBtnColorBottom = colors.brandGradient.length > 1
+        ? colors.brandGradient.last
+        : colors.primaryPressed;
+    final Color centerBtnIconColor = colors.onPrimary;
     final Color centerBtnRim = isDark
-        ? colors.border.withValues(alpha: 0.40)
+        ? Colors.white.withValues(alpha: 0.28)
         : Colors.white.withValues(alpha: 0.95);
 
     final navH = context.metrics.navBarHeight;
@@ -249,8 +232,8 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                             ),
                             child: BackdropFilter(
                               filter: ui.ImageFilter.blur(
-                                sigmaX: glassBlur,
-                                sigmaY: glassBlur,
+                                sigmaX: 25.0,
+                                sigmaY: 25.0,
                               ),
                               child: CustomPaint(
                                 painter: _NeumorphicPillPainter(
@@ -343,6 +326,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                       activeItem: activeItem,
                       bgTop: centerBtnColorTop,
                       bgBottom: centerBtnColorBottom,
+                      iconColor: centerBtnIconColor,
                       rimColor: centerBtnRim,
                       isDark: isDark,
                       onTap: () {
@@ -452,7 +436,6 @@ class _NeumorphicSlotItem extends StatelessWidget {
                               fontSize: _kLabelSize,
                               fontWeight: FontWeight.w500,
                               color: inactiveColor,
-                              fontFamily: 'Vazirmatn',
                               letterSpacing: -0.2,
                               height: 1.0,
                             ),
@@ -576,6 +559,7 @@ class _AnimatedFloatingButton extends StatefulWidget {
     required this.activeItem,
     required this.bgTop,
     required this.bgBottom,
+    required this.iconColor,
     required this.rimColor,
     required this.isDark,
     required this.onTap,
@@ -585,6 +569,7 @@ class _AnimatedFloatingButton extends StatefulWidget {
   final _NavItem activeItem;
   final Color bgTop;
   final Color bgBottom;
+  final Color iconColor;
   final Color rimColor;
   final bool isDark;
   final VoidCallback onTap;
@@ -749,7 +734,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                     key: ValueKey<IconData>(_currentIcon),
                     size:
                         _currentIcon == CupertinoIcons.add ? 24 : 22,
-                    color: Colors.white,
+                    color: widget.iconColor,
                   ),
                 ),
               ),

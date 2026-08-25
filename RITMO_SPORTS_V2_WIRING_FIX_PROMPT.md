@@ -90,7 +90,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T2 — شیت ساخت و ویرایش لنگر
+### - [x] S8-T2 — شیت ساخت و ویرایش لنگر — 47253578
 
 **فایل جدید:** `lib/features/supplementary_sports/presentation/sheets/mv_commitment_edit_sheet.dart`
 
@@ -281,7 +281,7 @@ flutter test
 | کد تسک | وضعیت | کامیت | یادداشت |
 | :-- | :-- | :-- | :-- |
 | S8-T1 | DONE | fa94daa7 | کنترلر: بارگذاری و انتشار لنگرها با cycleWeek و متدهای ذخیره/حذف |
-| S8-T2 | | | |
+| S8-T2 | DONE | 47253578 | شیت ساخت و ویرایش لنگر (MvCommitmentEditSheet) با ۸ فیلد و توکن‌های طراحی |
 | S8-T3 | | | |
 | S8-T4 | | | |
 | S8-T5 | | | |

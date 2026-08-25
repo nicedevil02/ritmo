@@ -354,7 +354,7 @@ class MvMovementKind {
 
 ---
 
-### - [ ] S1-T2 — `MvKindRepository` (کلید اصلی باز شدن ۴۹ نوع ورزش)
+### - [x] S1-T2 — `MvKindRepository` (کلید اصلی باز شدن ۴۹ نوع ورزش) — 97aa213b
 
 **فایل جدید:** `data/repositories/mv_kind_repository.dart`
 
@@ -1435,7 +1435,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S0-T7 | DONE | a8fccd93 | نمایش MvInsufficientData در تب پیشرفت هنگام خالی بودن مخازن |
 | S0-T8 | DONE | 2b35fa8e | تست جامع Golden Path Phase A و تأیید کامل تست‌های اسپرینت ۰ |
 | S1-T1 | DONE | aa56104b | پیاده‌سازی مدل کامل و ایمیوتبل MvMovementKind و لیست آلیاس‌ها |
-| S1-T2 |  |  |  |
+| S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
 | S1-T3 |  |  |  |
 | S1-T4 |  |  |  |
 | S1-T5 |  |  |  |

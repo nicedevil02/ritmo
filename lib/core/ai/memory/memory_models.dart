@@ -115,6 +115,7 @@ class MemoryOp {
     required this.domain,
     required this.importance,
     required this.sensitive,
+    this.pin = false,
     this.expiresAt,
   });
 
@@ -138,6 +139,7 @@ class MemoryOp {
       domain: json['domain'] as String? ?? 'core',
       importance: json['importance'] as int? ?? 5,
       sensitive: json['sensitive'] == true || json['sensitive'] == 1,
+      pin: json['pin'] == true || json['pin'] == 1,
       expiresAt: exp,
     );
   }
@@ -148,5 +150,6 @@ class MemoryOp {
   final String domain;
   final int importance;
   final bool sensitive;
+  final bool pin;
   final DateTime? expiresAt;
 }

@@ -33,9 +33,13 @@ class MvHubController extends ChangeNotifier {
   // Engines
   final BudgetEngine _budgetEngine;
   final InsightEngine _insightEngine;
+  final LoadEngine _loadEngine;
 
   bool _isLoading = true;
   bool get isLoading => _isLoading;
+
+  MvLoadSnapshot? _loadSnapshot;
+  MvLoadSnapshot? get loadSnapshot => _loadSnapshot;
 
   late MvUserProfile _profile;
   MvUserProfile get profile => _profile;
@@ -89,6 +93,7 @@ class MvHubController extends ChangeNotifier {
     PlanEngine? planEngine,
     BudgetEngine? budgetEngine,
     InsightEngine? insightEngine,
+    LoadEngine? loadEngine,
   }) : _profileRepo = profileRepo ?? MvProfileRepository(),
        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
        _sessionRepo = sessionRepo ?? MvSessionRepository(),
@@ -126,7 +131,8 @@ class MvHubController extends ChangeNotifier {
          planEngine: planEngine,
        ),
        _budgetEngine = budgetEngine ?? const BudgetEngine(),
-       _insightEngine = insightEngine ?? const InsightEngine();
+       _insightEngine = insightEngine ?? const InsightEngine(),
+       _loadEngine = loadEngine ?? const LoadEngine();
 
   /// Loads all required data for the hub.
   Future<void> loadAllData() async {
@@ -220,6 +226,18 @@ class MvHubController extends ChangeNotifier {
     final historySessions = await _sessionRepo.getSessionHistory(limit: 100);
     _continuousActiveWeeks = calculateContinuousWeeks(
       historySessions,
+      referenceDate: today,
+    );
+
+    // Calculate Acute:Chronic Workload Ratio (LoadEngine / S8-T7)
+    final daysOfHistory = _profile.programStartDate != null
+        ? today.difference(MvCalendar.parseDateIso(_profile.programStartDate!)).inDays + 1
+        : (historySessions.isNotEmpty
+            ? today.difference(DateTime.fromMillisecondsSinceEpoch(historySessions.last.startedAt)).inDays + 1
+            : 0);
+    _loadSnapshot = _loadEngine.computeLoadSnapshot(
+      completedSessions: historySessions,
+      daysOfHistory: daysOfHistory,
       referenceDate: today,
     );
 

@@ -204,11 +204,12 @@ class MvProgressTab extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     final load = loadSnapshot;
-    if (load == null || load.ratio == null) {
+    if (load == null || !load.hasEnoughData) {
       return const MvInsufficientData(
+        key: ValueKey('mv_load_insufficient_data'),
         title: 'بار تمرینی و تعادل فشار',
         requirementDescription:
-            'چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.',
+            'حداقل ۱۴ روز سابقه و ۶ جلسه تمرین لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.',
       );
     }
 
@@ -217,9 +218,15 @@ class MvProgressTab extends StatelessWidget {
       badgeColor = colors.warning;
     } else if (load.bandKey == 'mv_load_band_spike') {
       badgeColor = colors.error;
+    } else if (load.bandKey == 'mv_load_band_low') {
+      badgeColor = colors.textSecondary;
     }
 
+    final ratioVal = load.ratio ?? 1.0;
+    final normalizedProgress = (ratioVal / 2.0).clamp(0.0, 1.0);
+
     return Container(
+      key: const ValueKey('mv_training_load_card'),
       padding: EdgeInsets.all(metrics.spaceLg),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -250,6 +257,7 @@ class MvProgressTab extends StatelessWidget {
                 ],
               ),
               Container(
+                key: ValueKey(load.bandKey ?? 'mv_load_band_badge'),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 4,
@@ -291,9 +299,22 @@ class MvProgressTab extends StatelessWidget {
               ),
             ],
           ),
+          SizedBox(height: metrics.spaceMd),
+
+          // Load ratio progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: normalizedProgress,
+              backgroundColor: colors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(badgeColor),
+              minHeight: 8,
+            ),
+          ),
           SizedBox(height: metrics.spaceSm),
           Text(
-            'به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما ${toPersianDigits(load.ratio!.toStringAsFixed(2))} بوده و در محدودهٔ ${load.bandTitleFa} قرار دارد.',
+            'نسبت بار حاد به مزمن: ${toPersianDigits(load.ratio!.toStringAsFixed(2))} · محدودهٔ ${load.bandTitleFa}',
+            key: const ValueKey('mv_load_ratio_text'),
             style: textTheme.bodySmall?.copyWith(
               color: colors.textSecondary,
               height: 1.4,

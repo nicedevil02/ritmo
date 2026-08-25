@@ -249,6 +249,8 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 .where((s) => s.isCompleted)
                 .length,
             totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
+            weeklyBudget: _controller.budgetProgress,
+            loadSnapshot: _controller.loadSnapshot,
             personalRecords: _controller.prs,
             bodyMapDistribution:
                 _controller.bodyMapDistribution ??

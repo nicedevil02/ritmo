@@ -541,7 +541,7 @@ CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(dayOfWeekSat
 
 ---
 
-### - [ ] S2-T2 — مدل `MvCommitment`
+### - [x] S2-T2 — مدل `MvCommitment` — bf5a3ee2
 
 **فایل جدید:** `domain/models/mv_commitment.dart`
 
@@ -1444,7 +1444,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T8 | DONE | cd539920 | افزودن تب انواع ورزش به کتابخانه و شیت ساخت ورزش سفارشی جدید |
 | S1-T9 | DONE | 975f32dc | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
 | S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
-| S2-T2 |  |  |  |
+| S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
 | S2-T3 |  |  |  |
 | S2-T4 |  |  |  |
 | S2-T5 |  |  |  |

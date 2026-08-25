@@ -507,7 +507,7 @@ class MvKindRepository {
 
 **هدف اسپرینت:** کاربری که پنجشنبه‌ها ساعت ۲۱ فوتسال دارد، این را **یک بار** به اپ بگوید و اپ تا ابد حولش برنامه بچیند.
 
-### - [ ] S2-T1 — مایگریشن جدول `mv_commitments`
+### - [x] S2-T1 — مایگریشن جدول `mv_commitments` — 3a053ac2
 
 **فایل‌ها:** `lib/core/database/schema/tables/supplementary_sports_tables.dart`، مایگریشن جدید `MigrationV<N>MvCommitments`
 
@@ -1443,7 +1443,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T7 | DONE | a57aab8d | اتصال شیت برنامه روز به انتخابگر ورزش با ۷ فیلد و شرط مکان و تمرکز عضلانی |
 | S1-T8 | DONE | cd539920 | افزودن تب انواع ورزش به کتابخانه و شیت ساخت ورزش سفارشی جدید |
 | S1-T9 | DONE | 975f32dc | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
-| S2-T1 |  |  |  |
+| S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
 | S2-T2 |  |  |  |
 | S2-T3 |  |  |  |
 | S2-T4 |  |  |  |

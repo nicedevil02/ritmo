@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -144,162 +146,316 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final weekDays = PlanningWeek.dayKeysOfWeekContaining(DateTime.now());
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
+    final content = Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          decoration: BoxDecoration(
-            color: colors.bg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: colors.textSecondary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
+                      color: colors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.add_task_rounded, color: colors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'افزودن تعهد جدید',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'تعهدی را برای امروز، این هفته یا این ماه ثبت کنید',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ],
+              ),
 
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
+              const SizedBox(height: 20),
+
+              // 1. Horizon Picker
+              CupertinoSlidingSegmentedControl<PlanningHorizon>(
+                groupValue: _horizon,
+                thumbColor: colors.primary,
+                backgroundColor: isGlass
+                    ? colors.surfaceSunken.withValues(alpha: 0.5)
+                    : colors.card,
+                children: {
+                  PlanningHorizon.day: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'امروز',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: _horizon == PlanningHorizon.day ? FontWeight.bold : FontWeight.normal,
+                        color: _horizon == PlanningHorizon.day ? Colors.white : colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  PlanningHorizon.week: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'این هفته',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: _horizon == PlanningHorizon.week ? FontWeight.bold : FontWeight.normal,
+                        color: _horizon == PlanningHorizon.week ? Colors.white : colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  PlanningHorizon.month: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      'این ماه',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: _horizon == PlanningHorizon.month ? FontWeight.bold : FontWeight.normal,
+                        color: _horizon == PlanningHorizon.month ? Colors.white : colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                },
+                onValueChanged: (val) {
+                  if (val != null) setState(() => _horizon = val);
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // 2. Title Field
+              TextField(
+                controller: _titleController,
+                autofocus: true,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'عنوان تعهد یا کار',
+                  labelStyle: TextStyle(
+                    fontSize: 13,
+                    color: colors.textSecondary,
+                  ),
+                  hintText: 'مثلاً: مطالعه ۳۰ صفحه کتاب، پیاده‌سازی فرم لاگین...',
+                  hintStyle: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary.withValues(alpha: 0.5),
+                  ),
+                  filled: true,
+                  fillColor: isGlass
+                      ? colors.surfaceSunken.withValues(alpha: 0.4)
+                      : colors.card,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: colors.primary),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 3. Duration Selector
+              Text(
+                'مدت زمان تخمینی:',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [15, 30, 45, 60, 90, 120].map((mins) {
+                  final isSel = _effortMinutes == mins;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () => setState(() => _effortMinutes = mins),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: isSel
+                            ? colors.primary
+                            : (isGlass ? colors.surfaceSunken.withValues(alpha: 0.5) : colors.card),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSel ? colors.primary : colors.border.withValues(alpha: 0.3),
+                        ),
                       ),
-                      child: Icon(Icons.add_task_rounded, color: colors.primary, size: 22),
+                      child: Text(
+                        '${PersianDigits.toPersian(mins.toString())} دقیقه',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          color: isSel ? Colors.white : colors.textPrimary,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'افزودن تعهد جدید',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 4. Importance & Work Kind Row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'اولویت:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: isGlass
+                                ? colors.surfaceSunken.withValues(alpha: 0.5)
+                                : colors.card,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: colors.border.withValues(alpha: 0.2)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<CommitmentImportance>(
+                              value: _importance,
+                              isExpanded: true,
+                              dropdownColor: colors.surfaceElevated,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: CommitmentImportance.must,
+                                  child: Text('ضروری (Must)', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: CommitmentImportance.should,
+                                  child: Text('مهم (Should)', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: CommitmentImportance.could,
+                                  child: Text('در صورت امکان (Could)', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _importance = val);
+                              },
                             ),
                           ),
-                          Text(
-                            'تعهدی را برای امروز، این هفته یا این ماه ثبت کنید',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colors.textSecondary,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'نوع کار:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: isGlass
+                                ? colors.surfaceSunken.withValues(alpha: 0.5)
+                                : colors.card,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: colors.border.withValues(alpha: 0.2)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<WorkKind>(
+                              value: _workKind,
+                              isExpanded: true,
+                              dropdownColor: colors.surfaceElevated,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: WorkKind.deep,
+                                  child: Text('کار عمیق (Deep)', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: WorkKind.light,
+                                  child: Text('کار سبک (Light)', style: TextStyle(fontSize: 12)),
+                                ),
+                                DropdownMenuItem(
+                                  value: WorkKind.admin,
+                                  child: Text('اداری (Admin)', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _workKind = val);
+                              },
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // 1. Horizon Picker
-                CupertinoSlidingSegmentedControl<PlanningHorizon>(
-                  groupValue: _horizon,
-                  thumbColor: colors.primary,
-                  backgroundColor: colors.card,
-                  children: {
-                    PlanningHorizon.day: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        'امروز',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: _horizon == PlanningHorizon.day ? FontWeight.bold : FontWeight.normal,
-                          color: _horizon == PlanningHorizon.day ? Colors.white : colors.textPrimary,
                         ),
-                      ),
-                    ),
-                    PlanningHorizon.week: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        'این هفته',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: _horizon == PlanningHorizon.week ? FontWeight.bold : FontWeight.normal,
-                          color: _horizon == PlanningHorizon.week ? Colors.white : colors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    PlanningHorizon.month: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text(
-                        'این ماه',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: _horizon == PlanningHorizon.month ? FontWeight.bold : FontWeight.normal,
-                          color: _horizon == PlanningHorizon.month ? Colors.white : colors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  },
-                  onValueChanged: (val) {
-                    if (val != null) setState(() => _horizon = val);
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                // 2. Title Field
-                TextField(
-                  controller: _titleController,
-                  autofocus: true,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: colors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'عنوان تعهد یا کار',
-                    labelStyle: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
-                    hintText: 'مثلاً: مطالعه ۳۰ صفحه کتاب، پیاده‌سازی فرم لاگین...',
-                    hintStyle: TextStyle(
-                      fontSize: 12,
-                      color: colors.textSecondary.withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: colors.card,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colors.border.withValues(alpha: 0.3)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: colors.primary),
+                      ],
                     ),
                   ),
-                ),
+                ],
+              ),
 
+              if (_horizon == PlanningHorizon.week) ...[
                 const SizedBox(height: 16),
-
-                // 3. Duration Selector
                 Text(
-                  'مدت زمان تخمینی:',
+                  'تخصیص به روز مشخص:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -308,203 +464,118 @@ class _CreateCommitmentSheetState extends State<CreateCommitmentSheet> {
                 ),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [15, 30, 45, 60, 90, 120].map((mins) {
-                    final isSel = _effortMinutes == mins;
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: weekDays.map((dk) {
+                    final isSel = _selectedDayKey == dk;
                     return InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () => setState(() => _effortMinutes = mins),
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => setState(() => _selectedDayKey = dk),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSel ? colors.primary : colors.card,
-                          borderRadius: BorderRadius.circular(10),
+                          color: isSel
+                              ? colors.primary.withValues(alpha: 0.2)
+                              : (isGlass ? colors.surfaceSunken.withValues(alpha: 0.5) : colors.card),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSel ? colors.primary : colors.border.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
-                          '${PersianDigits.toPersian(mins.toString())} دقیقه',
+                          _getDayNameShort(dk),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                            color: isSel ? Colors.white : colors.textPrimary,
+                            color: isSel ? colors.primary : colors.textPrimary,
                           ),
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-
-                const SizedBox(height: 16),
-
-                // 4. Importance & Work Kind Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'اولویت:',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: colors.card,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<CommitmentImportance>(
-                                value: _importance,
-                                isExpanded: true,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: CommitmentImportance.must,
-                                    child: Text('ضروری (Must)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: CommitmentImportance.should,
-                                    child: Text('مهم (Should)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: CommitmentImportance.could,
-                                    child: Text('در صورت امکان (Could)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _importance = val);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'نوع کار:',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: colors.card,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<WorkKind>(
-                                value: _workKind,
-                                isExpanded: true,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: WorkKind.deep,
-                                    child: Text('کار عمیق (Deep)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: WorkKind.light,
-                                    child: Text('کار سبک (Light)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: WorkKind.admin,
-                                    child: Text('اداری (Admin)', style: TextStyle(fontSize: 12)),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  if (val != null) setState(() => _workKind = val);
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (_horizon == PlanningHorizon.week) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'تخصیص به روز مشخص:',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: weekDays.map((dk) {
-                      final isSel = _selectedDayKey == dk;
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () => setState(() => _selectedDayKey = dk),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSel ? colors.primary.withValues(alpha: 0.2) : colors.card,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSel ? colors.primary : colors.border.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            _getDayNameShort(dk),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                              color: isSel ? colors.primary : colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-
-                const SizedBox(height: 24),
-
-                // Submit Button
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: _isSaving ? null : _saveCommitment,
-                  child: _isSaving
-                      ? const CupertinoActivityIndicator(color: Colors.white)
-                      : const Text(
-                          'ثبت تعهد',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
               ],
+
+              const SizedBox(height: 24),
+
+              // Submit Button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: _isSaving ? null : _saveCommitment,
+                child: _isSaving
+                    ? const CupertinoActivityIndicator(color: Colors.white)
+                    : const Text(
+                        'ثبت تعهد',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final sheetBody = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        type: MaterialType.transparency,
+        child: content,
+      ),
+    );
+
+    if (!isGlass) {
+      return Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: sheetRadius,
+          border: Border.all(
+            color: isDark ? colors.border : colors.divider,
+            width: 1.0,
+          ),
+        ),
+        child: sheetBody,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: sheetRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.glassTint,
+            borderRadius: sheetRadius,
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : Colors.white.withValues(alpha: 0.70),
+              width: 1.0,
             ),
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: sheetRadius,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                  Colors.white.withValues(alpha: 0.0),
+                ],
+                stops: const [0.0, 0.45],
+              ),
+            ),
+            child: sheetBody,
           ),
         ),
       ),

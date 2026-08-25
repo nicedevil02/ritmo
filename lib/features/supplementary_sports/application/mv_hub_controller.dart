@@ -16,6 +16,7 @@ class MvHubController extends ChangeNotifier {
   final MvSessionRepository _sessionRepo;
   final MvExerciseRepository _exerciseRepo;
   final MvPrRepository _prRepo;
+  final MvCommitmentRepository _commitmentRepo;
 
   // Use Cases
   final MvStartSessionUseCase startSessionUseCase;
@@ -37,6 +38,12 @@ class MvHubController extends ChangeNotifier {
 
   List<MvSlot> _weekSlots = [];
   List<MvSlot> get weekSlots => _weekSlots;
+
+  List<MvCommitment> _commitments = const [];
+  List<MvCommitment> get commitments => _commitments;
+
+  int _cycleWeek = 1;
+  int get cycleWeek => _cycleWeek;
 
   List<MvExercise> _allExercises = [];
   List<MvExercise> get allExercises => _allExercises;
@@ -68,6 +75,7 @@ class MvHubController extends ChangeNotifier {
     MvSessionRepository? sessionRepo,
     MvExerciseRepository? exerciseRepo,
     MvPrRepository? prRepo,
+    MvCommitmentRepository? commitmentRepo,
     MvDailyCheckinRepository? checkinRepo,
     SelectionEngine? selectionEngine,
     ProgressionEngine? progressionEngine,
@@ -81,6 +89,7 @@ class MvHubController extends ChangeNotifier {
        _sessionRepo = sessionRepo ?? MvSessionRepository(),
        _exerciseRepo = exerciseRepo ?? MvExerciseRepository(),
        _prRepo = prRepo ?? MvPrRepository(),
+       _commitmentRepo = commitmentRepo ?? MvCommitmentRepositoryImpl(),
        startSessionUseCase = MvStartSessionUseCase(
          sessionRepo: sessionRepo,
          exerciseRepo: exerciseRepo,
@@ -106,6 +115,7 @@ class MvHubController extends ChangeNotifier {
        ),
        weekRegenUseCase = MvWeekRegenUseCase(
          prescriptionRepo: prescriptionRepo,
+         commitmentRepo: commitmentRepo,
          planEngine: planEngine,
        ),
        _budgetEngine = budgetEngine ?? const BudgetEngine(),
@@ -128,6 +138,19 @@ class MvHubController extends ChangeNotifier {
     final weekStartSat = MvCalendar.getWeekDays(today).first;
     final weekStartIso = MvCalendar.formatDateIso(weekStartSat);
 
+    // Fetch commitments
+    _commitments = await _commitmentRepo.getActive();
+
+    // Compute cycleWeek
+    final startDate = _profile.programStartDate != null
+        ? MvCalendar.parseDateIso(_profile.programStartDate!)
+        : weekStartSat;
+    _cycleWeek = MvCalendar.cycleWeekFor(
+      targetDate: weekStartSat,
+      programStartDate: startDate,
+      totalWeeks: _profile.deloadEveryNWeeks > 0 ? _profile.deloadEveryNWeeks : 4,
+    );
+
     // Fetch exercises, PRs, active session
     _allExercises = await _exerciseRepo.getAllExercises();
     _prs = await _prRepo.getAllPrs();
@@ -139,6 +162,7 @@ class MvHubController extends ChangeNotifier {
       _weekSlots = await weekRegenUseCase.execute(
         profile: _profile,
         weekSaturday: weekStartSat,
+        commitments: _commitments,
       );
     }
 
@@ -293,12 +317,27 @@ class MvHubController extends ChangeNotifier {
     await loadAllData();
   }
 
+  Future<void> saveCommitment(MvCommitment c) async {
+    await _commitmentRepo.upsert(c);
+    _commitments = await _commitmentRepo.getActive();
+    await regenerateWeek();
+    await loadAllData();
+  }
+
+  Future<void> deleteCommitment(int id) async {
+    await _commitmentRepo.delete(id);
+    _commitments = await _commitmentRepo.getActive();
+    await regenerateWeek();
+    await loadAllData();
+  }
+
   Future<void> regenerateWeek() async {
     final weekStartSat = MvCalendar.getWeekDays(DateTime.now()).first;
     _weekSlots = await weekRegenUseCase.execute(
       profile: _profile,
       weekSaturday: weekStartSat,
       existingSlots: _weekSlots,
+      commitments: _commitments,
     );
     notifyListeners();
   }

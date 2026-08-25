@@ -283,7 +283,10 @@ enum DoseUnit {
   CAPSULE,
   CC;
 
-  static DoseUnit fromString(String? value, {DoseUnit fallback = DoseUnit.TABLET}) {
+  static DoseUnit fromString(
+    String? value, {
+    DoseUnit fallback = DoseUnit.TABLET,
+  }) {
     if (value == null || value.isEmpty) return fallback;
     final upper = value.trim().toUpperCase();
     for (final unit in DoseUnit.values) {
@@ -484,7 +487,10 @@ class MedicationProfile {
   final String? lastInjectionSite;
   final bool needsSiteRotation;
 
-  bool get hasStockTracking => packageSize != null && packageSize! > 0;
+  bool get hasStockTracking =>
+      (packageSize != null && packageSize! > 0) ||
+      (remainingAmount != null && remainingAmount! > 0) ||
+      (refillThresholdAmount != null && refillThresholdAmount! > 0);
   bool get isLowStock =>
       hasStockTracking &&
       remainingAmount != null &&
@@ -492,6 +498,8 @@ class MedicationProfile {
       remainingAmount! <= refillThresholdAmount!;
   bool get isOutOfStock =>
       hasStockTracking && remainingAmount != null && remainingAmount! <= 0;
+
+  static const Object _sentinel = Object();
 
   Map<String, dynamic> toMap() {
     return {
@@ -551,66 +559,94 @@ class MedicationProfile {
       durationDays: map['durationDays'] as int?,
       prescriberName: map['prescriberName'] as String?,
       instructions: map['instructions'] as String?,
-      criticality: MedicationCriticality.fromString(map['criticality'] as String?),
+      criticality: MedicationCriticality.fromString(
+        map['criticality'] as String?,
+      ),
       packageSize: (map['packageSize'] as num?)?.toDouble(),
       packageUnit: map['packageUnit'] as String?,
       remainingAmount: (map['remainingAmount'] as num?)?.toDouble(),
-      refillThresholdAmount:
-          (map['refillThresholdAmount'] as num?)?.toDouble(),
+      refillThresholdAmount: (map['refillThresholdAmount'] as num?)?.toDouble(),
       injectionSites: parsedSites,
       lastInjectionSite: map['lastInjectionSite'] as String?,
-      needsSiteRotation: map['needsSiteRotation'] == 1 ||
-          map['needsSiteRotation'] == true,
+      needsSiteRotation:
+          map['needsSiteRotation'] == 1 || map['needsSiteRotation'] == true,
     );
   }
 
   MedicationProfile copyWith({
     String? routineId,
     MedicationForm? form,
-    MedicationRoute? route,
-    double? doseAmount,
-    DoseUnit? doseUnit,
-    String? strength,
-    String? activeIngredient,
+    Object? route = _sentinel,
+    Object? doseAmount = _sentinel,
+    Object? doseUnit = _sentinel,
+    Object? strength = _sentinel,
+    Object? activeIngredient = _sentinel,
     FoodRelation? foodRelation,
-    int? startDate,
-    int? endDate,
+    Object? startDate = _sentinel,
+    Object? endDate = _sentinel,
     bool? isChronic,
-    int? durationDays,
-    String? prescriberName,
-    String? instructions,
+    Object? durationDays = _sentinel,
+    Object? prescriberName = _sentinel,
+    Object? instructions = _sentinel,
     MedicationCriticality? criticality,
-    double? packageSize,
-    String? packageUnit,
-    double? remainingAmount,
-    double? refillThresholdAmount,
+    Object? packageSize = _sentinel,
+    Object? packageUnit = _sentinel,
+    Object? remainingAmount = _sentinel,
+    Object? refillThresholdAmount = _sentinel,
     List<String>? injectionSites,
-    String? lastInjectionSite,
+    Object? lastInjectionSite = _sentinel,
     bool? needsSiteRotation,
   }) {
     return MedicationProfile(
       routineId: routineId ?? this.routineId,
       form: form ?? this.form,
-      route: route ?? this.route,
-      doseAmount: doseAmount ?? this.doseAmount,
-      doseUnit: doseUnit ?? this.doseUnit,
-      strength: strength ?? this.strength,
-      activeIngredient: activeIngredient ?? this.activeIngredient,
+      route: identical(route, _sentinel)
+          ? this.route
+          : (route as MedicationRoute?),
+      doseAmount: identical(doseAmount, _sentinel)
+          ? this.doseAmount
+          : (doseAmount as double?),
+      doseUnit: identical(doseUnit, _sentinel)
+          ? this.doseUnit
+          : (doseUnit as DoseUnit?),
+      strength: identical(strength, _sentinel)
+          ? this.strength
+          : (strength as String?),
+      activeIngredient: identical(activeIngredient, _sentinel)
+          ? this.activeIngredient
+          : (activeIngredient as String?),
       foodRelation: foodRelation ?? this.foodRelation,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      startDate: identical(startDate, _sentinel)
+          ? this.startDate
+          : (startDate as int?),
+      endDate: identical(endDate, _sentinel) ? this.endDate : (endDate as int?),
       isChronic: isChronic ?? this.isChronic,
-      durationDays: durationDays ?? this.durationDays,
-      prescriberName: prescriberName ?? this.prescriberName,
-      instructions: instructions ?? this.instructions,
+      durationDays: identical(durationDays, _sentinel)
+          ? this.durationDays
+          : (durationDays as int?),
+      prescriberName: identical(prescriberName, _sentinel)
+          ? this.prescriberName
+          : (prescriberName as String?),
+      instructions: identical(instructions, _sentinel)
+          ? this.instructions
+          : (instructions as String?),
       criticality: criticality ?? this.criticality,
-      packageSize: packageSize ?? this.packageSize,
-      packageUnit: packageUnit ?? this.packageUnit,
-      remainingAmount: remainingAmount ?? this.remainingAmount,
-      refillThresholdAmount:
-          refillThresholdAmount ?? this.refillThresholdAmount,
+      packageSize: identical(packageSize, _sentinel)
+          ? this.packageSize
+          : (packageSize as double?),
+      packageUnit: identical(packageUnit, _sentinel)
+          ? this.packageUnit
+          : (packageUnit as String?),
+      remainingAmount: identical(remainingAmount, _sentinel)
+          ? this.remainingAmount
+          : (remainingAmount as double?),
+      refillThresholdAmount: identical(refillThresholdAmount, _sentinel)
+          ? this.refillThresholdAmount
+          : (refillThresholdAmount as double?),
       injectionSites: injectionSites ?? this.injectionSites,
-      lastInjectionSite: lastInjectionSite ?? this.lastInjectionSite,
+      lastInjectionSite: identical(lastInjectionSite, _sentinel)
+          ? this.lastInjectionSite
+          : (lastInjectionSite as String?),
       needsSiteRotation: needsSiteRotation ?? this.needsSiteRotation,
     );
   }
@@ -662,7 +698,7 @@ class Medication {
   final Map<String, dynamic>? scheduleMap;
 
   bool get isPrn => routineType == 'asNeeded';
-  bool get isPRN => routineType == 'asNeeded';
+  bool get isPRN => isPrn;
 
   /// نمایش مقدار و واحد دوز
   String get displayDose {
@@ -721,8 +757,8 @@ class Medication {
             instructions: routine['description'] as String?,
             isChronic: true,
             remainingAmount: (routine['medStockCount'] as num?)?.toDouble(),
-            refillThresholdAmount:
-                (routine['medRefillThreshold'] as num?)?.toDouble(),
+            refillThresholdAmount: (routine['medRefillThreshold'] as num?)
+                ?.toDouble(),
             startDate: routine['createdAt'] as int?,
           );
 
@@ -732,12 +768,15 @@ class Medication {
       description: routine['description'] as String?,
       category: routine['category'] as String? ?? 'medical',
       routineType: routine['routineType'] as String? ?? 'timeBased',
-      isEssential: routine['isEssential'] == 1 || routine['isEssential'] == true,
+      isEssential:
+          routine['isEssential'] == 1 || routine['isEssential'] == true,
       isArchived: routine['isArchived'] == 1 || routine['isArchived'] == true,
       minIntervalHours: (routine['minIntervalHours'] as num?)?.toInt() ?? 0,
       maxDosesPerDay: (routine['maxDosesPerDay'] as num?)?.toInt() ?? 0,
-      createdAt: routine['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: routine['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          routine['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          routine['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       profile: profile,
       scheduleMap: scheduleMap,
     );

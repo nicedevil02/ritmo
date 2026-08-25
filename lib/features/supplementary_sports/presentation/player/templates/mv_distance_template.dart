@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -23,30 +24,34 @@ class MvDistanceTemplate extends StatefulWidget {
 }
 
 class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
-  int _seconds = 0;
+  late int _seconds;
+  late double _distanceKm;
+  int _rpe = 7;
   bool _isPaused = false;
   Timer? _timer;
-  double _distanceKm = 3.0; // in km
-  int _rpe = 7;
 
   @override
   void initState() {
     super.initState();
+    _seconds = widget.session.elapsedSeconds;
+    _distanceKm = (widget.session.distanceMeters ?? 3000.0) / 1000.0;
     _startTimer();
-  }
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!_isPaused && mounted) {
-        setState(() => _seconds++);
-      }
-    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!_isPaused && mounted) {
+        setState(() {
+          _seconds++;
+        });
+      }
+    });
   }
 
   String _formatDuration(int totalSec) {
@@ -57,19 +62,23 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(metrics.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 widget.kind?.titleFa ?? 'جلسه مسافتی',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: metrics.spaceMd),
               // Distance hero display
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -78,34 +87,32 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                 children: [
                   Text(
                     toPersianDigits(_distanceKm.toStringAsFixed(2)),
-                    style: const TextStyle(
-                      fontSize: 56,
+                    style: textTheme.displayLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: metrics.spaceSm),
+                  Text(
                     'کیلومتر',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: textTheme.titleMedium?.copyWith(color: colors.textSecondary),
                   ),
                 ],
               ),
               // Stopwatch
               Text(
                 toPersianDigits(_formatDuration(_seconds)),
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: Colors.grey,
+                style: textTheme.headlineMedium?.copyWith(
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceLg),
               // Distance adjuster (+ / -)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton.outlined(
-                    icon: const Icon(Icons.remove),
+                    icon: Icon(Icons.remove, size: metrics.iconMd),
                     onPressed: () {
                       if (_distanceKm > 0.5) {
                         RitmoHaptics.tap();
@@ -113,14 +120,14 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                       }
                     },
                   ),
-                  const SizedBox(width: 16),
-                  const Text(
+                  SizedBox(width: metrics.spaceLg),
+                  Text(
                     'تنظیم مسافت',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: metrics.spaceLg),
                   IconButton.outlined(
-                    icon: const Icon(Icons.add),
+                    icon: Icon(Icons.add, size: metrics.iconMd),
                     onPressed: () {
                       RitmoHaptics.tap();
                       setState(() => _distanceKm = (_distanceKm + 0.5));
@@ -128,9 +135,9 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -139,13 +146,13 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                 label: _rpe.toString(),
                 onChanged: (val) => setState(() => _rpe = val.round()),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: metrics.spaceXl),
               // Controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton.filledTonal(
-                    iconSize: 36,
+                    iconSize: metrics.iconXl,
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
@@ -154,15 +161,15 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                       setState(() => _isPaused = !_isPaused);
                     },
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceXl,
+                        vertical: metrics.spaceMd,
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_rounded),
+                    icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
                     label: const Text('پایان جلسه'),
                     onPressed: () {
                       RitmoHaptics.success();

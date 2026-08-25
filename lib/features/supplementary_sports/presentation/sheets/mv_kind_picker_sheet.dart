@@ -426,7 +426,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                               children: [
                                 Text(
                                   kind.emoji,
-                                  style: const TextStyle(fontSize: 28),
+                                  style: textTheme.headlineMedium,
                                 ),
                                 SizedBox(width: metrics.spaceMd),
                                 Expanded(

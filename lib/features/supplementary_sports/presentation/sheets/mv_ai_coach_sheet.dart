@@ -121,7 +121,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.auto_awesome_rounded, color: colors.primary, size: 14),
+              Icon(Icons.auto_awesome_rounded, color: colors.primary, size: metrics.iconSm),
               SizedBox(width: metrics.spaceXs),
               Text(
                 'AI Coach',

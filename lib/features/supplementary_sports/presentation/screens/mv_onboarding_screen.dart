@@ -440,7 +440,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                               children: [
                                 Icon(
                                   Icons.lock_rounded,
-                                  size: 18,
+                                  size: metrics.iconSm,
                                   color: colors.accent,
                                 ),
                                 SizedBox(width: metrics.spaceSm),
@@ -454,9 +454,9 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.close_rounded,
-                                    size: 18,
+                                    size: metrics.iconSm,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -473,7 +473,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                             key: const ValueKey(
                               'onboarding_add_another_anchor_btn',
                             ),
-                            icon: const Icon(Icons.add_rounded, size: 18),
+                            icon: Icon(Icons.add_rounded, size: metrics.iconSm),
                             label: const Text('افزودن ورزش ثابت دیگر'),
                             onPressed: _openAddAnchorFlow,
                           ),
@@ -546,7 +546,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 16)),
+              Text(emoji, style: textTheme.bodyLarge),
               SizedBox(width: metrics.spaceSm),
               Flexible(
                 child: Text(

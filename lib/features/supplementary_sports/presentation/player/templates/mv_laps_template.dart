@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -22,7 +23,7 @@ class MvLapsTemplate extends StatefulWidget {
 }
 
 class _MvLapsTemplateState extends State<MvLapsTemplate> {
-  int _seconds = 0;
+  late int _seconds;
   bool _isPaused = false;
   Timer? _timer;
   int _laps = 0;
@@ -31,6 +32,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
   @override
   void initState() {
     super.initState();
+    _seconds = widget.session.elapsedSeconds;
     _startTimer();
   }
 
@@ -56,55 +58,61 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(metrics.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 widget.kind?.titleFa ?? 'جلسه دورمحور',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: metrics.spaceSm),
               // Laps display
               Text(
                 toPersianDigits(_laps.toString()),
-                style: const TextStyle(fontSize: 72, fontWeight: FontWeight.w900),
+                style: textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
-              const Text(
+              Text(
                 'دور ثبت‌شده',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: textTheme.titleMedium?.copyWith(color: colors.textSecondary),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: metrics.spaceXs),
               // Stopwatch
               Text(
                 toPersianDigits(_formatDuration(_seconds)),
-                style: const TextStyle(
-                  fontSize: 22,
-                  color: Colors.grey,
+                style: textTheme.headlineSmall?.copyWith(
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceLg),
               // Big +1 Lap button
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: metrics.rowHeight,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(metrics.radiusCard),
                     ),
                   ),
-                  icon: const Icon(Icons.add_rounded, size: 28),
-                  label: const Text(
+                  icon: Icon(Icons.add_rounded, size: metrics.iconLg),
+                  label: Text(
                     '+۱ دور ثبت شد',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colors.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () {
                     RitmoHaptics.confirm();
@@ -112,9 +120,9 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -123,13 +131,13 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                 label: _rpe.toString(),
                 onChanged: (val) => setState(() => _rpe = val.round()),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceLg),
               // Controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton.filledTonal(
-                    iconSize: 36,
+                    iconSize: metrics.iconXl,
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
@@ -138,15 +146,15 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                       setState(() => _isPaused = !_isPaused);
                     },
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceXl,
+                        vertical: metrics.spaceMd,
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_rounded),
+                    icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
                     label: const Text('پایان جلسه'),
                     onPressed: () {
                       RitmoHaptics.success();

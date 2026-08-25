@@ -107,7 +107,7 @@ class MvTodayTab extends StatelessWidget {
                         l10n != null && tomorrowSlot.plannedTime != null
                             ? l10n.mv_tomorrow_anchor_notice(
                                 tomorrowSlot.headlineFa,
-                                toPersianDigits(tomorrowSlot.plannedTime!),
+                                toPersianDigits(tomorrowSlot.plannedTime),
                               )
                             : 'یادآوری: فردا ${tomorrowSlot.headlineFa}${tomorrowSlot.plannedTime != null ? ' (ساعت ${toPersianDigits(tomorrowSlot.plannedTime)})' : ''}',
                         style: textTheme.bodySmall?.copyWith(

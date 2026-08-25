@@ -245,7 +245,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                         : k['code']!,
                     icon: Text(
                       k['emoji'] ?? '🏃',
-                      style: const TextStyle(fontSize: 14),
+                      style: textTheme.bodyMedium,
                     ),
                     isSelected: isSel,
                     onTap: () => setState(() => _selectedKind = k['code']!),
@@ -255,7 +255,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                 MvChip(
                   key: const ValueKey('quick_log_more_kinds'),
                   label: l10n.mv_quick_log_more,
-                  icon: const Icon(Icons.apps_rounded, size: 16),
+                  icon: Icon(Icons.apps_rounded, size: metrics.iconSm),
                   isSelected: false,
                   onTap: _openKindPicker,
                 ),
@@ -365,7 +365,7 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
             ),
             child: Column(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 20)),
+                Text(emoji, style: textTheme.headlineSmall),
                 SizedBox(height: metrics.spaceXs),
                 Text(
                   label,
@@ -374,7 +374,6 @@ class _MvQuickLogSheetState extends State<MvQuickLogSheet> {
                     fontWeight: isSelected
                         ? FontWeight.w700
                         : FontWeight.normal,
-                    fontSize: 10,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/screens/mv_progress_tab.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 void main() {
   group('S5-T4 MvProgressTab Dual Currency & Phrasing Tests', () {
@@ -11,6 +12,9 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('fa'),
             home: Scaffold(
               body: MvProgressTab(
                 continuousActiveWeeks: null,
@@ -99,7 +103,8 @@ void main() {
           chronicWeeklyLoad: 1000.0,
           ratio: 1.20,
           bandKey: 'mv_load_band_optimal',
-          bandTitleFa: 'مطلوب و سازنده',
+          daysOfHistory: 42,
+          completedSessions: 24,
         );
 
         const campaign = MvCampaign(
@@ -132,6 +137,9 @@ void main() {
 
         await tester.pumpWidget(
           const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('fa'),
             home: Scaffold(
               body: MvProgressTab(
                 continuousActiveWeeks: 6,

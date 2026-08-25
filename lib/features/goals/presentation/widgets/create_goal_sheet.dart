@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -531,6 +532,10 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    const sheetRadius = BorderRadius.vertical(top: Radius.circular(28));
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return DraggableScrollableSheet(
@@ -540,67 +545,118 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
       snap: true,
       snapSizes: const [0.85, 1.0],
       builder: (context, scrollController) {
-        return RitmoTheme.glassCardLight(
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Column(
-              children: [
-                // Drag handle
-                Container(
-                  margin: const EdgeInsets.only(top: 12, bottom: 8),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+        final content = Column(
+          children: [
+            // Drag handle
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
 
-                // Wizard Progress Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: Row(
+            // Wizard Progress Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  _buildStepIndicator(0, 'چی؟', colors),
+                  _buildStepConnector(colors),
+                  _buildStepIndicator(1, 'کی؟', colors),
+                  _buildStepConnector(colors),
+                  _buildStepIndicator(2, 'چطور؟', colors),
+                ],
+              ),
+            ),
+
+            // Live Preview Card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: _buildLivePreviewCard(colors),
+            ),
+
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 10,
+                  bottom: bottomInset + 20,
+                ),
+                children: [
+                  IndexedStack(
+                    index: _currentStep,
                     children: [
-                      _buildStepIndicator(0, 'چی؟', colors),
-                      _buildStepConnector(colors),
-                      _buildStepIndicator(1, 'کی؟', colors),
-                      _buildStepConnector(colors),
-                      _buildStepIndicator(2, 'چطور؟', colors),
+                      _buildStep1What(colors),
+                      _buildStep2When(colors),
+                      _buildStep3How(colors),
                     ],
                   ),
-                ),
+                ],
+              ),
+            ),
 
-                // Live Preview Card
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  child: _buildLivePreviewCard(colors),
-                ),
+            // Wizard Bottom Navigation Actions
+            _buildWizardFooter(colors),
+          ],
+        );
 
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: EdgeInsets.only(
-                      left: 20,
-                      right: 20,
-                      top: 10,
-                      bottom: bottomInset + 20,
-                    ),
-                    children: [
-                      IndexedStack(
-                        index: _currentStep,
-                        children: [
-                          _buildStep1What(colors),
-                          _buildStep2When(colors),
-                          _buildStep3How(colors),
-                        ],
-                      ),
+        final sheetBody = Directionality(
+          textDirection: TextDirection.rtl,
+          child: Material(
+            type: MaterialType.transparency,
+            child: content,
+          ),
+        );
+
+        if (!isGlass) {
+          return Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceElevated,
+              borderRadius: sheetRadius,
+              border: Border.all(
+                color: isDark ? colors.border : colors.divider,
+                width: 1.0,
+              ),
+            ),
+            child: sheetBody,
+          );
+        }
+
+        return ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colors.glassTint,
+                borderRadius: sheetRadius,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
+                ),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
+                      Colors.white.withValues(alpha: 0.0),
                     ],
+                    stops: const [0.0, 0.45],
                   ),
                 ),
-
-                // Wizard Bottom Navigation Actions
-                _buildWizardFooter(colors),
-              ],
+                child: sheetBody,
+              ),
             ),
           ),
         );

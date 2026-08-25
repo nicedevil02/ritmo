@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -30,7 +31,7 @@ class MvRouteTemplate extends StatefulWidget {
 }
 
 class _MvRouteTemplateState extends State<MvRouteTemplate> {
-  int _seconds = 0;
+  late int _seconds;
   bool _isPaused = false;
   Timer? _timer;
 
@@ -43,6 +44,10 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
   @override
   void initState() {
     super.initState();
+    _seconds = widget.session.elapsedSeconds;
+    _distanceKm = (widget.session.distanceMeters ?? 5000.0) / 1000.0;
+    _elevationGainM = widget.session.elevationGainMeters ?? 400.0;
+    _packWeightKg = widget.session.packWeightKg ?? 4.0;
     _startTimer();
   }
 
@@ -61,190 +66,189 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
   }
 
   String _formatDuration(int totalSec) {
-    final h = totalSec ~/ 3600;
-    final m = (totalSec % 3600) ~/ 60;
+    final m = totalSec ~/ 60;
     final s = totalSec % 60;
-    if (h > 0) {
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(metrics.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 widget.kind?.titleFa ?? 'جلسه مسیر و کوه',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-            const SizedBox(height: 8),
-            // Stopwatch
-            Text(
-              toPersianDigits(_formatDuration(_seconds)),
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
+              SizedBox(height: metrics.spaceSm),
+              // Stopwatch
+              Text(
+                toPersianDigits(_formatDuration(_seconds)),
+                style: textTheme.displayMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            // Metrics grid
-            Row(
-              children: [
-                Expanded(
-                  child: _MetricCard(
-                    title: 'مسافت',
-                    value:
-                        '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ک‌م',
-                    onAdd: () => setState(() => _distanceKm += 0.5),
-                    onSub: () {
-                      if (_distanceKm > 0.5) setState(() => _distanceKm -= 0.5);
+              SizedBox(height: metrics.spaceLg),
+              // Metrics grid
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'مسافت',
+                      value:
+                          '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ک‌م',
+                      onAdd: () => setState(() => _distanceKm += 0.5),
+                      onSub: () {
+                        if (_distanceKm > 0.5) setState(() => _distanceKm -= 0.5);
+                      },
+                    ),
+                  ),
+                  SizedBox(width: metrics.spaceSm),
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'ارتفاع صعود',
+                      value:
+                          '${toPersianDigits(_elevationGainM.toInt().toString())} متر',
+                      onAdd: () => setState(() => _elevationGainM += 50.0),
+                      onSub: () {
+                        if (_elevationGainM > 50) {
+                          setState(() => _elevationGainM -= 50.0);
+                        }
+                      },
+                    ),
+                  ),
+                  SizedBox(width: metrics.spaceSm),
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'وزن کوله',
+                      value:
+                          '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ک‌گ',
+                      onAdd: () => setState(() => _packWeightKg += 0.5),
+                      onSub: () {
+                        if (_packWeightKg > 0.5) {
+                          setState(() => _packWeightKg -= 0.5);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: metrics.spaceLg),
+              // Route selector
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceMd,
+                        vertical: metrics.spaceSm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(metrics.radiusField),
+                        border: Border.all(color: colors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'مسیر',
+                            style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
+                          ),
+                          DropdownButton<int?>(
+                            value: _selectedRouteId,
+                            isExpanded: true,
+                            underline: const SizedBox.shrink(),
+                            items: const [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text('مسیر آزاد'),
+                              ),
+                              DropdownMenuItem(
+                                value: 1,
+                                child: Text('توچال - شیرپلا'),
+                              ),
+                              DropdownMenuItem(
+                                value: 2,
+                                child: Text('درکه - پلنگ‌چال'),
+                              ),
+                            ],
+                            onChanged: (id) {
+                              setState(() => _selectedRouteId = id);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: metrics.spaceLg),
+              // Effort slider
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Slider(
+                value: _rpe.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                label: _rpe.toString(),
+                onChanged: (val) => setState(() => _rpe = val.round()),
+              ),
+              SizedBox(height: metrics.spaceLg),
+              // Controls
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    iconSize: metrics.iconXl,
+                    icon: Icon(
+                      _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    ),
+                    onPressed: () {
+                      RitmoHaptics.tap();
+                      setState(() => _isPaused = !_isPaused);
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _MetricCard(
-                    title: 'ارتفاع صعود',
-                    value:
-                        '${toPersianDigits(_elevationGainM.round().toString())} م',
-                    onAdd: () => setState(() => _elevationGainM += 50),
-                    onSub: () {
-                      if (_elevationGainM > 50)
-                        setState(() => _elevationGainM -= 50);
+                  SizedBox(width: metrics.spaceXl),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceXl,
+                        vertical: metrics.spaceMd,
+                      ),
+                    ),
+                    icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
+                    label: const Text('پایان جلسه'),
+                    onPressed: () {
+                      RitmoHaptics.success();
+                      widget.onFinish?.call(
+                        elapsedSeconds: _seconds,
+                        distanceM: _distanceKm * 1000.0,
+                        elevationGainM: _elevationGainM,
+                        packWeightKg: _packWeightKg,
+                        rpe1To10: _rpe,
+                        routeId: _selectedRouteId,
+                      );
                     },
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _MetricCard(
-                    title: 'وزن کوله',
-                    value:
-                        '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ک‌گ',
-                    onAdd: () => setState(() => _packWeightKg += 0.5),
-                    onSub: () {
-                      if (_packWeightKg > 0.5)
-                        setState(() => _packWeightKg -= 0.5);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'مسیر',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        DropdownButton<int?>(
-                          value: _selectedRouteId,
-                          isExpanded: true,
-                          underline: const SizedBox.shrink(),
-                          items: const [
-                            DropdownMenuItem(
-                              value: null,
-                              child: Text('مسیر آزاد'),
-                            ),
-                            DropdownMenuItem(
-                              value: 1,
-                              child: Text('توچال - شیرپلا'),
-                            ),
-                            DropdownMenuItem(
-                              value: 2,
-                              child: Text('دربند - اوسون'),
-                            ),
-                            DropdownMenuItem(
-                              value: 3,
-                              child: Text('کلکچال - پناهگاه'),
-                            ),
-                          ],
-                          onChanged: (v) =>
-                              setState(() => _selectedRouteId = v),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Effort slider
-            Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
-            Slider(
-              value: _rpe.toDouble(),
-              min: 1,
-              max: 10,
-              divisions: 9,
-              label: _rpe.toString(),
-              onChanged: (val) => setState(() => _rpe = val.round()),
-            ),
-            const SizedBox(height: 16),
-            // Controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton.filledTonal(
-                  iconSize: 36,
-                  icon: Icon(
-                    _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                  ),
-                  onPressed: () {
-                    RitmoHaptics.tap();
-                    setState(() => _isPaused = !_isPaused);
-                  },
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                  ),
-                  icon: const Icon(Icons.check_circle_rounded),
-                  label: const Text('پایان جلسه'),
-                  onPressed: () {
-                    RitmoHaptics.success();
-                    widget.onFinish?.call(
-                      elapsedSeconds: _seconds,
-                      distanceM: _distanceKm * 1000.0,
-                      elevationGainM: _elevationGainM,
-                      packWeightKg: _packWeightKg,
-                      rpe1To10: _rpe,
-                      routeId: _selectedRouteId,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _MetricCard extends StatelessWidget {
@@ -262,22 +266,26 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: metrics.spaceSm, vertical: metrics.spaceSm),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(metrics.radiusCard),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const SizedBox(height: 4),
+          Text(title, style: textTheme.labelSmall?.copyWith(color: colors.textSecondary)),
+          SizedBox(height: metrics.spaceXs),
           Text(
             value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: metrics.spaceXs),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -286,20 +294,20 @@ class _MetricCard extends StatelessWidget {
                   RitmoHaptics.tap();
                   onSub();
                 },
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.remove, size: 16),
+                child: Padding(
+                  padding: EdgeInsets.all(metrics.spaceXs),
+                  child: Icon(Icons.remove, size: metrics.iconSm),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: metrics.spaceSm),
               InkWell(
                 onTap: () {
                   RitmoHaptics.tap();
                   onAdd();
                 },
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.add, size: 16),
+                child: Padding(
+                  padding: EdgeInsets.all(metrics.spaceXs),
+                  child: Icon(Icons.add, size: metrics.iconSm),
                 ),
               ),
             ],

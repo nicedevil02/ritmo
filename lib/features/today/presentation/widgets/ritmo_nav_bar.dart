@@ -369,64 +369,64 @@ class _NeumorphicSlotItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── فضای آیکون ──
-              SizedBox(
-                height: _kIconSize,
-                child: isActive
-                    ? null
-                    : Opacity(
-                        opacity: iconOpacity,
-                        child: Icon(
-                          item.inactiveIcon,
-                          size: _kIconSize,
-                          color: inactiveColor,
-                        ),
-                      ),
-              ),
-
-              const SizedBox(height: 3),
-
-              // ── لیبل (در حالت فعال ناپدید می‌شود تا زیر دکمه نماند) ──
-              SizedBox(
-                height: _kLabelSize,
-                child: isActive
-                    ? null
-                    : Opacity(
-                        opacity: iconOpacity,
-                        child: Text(
-                          item.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.clip,
-                          style: TextStyle(
-                            fontSize: _kLabelSize,
-                            fontWeight: FontWeight.w500,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── فضای آیکون ──
+                SizedBox(
+                  height: _kIconSize,
+                  child: isActive
+                      ? null
+                      : Opacity(
+                          opacity: iconOpacity,
+                          child: Icon(
+                            item.inactiveIcon,
+                            size: _kIconSize,
                             color: inactiveColor,
-                            letterSpacing: -0.2,
-                            height: 1.0,
                           ),
                         ),
-                      ),
-              ),
-
-              const SizedBox(height: 3),
-
-              // ── نشانگر فعال (خط کوچک زیر دکمه) ──
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOutCubic,
-                width: isActive ? _kIndicatorW : 0,
-                height: _kIndicatorH,
-                margin: const EdgeInsets.only(bottom: 4),
-                decoration: BoxDecoration(
-                  color: isActive ? indicatorColor : Colors.transparent,
-                  borderRadius: BorderRadius.circular(_kIndicatorH / 2),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 3),
+
+                // ── لیبل (در حالت فعال ناپدید می‌شود تا زیر دکمه نماند) ──
+                SizedBox(
+                  height: _kLabelSize,
+                  child: isActive
+                      ? null
+                      : Opacity(
+                          opacity: iconOpacity,
+                          child: Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              fontSize: _kLabelSize,
+                              fontWeight: FontWeight.w500,
+                              color: inactiveColor,
+                              letterSpacing: -0.2,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                ),
+
+                // ── نشانگر فعال (خط کوچک زیر دکمه) ──
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  width: isActive ? _kIndicatorW : 0,
+                  height: _kIndicatorH,
+                  margin: EdgeInsets.only(top: isActive ? 6 : 0),
+                  decoration: BoxDecoration(
+                    color: isActive ? indicatorColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(_kIndicatorH / 2),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

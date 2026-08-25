@@ -128,7 +128,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             ),
             child: Column(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 44)),
+                Text(emoji, style: textTheme.displayMedium),
                 SizedBox(height: metrics.spaceXs),
                 Text(
                   title,
@@ -309,8 +309,8 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.bolt_rounded, color: colors.primary, size: 20),
-                    const SizedBox(width: 8),
+                    Icon(Icons.bolt_rounded, color: colors.primary, size: metrics.iconMd),
+                    SizedBox(width: metrics.spaceSm),
                     Text(
                       '+${toPersianDigits(earnedEquivMin.toString())} دقیقه فعالیت معادل به این هفته اضافه شد',
                       style: textTheme.bodyMedium?.copyWith(
@@ -330,9 +330,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                       color: remainingToGoal == 0
                           ? Colors.green
                           : colors.textSecondary,
-                      size: 20,
+                      size: metrics.iconMd,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: metrics.spaceSm),
                     Text(
                       remainingToGoal == 0
                           ? 'هدف هفتگی ۱۵۰ دقیقه با موفقیت کامل شد! 🎯'
@@ -552,7 +552,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             ),
             child: Column(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 22)),
+                Text(emoji, style: textTheme.headlineSmall),
                 SizedBox(height: metrics.spaceXs),
                 Text(
                   label,
@@ -561,7 +561,6 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                     fontWeight: isSelected
                         ? FontWeight.w800
                         : FontWeight.normal,
-                    fontSize: 10,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,

@@ -206,7 +206,6 @@ class MvCantTodaySheet extends StatelessWidget {
                               'پیشنهادی',
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.onPrimary,
-                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -22,7 +23,7 @@ class MvMatchTemplate extends StatefulWidget {
 }
 
 class _MvMatchTemplateState extends State<MvMatchTemplate> {
-  int _seconds = 0;
+  late int _seconds;
   bool _isPaused = false;
   Timer? _timer;
 
@@ -35,6 +36,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
   @override
   void initState() {
     super.initState();
+    _seconds = widget.session.elapsedSeconds;
     _startTimer();
   }
 
@@ -61,35 +63,39 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(metrics.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 widget.kind?.titleFa ?? 'مسابقه و بازی',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: metrics.spaceSm),
               // Half indicator
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg, vertical: metrics.spaceXs),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(20),
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
                 ),
                 child: Text(
                   _half == 1 ? 'نیمه اول / ست اول' : 'نیمه دوم / ست دوم',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: metrics.spaceMd),
               // Scores and stopwatch
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -103,17 +109,16 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                     },
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: metrics.spaceLg),
                     child: Column(
                       children: [
                         Text(
                           toPersianDigits(_formatDuration(_seconds)),
-                          style: const TextStyle(
-                            fontSize: 36,
+                          style: textTheme.displaySmall?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: metrics.spaceSm),
                         if (_half == 1)
                           OutlinedButton(
                             onPressed: () {
@@ -135,9 +140,9 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -146,24 +151,26 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                 label: _rpe.toString(),
                 onChanged: (val) => setState(() => _rpe = val.round()),
               ),
-              const SizedBox(height: 12),
-              // Free note field
+              SizedBox(height: metrics.spaceMd),
+              // Note field
               TextField(
                 controller: _noteController,
                 decoration: InputDecoration(
-                  labelText: 'یادداشت مسابقه (نتیجه، گل‌ها، حس بازی)',
+                  labelText: 'یادداشت مسابقه (گل‌ها، کارت‌ها، حریف...)',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(metrics.radiusField),
                   ),
+                  filled: true,
+                  fillColor: colors.surfaceElevated,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceXl),
               // Controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton.filledTonal(
-                    iconSize: 36,
+                    iconSize: metrics.iconXl,
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
@@ -172,25 +179,20 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                       setState(() => _isPaused = !_isPaused);
                     },
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceXl,
+                        vertical: metrics.spaceMd,
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_rounded),
+                    icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
                     label: const Text('پایان مسابقه'),
                     onPressed: () {
                       RitmoHaptics.success();
-                      widget.onFinish?.call(
-                        _seconds,
-                        _rpe,
-                        _noteController.text.trim().isEmpty
-                            ? null
-                            : _noteController.text.trim(),
-                      );
+                      final note = _noteController.text.trim();
+                      widget.onFinish?.call(_seconds, _rpe, note.isEmpty ? null : note);
                     },
                   ),
                 ],
@@ -218,29 +220,32 @@ class _ScoreColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final metrics = context.metrics;
+
     return Column(
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: metrics.spaceXs),
         Text(
           toPersianDigits(score.toString()),
-          style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
+          style: textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w900),
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
+              icon: Icon(Icons.remove_circle_outline, size: metrics.iconMd),
               onPressed: () {
                 RitmoHaptics.tap();
                 onSub();
               },
             ),
             IconButton(
-              icon: const Icon(Icons.add_circle_outline),
+              icon: Icon(Icons.add_circle_outline, size: metrics.iconMd),
               onPressed: () {
                 RitmoHaptics.tap();
                 onAdd();

@@ -203,7 +203,7 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
             ),
             child: Column(
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 28)),
+                Text(emoji, style: textTheme.headlineMedium),
                 SizedBox(height: metrics.spaceSm),
                 Text(
                   title,
@@ -218,7 +218,6 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
                   desc,
                   style: textTheme.bodySmall?.copyWith(
                     color: colors.textSecondary,
-                    fontSize: 10,
                   ),
                   textAlign: TextAlign.center,
                 ),

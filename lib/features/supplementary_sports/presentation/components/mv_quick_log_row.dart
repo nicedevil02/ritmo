@@ -113,7 +113,7 @@ class MvQuickLogRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 16)),
+              Text(emoji, style: textTheme.bodyLarge),
               SizedBox(width: metrics.spaceSm),
               Text(
                 title,

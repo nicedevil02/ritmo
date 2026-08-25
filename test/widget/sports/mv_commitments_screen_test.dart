@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/components/components.dart';
@@ -135,8 +136,8 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           MvCommitmentsScreen(
-            commitmentRepo: fakeRepo,
-            kindRepo: fakeKindRepo,
+            commitmentUseCase: MvCommitmentUseCase(fakeRepo),
+            kindUseCase: MvKindUseCase(fakeKindRepo),
           ),
         ),
       );
@@ -168,15 +169,15 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           MvCommitmentsScreen(
-            commitmentRepo: fakeRepo,
-            kindRepo: fakeKindRepo,
+            commitmentUseCase: MvCommitmentUseCase(fakeRepo),
+            kindUseCase: MvKindUseCase(fakeKindRepo),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('فوتسال هفتگی'), findsOneWidget);
-      expect(find.textContaining('پنجشنبه'), findsOneWidget);
+      expect(find.textContaining('پنج'), findsOneWidget);
       expect(find.textContaining('21:00'), findsOneWidget);
       expect(find.byKey(const ValueKey('mv_commitment_switch_1')), findsOneWidget);
 

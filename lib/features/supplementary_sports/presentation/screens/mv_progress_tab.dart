@@ -136,7 +136,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'سلامت این هفته (استاندارد WHO)',
+                'سلامت این هفته (توصیه بهداشت جهانی)',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -151,7 +151,7 @@ class MvProgressTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'دقیقه معادل هوازی متوسط',
+                'فعالیت معادل متوسط',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -221,7 +221,7 @@ class MvProgressTab extends StatelessWidget {
         key: ValueKey('mv_load_insufficient_data'),
         title: 'بار تمرینی و تعادل فشار',
         requirementDescription:
-            'حداقل ۱۴ روز سابقه و ۶ جلسه تمرین لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.',
+            'حداقل ۱۴ روز سابقه و ثبت چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.',
       );
     }
 
@@ -325,7 +325,7 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceSm),
           Text(
-            'نسبت بار حاد به مزمن: ${toPersianDigits(load.ratio!.toStringAsFixed(2))} · محدودهٔ ${load.bandTitleFa}',
+            'به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما ${toPersianDigits(load.ratio!.toStringAsFixed(2))} بوده و در محدودهٔ ${load.bandTitleFa} قرار دارد.',
             key: const ValueKey('mv_load_ratio_text'),
             style: textTheme.bodySmall?.copyWith(
               color: colors.textSecondary,
@@ -375,7 +375,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'توزیع ورزش‌ها در این ماه',
+                'توزیع ورزش‌ها در ماه جاری',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -433,6 +433,15 @@ class MvProgressTab extends StatelessWidget {
               ),
             );
           }),
+          if (sorted.isNotEmpty) ...[
+            SizedBox(height: metrics.spaceXs),
+            Text(
+              'بیشترین تمرکز فعالیت شما بر ${kindsMap?[sorted.first.key]?.titleFa ?? sorted.first.key} بوده است.',
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -471,7 +480,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'رکوردهای شخصی',
+                'رکوردهای شخصی به تفکیک ورزش',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -481,6 +490,8 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceMd),
           ...personalRecords.take(5).map((pr) {
+            final kind = kindsMap?[pr.kind];
+            final displayKind = kind != null ? '${kind.emoji} ${kind.titleFa}' : pr.kind;
             return Container(
               margin: EdgeInsets.only(bottom: metrics.spaceSm),
               padding: EdgeInsets.symmetric(
@@ -495,7 +506,7 @@ class MvProgressTab extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    pr.kind,
+                    displayKind,
                     style: textTheme.bodySmall?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -566,7 +577,7 @@ class MvProgressTab extends StatelessWidget {
                   ),
                   SizedBox(width: metrics.spaceSm),
                   Text(
-                    l10n?.mv_campaign_title ?? 'دورهٔ هدف‌دار فعال',
+                    'دورهٔ هدف‌دار فعال',
                     style: textTheme.titleSmall?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w800,

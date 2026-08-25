@@ -94,7 +94,7 @@ class MvWeekRail extends StatelessWidget {
                     if (slot.isLocked)
                       Icon(
                         Icons.lock_rounded,
-                        size: 9,
+                        size: metrics.spaceSm,
                         color: isSelected ? colors.onPrimary : colors.accent,
                       )
                     else

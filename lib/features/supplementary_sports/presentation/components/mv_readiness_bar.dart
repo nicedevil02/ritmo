@@ -68,7 +68,7 @@ class MvReadinessBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(emoji, style: const TextStyle(fontSize: 12)),
+                    Text(emoji, style: textTheme.labelSmall),
                     SizedBox(width: metrics.spaceXs),
                     Text(
                       tier.titleFa,

@@ -83,7 +83,7 @@ class MvBodyMap extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(mg.emoji, style: const TextStyle(fontSize: 13)),
+                        Text(mg.emoji, style: textTheme.bodySmall),
                         SizedBox(width: metrics.spaceXs),
                         Text(
                           mg.titleFa,
@@ -113,7 +113,6 @@ class MvBodyMap extends StatelessWidget {
                               count.toString(),
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.onPrimary,
-                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

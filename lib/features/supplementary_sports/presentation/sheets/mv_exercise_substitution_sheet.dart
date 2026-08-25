@@ -105,7 +105,7 @@ class _MvExerciseSubstitutionSheetState
                 final isSel = r['code'] == _selectedReason;
                 return MvChip(
                   label: r['label']!,
-                  icon: Text(r['emoji']!, style: const TextStyle(fontSize: 14)),
+                  icon: Text(r['emoji']!, style: textTheme.bodyMedium),
                   isSelected: isSel,
                   onTap: () {
                     setState(() {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
@@ -22,7 +23,7 @@ class MvTimedTemplate extends StatefulWidget {
 }
 
 class _MvTimedTemplateState extends State<MvTimedTemplate> {
-  int _seconds = 0;
+  late int _seconds;
   bool _isPaused = false;
   Timer? _timer;
   String _currentPhase = 'تمرین اصلی';
@@ -31,6 +32,7 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
   @override
   void initState() {
     super.initState();
+    _seconds = widget.session.elapsedSeconds;
     _startTimer();
   }
 
@@ -56,32 +58,34 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final metrics = context.metrics;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(metrics.spaceLg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 widget.kind?.titleFa ?? 'جلسه زمانی',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: metrics.spaceMd),
               // Stopwatch
               Text(
                 toPersianDigits(_formatDuration(_seconds)),
-                style: const TextStyle(
-                  fontSize: 64,
+                style: textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: metrics.spaceLg),
               // Phase selector
               Wrap(
-                spacing: 8,
+                spacing: metrics.spaceSm,
                 children: ['گرم کردن', 'تمرین اصلی', 'سرد کردن'].map((phase) {
                   final isSel = _currentPhase == phase;
                   return ChoiceChip(
@@ -93,9 +97,9 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -104,13 +108,13 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                 label: _rpe.toString(),
                 onChanged: (val) => setState(() => _rpe = val.round()),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: metrics.spaceXl),
               // Controls
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton.filledTonal(
-                    iconSize: 36,
+                    iconSize: metrics.iconXl,
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
@@ -119,15 +123,15 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                       setState(() => _isPaused = !_isPaused);
                     },
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: metrics.spaceXl,
+                        vertical: metrics.spaceMd,
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_rounded),
+                    icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
                     label: const Text('پایان جلسه'),
                     onPressed: () {
                       RitmoHaptics.success();

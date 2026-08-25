@@ -433,7 +433,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.calendar_month_rounded, size: 48, color: colors.primary),
+            Icon(Icons.calendar_month_rounded, size: metrics.spaceXxxl, color: colors.primary),
             SizedBox(height: metrics.spaceMd),
             Text(
               'برنامه‌های تمرینی ۴ هفته‌ای',

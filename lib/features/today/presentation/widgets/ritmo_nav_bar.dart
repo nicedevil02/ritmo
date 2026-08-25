@@ -1,8 +1,8 @@
-// نوار ناوبری شیشه‌ای پویا و پرمیوم ریتمو با دکمه مرکزی برجسته و طراحی کپسولی شناور
-// (Premium Dynamic Glassmorphic Floating Pill Navigation Bar with Elevated Center Button)
+// نوار ناوبری نئومورفیک فوق‌پرمیوم و صیقلی ریتمو با لبه‌های پخ‌خورده، گودی سه‌بعدی و دکمه متالیک
+// (Ultra-Premium Tactile Neumorphic Navigation Bar with Specular Chamfer, Recessed Crater Socket & Elevated Button)
 
 import 'dart:async';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,14 +11,15 @@ import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
-// ── Glassmorphic & Pill Design Constants ─────────────────────────
+// ── Neumorphic & Tactile Design Constants ─────────────────────────
 const double _kHMargin = 16.0; // horizontal margin of the pill
 const double _kBottomGap = 8.0; // gap between pill bottom and nav area bottom
 const double _kPillRadius = 26.0; // corner radius (capsule)
-const double _kMoundHeight = 10.0; // height of the crest mound above baseline
-const double _kMoundHW = 42.0; // mound half-width at baseline
+const double _kMoundHeight = 11.0; // height of the crest mound above baseline
+const double _kMoundHW = 44.0; // mound half-width at baseline
+const double _kCraterSize = 62.0; // recessed socket crater diameter
 const double _kCenterBtnSize = 48.0; // center elevated button diameter
-const double _kCenterBtnRimW = 2.5; // metallic rim width
+const double _kCenterBtnRimW = 2.8; // metallic white rim width
 const double _kIconSize = 20.0; // inactive item icon size
 const double _kLabelSize = 9.5; // label font size
 const double _kIndicatorW = 14.0; // active indicator bar width
@@ -39,7 +40,7 @@ class _NavItem {
   final String label;
 }
 
-/// نوار ناوبری شیشه‌ای پویا و پرمیوم ریتمو
+/// نوار ناوبری نئومورفیک فوق‌لوکس ریتمو
 class RitmoNavBar extends StatefulWidget {
   const RitmoNavBar({
     super.key,
@@ -129,40 +130,46 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+    final behavior = context.behavior;
+    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
+    final isGlassEnabled = !behavior.reduceTransparency && !highContrast;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
     final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    // ── Dynamic Glass & Theme Tokens ──
-    final Color pillBg = isGlass ? colors.glassTint : colors.surfaceElevated;
-    final Color pillBorder = isGlass
-        ? (isDark
-            ? Colors.white.withValues(alpha: 0.16)
-            : Colors.white.withValues(alpha: 0.70))
-        : (isDark ? colors.border : colors.divider);
-
-    final Color shadowDark = isDark
+    // ── Neumorphic Colour Tokens ──
+    final Color pillTop =
+        isDark ? const Color(0xFF222B38) : const Color(0xFFF7F9FC);
+    final Color pillBottom =
+        isDark ? const Color(0xFF161B23) : const Color(0xFFE9EDF4);
+    final Color shadowDarkAmbient = isDark
+        ? Colors.black.withValues(alpha: 0.60)
+        : const Color(0xFF9EABB9).withValues(alpha: 0.45);
+    final Color shadowDarkDirect = isDark
         ? Colors.black.withValues(alpha: 0.45)
-        : colors.primary.withValues(alpha: 0.08);
-    final Color shadowLight = isDark
+        : const Color(0xFF8B98A8).withValues(alpha: 0.35);
+    final Color shadowLightTop = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.white.withValues(alpha: 0.95);
+    final Color borderTop = isDark
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.white.withValues(alpha: 0.95);
+    final Color borderBottom = isDark
         ? Colors.white.withValues(alpha: 0.04)
-        : Colors.white.withValues(alpha: 0.85);
-
-    final Color inactiveColor = isDark
-        ? colors.textSecondary.withValues(alpha: 0.75)
-        : colors.textSecondary;
-    final Color activeLabelColor = colors.textPrimary;
-    final Color indicatorColor = colors.primary;
-
-    final Color centerBtnColor = colors.primary;
+        : Colors.white.withValues(alpha: 0.30);
+    final Color inactiveColor =
+        isDark ? const Color(0xFF6E7B8E) : const Color(0xFF8A93A2);
+    final Color indicatorColor =
+        isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E293B);
+    final Color centerBtnColorTop =
+        isDark ? const Color(0xFF202734) : const Color(0xFF242C38);
+    final Color centerBtnColorBottom =
+        isDark ? const Color(0xFF11151D) : const Color(0xFF161B22);
     final Color centerBtnRim = isDark
-        ? Colors.white.withValues(alpha: 0.28)
-        : Colors.white.withValues(alpha: 0.90);
+        ? Colors.white.withValues(alpha: 0.30)
+        : Colors.white.withValues(alpha: 0.95);
 
     final navH = context.metrics.navBarHeight;
     final pillH = navH - _kBottomGap;
@@ -184,14 +191,14 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
             duration: const Duration(milliseconds: 420),
             curve: Curves.easeOutQuart,
             builder: (context, currentSlotPos, _) {
-              // محاسبه مرکز هلال نسبت به داخل قرص (RTL)
+              // محاسبه مرکز قوس و دکمه نسبت به داخل قرص (RTL)
               final ncx = barWidth - (currentSlotPos + 0.5) * slotWidth;
               final activeItem = destinations[activeSlot];
 
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ─── 1. سایه محیطی و عمق ───
+                  // ─── 1. سایه‌های سه‌بعدی نئومورفیک (لایه عمقی + لایه مستقیم + هایلایت بالا) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -199,51 +206,70 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     height: pillH,
                     child: CustomPaint(
                       painter: _NeumorphicShadowPainter(
-                        darkShadow: shadowDark,
-                        lightShadow: shadowLight,
+                        darkShadowAmbient: shadowDarkAmbient,
+                        darkShadowDirect: shadowDarkDirect,
+                        lightShadowTop: shadowLightTop,
                         moundCenterX: ncx,
-                        isDark: isDark,
                       ),
                     ),
                   ),
 
-                  // ─── 2. بدنه قرص کپسولی با فیلتر شیشه‌ای پویا و قوس برآمده ───
+                  // ─── 2. بدنه قرص با شیب سه‌بعدی، بلور زنده و حاشیه پخ‌خورده نورانی (Specular Chamfer) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
                     top: 0,
                     height: pillH,
-                    child: ClipPath(
-                      clipper: _PillMoundClipper(moundCenterX: ncx),
-                      child: isGlass
-                          ? BackdropFilter(
-                              filter: ImageFilter.blur(
-                                sigmaX: blur,
-                                sigmaY: blur,
+                    child: isGlassEnabled
+                        ? ClipPath(
+                            clipper: _PillMoundClipper(
+                              moundCenterX: ncx,
+                            ),
+                            child: BackdropFilter(
+                              filter: ui.ImageFilter.blur(
+                                sigmaX: 25.0,
+                                sigmaY: 25.0,
                               ),
                               child: CustomPaint(
                                 painter: _NeumorphicPillPainter(
-                                  fillColor: pillBg,
-                                  borderColor: pillBorder,
+                                  fillGradientTop: pillTop.withValues(
+                                    alpha: isDark ? 0.75 : 0.85,
+                                  ),
+                                  fillGradientBottom: pillBottom.withValues(
+                                    alpha: isDark ? 0.88 : 0.92,
+                                  ),
+                                  borderGradientTop: borderTop,
+                                  borderGradientBottom: borderBottom,
                                   moundCenterX: ncx,
-                                  isDark: isDark,
-                                  isGlass: true,
                                 ),
                               ),
-                            )
-                          : CustomPaint(
-                              painter: _NeumorphicPillPainter(
-                                fillColor: pillBg,
-                                borderColor: pillBorder,
-                                moundCenterX: ncx,
-                                isDark: isDark,
-                                isGlass: false,
-                              ),
                             ),
+                          )
+                        : CustomPaint(
+                            painter: _NeumorphicPillPainter(
+                              fillGradientTop: pillTop,
+                              fillGradientBottom: pillBottom,
+                              borderGradientTop: borderTop,
+                              borderGradientBottom: borderBottom,
+                              moundCenterX: ncx,
+                            ),
+                          ),
+                  ),
+
+                  // ─── 3. کاسه و گودی مقعر دور دکمه وسط (Recessed Crater Socket) ───
+                  Positioned(
+                    left: _kHMargin + ncx - _kCraterSize / 2,
+                    top: -(_kCraterSize - _kCenterBtnSize) / 2 - 2.0,
+                    width: _kCraterSize,
+                    height: _kCraterSize,
+                    child: CustomPaint(
+                      painter: _CraterSocketPainter(
+                        isDark: isDark,
+                      ),
                     ),
                   ),
 
-                  // ─── 3. آیتم‌های ناوبری ───
+                  // ─── 4. آیتم‌های ناوبری (کاملاً متمرکز در راستای عمودی) ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -259,9 +285,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                                 item: destinations[i],
                                 isActive: i == activeSlot,
                                 slotDistance: (currentSlotPos - i).abs(),
-                                isDark: isDark,
                                 inactiveColor: inactiveColor,
-                                activeLabelColor: activeLabelColor,
                                 indicatorColor: indicatorColor,
                                 onTap: () {
                                   if (destinations[i].index ==
@@ -284,7 +308,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     ),
                   ),
 
-                  // ─── 4. دکمه دایره‌ای برجسته مرکزی ───
+                  // ─── 5. دکمه دایره‌ای شناور فوق‌لوکس با حلقه متالیک و گرادیان سه‌بعدی ───
                   Positioned(
                     left: _kHMargin + ncx - _kCenterBtnSize / 2,
                     top: -2.0,
@@ -292,7 +316,8 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     height: _kCenterBtnSize,
                     child: _AnimatedFloatingButton(
                       activeItem: activeItem,
-                      backgroundColor: centerBtnColor,
+                      bgTop: centerBtnColorTop,
+                      bgBottom: centerBtnColorBottom,
                       rimColor: centerBtnRim,
                       isDark: isDark,
                       onTap: () {
@@ -324,7 +349,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  آیتم اسلات نئومورفیک
+//  آیتم اسلات نئومورفیک (متمرکز در راستای عمودی)
 // ═══════════════════════════════════════════════════════════════════
 
 class _NeumorphicSlotItem extends StatelessWidget {
@@ -332,9 +357,7 @@ class _NeumorphicSlotItem extends StatelessWidget {
     required this.item,
     required this.isActive,
     required this.slotDistance,
-    required this.isDark,
     required this.inactiveColor,
-    required this.activeLabelColor,
     required this.indicatorColor,
     required this.onTap,
   });
@@ -342,9 +365,7 @@ class _NeumorphicSlotItem extends StatelessWidget {
   final _NavItem item;
   final bool isActive;
   final double slotDistance;
-  final bool isDark;
   final Color inactiveColor;
-  final Color activeLabelColor;
   final Color indicatorColor;
   final VoidCallback onTap;
 
@@ -435,13 +456,67 @@ class _NeumorphicSlotItem extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  دکمه دایره‌ای شناور برجسته با حلقه متالیک و انیمیشن مورف آیکون
+//  کاسه و گودی مقعر دور دکمه وسط (Recessed Crater Socket Painter)
+// ═══════════════════════════════════════════════════════════════════
+
+class _CraterSocketPainter extends CustomPainter {
+  const _CraterSocketPainter({
+    required this.isDark,
+  });
+
+  final bool isDark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // ۱. سایه فرورفتگی بالای گودی (Concave Inner Shadow)
+    final shadowPaint = Paint()
+      ..shader = ui.Gradient.radial(
+        Offset(center.dx, center.dy - radius * 0.4),
+        radius,
+        [
+          (isDark ? Colors.black : const Color(0xFF758295))
+              .withValues(alpha: isDark ? 0.45 : 0.30),
+          Colors.transparent,
+        ],
+        [0.4, 1.0],
+      );
+    canvas.drawCircle(center, radius, shadowPaint);
+
+    // ۲. هایلایت نوری نیم‌حلقه پایین گودی (Specular Rim Reflection)
+    final rimPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..shader = ui.Gradient.linear(
+        Offset(center.dx, center.dy - radius),
+        Offset(center.dx, center.dy + radius),
+        [
+          Colors.transparent,
+          (isDark ? Colors.white : Colors.white)
+              .withValues(alpha: isDark ? 0.15 : 0.85),
+        ],
+        [0.5, 1.0],
+      );
+
+    canvas.drawCircle(center, radius - 0.7, rimPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CraterSocketPainter oldDelegate) =>
+      oldDelegate.isDark != isDark;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  دکمه دایره‌ای شناور با حلقه متالیک و انیمیشن مورف آیکون
 // ═══════════════════════════════════════════════════════════════════
 
 class _AnimatedFloatingButton extends StatefulWidget {
   const _AnimatedFloatingButton({
     required this.activeItem,
-    required this.backgroundColor,
+    required this.bgTop,
+    required this.bgBottom,
     required this.rimColor,
     required this.isDark,
     required this.onTap,
@@ -449,7 +524,8 @@ class _AnimatedFloatingButton extends StatefulWidget {
   });
 
   final _NavItem activeItem;
-  final Color backgroundColor;
+  final Color bgTop;
+  final Color bgBottom;
   final Color rimColor;
   final bool isDark;
   final VoidCallback onTap;
@@ -504,7 +580,6 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
       return;
     }
 
-    // پس از رفتن به تب خانه، با یک انیمیشن نرم به + تبدیل می‌شود
     _initialMorphTimer = Timer(const Duration(milliseconds: 500), () {
       if (!mounted || !_isHome) return;
       setState(() => _showPlusOnHome = true);
@@ -516,7 +591,6 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
     _homeMorphTimer?.cancel();
     _subMorphTimer?.cancel();
 
-    // چرخهٔ ۷ ثانیه‌ای: ۵ ثانیه روی + و ۲ ثانیه روی خانه
     _homeMorphTimer = Timer.periodic(const Duration(seconds: 7), (timer) {
       if (!mounted || !_isHome) {
         timer.cancel();
@@ -559,41 +633,41 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              // حلقه متالیک بیرونی (سفید / خاکستری شفاف)
+              // حلقه متالیک براق بیرونی
               border: Border.all(
                 color: widget.rimColor,
                 width: _kCenterBtnRimW,
               ),
               boxShadow: [
-                // سایه اصلی پایین دکمه
+                // سایه اصلی عمیق زیر دکمه
                 BoxShadow(
                   color: Colors.black.withValues(
-                    alpha: widget.isDark ? 0.50 : 0.22,
+                    alpha: widget.isDark ? 0.55 : 0.28,
                   ),
-                  blurRadius: 12,
+                  blurRadius: 14,
                   spreadRadius: 0,
-                  offset: const Offset(0, 5),
+                  offset: const Offset(0, 6),
                 ),
-                // سایه روشن بالای دکمه (نئومورفیک)
-                if (!widget.isDark)
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.50),
-                    blurRadius: 6,
-                    spreadRadius: 0,
-                    offset: const Offset(0, -2),
+                // سایه تماس لبه
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: widget.isDark ? 0.35 : 0.15,
                   ),
+                  blurRadius: 4,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                // گرادیان ظریف برای حجم سه‌بعدی دکمه
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    widget.backgroundColor.withValues(alpha: 0.88),
-                    widget.backgroundColor,
+                    widget.bgTop,
+                    widget.bgBottom,
                   ],
                 ),
               ),
@@ -629,7 +703,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  مسیر قرص کپسولی با قوس برآمده (Mound Crest) در بالای دکمه فعال
+//  مسیر قرص کپسولی با قوس برآمده (Mound Crest) هوشمند و انطباقی
 // ═══════════════════════════════════════════════════════════════════
 
 /// کلیپر دقیق مسیر قرص کپسولی با قوس برآمده جهت اتصال فیلتر BackdropFilter شیشه‌ای
@@ -649,7 +723,6 @@ class _PillMoundClipper extends CustomClipper<Path> {
 }
 
 /// مسیر قرص کپسولی با قوس برآمده هوشمند و انطباقی
-/// (در بخش تقویم فقط برآمدگی سمت چپ، در بخش بینش‌ها فقط برآمدگی سمت راست، و در تب‌های میانی برآمدگی دوطرفه)
 Path _buildPillMoundPath(double w, double h, double cx) {
   const r = _kPillRadius;
   const base = _kMoundHeight;
@@ -675,7 +748,7 @@ Path _buildPillMoundPath(double w, double h, double cx) {
   final moundPath = Path();
   moundPath.moveTo(mLeft, base);
 
-  // شیب سمت چپ (صعود به قله)
+  // شیب سمت چپ (صعود به قله با قوس سیال)
   moundPath.cubicTo(
     mLeft + leftSpan * 0.45,
     base,
@@ -685,7 +758,7 @@ Path _buildPillMoundPath(double w, double h, double cx) {
     0.0,
   );
 
-  // شیب سمت راست (نزول از قله)
+  // شیب سمت راست (نزول از قله با قوس سیال)
   moundPath.cubicTo(
     clampedCx + rightSpan * 0.40,
     0.0,
@@ -704,114 +777,113 @@ Path _buildPillMoundPath(double w, double h, double cx) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  نقاش سایه محیطی و عمق ناوبری
+//  نقاش سایه محیطی و عمق چندلایه نئومورفیک
 // ═══════════════════════════════════════════════════════════════════
 
 class _NeumorphicShadowPainter extends CustomPainter {
   const _NeumorphicShadowPainter({
-    required this.darkShadow,
-    required this.lightShadow,
+    required this.darkShadowAmbient,
+    required this.darkShadowDirect,
+    required this.lightShadowTop,
     required this.moundCenterX,
-    this.isDark = true,
   });
 
-  final Color darkShadow;
-  final Color lightShadow;
+  final Color darkShadowAmbient;
+  final Color darkShadowDirect;
+  final Color lightShadowTop;
   final double moundCenterX;
-  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = _buildPillMoundPath(size.width, size.height, moundCenterX);
 
-    // سایه تاریک (پایین و اطراف — عمق اصلی)
-    final darkPaint = Paint()
-      ..color = darkShadow
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isDark ? 16 : 14);
+    // ۱. سایه پخش‌شده محیطی (Ambient Diffused Shadow)
+    final ambientPaint = Paint()
+      ..color = darkShadowAmbient
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
     canvas.save();
-    canvas.translate(0, 4);
-    canvas.drawPath(path, darkPaint);
+    canvas.translate(0, 8);
+    canvas.drawPath(path, ambientPaint);
     canvas.restore();
 
-    // هالوی روشن (بالا — در تم روشن)
-    if (!isDark) {
-      final lightPaint = Paint()
-        ..color = lightShadow
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.save();
-      canvas.translate(0, -2);
-      canvas.drawPath(path, lightPaint);
-      canvas.restore();
-    }
+    // ۲. سایه مستقیم تماسی (Direct Contact Shadow)
+    final directPaint = Paint()
+      ..color = darkShadowDirect
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.save();
+    canvas.translate(0, 2);
+    canvas.drawPath(path, directPaint);
+    canvas.restore();
+
+    // ۳. هالوی بازتاب نوری لبه بالا (Top Specular Halo)
+    final lightPaint = Paint()
+      ..color = lightShadowTop
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.save();
+    canvas.translate(0, -2);
+    canvas.drawPath(path, lightPaint);
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _NeumorphicShadowPainter oldDelegate) =>
-      oldDelegate.darkShadow != darkShadow ||
-      oldDelegate.lightShadow != lightShadow ||
-      oldDelegate.moundCenterX != moundCenterX ||
-      oldDelegate.isDark != isDark;
+      oldDelegate.darkShadowAmbient != darkShadowAmbient ||
+      oldDelegate.darkShadowDirect != darkShadowDirect ||
+      oldDelegate.lightShadowTop != lightShadowTop ||
+      oldDelegate.moundCenterX != moundCenterX;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  نقاش بدنه قرص کپسولی با حاشیه نورانی و لایه گرادیان شیشه‌ای
+//  نقاش بدنه قرص کپسولی با حاشیه پخ‌خورده نورانی (Specular Chamfer)
 // ═══════════════════════════════════════════════════════════════════
 
 class _NeumorphicPillPainter extends CustomPainter {
   const _NeumorphicPillPainter({
-    required this.fillColor,
-    required this.borderColor,
+    required this.fillGradientTop,
+    required this.fillGradientBottom,
+    required this.borderGradientTop,
+    required this.borderGradientBottom,
     required this.moundCenterX,
-    required this.isDark,
-    required this.isGlass,
   });
 
-  final Color fillColor;
-  final Color borderColor;
+  final Color fillGradientTop;
+  final Color fillGradientBottom;
+  final Color borderGradientTop;
+  final Color borderGradientBottom;
   final double moundCenterX;
-  final bool isDark;
-  final bool isGlass;
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = _buildPillMoundPath(size.width, size.height, moundCenterX);
 
-    // ۱. پر کردن بدنه قرص
+    // ۱. پر کردن بدنه با گرادیان سه‌بعدی ملایم
     final fillPaint = Paint()
-      ..color = fillColor
+      ..shader = ui.Gradient.linear(
+        const Offset(0, 0),
+        Offset(0, size.height),
+        [fillGradientTop, fillGradientBottom],
+      )
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
-    // ۲. گرادیان بازتابی فوقانی (Specular highlight برای حجم شیشه‌ای)
-    if (isGlass) {
-      final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-      final specularPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withValues(alpha: isDark ? 0.12 : 0.28),
-            Colors.white.withValues(alpha: 0.0),
-          ],
-          stops: const [0.0, 0.45],
-        ).createShader(rect)
-        ..style = PaintingStyle.fill;
-      canvas.drawPath(path, specularPaint);
-    }
-
-    // ۳. حاشیه نورانی ظریف
+    // ۲. حاشیه پخ‌خورده براق سه‌بعدی (Specular Chamfer Border)
     final borderPaint = Paint()
-      ..color = borderColor
+      ..shader = ui.Gradient.linear(
+        const Offset(0, 0),
+        Offset(0, size.height),
+        [borderGradientTop, borderGradientBottom],
+        [0.0, 1.0],
+      )
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.3;
     canvas.drawPath(path, borderPaint);
   }
 
   @override
   bool shouldRepaint(covariant _NeumorphicPillPainter oldDelegate) =>
-      oldDelegate.fillColor != fillColor ||
-      oldDelegate.borderColor != borderColor ||
-      oldDelegate.moundCenterX != moundCenterX ||
-      oldDelegate.isDark != isDark ||
-      oldDelegate.isGlass != isGlass;
+      oldDelegate.fillGradientTop != fillGradientTop ||
+      oldDelegate.fillGradientBottom != fillGradientBottom ||
+      oldDelegate.borderGradientTop != borderGradientTop ||
+      oldDelegate.borderGradientBottom != borderGradientBottom ||
+      oldDelegate.moundCenterX != moundCenterX;
 }

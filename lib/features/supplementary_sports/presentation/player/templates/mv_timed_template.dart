@@ -56,85 +56,89 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            widget.kind?.titleFa ?? 'جلسه زمانی',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          // Stopwatch
-          Text(
-            toPersianDigits(_formatDuration(_seconds)),
-            style: const TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Phase selector
-          Wrap(
-            spacing: 8,
-            children: ['گرم کردن', 'تمرین اصلی', 'سرد کردن'].map((phase) {
-              final isSel = _currentPhase == phase;
-              return ChoiceChip(
-                label: Text(phase),
-                selected: isSel,
-                onSelected: (v) {
-                  if (v) setState(() => _currentPhase = phase);
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 24),
-          // Effort slider
-          Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
-          Slider(
-            value: _rpe.toDouble(),
-            min: 1,
-            max: 10,
-            divisions: 9,
-            label: _rpe.toString(),
-            onChanged: (val) => setState(() => _rpe = val.round()),
-          ),
-          const SizedBox(height: 24),
-          // Controls
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              IconButton.filledTonal(
-                iconSize: 36,
-                icon: Icon(
-                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                ),
-                onPressed: () {
-                  RitmoHaptics.tap();
-                  setState(() => _isPaused = !_isPaused);
-                },
+              Text(
+                widget.kind?.titleFa ?? 'جلسه زمانی',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
+              const SizedBox(height: 12),
+              // Stopwatch
+              Text(
+                toPersianDigits(_formatDuration(_seconds)),
+                style: const TextStyle(
+                  fontSize: 64,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
                 ),
-                icon: const Icon(Icons.check_circle_rounded),
-                label: const Text('پایان جلسه'),
-                onPressed: () {
-                  RitmoHaptics.success();
-                  widget.onFinish?.call(_seconds, _rpe);
-                },
+              ),
+              const SizedBox(height: 16),
+              // Phase selector
+              Wrap(
+                spacing: 8,
+                children: ['گرم کردن', 'تمرین اصلی', 'سرد کردن'].map((phase) {
+                  final isSel = _currentPhase == phase;
+                  return ChoiceChip(
+                    label: Text(phase),
+                    selected: isSel,
+                    onSelected: (v) {
+                      if (v) setState(() => _currentPhase = phase);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+              // Effort slider
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Slider(
+                value: _rpe.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                label: _rpe.toString(),
+                onChanged: (val) => setState(() => _rpe = val.round()),
+              ),
+              const SizedBox(height: 24),
+              // Controls
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    iconSize: 36,
+                    icon: Icon(
+                      _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    ),
+                    onPressed: () {
+                      RitmoHaptics.tap();
+                      setState(() => _isPaused = !_isPaused);
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded),
+                    label: const Text('پایان جلسه'),
+                    onPressed: () {
+                      RitmoHaptics.success();
+                      widget.onFinish?.call(_seconds, _rpe);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

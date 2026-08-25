@@ -107,6 +107,7 @@ class MvHubController extends ChangeNotifier {
        startSessionUseCase = MvStartSessionUseCase(
          sessionRepo: sessionRepo,
          exerciseRepo: exerciseRepo,
+         kindRepo: kindRepo,
          selectionEngine: selectionEngine,
        ),
        finishSessionUseCase = MvFinishSessionUseCase(

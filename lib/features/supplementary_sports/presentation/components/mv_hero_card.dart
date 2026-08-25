@@ -175,6 +175,7 @@ class MvHeroCard extends StatelessWidget {
                       Expanded(
                         flex: 3,
                         child: MvPrimaryAction(
+                          key: const ValueKey('mv_hero_start_btn'),
                           label: 'شروع جلسه',
                           icon: Icons.play_arrow_rounded,
                           onPressed: onStart,

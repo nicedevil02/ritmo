@@ -64,10 +64,127 @@ class _MvHubScreenState extends State<MvHubScreen> {
 
     if (!mounted) return;
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MvSessionPlayerScreen(
+    Widget playerWidget;
+    switch (result.session.sessionMode) {
+      case MvSessionMode.route:
+        playerWidget = MvRouteTemplate(
+          session: result.session,
+          onFinish: ({
+            required elapsedSeconds,
+            required distanceM,
+            required elevationGainM,
+            required packWeightKg,
+            required rpe1To10,
+            routeId,
+          }) async {
+            final finished = result.session.copyWith(
+              distanceM: distanceM,
+              elevationGainM: elevationGainM,
+              packWeightKg: packWeightKg,
+              rpe1To10: rpe1To10,
+              routeId: routeId,
+              status: MvSessionStatus.completed,
+              endedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+            await _controller.finishSessionUseCase.execute(
+              session: finished,
+              setLogs: const [],
+              feeling: MvSessionFeeling.good,
+              rpe1To10: rpe1To10,
+            );
+            await _controller.loadAllData();
+            if (mounted) Navigator.pop(context);
+          },
+        );
+        break;
+      case MvSessionMode.laps:
+        playerWidget = MvLapsTemplate(
+          session: result.session,
+          onFinish: (elapsedSeconds, totalLaps, rpe1To10) async {
+            final finished = result.session.copyWith(
+              laps: totalLaps,
+              rpe1To10: rpe1To10,
+              status: MvSessionStatus.completed,
+              endedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+            await _controller.finishSessionUseCase.execute(
+              session: finished,
+              setLogs: const [],
+              feeling: MvSessionFeeling.good,
+              rpe1To10: rpe1To10,
+            );
+            await _controller.loadAllData();
+            if (mounted) Navigator.pop(context);
+          },
+        );
+        break;
+      case MvSessionMode.match:
+        playerWidget = MvMatchTemplate(
+          session: result.session,
+          onFinish: (elapsedSeconds, rpe1To10, note) async {
+            final finished = result.session.copyWith(
+              rpe1To10: rpe1To10,
+              note: note,
+              status: MvSessionStatus.completed,
+              endedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+            await _controller.finishSessionUseCase.execute(
+              session: finished,
+              setLogs: const [],
+              feeling: MvSessionFeeling.good,
+              rpe1To10: rpe1To10,
+              note: note,
+            );
+            await _controller.loadAllData();
+            if (mounted) Navigator.pop(context);
+          },
+        );
+        break;
+      case MvSessionMode.distance:
+        playerWidget = MvDistanceTemplate(
+          session: result.session,
+          onFinish: (elapsedSeconds, distanceM, rpe1To10) async {
+            final finished = result.session.copyWith(
+              distanceM: distanceM,
+              rpe1To10: rpe1To10,
+              status: MvSessionStatus.completed,
+              endedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+            await _controller.finishSessionUseCase.execute(
+              session: finished,
+              setLogs: const [],
+              feeling: MvSessionFeeling.good,
+              rpe1To10: rpe1To10,
+            );
+            await _controller.loadAllData();
+            if (mounted) Navigator.pop(context);
+          },
+        );
+        break;
+      case MvSessionMode.timed:
+        playerWidget = MvTimedTemplate(
+          session: result.session,
+          onFinish: (elapsedSeconds, rpe1To10) async {
+            final finished = result.session.copyWith(
+              rpe1To10: rpe1To10,
+              status: MvSessionStatus.completed,
+              endedAt: DateTime.now().millisecondsSinceEpoch,
+            );
+            await _controller.finishSessionUseCase.execute(
+              session: finished,
+              setLogs: const [],
+              feeling: MvSessionFeeling.good,
+              rpe1To10: rpe1To10,
+            );
+            await _controller.loadAllData();
+            if (mounted) Navigator.pop(context);
+          },
+        );
+        break;
+      case MvSessionMode.guided:
+      case MvSessionMode.structured:
+      case MvSessionMode.quickLog:
+        playerWidget = MvSessionPlayerScreen(
           initialSession: result.session,
           plannedExercises: result.exercises,
           allCandidatePool: _controller.allExercises,
@@ -80,8 +197,13 @@ class _MvHubScreenState extends State<MvHubScreen> {
             );
             await _controller.loadAllData();
           },
-        ),
-      ),
+        );
+        break;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => playerWidget),
     );
 
     await _controller.loadAllData();

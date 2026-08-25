@@ -57,120 +57,124 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            widget.kind?.titleFa ?? 'جلسه مسافتی',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          // Distance hero display
-          Row(
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                toPersianDigits(_distanceKm.toStringAsFixed(2)),
-                style: const TextStyle(
-                  fontSize: 56,
-                  fontWeight: FontWeight.w900,
-                ),
+                widget.kind?.titleFa ?? 'جلسه مسافتی',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'کیلومتر',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            ],
-          ),
-          // Stopwatch
-          Text(
-            toPersianDigits(_formatDuration(_seconds)),
-            style: const TextStyle(
-              fontSize: 24,
-              color: Colors.grey,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Distance adjuster (+ / -)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton.outlined(
-                icon: const Icon(Icons.remove),
-                onPressed: () {
-                  if (_distanceKm > 0.5) {
-                    RitmoHaptics.tap();
-                    setState(() => _distanceKm = (_distanceKm - 0.5));
-                  }
-                },
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'تنظیم مسافت',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 16),
-              IconButton.outlined(
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  RitmoHaptics.tap();
-                  setState(() => _distanceKm = (_distanceKm + 0.5));
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // Effort slider
-          Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
-          Slider(
-            value: _rpe.toDouble(),
-            min: 1,
-            max: 10,
-            divisions: 9,
-            label: _rpe.toString(),
-            onChanged: (val) => setState(() => _rpe = val.round()),
-          ),
-          const SizedBox(height: 20),
-          // Controls
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton.filledTonal(
-                iconSize: 36,
-                icon: Icon(
-                  _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                ),
-                onPressed: () {
-                  RitmoHaptics.tap();
-                  setState(() => _isPaused = !_isPaused);
-                },
-              ),
-              const SizedBox(width: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
+              const SizedBox(height: 12),
+              // Distance hero display
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    toPersianDigits(_distanceKm.toStringAsFixed(2)),
+                    style: const TextStyle(
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'کیلومتر',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ],
+              ),
+              // Stopwatch
+              Text(
+                toPersianDigits(_formatDuration(_seconds)),
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w600,
                 ),
-                icon: const Icon(Icons.check_circle_rounded),
-                label: const Text('پایان جلسه'),
-                onPressed: () {
-                  RitmoHaptics.success();
-                  final distanceMeters = _distanceKm * 1000.0;
-                  widget.onFinish?.call(_seconds, distanceMeters, _rpe);
-                },
+              ),
+              const SizedBox(height: 16),
+              // Distance adjuster (+ / -)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.outlined(
+                    icon: const Icon(Icons.remove),
+                    onPressed: () {
+                      if (_distanceKm > 0.5) {
+                        RitmoHaptics.tap();
+                        setState(() => _distanceKm = (_distanceKm - 0.5));
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'تنظیم مسافت',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton.outlined(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      RitmoHaptics.tap();
+                      setState(() => _distanceKm = (_distanceKm + 0.5));
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Effort slider
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Slider(
+                value: _rpe.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                label: _rpe.toString(),
+                onChanged: (val) => setState(() => _rpe = val.round()),
+              ),
+              const SizedBox(height: 20),
+              // Controls
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    iconSize: 36,
+                    icon: Icon(
+                      _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    ),
+                    onPressed: () {
+                      RitmoHaptics.tap();
+                      setState(() => _isPaused = !_isPaused);
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded),
+                    label: const Text('پایان جلسه'),
+                    onPressed: () {
+                      RitmoHaptics.success();
+                      final distanceMeters = _distanceKm * 1000.0;
+                      widget.onFinish?.call(_seconds, distanceMeters, _rpe);
+                    },
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

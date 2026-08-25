@@ -72,17 +72,18 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              widget.kind?.titleFa ?? 'جلسه مسیر و کوه',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                widget.kind?.titleFa ?? 'جلسه مسیر و کوه',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
             const SizedBox(height: 8),
             // Stopwatch
             Text(
@@ -241,8 +242,9 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _MetricCard extends StatelessWidget {

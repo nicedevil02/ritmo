@@ -61,140 +61,142 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              widget.kind?.titleFa ?? 'مسابقه و بازی',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            // Half indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(20),
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                widget.kind?.titleFa ?? 'مسابقه و بازی',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              child: Text(
-                _half == 1 ? 'نیمه اول / ست اول' : 'نیمه دوم / ست دوم',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 8),
+              // Half indicator
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Scores and stopwatch
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _ScoreColumn(
-                  label: 'ما',
-                  score: _teamScore,
-                  onAdd: () => setState(() => _teamScore++),
-                  onSub: () {
-                    if (_teamScore > 0) setState(() => _teamScore--);
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      Text(
-                        toPersianDigits(_formatDuration(_seconds)),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_half == 1)
-                        OutlinedButton(
-                          onPressed: () {
-                            RitmoHaptics.tap();
-                            setState(() => _half = 2);
-                          },
-                          child: const Text('شروع نیمه دوم'),
-                        ),
-                    ],
+                child: Text(
+                  _half == 1 ? 'نیمه اول / ست اول' : 'نیمه دوم / ست دوم',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                _ScoreColumn(
-                  label: 'حریف',
-                  score: _opponentScore,
-                  onAdd: () => setState(() => _opponentScore++),
-                  onSub: () {
-                    if (_opponentScore > 0) setState(() => _opponentScore--);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Effort slider
-            Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
-            Slider(
-              value: _rpe.toDouble(),
-              min: 1,
-              max: 10,
-              divisions: 9,
-              label: _rpe.toString(),
-              onChanged: (val) => setState(() => _rpe = val.round()),
-            ),
-            const SizedBox(height: 12),
-            // Free note field
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(
-                labelText: 'یادداشت مسابقه (نتیجه، گل‌ها، حس بازی)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            // Controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton.filledTonal(
-                  iconSize: 36,
-                  icon: Icon(
-                    _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+              const SizedBox(height: 12),
+              // Scores and stopwatch
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _ScoreColumn(
+                    label: 'ما',
+                    score: _teamScore,
+                    onAdd: () => setState(() => _teamScore++),
+                    onSub: () {
+                      if (_teamScore > 0) setState(() => _teamScore--);
+                    },
                   ),
-                  onPressed: () {
-                    RitmoHaptics.tap();
-                    setState(() => _isPaused = !_isPaused);
-                  },
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Text(
+                          toPersianDigits(_formatDuration(_seconds)),
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_half == 1)
+                          OutlinedButton(
+                            onPressed: () {
+                              RitmoHaptics.tap();
+                              setState(() => _half = 2);
+                            },
+                            child: const Text('شروع نیمه دوم'),
+                          ),
+                      ],
                     ),
                   ),
-                  icon: const Icon(Icons.check_circle_rounded),
-                  label: const Text('پایان مسابقه'),
-                  onPressed: () {
-                    RitmoHaptics.success();
-                    widget.onFinish?.call(
-                      _seconds,
-                      _rpe,
-                      _noteController.text.trim().isEmpty
-                          ? null
-                          : _noteController.text.trim(),
-                    );
-                  },
+                  _ScoreColumn(
+                    label: 'حریف',
+                    score: _opponentScore,
+                    onAdd: () => setState(() => _opponentScore++),
+                    onSub: () {
+                      if (_opponentScore > 0) setState(() => _opponentScore--);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Effort slider
+              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})'),
+              Slider(
+                value: _rpe.toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                label: _rpe.toString(),
+                onChanged: (val) => setState(() => _rpe = val.round()),
+              ),
+              const SizedBox(height: 12),
+              // Free note field
+              TextField(
+                controller: _noteController,
+                decoration: InputDecoration(
+                  labelText: 'یادداشت مسابقه (نتیجه، گل‌ها، حس بازی)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              // Controls
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    iconSize: 36,
+                    icon: Icon(
+                      _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    ),
+                    onPressed: () {
+                      RitmoHaptics.tap();
+                      setState(() => _isPaused = !_isPaused);
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_circle_rounded),
+                    label: const Text('پایان مسابقه'),
+                    onPressed: () {
+                      RitmoHaptics.success();
+                      widget.onFinish?.call(
+                        _seconds,
+                        _rpe,
+                        _noteController.text.trim().isEmpty
+                            ? null
+                            : _noteController.text.trim(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

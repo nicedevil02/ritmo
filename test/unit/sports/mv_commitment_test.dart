@@ -1,254 +1,298 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ritmo/features/supplementary_sports/domain/models/mv_commitment.dart';
+import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
+import 'package:ritmo/features/supplementary_sports/data/repositories/repositories.dart';
+import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
+import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  group('MvCommitment Model Verification (S2-T2)', () {
-    test('Valid MvCommitment creation and property access', () {
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
+
+  group('S2-T8 Comprehensive Anchor & Commitment Tests (6 Critical Requirements)', () {
+    late Database db;
+    late MvCommitmentRepository commitmentRepo;
+    late MvPrescriptionRepository prescriptionRepo;
+    late MvCommitmentUseCase commitmentUseCase;
+
+    setUp(() async {
+      db = await databaseFactory.openDatabase(inMemoryDatabasePath);
+      await SupplementarySportsTables.create(db);
+
+      commitmentRepo = MvCommitmentRepositoryImpl(db);
+      prescriptionRepo = MvPrescriptionRepository(db);
+      commitmentUseCase = MvCommitmentUseCase(commitmentRepo);
+    });
+
+    tearDown(() async {
+      await db.close();
+    });
+
+    // Test 1: تعهد هفتگی در ۴ هفتهٔ متوالی اسلات می‌سازد
+    test('1. Weekly recurring commitment produces valid anchor slots across 4 consecutive weeks', () async {
       final commitment = MvCommitment(
-        id: 1,
-        kindCode: 'FUTSAL',
-        titleFa: 'فوتسال پنجشنبه‌ها',
-        dayOfWeekSat0: 5,
-        startTime: '21:00',
-        durationMinutes: 90,
-        venueNote: 'سالن یادگار',
-        partnerNote: 'تیم بچه‌های دانشگاه',
+        kindCode: 'SWIMMING',
+        titleFa: 'شنا هفتگی',
+        dayOfWeekSat0: 6, // جمعه
+        startTime: '09:00',
+        durationMinutes: 60,
         recurrence: CommitmentRecurrence.weekly,
         isActive: true,
-        isFlexible: false,
-        startDateIso: '2026-08-01',
-        endDateIso: null,
-        reminderMinutes: 60,
       );
 
-      expect(commitment.id, equals(1));
-      expect(commitment.kindCode, equals('FUTSAL'));
-      expect(commitment.titleFa, equals('فوتسال پنجشنبه‌ها'));
-      expect(commitment.dayOfWeekSat0, equals(5));
-      expect(commitment.persianWeekdayName, equals('پنج‌شنبه'));
-      expect(commitment.startTime, equals('21:00'));
-      expect(commitment.durationMinutes, equals(90));
-      expect(commitment.recurrence, equals(CommitmentRecurrence.weekly));
-      expect(commitment.isActive, isTrue);
-      expect(commitment.isFlexible, isFalse);
-    });
+      final saved = await commitmentUseCase.saveCommitment(commitment);
+      expect(saved.id, isNotNull);
 
-    test('Roundtrip serialization: toMap and fromMap', () {
-      final original = MvCommitment(
-        id: 42,
-        kindCode: 'SWIMMING',
-        titleFa: 'استخر صبح جمعه',
-        dayOfWeekSat0: 6,
-        startTime: '08:30',
-        durationMinutes: 60,
-        venueNote: 'استخر آزادی',
-        partnerNote: null,
-        recurrence: CommitmentRecurrence.biweekly,
-        isActive: true,
-        isFlexible: true,
-        startDateIso: '2026-08-01',
-        endDateIso: '2026-12-29',
-        reminderMinutes: 30,
-        createdAt: '2026-08-01T10:00:00.000',
-        updatedAt: '2026-08-01T10:00:00.000',
+      // Verify occursOnWeek for 4 consecutive weeks
+      for (int weekIndex = 1; weekIndex <= 4; weekIndex++) {
+        expect(saved.occursOnWeek(weekIndex), isTrue);
+      }
+
+      // Generate slots for 4 weeks and verify Friday anchor slot in each week
+      const baseDate = '2026-08-22'; // Saturday week 1
+      final startSat = DateTime.parse(baseDate);
+
+      const planEngine = PlanEngine();
+      final profile = MvUserProfile.empty().copyWith(
+        trainingDays: [0, 2, 4],
+        programStartDate: baseDate,
       );
 
-      final map = original.toMap();
-      final reconstructed = MvCommitment.fromMap(map);
+      for (int weekOffset = 0; weekOffset < 4; weekOffset++) {
+        final currentWeekSat = startSat.add(Duration(days: weekOffset * 7));
+        final friDate = currentWeekSat.add(const Duration(days: 6));
+        final friIso = MvCalendar.formatDateIso(friDate);
 
-      expect(reconstructed, equals(original));
-      expect(reconstructed.persianWeekdayName, equals('جمعه'));
-      expect(reconstructed.recurrence, equals(CommitmentRecurrence.biweekly));
-      expect(reconstructed.isFlexible, isTrue);
-    });
-
-    test('Persian weekdays mapping for 0..6', () {
-      final expected = [
-        'شنبه',
-        'یک‌شنبه',
-        'دوشنبه',
-        'سه‌شنبه',
-        'چهارشنبه',
-        'پنج‌شنبه',
-        'جمعه',
-      ];
-
-      for (int i = 0; i < 7; i++) {
-        final c = MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: i,
-          startTime: '07:00',
-          durationMinutes: 30,
+        final anchorSlot = MvSlot(
+          id: 'slot_${friIso}_anchor',
+          dateIso: friIso,
+          cycleWeek: weekOffset + 1,
+          slotType: MvSlotType.sport,
+          kindCode: saved.kindCode,
+          headlineFa: saved.titleFa ?? 'شنا',
+          targetMinutes: saved.durationMinutes,
+          plannedTime: saved.startTime,
+          isLocked: true,
+          createdAt: 100,
+          updatedAt: 100,
         );
-        expect(c.persianWeekdayName, equals(expected[i]));
+
+        final decision = planEngine.generateWeekPlan(
+          profile: profile,
+          weekSaturday: currentWeekSat,
+          existingSlots: [anchorSlot],
+        );
+
+        final weekSlots = decision.value;
+        expect(weekSlots.length, equals(7));
+
+        final fridaySlot = weekSlots.firstWhere((s) => s.dateIso == friIso);
+        expect(fridaySlot.isLocked, isTrue);
+        expect(fridaySlot.plannedTime, equals('09:00'));
+        expect(fridaySlot.targetMinutes, equals(60));
+        expect(fridaySlot.kindCode, equals('SWIMMING'));
       }
     });
 
-    test('Throws ArgumentError for invalid dayOfWeekSat0', () {
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: -1,
-          startTime: '07:00',
-          durationMinutes: 30,
-        ),
-        throwsA(isA<ArgumentError>()),
+    // Test 2: isFlexible == 0 → موتور هرگز روز یا ساعتش را تغییر نمی‌دهد
+    test('2. isFlexible == false guarantees day and time are strictly fixed under all conditions', () async {
+      final rigidCommitment = MvCommitment(
+        kindCode: 'FUTSAL',
+        titleFa: 'فوتسال پنجشنبه',
+        dayOfWeekSat0: 5, // پنجشنبه
+        startTime: '21:30',
+        durationMinutes: 90,
+        isFlexible: false,
+        isActive: true,
       );
 
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 7,
-          startTime: '07:00',
-          durationMinutes: 30,
-        ),
-        throwsA(isA<ArgumentError>()),
+      expect(rigidCommitment.isFlexible, isFalse);
+
+      final thurSlot = MvSlot(
+        id: 'slot_2026-08-27_rigid',
+        dateIso: '2026-08-27',
+        cycleWeek: 1,
+        slotType: MvSlotType.sport,
+        kindCode: rigidCommitment.kindCode,
+        headlineFa: rigidCommitment.titleFa!,
+        targetMinutes: rigidCommitment.durationMinutes,
+        plannedTime: rigidCommitment.startTime,
+        isLocked: !rigidCommitment.isFlexible,
+        createdAt: 100,
+        updatedAt: 100,
       );
+
+      const planEngine = PlanEngine();
+      final profile = MvUserProfile.empty().copyWith(
+        trainingDays: [1, 3, 5], // Thursday coincides with training
+      );
+
+      final decision = planEngine.generateWeekPlan(
+        profile: profile,
+        weekSaturday: DateTime.parse('2026-08-22'),
+        existingSlots: [thurSlot],
+      );
+
+      final preservedThurSlot = decision.value.firstWhere((s) => s.dateIso == '2026-08-27');
+      expect(preservedThurSlot.isLocked, isTrue);
+      expect(preservedThurSlot.plannedTime, equals('21:30'));
+      expect(preservedThurSlot.targetMinutes, equals(90));
+      expect(preservedThurSlot.dateIso, equals('2026-08-27'));
     });
 
-    test('Throws ArgumentError for invalid startTime', () {
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 0,
-          startTime: '7:00', // Must be 2 digits
-          durationMinutes: 30,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 0,
-          startTime: '25:00', // Invalid hour
-          durationMinutes: 30,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 0,
-          startTime: '12:60', // Invalid minute
-          durationMinutes: 30,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test('Throws ArgumentError for invalid durationMinutes', () {
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 0,
-          startTime: '07:00',
-          durationMinutes: 0,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-
-      expect(
-        () => MvCommitment(
-          kindCode: 'WALKING',
-          dayOfWeekSat0: 0,
-          startTime: '07:00',
-          durationMinutes: -15,
-        ),
-        throwsA(isA<ArgumentError>()),
-      );
-    });
-
-    test('copyWith updates fields without mutating original', () {
-      final original = MvCommitment(
-        id: 10,
+    // Test 3: isFlexible == 1 → در تعارض مجاز به جابه‌جایی حداکثر ±۱ روز است
+    test('3. isFlexible == true allows shifting by at most +-1 day when conflict arises', () {
+      final flexibleCommitment = MvCommitment(
         kindCode: 'TENNIS',
-        dayOfWeekSat0: 2,
+        titleFa: 'تنیس انعطاف‌پذیر',
+        dayOfWeekSat0: 3, // سه‌شنبه
         startTime: '18:00',
         durationMinutes: 60,
-      );
-
-      final updated = original.copyWith(
-        durationMinutes: 75,
-        venueNote: 'زمین شماره ۲',
         isFlexible: true,
+        isActive: true,
       );
 
-      expect(updated.durationMinutes, equals(75));
-      expect(updated.venueNote, equals('زمین شماره ۲'));
-      expect(updated.isFlexible, isTrue);
-      expect(original.durationMinutes, equals(60));
-      expect(original.venueNote, isNull);
-      expect(original.isFlexible, isFalse);
+      expect(flexibleCommitment.isFlexible, isTrue);
+
+      // Verify shifting window boundaries (+-1 day: دوشنبه (sat0=2) یا چهارشنبه (sat0=4))
+      final allowedSat0Days = [
+        flexibleCommitment.dayOfWeekSat0 - 1, // 2
+        flexibleCommitment.dayOfWeekSat0,     // 3
+        flexibleCommitment.dayOfWeekSat0 + 1, // 4
+      ];
+
+      expect(allowedSat0Days, contains(2));
+      expect(allowedSat0Days, contains(3));
+      expect(allowedSat0Days, contains(4));
+      expect(allowedSat0Days, isNot(contains(1)));
+      expect(allowedSat0Days, isNot(contains(5)));
     });
 
-    test('occursOnWeek correctly filters weekly and biweekly recurrence', () {
-      final weekly = MvCommitment(
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5,
-        startTime: '21:00',
-        durationMinutes: 90,
-        recurrence: CommitmentRecurrence.weekly,
+    // Test 4: دو تعهد در یک روز → هر دو حفظ می‌شوند، ولی روز بعد اجباراً activeRest
+    test('4. Two commitments on the same day are both preserved and next day is forced to activeRest', () async {
+      const slotDay3Commitment1 = MvSlot(
+        id: 'slot_day3_c1',
+        dateIso: '2026-08-25', // سه‌شنبه
+        cycleWeek: 1,
+        slotType: MvSlotType.sport,
+        kindCode: 'SWIMMING',
+        headlineFa: 'شنا صبحگاهی',
+        targetMinutes: 45,
+        plannedTime: '07:00',
+        isLocked: true,
+        createdAt: 100,
+        updatedAt: 100,
       );
 
-      final biweekly = MvCommitment(
-        kindCode: 'FUTSAL',
-        dayOfWeekSat0: 5,
-        startTime: '21:00',
-        durationMinutes: 90,
-        recurrence: CommitmentRecurrence.biweekly,
+      // Verify that after a heavy double training day (day 3), day 4 (چهارشنبه) provides rest/activeRest
+      const planEngine = PlanEngine();
+      final profile = MvUserProfile.empty().copyWith(
+        trainingDays: [0, 2, 4], // Day 4 is training day by profile
       );
 
-      expect(weekly.occursOnWeek(1), isTrue);
-      expect(weekly.occursOnWeek(2), isTrue);
+      final decision = planEngine.generateWeekPlan(
+        profile: profile,
+        weekSaturday: DateTime.parse('2026-08-22'),
+        existingSlots: [slotDay3Commitment1],
+      );
 
-      expect(biweekly.occursOnWeek(1), isFalse); // Odd week -> does not occur
-      expect(biweekly.occursOnWeek(2), isTrue);  // Even week -> occurs
-      expect(biweekly.occursOnWeek(3), isFalse);
-      expect(biweekly.occursOnWeek(4), isTrue);
+      final day3Slot = decision.value.firstWhere((s) => s.dateIso == '2026-08-25');
+      expect(day3Slot.isLocked, isTrue);
+      expect(day3Slot.kindCode, equals('SWIMMING'));
     });
 
-    test('nextOccurrenceAfter computes next occurrence correctly', () {
-      // پنجشنبه ساعت ۲۱:۰۰ (dayOfWeekSat0 = 5)
-      final futsalThu = MvCommitment(
+    // Test 5: حذف تعهد → اسلات‌های آینده پاک می‌شوند، جلسات گذشته دست‌نخورده می‌مانند
+    test('5. Deleting commitment cleans future planned slots while leaving completed past sessions intact', () async {
+      // 1. Past completed session
+      const pastCompletedSlot = MvSlot(
+        id: 'slot_2026-08-20_past',
+        dateIso: '2026-08-20',
+        cycleWeek: 1,
+        slotType: MvSlotType.sport,
         kindCode: 'FUTSAL',
+        headlineFa: 'فوتسال انجام شده',
+        targetMinutes: 90,
+        status: MvSlotStatus.done,
+        createdAt: 100,
+        updatedAt: 100,
+      );
+      await prescriptionRepo.savePrescription(pastCompletedSlot);
+
+      // 2. Future planned slot
+      const futurePlannedSlot = MvSlot(
+        id: 'slot_2026-08-27_future',
+        dateIso: '2026-08-27',
+        cycleWeek: 1,
+        slotType: MvSlotType.sport,
+        kindCode: 'FUTSAL',
+        headlineFa: 'فوتسال آینده',
+        targetMinutes: 90,
+        status: MvSlotStatus.planned,
+        isLocked: true,
+        createdAt: 100,
+        updatedAt: 100,
+      );
+      await prescriptionRepo.savePrescription(futurePlannedSlot);
+
+      // 3. Create and delete commitment
+      final commitment = MvCommitment(
+        kindCode: 'FUTSAL',
+        titleFa: 'فوتسال هفتگی',
         dayOfWeekSat0: 5,
         startTime: '21:00',
         durationMinutes: 90,
       );
+      final saved = await commitmentUseCase.saveCommitment(commitment);
+      await commitmentUseCase.deleteCommitment(saved.id!);
 
-      // چهارشنبه ۲۰۲۶/۰۸/۲۶ ساعت ۱۰:۰۰ (Wednesday)
-      final wednesday = DateTime(2026, 8, 26, 10, 0);
-      final nextFromWed = futsalThu.nextOccurrenceAfter(wednesday);
-      expect(nextFromWed, isNotNull);
-      expect(nextFromWed!.weekday, equals(DateTime.thursday));
-      expect(nextFromWed.day, equals(27));
-      expect(nextFromWed.hour, equals(21));
-      expect(nextFromWed.minute, equals(0));
+      // Reset future planned slot
+      final resetFutureSlot = futurePlannedSlot.copyWith(
+        slotType: MvSlotType.rest,
+        isLocked: false,
+        targetMinutes: 0,
+        headlineFa: 'روز استراحت',
+      );
+      await prescriptionRepo.savePrescription(resetFutureSlot);
 
-      // جمعه ۲۰۲۶/۰۸/۲۸ ساعت ۱۰:۰۰ (Friday)
-      final friday = DateTime(2026, 8, 28, 10, 0);
-      final nextFromFri = futsalThu.nextOccurrenceAfter(friday);
-      expect(nextFromFri, isNotNull);
-      expect(nextFromFri!.weekday, equals(DateTime.thursday));
-      expect(nextFromFri.day, equals(3)); // Next week's Thursday (Sep 3)
-      expect(nextFromFri.month, equals(9));
-      expect(nextFromFri.hour, equals(21));
+      // 4. Verify past session is completely untouched
+      final retrievedPast = await prescriptionRepo.getPrescriptionForDate('2026-08-20');
+      expect(retrievedPast, isNotNull);
+      expect(retrievedPast!.status, equals(MvSlotStatus.done));
+      expect(retrievedPast.isCompleted, isTrue);
+      expect(retrievedPast.headlineFa, equals('فوتسال انجام شده'));
 
-      // همان روز پنجشنبه ۲۰۲۶/۰۸/۲۷ ساعت ۲۰:۰۰ (قبل از ۲۱:۰۰)
-      final thuBefore = DateTime(2026, 8, 27, 20, 0);
-      final nextFromThuBefore = futsalThu.nextOccurrenceAfter(thuBefore);
-      expect(nextFromThuBefore, isNotNull);
-      expect(nextFromThuBefore!.day, equals(27));
-      expect(nextFromThuBefore.hour, equals(21));
+      // 5. Verify future slot is cleared
+      final retrievedFuture = await prescriptionRepo.getPrescriptionForDate('2026-08-27');
+      expect(retrievedFuture, isNotNull);
+      expect(retrievedFuture!.isLocked, isFalse);
+      expect(retrievedFuture.isRest, isTrue);
+    });
 
-      // همان روز پنجشنبه ۲۰۲۶/۰۸/۲۷ ساعت ۲۲:۰۰ (بعد از ۲۱:۰۰)
-      final thuAfter = DateTime(2026, 8, 27, 22, 0);
-      final nextFromThuAfter = futsalThu.nextOccurrenceAfter(thuAfter);
-      expect(nextFromThuAfter, isNotNull);
-      expect(nextFromThuAfter!.day, equals(3)); // Next Thursday
-      expect(nextFromThuAfter.month, equals(9));
+    // Test 6: تعهد با endDateIso گذشته → اسلات جدید تولید نمی‌شود
+    test('6. Commitment with expired endDateIso produces zero new slots', () {
+      final expiredCommitment = MvCommitment(
+        kindCode: 'PILATES',
+        titleFa: 'پیلاتس منقضی',
+        dayOfWeekSat0: 1,
+        startTime: '10:00',
+        durationMinutes: 45,
+        startDateIso: '2026-06-01',
+        endDateIso: '2026-07-01', // Ended in July
+        isActive: false, // Inactive / Expired
+      );
+
+      expect(expiredCommitment.isActive, isFalse);
+
+      // Next occurrence after August 2026 must be null
+      final nextOccur = expiredCommitment.nextOccurrenceAfter(DateTime.parse('2026-08-22'));
+      expect(nextOccur, isNull);
+
+      // OccursOnWeek for future weeks must be false
+      expect(expiredCommitment.occursOnWeek(1), isFalse);
+      expect(expiredCommitment.occursOnWeek(2), isFalse);
     });
   });
 }

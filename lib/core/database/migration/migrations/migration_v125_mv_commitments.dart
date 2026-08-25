@@ -22,22 +22,24 @@ class MigrationV125MvCommitments extends Migration {
           id                INTEGER PRIMARY KEY AUTOINCREMENT,
           kindCode          TEXT    NOT NULL,
           titleFa           TEXT,
-          ritmoDayOfWeek    INTEGER NOT NULL,
-          timeOfDay         TEXT    NOT NULL,
-          durationMinutes   INTEGER NOT NULL DEFAULT 60,
-          intensityTier     TEXT    NOT NULL DEFAULT 'MODERATE',
+          dayOfWeekSat0     INTEGER NOT NULL,
+          startTime         TEXT    NOT NULL,
+          durationMinutes   INTEGER NOT NULL,
           venueNote         TEXT,
-          isAnchor          INTEGER NOT NULL DEFAULT 1,
+          partnerNote       TEXT,
+          recurrence        TEXT    NOT NULL DEFAULT 'WEEKLY',
           isActive          INTEGER NOT NULL DEFAULT 1,
-          effectiveFromIso  TEXT    NOT NULL,
-          effectiveUntilIso TEXT,
-          createdAt         INTEGER NOT NULL,
-          updatedAt         INTEGER NOT NULL
+          isFlexible        INTEGER NOT NULL DEFAULT 0,
+          startDateIso      TEXT,
+          endDateIso        TEXT,
+          reminderMinutes   INTEGER,
+          createdAt         TEXT    NOT NULL,
+          updatedAt         TEXT    NOT NULL
         );
       ''');
 
       await db.execute('''
-        CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(ritmoDayOfWeek, isActive);
+        CREATE INDEX IF NOT EXISTS idx_mv_commitments_day ON mv_commitments(dayOfWeekSat0, isActive);
       ''');
     } catch (e) {
       RitmoLog.warning('MigrationV125MvCommitments', 'Error applying migration v125: $e');

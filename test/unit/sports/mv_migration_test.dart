@@ -142,52 +142,56 @@ void main() {
       expect(colNames, contains('id'));
       expect(colNames, contains('kindCode'));
       expect(colNames, contains('titleFa'));
-      expect(colNames, contains('ritmoDayOfWeek'));
-      expect(colNames, contains('timeOfDay'));
+      expect(colNames, contains('dayOfWeekSat0'));
+      expect(colNames, contains('startTime'));
       expect(colNames, contains('durationMinutes'));
-      expect(colNames, contains('intensityTier'));
       expect(colNames, contains('venueNote'));
-      expect(colNames, contains('isAnchor'));
+      expect(colNames, contains('partnerNote'));
+      expect(colNames, contains('recurrence'));
       expect(colNames, contains('isActive'));
-      expect(colNames, contains('effectiveFromIso'));
-      expect(colNames, contains('effectiveUntilIso'));
+      expect(colNames, contains('isFlexible'));
+      expect(colNames, contains('startDateIso'));
+      expect(colNames, contains('endDateIso'));
+      expect(colNames, contains('reminderMinutes'));
       expect(colNames, contains('createdAt'));
       expect(colNames, contains('updatedAt'));
 
       // Insert commitment row
-      final now = DateTime.now().millisecondsSinceEpoch;
+      final now = DateTime.now().toIso8601String();
       final insertedId = await db.insert('mv_commitments', {
         'kindCode': 'FUTSAL',
-        'titleFa': 'فوتسال هفتگی',
-        'ritmoDayOfWeek': 5, // Thursday in Ritmo
-        'timeOfDay': '21:00',
+        'titleFa': 'فوتسال پنجشنبه‌ها',
+        'dayOfWeekSat0': 5, // پنجشنبه در شنبه-مبنا (۰=ش، ۱=ی، ۲=د، ۳=س، ۴=چ، ۵=پ، ۶=ج)
+        'startTime': '21:00',
         'durationMinutes': 90,
-        'intensityTier': 'HIGH',
         'venueNote': 'سالن یادگار',
-        'isAnchor': 1,
+        'partnerNote': 'بچه‌های دانشگاه',
+        'recurrence': 'WEEKLY',
         'isActive': 1,
-        'effectiveFromIso': '2026-08-01',
-        'effectiveUntilIso': null,
+        'isFlexible': 0,
+        'startDateIso': '2026-08-01',
+        'endDateIso': null,
+        'reminderMinutes': 60,
         'createdAt': now,
         'updatedAt': now,
       });
 
       expect(insertedId, isPositive);
 
-      // Query by ritmoDayOfWeek & isActive
+      // Query by dayOfWeekSat0 & isActive
       final results = await db.query(
         'mv_commitments',
-        where: 'ritmoDayOfWeek = ? AND isActive = 1',
+        where: 'dayOfWeekSat0 = ? AND isActive = 1',
         whereArgs: [5],
       );
 
       expect(results.length, equals(1));
       expect(results.first['kindCode'], equals('FUTSAL'));
       expect(results.first['durationMinutes'], equals(90));
-      expect(results.first['isAnchor'], equals(1));
+      expect(results.first['isFlexible'], equals(0));
     });
 
-    test('S2-T1: MigrationRunner applies MigrationV125MvCommitments successfully', () async {
+    test('S2-T1: MigrationRunner applies MigrationV125MvCommitments idempotently', () async {
       final migrationDb = await databaseFactory.openDatabase(
         inMemoryDatabasePath,
       );
@@ -203,6 +207,9 @@ void main() {
         "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_mv_commitments_day'",
       );
       expect(indexes.isNotEmpty, isTrue);
+
+      // Verify idempotency (running ensure / migration again doesn't crash)
+      await SupplementarySportsTables.ensureCommitmentTables(migrationDb);
 
       await migrationDb.close();
     });

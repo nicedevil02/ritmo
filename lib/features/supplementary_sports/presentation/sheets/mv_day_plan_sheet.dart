@@ -56,12 +56,15 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
   late final MvKindUseCase _kindUseCase;
   late MvSlotType _slotType;
+  MvMovementKind? _kind;
   String? _kindCode;
-  String? _kindTitleFa;
-  String? _kindEmoji;
   late int _minutes;
   late MvIntensityTier _intensity;
   late TextEditingController _titleController;
+  late TextEditingController _venueController;
+  TimeOfDay? _plannedTime;
+  final List<String> _focusCodes = [];
+  bool _repeatWeekly = false;
 
   @override
   void initState() {
@@ -71,13 +74,16 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     _kindCode = widget.slot.kindCode;
     _minutes = widget.slot.targetMinutes == 0 ? 30 : widget.slot.targetMinutes;
     _intensity = widget.slot.intensityTier;
+    _focusCodes.addAll(widget.slot.focusCodes);
     _titleController = TextEditingController(text: widget.slot.headlineFa);
+    _venueController = TextEditingController();
     _loadKindDetails();
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _venueController.dispose();
     super.dispose();
   }
 
@@ -88,8 +94,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
         final kind = await _kindUseCase.getByCode(code);
         if (kind != null && mounted) {
           setState(() {
-            _kindTitleFa = kind.titleFa;
-            _kindEmoji = kind.emoji;
+            _kind = kind;
           });
         }
       } catch (_) {}
@@ -145,9 +150,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
     if (picked != null && mounted) {
       setState(() {
+        _kind = picked;
         _kindCode = picked.code;
-        _kindTitleFa = picked.titleFa;
-        _kindEmoji = picked.emoji;
         if (_titleController.text.isEmpty ||
             _titleController.text == _slotType.titleFa) {
           _titleController.text = picked.titleFa;
@@ -160,31 +164,24 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     setState(() {
       _slotType = type;
       if (type == MvSlotType.rest) {
+        _kind = null;
         _kindCode = null;
-        _kindTitleFa = null;
-        _kindEmoji = null;
         _titleController.text = 'استراحت';
       } else if (type == MvSlotType.strength) {
         if (_kindCode == null) {
           _titleController.text = 'تمرین قدرتی';
         }
       } else {
-        // cardio, sport, outdoor: require a kindCode
         if (_kindCode == null) {
           if (type == MvSlotType.cardio) {
             _kindCode = 'RUNNING';
-            _kindTitleFa = 'دویدن';
-            _kindEmoji = '🏃';
           } else if (type == MvSlotType.sport) {
             _kindCode = 'FOOTBALL';
-            _kindTitleFa = 'فوتبال';
-            _kindEmoji = '⚽';
           } else if (type == MvSlotType.outdoor) {
             _kindCode = 'HIKING';
-            _kindTitleFa = 'کوه‌نوردی';
-            _kindEmoji = '🏔';
           }
-          _titleController.text = _kindTitleFa ?? type.titleFa;
+          _loadKindDetails();
+          _titleController.text = _kind?.titleFa ?? type.titleFa;
         }
       }
     });
@@ -194,7 +191,6 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     final now = DateTime.now().millisecondsSinceEpoch;
     final isRest = _slotType == MvSlotType.rest;
 
-    // Ensure kindCode is present if required by MvSlotType
     String? finalKindCode = _kindCode;
     if (!isRest && _slotType != MvSlotType.strength && finalKindCode == null) {
       if (_slotType == MvSlotType.sport) {
@@ -208,13 +204,14 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
     final headline = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
-        : (_kindTitleFa ?? _slotType.titleFa);
+        : (_kind?.titleFa ?? _slotType.titleFa);
 
     final updated = widget.slot.copyWith(
       slotType: _slotType,
       kindCode: isRest ? null : finalKindCode,
       targetMinutes: isRest ? 0 : _minutes,
       intensityTier: isRest ? MvIntensityTier.light : _intensity,
+      focusCodes: _focusCodes,
       headlineFa: headline,
       updatedAt: now,
     );
@@ -230,6 +227,10 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
     final isKindRequired =
         _slotType != MvSlotType.rest && _slotType != MvSlotType.strength;
+    final isStrength =
+        _slotType == MvSlotType.strength ||
+        (_kind != null && _kind!.family == MovementFamily.strength);
+    final needsVenue = _kind?.needsVenue == true;
 
     return MvSheetScaffold(
       title: 'برنامهٔ روز',
@@ -239,9 +240,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ۱. عنوان روز و تاریخ جلالی در هدر آمده است.
-
-            // ۲. نوع اسلات (۵ چیپ)
+            // نوع اسلات (۵ چیپ)
             Text(
               'نوع برنامه',
               style: textTheme.labelLarge?.copyWith(
@@ -264,7 +263,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             ),
             SizedBox(height: metrics.spaceMd),
 
-            // ۳. انتخاب نوع حرکت (اگر نوع != REST و != STRENGTH باشد الزامی است)
+            // ۱. انتخاب نوع ورزش (اجباری اگر != REST و != STRENGTH)
             if (isKindRequired) ...[
               Text(
                 'نوع ورزش / فعالیت',
@@ -291,13 +290,13 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   child: Row(
                     children: [
                       Text(
-                        _kindEmoji ?? '🏃',
-                        style: const TextStyle(fontSize: 24),
+                        _kind?.emoji ?? '🏃',
+                        style: textTheme.headlineSmall,
                       ),
                       SizedBox(width: metrics.spaceSm),
                       Expanded(
                         child: Text(
-                          _kindTitleFa ?? 'انتخاب از ۴۹ ورزش...',
+                          _kind?.titleFa ?? 'انتخاب از ۴۹ ورزش...',
                           style: textTheme.bodyMedium?.copyWith(
                             color: colors.textPrimary,
                             fontWeight: FontWeight.w700,
@@ -316,7 +315,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             ],
 
             if (_slotType != MvSlotType.rest) ...[
-              // ۴. مدت پیشنهادی (چیپ‌های ۱۵/۳۰/۴۵/۶۰ دقیقه)
+              // ۲. مدت پیشنهادی (چیپ‌های ۱۵/۳۰/۴۵/۶۰ دقیقه)
               Text(
                 'مدت هدف (دقیقه)',
                 style: textTheme.labelLarge?.copyWith(
@@ -339,7 +338,82 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               ),
               SizedBox(height: metrics.spaceMd),
 
-              // ۵. شدت تمرین (۳ دکمه: سبک، متوسط، سنگین)
+              // ۳. ساعت شروع (plannedTime) اختیاری
+              Text(
+                'ساعت شروع (اختیاری)',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: metrics.spaceSm),
+              InkWell(
+                key: const ValueKey('day_plan_time_picker'),
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: _plannedTime ?? const TimeOfDay(hour: 18, minute: 0),
+                  );
+                  if (picked != null) {
+                    setState(() => _plannedTime = picked);
+                  }
+                },
+                borderRadius: BorderRadius.circular(metrics.radiusField),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: metrics.spaceMd,
+                    vertical: metrics.spaceSm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(metrics.radiusField),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time_rounded, color: colors.textSecondary, size: 20),
+                      SizedBox(width: metrics.spaceSm),
+                      Text(
+                        _plannedTime != null
+                            ? '${toPersianDigits(_plannedTime!.hour.toString().padLeft(2, '0'))}:${toPersianDigits(_plannedTime!.minute.toString().padLeft(2, '0'))}'
+                            : 'مشخص نشده',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: _plannedTime != null ? colors.textPrimary : colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: metrics.spaceMd),
+
+              // ۴. مکان (venueNote) — فقط اگر kind.needsVenue == true
+              if (needsVenue) ...[
+                Text(
+                  'مکان یا سالن (اختیاری)',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: metrics.spaceXs),
+                TextField(
+                  key: const ValueKey('day_plan_venue_field'),
+                  controller: _venueController,
+                  decoration: InputDecoration(
+                    hintText: 'مثلاً سالن شهدای غواص، زمین چمن آزادی',
+                    filled: true,
+                    fillColor: colors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(metrics.radiusField),
+                      borderSide: BorderSide(color: colors.border),
+                    ),
+                  ),
+                ),
+                SizedBox(height: metrics.spaceMd),
+              ],
+
+              // ۵. شدت تمرین (۳ گزینهٔ MvIntensityTier)
               Text(
                 'شدت تمرین',
                 style: textTheme.labelLarge?.copyWith(
@@ -362,7 +436,64 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               ),
               SizedBox(height: metrics.spaceMd),
 
-              // فیلد عنوان اختیاری
+              // ۶. تمرکز عضلانی — فقط اگر family == STRENGTH
+              if (isStrength) ...[
+                Text(
+                  'تمرکز عضلانی',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: metrics.spaceSm),
+                Wrap(
+                  key: const ValueKey('day_plan_muscle_focus'),
+                  spacing: metrics.spaceSm,
+                  runSpacing: metrics.spaceSm,
+                  children: MvMuscleGroup.all.take(6).map((mg) {
+                    final isSel = _focusCodes.contains(mg.code);
+                    return MvChip(
+                      label: mg.titleFa,
+                      icon: Text(mg.emoji, style: textTheme.labelSmall),
+                      isSelected: isSel,
+                      onTap: () {
+                        setState(() {
+                          if (isSel) {
+                            _focusCodes.remove(mg.code);
+                          } else {
+                            _focusCodes.add(mg.code);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: metrics.spaceMd),
+              ],
+
+              // ۷. «هر هفته تکرار شود»
+              SwitchListTile.adaptive(
+                key: const ValueKey('day_plan_repeat_weekly_switch'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'هر هفته تکرار شود',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  'این فعالیت در هفته‌های بعد در همین روز قرار می‌گیرد',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                value: _repeatWeekly,
+                onChanged: (val) => setState(() => _repeatWeekly = val),
+              ),
+              SizedBox(height: metrics.spaceMd),
+
+              // فیلد عنوان دلخواه
               Text(
                 'عنوان دلخواه (اختیاری)',
                 style: textTheme.labelLarge?.copyWith(
@@ -374,7 +505,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               TextField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  hintText: _kindTitleFa ?? _slotType.titleFa,
+                  hintText: _kind?.titleFa ?? _slotType.titleFa,
                   filled: true,
                   fillColor: colors.surface,
                   border: OutlineInputBorder(
@@ -388,7 +519,6 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
           ],
         ),
       ),
-      // ۶. دکمهٔ ثبت / بستن
       bottomAction: MvPrimaryAction(
         key: const ValueKey('day_plan_save_action'),
         label: 'ثبت و ذخیره برنامه',

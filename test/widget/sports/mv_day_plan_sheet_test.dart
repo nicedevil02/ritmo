@@ -132,5 +132,78 @@ void main() {
       expect(savedSlot!.kindCode, equals('FOOTBALL'));
       expect(savedSlot!.targetMinutes, equals(45));
     });
+
+    testWidgets('Selecting FUTSAL shows venue field and hides muscle focus field', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const initialSlot = MvSlot(
+        id: 'slot_futsal_test',
+        dateIso: '2026-08-25',
+        slotType: MvSlotType.strength,
+        headlineFa: 'تمرین قدرتی',
+        createdAt: 1000,
+        updatedAt: 1000,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  MvDayPlanSheet.show(
+                    context: context,
+                    slot: initialSlot,
+                    kindUseCase: kindUseCase,
+                    onSave: (_) {},
+                  );
+                },
+                child: const Text('Open Day Plan'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Open sheet
+      await tester.tap(find.text('Open Day Plan'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // For STRENGTH: muscle focus is shown, venue is hidden
+      expect(find.byKey(const ValueKey('day_plan_muscle_focus')), findsOneWidget);
+      expect(find.byKey(const ValueKey('day_plan_venue_field')), findsNothing);
+
+      // Switch to SPORT
+      await tester.ensureVisible(find.byKey(const ValueKey('slot_type_SPORT')));
+      await tester.tap(find.byKey(const ValueKey('slot_type_SPORT')));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+
+      // Open Kind Picker
+      await tester.ensureVisible(find.byKey(const ValueKey('day_plan_kind_picker_tile')));
+      await tester.tap(find.byKey(const ValueKey('day_plan_kind_picker_tile')));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 200)));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Search and pick FUTSAL
+      await tester.enterText(find.byType(TextField).last, 'فوتسال');
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 200)));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.ensureVisible(find.byKey(const ValueKey('kind_FUTSAL')));
+      await tester.tap(find.byKey(const ValueKey('kind_FUTSAL')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // For FUTSAL: venue field MUST be visible, muscle focus MUST be hidden
+      expect(find.byKey(const ValueKey('day_plan_venue_field')), findsOneWidget);
+      expect(find.byKey(const ValueKey('day_plan_muscle_focus')), findsNothing);
+    });
   });
 }

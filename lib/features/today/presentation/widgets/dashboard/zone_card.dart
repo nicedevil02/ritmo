@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -63,7 +61,6 @@ class ZoneCard extends StatelessWidget {
 
     final Color energyColor;
     final IconData energyIcon;
-    final List<Color> energyRingColors;
 
     final isHigh = currentEnergyLabel == 'بالا' || currentEnergyLabel == 'High';
     final isLow = currentEnergyLabel == 'پایین' || currentEnergyLabel == 'Low';
@@ -71,15 +68,12 @@ class ZoneCard extends StatelessWidget {
     if (isHigh) {
       energyColor = colors.success;
       energyIcon = CupertinoIcons.flame_fill;
-      energyRingColors = [colors.success, colors.primary];
     } else if (isLow) {
       energyColor = colors.medicalRed;
       energyIcon = CupertinoIcons.moon_fill;
-      energyRingColors = [colors.medicalRed, colors.warning];
     } else {
-      energyColor = colors.warning;
+      energyColor = colors.energyAccent;
       energyIcon = CupertinoIcons.bolt_fill;
-      energyRingColors = [colors.warning, colors.success];
     }
 
     final energyLabel = isHigh

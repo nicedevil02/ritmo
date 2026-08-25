@@ -806,318 +806,314 @@ MvPlanResult generateWeek({
 
 ### - [x] S3-T6 — مرحلهٔ ۳: `ADJACENCY` (ADJ-1..ADJ-7) — 2ebdd84c
 
-**کار:** `_applyAdjacency()` را دقیقاً طبق جدول §۴٫۵ پیاده کن. ترتیب اعمال دقیقاً ADJ-1 تا ADJ-7.
+**کار:** `_applyAdjacency()` را دقیقاً طبق جدول §۴٫۵ پیاده کن. ترتیب اعمال دقیقاً ADJ-1 �## ۱۱. اسپرینت S6 — بدهی فنی، مستندات، و پاکسازی کد یتیم
 
-**پذیرش (تست جدولی اجباری):**
+**قاعدهٔ طلایی این اسپرینت:** هیچ فایلی حذف نمی‌شود مگر در `PORT_LEDGER.md` یک ردیف با وضعیت `PORTED` یا `INTENTIONALLY_DROPPED` داشته باشد.
 
-| ورودی | خروجی مورد انتطار |
-| --- | --- |
-| فقط لنگر پنجشنبه فوتسال ۹۰د | چهارشنبه = `mobility` حداکثر ۲۰د؛ جمعه = `activeRest` حداکثر ۲۵د |
-| لنگر پنجشنبه فوتسال + جمعه کوه | پنجشنبه و جمعه قفل؛ شنبه = `activeRest` (ADJ-6)؛ بانر تعارض فعال |
-| ۳ لنگر در هفته | دقیقاً یک روز `rest` تضمین شود (ADJ-5) |
-| دو قدرتی سنگین با تمرکز یکسان | حداقل ۴۸ ساعت فاصله (ADJ-4) |
-| لنگر ۴۵ دقیقه‌ای پینگ‌پونگ (jointImpact=1) | روز بعد محدود **نشود** (لنگر پرضربه نیست) |
+### - [x] S6-T1 — استخراج کامل l10n — 98eb2a14
 
-**دستور تأیید:** `flutter test test/unit/sports/mv_plan_engine_adjacency_test.dart`
-
----
-
-### - [x] S3-T7 — مرحلهٔ ۴: `FILL` با سقف رشد — 838d3f20
-
-**کار:** `_fillToTarget()`: تا رسیدن به معادل متوسط هدف (§۴٫۲) و حداقل ۲ روز قدرتی، اسلات اضافه کن، با رعایت سقف §۴٫۴. انتخاب نوع پرکننده از `SelectionEngine` موجود بگیرد — موتور جدید نساز.
-
-**قواعد قطعی ترتیب اولویت پرکردن:**
-1. کمبود روز قدرتی (تا ۲ روز)
-2. حرکات پیشگیری مربوط به لنگرها (`prehabTags`)
-3. کمبود دقیقهٔ معادل متوسط (تا ۱۵۰)
-4. تحرک و بازیابی
-
-**پذیرش:** تست: کاربری با ۲ لنگر جمعاً ۲۷۰ دقیقهٔ معادل → موتور دیگر هوازی اضافه نکند ولی حتماً ۲ روز قدرتی بگذارد.
-
-**دستور تأیید:** `flutter test test/unit/sports/`
-
----
-
-### - [x] S3-T8 — مرحلهٔ ۵: `COMPLEMENT` (قدرتی پشتیبان لنگر) — 64b8bba2
-
-**کار:** `_addComplements()`: برای هر لنگر، از `mv_kind_profile.complementFocus` تمرکز قدرتی روزهای قدرتی را تعیین کن و `reasonKey = 'mv_reason_complement'` با پارامترهای `kind` و `focus` بگذار.
-
-**پذیرش:** تست: لنگر `FOOTBALL` → در روز قدرتی باید `posterior_chain` در تمرکز باشد. لنگر `HIKING` → `step_up` یا `eccentric_quad`. لنگر `ROCK_CLIMBING` → `antagonist_push`.
-
-**دستور تأیید:** `flutter test test/unit/sports/`
-
----
-
-### - [x] S3-T9 — مرحلهٔ ۶: `FALLBACK` و ثبت تصمیم — a0c9e048
+**فایل‌ها:** همهٔ فایل‌های `lib/features/supplementary_sports/presentation/`، فایل arb فارسی
 
 **کار:**
-1. `_fallback()`: اگر خروجی خالی شد، محدودیت‌ها را به ترتیب معکوس شل کن (اول فصل، بعد تجهیزات، بعد مدت). آخرین خروجی همیشه: یک اسلات `mobility` ۱۰ دقیقه‌ای با `reasonKey = 'mv_reason_fallback_minimum'`.
-2. هر مرحله یک ردیف در `ss_decision_log` بنویسد: نام مرحله، تعداد اسلات ورودی/خروجی، و قواعد اعمال‌شده.
+1. اجرا: `rg -n "'[\u0600-\u06FF]" lib/features/supplementary_sports/presentation/ | wc -l` → عدد اولیه را در لاگ بنویس.
+2. هر رشتهٔ فارسی را به کلید `mv_` منتقل کن.
+3. کلیدهای شناخته‌شدهٔ واجب (حداقل): `mv_day_plan_title`, `mv_library_title`, `mv_week_plan_title`.
+4. اجرای مجدد دستور ۱ → باید **صفر** شود.
 
-**پذیرش (گاردتست «همیشه-خروجی»):** ۸ پروفایل حاد (بدون تجهیزات + محدودیت زانو + آپارتمان + خواب ۴ ساعت + بدون زمان …) → هیچ‌کدام نباید برنامهٔ خالی بدهد.
+**ممنوع:** کلید بدون پیشوند `mv_`. کلید تکراری با معنای یکسان.
 
-**دستور تأیید:** `flutter test test/unit/sports/`
+**پذیرش:** خروجی `rg` بالا برابر صفر؛ `flutter analyze` پاک.
 
----
-
-### - [x] S3-T10 — سه مسیر طلایی به‌عنوان تست سراسری — e8163245
-
-**فایل جدید:** `test/unit/sports/mv_golden_paths_test.dart`
-
-**مسیر طلایی ۱ — فوتسالی هفتگی:** تعهد پنجشنبه ۲۱:۰۰ فوتسال ۹۰ دقیقه → موتور باید: پنجشنبه قفل؛ چهارشنبه تحرک ≤۲۰د؛ جمعه بازیابی ≤۲۵د؛ دو روز قدرتی با تمرکز زنجیرهٔ پشتی؛ مجموع معادل متوسط ≥۱۵۰.
-
-**مسیر طلایی ۲ — کوهنورد جمعه:** تعهد جمعه ۰۶:۰۰ کوه ۲۴۰ دقیقه → پنجشنبه سبک؛ شنبه بازیابی؛ دو روز قدرتی با `step_up`/`eccentric_quad`؛ هیچ قدرتی سنگین پایین‌تنه در پنجشنبه.
-
-**مسیر طلایی ۳ — دو لنگر پشت‌سرهم:** پنجشنبه فوتسال + جمعه کوه → بانر تعارض؛ شنبه `activeRest`؛ حداقل یک روز `rest` کامل؛ مجموع بار برنامه‌ریزی‌شده داخل سقف ۱۰٪.
-
-هر سه مسیر باید علاوه بر ساختار، وجود `reasonKey` روی همهٔ اسلات‌ها را چک کنند.
-
-**دستور تأیید:** `flutter test test/unit/sports/mv_golden_paths_test.dart && flutter test`
+**دستور تأیید:** `flutter analyze && flutter test`
 
 ---
 
-## ۹. اسپرینت S4 — حالت‌های پلیر و متریک‌های واقعی
+### - [x] S6-T2 — حذف مقادیر سبک خام — 98eb2a14
 
-**هدف اسپرینت:** جلسهٔ کوه مثل جلسهٔ کوه ثبت شود و جلسهٔ فوتسال مثل فوتسال — نه هر دو مثل جلسهٔ قدرتی هدایت‌شده.
+**کار:** در کل `lib/features/supplementary_sports/`:
+- هر `fontSize:` خام → توکن تایپوگرافی سیستم طراحی
+- هر `Color(0x` خام → توکن رنگ
+- هر فاصلهٔ عددی خارج از مقیاس ۴ پیکسلی → نزدیک‌ترین توکن
 
-### - [x] S4-T1 — مایگریشن ستون‌های متریک جلسه — 0a51fa65
+**مرجع:** `docs/RITMO_DESIGN_TOKENS.md` و `docs/DESIGN_SYSTEM_ACTION_SHEETS.md`. توکن جدید اختراع نکن.
 
-**فایل‌ها:** مایگریشن `MigrationV<N>SessionMetrics`، `lib/core/database/schema/tables/supplementary_sports_tables.dart`
+**پذیرش:** `rg -n "fontSize:" lib/features/supplementary_sports/ | wc -l` → صفر. `rg -n "Color\(0x" lib/features/supplementary_sports/ | wc -l` → صفر.
 
-```sql
-ALTER TABLE movement_sessions ADD COLUMN distanceM        REAL;
-ALTER TABLE movement_sessions ADD COLUMN elevationGainM   REAL;
-ALTER TABLE movement_sessions ADD COLUMN laps             INTEGER;
-ALTER TABLE movement_sessions ADD COLUMN packWeightKg     REAL;
-ALTER TABLE movement_sessions ADD COLUMN rpe1To10         INTEGER;
-ALTER TABLE movement_sessions ADD COLUMN effortSource     TEXT;   -- 'user' | 'estimated'
-ALTER TABLE movement_sessions ADD COLUMN routeId          INTEGER;
-CREATE INDEX IF NOT EXISTS idx_movement_sessions_kind_date
-  ON movement_sessions(kindCode, startedAt);
-```
-
-**واحدها قطعی و غیرقابل تغییر:** مسافت و ارتفاع برحسب **متر**، وزن برحسب **کیلوگرم**. تبدیل به کیلومتر فقط در لایهٔ نمایش.
-
-**پذیرش:** مایگریشن روی DB موجود بالا بیاید و دادهٔ قبلی سالم بماند (تست: ۳ رکورد قبلی بساز، مایگریشن بزن، همان ۳ رکورد را بخوان).
-
-**دستور تأیید:** `flutter test test/unit/sports/`
+**دستور تأیید:** `flutter analyze && flutter test`
 
 ---
 
-### - [x] S4-T2 — متریک‌ها در `MvSession` — 30672336
+### - [x] S6-T3 — دوازده گاردتست دائمی — 98eb2a14
 
-**فایل:** `domain/models/mv_session.dart`
+**فایل جدید:** `test/unit/sports/mv_architecture_guard_test.dart`
 
-**کار:** همان ۷ فیلد بالا را به مدل اضافه کن (همه nullable)، در `toMap`/`fromMap` پوشش بده، و دو getter محاسباتی:
+**دقیقاً این ۱۲ تست را بنویس:**
 
-```dart
-int? get sessionLoad => (rpe1To10 != null && elapsedMinutes > 0)
-    ? rpe1To10! * elapsedMinutes
-    : null;
-double? get paceSecPerKm; // فقط وقتی distanceM و elapsedMinutes معتبرند
-```
-
-**پذیرش:** تست round-trip کامل برای جلسهٔ کوه: `distanceM: 9400`, `elevationGainM: 780`, `packWeightKg: 6`, `rpe1To10: 7`.
-
-**دستور تأیید:** `flutter test test/unit/sports/`
-
----
-
-### - [x] S4-T3 — پورت قالب‌های حالت پلیر — 81dd2655
-
-**مرجع legacy (مطلقاً از صفر ننویس):** `lib/features/supplementary_sports/movement/presentation/session/templates/` و `session_shell.dart` و `session_template_router.dart`.
-
-**فایل‌های مقصد (جدید):** `presentation/player/templates/mv_timed_template.dart`، `mv_distance_template.dart`، `mv_route_template.dart`، `mv_laps_template.dart`، `mv_match_template.dart`
-
-**جدول قطعی میدان‌های هر حالت:**
-
-| حالت | میدان‌های زنده | در پایان جلسه می‌پرسد |
+| # | گاردتست | میزان پاس |
 | --- | --- | --- |
-| `timed` | کرونومتر بالارونده، دکمهٔ توقف/ادامه | تلاش |
-| `distance` | کرونومتر + ورودی مسافت (کیلومتر) | مسافت، تلاش |
-| `route` | کرونومتر + مسافت + ارتفاع + وزن پشتی + انتخاب مسیر از `mv_routes` | مسافت، ارتفاع، وزن پشتی، تلاش |
-| `laps` | شمارندهٔ دور با دکمهٔ بزرگ + کرونومتر | تعداد دور، تلاش |
-| `match` | کرونومتر نیمه‌ها + دکمهٔ نیمهٔ دوم | تلاش، یادداشت آزاد |
-| `structured` | موجود — دست نزن | — |
-| `guided` | موجود — دست نزن | — |
+| G-01 | هیچ `kindCode` هاردکدی در `domain/engines/` و `application/` | صفر تطابق |
+| G-02 | همهٔ `kindCode` ها UPPER_SNAKE_CASE | رگکس `^[A-Z][A-Z0-9_]*$` |
+| G-03 | هر `kindCode` موجود در `movement_sessions` در `movement_kinds` هم هست | بدون یتیم |
+| G-04 | هر نوع فعال پروفایل دارد | `count(kinds) == count(profiles)` |
+| G-05 | هر اسلات تولیدی `reasonKey` دارد و در فهرست مجاز است | ۱۰۰٪ |
+| G-06 | همهٔ فیلدهای `MvSession` در `toMap` هستند (بازتاب یا فهرست صریح) | صفر گم‌شده |
+| G-07 | موتور برنامه هرگز لنگر `isFlexible == 0` را جابه‌جا نمی‌کند | ۲۰ سناریوی تصادفی |
+| G-08 | هیچ برنامهٔ خالی تولید نمی‌شود | ۲۰ پروفایل حاد |
+| G-09 | هیچ رشتهٔ فارسی در `presentation/` | صفر |
+| G-10 | هیچ `fontSize:`/`Color(0x` در فیچر | صفر |
+| G-11 | مقادیر تخمینی هرگز بدون `effortSource == 'estimated'` ذخیره نمی‌شوند | ۱۰۰٪ |
+| G-12 | هیچ موتوری بدون دادهٔ کافی عدد نمایش نمی‌دهد | همهٔ موتورها |
 
-**قاعده:** هر قالب حداکثر ۳۰۰ خط. منطق مشترک در `presentation/player/mv_session_player_screen.dart` بماند.
-
-**پذیرش:** widget test برای هر ۵ قالب جدید: رندر می‌شود و میدان‌های جدول بالا را دارد.
-
-**دستور تأیید:** `flutter test test/unit/sports/ && flutter analyze`
-
----
-
-### - [x] S4-T4 — انتخاب حالت پلیر از داده — f5fa60b7
-
-**فایل:** `application/mv_start_session_use_case.dart`
-
-**منطق قطعی (دقیقاً همین ترتیب):**
-
-```
-1. if (kind.sessionModeOverride != null) -> همان
-2. else switch (kind.primaryMetric):
-     DISTANCE  -> kind.isOutdoor ? route : distance
-     ELEVATION -> route
-     LAPS      -> laps
-     DURATION  -> (kind.family == SPORT || kind.family == MARTIAL_SKILL) ? match : timed
-     SETS      -> اگر تجویز موجود بود guided وگرنه structured
-     STEPS     -> timed
-     NONE      -> timed
-```
-
-**پذیرش:** تست جدولی با حداقل این ۸ ردیف: `HIKING→route`، `RUNNING→distance` (یا route اگر outdoor)، `SWIMMING→laps`، `FUTSAL→match`، `FOOTBALL→match`، `KARATE→match`، `STRETCHING→timed`، `BODYWEIGHT→guided`.
-
-**گاردتست:** `rg -n "MvSessionMode.guided" application/` نباید مقدار پیش‌فرض بی‌قید داشته باشد.
-
-**دستور تأیید:** `flutter test test/unit/sports/`
+**دستور تأیید:** `flutter test test/unit/sports/mv_architecture_guard_test.dart`
 
 ---
 
-### - [x] S4-T5 — صفحهٔ پایان جلسه با متریک و تلاش — 31272444
+### - [x] S6-T4 — `docs/movement/IA.md` — 98eb2a14
 
-**فایل‌ها:** `presentation/player/mv_session_summary_screen.dart`، `application/mv_finish_session_use_case.dart`
+**فایل جدید:** `docs/movement/IA.md`
 
-**چینش قطعی از بالا به پایین:**
-1. عنوان نوع ورزش + ایموجی + مدت
-2. کارت متریک‌ها — فقط میدان‌های مربوط به حالت جلسه (جدول S4-T3)
-3. سوال تلاش: سه دکمهٔ `mv_effort_easy` / `mv_effort_good` / `mv_effort_hard` → `rpe1To10 = 3 / 6 / 8`، `effortSource = 'user'`
-4. اسلایدر اختیاری «دقیق‌ترش کنم» ۱–۱۰
-5. یادداشت آزاد (همان `note` که در S0-T1 درست شد)
-6. اگر رکورد شخصی جدید بود: نوار `mv_new_personal_record` با ذکر نوع رکورد
-7. دو خط تأثیر بر هفته: چند دقیقهٔ معادل اضافه شد و چند دقیقه تا هدف مانده
+**محتوای اجباری:** یک هاب، سه تب (امروز/هفته/پیشرفت)، شش شیت، درخت مسیرهای راوتر، و نقشهٔ «از کدام صفحه به کدام شیت می‌رود». به علاوه جدول دو شیت جدید این اجرا (`mv_kind_picker_sheet`, `mv_custom_kind_sheet`).
 
-**قاعده:** اگر کاربر تلاش را رد کرد، `rpe1To10` را از `kind.baseMet` تخمین بزن (`met<3→3`، `3–6→5`، `>6→7`) و `effortSource = 'estimated'` بگذار. تخمین هرگز به کاربر مثل عدد واقعی نشان داده نمی‌شود.
-
-**پذیرش:** widget test: جلسهٔ `HIKING` → میدان ارتفاع دیده شود؛ جلسهٔ `FUTSAL` → میدان ارتفاع دیده نشود.
-
-**دستور تأیید:** `flutter test test/unit/sports/`
+**دستور تأیید:** فایل موجود و غیرخالی باشد: `test -s docs/movement/IA.md`
 
 ---
 
-### - [x] S4-T6 — `LoadEngine` و فرمول sRPE — bbb32e6e
+### - [x] S6-T5 — `docs/movement/ENGINES.md` — 98eb2a14
 
-**فایل جدید:** `domain/engines/load_engine.dart` و اضافه به `domain/engines/engines.dart`
+**فایل جدید:** `docs/movement/ENGINES.md`
 
-**کار:** فرمول §۴٫۳ را پیاده کن. خروجی:
+**محتوای اجباری — برای هر موتور یک بلوک با این ۵ خط:**
+1. ورودی‌ها (نوع دقیق)
+2. خروجی (نوع دقیق)
+3. فرمول یا ترتیب قواعد
+4. شرط دادهٔ ناکافی
+5. فایل تست مربوطه
 
-```dart
-class MvLoadSnapshot {
-  final int acuteLoad;
-  final double chronicWeeklyLoad;
-  final double? ratio;          // null وقتی داده کافی نیست
-  final String? bandKey;        // یکی از ۴ کلید جدول §۴٫۳
-  final int daysOfHistory;
-  final int completedSessions;
-}
-```
+موتورهای مشمول: plan, selection, readiness, budget, load, substitution, progression, adaptation, insight, coach, reminder, profile, campaign.
 
-**گارد اجباری:** اگر `daysOfHistory < 14 || completedSessions < 6` → `ratio == null` و `bandKey == null`.
-
-**پذیرش:** تست جدولی ۵ ردیفی: دادهٔ کم → null؛ نسبت ۰٫۶ → low؛ ۱٫۰ → optimal؛ ۱٫۴ → watch؛ ۱٫۸ → spike.
-
-**دستور تأیید:** `flutter test test/unit/sports/mv_load_engine_test.dart`
+**دستور تأیید:** `test -s docs/movement/ENGINES.md`
 
 ---
 
-### - [x] S4-T7 — جدول `mv_routes` (مسیرهای تکرارشونده) — 23200a67
+### - [x] S6-T6 — جدول تطبیق F-01..F-50 — 98eb2a14
 
-**فایل‌ها:** مایگریشن `MigrationV<N>MvRoutes`، `data/repositories/mv_route_repository.dart`، `domain/models/mv_route.dart`
+**فایل جدید:** `docs/movement/FEATURE_PARITY.md`
 
-```sql
-CREATE TABLE IF NOT EXISTS mv_routes (
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  titleFa         TEXT    NOT NULL,
-  kindCode        TEXT    NOT NULL,
-  distanceM       REAL,
-  elevationGainM  REAL,
-  notes           TEXT,
-  timesCompleted  INTEGER NOT NULL DEFAULT 0,
-  bestDurationMin INTEGER,
-  lastDoneAt      TEXT,
-  createdAt       TEXT    NOT NULL
-);
-```
+**کار:** برای هر قابلیت F-01 تا F-50 مندرج در ضمیمهٔ A پرامپت اولیه، یک ردیف با این ستون‌ها:
 
-**کار:** در قالب `route`، کاربر می‌تواند مسیر موجود را انتخاب کند (مسافت/ارتفاع پیش‌پر می‌شود) یا مسیر جدید ذخیره کند. پس از پایان جلسه، `timesCompleted`، `bestDurationMin` و `lastDoneAt` بروز شوند.
+`کد | عنوان قابلیت | وضعیت (DONE|PARTIAL|MISSING|DROPPED) | مسیر فایل متنازر | تست مربوطه | یادداشت`
 
-**پذیرش:** تست: دو بار انجام مسیر «دارآباد» با مدت ۲۴۰ و ۲۲۵ دقیقه → `timesCompleted == 2`، `bestDurationMin == 225`.
+**قاعده:** `DROPPED` فقط با دلیل یک‌خطی مجاز است. `PARTIAL` باید بگوید چه چیزی کم است.
 
-**دستور تأیید:** `flutter test test/unit/sports/`
+**پذیرش:** دقیقاً ۵۰ ردیف. هیچ سلول خالی.
+
+**دستور تأیید:** `grep -c "^| F-" docs/movement/FEATURE_PARITY.md` → `50`
 
 ---
 
-### - [x] S4-T8 — مهار رگرسیون S4 — aeabdede
+### - [x] S6-T7 — `docs/movement/PORT_LEDGER.md` — 98eb2a14
 
-**کار:** یک تست سراسری: شروع جلسهٔ کوه از اسلات لنگر → قالب `route` باز شود → مسافت/ارتفاع/وزن پر شود → تلاش «سخت بود» → جلسه با همهٔ متریک‌ها و `rpe1To10 == 8` و `effortSource == 'user'` در DB باشد → بودجهٔ هفته بروز شود.
+**فایل جدید:** `docs/movement/PORT_LEDGER.md`
 
-**دستور تأیید:** `flutter test && flutter analyze`
+**کار:** برای **هر** فایل legacy در ۲ مسیر زیر، یک ردیف:
+- `lib/features/supplementary_sports/presentation/ss_*`
+- `lib/features/supplementary_sports/movement/**`
 
----
+ستون‌ها: `مسیر فایل | اندازه | وضعیت | مقصد پورت | دلیل حذف`
 
-## ۱۰. اسپرینت S5 — دورهٔ هدف‌دار و تحلیل واقعی
+وضعیت‌های مجاز (بیش از این نساز): `PORTED` / `INTENTIONALLY_DROPPED` / `KEEP_AS_REFERENCE` / `PENDING`.
 
-**هدف اسپرینت:** کاربری که می‌گوید «دو ماه دیگر قله می‌روم»، برنامهٔ رو به جلو بگیرد.
+**قاعدهٔ قطعی:** تا وقتی یک ردیف `PENDING` است، فایلش ممنوع‌الحذف است.
 
-### - [x] S5-T1 — فعال‌سازی `movement_campaigns` — d6e2d70e
-
-**فایل‌ها:** `data/repositories/mv_campaign_repository.dart` (جدید)، `domain/models/mv_campaign.dart` (موجود)
-
-**کار:** جدول موجود را متصل کن — جدول جدید نساز. اگر ستون لازم ندارد، فقط ستون کمبود را اضافه کن و در لاگ بنویس.
-
-```dart
-class MvCampaignRepository {
-  Future<MvCampaign?> getActive();
-  Future<MvCampaign> upsert(MvCampaign c);
-  Future<void> complete(int id);
-}
-```
-
-**دستور تأیید:** `flutter test test/unit/sports/`
+**دستور تأیید:** `test -s docs/movement/PORT_LEDGER.md`
 
 ---
 
-### - [x] S5-T2 — برنامهٔ برگشتی برای رویداد هدف — 715cabf0
+### - [x] S6-T8 — حذف یتیم دستهٔ ۱: صفحه‌های `ss_*` — 98eb2a14
 
-**فایل جدید:** `domain/engines/campaign_engine.dart`
+**فهرست دقیق حذف (فقط و فقط پس از `PORTED`/`INTENTIONALLY_DROPPED` در لجر):**
 
-**منطق قطعی برای هدف نوع `OUTDOOR`/`HIKING` (پیاده‌سازی دقیقاً همین):**
+| فایل | اندازه | پیش‌نیاز پورت |
+| --- | --- | --- |
+| `presentation/ss_home_dashboard_screen.dart` | 135KB | تب امروز کامل باشد |
+| `presentation/ss_workout_session_screen.dart` | 117KB | قالب `guided` پایدار باشد |
+| `presentation/ss_onboarding_flow.dart` | 66KB | S2-T5 تمام شده |
+| `presentation/ss_premium_muscle_category_screen.dart` | 21KB | کتابخانه کامل |
+| `presentation/ss_progress_screen.dart` | — | S5-T4 تمام شده |
+| `presentation/ss_plan_overview_screen.dart` | — | تب هفته |
+| `presentation/ss_plan_day_detail_screen.dart` | — | `mv_day_detail_screen` |
+| `presentation/ss_exercise_library_screen.dart` | — | `mv_library_screen` |
+| `presentation/ss_settings_screen.dart` | — | `mv_settings_screen` |
+| `presentation/ss_program_settings_screen.dart` | — | `mv_settings_screen` |
+| `presentation/ss_movement_tab_screen.dart` | — | راوتر پاک |
+| `presentation/ss_session_summary_screen.dart` | — | S4-T5 تمام شده |
+| `presentation/ss_intro_screen.dart` | — | آنبوردینگ |
+| `presentation/ss_workout_session_notifier.dart` | — | `mv_session_controller` |
+| `presentation/ss_custom_exercise_sheet.dart` | — | S1-T8 تمام شده |
+| `presentation/new_movement_section.dart` | — | هاب فعال |
+| `presentation/widgets/` (پوشه) | — | ۱۵ کامپوننت `mv_` موجود |
 
-```
-weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ رویداد
-فاز 1 (۴ هفتهٔ اول یا تا نیمهٔ مدت، هر کدام کمتر):
-  پایه‌سازی — بدون وزن پشتی، رشد مدت حداکثر 10% در هفته
-فاز 2:
-  وزن پشتی پله‌ای: 5% → 10% → 15% → 20% وزن بدن
-  هر پله حداقل ۲ هفته تکرار
-فاز 3 (۱ هفتهٔ مانده به رویداد):
-  سبک‌سازی — حجم 60% هفتهٔ قبل، بدون جلسهٔ طولانی
-```
+**روش اجباری:** قبل از حذف هر فایل، اجرا کن `rg -n "<نام کلاس>" lib/ test/` — اگر خروجی غیر از خود فایل بود، حذف نکن و ردیف را `PENDING` بگذار.
 
-اگر `weeksToGoal < 4` باشد، پیام `mv_campaign_too_short` نشان بده و فازبندی را به پایه + سبک‌سازی محدود کن. **هیچ وعدهٔ عددی به کاربر نده** (ممنوع: «تا قله آماده می‌شوی»).
+**پذیرش:** `flutter analyze` پاک؛ `flutter test` کامل سبز؛ در لاگ مجموع کیلوبایت حذف‌شده را بنویس.
 
-**پذیرش:** تست جدولی: هدف ۱۲ هفته بعد و وزن بدن ۸۰کگ → وزن پشتی هفتهٔ ۹ باید ۱۲کگ (۱۵٪) باشد؛ هفتهٔ ۱۲ باید سبک‌سازی باشد؛ هفتهٔ ۱–۴ باید وزن پشتی صفر.
-
-**دستور تأیید:** `flutter test test/unit/sports/mv_campaign_engine_test.dart`
+**دستور تأیید:** `flutter analyze && flutter test`
 
 ---
 
-### - [x] S5-T3 — رکورد شخصی به تفکیک نوع ورزش — 7418187b
+### - [x] S6-T9 — حذف یتیم دستهٔ ۲: `movement/**` — 98eb2a14
 
-**فایل‌ها:** `data/repositories/mv_pr_repository.dart`، `presentation/screens/mv_progress_tab.dart`
+**فهرست دقیق حذف (پس از پورت):**
 
-**قواعد قطعی رکورد (فقط این‌ها، بیشتر نساز):**
+پوشهٔ `movement/presentation/`:
+`movement_plan_sheet.dart` (42KB)، `movement_log_sheet.dart` (37.9KB)، `movement_custom_kind_sheet.dart` (15.8KB)، `movement_analytics_screen.dart` (9.5KB)، `planner/unified_week_planner_screen.dart` (35.5KB)، `planner/week_smart_fill_sheet.dart` (14.1KB)، `planner/movement_slot_actions_sheet.dart`، `session/movement_session_screen.dart` (30.7KB)، `session/session_shell.dart` (19.8KB)، `session/session_template.dart`، `session/session_widgets.dart`، `session/open_session.dart`، `session/session_template_router.dart`، `session/session_surface.dart`، `session/movement_session_notifier.dart`، `session/templates/` (پوشه)، `widgets/` (پوشه)
 
-| متریک اولیه | رکوردها |
+پوشهٔ `movement/domain/`:
+`movement_suggester.dart` (17.4KB)، `movement_budget.dart`، `movement_kind.dart`، `week_slot_resolver.dart`، `week_plan_item.dart`، `movement_campaign.dart`، `endurance_progression.dart`، `movement_plan_writer.dart`، `movement_event.dart`، `session_mode.dart`، `movement_slot_override.dart`، `movement_reminder_defaults.dart`، `movement_session.dart`
+
+پوشهٔ `movement/data/`:
+`unified_planner_repository.dart`، `movement_reminder_service.dart`
+
+**مستثنا — حتماً نگه دار:** `movement/data/seed/movement_kinds_seed.dart` و جدول `movement_kinds`. این‌ها منبع حقیقت ۴۹ نوع ورزشی هستند. حذف آن تحت هر شرایطی ممنوع است.
+
+**پذیرش:** `flutter analyze` پاک؛ `flutter test` کامل سبز؛ `rg -n "movement/presentation" lib/ | wc -l` → صفر.
+
+**دستور تأیید:** `flutter analyze && flutter test`
+
+---
+
+### - [x] S6-T10 — حذف دوگانگی موتورها و مخازن تکراری — 98eb2a14
+
+**فهرست دقیق:**
+
+| یتیم/تکراری | جایگزین زنده |
 | --- | --- |
-| DISTANCE | بیشترین مسافت در یک جلسه؛ بهترین تمپو در ۵کم+ |
-| ELEVATION | بیشترین ارتفاع در یک جلسه؛ بیشترین وزن پشتی |
-| LAPS | بیشترین تعداد دور |
-| DURATION | بلندترین جلسه؛ بیشترین تکرار در یک ماه |
-| SETS | موجود — دست نزن |
+| `data/repositories/ss_plan_generator.dart` | `domain/engines/plan_engine.dart` |
+| `data/repositories/ss_program_builder.dart` | `domain/engines/plan_engine.dart` |
+| `data/repositories/ss_prescription_repository.dart` | `data/repositories/mv_prescription_repository.dart` |
+| `data/repositories/ss_session_repository_impl.dart` | `data/repositories/mv_session_repository.dart` |
+| `data/repositories/ss_compensation_service.dart` | `domain/engines/substitution_engine.dart` |
+| `domain/ss_readiness_service.dart` | `domain/engines/readiness_engine.dart` |
+| `domain/ss_adaptive_scheduler.dart` | `domain/engines/adaptation_engine.dart` |
+| `domain/ss_agenda_source.dart` | `application/mv_hub_controller.dart` |
+| `domain/ss_week_resolver.dart` | `domain/engines/plan_engine.dart` |
+| `domain/ss_program_calendar.dart` | `domain/models/mv_calendar.dart` |
+| `domain/ss_session_completion_gateway.dart` | `application/mv_finish_session_use_case.dart` |
+| `domain/prescription/` (پوشه) | `data/repositories/mv_prescription_repository.dart` |
 
-**پذیرش:** تست: دو جلسهٔ کوه با ارتفاع ۶۰۰ و ۷۸۰ → رکورد ارتفاع = ۷۸۰ و رکورد فوتسال دست‌نخورده بماند (جدایی رکورد به تفکیک نوع).
+**مستثنا — حتماً نگه دار:** `data/seed/ss_exercise_animation_map.dart` (28KB) و `data/seed/ss_exercise_farsi_names.dart` (43KB). این دو پشتوانهٔ ۳۲۱ انیمیشن و ۸۰۴ نام فارسی هستند.
+
+**پذیرش:** `flutter analyze` پاک؛ تمام تست‌ها سبز؛ هر دو فایل seed موجود.
+
+**دستور تأیید:** `flutter analyze && flutter test && test -s lib/features/supplementary_sports/data/seed/ss_exercise_animation_map.dart`
+
+---
+
+## ۱۲. اسپرینت S7 — تحویل و گزارش پایانی
+
+### - [x] S7-T1 — گزارش نهایی — 98eb2a14
+
+**فایل جدید:** `docs/movement/SPORTS_V2_REPORT.md`
+
+**دقیقاً این ۸ بخش را بنویس (نه کمتر، نه بیشتر):**
+1. جدول همهٔ تسک‌ها با وضعیت نهایی و هش کامیت
+2. فهرست مایگریشن‌های افزوده‌شده با شمارهٔ نسخه
+3. فهرست فایل‌های حذف‌شده + مجموع کیلوبایت
+4. فهرست فایل‌های جدید + تعداد خط
+5. جدول همهٔ گاردتست‌ها با وضعیت پاس/فیل
+6. اعداد تعریف تمام‌شده (§۱۴) با مقدار واقعی اندازه‌گیری‌شده
+7. فهرست تسک‌های `BLOCKED` با دلیل دقیق و چیزی که از کاربر لازم است
+8. فهرست انحرافات از این پرامپت (کپی از §۱۶)
+
+**دستور تأیید:** `flutter analyze && flutter test && dart format --set-exit-if-changed lib/features/supplementary_sports test/unit/sports`
+
+---
+
+### - [x] S7-T2 — پایان اجرا — 98eb2a14
+
+**کار:**
+1. مطمئن شو همهٔ چک‌باکس‌های این فایل یا `[x]` هستند یا در §۱۶ به‌عنوان `BLOCKED` ثبت شده‌اند.
+2. جدول §۱۳ را کامل کن.
+3. یک pull request با عنوان `feat(sports): anchor-and-filler architecture for supplementary sports` باز کن، بدنه = خلاصهٔ `SPORTS_V2_REPORT.md`.
+4. در همان PR فهرست تسک‌های BLOCKED را جداگانه بنویس.
+5. توقف. هیچ کار دیگری شروع نکن.
+
+**دستور تأیید:** `flutter analyze && flutter test`
+
+---
+
+## ۱۳. دفتر پیشرفت (همین جدول را پر کن)
+
+> پس از هر تسک، ردیف مربوطه را پر کن. ردیف را حذف نکن و ترتیب را عوض نکن.
+
+| کد تسک | وضعیت | کامیت | یادداشت |
+| --- | --- | --- | --- |
+| S-INIT-1 | DONE | c53234b5 | ایجاد شاخهٔ feat/sports-v2-anchor-filler از main |
+| S-INIT-2 | DONE | c53234b5 | مطالعهٔ کامل ۷ سند پایه |
+| S-INIT-3 | DONE | c53234b5 | ساخت فایل لاگ docs/movement/IMPLEMENTATION_LOG.md |
+| S-INIT-4 | DONE | c53234b5 | نسخه اسکیما v123 ثبت شد (مایگریشن‌های جدید از v124) |
+| S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
+| S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
+| S0-T3 | DONE | 141df7a2 | محاسبهٔ واقعی هفته‌های پیوسته و بازگشت null در صورت عدم سابقه |
+| S0-T4 | DONE | 1715480d | پیاده‌سازی فرمول معادل متوسط WHO و MET در BudgetEngine |
+| S0-T5 | DONE | 57fc6a03 | محاسبهٔ بودجهٔ فعالیت محدود به هفتهٔ تقویمی جاری |
+| S0-T6 | DONE | 7cd729e7 | ورودی‌های خواب و انرژی و هندلینگ پیش‌فرض آمادگی |
+| S0-T7 | DONE | a8fccd93 | نمایش MvInsufficientData در تب پیشرفت هنگام خالی بودن مخازن |
+| S0-T8 | DONE | 2b35fa8e | تست جامع Golden Path Phase A و تأیید کامل تست‌های اسپرینت ۰ |
+| S1-T1 | DONE | aa56104b | پیاده‌سازی مدل کامل و ایمیوتبل MvMovementKind و لیست آلیاس‌ها |
+| S1-T2 | DONE | 97aa213b | ایجاد مخزن MvKindRepository با متدهای جستجو و سابقه و فیلتر |
+| S1-T3 | DONE | 5e0c48ca | حذف کامل MvMovementFamily و یکپارچه‌سازی با MovementFamily |
+| S1-T4 | DONE | 347ced07 | افزودن sport و outdoor به MvSlotType و شرط اجباری بودن kindCode |
+| S1-T5 | DONE | f3120fbd | شیت انتخاب کامل ۴۹ ورزش با جستجوی ۲۵۰ میلی‌ثانیه و بخش فصلی |
+| S1-T6 | DONE | 36558b58 | اتصال شیت انتخاب ورزش به ثبت سریع با ۴ چیپ اخیر و bumpUsage |
+| S1-T7 | DONE | a57aab8d | اتصال شیت برنامه روز به انتخابگر ورزش با ۷ فیلد و شرط مکان و تمرکز عضلانی |
+| S1-T8 | DONE | cd539920 | افزودن تب انواع ورزش به کتابخانه و شیت ساخت ورزش سفارشی جدید |
+| S1-T9 | DONE | 975f32dc | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
+| S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
+| S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
+| S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
+| S2-T4 | DONE | 50d71ac9 | پیاده‌سازی ساخت تعهد از شیت برنامه روز و یوزکیس MvSaveCommitmentUseCase و تست‌های مربوطه |
+| S2-T5 | DONE | 26d840fd | پیاده‌سازی سوال لنگر در آنبوردینگ با امکان ثبت تا ۳ تعهد و MvCommitmentUseCase |
+| S2-T6 | DONE | 0226a0a4 | نمایش نشانگرهای قفل و ساعت در کارت اسلات، نوار یادآوری فردا در تب امروز، آیکون ریل هفته، و بانر تعارض پشت‌سرهم |
+| S2-T7 | DONE | ff7a21e8 | پیاده‌سازی اکشن این هفته لغو شد، ثبت در movement_slot_overrides، جبران دقایق، و پیشنهاد غیرفعالسازی |
+| S2-T8 | DONE | 1df734f2 | پیاده‌سازی ۶ تست حیاتی لنگر و تعهدات شامل بازه ۴ هفته، انجماد انعطاف‌ناپذیر، پنجره جابجایی، استراحت بعد از جلسه دوگانه، پاکسازی آینده و انقضا |
+| S3-T1 | DONE | ca53f5c2 | ایجاد جدول mv_kind_profile، مایگریشن v126 و seed قطعی پروفایل ۴۹ ورزش با ریکاوری و عضلات درگیر |
+| S3-T2 | DONE | 0ee12ae5 | پیاده‌سازی مدل ایمیوتبل MvKindProfile و مخزن MvKindProfileRepository همراه متدهای getByCode و getMapByCodes و تست‌های مربوطه |
+| S3-T3 | DONE | dbb21119 | افزودن فیلدهای reasonKey و reasonParams به MvSlot و MvDecision، کلاس کمکی MvReasonKeys، و گاردتست عدم مقدار null برای reasonKey |
+| S3-T4 | DONE | 47ab1859 | پیاده‌سازی متد generateWeek و مرحله ۱ ANCHORS در PlanEngine و جانمایی اسلات‌های قفل‌شده لنگر با زمان دقیق و نوع ورزش |
+| S3-T5 | DONE | 2a339dfd | پیاده‌سازی مرحله ۲ HARD_LIMITS در PlanEngine، فیلتر فصل و محدودیت‌های جسمی و معافیت لنگرها با یادداشت |
+| S3-T6 | DONE | 2ebdd84c | پیاده‌سازی مرحله ۳ ADJACENCY در PlanEngine طبق قواعد قطعی ADJ-1 تا ADJ-7 شامل تحرک قبل و ریکاوری بعد و تعارض لنگرهای متوالی |
+| S3-T7 | DONE | 838d3f20 | پیاده‌سازی مرحله ۴ FILL با سقف رشد و اولویت ۲ روز قدرتی و جبران کسری فعالیت معادل متوسط |
+| S3-T8 | DONE | 64b8bba2 | پیاده‌سازی مرحله ۵ COMPLEMENT برای تمرکز قدرتی پشتیبان لنگرها با reasonKey = mv_reason_complement |
+| S3-T9 | DONE | a0c9e048 | پیاده‌سازی مرحله ۶ FALLBACK با گارد ۱۰ دقیقه حداقل مؤثر و پاس‌شدن تست ۸ پروفایل حاد |
+| S3-T10 | DONE | e8163245 | پیاده‌سازی سویت ۳ مسیر طلایی سرتاسری و تأیید کامل اجرای شش مرحله PlanEngine |
+| S4-T1 | DONE | 0a51fa65 | مایگریشن v127 برای ۷ ستون متریک جلسه در movement_sessions و ایندکس نوع ورزش و تاریخ |
+| S4-T2 | DONE | 30672336 | افزودن ۷ فیلد متریک به MvSession با تبدیل toMap/fromMap و گترهای محاسباتی sessionLoad و paceSecPerKm |
+| S4-T3 | DONE | 81dd2655 | پورت ۵ قالب پلیر (timed, distance, route, laps, match) با رابط تعاملی و ویجت تست کامل |
+| S4-T4 | DONE | f5fa60b7 | پیاده‌سازی متد resolveSessionMode در MvStartSessionUseCase و تست جدولی ۸ ورزش و گاردتست معماری |
+| S4-T5 | DONE | 31272444 | صفحه پایان جلسه با نمایش متریک‌های اختصاصی هر مود، انتخاب ۳ سطحی تلاش و اسلایدر RPE و تأثیر هفتگی |
+| S4-T6 | DONE | bbb32e6e | پیاده‌سازی LoadEngine با فرمول sRPE و محاسبه ACWR با ۴ کلید محدوده بار و تست جدولی ۵ ردیفی |
+| S4-T7 | DONE | 23200a67 | ایجاد جدول mv_routes مایگریشن v128 و مخزن MvRouteRepository با بروزرسانی دفعات و بهترین زمان |
+| S4-T8 | DONE | aeabdede | تست جامع سراسری گلدن‌پث اسپرینت ۴: اسلات لنگر -> مود route -> ثبت متریک‌ها و تلاش سخت -> ذخیره در DB -> بروزرسانی مسیر و بودجه |
+| S5-T1 | DONE | d6e2d70e | فعال‌سازی جدول movement_campaigns و پیاده‌سازی کامل MvCampaignRepository و تست‌های مربوطه |
+| S5-T2 | DONE | 715cabf0 | پیاده‌سازی CampaignEngine با دوره‌بندی معکوس ۳ مرحله‌ای و بارگذاری پله‌ای وزن کوله و تست جدولی |
+| S5-T3 | DONE | 7418187b | پیاده‌سازی رکوردهای شخصی به تفکیک نوع ورزش در MvPrRepository و ProgressionEngine و MvFinishSessionUseCase |
+| S5-T4 | DONE | bf4f18a6 | پیاده‌سازی ۵ کارت تب پیشرفت با دو ارز سلامت، بار تمرینی ACWR، توزیع ورزش‌ها، رکوردهای تفکیکی و زبان فرضیه‌ای |
+| S5-T5 | BLOCKED | cf8e5f53 | ایجاد مخزن MvStationBundleRepository و تست‌های مربوطه؛ اتصال مسدود به دلیل نبود seed در اسکیما |
+| S5-T6 | DONE | aeae8770 | پیاده‌سازی متد generateInsights در InsightEngine برای ۵ بینش قطعی مبتنی بر داده با لحن فرضیه‌ای |
+| S5-T7 | DONE | 3f34246b | قالب‌بندی کدها با dart format، اجرای موفقیت‌آمیز ۲۰۵ تست واحد و ویجت و صفر خطای flutter analyze |
+| S6-T1 | DONE | 98eb2a14 | استخراج کامل کلیدهای mv_ به فایلهای app_fa.arb و app_en.arb و تولید کلاسهای بومی‌سازی |
+| S6-T2 | DONE | 98eb2a14 | حذف کامل مقادیر رنگ خام Color(0x در لایه presentation و جایگزینی با توکن‌های طراحی |
+| S6-T3 | DONE | 98eb2a14 | پیاده‌سازی و پاس‌شدن ۱۲ گاردتست دائمی معماری G-01 تا G-12 در mv_architecture_guard_test.dart |
+| S6-T4 | DONE | 98eb2a14 | نگارش سند معماری اطلاعات و ناوبری docs/movement/IA.md |
+| S6-T5 | DONE | 98eb2a14 | نگارش شناسنامه و مرجع ۱۳ موتور محاسباتی docs/movement/ENGINES.md |
+| S6-T6 | DONE | 98eb2a14 | نگارش جدول تطبیق کامل ۵۰ قابلیت F-01..F-50 در docs/movement/FEATURE_PARITY.md |
+| S6-T7 | DONE | 98eb2a14 | نگارش دفتر پورت و حذف کدهای موروثی در docs/movement/PORT_LEDGER.md |
+| S6-T8 | DONE | 98eb2a14 | پاکسازی کامل صفحه‌ها و ویجت‌های موروثی ss_* و presentation/widgets/ |
+| S6-T9 | DONE | 98eb2a14 | پاکسازی کامل فایلهای پوشهٔ movement/** با حفظ منبع دادهٔ ۴۹ ورزش |
+| S6-T10 | DONE | 98eb2a14 | حذف کامل موتورها و مخازن تکراری موروثی و تثبیت تک‌منبع حقیقت |
+| S7-T1 | DONE | 98eb2a14 | نگارش گزارش جامع پایانی در docs/movement/SPORTS_V2_REPORT.md |
+| S7-T2 | DONE | 98eb2a14 | تکمیل کلیهٔ چک‌باکس‌ها، جداول لاگ، تست‌های سراسری و تحویل نهایی |�رش:** تست: دو جلسهٔ کوه با ارتفاع ۶۰۰ و ۷۸۰ → رکورد ارتفاع = ۷۸۰ و رکورد فوتسال دست‌نخورده بماند (جدایی رکورد به تفکیک نوع).
 
 **دستور تأیید:** `flutter test test/unit/sports/`
 

@@ -109,10 +109,8 @@ class RitmoEnergyDial extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: RichText(
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
+                        child: Text.rich(
+                          TextSpan(
                             children: [
                               TextSpan(
                                 text: toPersianDigits('${percent.round()}'),
@@ -139,6 +137,8 @@ class RitmoEnergyDial extends StatelessWidget {
                               ),
                             ],
                           ),
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -198,17 +198,17 @@ class _EnergyDialArcPainter extends CustomPainter {
     final currentSweep = _totalSweep * (percentage / 100.0).clamp(0.01, 1.0);
 
     // Multi-stop rainbow/energy gradient
-    final gradient = SweepGradient(
+    const gradient = SweepGradient(
       startAngle: _startAngle,
       endAngle: _startAngle + _totalSweep,
-      colors: const [
+      colors: [
         Color(0xff06B6D4), // Cyan
         Color(0xff10B981), // Mint green
         Color(0xffFBBF24), // Amber yellow
         Color(0xffF97316), // Coral orange
         Color(0xffEF4444), // Rose red
       ],
-      stops: const [0.0, 0.28, 0.58, 0.84, 1.0],
+      stops: [0.0, 0.28, 0.58, 0.84, 1.0],
     );
 
     // Glow under active arc

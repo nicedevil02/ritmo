@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Tab 3: "پیشرفت" (Section 5.3 / S5-T4).
@@ -21,6 +22,7 @@ class MvProgressTab extends StatelessWidget {
   final MvCampaign? activeCampaign;
   final MvBodyMapDistribution? bodyMapDistribution;
   final bool hasEnoughDataForTrends;
+  final ValueChanged<MvCampaign>? onCreateCampaign;
 
   const MvProgressTab({
     super.key,
@@ -36,6 +38,7 @@ class MvProgressTab extends StatelessWidget {
     this.activeCampaign,
     this.bodyMapDistribution,
     this.hasEnoughDataForTrends = false,
+    this.onCreateCampaign,
   });
 
   @override
@@ -69,11 +72,13 @@ class MvProgressTab extends StatelessWidget {
             SizedBox(height: metrics.spaceLg),
           ],
 
-          // 6. دورهٔ هدف‌دار فعال (Active Goal Campaign)
+          // 6. دورهٔ هدف‌دار (Active or Inactive CTA) (CampaignEngine / S8-T9)
           if (activeCampaign != null && activeCampaign!.isActive) ...[
             _buildActiveCampaignCard(context, activeCampaign!),
-            SizedBox(height: metrics.spaceLg),
+          ] else ...[
+            _buildInactiveCampaignCard(context),
           ],
+          SizedBox(height: metrics.spaceLg),
 
           // 7. هفته‌های فعال پیوسته (Hero streak)
           if (continuousActiveWeeks != null && continuousActiveWeeks! > 0) ...[
@@ -107,10 +112,9 @@ class MvProgressTab extends StatelessWidget {
     final targetMod = budget.targetMin > 0 ? budget.targetMin : 150;
     final modProgress = (modMinutes / targetMod).clamp(0.0, 1.5);
 
+    final targetStr =
+        budget.strengthDaysTarget > 0 ? budget.strengthDaysTarget : 2;
     final strDays = budget.strengthDays;
-    final targetStr = budget.strengthDaysTarget > 0
-        ? budget.strengthDaysTarget
-        : 2;
     final strProgress = (strDays / targetStr).clamp(0.0, 1.5);
 
     return Container(
@@ -127,12 +131,12 @@ class MvProgressTab extends StatelessWidget {
             children: [
               Icon(
                 Icons.favorite_rounded,
-                color: colors.primary,
+                color: colors.error,
                 size: metrics.iconMd,
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'سلامت این هفته (توصیه بهداشت جهانی)',
+                'سلامت این هفته (استاندارد WHO)',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -147,7 +151,7 @@ class MvProgressTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'فعالیت معادل متوسط',
+                'دقیقه معادل هوازی متوسط',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -348,20 +352,9 @@ class MvProgressTab extends StatelessWidget {
       );
     }
 
-    final totalMinutes = kindMinutes.values.fold<int>(0, (a, b) => a + b);
-    if (totalMinutes == 0) {
-      return const MvInsufficientData(
-        title: 'توزیع ورزش‌ها در این ماه',
-        requirementDescription: 'هنوز فعالیتی در ماه جاری ثبت نشده است.',
-      );
-    }
-
-    final sortedEntries = kindMinutes.entries.toList()
+    final totalMin = kindMinutes.values.fold(0, (a, b) => a + b);
+    final sorted = kindMinutes.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-
-    final topEntry = sortedEntries.first;
-    final topKind = kindsMap?[topEntry.key.toUpperCase()];
-    final topName = topKind?.titleFa ?? topEntry.key;
 
     return Container(
       padding: EdgeInsets.all(metrics.spaceLg),
@@ -382,7 +375,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'توزیع ورزش‌ها در ماه جاری',
+                'توزیع ورزش‌ها در این ماه',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -391,38 +384,46 @@ class MvProgressTab extends StatelessWidget {
             ],
           ),
           SizedBox(height: metrics.spaceMd),
-          ...sortedEntries.map((e) {
-            final kind = kindsMap?[e.key.toUpperCase()];
-            final title = kind?.titleFa ?? e.key;
+          ...sorted.take(4).map((entry) {
+            final kind = kindsMap?[entry.key];
+            final title = kind?.titleFa ?? entry.key;
             final emoji = kind?.emoji ?? '🏃';
-            final percent = (e.value / totalMinutes * 100).round();
+            final pct = totalMin > 0 ? (entry.value / totalMin) : 0.0;
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: EdgeInsets.only(bottom: metrics.spaceSm),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '$emoji $title',
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        children: [
+                          Text(emoji, style: textTheme.bodyMedium),
+                          SizedBox(width: metrics.spaceXs),
+                          Text(
+                            title,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
-                        '${toPersianDigits(percent)}٪ (${toPersianDigits(e.value)} دقیقه)',
+                        '${toPersianDigits(entry.value)} دقیقه (${toPersianDigits((pct * 100).toInt())}٪)',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: metrics.spaceXs),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
-                      value: percent / 100.0,
+                      value: pct,
                       backgroundColor: colors.border,
                       valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                       minHeight: 6,
@@ -432,20 +433,12 @@ class MvProgressTab extends StatelessWidget {
               ),
             );
           }),
-          SizedBox(height: metrics.spaceSm),
-          Text(
-            'در ماه گذشته به نظر می‌رسد بیشترین تمرکز فعالیت شما بر $topName بوده است.',
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.textSecondary,
-              height: 1.4,
-            ),
-          ),
         ],
       ),
     );
   }
 
-  /// 4. کارت رکوردهای شخصی به تفکیک نوع
+  /// 4. کارت رکوردها به تفکیک نوع (Partitioned PRs)
   Widget _buildPersonalRecordsCard(BuildContext context) {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
@@ -455,7 +448,7 @@ class MvProgressTab extends StatelessWidget {
       return const MvInsufficientData(
         title: 'رکوردهای شخصی',
         requirementDescription:
-            'با انجام اولین جلسهٔ تمرینی، رکوردهایت به تفکیک نوع ورزش اینجا ثبت می‌شود.',
+            'هنوز رکوردی ثبت نشده است. با اتمام جلسات تمرین، رکوردهای جدید شما در اینجا ثبت می‌شوند.',
       );
     }
 
@@ -478,7 +471,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'رکوردهای شخصی به تفکیک ورزش',
+                'رکوردهای شخصی',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -487,46 +480,25 @@ class MvProgressTab extends StatelessWidget {
             ],
           ),
           SizedBox(height: metrics.spaceMd),
-          ...personalRecords.map((pr) {
-            final kind = kindsMap?[pr.kind.toUpperCase()];
-            final title = kind != null
-                ? '${kind.emoji} ${kind.titleFa}'
-                : (pr.isExercisePr ? pr.exerciseId : pr.kind);
-
+          ...personalRecords.take(5).map((pr) {
             return Container(
               margin: EdgeInsets.only(bottom: metrics.spaceSm),
-              padding: EdgeInsets.all(metrics.spaceMd),
+              padding: EdgeInsets.symmetric(
+                horizontal: metrics.spaceMd,
+                vertical: metrics.spaceSm,
+              ),
               decoration: BoxDecoration(
-                color: colors.surfaceSubtle,
-                borderRadius: BorderRadius.circular(metrics.radiusCard),
-                border: Border.all(color: colors.border),
+                color: colors.surfaceElevated,
+                borderRadius: BorderRadius.circular(metrics.radiusField),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.military_tech_rounded,
-                    color: colors.warning,
-                    size: metrics.iconMd,
-                  ),
-                  SizedBox(width: metrics.spaceMd),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          pr.prType.titleFa,
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    pr.kind,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
@@ -550,8 +522,29 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    final start = DateTime.tryParse(campaign.startDate) ?? DateTime.now();
+    final currentWeek = ((DateTime.now().difference(start).inDays / 7).floor() + 1).clamp(1, campaign.weeks);
+    const engine = CampaignEngine();
+    final plan = engine.buildOutdoorPlan(totalWeeks: campaign.weeks, bodyWeightKg: 75.0);
+    final weekPlan = plan.getWeekPlan(currentWeek);
+
+    String phaseTitle = 'پایه';
+    if (l10n != null) {
+      if (weekPlan?.phase == MvCampaignPhase.base) {
+        phaseTitle = l10n.mv_campaign_phase_base;
+      } else if (weekPlan?.phase == MvCampaignPhase.taper) {
+        phaseTitle = l10n.mv_campaign_phase_taper;
+      } else {
+        phaseTitle = l10n.mv_campaign_phase_build;
+      }
+    }
+
+    final packWeight = weekPlan?.packWeightKg ?? 0.0;
 
     return Container(
+      key: const ValueKey('mv_active_campaign_card'),
       padding: EdgeInsets.all(metrics.spaceLg),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -562,18 +555,37 @@ class MvProgressTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Icons.flag_rounded,
-                color: colors.primary,
-                size: metrics.iconMd,
+              Row(
+                children: [
+                  Icon(
+                    Icons.flag_rounded,
+                    color: colors.primary,
+                    size: metrics.iconMd,
+                  ),
+                  SizedBox(width: metrics.spaceSm),
+                  Text(
+                    l10n?.mv_campaign_title ?? 'دورهٔ هدف‌دار فعال',
+                    style: textTheme.titleSmall?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: metrics.spaceSm),
-              Text(
-                'دورهٔ هدف‌دار فعال',
-                style: textTheme.titleSmall?.copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w800,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(RitmoRadius.pill),
+                ),
+                child: Text(
+                  phaseTitle,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -588,10 +600,94 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceXs),
           Text(
-            'مدت کل: ${toPersianDigits(campaign.weeks)} هفته | شروع از: ${toPersianDigits(campaign.startDate)}',
+            l10n != null
+                ? l10n.mv_campaign_active_phase(phaseTitle, currentWeek, campaign.weeks)
+                : 'فاز $phaseTitle • هفتهٔ ${toPersianDigits(currentWeek)} از ${toPersianDigits(campaign.weeks)}',
+            key: const ValueKey('mv_campaign_phase_text'),
             style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
+          if (packWeight > 0) ...[
+            SizedBox(height: metrics.spaceXs),
+            Text(
+              'وزن کوله‌پشتی هدف این هفته: ${toPersianDigits(packWeight)} کیلوگرم',
+              key: const ValueKey('mv_campaign_pack_weight'),
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.accent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  /// 5b. کارت دورهٔ هدف‌دار غیرفعال (CTA ساخت دوره)
+  Widget _buildInactiveCampaignCard(BuildContext context) {
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      key: const ValueKey('mv_campaign_inactive_card'),
+      padding: EdgeInsets.all(metrics.spaceLg),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(metrics.radiusCard),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.flag_outlined,
+                color: colors.primary,
+                size: metrics.iconMd,
+              ),
+              SizedBox(width: metrics.spaceSm),
+              Text(
+                l10n?.mv_campaign_title ?? 'دورهٔ هدف‌دار',
+                style: textTheme.titleSmall?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: metrics.spaceSm),
+          Text(
+            'برنامه‌ریزی معکوس و تمرین برای رویداد ورزشی (کوهنوردی، پیمایش و ...)',
+            style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+          ),
+          SizedBox(height: metrics.spaceMd),
+          ElevatedButton.icon(
+            key: const ValueKey('mv_campaign_create'),
+            onPressed: () => _openCreateCampaignDialog(context),
+            icon: Icon(Icons.add_rounded, size: metrics.iconSm),
+            label: Text(l10n?.mv_campaign_create ?? 'ساخت دورهٔ تمرینی'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(metrics.radiusField),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openCreateCampaignDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => _CreateCampaignDialog(
+        onCreate: (campaign) {
+          onCreateCampaign?.call(campaign);
+        },
       ),
     );
   }
@@ -734,6 +830,176 @@ class MvProgressTab extends StatelessWidget {
             ),
           );
         }),
+      ],
+    );
+  }
+}
+
+class _CreateCampaignDialog extends StatefulWidget {
+  final ValueChanged<MvCampaign> onCreate;
+
+  const _CreateCampaignDialog({required this.onCreate});
+
+  @override
+  State<_CreateCampaignDialog> createState() => _CreateCampaignDialogState();
+}
+
+class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
+  late final TextEditingController _weightController;
+  DateTime _targetDate = DateTime.now().add(const Duration(days: 70)); // 10 weeks
+  final String _sportKind = 'HIKING';
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightController = TextEditingController(text: '75');
+  }
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final l10n = AppLocalizations.of(context);
+    final days = _targetDate.difference(DateTime.now()).inDays;
+    final weeks = days ~/ 7;
+
+    if (weeks < 4) {
+      setState(() {
+        _errorMessage = l10n?.mv_campaign_too_short ??
+            'زمان باقیمانده تا رویداد کمتر از ۴ هفته است';
+      });
+      return;
+    }
+
+    final now = DateTime.now();
+    final campaign = MvCampaign(
+      id: 'camp_${now.millisecondsSinceEpoch}',
+      titleFa: 'دورهٔ هدف‌دار کوهنوردی',
+      goalCode: _sportKind,
+      startDate: MvCalendar.formatDateIso(now),
+      weeks: weeks,
+      status: 'ACTIVE',
+      createdAt: now.millisecondsSinceEpoch,
+      updatedAt: now.millisecondsSinceEpoch,
+    );
+
+    widget.onCreate(campaign);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.ritmoColors;
+    final metrics = context.metrics;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AlertDialog(
+      title: Text(
+        l10n?.mv_campaign_create ?? 'ساخت دورهٔ تمرینی',
+        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('نوع ورزش هدف:', style: textTheme.labelMedium),
+            SizedBox(height: metrics.spaceXs),
+            Container(
+              padding: EdgeInsets.all(metrics.spaceSm),
+              decoration: BoxDecoration(
+                color: colors.surfaceElevated,
+                borderRadius: BorderRadius.circular(metrics.radiusField),
+                border: Border.all(color: colors.border),
+              ),
+              child: Row(
+                children: [
+                  const Text('🏔️'),
+                  SizedBox(width: metrics.spaceSm),
+                  Text('کوهنوردی و پیمایش (HIKING)', style: textTheme.bodyMedium),
+                ],
+              ),
+            ),
+            SizedBox(height: metrics.spaceMd),
+            Text(l10n?.mv_campaign_target_date ?? 'تاریخ رویداد هدف:', style: textTheme.labelMedium),
+            SizedBox(height: metrics.spaceXs),
+            InkWell(
+              key: const ValueKey('mv_campaign_date_field'),
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _targetDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (picked != null) {
+                  setState(() {
+                    _targetDate = picked;
+                    _errorMessage = null;
+                  });
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.all(metrics.spaceSm),
+                decoration: BoxDecoration(
+                  color: colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(metrics.radiusField),
+                  border: Border.all(color: colors.border),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: metrics.iconSm, color: colors.primary),
+                    SizedBox(width: metrics.spaceSm),
+                    Text(
+                      '${toPersianDigits(_targetDate.difference(DateTime.now()).inDays ~/ 7)} هفته بعد (${toPersianDigits(MvCalendar.formatDateIso(_targetDate))})',
+                      style: textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: metrics.spaceMd),
+            Text('وزن بدن (کیلوگرم):', style: textTheme.labelMedium),
+            SizedBox(height: metrics.spaceXs),
+            TextField(
+              key: const ValueKey('mv_campaign_weight_field'),
+              controller: _weightController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: '75',
+                filled: true,
+                fillColor: colors.surfaceElevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(metrics.radiusField),
+                ),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              SizedBox(height: metrics.spaceSm),
+              Text(
+                _errorMessage!,
+                key: const ValueKey('mv_campaign_error_text'),
+                style: textTheme.bodySmall?.copyWith(color: colors.error, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('انصراف'),
+        ),
+        ElevatedButton(
+          key: const ValueKey('mv_campaign_submit_btn'),
+          onPressed: _submit,
+          child: const Text('ثبت دوره'),
+        ),
       ],
     );
   }

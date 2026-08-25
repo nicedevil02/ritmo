@@ -241,7 +241,7 @@ plannedWeeklyLoadCap:
 
 ---
 
-### - [ ] S0-T4 — `BudgetEngine` با MET واقعی و معیار WHO
+### - [x] S0-T4 — `BudgetEngine` با MET واقعی و معیار WHO — 1715480d
 
 **فایل:** `domain/engines/budget_engine.dart`
 
@@ -1429,7 +1429,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S0-T1 | DONE | b3021b27 | افزودن overallFeeling و note به مدل MvSession و مایگریشن v124 |
 | S0-T2 | DONE | e5de0795 | یکسان‌سازی کدهای kindCode به UPPER_SNAKE_CASE و گاردتست |
 | S0-T3 | DONE | 141df7a2 | محاسبهٔ واقعی هفته‌های پیوسته و بازگشت null در صورت عدم سابقه |
-| S0-T4 |  |  |  |
+| S0-T4 | DONE | 1715480d | پیاده‌سازی فرمول معادل متوسط WHO و MET در BudgetEngine |
 | S0-T5 |  |  |  |
 | S0-T6 |  |  |  |
 | S0-T7 |  |  |  |

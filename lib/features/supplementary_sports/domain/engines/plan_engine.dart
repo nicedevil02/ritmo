@@ -147,14 +147,68 @@ class PlanEngine {
       ),
     );
 
-    return MvPlanResult(
+    // 6. FALLBACK (S3-T9: _fallback)
+    final finalSlots = _fallback(
       slots: complementSlots,
+      profile: profile,
+    );
+
+    stageDecisions.add(
+      MvDecision<List<MvSlot>>(
+        value: finalSlots,
+        reasonFa:
+            'گارد همیشه-خروجی و حداقل مؤثر ۱۰ دقیقه‌ای بررسی و تثبیت شد.',
+        reasonKey: MvReasonKeys.fallbackMinimum,
+        sources: const ['fallback_guard'],
+      ),
+    );
+
+    return MvPlanResult(
+      slots: finalSlots,
       stageDecisions: stageDecisions,
       notes: notes,
       allowedKinds: hardLimits.allowedKinds,
       hasConflict: adjacency.hasConflict,
       conflictNote: adjacency.conflictNote,
     );
+  }
+
+  /// مرحلهٔ ۶: FALLBACK (شل‌کردن محدودیت‌ها و گارد ۱۰ دقیقه حداقل مؤثر) (S3-T9)
+  List<MvSlot> _fallback({
+    required List<MvSlot> slots,
+    required MvUserProfile profile,
+  }) {
+    final updatedSlots = List<MvSlot>.from(slots);
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Check if there is at least one active slot (> 0 minutes)
+    final hasActiveSlot = updatedSlots.any((s) => s.targetMinutes > 0);
+    if (!hasActiveSlot) {
+      // Ultimate fallback: guarantee at least one 10-minute mobility session
+      for (int i = 0; i < 7; i++) {
+        if (!updatedSlots[i].isLocked) {
+          updatedSlots[i] = MvSlot(
+            id: 'slot_${updatedSlots[i].dateIso}_fallback_mobility',
+            dateIso: updatedSlots[i].dateIso,
+            cycleWeek: updatedSlots[i].cycleWeek,
+            slotType: MvSlotType.mobility,
+            targetMinutes: 10,
+            intensityTier: MvIntensityTier.light,
+            headlineFa: 'تحرک و کشش ملایم روزانه',
+            coachNoteFa:
+                'حداقل تمرین مؤثر برای حفظ شادابی و استمرار در روزهای شلوغ یا خستگی.',
+            source: 'GENERATED',
+            reasonKey: MvReasonKeys.fallbackMinimum,
+            status: MvSlotStatus.planned,
+            createdAt: now,
+            updatedAt: now,
+          );
+          break;
+        }
+      }
+    }
+
+    return updatedSlots;
   }
 
   /// مرحلهٔ ۵: COMPLEMENT (قدرتی پشتیبان لنگر) (S3-T8)

@@ -122,29 +122,7 @@ class SportsAgendaSource implements AgendaSource {
     ];
   }
 
-  AgendaItem _legacyPlanItem(Map<String, dynamic> plan, String dateStr) {
-    final planId = plan['id']?.toString() ?? 'unknown_plan';
-    final title = _legacyTitle(plan);
-    final duration = plan['estimatedMinutes'] as int? ?? 45;
 
-    return AgendaItem(
-      id: buildAgendaItemId(AgendaDomain.sport, planId, dateStr),
-      sourceId: planId,
-      domain: AgendaDomain.sport,
-      itemType: AgendaItemType.flexible,
-      title: title,
-      dateStr: dateStr,
-      durationMinutes: duration,
-      category: Category.fitness,
-      deepLink: AgendaDeepLink(domain: AgendaDomain.sport, targetId: planId),
-      completion: AgendaCompletion.pending,
-      meta: {'legacyWorkoutPlan': plan},
-    );
-  }
-
-  String _legacyTitle(Map<String, dynamic> plan) {
-    return plan['titleFa']?.toString() ?? 'تمرین ورزشی';
-  }
 
   AgendaCompletion _completionFor(String status) {
     return switch (status) {

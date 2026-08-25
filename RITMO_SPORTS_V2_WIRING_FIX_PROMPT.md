@@ -214,7 +214,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T11 — l10n واقعی با گاردی که واقعاً کار کند (رفع E-08)
+### - [x] S8-T11 — l10n واقعی با گاردی که واقعاً کار کند (رفع E-08) — d910b27f
 
 1. همهٔ رشته‌های فارسی هاردکد در این چهار فایل را به `app_fa.arb` و `app_en.arb` منتقل کن:
    `mv_hub_screen.dart`, `mv_week_tab.dart`, `mv_settings_screen.dart`, `mv_quick_log_sheet.dart`.
@@ -289,7 +289,7 @@ flutter test
 | S8-T8 | DONE | 15fe6ce2 | اتصال InsightEngine به تب پیشرفت با رندر بینش‌های معتبر |
 | S8-T9 | DONE | 91aed1a6 | ورودی و دیالوگ ساخت دورهٔ هدف‌دار بر مبنای CampaignEngine |
 | S8-T10 | DONE | d93dc28b | تأیید مسیردهی ۵ قالب پلیر (Route, Laps, Match, Distance, Timed) از هاب |
-| S8-T11 | | | |
+| S8-T11 | DONE | d910b27f | پاک‌سازی کامل رشته‌های هاردکد در presentation و گاردتست mv_no_hardcoded_persian_test |
 | S8-T12 | | | |
 | S8-T13 | | | |
 | S8-T14 | | | |

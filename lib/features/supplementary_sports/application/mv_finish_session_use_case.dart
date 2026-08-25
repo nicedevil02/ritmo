@@ -7,16 +7,19 @@ class MvFinishSessionUseCase {
   final MvSessionRepository _sessionRepo;
   final MvPrescriptionRepository _prescriptionRepo;
   final MvPrRepository _prRepo;
+  final MvRouteRepository _routeRepo;
   final ProgressionEngine _progressionEngine;
 
   MvFinishSessionUseCase({
     MvSessionRepository? sessionRepo,
     MvPrescriptionRepository? prescriptionRepo,
     MvPrRepository? prRepo,
+    MvRouteRepository? routeRepo,
     ProgressionEngine? progressionEngine,
   }) : _sessionRepo = sessionRepo ?? MvSessionRepository(),
        _prescriptionRepo = prescriptionRepo ?? MvPrescriptionRepository(),
        _prRepo = prRepo ?? MvPrRepository(),
+       _routeRepo = routeRepo ?? MvRouteRepository(),
        _progressionEngine = progressionEngine ?? const ProgressionEngine();
 
   /// Executes session completion and PR calculations (S4-T5).
@@ -131,6 +134,19 @@ class MvFinishSessionUseCase {
             ? MvSlotStatus.partial
             : MvSlotStatus.done,
         workoutLogId: session.id,
+      );
+    }
+
+    // 5. Update recurring route statistics if routeId is specified (S4-T7)
+    final resolvedRouteId = routeId ?? session.routeId;
+    if (resolvedRouteId != null) {
+      final duration = updatedSession.elapsedMinutes > 0
+          ? updatedSession.elapsedMinutes
+          : 1;
+      await _routeRepo.recordRouteCompletion(
+        routeId: resolvedRouteId,
+        durationMin: duration,
+        completedAt: DateTime.fromMillisecondsSinceEpoch(now),
       );
     }
 

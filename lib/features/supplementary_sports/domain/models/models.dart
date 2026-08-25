@@ -12,6 +12,7 @@ export 'mv_movement_kind.dart';
 export 'mv_personal_record.dart';
 export 'mv_plan_result.dart';
 export 'mv_reason_keys.dart';
+export 'mv_route.dart';
 export 'mv_session.dart';
 export 'mv_set_log.dart';
 export 'mv_slot.dart';

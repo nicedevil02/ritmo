@@ -490,6 +490,9 @@ class SupplementarySportsTables {
 
     // 9. mv_commitments (S2-T1)
     await ensureCommitmentTables(db);
+
+    // 10. mv_routes (S4-T7)
+    await ensureRoutesTables(db);
   }
 
   /// Ensures mv_commitments table and index exist safely.
@@ -527,6 +530,30 @@ class SupplementarySportsTables {
     try {
       await MvKindProfileSeed.ensureSchema(db);
       await MvKindProfileSeed.ensureSeed(db);
+    } catch (_) {}
+  }
+
+  /// Ensures mv_routes table and index exist safely (S4-T7).
+  static Future<void> ensureRoutesTables(DatabaseExecutor db) async {
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS mv_routes (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          titleFa         TEXT    NOT NULL,
+          kindCode        TEXT    NOT NULL,
+          distanceM       REAL,
+          elevationGainM  REAL,
+          notes           TEXT,
+          timesCompleted  INTEGER NOT NULL DEFAULT 0,
+          bestDurationMin INTEGER,
+          lastDoneAt      TEXT,
+          createdAt       TEXT    NOT NULL
+        );
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_mv_routes_kind ON mv_routes(kindCode);
+      ''');
     } catch (_) {}
   }
 

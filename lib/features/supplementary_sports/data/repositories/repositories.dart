@@ -6,5 +6,6 @@ export 'mv_kind_repository.dart';
 export 'mv_pr_repository.dart';
 export 'mv_prescription_repository.dart';
 export 'mv_profile_repository.dart';
+export 'mv_route_repository.dart';
 export 'mv_session_repository.dart';
 export 'mv_slot_override_repository.dart';

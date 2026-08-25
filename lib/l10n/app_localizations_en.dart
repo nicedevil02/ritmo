@@ -1644,4 +1644,92 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mv_library_tab_exercises => 'Exercises';
+
+  @override
+  String get mv_commitments_title => 'Weekly Fixed Sports';
+
+  @override
+  String get mv_commitments_empty =>
+      'No fixed sports registered yet. Adding an anchor helps adapt your weekly plan around your routine.';
+
+  @override
+  String get mv_commitment_add => 'Add Fixed Sport';
+
+  @override
+  String get mv_commitment_edit => 'Edit Fixed Sport';
+
+  @override
+  String get mv_commitment_delete => 'Delete Fixed Sport';
+
+  @override
+  String get mv_commitment_day_label => 'Day of Week';
+
+  @override
+  String get mv_commitment_time_label => 'Start Time';
+
+  @override
+  String get mv_commitment_duration_label => 'Duration (min)';
+
+  @override
+  String get mv_commitment_recurrence_label => 'Recurrence';
+
+  @override
+  String get mv_commitment_venue_label => 'Venue (Optional)';
+
+  @override
+  String get mv_commitment_reminder_label => 'Reminder';
+
+  @override
+  String get mv_week_anchor_cta => 'Set Fixed Weekly Sport';
+
+  @override
+  String get mv_week_anchor_cta_text =>
+      'Have regular futsal, swimming, or hiking days? The weekly plan will adapt around them.';
+
+  @override
+  String get mv_settings_anchors_section => 'Fixed Sports (Anchors) Management';
+
+  @override
+  String get mv_campaign_create => 'Create Training Campaign';
+
+  @override
+  String mv_campaign_active_phase(
+    String phase,
+    int currentWeek,
+    int totalWeeks,
+  ) {
+    return 'Phase $phase • Week $currentWeek of $totalWeeks';
+  }
+
+  @override
+  String get mv_plan_change_kind => 'Change Sport Kind';
+
+  @override
+  String get mv_hub_title => 'Sports & Movement';
+
+  @override
+  String get mv_tab_today => 'Today';
+
+  @override
+  String get mv_tab_week => 'Week';
+
+  @override
+  String get mv_tab_progress => 'Progress';
+
+  @override
+  String get mv_library_tooltip => 'Movement Library';
+
+  @override
+  String get mv_coach_tooltip => 'Coach & Tips';
+
+  @override
+  String get mv_settings_tooltip => 'Sports Settings';
+
+  @override
+  String mv_week_title(int cycleWeek) {
+    return 'Weekly Plan (Week $cycleWeek)';
+  }
+
+  @override
+  String get mv_week_regenerate => 'Regenerate Plan';
 }

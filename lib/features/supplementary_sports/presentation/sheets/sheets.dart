@@ -6,3 +6,4 @@ export 'mv_exercise_substitution_sheet.dart';
 export 'mv_kind_picker_sheet.dart';
 export 'mv_quick_checkin_sheet.dart';
 export 'mv_quick_log_sheet.dart';
+export 'mv_commitment_edit_sheet.dart';

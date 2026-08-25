@@ -835,5 +835,52 @@
   "mv_library_title": "کتابخانهٔ حرکات و ورزش‌ها",
   "mv_week_plan_title": "برنامهٔ هفته",
   "mv_library_tab_kinds": "ورزش‌ها",
-  "mv_library_tab_exercises": "حرکات"
+  "mv_library_tab_exercises": "حرکات",
+
+  "mv_commitments_title": "ورزش‌های ثابت هفتگی",
+  "mv_commitments_empty": "هنوز ورزش ثابتی ثبت نکرده‌اید. با افزودن لنگر، برنامهٔ هفتگی به طور هوشمند حول زمان‌های شما تنظیم می‌شود.",
+  "mv_commitment_add": "افزودن ورزش ثابت",
+  "mv_commitment_edit": "ویرایش ورزش ثابت",
+  "mv_commitment_delete": "حذف ورزش ثابت",
+  "mv_commitment_day_label": "روز هفته",
+  "mv_commitment_time_label": "ساعت شروع",
+  "mv_commitment_duration_label": "مدت (دقیقه)",
+  "mv_commitment_recurrence_label": "تکرار",
+  "mv_commitment_venue_label": "محل تمرین (اختیاری)",
+  "mv_commitment_reminder_label": "یادآوری",
+  "mv_week_anchor_cta": "تعریف ورزش ثابت هفتگی",
+  "mv_week_anchor_cta_text": "روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.",
+  "mv_settings_anchors_section": "مدیریت ورزش‌های ثابت (لنگر)",
+  "mv_campaign_create": "ساخت دورهٔ تمرینی",
+  "mv_campaign_active_phase": "فاز {phase} • هفتهٔ {currentWeek} از {totalWeeks}",
+  "@mv_campaign_active_phase": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      },
+      "currentWeek": {
+        "type": "int"
+      },
+      "totalWeeks": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_plan_change_kind": "تغییر نوع ورزش",
+  "mv_hub_title": "ورزش و حرکت",
+  "mv_tab_today": "امروز",
+  "mv_tab_week": "هفته",
+  "mv_tab_progress": "پیشرفت",
+  "mv_library_tooltip": "کتابخانهٔ حرکات",
+  "mv_coach_tooltip": "دستیار و مربی",
+  "mv_settings_tooltip": "تنظیمات ورزشی",
+  "mv_week_title": "برنامهٔ هفتگی (هفتهٔ {cycleWeek})",
+  "@mv_week_title": {
+    "placeholders": {
+      "cycleWeek": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_week_regenerate": "بازتولید برنامه"
 }

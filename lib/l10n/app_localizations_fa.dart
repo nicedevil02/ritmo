@@ -1642,4 +1642,92 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get mv_library_tab_exercises => 'حرکات';
+
+  @override
+  String get mv_commitments_title => 'ورزش‌های ثابت هفتگی';
+
+  @override
+  String get mv_commitments_empty =>
+      'هنوز ورزش ثابتی ثبت نکرده‌اید. با افزودن لنگر، برنامهٔ هفتگی به طور هوشمند حول زمان‌های شما تنظیم می‌شود.';
+
+  @override
+  String get mv_commitment_add => 'افزودن ورزش ثابت';
+
+  @override
+  String get mv_commitment_edit => 'ویرایش ورزش ثابت';
+
+  @override
+  String get mv_commitment_delete => 'حذف ورزش ثابت';
+
+  @override
+  String get mv_commitment_day_label => 'روز هفته';
+
+  @override
+  String get mv_commitment_time_label => 'ساعت شروع';
+
+  @override
+  String get mv_commitment_duration_label => 'مدت (دقیقه)';
+
+  @override
+  String get mv_commitment_recurrence_label => 'تکرار';
+
+  @override
+  String get mv_commitment_venue_label => 'محل تمرین (اختیاری)';
+
+  @override
+  String get mv_commitment_reminder_label => 'یادآوری';
+
+  @override
+  String get mv_week_anchor_cta => 'تعریف ورزش ثابت هفتگی';
+
+  @override
+  String get mv_week_anchor_cta_text =>
+      'روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.';
+
+  @override
+  String get mv_settings_anchors_section => 'مدیریت ورزش‌های ثابت (لنگر)';
+
+  @override
+  String get mv_campaign_create => 'ساخت دورهٔ تمرینی';
+
+  @override
+  String mv_campaign_active_phase(
+    String phase,
+    int currentWeek,
+    int totalWeeks,
+  ) {
+    return 'فاز $phase • هفتهٔ $currentWeek از $totalWeeks';
+  }
+
+  @override
+  String get mv_plan_change_kind => 'تغییر نوع ورزش';
+
+  @override
+  String get mv_hub_title => 'ورزش و حرکت';
+
+  @override
+  String get mv_tab_today => 'امروز';
+
+  @override
+  String get mv_tab_week => 'هفته';
+
+  @override
+  String get mv_tab_progress => 'پیشرفت';
+
+  @override
+  String get mv_library_tooltip => 'کتابخانهٔ حرکات';
+
+  @override
+  String get mv_coach_tooltip => 'دستیار و مربی';
+
+  @override
+  String get mv_settings_tooltip => 'تنظیمات ورزشی';
+
+  @override
+  String mv_week_title(int cycleWeek) {
+    return 'برنامهٔ هفتگی (هفتهٔ $cycleWeek)';
+  }
+
+  @override
+  String get mv_week_regenerate => 'بازتولید برنامه';
 }

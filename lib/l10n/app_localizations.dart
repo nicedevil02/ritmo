@@ -3043,6 +3043,166 @@ abstract class AppLocalizations {
   /// In fa, this message translates to:
   /// **'حرکات'**
   String get mv_library_tab_exercises;
+
+  /// No description provided for @mv_commitments_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش‌های ثابت هفتگی'**
+  String get mv_commitments_title;
+
+  /// No description provided for @mv_commitments_empty.
+  ///
+  /// In fa, this message translates to:
+  /// **'هنوز ورزش ثابتی ثبت نکرده‌اید. با افزودن لنگر، برنامهٔ هفتگی به طور هوشمند حول زمان‌های شما تنظیم می‌شود.'**
+  String get mv_commitments_empty;
+
+  /// No description provided for @mv_commitment_add.
+  ///
+  /// In fa, this message translates to:
+  /// **'افزودن ورزش ثابت'**
+  String get mv_commitment_add;
+
+  /// No description provided for @mv_commitment_edit.
+  ///
+  /// In fa, this message translates to:
+  /// **'ویرایش ورزش ثابت'**
+  String get mv_commitment_edit;
+
+  /// No description provided for @mv_commitment_delete.
+  ///
+  /// In fa, this message translates to:
+  /// **'حذف ورزش ثابت'**
+  String get mv_commitment_delete;
+
+  /// No description provided for @mv_commitment_day_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'روز هفته'**
+  String get mv_commitment_day_label;
+
+  /// No description provided for @mv_commitment_time_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'ساعت شروع'**
+  String get mv_commitment_time_label;
+
+  /// No description provided for @mv_commitment_duration_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدت (دقیقه)'**
+  String get mv_commitment_duration_label;
+
+  /// No description provided for @mv_commitment_recurrence_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'تکرار'**
+  String get mv_commitment_recurrence_label;
+
+  /// No description provided for @mv_commitment_venue_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'محل تمرین (اختیاری)'**
+  String get mv_commitment_venue_label;
+
+  /// No description provided for @mv_commitment_reminder_label.
+  ///
+  /// In fa, this message translates to:
+  /// **'یادآوری'**
+  String get mv_commitment_reminder_label;
+
+  /// No description provided for @mv_week_anchor_cta.
+  ///
+  /// In fa, this message translates to:
+  /// **'تعریف ورزش ثابت هفتگی'**
+  String get mv_week_anchor_cta;
+
+  /// No description provided for @mv_week_anchor_cta_text.
+  ///
+  /// In fa, this message translates to:
+  /// **'روزهای فوتسال، شنا یا کوهنوردی ثابت دارید؟ برنامهٔ هفته هوشمندانه دور آنها چیده می‌شود.'**
+  String get mv_week_anchor_cta_text;
+
+  /// No description provided for @mv_settings_anchors_section.
+  ///
+  /// In fa, this message translates to:
+  /// **'مدیریت ورزش‌های ثابت (لنگر)'**
+  String get mv_settings_anchors_section;
+
+  /// No description provided for @mv_campaign_create.
+  ///
+  /// In fa, this message translates to:
+  /// **'ساخت دورهٔ تمرینی'**
+  String get mv_campaign_create;
+
+  /// No description provided for @mv_campaign_active_phase.
+  ///
+  /// In fa, this message translates to:
+  /// **'فاز {phase} • هفتهٔ {currentWeek} از {totalWeeks}'**
+  String mv_campaign_active_phase(
+    String phase,
+    int currentWeek,
+    int totalWeeks,
+  );
+
+  /// No description provided for @mv_plan_change_kind.
+  ///
+  /// In fa, this message translates to:
+  /// **'تغییر نوع ورزش'**
+  String get mv_plan_change_kind;
+
+  /// No description provided for @mv_hub_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'ورزش و حرکت'**
+  String get mv_hub_title;
+
+  /// No description provided for @mv_tab_today.
+  ///
+  /// In fa, this message translates to:
+  /// **'امروز'**
+  String get mv_tab_today;
+
+  /// No description provided for @mv_tab_week.
+  ///
+  /// In fa, this message translates to:
+  /// **'هفته'**
+  String get mv_tab_week;
+
+  /// No description provided for @mv_tab_progress.
+  ///
+  /// In fa, this message translates to:
+  /// **'پیشرفت'**
+  String get mv_tab_progress;
+
+  /// No description provided for @mv_library_tooltip.
+  ///
+  /// In fa, this message translates to:
+  /// **'کتابخانهٔ حرکات'**
+  String get mv_library_tooltip;
+
+  /// No description provided for @mv_coach_tooltip.
+  ///
+  /// In fa, this message translates to:
+  /// **'دستیار و مربی'**
+  String get mv_coach_tooltip;
+
+  /// No description provided for @mv_settings_tooltip.
+  ///
+  /// In fa, this message translates to:
+  /// **'تنظیمات ورزشی'**
+  String get mv_settings_tooltip;
+
+  /// No description provided for @mv_week_title.
+  ///
+  /// In fa, this message translates to:
+  /// **'برنامهٔ هفتگی (هفتهٔ {cycleWeek})'**
+  String mv_week_title(int cycleWeek);
+
+  /// No description provided for @mv_week_regenerate.
+  ///
+  /// In fa, this message translates to:
+  /// **'بازتولید برنامه'**
+  String get mv_week_regenerate;
 }
 
 class _AppLocalizationsDelegate

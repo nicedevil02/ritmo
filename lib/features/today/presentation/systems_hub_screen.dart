@@ -1372,6 +1372,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
         illustrationAsset.contains('energy_card_top.png') ||
         illustrationAsset.contains('notes_card_top.png') ||
         illustrationAsset.contains('reflection_card_top.png') ||
+        illustrationAsset.contains('insights_card_top.png') ||
         illustrationAsset.contains('cycle_card_top.png')) {
       imageAsset = illustrationAsset;
     } else {

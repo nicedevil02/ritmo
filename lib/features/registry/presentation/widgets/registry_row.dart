@@ -90,10 +90,10 @@ class _RegistryRowState extends State<RegistryRow> {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
             children: [
-              // Domain icon container (40×40, rounded rect)
+              // Domain icon container (dynamic, rounded rect)
               Container(
-                width: CalendarGeometry.iconContainerSize,
-                height: CalendarGeometry.iconContainerSize,
+                width: CalendarGeometry.effectiveIconContainerSize(context),
+                height: CalendarGeometry.effectiveIconContainerSize(context),
                 decoration: BoxDecoration(
                   color: domainColor.withValues(alpha: isDark ? 0.12 : 0.08),
                   borderRadius: BorderRadius.circular(RitmoRadius.iconButton),

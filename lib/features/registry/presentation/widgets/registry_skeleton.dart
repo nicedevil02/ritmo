@@ -92,9 +92,9 @@ class _RegistrySkeletonState extends State<RegistrySkeleton>
               gradient: gradient,
               borderRadius: BorderRadius.circular(RitmoRadius.iconButton),
             ),
-            child: const SizedBox(
-              width: CalendarGeometry.iconContainerSize,
-              height: CalendarGeometry.iconContainerSize,
+            child: SizedBox(
+              width: CalendarGeometry.effectiveIconContainerSize(context),
+              height: CalendarGeometry.effectiveIconContainerSize(context),
             ),
           ),
 

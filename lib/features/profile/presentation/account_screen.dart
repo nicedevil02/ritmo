@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
 import 'package:ritmo/core/backend/models/auth_result.dart';
 import 'package:ritmo/core/theme/ritmo_colors.dart';
+import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/profile/presentation/alarm_diagnostics_sheet.dart';
 import 'package:ritmo/features/profile/presentation/widgets/otp_verification_sheet.dart';
 

@@ -89,12 +89,24 @@ abstract final class CalendarGeometry {
       context.metrics.densityFactor *
       (context.textScale > 1.0 ? context.textScale : 1.0);
 
+  /// Returns dynamic search bar height adhering to minimum touch target floor.
+  static double effectiveSearchBarHeight(BuildContext context) =>
+      context.metrics.touchTarget;
+
   /// Standard filter/module chip height.
   static const double chipHeight = 36.0;
 
   /// Returns dynamic chip height adhering to Law 38 (Minimum 48dp Touch Target Floor).
   static double effectiveChipHeight(BuildContext context) =>
       context.metrics.touchTarget;
+
+  /// Returns dynamic FAB height adhering to density factor.
+  static double effectiveFabHeight(BuildContext context) =>
+      54.0 * context.metrics.densityFactor;
+
+  /// Returns dynamic icon container size based on density.
+  static double effectiveIconContainerSize(BuildContext context) =>
+      40.0 * context.metrics.densityFactor;
 
   // ─── Surface & Background Opacities ───
   /// Opacity for domain tinted background surfaces.

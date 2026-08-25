@@ -1060,7 +1060,7 @@ CREATE TABLE IF NOT EXISTS mv_routes (
 
 **هدف اسپرینت:** کاربری که می‌گوید «دو ماه دیگر قله می‌روم»، برنامهٔ رو به جلو بگیرد.
 
-### - [ ] S5-T1 — فعال‌سازی `movement_campaigns`
+### - [x] S5-T1 — فعال‌سازی `movement_campaigns` — d6e2d70e
 
 **فایل‌ها:** `data/repositories/mv_campaign_repository.dart` (جدید)، `domain/models/mv_campaign.dart` (موجود)
 
@@ -1469,7 +1469,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S4-T6 | DONE | bbb32e6e | پیاده‌سازی LoadEngine با فرمول sRPE و محاسبه ACWR با ۴ کلید محدوده بار و تست جدولی ۵ ردیفی |
 | S4-T7 | DONE | 23200a67 | ایجاد جدول mv_routes مایگریشن v128 و مخزن MvRouteRepository با بروزرسانی دفعات و بهترین زمان |
 | S4-T8 | DONE | aeabdede | تست جامع سراسری گلدن‌پث اسپرینت ۴: اسلات لنگر -> مود route -> ثبت متریک‌ها و تلاش سخت -> ذخیره در DB -> بروزرسانی مسیر و بودجه |
-| S5-T1 |  |  |  |
+| S5-T1 | DONE | d6e2d70e | فعال‌سازی جدول movement_campaigns و پیاده‌سازی کامل MvCampaignRepository و تست‌های مربوطه |
 | S5-T2 |  |  |  |
 | S5-T3 |  |  |  |
 | S5-T4 |  |  |  |

@@ -32,6 +32,7 @@ class MvQuickLogSheet extends StatefulWidget {
     required BuildContext context,
     String initialKindCode = 'WALKING',
     int initialDuration = 20,
+    int? initialDurationMinutes,
     MvKindUseCase? kindUseCase,
     Future<void> Function(
       String kindCode,
@@ -45,7 +46,7 @@ class MvQuickLogSheet extends StatefulWidget {
       context: context,
       builder: (ctx) => MvQuickLogSheet(
         initialKindCode: initialKindCode,
-        initialDuration: initialDuration,
+        initialDuration: initialDurationMinutes ?? initialDuration,
         kindUseCase: kindUseCase,
         onSave:
             onSave ??

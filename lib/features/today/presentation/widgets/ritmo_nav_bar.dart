@@ -1,23 +1,25 @@
-// نوار ناوبری نئومورفیک پرمیوم ریتمو با دکمه مرکزی برجسته و طراحی کپسولی شناور
-// (Premium Neumorphic Floating Pill Navigation Bar with Elevated Center Button)
+// نوار ناوبری شیشه‌ای پویا و پرمیوم ریتمو با دکمه مرکزی برجسته و طراحی کپسولی شناور
+// (Premium Dynamic Glassmorphic Floating Pill Navigation Bar with Elevated Center Button)
 
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/ux/ritmo_haptics.dart';
 
-// ── Neumorphic Design Constants ─────────────────────────────────
+// ── Glassmorphic & Pill Design Constants ─────────────────────────
 const double _kHMargin = 16.0; // horizontal margin of the pill
 const double _kBottomGap = 8.0; // gap between pill bottom and nav area bottom
 const double _kPillRadius = 26.0; // corner radius (capsule)
 const double _kMoundHeight = 10.0; // height of the crest mound above baseline
 const double _kMoundHW = 42.0; // mound half-width at baseline
 const double _kCenterBtnSize = 48.0; // center elevated button diameter
-const double _kCenterBtnRimW = 3.0; // metallic rim width
+const double _kCenterBtnRimW = 2.5; // metallic rim width
 const double _kIconSize = 20.0; // inactive item icon size
 const double _kLabelSize = 9.5; // label font size
 const double _kIndicatorW = 14.0; // active indicator bar width
@@ -38,7 +40,7 @@ class _NavItem {
   final String label;
 }
 
-/// نوار ناوبری نئومورفیک پرمیوم ریتمو
+/// نوار ناوبری شیشه‌ای پویا و پرمیوم ریتمو
 class RitmoNavBar extends StatefulWidget {
   const RitmoNavBar({
     super.key,
@@ -128,35 +130,40 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final isDark = context.isDark;
+    final isGlass = context.isGlassEnabled;
+    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final destinations = _destinations;
     final slotCount = destinations.length;
     final activeSlot = _findSlotIndex(widget.currentIndex);
 
-    // ── Neumorphic Colour Tokens ──
-    final Color pillBg =
-        isDark ? const Color(0xFF1B202B) : const Color(0xFFEFF2F7);
+    // ── Dynamic Glass & Theme Tokens ──
+    final Color pillBg = isGlass ? colors.glassTint : colors.surfaceElevated;
+    final Color pillBorder = isGlass
+        ? (isDark
+            ? Colors.white.withValues(alpha: 0.16)
+            : Colors.white.withValues(alpha: 0.70))
+        : (isDark ? colors.border : colors.divider);
+
     final Color shadowDark = isDark
-        ? Colors.black.withValues(alpha: 0.50)
-        : const Color(0xFFB5BDCA).withValues(alpha: 0.55);
+        ? Colors.black.withValues(alpha: 0.45)
+        : colors.primary.withValues(alpha: 0.08);
     final Color shadowLight = isDark
         ? Colors.white.withValues(alpha: 0.04)
-        : Colors.white.withValues(alpha: 0.90);
-    final Color pillBorder = isDark
-        ? Colors.white.withValues(alpha: 0.09)
         : Colors.white.withValues(alpha: 0.85);
-    final Color inactiveColor =
-        isDark ? const Color(0xFF6E7B8E) : const Color(0xFF8D96A5);
-    final Color activeLabelColor =
-        isDark ? const Color(0xFFCBD5E1) : const Color(0xFF1E293B);
-    final Color indicatorColor =
-        isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E293B);
-    final Color centerBtnColor =
-        isDark ? const Color(0xFF141922) : const Color(0xFF1E2430);
+
+    final Color inactiveColor = isDark
+        ? colors.textSecondary.withValues(alpha: 0.75)
+        : colors.textSecondary;
+    final Color activeLabelColor = colors.textPrimary;
+    final Color indicatorColor = colors.primary;
+
+    final Color centerBtnColor = colors.primary;
     final Color centerBtnRim = isDark
-        ? Colors.white.withValues(alpha: 0.22)
-        : Colors.white.withValues(alpha: 0.92);
+        ? Colors.white.withValues(alpha: 0.28)
+        : Colors.white.withValues(alpha: 0.90);
 
     final navH = context.metrics.navBarHeight;
     final pillH = navH - _kBottomGap;
@@ -185,7 +192,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ─── 1. سایه نئومورفیک (تاریک + روشن) ───
+                  // ─── 1. سایه محیطی و عمق ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
@@ -196,22 +203,44 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                         darkShadow: shadowDark,
                         lightShadow: shadowLight,
                         moundCenterX: ncx,
+                        isDark: isDark,
                       ),
                     ),
                   ),
 
-                  // ─── 2. بدنه قرص با قوس برجسته بالای دکمه ───
+                  // ─── 2. بدنه قرص کپسولی با فیلتر شیشه‌ای پویا و قوس برآمده ───
                   Positioned(
                     left: _kHMargin,
                     right: _kHMargin,
                     top: 0,
                     height: pillH,
-                    child: CustomPaint(
-                      painter: _NeumorphicPillPainter(
-                        fillColor: pillBg,
-                        borderColor: pillBorder,
-                        moundCenterX: ncx,
-                      ),
+                    child: ClipPath(
+                      clipper: _PillMoundClipper(moundCenterX: ncx),
+                      child: isGlass
+                          ? BackdropFilter(
+                              filter: ImageFilter.blur(
+                                sigmaX: blur,
+                                sigmaY: blur,
+                              ),
+                              child: CustomPaint(
+                                painter: _NeumorphicPillPainter(
+                                  fillColor: pillBg,
+                                  borderColor: pillBorder,
+                                  moundCenterX: ncx,
+                                  isDark: isDark,
+                                  isGlass: true,
+                                ),
+                              ),
+                            )
+                          : CustomPaint(
+                              painter: _NeumorphicPillPainter(
+                                fillColor: pillBg,
+                                borderColor: pillBorder,
+                                moundCenterX: ncx,
+                                isDark: isDark,
+                                isGlass: false,
+                              ),
+                            ),
                     ),
                   ),
 
@@ -230,8 +259,7 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                               child: _NeumorphicSlotItem(
                                 item: destinations[i],
                                 isActive: i == activeSlot,
-                                slotDistance:
-                                    (currentSlotPos - i).abs(),
+                                slotDistance: (currentSlotPos - i).abs(),
                                 isDark: isDark,
                                 inactiveColor: inactiveColor,
                                 activeLabelColor: activeLabelColor,
@@ -241,10 +269,10 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                                       RitmoShellMetrics.homeTabIndexFor(
                                         widget.mode,
                                       )) {
-                                    HapticFeedback.mediumImpact();
+                                    RitmoHaptics.confirm();
                                     widget.onCenterTap();
                                   } else {
-                                    HapticFeedback.selectionClick();
+                                    RitmoHaptics.selection();
                                     widget.onSelectTab(
                                       destinations[i].index,
                                     );
@@ -271,14 +299,19 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                       onTap: () {
                         if (activeItem.index ==
                             RitmoShellMetrics.homeTabIndexFor(widget.mode)) {
-                          HapticFeedback.mediumImpact();
+                          RitmoHaptics.confirm();
                           widget.onCenterTap();
                         } else {
-                          HapticFeedback.selectionClick();
+                          RitmoHaptics.selection();
                           widget.onSelectTab(activeItem.index);
                         }
                       },
-                      onLongPress: widget.onCenterLongPress,
+                      onLongPress: widget.onCenterLongPress != null
+                          ? () {
+                              RitmoHaptics.warning();
+                              widget.onCenterLongPress!();
+                            }
+                          : null,
                     ),
                   ),
                 ],
@@ -600,11 +633,26 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
 //  مسیر قرص کپسولی با قوس برآمده (Mound Crest) در بالای دکمه فعال
 // ═══════════════════════════════════════════════════════════════════
 
+/// کلیپر دقیق مسیر قرص کپسولی با قوس برآمده جهت اتصال فیلتر BackdropFilter شیشه‌ای
+class _PillMoundClipper extends CustomClipper<Path> {
+  const _PillMoundClipper({required this.moundCenterX});
+
+  final double moundCenterX;
+
+  @override
+  Path getClip(Size size) {
+    return _buildPillMoundPath(size.width, size.height, moundCenterX);
+  }
+
+  @override
+  bool shouldReclip(covariant _PillMoundClipper oldClipper) =>
+      oldClipper.moundCenterX != moundCenterX;
+}
+
 /// مسیر قرص کپسولی با قوس ارگانیک رو به بالا پیرامون دکمه وسط
 Path _buildPillMoundPath(double w, double h, double cx) {
   const r = _kPillRadius;
   const base = _kMoundHeight;
-  const mhw = _kMoundHW;
 
   // ۱. بدنه پایه کپسول (قرص کامل با گوشه‌های کاملاً گرد)
   final pillPath = Path()
@@ -615,39 +663,57 @@ Path _buildPillMoundPath(double w, double h, double cx) {
       ),
     );
 
-  // ۲. قوس برآمده گنبدی (Mound) منطبق بر موقعیت دکمه فعال
-  final clampedCx = cx.clamp(r + 4.0, w - r - 4.0);
-  final mLeft = clampedCx - mhw;
-  final mRight = clampedCx + mhw;
+  // ۲. محاسبه فاصله از لبه‌های چپ و راست نوار
+  final distToEdge = math.min(cx, w - cx);
+  final minSafeDist = r + 14.0;
+
+  // در تب‌های کناری، نوار کاملاً صاف، تمیز و قرص‌شکل می‌ماند تا گوشه‌ها دفورمه نشوند
+  if (distToEdge <= minSafeDist) {
+    return pillPath;
+  }
+
+  // ضریب محوشدگی نرم قوس گنبدی هنگام نزدیک شدن به گوشه‌ها
+  final t = ((distToEdge - minSafeDist) / (_kMoundHW * 0.8)).clamp(0.0, 1.0);
+  final smoothT = t * t * (3.0 - 2.0 * t); // Smoothstep
+  final moundH = _kMoundHeight * smoothT;
+
+  if (moundH <= 0.5) {
+    return pillPath;
+  }
+
+  final mhw = (_kMoundHW * (0.65 + 0.35 * smoothT)).clamp(16.0, distToEdge - r);
+  final mLeft = (cx - mhw).clamp(r, w - r);
+  final mRight = (cx + mhw).clamp(r, w - r);
+  final crestY = base - moundH;
 
   final moundPath = Path();
   moundPath.moveTo(mLeft, base);
   moundPath.cubicTo(
-    mLeft + 14.0,
+    mLeft + 12.0 * smoothT,
     base,
-    clampedCx - mhw * 0.45,
-    0.0,
-    clampedCx,
-    0.0,
+    cx - mhw * 0.45,
+    crestY,
+    cx,
+    crestY,
   );
   moundPath.cubicTo(
-    clampedCx + mhw * 0.45,
-    0.0,
-    mRight - 14.0,
+    cx + mhw * 0.45,
+    crestY,
+    mRight - 12.0 * smoothT,
     base,
     mRight,
     base,
   );
-  moundPath.lineTo(mRight, base + 12.0);
-  moundPath.lineTo(mLeft, base + 12.0);
+  moundPath.lineTo(mRight, base + 8.0);
+  moundPath.lineTo(mLeft, base + 8.0);
   moundPath.close();
 
-  // ۳. پیوند و ادغام ریاضی بی‌نقص (بدون اعوجاج یا لبه‌های تیز در گوشه‌ها)
+  // ۳. پیوند و ادغام ریاضی بی‌نقص
   return Path.combine(PathOperation.union, pillPath, moundPath);
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  نقاش سایه نئومورفیک (سایه تاریک + هالوی روشن)
+//  نقاش سایه محیطی و عمق ناوبری
 // ═══════════════════════════════════════════════════════════════════
 
 class _NeumorphicShadowPainter extends CustomPainter {
@@ -655,11 +721,13 @@ class _NeumorphicShadowPainter extends CustomPainter {
     required this.darkShadow,
     required this.lightShadow,
     required this.moundCenterX,
+    this.isDark = true,
   });
 
   final Color darkShadow;
   final Color lightShadow;
   final double moundCenterX;
+  final bool isDark;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -668,31 +736,34 @@ class _NeumorphicShadowPainter extends CustomPainter {
     // سایه تاریک (پایین و اطراف — عمق اصلی)
     final darkPaint = Paint()
       ..color = darkShadow
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isDark ? 16 : 14);
     canvas.save();
-    canvas.translate(0, 5);
+    canvas.translate(0, 4);
     canvas.drawPath(path, darkPaint);
     canvas.restore();
 
-    // هالوی روشن (بالا — نور نئومورفیک)
-    final lightPaint = Paint()
-      ..color = lightShadow
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.save();
-    canvas.translate(0, -3);
-    canvas.drawPath(path, lightPaint);
-    canvas.restore();
+    // هالوی روشن (بالا — در تم روشن)
+    if (!isDark) {
+      final lightPaint = Paint()
+        ..color = lightShadow
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      canvas.save();
+      canvas.translate(0, -2);
+      canvas.drawPath(path, lightPaint);
+      canvas.restore();
+    }
   }
 
   @override
   bool shouldRepaint(covariant _NeumorphicShadowPainter oldDelegate) =>
       oldDelegate.darkShadow != darkShadow ||
       oldDelegate.lightShadow != lightShadow ||
-      oldDelegate.moundCenterX != moundCenterX;
+      oldDelegate.moundCenterX != moundCenterX ||
+      oldDelegate.isDark != isDark;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  نقاش بدنه قرص کپسولی با حاشیه نورانی (Specular)
+//  نقاش بدنه قرص کپسولی با حاشیه نورانی و لایه گرادیان شیشه‌ای
 // ═══════════════════════════════════════════════════════════════════
 
 class _NeumorphicPillPainter extends CustomPainter {
@@ -700,27 +771,48 @@ class _NeumorphicPillPainter extends CustomPainter {
     required this.fillColor,
     required this.borderColor,
     required this.moundCenterX,
+    required this.isDark,
+    required this.isGlass,
   });
 
   final Color fillColor;
   final Color borderColor;
   final double moundCenterX;
+  final bool isDark;
+  final bool isGlass;
 
   @override
   void paint(Canvas canvas, Size size) {
     final path = _buildPillMoundPath(size.width, size.height, moundCenterX);
 
-    // پر کردن بدنه قرص
+    // ۱. پر کردن بدنه قرص
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
-    // حاشیه نورانی ظریف (Specular highlight)
+    // ۲. گرادیان بازتابی فوقانی (Specular highlight برای حجم شیشه‌ای)
+    if (isGlass) {
+      final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+      final specularPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withValues(alpha: isDark ? 0.12 : 0.28),
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 0.45],
+        ).createShader(rect)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, specularPaint);
+    }
+
+    // ۳. حاشیه نورانی ظریف
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.0;
     canvas.drawPath(path, borderPaint);
   }
 
@@ -728,5 +820,7 @@ class _NeumorphicPillPainter extends CustomPainter {
   bool shouldRepaint(covariant _NeumorphicPillPainter oldDelegate) =>
       oldDelegate.fillColor != fillColor ||
       oldDelegate.borderColor != borderColor ||
-      oldDelegate.moundCenterX != moundCenterX;
+      oldDelegate.moundCenterX != moundCenterX ||
+      oldDelegate.isDark != isDark ||
+      oldDelegate.isGlass != isGlass;
 }

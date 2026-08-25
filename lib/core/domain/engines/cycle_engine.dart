@@ -64,7 +64,7 @@ class CycleEngineInput {
     required this.now,
     this.horizonCycles = 12,
   });
-  final Database db;
+  final DatabaseExecutor db;
   final Map<String, String> appSettings;
   final DateTime now;
   final int horizonCycles;
@@ -255,12 +255,110 @@ class CycleEngineOutput {
 
   DateTime? get pmsWindowEnd =>
       _pmsWindowEnd ?? (forecast.isNotEmpty ? forecast.first.pmsEnd : null);
+
+  CycleEngineOutput copyWith({
+    CyclePhase? currentPhase,
+    int? dayOfCycle,
+    int? dayOfPeriod,
+    DateTime? nextPeriodPrediction,
+    DateTime? fertileWindowStart,
+    DateTime? fertileWindowEnd,
+    DateTime? ovulationDay,
+    bool? isIrregular,
+    CycleStats? stats,
+    String? dataMaturity,
+    bool? hasData,
+    DateTime? nextPeriodWindowStart,
+    DateTime? nextPeriodWindowEnd,
+    DateTime? pmsWindowStart,
+    DateTime? pmsWindowEnd,
+    int? regularityScore,
+    List<CycleTrendPoint>? trendPoints,
+    RegularityLevel? regularityLevel,
+    CycleDisclaimerCode? disclaimerCode,
+    String? regularityLabel,
+    String? predictionDisclaimer,
+    bool? isOverdue,
+    int? daysOverdue,
+    int? missedCycles,
+    bool? needsUserAttention,
+    bool? hasPhaseConflict,
+    bool? hasImplausiblePeriodData,
+    bool? isProjected,
+    int? discardedOutliers,
+    double? cycleLengthSd,
+    DateTime? forecastAnchor,
+    List<PredictedCycle>? forecast,
+    bool? isBleedingConfirmed,
+    bool? isOpenPeriodBeyondAverage,
+    int? openPeriodDayCount,
+    DateTime? actualPeriodStart,
+    bool? isStartDueToday,
+    List<DateTime>? missedExpectedStarts,
+    bool? awaitingStartConfirmation,
+    bool? awaitingEndConfirmation,
+  }) {
+    return CycleEngineOutput(
+      currentPhase: currentPhase ?? this.currentPhase,
+      dayOfCycle: dayOfCycle ?? this.dayOfCycle,
+      dayOfPeriod: dayOfPeriod ?? this.dayOfPeriod,
+      nextPeriodPrediction: nextPeriodPrediction ?? _nextPeriodPrediction,
+      fertileWindowStart: fertileWindowStart ?? _fertileWindowStart,
+      fertileWindowEnd: fertileWindowEnd ?? _fertileWindowEnd,
+      ovulationDay: ovulationDay ?? _ovulationDay,
+      isIrregular: isIrregular ?? this.isIrregular,
+      stats: stats ?? this.stats,
+      dataMaturity: dataMaturity ?? this.dataMaturity,
+      hasData: hasData ?? this.hasData,
+      nextPeriodWindowStart:
+          nextPeriodWindowStart ?? _nextPeriodWindowStart,
+      nextPeriodWindowEnd:
+          nextPeriodWindowEnd ?? _nextPeriodWindowEnd,
+      pmsWindowStart: pmsWindowStart ?? _pmsWindowStart,
+      pmsWindowEnd: pmsWindowEnd ?? _pmsWindowEnd,
+      regularityScore: regularityScore ?? this.regularityScore,
+      trendPoints: trendPoints ?? this.trendPoints,
+      regularityLevel: regularityLevel ?? this.regularityLevel,
+      disclaimerCode: disclaimerCode ?? this.disclaimerCode,
+      regularityLabel: regularityLabel ?? _regularityLabel,
+      predictionDisclaimer:
+          predictionDisclaimer ?? _predictionDisclaimer,
+      isOverdue: isOverdue ?? this.isOverdue,
+      daysOverdue: daysOverdue ?? this.daysOverdue,
+      missedCycles: missedCycles ?? this.missedCycles,
+      needsUserAttention:
+          needsUserAttention ?? this.needsUserAttention,
+      hasPhaseConflict: hasPhaseConflict ?? this.hasPhaseConflict,
+      hasImplausiblePeriodData:
+          hasImplausiblePeriodData ?? this.hasImplausiblePeriodData,
+      isProjected: isProjected ?? this.isProjected,
+      discardedOutliers: discardedOutliers ?? this.discardedOutliers,
+      cycleLengthSd: cycleLengthSd ?? this.cycleLengthSd,
+      forecastAnchor: forecastAnchor ?? this.forecastAnchor,
+      forecast: forecast ?? this.forecast,
+      isBleedingConfirmed:
+          isBleedingConfirmed ?? this.isBleedingConfirmed,
+      isOpenPeriodBeyondAverage:
+          isOpenPeriodBeyondAverage ?? this.isOpenPeriodBeyondAverage,
+      openPeriodDayCount:
+          openPeriodDayCount ?? this.openPeriodDayCount,
+      actualPeriodStart: actualPeriodStart ?? this.actualPeriodStart,
+      isStartDueToday: isStartDueToday ?? this.isStartDueToday,
+      missedExpectedStarts:
+          missedExpectedStarts ?? this.missedExpectedStarts,
+      awaitingStartConfirmation:
+          awaitingStartConfirmation ?? this.awaitingStartConfirmation,
+      awaitingEndConfirmation:
+          awaitingEndConfirmation ?? this.awaitingEndConfirmation,
+    );
+  }
 }
 
 class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
-  static const int minPlausibleCycle = 21;
-  static const int maxPlausibleCycle = 45;
-  static const int maxPlausiblePeriodDays = 15;
+  static const int minPlausibleCycle = CycleSettings.minCycleLength;
+  static const int maxPlausibleCycle = CycleSettings.maxCycleLength;
+  static const int maxPlausiblePeriodDays =
+      CycleSettings.maxPlausiblePeriodDays;
 
   // Horizon constraints (F-15)
   static const int defaultHorizonCycles = 12;
@@ -295,15 +393,18 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       return _pregnancyOutput(now);
     }
 
-    // 1. Fetch cycle_periods from database
+    // 1. Fetch cycle_periods from database (excluding predicted placeholders)
     final List<Map<String, dynamic>> periodRows = await db.query(
       'cycle_periods',
+      where: 'isPredicted = 0 OR isPredicted IS NULL',
       orderBy: 'startDate ASC',
     );
 
     if (periodRows.isEmpty) {
       return _emptyOutput(now);
     }
+
+    final cleanNow = CycleDateContract.cleanDate(now);
 
     // 2. Parse setting fallbacks using CycleSettings façade
     final defaultCycleLength = CycleSettings.getCycleLength(appSettings);
@@ -341,9 +442,11 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
           cycleLengths.reduce((a, b) => a + b) / cycleLengths.length;
     }
 
-    // Average period duration
+    // Average period duration (excluding auto-closed periods)
     final periodDurations = <int>[];
     for (final row in periodRows) {
+      final isAutoClosed = (row['autoClosed'] as int? ?? 0) == 1;
+      if (isAutoClosed) continue;
       final start = CycleDateContract.parseDayKey(row['startDate']?.toString());
       final end = CycleDateContract.parseDayKey(row['endDate']?.toString());
       if (start != null && end != null) {
@@ -396,6 +499,9 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       var pDays = pDuration;
       if (end != null) {
         pDays = CycleDateContract.daysBetween(start, end) + 1;
+      } else {
+        final elapsed = CycleDateContract.daysBetween(start, cleanNow) + 1;
+        pDays = math.min(elapsed, maxPlausiblePeriodDays);
       }
 
       var lenDays = L;
@@ -408,9 +514,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
           lenDays = CycleDateContract.daysBetween(start, nextStart);
         }
       } else {
-        if (cycleLengths.isNotEmpty) {
-          lenDays = cycleLengths.last;
-        }
+        lenDays = CycleDateContract.daysBetween(start, cleanNow) + 1;
         isInProgress = true;
       }
 
@@ -513,21 +617,21 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
   }
 
   static CycleRegularity _computeRegularity(List<int> cycleLengths) {
-    if (cycleLengths.length < CycleSettings.minCyclesForReliableForecast) {
-      return const CycleRegularity(
+    final n = cycleLengths.length;
+    if (n < CycleSettings.minCyclesForReliableForecast) {
+      return CycleRegularity(
         score: null,
         level: RegularityLevel.insufficientData,
         isIrregular: false,
-        sampleSize: 0,
+        sampleSize: n,
         isComputable: false,
       );
     }
 
-    final n = cycleLengths.length;
     final mean = cycleLengths.reduce((a, b) => a + b) / n;
     final variance =
         cycleLengths.map((x) => math.pow(x - mean, 2)).reduce((a, b) => a + b) /
-        n;
+        (n > 1 ? (n - 1) : 1);
     final sd = math.sqrt(variance);
     final sdPenalty = (sd * 10).round();
     final score = (100 - sdPenalty).clamp(0, 100);
@@ -729,7 +833,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
         // دورهٔ باز: تا تأیید کاربر، وضعیت واقعی «در جریان» است.
         // قبلاً از میانگین pDuration استفاده می‌شد و همین باعث می‌شد UI
         // بی‌اجازه فاز را به فولیکولار ببرد در حالی که رکورد هنوز باز بود.
-        if (daysSinceStart <= maxPlausiblePeriodDays) {
+        if (daysSinceStart < maxPlausiblePeriodDays) {
           isBleeding = true;
           dayOfPeriod = daysSinceStart + 1;
           openPeriodDayCount = daysSinceStart + 1;
@@ -740,6 +844,7 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
           isBleedingConfirmed = !isProjected;
         } else {
           hasImplausiblePeriodData = true;
+          dayOfPeriod = maxPlausiblePeriodDays;
           openPeriodDayCount = maxPlausiblePeriodDays;
           awaitingEndConfirmation = true;
         }
@@ -755,14 +860,13 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
     // C-19: Luteal days tailored for short cycles so follicular phase >= 10 days
     final lutealDays = math.min(lutealPhaseSetting, math.max(1, L - 10));
 
-    // Overdue tracking (C-18)
+    // Overdue tracking (C-18, Bug 7 fix)
     final missedCycles = (daysSinceStart / L).floor();
-    final rawOverdue = (!isBleeding && daysSinceStart >= L)
+    final isStartDueToday = !isBleeding && daysSinceStart == L;
+    final isOverdue = !isBleeding && daysSinceStart > L;
+    final daysOverdue = (!isBleeding && daysSinceStart > L)
         ? (daysSinceStart - L)
         : 0;
-    final isStartDueToday = !isBleeding && daysSinceStart == L;
-    final daysOverdue = rawOverdue;
-    final isOverdue = !isBleeding && daysSinceStart >= L;
     final awaitingStartConfirmation = !isBleeding && daysSinceStart >= L;
     final needsUserAttention =
         (!isBleeding && (missedCycles >= 2 || daysOverdue >= 45));
@@ -788,9 +892,8 @@ class CycleEngine implements CachedEngine<CycleEngineInput, CycleEngineOutput> {
       phase = CyclePhase.dataStale;
     } else if (isBleeding) {
       phase = CyclePhase.menstrual;
-    } else if (awaitingStartConfirmation) {
-      // موعد گذشته و کاربر چیزی ثبت نکرده:
-      // حق نداریم فاز فولیکولار را قطعی اعلام کنیم.
+    } else if (isOverdue) {
+      // فقط زمانی که موعد گذشته و کاربر چیزی ثبت نکرده (daysSinceStart > L):
       phase = CyclePhase.dataStale;
     } else {
       final currentDayInCycle = (daysSinceStart % L) + 1;

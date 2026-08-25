@@ -48,11 +48,14 @@ class CycleConfirmationService {
             ? CycleConfirmationKind.startDue
             : CycleConfirmationKind.startOverdue;
 
-        final targetDate =
-            engineOutput.nextPeriodPrediction ??
-            (engineOutput.forecast.isNotEmpty
-                ? engineOutput.forecast.first.predictedStart
-                : cleanNow);
+        final targetDate = kind == CycleConfirmationKind.startOverdue
+            ? (engineOutput.missedExpectedStarts.isNotEmpty
+                ? engineOutput.missedExpectedStarts.last
+                : cleanNow)
+            : (engineOutput.nextPeriodPrediction ??
+                (engineOutput.forecast.isNotEmpty
+                    ? engineOutput.forecast.first.predictedStart
+                    : cleanNow));
 
         final reqId = CycleConfirmationRequest.buildId(kind, targetDate);
         final existing = await _getRequestById(db, reqId);
@@ -63,11 +66,14 @@ class CycleConfirmationService {
           return existing;
         }
 
+        final nowMs = effectiveNow.millisecondsSinceEpoch;
         return CycleConfirmationRequest(
           id: reqId,
           kind: kind,
           targetDate: targetDate,
           askCount: 0,
+          createdAt: nowMs,
+          updatedAt: nowMs,
         );
       }
 
@@ -122,6 +128,38 @@ class CycleConfirmationService {
     return CycleConfirmationRequest.fromMap(rows.first);
   }
 
+  /// افزایش تعداد دفعات نمایش درخواست تأیید به کاربر
+  Future<void> markAsked({
+    DatabaseExecutor? dbExecutor,
+    required String requestId,
+    DateTime? now,
+  }) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final effectiveNow = now ?? CycleClock.now;
+      final nowMs = effectiveNow.millisecondsSinceEpoch;
+      final existing = await _getRequestById(db, requestId);
+      if (existing != null) {
+        await db.update(
+          'cycle_confirmations',
+          {
+            'askCount': existing.askCount + 1,
+            'lastAskedAt': nowMs,
+            'updatedAt': nowMs,
+          },
+          where: 'id = ?',
+          whereArgs: [requestId],
+        );
+      }
+    } catch (e, st) {
+      RitmoLogger.error(
+        '[CycleConfirmationService] Error marking confirmation asked',
+        error: e,
+        stack: st,
+      );
+    }
+  }
+
   /// ثبت پاسخ کاربر
   Future<void> recordAnswer({
     DatabaseExecutor? dbExecutor,
@@ -137,6 +175,10 @@ class CycleConfirmationService {
 
     final existing = await _getRequestById(db, requestId);
     final newAskCount = (existing?.askCount ?? 0) + 1;
+    final createdAtMs =
+        (existing?.createdAt != null && (existing?.createdAt ?? 0) > 0)
+            ? existing!.createdAt!
+            : nowMs;
 
     await db.insert('cycle_confirmations', {
       'id': requestId,
@@ -153,7 +195,7 @@ class CycleConfirmationService {
       'answeredAt': nowMs,
       'askCount': newAskCount,
       'lastAskedAt': nowMs,
-      'createdAt': existing?.targetDate.millisecondsSinceEpoch ?? nowMs,
+      'createdAt': createdAtMs,
       'updatedAt': nowMs,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
 
@@ -233,7 +275,7 @@ class CycleConfirmationService {
     );
   }
 
-  /// هنگامی که دورهٔ واقعی شروع شد (startPeriod)، درخواست‌های startDue باز حذف/بسته می‌شوند
+  /// هنگامی که دورهٔ واقعی شروع شد (startPeriod)، درخواست‌های startDue و startOverdue باز حذف می‌شوند
   /// و cycle_confirm_snooze_until نیز پاک می‌شود.
   Future<void> onActualCycleStarted({
     DatabaseExecutor? dbExecutor,
@@ -246,7 +288,8 @@ class CycleConfirmationService {
 
       await db.delete(
         'cycle_confirmations',
-        where: "kind = 'startDue' AND targetDate <= ?",
+        where:
+            "(kind = 'startDue' OR kind = 'startOverdue') AND targetDate <= ?",
         whereArgs: [CycleDateContract.toDayKey(maxTargetDate)],
       );
 

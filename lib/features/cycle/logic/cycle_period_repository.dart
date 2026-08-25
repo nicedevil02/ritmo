@@ -19,6 +19,7 @@ class CyclePeriod {
   final String flowIntensity;
   final bool isPredicted;
   final String? note;
+  final bool autoClosed;
   final int createdAt;
   final int updatedAt;
 
@@ -29,6 +30,7 @@ class CyclePeriod {
     this.flowIntensity = 'MEDIUM',
     this.isPredicted = false,
     this.note,
+    this.autoClosed = false,
     this.createdAt = 0,
     this.updatedAt = 0,
   });
@@ -54,26 +56,32 @@ class CyclePeriod {
       CyclePeriodContract.colFlowIntensity: flowIntensity,
       CyclePeriodContract.colIsPredicted: isPredicted ? 1 : 0,
       CyclePeriodContract.colNote: note,
+      CyclePeriodContract.colAutoClosed: autoClosed ? 1 : 0,
       CyclePeriodContract.colCreatedAt: createdAt,
       CyclePeriodContract.colUpdatedAt: updatedAt,
     };
   }
 
-  factory CyclePeriod.fromMap(Map<String, dynamic> map) {
+  static CyclePeriod? tryFromMap(Map<String, dynamic> map) {
     final startRaw =
         map[CyclePeriodContract.colStartDate] ?? map['cycleStartDate'];
     final endRaw = map[CyclePeriodContract.colEndDate] ?? map['cycleEndDate'];
+    final start = CycleDateContract.parseDayKey(startRaw?.toString());
+    if (start == null) {
+      RitmoLogger.error('[CyclePeriod] Corrupt or missing startDate: $startRaw');
+      return null;
+    }
     final rawId = (map[CyclePeriodContract.colId] as String?) ?? '';
 
     return CyclePeriod(
       id: rawId,
-      startDate:
-          CycleDateContract.parseDayKey(startRaw?.toString()) ?? CycleClock.now,
+      startDate: start,
       endDate: CycleDateContract.parseDayKey(endRaw?.toString()),
       flowIntensity:
           (map[CyclePeriodContract.colFlowIntensity] as String?) ?? 'MEDIUM',
       isPredicted: (map[CyclePeriodContract.colIsPredicted] as int? ?? 0) == 1,
       note: (map[CyclePeriodContract.colNote] ?? map['notes']) as String?,
+      autoClosed: (map[CyclePeriodContract.colAutoClosed] as int? ?? 0) == 1,
       createdAt:
           map[CyclePeriodContract.colCreatedAt] as int? ??
           CycleClock.nowMillisecondsSinceEpoch,
@@ -81,6 +89,10 @@ class CyclePeriod {
           map[CyclePeriodContract.colUpdatedAt] as int? ??
           CycleClock.nowMillisecondsSinceEpoch,
     );
+  }
+
+  factory CyclePeriod.fromMap(Map<String, dynamic> map) {
+    return tryFromMap(map) ?? CyclePeriod(id: '', startDate: CycleClock.now);
   }
 }
 
@@ -95,18 +107,21 @@ class CyclePeriodRepository {
         CyclePeriodContract.table,
         orderBy: '${CyclePeriodContract.colStartDate} DESC',
       );
-      return rows.map((r) => CyclePeriod.fromMap(r)).toList();
+      return rows
+          .map((r) => CyclePeriod.tryFromMap(r))
+          .whereType<CyclePeriod>()
+          .toList();
     } catch (e, st) {
       RitmoLogger.error(
-        '[CyclePeriodRepository] failed to fetch periods',
+        '[CyclePeriodRepository] getAllPeriods failed: $e',
         error: e,
         stack: st,
       );
-      return [];
+      return const [];
     }
   }
 
-  /// Fetches the currently open period (endDate is NULL), or null if none active.
+  /// Fetches the current open cycle period (where endDate is null), if any.
   Future<CyclePeriod?> getOpenPeriod(DatabaseExecutor db) async {
     try {
       final rows = await db.query(
@@ -116,10 +131,10 @@ class CyclePeriodRepository {
         limit: 1,
       );
       if (rows.isEmpty) return null;
-      return CyclePeriod.fromMap(rows.first);
+      return CyclePeriod.tryFromMap(rows.first);
     } catch (e, st) {
       RitmoLogger.error(
-        '[CyclePeriodRepository] failed to fetch active period',
+        '[CyclePeriodRepository] getOpenPeriod failed: $e',
         error: e,
         stack: st,
       );
@@ -157,14 +172,29 @@ class CyclePeriodRepository {
       }
       final elapsed = active.elapsedDaysAt(cleanToday);
       if (elapsed >= CycleSettings.forgottenOpenPeriodDays) {
-        // Auto-close with startDate to avoid faking data
+        // Auto-close with estimated duration (6 days or before cleanStart) with autoClosed = 1
+        const estimatedDurationDays = 6;
+        final estimatedEnd = active.startDate.add(
+          const Duration(days: estimatedDurationDays - 1),
+        );
+        final safeEnd = estimatedEnd.isBefore(cleanStart)
+            ? estimatedEnd
+            : cleanStart.subtract(const Duration(days: 1));
+        final finalEnd = safeEnd.isBefore(active.startDate)
+            ? active.startDate
+            : safeEnd;
+        final existingNote = active.note ?? '';
+        final noteToSave = existingNote.isNotEmpty
+            ? '$existingNote [auto-closed]'
+            : '[auto-closed]';
         await db.update(
           CyclePeriodContract.table,
           {
             CyclePeriodContract.colEndDate: CycleDateContract.toDayKey(
-              active.startDate,
+              finalEnd,
             ),
-            CyclePeriodContract.colNote: 'auto_closed_unknown_end',
+            CyclePeriodContract.colAutoClosed: 1,
+            CyclePeriodContract.colNote: noteToSave,
             CyclePeriodContract.colUpdatedAt:
                 effectiveNow.millisecondsSinceEpoch,
           },
@@ -193,11 +223,24 @@ class CyclePeriodRepository {
           '';
     }
 
-    // R4: Overlap check with existing periods
+    // R4: Overlap check with existing periods using contract overlaps & effectiveEnd
     final all = await getAllPeriods(db);
+    final newEffectiveEnd = cleanToday.isAfter(cleanStart)
+        ? cleanToday
+        : cleanStart;
     for (final p in all) {
-      final pEnd = p.endDate ?? cleanToday;
-      if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: p.startDate,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+      );
+      if (CycleDateContract.overlaps(
+        cleanStart,
+        newEffectiveEnd,
+        p.startDate,
+        pEnd,
+      )) {
         throw ArgumentError(
           'startDate overlaps with an existing recorded period.',
         );
@@ -215,6 +258,7 @@ class CyclePeriodRepository {
       CyclePeriodContract.colFlowIntensity: flowIntensity,
       CyclePeriodContract.colIsPredicted: 0,
       CyclePeriodContract.colNote: note,
+      CyclePeriodContract.colAutoClosed: 0,
       CyclePeriodContract.colCreatedAt: nowMs,
       CyclePeriodContract.colUpdatedAt: nowMs,
     });
@@ -255,6 +299,9 @@ class CyclePeriodRepository {
     }
 
     final period = CyclePeriod.fromMap(rows.first);
+    if (!period.isOpen) {
+      throw StateError('Period is already closed.');
+    }
 
     // R4: Validation guards
     if (cleanEnd.isBefore(period.startDate)) {
@@ -266,10 +313,30 @@ class CyclePeriodRepository {
 
     final duration =
         CycleDateContract.daysBetween(period.startDate, cleanEnd) + 1;
-    if (duration > CycleSettings.forgottenOpenPeriodDays) {
+    if (duration > CycleSettings.maxPeriodDuration) {
       throw ArgumentError(
-        'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.',
+        'Period duration cannot exceed ${CycleSettings.maxPeriodDuration} days.',
       );
+    }
+
+    // Overlap check with other periods
+    final all = await getAllPeriods(db);
+    for (final p in all) {
+      if (p.id == id) continue;
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: p.startDate,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+      );
+      if (CycleDateContract.overlaps(
+        period.startDate,
+        cleanEnd,
+        p.startDate,
+        pEnd,
+      )) {
+        throw ArgumentError('endDate overlaps with a subsequent period.');
+      }
     }
 
     final nowMs = effectiveNow.millisecondsSinceEpoch;
@@ -299,6 +366,7 @@ class CyclePeriodRepository {
     required String id,
     required DateTime startDate,
     DateTime? endDate,
+    bool clearEndDate = false,
     String? flowIntensity,
     String? note,
     DateTime? now,
@@ -321,6 +389,8 @@ class CyclePeriodRepository {
       throw StateError('Period with specified id for update not found.');
     }
 
+    final period = CyclePeriod.fromMap(rows.first);
+
     // R4: Guards
     if (cleanStart.isAfter(cleanToday)) {
       throw ArgumentError('startDate cannot be in the future.');
@@ -333,35 +403,54 @@ class CyclePeriodRepository {
         throw ArgumentError('endDate cannot be in the future.');
       }
       final duration = CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
-      if (duration > CycleSettings.forgottenOpenPeriodDays) {
+      if (duration > CycleSettings.maxPeriodDuration) {
         throw ArgumentError(
-          'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.',
+          'Period duration cannot exceed ${CycleSettings.maxPeriodDuration} days.',
         );
       }
     }
 
     // Check overlap with OTHER periods
+    final targetEnd = clearEndDate
+        ? cleanToday
+        : (cleanEnd ??
+            (period.endDate != null
+                ? CycleDateContract.cleanDate(period.endDate!)
+                : cleanToday));
+
     final all = await getAllPeriods(db);
     for (final p in all) {
       if (p.id == id) continue;
-      final pEnd = p.endDate ?? cleanToday;
-      if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
-        throw ArgumentError('startDate overlaps with another period.');
-      }
-      if (cleanEnd != null &&
-          CycleDateContract.inWindow(cleanEnd, p.startDate, pEnd)) {
-        throw ArgumentError('endDate overlaps with another period.');
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: p.startDate,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+      );
+      if (CycleDateContract.overlaps(
+        cleanStart,
+        targetEnd,
+        p.startDate,
+        pEnd,
+      )) {
+        throw ArgumentError(
+          'Updated period range overlaps with another period.',
+        );
       }
     }
 
     final nowMs = effectiveNow.millisecondsSinceEpoch;
     final updateMap = <String, dynamic>{
       CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(cleanStart),
-      CyclePeriodContract.colEndDate: cleanEnd != null
-          ? CycleDateContract.toDayKey(cleanEnd)
-          : null,
       CyclePeriodContract.colUpdatedAt: nowMs,
     };
+    if (clearEndDate) {
+      updateMap[CyclePeriodContract.colEndDate] = null;
+    } else if (cleanEnd != null) {
+      updateMap[CyclePeriodContract.colEndDate] = CycleDateContract.toDayKey(
+        cleanEnd,
+      );
+    }
     if (flowIntensity != null) {
       updateMap[CyclePeriodContract.colFlowIntensity] = flowIntensity;
     }
@@ -431,20 +520,27 @@ class CyclePeriodRepository {
         return 'endDate cannot be in the future.';
       }
       final duration = CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
-      if (duration > CycleSettings.forgottenOpenPeriodDays) {
-        return 'Period duration cannot exceed ${CycleSettings.forgottenOpenPeriodDays} days.';
+      if (duration > CycleSettings.maxPeriodDuration) {
+        return 'Period duration cannot exceed ${CycleSettings.maxPeriodDuration} days.';
       }
     }
 
+    final targetEnd = cleanEnd ?? cleanToday;
     for (final p in existing) {
       if (editingId != null && p.id == editingId) continue;
-      final pEnd = p.endDate ?? cleanToday;
-      if (CycleDateContract.inWindow(cleanStart, p.startDate, pEnd)) {
-        return 'startDate overlaps with another period.';
-      }
-      if (cleanEnd != null &&
-          CycleDateContract.inWindow(cleanEnd, p.startDate, pEnd)) {
-        return 'endDate overlaps with another period.';
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: p.startDate,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+      );
+      if (CycleDateContract.overlaps(
+        cleanStart,
+        targetEnd,
+        p.startDate,
+        pEnd,
+      )) {
+        return 'Period date range overlaps with another period.';
       }
     }
 

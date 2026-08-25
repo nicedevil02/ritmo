@@ -6,3 +6,4 @@ export 'mv_progress_tab.dart';
 export 'mv_settings_screen.dart';
 export 'mv_today_tab.dart';
 export 'mv_week_tab.dart';
+export 'mv_commitments_screen.dart';

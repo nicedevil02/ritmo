@@ -1,4 +1,5 @@
 export 'mv_cant_today_use_case.dart';
+export 'mv_commitment_use_case.dart';
 export 'mv_finish_session_use_case.dart';
 export 'mv_hub_controller.dart';
 export 'mv_kind_use_case.dart';

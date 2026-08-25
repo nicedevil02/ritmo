@@ -558,7 +558,7 @@ DateTime? nextOccurrenceAfter(DateTime now, MvCalendar calendar);
 
 ---
 
-### - [ ] S2-T3 — `MvCommitmentRepository`
+### - [x] S2-T3 — `MvCommitmentRepository` — 9702cbef
 
 **فایل جدید:** `data/repositories/mv_commitment_repository.dart`
 
@@ -1445,7 +1445,7 @@ weeksToGoal = تعداد هفته‌های باقیمانده تا تاریخ ر
 | S1-T9 | DONE | 975f32dc | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
 | S2-T1 | DONE | 3a053ac2 | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
 | S2-T2 | DONE | bf5a3ee2 | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
-| S2-T3 |  |  |  |
+| S2-T3 | DONE | 9702cbef | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
 | S2-T4 |  |  |  |
 | S2-T5 |  |  |  |
 | S2-T6 |  |  |  |

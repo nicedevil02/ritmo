@@ -25,6 +25,7 @@
 | S1-T9 | 2026-08-25 | 975f32dc | PASS | افزودن گاردتست‌های اعتبار seed برای kindCode و پاکسازی لیترال‌های presentation |
 | S2-T1 | 2026-08-25 | 3a053ac2 | PASS | ایجاد جدول mv_commitments، مایگریشن v125 و ایندکس idx_mv_commitments_day |
 | S2-T2 | 2026-08-25 | bf5a3ee2 | PASS | پیاده‌سازی مدل MvCommitment با متدهای occursOnWeek و nextOccurrenceAfter و اعتبارسنجی |
+| S2-T3 | 2026-08-25 | 9702cbef | PASS | پیاده‌سازی MvCommitmentRepository با عملیات کامل CRUD، getActive، upsert، deactivate و فیلتر روز |
 
 ## S0 — نتیجه
 تمام ۸ تسک اسپرینت ۰ با موفقیت کامل و بدون هیچ خطای استاتیک یا تست ناموفق به پایان رسیدند. کل سویت ۷۸ تستی واحد و ویجت ورزش سبز است.

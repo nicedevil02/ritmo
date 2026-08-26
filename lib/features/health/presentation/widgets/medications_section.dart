@@ -44,9 +44,9 @@ class _MedicationsSectionState extends State<MedicationsSection> with SingleTick
       }
     });
 
-    // Refresh timers periodically to update PRN live countdowns
+    // Refresh timers periodically only when active PRN items exist (RITF-019)
     _countdownTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (mounted && _tabController.index == 0) {
+      if (mounted && _tabController.index == 0 && _prnLogs24hMap.isNotEmpty) {
         setState(() {});
       }
     });

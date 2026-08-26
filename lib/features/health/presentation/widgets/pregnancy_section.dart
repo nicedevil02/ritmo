@@ -45,13 +45,13 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
   int _currentKickCount = 0;
   int? _kickSessionStart;
   Timer? _kickTimer;
-  int _kickElapsedSeconds = 0;
+  final ValueNotifier<int> _kickElapsedNotifier = ValueNotifier<int>(0);
   int _lastKickMs = 0;
 
   // Contraction State
   bool _isTimingContraction = false;
   int? _contractionStart;
-  int _currentContractionDuration = 0;
+  final ValueNotifier<int> _contractionElapsedNotifier = ValueNotifier<int>(0);
   Timer? _contractionTimer;
 
   // Symptoms Selection
@@ -88,6 +88,8 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     _tabController.dispose();
     _kickTimer?.cancel();
     _contractionTimer?.cancel();
+    _kickElapsedNotifier.dispose();
+    _contractionElapsedNotifier.dispose();
     super.dispose();
   }
 
@@ -107,11 +109,12 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
           _kickSessionStart = startMs;
           _currentKickCount = count;
           _isCountingKicks = true;
+          final initialSecs = (DateTime.now().millisecondsSinceEpoch - _kickSessionStart!) ~/ 1000;
+          _kickElapsedNotifier.value = initialSecs;
           _kickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
             if (mounted && _kickSessionStart != null) {
-              setState(() {
-                _kickElapsedSeconds = (DateTime.now().millisecondsSinceEpoch - _kickSessionStart!) ~/ 1000;
-              });
+              final secs = (DateTime.now().millisecondsSinceEpoch - _kickSessionStart!) ~/ 1000;
+              _kickElapsedNotifier.value = secs;
             }
           });
         }
@@ -122,11 +125,12 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
         if (startMs != null && startMs > 0) {
           _contractionStart = startMs;
           _isTimingContraction = true;
+          final initialSecs = (DateTime.now().millisecondsSinceEpoch - _contractionStart!) ~/ 1000;
+          _contractionElapsedNotifier.value = initialSecs;
           _contractionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
             if (mounted && _contractionStart != null) {
-              setState(() {
-                _currentContractionDuration = (DateTime.now().millisecondsSinceEpoch - _contractionStart!) ~/ 1000;
-              });
+              final secs = (DateTime.now().millisecondsSinceEpoch - _contractionStart!) ~/ 1000;
+              _contractionElapsedNotifier.value = secs;
             }
           });
         }
@@ -339,7 +343,6 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
       _isCountingKicks = true;
       _currentKickCount = 0;
       _kickSessionStart = nowMs;
-      _kickElapsedSeconds = 0;
     });
 
     try {
@@ -349,11 +352,11 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
     } catch (_) {}
 
     _kickTimer?.cancel();
+    _kickElapsedNotifier.value = 0;
     _kickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted && _kickSessionStart != null) {
-        setState(() {
-          _kickElapsedSeconds = (DateTime.now().millisecondsSinceEpoch - _kickSessionStart!) ~/ 1000;
-        });
+        final secs = (DateTime.now().millisecondsSinceEpoch - _kickSessionStart!) ~/ 1000;
+        _kickElapsedNotifier.value = secs;
       }
     });
   }
@@ -422,7 +425,6 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
       setState(() {
         _isTimingContraction = true;
         _contractionStart = now;
-        _currentContractionDuration = 0;
       });
 
       DatabaseHelper.instance.database.then((db) {
@@ -431,9 +433,8 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
 
       _contractionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (mounted && _contractionStart != null) {
-          setState(() {
-            _currentContractionDuration = (DateTime.now().millisecondsSinceEpoch - _contractionStart!) ~/ 1000;
-          });
+          final secs = (DateTime.now().millisecondsSinceEpoch - _contractionStart!) ~/ 1000;
+          _contractionElapsedNotifier.value = secs;
         }
       });
     } else {
@@ -959,8 +960,6 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
   // Sub-tab 3: Kick Counter (PREG-09, PREG-10, PREG-11)
   Widget _buildKickCounterTab() {
     final colors = context.colors;
-    final mins = _kickElapsedSeconds ~/ 60;
-    final secs = _kickElapsedSeconds % 60;
 
     return SingleChildScrollView(
       child: Column(
@@ -980,9 +979,16 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
                       child: const Text('شروع شمارش حرکات جنین', style: TextStyle(color: Colors.white)),
                     ),
                   ] else ...[
-                    Text(
-                      toPersianDigits('${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}'),
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.primary),
+                    ValueListenableBuilder<int>(
+                      valueListenable: _kickElapsedNotifier,
+                      builder: (context, kickSecs, _) {
+                        final mins = kickSecs ~/ 60;
+                        final secs = kickSecs % 60;
+                        return Text(
+                          toPersianDigits('${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}'),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.primary),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -1097,9 +1103,14 @@ class _PregnancySectionState extends State<PregnancySection> with TickerProvider
               child: Column(
                 children: [
                   if (_isTimingContraction) ...[
-                    Text(
-                      toPersianDigits('مدت انقباض: $_currentContractionDuration ثانیه'),
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colors.medicalRed),
+                    ValueListenableBuilder<int>(
+                      valueListenable: _contractionElapsedNotifier,
+                      builder: (context, durationSecs, _) {
+                        return Text(
+                          toPersianDigits('مدت انقباض: $durationSecs ثانیه'),
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colors.medicalRed),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                   ],

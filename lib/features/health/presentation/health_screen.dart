@@ -40,13 +40,13 @@ class _HealthScreenState extends State<HealthScreen> {
   // Next upcoming dose
   String? _nextDoseName;
   String? _nextDoseTimeStr;
-  String _countdownText = 'بارگذاری نوبت بعدی...';
 
   // Subsystem alerts
   List<String> _criticalAlerts = [];
 
   HealthEngineOutput? _engineOutput;
   Timer? _countdownTimer;
+  final ValueNotifier<String> _countdownNotifier = ValueNotifier<String>('در حال محاسبه زمان دوز بعدی...');
 
   @override
   void initState() {
@@ -62,6 +62,7 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _countdownNotifier.dispose();
     super.dispose();
   }
 
@@ -339,9 +340,7 @@ class _HealthScreenState extends State<HealthScreen> {
   void _calculateNextDoseCountdown() {
     if (!mounted) return;
     if (_nextDoseTimeStr == null || _nextDoseName == null) {
-      setState(() {
-        _countdownText = 'برنامه دارویی فعال برای امروز تعریف نشده است 💊';
-      });
+      _countdownNotifier.value = 'برنامه دارویی فعال برای امروز تعریف نشده است 💊';
       return;
     }
 
@@ -353,19 +352,17 @@ class _HealthScreenState extends State<HealthScreen> {
     final scheduledDateTime = DateTime(now.year, now.month, now.day, hour, minute);
     final diff = scheduledDateTime.difference(now);
     
-    setState(() {
-      if (diff.isNegative) {
-        final overdueMins = diff.inMinutes.abs();
-        _countdownText = 'نوبت داروی «$_nextDoseName» با تأخیر ($overdueMins دقیقه قبل)';
-      } else {
-        final hours = diff.inHours;
-        final minutes = diff.inMinutes % 60;
-        final timeRemainingStr = hours > 0 
-            ? '$hours ساعت و $minutes دقیقه مانده' 
-            : '$minutes دقیقه مانده';
-        _countdownText = 'دوز بعدی: «$_nextDoseName» ($timeRemainingStr)';
-      }
-    });
+    if (diff.isNegative) {
+      final overdueMins = diff.inMinutes.abs();
+      _countdownNotifier.value = 'نوبت داروی «$_nextDoseName» با تأخیر ($overdueMins دقیقه قبل)';
+    } else {
+      final hours = diff.inHours;
+      final minutes = diff.inMinutes % 60;
+      final timeRemainingStr = hours > 0 
+          ? '$hours ساعت و $minutes دقیقه مانده' 
+          : '$minutes دقیقه مانده';
+      _countdownNotifier.value = 'دوز بعدی: «$_nextDoseName» ($timeRemainingStr)';
+    }
   }
 
   void _openAiAssistant() {
@@ -598,13 +595,18 @@ class _HealthScreenState extends State<HealthScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    _toPersianDigits(_countdownText),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
-                      color: hasMeds ? colors.textPrimary : colors.textSecondary,
-                    ),
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: _countdownNotifier,
+                    builder: (context, countdownText, _) {
+                      return Text(
+                        _toPersianDigits(countdownText),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: hasMeds ? FontWeight.bold : FontWeight.normal,
+                          color: hasMeds ? colors.textPrimary : colors.textSecondary,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

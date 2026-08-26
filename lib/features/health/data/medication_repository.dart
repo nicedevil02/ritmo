@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/medical_engine.dart';
@@ -7,10 +8,13 @@ import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
 import 'package:ritmo/core/domain/execution/post_commit_pipeline.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
+import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/health/models/medication_models.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 /// مخزن داده اصلی، جامع و اتمیک برای مدیریت داروها، پروفایل‌های بالینی و ثبت دوزها
 class MedicationRepository {
@@ -39,7 +43,9 @@ class MedicationRepository {
 
     if (isMassUnit && isCountableForm) {
       if (profile.strength != null && profile.strength!.isNotEmpty) {
-        final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(profile.strength!);
+        // Handle combination drugs or standard strength (RITF-013)
+        final strengthStr = profile.strength!.split('/')[0];
+        final match = RegExp(r'(\d+(\.\d+)?)').firstMatch(strengthStr);
         if (match != null) {
           final strengthNum = double.tryParse(match.group(1)!);
           if (strengthNum != null && strengthNum > 0) {
@@ -50,6 +56,34 @@ class MedicationRepository {
       }
       // اگر قدرت قرص در پروفایل ثبت نشده بود، ۱ عدد قرص کسر می‌شود (نه مثلاً ۵۰۰ عدد!)
       return 1.0;
+    }
+
+    final isLiquidForm = profile.form == MedicationForm.DROPS ||
+        profile.form == MedicationForm.SYRUP;
+
+    if (isMassUnit && isLiquidForm) {
+      // RITF-012: Handle liquid forms with mass dose (mg per ml or concentration)
+      if (profile.strength != null && profile.strength!.isNotEmpty) {
+        final match = RegExp(r'(\d+(\.\d+)?)\s*(?:mg)?\s*/\s*(\d+(\.\d+)?)\s*ml', caseSensitive: false)
+            .firstMatch(profile.strength!);
+        if (match != null) {
+          final mg = double.tryParse(match.group(1)!) ?? 1.0;
+          final ml = double.tryParse(match.group(3)!) ?? 1.0;
+          if (mg > 0 && ml > 0) {
+            final mgPerMl = mg / ml;
+            return (effectiveAmount / mgPerMl).clamp(0.1, 1000.0);
+          }
+        }
+        final singleMatch = RegExp(r'(\d+(\.\d+)?)').firstMatch(profile.strength!);
+        if (singleMatch != null) {
+          final strengthNum = double.tryParse(singleMatch.group(1)!);
+          if (strengthNum != null && strengthNum > 0) {
+            return (effectiveAmount / strengthNum).clamp(0.1, 1000.0);
+          }
+        }
+      }
+      // If strength is not provided for liquid, fallback to doseAmount as ml or 1.0 unit
+      return (doseAmount ?? 1.0).clamp(0.1, 100.0);
     }
 
     return effectiveAmount.clamp(0.0, double.infinity);
@@ -227,7 +261,7 @@ class MedicationRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     final routineId = isEdit
         ? medication.id
-        : (medication.id.isNotEmpty ? medication.id : 'routine_med_$now');
+        : (medication.id.isNotEmpty ? medication.id : 'routine_med_${const Uuid().v4()}');
 
     // C-03: اتصال سطح حساسیت دارو به سطح آگاه‌سازی و اولویت
     String notifLevel = 'normal';
@@ -324,7 +358,7 @@ class MedicationRepository {
   }
 
   /// به‌روزرسانی موجودی دارو به صورت اتمیک (پشتیبانی کامل از اعشار)
-  Future<void> updateStock(String routineId, double remainingAmount) async {
+  Future<bool> updateStock(String routineId, double remainingAmount) async {
     try {
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -346,13 +380,15 @@ class MedicationRepository {
           whereArgs: [routineId],
         );
       });
+      return true;
     } catch (e, st) {
-      debugPrint('[MedicationRepository] updateStock error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'updateStock error', e, st);
+      return false;
     }
   }
 
   /// شارژ موجودی دارو / تمدید نسخه
-  Future<void> refillStock(String routineId, double addedAmount) async {
+  Future<bool> refillStock(String routineId, double addedAmount) async {
     try {
       final db = await DatabaseHelper.instance.database;
       await db.transaction((txn) async {
@@ -385,39 +421,44 @@ class MedicationRepository {
           whereArgs: [routineId],
         );
       });
+      return true;
     } catch (e, st) {
-      debugPrint('[MedicationRepository] refillStock error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'refillStock error', e, st);
+      return false;
     }
   }
 
   /// آرشیو کردن دارو همراه با لغو فیزیکی آلارم‌ها و حذف یادآورهای آینده
-  Future<void> archive(String routineId) async {
+  Future<bool> archive(String routineId) async {
     try {
       await RitmoExecutionKernel.instance.execute(
         ArchiveRoutineCommand(routineId: routineId),
       );
+      return true;
     } catch (e, st) {
-      debugPrint('[MedicationRepository] archive error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'archive error', e, st);
+      return false;
     }
   }
 
   /// خروج از آرشیو همراه با بازسازی یادآورها
-  Future<void> unarchive(String routineId) async {
+  Future<bool> unarchive(String routineId) async {
     try {
       await RitmoExecutionKernel.instance.execute(
         UnarchiveRoutineCommand(routineId: routineId),
       );
+      return true;
     } catch (e, st) {
-      debugPrint('[MedicationRepository] unarchive error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'unarchive error', e, st);
+      return false;
     }
   }
 
   /// حذف دارو (به صورت پیش‌فرض آرشیو ایمن همراه با لغو کامل آلارم‌ها جهت حفظ سوابق بالینی)
-  Future<void> delete(String routineId, {bool hardDelete = false}) async {
+  Future<bool> delete(String routineId, {bool hardDelete = false}) async {
     try {
       if (!hardDelete) {
-        await archive(routineId);
-        return;
+        return await archive(routineId);
       }
 
       await RitmoExecutionKernel.instance.execute(
@@ -426,23 +467,27 @@ class MedicationRepository {
         ),
       );
       final db = await DatabaseHelper.instance.database;
-      await db.delete(
-        'medication_profiles',
-        where: 'routineId = ?',
-        whereArgs: [routineId],
-      );
-      await db.delete(
-        'prn_logs',
-        where: 'routineId = ?',
-        whereArgs: [routineId],
-      );
-      await db.delete(
-        'medication_logs',
-        where: 'routineId = ?',
-        whereArgs: [routineId],
-      );
+      await db.transaction((txn) async {
+        await txn.delete(
+          'medication_profiles',
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+        await txn.delete(
+          'prn_logs',
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+        await txn.delete(
+          'medication_logs',
+          where: 'routineId = ?',
+          whereArgs: [routineId],
+        );
+      });
+      return true;
     } catch (e, st) {
-      debugPrint('[MedicationRepository] delete error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'delete error', e, st);
+      return false;
     }
   }
 
@@ -452,91 +497,96 @@ class MedicationRepository {
     int? scheduledTime,
     int? nowMs,
   }) async {
-    final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
-    final db = await DatabaseHelper.instance.database;
+    try {
+      final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+      final db = await DatabaseHelper.instance.database;
 
-    final med = await getByRoutineId(routineId);
-    if (med == null) {
+      final med = await getByRoutineId(routineId);
+      if (med == null) {
+        return const MedicationSafetyResult(isSafe: true);
+      }
+
+      // 1. بررسی دوز تکراری در بازه زمانی اخیر (Duplicate Check)
+      if (scheduledTime != null) {
+        final existingScheduled = await db.query(
+          'medication_logs',
+          where: 'routineId = ? AND scheduledTime = ? AND status = ?',
+          whereArgs: [routineId, scheduledTime, 'TAKEN'],
+        );
+        if (existingScheduled.isNotEmpty) {
+          return const MedicationSafetyResult(
+            isSafe: false,
+            isDuplicate: true,
+            warningMessage: 'این دوز دارو قبلاً ثبت شده است. جهت پیشگیری از مسمومیت دارویی از مصرف مجدد خودداری فرمایید.',
+          );
+        }
+      } else {
+        // اگر زمان‌بندی صریح پاس داده نشد (داروی زمان‌دار یا موردی)
+        final recentLogs = await db.query(
+          'medication_logs',
+          where: 'routineId = ? AND status = ? AND (takenTime >= ? OR createdAt >= ?)',
+          whereArgs: [routineId, 'TAKEN', now - 15 * 60 * 1000, now - 15 * 60 * 1000],
+        );
+        if (recentLogs.isNotEmpty) {
+          return const MedicationSafetyResult(
+            isSafe: false,
+            isDuplicate: true,
+            warningMessage: 'شما در ۱۵ دقیقه گذشته یک دوز از این دارو ثبت کرده‌اید. آیا از مصرف مجدد اطمینان دارید؟',
+          );
+        }
+      }
+
+      // 2. بررسی فاصله زمانی و سقف روزانه داروهای موردی (PRN)
+      if (med.isPrn) {
+        final oneDayAgo = now - 24 * 60 * 60 * 1000;
+        final prnLogs = await db.query(
+          'medication_logs',
+          where: 'routineId = ? AND status = ? AND COALESCE(takenTime, createdAt) >= ?',
+          whereArgs: [routineId, 'TAKEN', oneDayAgo],
+        );
+
+        final timestamps = <int>[
+          for (final l in prnLogs) ((l['takenTime'] as num?)?.toInt() ?? (l['createdAt'] as num?)?.toInt() ?? 0),
+        ];
+
+        final overdose = MedicalEngine.checkOverdoseStatus(
+          now: now,
+          prnLogs24h: timestamps,
+          minIntervalHours: med.minIntervalHours,
+          maxDosesPerDay: med.maxDosesPerDay,
+        );
+
+        if (overdose == OverdoseResult.warningBoth) {
+          return MedicationSafetyResult(
+            isSafe: false,
+            overdoseResult: overdose,
+            warningMessage: 'هشدار جدی: هم فاصله زمانی مجاز و هم سقف تعداد دوز در ۲۴ ساعت (${med.maxDosesPerDay} دوز) نقض شده است.',
+          );
+        } else if (overdose == OverdoseResult.warningUnderInterval) {
+          final lastTaken = timestamps.fold<int>(0, (max, val) => val > max ? val : max);
+          final elapsedMinutes = (now - lastTaken) / (60 * 1000);
+          final requiredMinutes = med.minIntervalHours * 60;
+          final remainingMinutes = (requiredMinutes - elapsedMinutes).ceil().clamp(1, math.max(1, requiredMinutes));
+          return MedicationSafetyResult(
+            isSafe: false,
+            overdoseResult: overdose,
+            remainingMinutesUntilSafe: remainingMinutes.toInt(),
+            warningMessage: 'فاصله زمانی مجاز بین دوزها رعایت نشده است. حداقل $remainingMinutes دقیقه دیگر برای مصرف مجدد صبر کنید.',
+          );
+        } else if (overdose == OverdoseResult.warningMaxLimitExceeded) {
+          return MedicationSafetyResult(
+            isSafe: false,
+            overdoseResult: overdose,
+            warningMessage: 'حداکثر تعداد دوز مجاز در ۲۴ ساعت (${med.maxDosesPerDay} دوز) به پایان رسیده است.',
+          );
+        }
+      }
+
+      return const MedicationSafetyResult(isSafe: true);
+    } catch (e, st) {
+      RitmoLog.error('MedicationRepository', 'checkSafety error', e, st);
       return const MedicationSafetyResult(isSafe: true);
     }
-
-    // 1. بررسی دوز تکراری در بازه زمانی اخیر (Duplicate Check)
-    if (scheduledTime != null) {
-      final existingScheduled = await db.query(
-        'medication_logs',
-        where: 'routineId = ? AND scheduledTime = ? AND status = ?',
-        whereArgs: [routineId, scheduledTime, 'TAKEN'],
-      );
-      if (existingScheduled.isNotEmpty) {
-        return const MedicationSafetyResult(
-          isSafe: false,
-          isDuplicate: true,
-          warningMessage: 'این دوز دارو قبلاً ثبت شده است. جهت پیشگیری از مسمومیت دارویی از مصرف مجدد خودداری فرمایید.',
-        );
-      }
-    } else {
-      // اگر زمان‌بندی صریح پاس داده نشد (داروی زمان‌دار یا موردی)
-      final recentLogs = await db.query(
-        'medication_logs',
-        where: 'routineId = ? AND status = ? AND (takenTime >= ? OR createdAt >= ?)',
-        whereArgs: [routineId, 'TAKEN', now - 15 * 60 * 1000, now - 15 * 60 * 1000],
-      );
-      if (recentLogs.isNotEmpty) {
-        return const MedicationSafetyResult(
-          isSafe: false,
-          isDuplicate: true,
-          warningMessage: 'شما در ۱۵ دقیقه گذشته یک دوز از این دارو ثبت کرده‌اید. آیا از مصرف مجدد اطمینان دارید؟',
-        );
-      }
-    }
-
-    // 2. بررسی فاصله زمانی و سقف روزانه داروهای موردی (PRN)
-    if (med.isPrn) {
-      final oneDayAgo = now - 24 * 60 * 60 * 1000;
-      final prnLogs = await db.query(
-        'medication_logs',
-        where: 'routineId = ? AND status = ? AND COALESCE(takenTime, createdAt) >= ?',
-        whereArgs: [routineId, 'TAKEN', oneDayAgo],
-      );
-
-      final timestamps = <int>[
-        for (final l in prnLogs) (l['takenTime'] as int? ?? l['createdAt'] as int),
-      ];
-
-      final overdose = MedicalEngine.checkOverdoseStatus(
-        now: now,
-        prnLogs24h: timestamps,
-        minIntervalHours: med.minIntervalHours,
-        maxDosesPerDay: med.maxDosesPerDay,
-      );
-
-      if (overdose == OverdoseResult.warningBoth) {
-        return MedicationSafetyResult(
-          isSafe: false,
-          overdoseResult: overdose,
-          warningMessage: 'هشدار جدی: هم فاصله زمانی مجاز و هم سقف تعداد دوز در ۲۴ ساعت (${med.maxDosesPerDay} دوز) نقض شده است.',
-        );
-      } else if (overdose == OverdoseResult.warningUnderInterval) {
-        final lastTaken = timestamps.fold<int>(0, (max, val) => val > max ? val : max);
-        final elapsedMinutes = (now - lastTaken) / (60 * 1000);
-        final requiredMinutes = med.minIntervalHours * 60;
-        final remainingMinutes = (requiredMinutes - elapsedMinutes).ceil().clamp(1, requiredMinutes);
-        return MedicationSafetyResult(
-          isSafe: false,
-          overdoseResult: overdose,
-          remainingMinutesUntilSafe: remainingMinutes,
-          warningMessage: 'فاصله زمانی مجاز بین دوزها رعایت نشده است. حداقل $remainingMinutes دقیقه دیگر برای مصرف مجدد صبر کنید.',
-        );
-      } else if (overdose == OverdoseResult.warningMaxLimitExceeded) {
-        return MedicationSafetyResult(
-          isSafe: false,
-          overdoseResult: overdose,
-          warningMessage: 'حداکثر تعداد دوز مجاز در ۲۴ ساعت (${med.maxDosesPerDay} دوز) به پایان رسیده است.',
-        );
-      }
-    }
-
-    return const MedicationSafetyResult(isSafe: true);
   }
 
   /// ثبت دقیق مصرف یا پرش یک دوز دارو به صورت اتمیک و Idempotent
@@ -572,12 +622,13 @@ class MedicationRepository {
     // C-05: محاسبه تاریخ دقیق وقوع بر مبنای ساعت زمان‌بندی‌شده یا زمان مصرف
     final eventMs = scheduledTime ?? takenTime ?? now;
     final targetDate = DateTime.fromMillisecondsSinceEpoch(eventMs);
-    final targetDateStr = targetDate.toIso8601String().substring(0, 10);
+    final targetDateStr = DayKey.from(targetDate).value;
 
     final alarmsToCancel = <String>[];
+    bool wasDuplicate = false;
 
     await db.transaction((txn) async {
-      // بررسی عدم ثبت دوباره دوز قبلاً ثبت‌شده (Idempotency)
+      // بررسی عدم ثبت دوباره دوز قبلاً ثبت‌شده (Idempotency - RITF-008)
       if (scheduledTime != null && status == 'TAKEN') {
         final existing = await txn.query(
           'medication_logs',
@@ -585,11 +636,12 @@ class MedicationRepository {
           whereArgs: [routineId, scheduledTime, 'TAKEN'],
         );
         if (existing.isNotEmpty) {
+          wasDuplicate = true;
           return;
         }
       }
 
-      // ۱. درج یا به‌روزرسانی لاگ در medication_logs
+      // ۱. درج یا به‌روزرسانی لاگ در medication_logs همراه با دوز، واحد و محل تزریق (RITF-006)
       await txn.insert(
         'medication_logs',
         {
@@ -598,6 +650,9 @@ class MedicationRepository {
           'scheduledTime': scheduledTime,
           'takenTime': status == 'TAKEN' ? (takenTime ?? now) : null,
           'status': status,
+          'doseAmount': deductionUnits,
+          'doseUnit': effectiveUnit,
+          'site': site,
           'note': notes,
           'createdAt': now,
         },
@@ -649,13 +704,8 @@ class MedicationRepository {
         }
       }
 
-      // ۳. جمع‌آوری آلارم‌های مرتبط با این دوز جهت لغو خارج از تراکنش
+      // ۳. جمع‌آوری آلارم‌های مرتبط با این دوز جهت لغو خارج از تراکنش (RITF-014)
       if (scheduledTime != null) {
-        final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledTime);
-        final dateStr = scheduledDate.toIso8601String().substring(0, 10);
-        final timeStr =
-            '${scheduledDate.hour.toString().padLeft(2, '0')}${scheduledDate.minute.toString().padLeft(2, '0')}';
-
         await txn.update(
           'pending_reminders',
           {
@@ -668,8 +718,8 @@ class MedicationRepository {
 
         final matchingReminders = await txn.query(
           'pending_reminders',
-          where: 'routineId = ? AND id LIKE ?',
-          whereArgs: [routineId, '%$dateStr%$timeStr%'],
+          where: 'routineId = ? AND (originalTime = ? OR scheduledTime = ?)',
+          whereArgs: [routineId, scheduledTime, scheduledTime],
         );
         for (final rem in matchingReminders) {
           final rId = rem['id'] as String;
@@ -701,6 +751,11 @@ class MedicationRepository {
       }
     });
 
+    // گارد کامل عدم اجرای side-effect ها در صورت تکراری بودن دوز (RITF-008)
+    if (wasDuplicate) {
+      return logId;
+    }
+
     // لغو فیزیکی آلارم‌ها خارج از بلاک تراکنش SQL
     for (final remId in alarmsToCancel) {
       try {
@@ -708,7 +763,7 @@ class MedicationRepository {
       } catch (_) {}
     }
 
-    // ۴. ثبت نتیجه در هسته اجرای ریتمو با تاریخ درست
+    // ۴. ثبت نتیجه در هسته اجرای ریتمو با تاریخ درست (RITF-018)
     try {
       await RitmoExecutionKernel.instance.execute(
         CompleteOccurrenceCommand(
@@ -739,7 +794,7 @@ class MedicationRepository {
     return logId;
   }
 
-  /// لغو ثبت مصرف دارو و بازگردانی دقیق موجودی (Undo Intake)
+  /// لغو ثبت مصرف دارو و بازگردانی دقیق موجودی (Undo Intake - RITF-007)
   Future<void> undoIntake(String logId) async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -764,12 +819,14 @@ class MedicationRepository {
 
         if (routineId == null) return;
 
-        // اگر دوز مصرف شده بود، موجودی را پس بده
+        // اگر دوز مصرف شده بود، موجودی واقعی ثبت‌شده در لاگ را پس بده (RITF-007)
         if (status == 'TAKEN') {
+          final recordedDose = (log['doseAmount'] as num?)?.toDouble();
           final med = await _getByRoutineIdTxn(txn, routineId);
-          final deductionUnits = med != null
-              ? calculateDeductionUnits(profile: med.profile)
-              : 1.0;
+          final deductionUnits = recordedDose ??
+              (med != null
+                  ? calculateDeductionUnits(profile: med.profile)
+                  : 1.0);
 
           final profileRows = await txn.query(
             'medication_profiles',
@@ -819,7 +876,7 @@ class MedicationRepository {
         }
 
         final eventMs = scheduledTime ?? takenTime ?? now;
-        final dateStr = DateTime.fromMillisecondsSinceEpoch(eventMs).toIso8601String().substring(0, 10);
+        final dateStr = DayKey.from(DateTime.fromMillisecondsSinceEpoch(eventMs)).value;
         final kRes = await RitmoExecutionKernel.instance.execute(
           CompleteOccurrenceCommand(
             routineId: routineId,
@@ -846,7 +903,7 @@ class MedicationRepository {
       RitmoEvents.notifyRoutineChanged();
       await SnapshotSyncService.syncAll();
     } catch (e, st) {
-      debugPrint('[MedicationRepository] undoIntake error: $e\n$st');
+      RitmoLog.error('MedicationRepository', 'undoIntake error', e, st);
     }
   }
 }

@@ -55,9 +55,10 @@ class SchemaManager {
       await NoteTables.ensureSchema(db);
       await SleepTables.ensureSchema(db);
       await AiTables.ensureSchema(db);
-      await SupplementarySportsTables.ensureSlotOverrideTable(db);
       await SupplementarySportsTables.ensureMovementMuscleFocus(db);
+      await ZoneTables.ensureSchema(db);
       await MovementTables.ensureSchema(db);
+      await HealthTables.ensureSchema(db);
     } catch (_) {}
   }
 

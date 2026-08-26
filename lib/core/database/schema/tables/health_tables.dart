@@ -160,6 +160,9 @@ class HealthTables {
           scheduledTime INTEGER,
           takenTime INTEGER,
           status TEXT NOT NULL DEFAULT 'TAKEN',
+          doseAmount REAL,
+          doseUnit TEXT,
+          site TEXT,
           note TEXT,
           createdAt INTEGER NOT NULL,
           FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE CASCADE
@@ -231,5 +234,22 @@ class HealthTables {
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_medprof_routine ON medication_profiles(routineId);');
+  }
+
+  /// Self-healing migration checking and adding columns to health tables.
+  static Future<void> ensureSchema(DatabaseExecutor db) async {
+    try {
+      final columns = await db.rawQuery('PRAGMA table_info(medication_logs)');
+      final colNames = columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+      if (!colNames.contains('doseamount')) {
+        await db.execute('ALTER TABLE medication_logs ADD COLUMN doseAmount REAL;');
+      }
+      if (!colNames.contains('doseunit')) {
+        await db.execute('ALTER TABLE medication_logs ADD COLUMN doseUnit TEXT;');
+      }
+      if (!colNames.contains('site')) {
+        await db.execute('ALTER TABLE medication_logs ADD COLUMN site TEXT;');
+      }
+    } catch (_) {}
   }
 }

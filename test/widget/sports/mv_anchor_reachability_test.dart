@@ -122,7 +122,7 @@ class FakeCampaignRepo implements MvCampaignRepository {
   @override
   Future<MvCampaign?> getActive() async => null;
   @override
-  Future<List<MvCampaign>> getAll() async => [];
+  Future<List<MvCampaign>> getAllCampaigns() async => [];
   @override
   Future<MvCampaign> upsert(MvCampaign c) async => c;
   @override

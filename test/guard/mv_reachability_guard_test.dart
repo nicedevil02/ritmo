@@ -10,7 +10,7 @@ import 'package:ritmo/features/supplementary_sports/presentation/sheets/sheets.d
 import 'package:ritmo/l10n/app_localizations.dart';
 
 class GuardFakeProfileRepo implements MvProfileRepository {
-  MvUserProfile profile = MvUserProfile(
+  MvUserProfile profile = const MvUserProfile(
     id: 'default',
     onboardingCompleted: true,
     goal: 'generalFitness',
@@ -35,9 +35,6 @@ class GuardFakePrescriptionRepo implements MvPrescriptionRepository {
 
   @override
   Future<List<MvSlot>> getWeekSlots(String weekStartIso) async => slots;
-  @override
-  Future<MvSlot?> getSlotForDate(String dateIso) async =>
-      slots.where((s) => s.dateIso == dateIso).firstOrNull;
   @override
   Future<MvSlot?> getPrescriptionForDate(String dateIso) async =>
       slots.where((s) => s.dateIso == dateIso).firstOrNull;
@@ -231,7 +228,7 @@ class GuardFakeCampaignRepo implements MvCampaignRepository {
   @override
   Future<MvCampaign?> getActive() async => activeCampaign;
   @override
-  Future<List<MvCampaign>> getAll() async => campaigns;
+  Future<List<MvCampaign>> getAllCampaigns() async => campaigns;
   @override
   Future<MvCampaign> upsert(MvCampaign c) async {
     activeCampaign = c;
@@ -269,7 +266,6 @@ class GuardFakeSessionRepo implements MvSessionRepository {
   Future<void> recordEvent(MvSessionEvent event) async {
     events.add(event);
   }
-  @override
   Future<void> logCompletedSession(MvSession session) async {
     sessions.add(session);
   }

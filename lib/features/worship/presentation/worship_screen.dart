@@ -34,9 +34,10 @@ class WorshipScreen extends StatefulWidget {
 class _WorshipScreenState extends State<WorshipScreen> {
   WorshipDay? _worshipDay;
   bool _isLoading = true;
+  bool _isNightPrayerEnabled = false;
   String _cityName = 'تهران';
-  StreamSubscription<RitmoEvent>? _eventSub;
   Timer? _debounceTimer;
+  StreamSubscription<dynamic>? _eventSub;
 
   @override
   void initState() {
@@ -56,6 +57,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
     });
   }
 
+
   @override
   void dispose() {
     _debounceTimer?.cancel();
@@ -68,11 +70,13 @@ class _WorshipScreenState extends State<WorshipScreen> {
       final now = DateTime.now();
       final day = await WorshipEngine.instance.loadDay(now);
       final name = await WorshipEngine.instance.getCityName();
+      final nightEnabled = await WorshipEngine.instance.isNightPrayerEnabled();
 
       if (mounted) {
         setState(() {
           _cityName = name;
           _worshipDay = day;
+          _isNightPrayerEnabled = nightEnabled;
           _isLoading = false;
         });
       }
@@ -83,10 +87,12 @@ class _WorshipScreenState extends State<WorshipScreen> {
         final now = DateTime.now();
         final day = await WorshipEngine.instance.loadDay(now);
         final name = await WorshipEngine.instance.getCityName();
+        final nightEnabled = await WorshipEngine.instance.isNightPrayerEnabled();
         if (mounted) {
           setState(() {
             _cityName = name;
             _worshipDay = day;
+            _isNightPrayerEnabled = nightEnabled;
             _isLoading = false;
           });
         }
@@ -95,6 +101,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
         if (mounted) {
           final now = DateTime.now();
           final fallbackTimes = await WorshipEngine.instance.prayerTimes(now);
+          final nightEnabled = await WorshipEngine.instance.isNightPrayerEnabled();
           setState(() {
             _worshipDay = WorshipDay(
               date: now,
@@ -105,6 +112,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
               context: WorshipDayContext(date: now),
               occasions: [],
             );
+            _isNightPrayerEnabled = nightEnabled;
             _isLoading = false;
           });
         }
@@ -286,12 +294,15 @@ class _WorshipScreenState extends State<WorshipScreen> {
 
                       const SizedBox(height: 12),
 
-                      // 2. NIGHT PRAYER RITUAL CARD (after Shari Midnight)
-                      NightPrayerCard(
-                        day: _worshipDay!,
-                        onComplete: _onDataChanged,
-                      ),
-                      const SizedBox(height: 12),
+                      // 2. NIGHT PRAYER RITUAL CARD (after Shari Midnight when enabled)
+                      if (_isNightPrayerEnabled) ...[
+                        NightPrayerCard(
+                          day: _worshipDay!,
+                          onComplete: _onDataChanged,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
 
                       // 3. PREMIUM SOLAR WORSHIP CALENDAR & REACTIVE DETAIL PANEL (INCLUDES OBLIGATORY PRAYERS & MUSTAHABS)
                       WorshipSolarCalendar(

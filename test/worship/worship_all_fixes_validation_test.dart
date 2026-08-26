@@ -5,8 +5,10 @@ import 'package:ritmo/features/worship/logic/prayer_times.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
+import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 
 void main() {
+
   group('Worship 17-Fixes Comprehensive Validation Tests', () {
 
     test('1. C5 & C6: ihtiyatMinutes and local computation prevents fake 00:00', () {
@@ -266,5 +268,12 @@ void main() {
       expect(blocked.reasonCode, equals('NOT_YET_DUE'));
     });
 
+    test('8. PrayerReminderScheduler instance exists and cancelAll executes safely', () async {
+      expect(PrayerReminderScheduler.instance, isNotNull);
+      // cancelAll should complete without unhandled exceptions
+      await expectLater(PrayerReminderScheduler.instance.cancelAll(), completes);
+    });
+
   });
 }
+

@@ -11,7 +11,9 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_snackbar.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
+import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
+
 import 'package:ritmo/features/worship/presentation/widgets/prayer_city_picker.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -656,10 +658,10 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                             ),
                             const SizedBox(height: 20),
 
-                            // 3. ADHAN & AUDIO REMINDERS CARD
+                            // 3. PRAYER REMINDERS & CALENDAR INTEGRATION CARD
                             _buildSectionHeader(
-                              icon: CupertinoIcons.speaker_2_fill,
-                              title: 'اذان و یادآورهای صوتی',
+                              icon: CupertinoIcons.bell_fill,
+                              title: 'یادآوری و تقویم نمازها',
                               colors: colors,
                             ),
                             const SizedBox(height: 8),
@@ -667,11 +669,30 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                               colors: colors,
                               isDark: isDark,
                               children: [
-                                // Master Adhan Toggle
+                                // 1. Main Calendar Integration Toggle
                                 _buildSwitchTile(
-                                  title: 'پخش اذان صوتی',
+                                  title: 'ارسال نمازهای واجب به تقویم اصلی',
                                   subtitle:
-                                      'پخش ندای ملکوتی اذان در سر موعد شرعی',
+                                      'نمایش اوقات و ثبت نمازها در تایم‌لاین تقویم روزانه و صفحهٔ امروز',
+                                  value: _showObligatoryInCalendar,
+                                  colors: colors,
+                                  onChanged: (val) {
+                                    setState(
+                                      () => _showObligatoryInCalendar = val,
+                                    );
+                                    _saveSetting(
+                                      'calendar_show_worship_obligatory',
+                                      val.toString(),
+                                    );
+                                  },
+                                ),
+                                const Divider(height: 20),
+
+                                // 2. Master Prayer Notification Toggle
+                                _buildSwitchTile(
+                                  title: 'اعلان و یادآوری موعد نماز',
+                                  subtitle:
+                                      'ارسال اعلان در سر موعد شرعی اذان',
                                   value: _adhanEnabled,
                                   colors: colors,
                                   onChanged: (val) {
@@ -680,13 +701,15 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                       'worship_adhan_enabled',
                                       val.toString(),
                                     );
+                                    PrayerReminderScheduler.instance
+                                        .schedulePrayerReminders();
                                   },
                                 ),
 
                                 if (_adhanEnabled) ...[
                                   const Divider(height: 16),
                                   const Text(
-                                    'نوبت‌های فعال اذان:',
+                                    'نوبت‌های فعال یادآوری:',
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
@@ -697,7 +720,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                     children: [
                                       Expanded(
                                         child: _buildChoiceChip(
-                                          label: 'اذان صبح',
+                                          label: 'نماز صبح',
                                           isSelected: _adhanFajr,
                                           colors: colors,
                                           onTap: () {
@@ -706,13 +729,15 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                               'worship_adhan_fajr',
                                               _adhanFajr.toString(),
                                             );
+                                            PrayerReminderScheduler.instance
+                                                .schedulePrayerReminders();
                                           },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: _buildChoiceChip(
-                                          label: 'اذان ظهر',
+                                          label: 'نماز ظهر',
                                           isSelected: _adhanDhuhr,
                                           colors: colors,
                                           onTap: () {
@@ -721,13 +746,15 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                               'worship_adhan_dhuhr',
                                               _adhanDhuhr.toString(),
                                             );
+                                            PrayerReminderScheduler.instance
+                                                .schedulePrayerReminders();
                                           },
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: _buildChoiceChip(
-                                          label: 'اذان مغرب',
+                                          label: 'نماز مغرب',
                                           isSelected: _adhanMaghrib,
                                           colors: colors,
                                           onTap: () {
@@ -736,60 +763,64 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                               'worship_adhan_maghrib',
                                               _adhanMaghrib.toString(),
                                             );
+                                            PrayerReminderScheduler.instance
+                                                .schedulePrayerReminders();
                                           },
                                         ),
                                       ),
                                     ],
                                   ),
+                                  const Divider(height: 20),
+
+                                  // Pre-Adhan Reminder Options
+                                  const Text(
+                                    'یادآور پیش‌واز (آمادگی برای نماز):',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: _preReminderOptions.map((mins) {
+                                      final isSelected = _preReminderMinutes == mins;
+                                      final label = mins == 0
+                                          ? 'غیرفعال'
+                                          : '${toPersianDigits(mins.toString())} دقیقه';
+                                      return Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 3,
+                                          ),
+                                          child: _buildChoiceChip(
+                                            label: label,
+                                            isSelected: isSelected,
+                                            colors: colors,
+                                            fontSize: 11.5,
+                                            onTap: () {
+                                              setState(
+                                                () => _preReminderMinutes = mins,
+                                              );
+                                              _saveSetting(
+                                                'worship_pre_reminder_minutes',
+                                                mins.toString(),
+                                              );
+                                              PrayerReminderScheduler.instance
+                                                  .schedulePrayerReminders();
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ],
                                 const Divider(height: 20),
 
-                                // Pre-Adhan Reminder Options
-                                const Text(
-                                  'یادآور پیش‌واز اذان (آمادگی برای نماز):',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: _preReminderOptions.map((mins) {
-                                    final isSelected = _preReminderMinutes == mins;
-                                    final label = mins == 0
-                                        ? 'غیرفعال'
-                                        : '${toPersianDigits(mins.toString())} دقیقه قبل';
-                                    return Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 3,
-                                        ),
-                                        child: _buildChoiceChip(
-                                          label: label,
-                                          isSelected: isSelected,
-                                          colors: colors,
-                                          fontSize: 11.5,
-                                          onTap: () {
-                                            setState(
-                                              () => _preReminderMinutes = mins,
-                                            );
-                                            _saveSetting(
-                                              'worship_pre_reminder_minutes',
-                                              mins.toString(),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                                const Divider(height: 20),
-
-                                // Night Prayer Reminder
+                                // 3. Night Prayer Ritual Toggle
                                 _buildSwitchTile(
-                                  title: 'یادآور سحر و نماز شب',
+                                  title: 'کارت و آیین نماز شب',
                                   subtitle:
-                                      'ارسال یادآور آرام‌بخش پیش از اذان صبح برای تهجد',
+                                      'نمایش کارت و راهنمای ۱۱ رکعت نماز شب در ساعات نیمه‌شب شرعی تا اذان صبح',
                                   value: _nightPrayerReminder,
                                   colors: colors,
                                   onChanged: (val) {
@@ -802,6 +833,7 @@ class _WorshipSettingsSheetState extends State<WorshipSettingsSheet> {
                                 ),
                               ],
                             ),
+
                             const SizedBox(height: 20),
 
                             // 4. QADA & SETTLEMENT RULES CARD

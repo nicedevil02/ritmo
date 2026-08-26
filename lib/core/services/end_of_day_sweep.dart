@@ -7,9 +7,11 @@ import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/utils/cycle_consent_bridge.dart';
 import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/ritmo_date.dart';
+import 'package:ritmo/features/worship/logic/prayer_reminder_scheduler.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -227,6 +229,14 @@ class EndOfDaySweep {
         where: 'sentAt < ?',
         whereArgs: [ninetyDaysAgoMs],
       );
+
+      // Refresh prayer reminders for today & tomorrow
+      try {
+        await PrayerReminderScheduler.instance.schedulePrayerReminders();
+      } catch (e, st) {
+        RitmoLog.error('EndOfDaySweep', 'Failed to refresh prayer reminders in sweep', e, st);
+      }
+
     } catch (e, st) {
       RitmoLog.error('EndOfDaySweep', 'EndOfDaySweep error', e, st);
     }

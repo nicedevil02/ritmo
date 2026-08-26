@@ -290,8 +290,10 @@ class WorshipEngine {
       'last_worship_sweep_date',
       'module_religion_enabled',
       'ihtiyat_minutes',
+      'worship_night_prayer_reminder',
     ];
     final rows = await db.query(
+
       'app_settings',
       columns: ['key', 'value'],
       where: 'key IN (${List.filled(keys.length, '?').join(',')})',
@@ -344,6 +346,14 @@ class WorshipEngine {
     await _loadSettings(db);
     return _hijriOffset;
   }
+
+  /// Returns whether the night prayer card / ritual is enabled by user in settings.
+  Future<bool> isNightPrayerEnabled() async {
+    final db = await DatabaseHelper.instance.database;
+    final settings = await _loadSettings(db);
+    return settings['worship_night_prayer_reminder'] == 'true';
+  }
+
 
   /// Loads active scheduled mustahab practices for [date] (both daily and specific-day practices)
   Future<List<WorshipPractice>> loadActiveMustahabs(DateTime date) async {

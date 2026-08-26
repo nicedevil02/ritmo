@@ -121,18 +121,25 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
             ],
           ),
 
-          const SizedBox(height: 12),
-
           Text(
             'وَمِنَ اللَّيْلِ فَتَهَجَّدْ بِهِ نَافِلَةً لَكَ عَسَىٰ أَنْ يَبْعَثَكَ رَبُّكَ مَقَامًا مَحْمُودًا',
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '«و پاسی از شب را برای خواندن نافله (نماز شب) بیدار باش؛ امید است پروردگارت تو را به مقامی ستوده برانگیزد.» (اسراء - ۷۹)',
+            style: TextStyle(
+              fontSize: 11,
               color: colors.textSecondary,
               height: 1.45,
-              ),
+            ),
           ),
 
-          const SizedBox(height: 16),
 
           // Stepper Counter Row
           Row(

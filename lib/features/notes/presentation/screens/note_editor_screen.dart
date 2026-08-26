@@ -358,13 +358,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       final result = await FilePickerPlatform.instance.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'm4a', 'wav'],
-        allowMultiple: false,
       );
 
-      if (result != null &&
-          result.files.isNotEmpty &&
-          result.files.first.path != null) {
-        final pickedFile = File(result.files.first.path!);
+      if (result.isNotEmpty &&
+          result.first.path != null) {
+        final pickedFile = File(result.first.path!);
 
         if (_activeNote == null) {
           await _save();
@@ -374,7 +372,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           final created = await NoteAttachmentRepository.instance.add(
             noteId: _activeNote!.id,
             sourceFile: pickedFile,
-            fileName: result.files.first.name,
+            fileName: result.first.name,
           );
           setState(() {
             _attachments.add(created);

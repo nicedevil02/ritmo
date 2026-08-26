@@ -23,12 +23,12 @@ class TaskAttachmentsSection extends StatelessWidget {
   Future<void> _pickAttachment(BuildContext context) async {
     try {
       final result = await FilePickerPlatform.instance.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
+      if (result.isNotEmpty && result.first.path != null) {
+        final file = File(result.first.path!);
         await TaskAttachmentRepository.instance.add(
           taskId: taskId,
           sourceFile: file,
-          fileName: result.files.single.name,
+          fileName: result.first.name,
         );
         onAttachmentsChanged();
       }

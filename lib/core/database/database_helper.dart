@@ -88,6 +88,11 @@ class DatabaseHelper {
     try {
       await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
     } catch (_) {}
+    try {
+      await db.rawQuery("SELECT json_valid('{}');");
+    } catch (e, st) {
+      RitmoLog.warning('DatabaseHelper', 'SQLite JSON1 capability verification warning: $e', e, st);
+    }
   }
 
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).

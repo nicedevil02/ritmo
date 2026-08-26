@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
@@ -99,7 +100,9 @@ class NoteAttachmentRepository {
     if (await f.exists()) {
       try {
         await f.delete();
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('NoteAttachmentRepository', 'Failed to delete file at $absPath', e, st);
+      }
     }
 
     await db.delete(

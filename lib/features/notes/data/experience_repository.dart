@@ -34,11 +34,26 @@ class ExperienceRepository {
     );
 
     final db = await _db;
-    await db.insert(
+    final existing = await db.query(
       'note_experience_meta',
-      exp.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'noteId = ?',
+      whereArgs: [exp.noteId],
+      limit: 1,
     );
+    if (existing.isNotEmpty) {
+      await db.update(
+        'note_experience_meta',
+        exp.toMap(),
+        where: 'noteId = ?',
+        whereArgs: [exp.noteId],
+      );
+    } else {
+      await db.insert(
+        'note_experience_meta',
+        exp.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+    }
 
     return exp;
   }
@@ -63,11 +78,26 @@ class ExperienceRepository {
     );
 
     final db = await _db;
-    await db.insert(
+    final existing = await db.query(
       'note_experience_meta',
-      exp.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'noteId = ?',
+      whereArgs: [exp.noteId],
+      limit: 1,
     );
+    if (existing.isNotEmpty) {
+      await db.update(
+        'note_experience_meta',
+        exp.toMap(),
+        where: 'noteId = ?',
+        whereArgs: [exp.noteId],
+      );
+    } else {
+      await db.insert(
+        'note_experience_meta',
+        exp.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+    }
 
     return exp;
   }

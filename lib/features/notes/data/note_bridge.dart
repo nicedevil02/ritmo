@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class BridgedNote {
@@ -67,7 +68,9 @@ class NoteBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('NoteBridge', 'Failed to fetch promoted notes for $module:$entityId', e, st);
+    }
 
     // 2. Check native module tables for module-specific notes
     try {
@@ -145,7 +148,9 @@ class NoteBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('NoteBridge', 'Failed to fetch native notes for $module:$entityId', e, st);
+    }
 
     list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return list;
@@ -185,7 +190,9 @@ class NoteBridge {
           }
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('NoteBridge', 'Failed to fetch notes for day $dayKey', e, st);
+    }
     return list;
   }
 }

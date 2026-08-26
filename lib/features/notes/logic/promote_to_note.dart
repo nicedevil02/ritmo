@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
@@ -33,7 +34,7 @@ class NotePromoter {
     final noteId = 'note_${_uuid.v4()}';
     final linkId = 'link_${_uuid.v4()}';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final currentDayKey = dayKey ?? SystemClock().today().value;
+    final currentDayKey = dayKey ?? const SystemClock().today().value;
 
     final title =
         titleHint ??
@@ -67,7 +68,7 @@ class NotePromoter {
           'updatedAt': nowMs,
           'openCount': 0,
           'reviewStage': 0,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }, conflictAlgorithm: ConflictAlgorithm.abort);
 
         // 2. Create note_links entry with SPAWNED relation
         await txn.insert('note_links', {
@@ -117,13 +118,16 @@ class NotePromoter {
                 whereArgs: [linkId],
               );
               await NoteFtsEngine.instance.deleteFromIndex(noteId);
-            } catch (_) {}
+            } catch (e, st) {
+              RitmoLog.warning('NotePromoter', 'Failed to undo note promotion for $noteId', e, st);
+            }
           },
         );
       }
 
       return noteId;
-    } catch (e) {
+    } catch (e, st) {
+      RitmoLog.error('NotePromoter', 'Failed to promote note from $module:$entityId', e, st);
       if (context != null && context.mounted) {
         RitmoToast.show(context, 'خطا در ثبت دفترچه');
       }

@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/notes/data/notes_repository.dart';
 import 'package:ritmo/features/notes/domain/note_models.dart';
 import 'package:ritmo/features/notes/logic/note_text_normalizer.dart';
@@ -26,7 +27,9 @@ class NoteFtsEngine {
         _cachedFtsAvailable = rows.first['value'] == 'true';
         return _cachedFtsAvailable!;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('NoteFtsEngine', 'Failed to check FTS availability', e, st);
+    }
     _cachedFtsAvailable = false;
     return false;
   }
@@ -58,7 +61,9 @@ class NoteFtsEngine {
         'bodyN': bodyN,
         'tagsN': tagsN,
       });
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('NoteFtsEngine', 'Failed to index note ${note.id}', e, st);
+    }
   }
 
   Future<void> deleteFromIndex(String noteId) async {
@@ -67,7 +72,9 @@ class NoteFtsEngine {
     try {
       final db = await _db;
       await db.delete('notes_fts', where: 'noteId = ?', whereArgs: [noteId]);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('NoteFtsEngine', 'Failed to delete note $noteId from FTS index', e, st);
+    }
   }
 
   Future<void> rebuildIndex() async {
@@ -83,7 +90,9 @@ class NoteFtsEngine {
         final note = Note.fromMap(row);
         await indexNote(note);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.error('NoteFtsEngine', 'Failed to rebuild FTS index', e, st);
+    }
   }
 
   Future<List<Note>> search(
@@ -141,8 +150,9 @@ class NoteFtsEngine {
         if (rows.isNotEmpty) {
           return rows.map((r) => Note.fromMap(r)).toList();
         }
-      } catch (_) {
+      } catch (e, st) {
         // Fallback to LIKE query if FTS expression fails
+        RitmoLog.warning('NoteFtsEngine', 'FTS search query failed for "$queryN", falling back to LIKE', e, st);
       }
     }
 

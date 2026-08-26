@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -41,7 +42,7 @@ class CaptureContext {
 
   factory CaptureContext.fromMap(Map<String, dynamic> map) {
     return CaptureContext(
-      dayKey: map['dayKey'] as String? ?? SystemClock().today().value,
+      dayKey: map['dayKey'] as String? ?? const SystemClock().today().value,
       timeOfDay: map['timeOfDay'] as String? ?? 'DAY',
       weekdayJalali: map['weekdayJalali'] as int? ?? 1,
       energy: map['energy'] as int?,
@@ -58,9 +59,10 @@ class CaptureContext {
     try {
       final map = jsonDecode(jsonStr) as Map<String, dynamic>;
       return CaptureContext.fromMap(map);
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLog.warning('CaptureContext', 'Failed to parse CaptureContext from JSON: $jsonStr', e, st);
       return CaptureContext(
-        dayKey: SystemClock().today().value,
+        dayKey: const SystemClock().today().value,
         timeOfDay: 'DAY',
         weekdayJalali: 1,
       );
@@ -77,7 +79,7 @@ class CaptureContext {
 
   /// Builds a snapshot of current system context safely (D-04).
   static Future<CaptureContext> buildCurrent({String? activeZone}) async {
-    final clock = SystemClock();
+    const clock = SystemClock();
     final now = clock.now();
     final dayKey = clock.today().value;
     final jalali = Jalali.fromDateTime(now);
@@ -134,7 +136,9 @@ class CaptureContext {
           };
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('CaptureContext', 'Failed to build full current CaptureContext', e, st);
+    }
 
     return CaptureContext(
       dayKey: dayKey,

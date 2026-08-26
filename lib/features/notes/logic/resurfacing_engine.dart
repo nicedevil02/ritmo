@@ -1,3 +1,4 @@
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
@@ -30,7 +31,7 @@ class ResurfacingEngine {
         .listActiveWithNotes();
     if (activePairs.isEmpty) return null;
 
-    final clock = SystemClock();
+    const clock = SystemClock();
     final todayDayKey = clock.today().value;
     final nowJalali = Jalali.fromDateTime(clock.now());
 
@@ -45,17 +46,20 @@ class ResurfacingEngine {
         try {
           final parts = exp.lastShownAtDayKey!.split('-');
           if (parts.length == 3) {
-            final jShown = Jalali(
-              int.parse(parts[0]),
-              int.parse(parts[1]),
-              int.parse(parts[2]),
-            );
-            daysSinceShown = nowJalali
-                .toDateTime()
-                .difference(jShown.toDateTime())
-                .inDays;
+            final y = int.tryParse(parts[0]);
+            final m = int.tryParse(parts[1]);
+            final d = int.tryParse(parts[2]);
+            if (y != null && m != null && d != null && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+              final jShown = Jalali(y, m, d);
+              daysSinceShown = nowJalali
+                  .toDateTime()
+                  .difference(jShown.toDateTime())
+                  .inDays;
+            }
           }
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLog.warning('ResurfacingEngine', 'Failed to parse lastShownAtDayKey: ${exp.lastShownAtDayKey}', e, st);
+        }
       }
 
       double categoryMatchBonus = 0.0;

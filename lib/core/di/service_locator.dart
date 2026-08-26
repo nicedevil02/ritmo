@@ -110,12 +110,14 @@ class AppBootstrapper {
     });
   }
 
+  static void _registerIfNot<T extends Object>(T instance) {
+    if (!sl.isRegistered<T>()) {
+      sl.registerSingleton<T>(instance);
+    }
+  }
+
   static Future<void> _doInit() async {
     try {
-      await sl.reset();
-      _initializedCore = false;
-      _initializedFull = false;
-
       // 0. Register Core Singletons first
       await initCore();
 
@@ -143,7 +145,7 @@ class AppBootstrapper {
       );
 
       final eventBus = RitmoEventBus();
-      sl.registerSingleton<RitmoEventBus>(eventBus);
+      _registerIfNot<RitmoEventBus>(eventBus);
 
       // Analytical engines registration (BOOT-08)
       final registry = EngineRegistry()
@@ -167,26 +169,26 @@ class AppBootstrapper {
         ..register(FreshStartEngine())
         ..register(NotesEngine());
 
-      sl.registerSingleton<EngineRegistry>(registry);
+      _registerIfNot<EngineRegistry>(registry);
 
       RitmoEngineBus.init(registry);
-      sl.registerSingleton<RitmoEngineBus>(RitmoEngineBus.instance);
+      _registerIfNot<RitmoEngineBus>(RitmoEngineBus.instance);
 
       // 2. Intelligence Orchestrator
       final orchestrator = RitmoIntelligenceOrchestrator(
         engineBus: RitmoEngineBus.instance,
         eventBus: eventBus,
       );
-      sl.registerSingleton<RitmoIntelligenceOrchestrator>(orchestrator);
+      _registerIfNot<RitmoIntelligenceOrchestrator>(orchestrator);
 
       // 3. Register Additional Services and Singletons
-      sl.registerSingleton<DayAgendaService>(DayAgendaService.instance);
+      _registerIfNot<DayAgendaService>(DayAgendaService.instance);
 
       // 4. Register Feature Repositories
-      sl.registerSingleton<CoursesRepository>(CoursesRepository.instance);
-      sl.registerSingleton<GoalsRepository>(GoalsRepository.instance);
-      sl.registerSingleton<KonkurRepository>(KonkurRepository.instance);
-      sl.registerSingleton<MvSessionRepository>(MvSessionRepository());
+      _registerIfNot<CoursesRepository>(CoursesRepository.instance);
+      _registerIfNot<GoalsRepository>(GoalsRepository.instance);
+      _registerIfNot<KonkurRepository>(KonkurRepository.instance);
+      _registerIfNot<MvSessionRepository>(MvSessionRepository());
 
       _initializedFull = true;
     } catch (e, st) {

@@ -291,8 +291,9 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
     });
 
     if (_enteredPin.length == expectedLength) {
-      Future.delayed(const Duration(milliseconds: 200), () async {
-        final result = PinHasher.verifyAndUpgrade(_enteredPin, correctPin);
+      final pinToVerify = _enteredPin;
+      Future.delayed(const Duration(milliseconds: 100), () async {
+        final result = await PinHasher.verifyAndUpgradeAsync(pinToVerify, correctPin);
         if (result.isValid) {
           final upgraded = result.upgradedHash;
           if (upgraded != null) {

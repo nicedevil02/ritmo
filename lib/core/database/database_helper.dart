@@ -420,9 +420,14 @@ class DatabaseHelper {
         if (g != null) return g;
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      final spGender = prefs.getString('ss_onboarding_gender') ?? prefs.getString('user_gender');
-      return normalizeGender(spGender);
+      if (executor == null) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final spGender = prefs.getString('ss_onboarding_gender') ?? prefs.getString('user_gender');
+          return normalizeGender(spGender);
+        } catch (_) {}
+      }
+      return null;
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Error getting user gender', e, st);
       return null;
@@ -460,14 +465,7 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getCycleLogs({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
     try {
-      final rows = await exec.query('cycle_periods', orderBy: 'startDate DESC');
-      return rows.map((r) {
-        return {
-          ...r,
-          'cycleStartDate': r['startDate'],
-          'cycleEndDate': r['endDate'],
-        };
-      }).toList();
+      return await exec.query('cycle_periods', orderBy: 'startDate DESC');
     } catch (_) {
       return [];
     }

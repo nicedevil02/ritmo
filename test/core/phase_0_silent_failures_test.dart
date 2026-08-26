@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
@@ -13,6 +14,7 @@ void main() {
     late Database db;
 
     setUp(() async {
+      FlutterSecureStorage.setMockInitialValues({});
       db = await databaseFactoryFfi.openDatabase(
         inMemoryDatabasePath,
         options: OpenDatabaseOptions(

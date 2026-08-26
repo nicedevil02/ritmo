@@ -3,6 +3,25 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
+sealed class KeyReadResult {
+  const KeyReadResult();
+}
+
+class KeyFound extends KeyReadResult {
+  final String value;
+  const KeyFound(this.value);
+}
+
+class KeyAbsent extends KeyReadResult {
+  const KeyAbsent();
+}
+
+class KeyUnavailable extends KeyReadResult {
+  final Object error;
+  final StackTrace? stackTrace;
+  const KeyUnavailable(this.error, [this.stackTrace]);
+}
+
 /// SecureKeyStore uses Keystore/Keychain via FlutterSecureStorage for sensitive API keys,
 /// automatically migrating legacy keys out of plaintext SQLite app_settings.
 class SecureKeyStore {
@@ -16,17 +35,19 @@ class SecureKeyStore {
     return null;
   }
 
-  static Future<String?> getKey(
+  /// Distinguishes key existence from keystore operational failures (REG-05).
+  static Future<KeyReadResult> readKey(
     String keyName, [
     DatabaseExecutor? dbExecutor,
   ]) async {
     try {
       final value = await _storage.read(key: keyName);
       if (value != null && value.isNotEmpty) {
-        return value;
+        return KeyFound(value);
       }
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در خواندن کلید امن $keyName', e, st);
+      return KeyUnavailable(e, st);
     }
 
     // Fallback & Auto-Migration from legacy SQLite app_settings
@@ -41,18 +62,34 @@ class SecureKeyStore {
         if (rows.isNotEmpty) {
           final legacyVal = rows.first['value'] as String?;
           if (legacyVal != null && legacyVal.isNotEmpty) {
-            await setKey(keyName, legacyVal, db);
-            await db.delete(
-              'app_settings',
-              where: 'key = ?',
-              whereArgs: [keyName],
-            );
-            return legacyVal;
+            try {
+              await setKey(keyName, legacyVal, db);
+              await db.delete(
+                'app_settings',
+                where: 'key = ?',
+                whereArgs: [keyName],
+              );
+              return KeyFound(legacyVal);
+            } catch (e, st) {
+              RitmoLog.error('Settings', 'خطا در مهاجرت کلید سنتی $keyName به مخزن امن', e, st);
+              return KeyUnavailable(e, st);
+            }
           }
         }
       }
     } catch (_) {}
 
+    return const KeyAbsent();
+  }
+
+  static Future<String?> getKey(
+    String keyName, [
+    DatabaseExecutor? dbExecutor,
+  ]) async {
+    final result = await readKey(keyName, dbExecutor);
+    if (result is KeyFound) {
+      return result.value;
+    }
     return null;
   }
 

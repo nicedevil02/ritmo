@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
@@ -226,30 +227,44 @@ void main() async {
     return RitmoFriendlyErrorPane(details: details);
   };
 
-  // 1. Initialize service locator & settings cache (AgendaRenderers registered inside AppBootstrapper.init - BOOT-09)
-  await AppBootstrapper.init();
-  await SettingsService.instance.init();
+  try {
+    // 1. Initialize service locator & settings cache (AgendaRenderers registered inside AppBootstrapper.init - BOOT-09)
+    await AppBootstrapper.init();
+    await SettingsService.instance.init();
 
-  // 2. Initialize database and repositories before runApp
-  final themeRepository = sl<ThemeRepository>();
-  await themeRepository.init();
+    // 2. Initialize database and repositories before runApp
+    final themeRepository = sl<ThemeRepository>();
+    await themeRepository.init();
 
-  final localeRepository = sl<LocaleRepository>();
-  await localeRepository.init();
+    final localeRepository = sl<LocaleRepository>();
+    await localeRepository.init();
 
-  await AppModeService.instance.load();
+    await AppModeService.instance.load();
 
-  runApp(
-    RestartWidget(
-      child: ProviderScope(
-        child: RitmoApp(
-          themeRepository: themeRepository,
-          localeRepository: localeRepository,
-          orchestrator: sl<RitmoIntelligenceOrchestrator>(),
+    runApp(
+      RestartWidget(
+        child: ProviderScope(
+          child: RitmoApp(
+            themeRepository: themeRepository,
+            localeRepository: localeRepository,
+            orchestrator: sl<RitmoIntelligenceOrchestrator>(),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  } catch (e, st) {
+    RitmoLog.error('Main', 'Fatal pre-runApp initialization error', e, st);
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: RitmoFriendlyErrorPane(
+            details: FlutterErrorDetails(exception: e, stack: st),
+          ),
+        ),
+      ),
+    );
+  }
 
   // Initialize OS share target listener (T-32)
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
@@ -285,7 +300,7 @@ class RitmoApp extends StatefulWidget {
   State<RitmoApp> createState() => _RitmoAppState();
 }
 
-class _RitmoAppState extends State<RitmoApp> {
+class _RitmoAppState extends State<RitmoApp> with WidgetsBindingObserver {
   bool _showSplash = true;
   bool _onboardingCompleted = false;
   Object? _initError;
@@ -301,7 +316,35 @@ class _RitmoAppState extends State<RitmoApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializationFuture = _initialize();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncDeviceTimezone();
+    }
+  }
+
+  static Future<void> _syncDeviceTimezone() async {
+    try {
+      String tzName;
+      try {
+        final tz = await FlutterTimezone.getLocalTimezone();
+        tzName = tz.identifier;
+      } catch (_) {
+        tzName = DateTime.now().timeZoneName;
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_timezone', tzName);
+    } catch (_) {}
   }
 
   Future<void> _initialize() async {
@@ -326,11 +369,8 @@ class _RitmoAppState extends State<RitmoApp> {
         onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
       );
 
-      // 3. Save device timezone for background isolates (RIT-040)
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('app_timezone', 'Asia/Tehran');
-      } catch (_) {}
+      // 3. Save real device timezone for background isolates (REG-03, RIT-040)
+      await _syncDeviceTimezone();
 
       // 4. Ensure periodic backup registration if enabled in settings (RIT-041)
       try {
@@ -539,8 +579,9 @@ class _RitmoAppState extends State<RitmoApp> {
                                 : OnboardingScreen(
                                     key: const ValueKey('onboarding'),
                                     onFinished: () {
-                                      debugPrint(
-                                        '[Main] Onboarding onFinished received! Setting _onboardingCompleted = true',
+                                      RitmoLog.info(
+                                        'Main',
+                                        'Onboarding onFinished received. Setting _onboardingCompleted = true',
                                       );
                                       setState(() {
                                         _onboardingCompleted = true;

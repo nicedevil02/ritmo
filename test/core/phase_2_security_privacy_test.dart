@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
@@ -11,6 +12,7 @@ void main() {
   databaseFactory = databaseFactoryFfi;
 
   setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
     SharedPreferences.setMockInitialValues({});
   });
 

@@ -46,6 +46,7 @@ class SettingsService {
   final _changeController = StreamController<String>.broadcast();
   bool _initialized = false;
   Object? _initError;
+  SettingsLoadState _loadState = SettingsLoadState.notLoaded;
 
   /// Coalescing window for the heavy "reload the day" refresh signal.
   static const Duration agendaSignalDebounce = Duration(milliseconds: 350);
@@ -56,6 +57,7 @@ class SettingsService {
   Object? get initError => _initError;
   bool get hasInitError => _initError != null;
   SettingsLoadState get loadState {
+    if (_loadState != SettingsLoadState.notLoaded) return _loadState;
     if (_initError != null) return SettingsLoadState.degraded;
     if (!_initialized) return SettingsLoadState.notLoaded;
     return SettingsLoadState.loaded;
@@ -115,6 +117,7 @@ class SettingsService {
         RitmoLog.error('Settings', 'SharedPreferences init error', e, st);
       }
 
+      bool hasKeystoreReadFailure = false;
       for (final desc in SettingsRegistry.all) {
         if (desc.scope == SettingScope.db) {
           final raw = dbMap[desc.key];
@@ -123,14 +126,21 @@ class SettingsService {
           final raw = prefs.get(desc.key);
           _cache[desc.key] = desc.parseValue(raw);
         } else if (desc.scope == SettingScope.secure) {
-          try {
-            final secVal = await SecureKeyStore.getKey(desc.key);
-            _cache[desc.key] = desc.parseValue(secVal != null && secVal.isNotEmpty ? secVal : null);
-          } catch (e, st) {
-            RitmoLog.error('Settings', 'خطا در بارگذاری کلید امن ${desc.key}', e, st);
+          final readRes = await SecureKeyStore.readKey(desc.key);
+          if (readRes is KeyFound) {
+            _cache[desc.key] = desc.parseValue(readRes.value);
+          } else if (readRes is KeyAbsent) {
+            _cache[desc.key] = desc.defaultValue;
+          } else if (readRes is KeyUnavailable) {
+            hasKeystoreReadFailure = true;
             _cache[desc.key] = desc.defaultValue;
           }
         }
+      }
+
+      if (hasKeystoreReadFailure) {
+        _loadState = SettingsLoadState.degraded;
+        RitmoLog.error('Settings', 'Keystore read failure during init - running in degraded fail-closed mode');
       }
 
       if (_cache['app_mode'] == 'simple' || _cache['app_mode'] == 'SIMPLE') {
@@ -139,32 +149,34 @@ class SettingsService {
         _cache['show_advanced_settings'] = true;
       }
 
-      // Invariant: If app_lock_enabled is true but password is missing/empty, fail-safe disable to prevent lockout
+      // Invariant (REG-06): If app_lock_enabled is true, verify password existence only if keystore was healthy
       final lockEnabled = _cache['app_lock_enabled'] == true;
       var lockPassword = _cache['app_lock_password']?.toString() ?? '';
-      if (lockEnabled && lockPassword.isEmpty) {
-        _cache['app_lock_enabled'] = false;
-        RitmoLog.warning('Settings', 'Invariant violation: app_lock_enabled is true with empty password. Auto-disabled.');
-        try {
-          final db = await DatabaseHelper.instance.database;
-          await db.insert('app_settings', {
-            'key': 'app_lock_enabled',
-            'value': 'false',
-            'updatedAt': DateTime.now().millisecondsSinceEpoch,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-        } catch (_) {}
-      } else if (lockPassword.isNotEmpty && !lockPassword.startsWith('v2:') && lockPassword.length <= 6) {
-        // Auto-upgrade legacy plaintext PIN to hardened v2 hash (RIT-031)
-        try {
-          final upgraded = PinHasher.hashPin(lockPassword);
-          _cache['app_lock_password'] = upgraded;
-          lockPassword = upgraded;
-          unawaited(SecureKeyStore.setKey('app_lock_password', upgraded));
-        } catch (_) {}
+      if (!hasKeystoreReadFailure) {
+        if (lockEnabled && lockPassword.isEmpty) {
+          _cache['app_lock_enabled'] = false;
+          RitmoLog.warning('Settings', 'Invariant violation: app_lock_enabled is true with empty password. Disabled.');
+          try {
+            final db = await DatabaseHelper.instance.database;
+            await db.insert('app_settings', {
+              'key': 'app_lock_enabled',
+              'value': 'false',
+              'updatedAt': DateTime.now().millisecondsSinceEpoch,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+          } catch (_) {}
+        } else if (lockPassword.isNotEmpty && !lockPassword.startsWith('v2:') && lockPassword.length <= 6) {
+          // Auto-upgrade legacy plaintext PIN to hardened v2 hash (RIT-031)
+          try {
+            final upgraded = PinHasher.hashPin(lockPassword);
+            _cache['app_lock_password'] = upgraded;
+            lockPassword = upgraded;
+            unawaited(SecureKeyStore.setKey('app_lock_password', upgraded));
+          } catch (_) {}
+        }
       }
 
       final cyclePassword = _cache['cycle_lock_password']?.toString() ?? '';
-      if (cyclePassword.isNotEmpty && !cyclePassword.startsWith('v2:') && cyclePassword.length <= 6) {
+      if (!hasKeystoreReadFailure && cyclePassword.isNotEmpty && !cyclePassword.startsWith('v2:') && cyclePassword.length <= 6) {
         try {
           final upgraded = PinHasher.hashPin(cyclePassword);
           _cache['cycle_lock_password'] = upgraded;
@@ -624,7 +636,7 @@ class SettingsService {
       final ok = await retryInit();
       if (!ok) {
         RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی دسته‌ای به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
-        return 0;
+        return -1;
       }
     }
 
@@ -762,7 +774,7 @@ class SettingsService {
         }
       }
       RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات - rollback cache اعمال شد', e, st);
-      return 0;
+      return -1;
     }
   }
 
@@ -770,5 +782,11 @@ class SettingsService {
   void cancelPendingSignals() {
     _agendaDebounceTimer?.cancel();
     _agendaDebounceTimer = null;
+  }
+
+  void dispose() {
+    _agendaDebounceTimer?.cancel();
+    _agendaDebounceTimer = null;
+    _changeController.close();
   }
 }

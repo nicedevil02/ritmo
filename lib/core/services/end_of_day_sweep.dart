@@ -178,23 +178,27 @@ class EndOfDaySweep {
             suspended: suspended,
           );
         }
-
-        // Reset dailyDone for active practices for today
-        await txn.update('worship_practices', {
-          'dailyDone': 0,
-          'dailyDoneDate': todayStr,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        }, where: 'isActive = 1');
+        // Reset dailyDone for active practices for today if not already reset today (Item 9)
+        await txn.update(
+          'worship_practices',
+          {
+            'dailyDone': 0,
+            'dailyDoneDate': todayStr,
+            'updatedAt': DateTime.now().millisecondsSinceEpoch,
+          },
+          where: 'isActive = 1 AND (dailyDoneDate IS NULL OR dailyDoneDate < ?)',
+          whereArgs: [todayStr],
+        );
 
         // Sports Sweep with pre-fetched state (RIT-015, RIT-016)
         if (sportsState != null) {
           await _sweepSports(txn, sportsState);
         }
 
-        // Update last_worship_sweep_date in the same transaction (RIT-013)
+        // Update last_worship_sweep_date to last swept date (yesterdayDate) (REG-01, RIT-013)
         await txn.insert('app_settings', {
           'key': 'last_worship_sweep_date',
-          'value': todayStr,
+          'value': RitmoDate(yesterdayDate).value,
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       });
@@ -416,10 +420,29 @@ class EndOfDaySweep {
           : 0;
       final finishedAt = endOfStartDay;
 
+      // Lookup real workoutPlanId if activePlanId is a prescription ID (Item 8)
+      String? realPlanId = activePlanId;
+      String? realPrescriptionId = activePlanId;
+      try {
+        final prescRows = await txn.query(
+          'ss_session_prescription',
+          where: 'id = ?',
+          whereArgs: [activePlanId],
+          limit: 1,
+        );
+        if (prescRows.isNotEmpty) {
+          final workoutPlanId = prescRows.first['workoutPlanId'] as String?;
+          if (workoutPlanId != null && workoutPlanId.isNotEmpty) {
+            realPlanId = workoutPlanId;
+          }
+          realPrescriptionId = prescRows.first['id'] as String?;
+        }
+      } catch (_) {}
+
       await txn.insert('ss_workout_session_log', {
         'id': activeSessionId,
-        'planId': activePlanId,
-        'prescriptionId': activePlanId,
+        'planId': realPlanId,
+        'prescriptionId': realPrescriptionId,
         'startedAt': startedAt,
         'finishedAt': finishedAt,
         'durationSeconds': durationSec,

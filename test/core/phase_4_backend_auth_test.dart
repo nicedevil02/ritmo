@@ -72,7 +72,7 @@ void main() {
       await db.insert('app_settings', {'key': 'auth_google_linked', 'value': 'false', 'updatedAt': 0});
 
       final auth = AuthService.instance;
-      await auth.init();
+      await auth.reloadState();
 
       expect(auth.isLoggedIn, isTrue);
       expect(auth.provider, equals('email'));

@@ -32,13 +32,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify formatting
-        run: dart format --set-exit-if-changed .
-
       - name: Verify code generation up-to-date
         run: |
           dart run build_runner build --delete-conflicting-outputs
           git diff --exit-code
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
 
       - name: Analyze code
         run: flutter analyze --fatal-warnings .

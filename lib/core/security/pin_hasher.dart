@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pointycastle/export.dart';
 
 class PinHasher {
@@ -42,6 +43,13 @@ class PinHasher {
     final hashHex = keyBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return 'v2:$saltHex:$hashHex';
   }
+
+  /// Non-blocking isolate worker for hashing PIN (REG-04)
+  static Future<String> hashPinAsync(String pin) {
+    return compute(_hashPinWorker, pin);
+  }
+
+  static String _hashPinWorker(String pin) => hashPin(pin);
 
   /// Checks whether a stored PIN hash is from a legacy format and needs upgrade to v2.
   static bool needsUpgrade(String storedHash) {
@@ -108,5 +116,19 @@ class PinHasher {
       return (isValid: true, upgradedHash: hashPin(pin));
     }
     return (isValid: true, upgradedHash: null);
+  }
+
+  /// Non-blocking isolate worker for PIN verification (REG-04)
+  static Future<({bool isValid, String? upgradedHash})> verifyAndUpgradeAsync(
+    String pin,
+    String storedHash,
+  ) async {
+    final result = await compute(_verifyAndUpgradeWorker, (pin: pin, storedHash: storedHash));
+    return (isValid: result.$1, upgradedHash: result.$2);
+  }
+
+  static (bool, String?) _verifyAndUpgradeWorker(({String pin, String storedHash}) args) {
+    final res = verifyAndUpgrade(args.pin, args.storedHash);
+    return (res.isValid, res.upgradedHash);
   }
 }

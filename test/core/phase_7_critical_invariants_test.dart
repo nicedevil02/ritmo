@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/backend/app_config.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
@@ -19,6 +20,7 @@ void main() {
     late Database testDb;
 
     setUp(() async {
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       testDb = await databaseFactory.openDatabase(
         inMemoryDatabasePath,

@@ -280,22 +280,38 @@ class MigrationRunner {
     await _ensureSchemaMigrationsTable(db);
     final sorted = [..._migrations]..sort((a, b) => a.version.compareTo(b.version));
 
+    final seenVersions = <int>{};
+    for (final m in sorted) {
+      if (!seenVersions.add(m.version)) {
+        throw StateError('Duplicate migration version detected in runner: ${m.version}');
+      }
+    }
+
     var applied = 0;
     var skipped = 0;
     for (final migration in sorted) {
       if (migration.version > newVersion) continue;
       try {
-        await migration.up(db);
-        await db.insert('schema_migrations', {
-          'version': migration.version,
-          'appliedAt': DateTime.now().millisecondsSinceEpoch,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        if (migration.requiresTransaction) {
+          await db.transaction((txn) async {
+            await migration.up(txn);
+            await txn.insert('schema_migrations', {
+              'version': migration.version,
+              'appliedAt': DateTime.now().millisecondsSinceEpoch,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
+          });
+        } else {
+          await migration.up(db);
+          await db.insert('schema_migrations', {
+            'version': migration.version,
+            'appliedAt': DateTime.now().millisecondsSinceEpoch,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
         applied++;
       } catch (e, st) {
         final errStr = e.toString().toLowerCase();
         final isExpected = errStr.contains('duplicate column name') ||
             errStr.contains('already exists') ||
-            errStr.contains('no such column') ||
             errStr.contains('unique constraint failed');
         if (isExpected) {
           skipped++;

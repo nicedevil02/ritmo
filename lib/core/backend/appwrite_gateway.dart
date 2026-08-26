@@ -75,11 +75,11 @@ class AppwriteGateway {
       return AuthErrorCode.sessionExpired;
     } else if (code == 429 || type == 'user_more_requests_than_limit') {
       return AuthErrorCode.maxAttemptsReached;
-    } else if (code == 400 || type == 'user_phone_not_valid') {
+    } else if (type == 'user_phone_not_valid' || type == 'user_phone_already_exists') {
       return AuthErrorCode.invalidPhone;
-    } else if (type == 'user_email_not_valid') {
+    } else if (type == 'user_email_not_valid' || type == 'user_email_already_exists') {
       return AuthErrorCode.invalidEmail;
-    } else if (type == 'user_already_exists' || type == 'user_phone_already_exists') {
+    } else if (type == 'user_already_exists') {
       return AuthErrorCode.accountAlreadyLinked;
     } else if (code == 503 || code == 500) {
       return AuthErrorCode.serverUnreachable;

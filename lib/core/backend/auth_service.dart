@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/backend/app_config.dart';
 import 'package:ritmo/core/backend/appwrite_gateway.dart';
 import 'package:ritmo/core/backend/models/auth_result.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -92,11 +93,18 @@ class AuthService extends ChangeNotifier {
     r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',
   );
 
+  /// Reloads state directly from local database
+  Future<void> reloadState() async {
+    await _loadStateFromLocalDb();
+  }
+
   /// Non-blocking initialization of local account state & background SDK sync
   Future<void> init() async {
     await _loadStateFromLocalDb();
-    // Background SDK warm-up
-    unawaited(_gateway.init().then((_) => checkRemoteSession()));
+    // Background SDK warm-up only if Appwrite configured
+    if (AppConfig.isAppwriteConfigured) {
+      unawaited(_gateway.init().then((_) => checkRemoteSession()));
+    }
   }
 
   Future<void> _loadStateFromLocalDb() async {

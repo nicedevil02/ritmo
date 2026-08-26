@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/analytics/goals_engine.dart';
+import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:ritmo/features/goals/logic/goals_repository.dart';
 import 'package:ritmo/features/goals/models/goal_models.dart';
@@ -110,16 +112,41 @@ class GoalsController extends ChangeNotifier {
 
   Future<void> _loadPrefs() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _showTreeView = prefs.getBool('goals_view_mode') ?? true;
-      _selectedTabIndex = prefs.getInt('goals_last_tab') ?? 0;
-      final expandedJson = prefs.getString('goals_expanded_ids');
-      if (expandedJson != null && expandedJson.isNotEmpty) {
-        final list = jsonDecode(expandedJson) as List<dynamic>;
+      final db = await DatabaseHelper.instance.database;
+      final settings = await db.query(
+        'app_settings',
+        where: "key IN ('goals_view_mode', 'goals_last_tab', 'goals_expanded_ids')",
+      );
+      final map = {for (final r in settings) r['key']! as String: r['value']! as String};
+
+      if (map.containsKey('goals_view_mode')) {
+        _showTreeView = map['goals_view_mode'] == 'true';
+      }
+      if (map.containsKey('goals_last_tab')) {
+        _selectedTabIndex = int.tryParse(map['goals_last_tab']!) ?? 0;
+      }
+      if (map.containsKey('goals_expanded_ids')) {
+        final list = jsonDecode(map['goals_expanded_ids']!) as List<dynamic>;
         _expandedNodeIds = list.cast<String>().toSet();
       }
-    } catch (e) {
-      debugPrint('[GoalsController] Error loading prefs: $e');
+
+      // Fallback: check SharedPreferences if not found in DB
+      if (settings.isEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        _showTreeView = prefs.getBool('goals_view_mode') ?? _showTreeView;
+        _selectedTabIndex = prefs.getInt('goals_last_tab') ?? _selectedTabIndex;
+        final expandedJson = prefs.getString('goals_expanded_ids');
+        if (expandedJson != null && expandedJson.isNotEmpty) {
+          final list = jsonDecode(expandedJson) as List<dynamic>;
+          _expandedNodeIds = list.cast<String>().toSet();
+        }
+      }
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'GoalsController._loadPrefs error: $e',
+        error: e,
+        stack: st,
+      );
     }
     notifyListeners();
   }
@@ -128,18 +155,52 @@ class GoalsController extends ChangeNotifier {
     _showTreeView = treeView;
     notifyListeners();
     try {
+      final db = await DatabaseHelper.instance.database;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'goals_view_mode',
+          'value': treeView ? 'true' : 'false',
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictColumns: const ['key'],
+      );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('goals_view_mode', treeView);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'GoalsController.toggleViewMode error: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   Future<void> setTabIndex(int index) async {
     _selectedTabIndex = index;
     notifyListeners();
     try {
+      final db = await DatabaseHelper.instance.database;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'goals_last_tab',
+          'value': index.toString(),
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictColumns: const ['key'],
+      );
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('goals_last_tab', index);
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'GoalsController.setTabIndex error: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   Future<void> toggleNodeExpanded(String nodeGoalId) async {
@@ -150,9 +211,27 @@ class GoalsController extends ChangeNotifier {
     }
     notifyListeners();
     try {
+      final jsonStr = jsonEncode(_expandedNodeIds.toList());
+      final db = await DatabaseHelper.instance.database;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'goals_expanded_ids',
+          'value': jsonStr,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictColumns: const ['key'],
+      );
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('goals_expanded_ids', jsonEncode(_expandedNodeIds.toList()));
-    } catch (_) {}
+      await prefs.setString('goals_expanded_ids', jsonStr);
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'GoalsController.toggleNodeExpanded error: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   Future<void> reload({bool silent = false, bool force = false}) async {

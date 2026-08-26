@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/goals/models/planning_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -67,10 +68,11 @@ class PlanningReviewRepository {
   Future<void> saveReview(PlanningReviewItem review) async {
     final db = await _db;
     await db.transaction((txn) async {
-      await txn.insert(
+      await UpsertHelper.upsert(
+        txn,
         'planning_reviews',
         review.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
     });
   }

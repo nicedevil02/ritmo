@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
@@ -402,7 +403,13 @@ class GoalsRepository {
         final sId = r['id'] as String;
         try {
           await AlarmSchedulerService.cancel('goal_step_$sId');
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLogger.warning(
+            'GoalsRepository: Failed to cancel alarm goal_step_$sId: $e',
+            error: e,
+            stack: st,
+          );
+        }
       }
 
       await txn.rawDelete('DELETE FROM goal_steps WHERE goalId IN ($placeholders)', targetList);
@@ -721,7 +728,13 @@ class GoalsRepository {
           try {
             final parsed = jsonDecode(ruleConfigRaw) as Map<String, dynamic>;
             targetCount = (parsed['target'] as num?)?.toInt() ?? 1;
-          } catch (_) {}
+          } catch (e, st) {
+            RitmoLogger.warning(
+              'GoalsRepository: Failed to parse ruleConfig for step $stepId: $e',
+              error: e,
+              stack: st,
+            );
+          }
         }
 
         if (completionCount >= targetCount) {

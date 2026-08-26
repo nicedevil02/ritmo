@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/goals/models/planning_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -95,10 +96,11 @@ class PlanningRepository {
         activatedAt: nowMs,
       );
 
-      await txn.insert(
+      await UpsertHelper.upsert(
+        txn,
         'planning_cycles',
         activated.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
     });
 
@@ -230,14 +232,19 @@ class PlanningRepository {
     final db = await _db;
     try {
       await db.transaction((txn) async {
-        await txn.insert(
+        await UpsertHelper.upsert(
+          txn,
           'planning_allocations',
           a.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          conflictColumns: const ['id'],
         );
       });
-    } catch (e) {
-      debugPrint('[PlanningRepository] Allocation insert error: $e');
+    } catch (e, st) {
+      RitmoLogger.error(
+        'PlanningRepository: Allocation insert error: $e',
+        error: e,
+        stack: st,
+      );
     }
   }
 
@@ -293,7 +300,8 @@ class PlanningRepository {
   Future<void> setDayLight(String dayKey, bool isLight) async {
     final db = await _db;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'calendar_exceptions',
       {
         'id': 'ce_$dayKey',
@@ -303,14 +311,14 @@ class PlanningRepository {
         'createdAt': nowMs,
         'updatedAt': nowMs,
       },
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 
   Future<Set<String>> getLightDays() async {
     try {
       final db = await _db;
-      final existing = await db.query('settings', where: 'key = ?', whereArgs: ['planning_light_days']);
+      final existing = await db.query('app_settings', where: 'key = ?', whereArgs: ['planning_light_days']);
       if (existing.isNotEmpty) {
         final val = existing.first['value'] as String?;
         if (val != null && val.isNotEmpty) {
@@ -318,7 +326,12 @@ class PlanningRepository {
         }
       }
       return {};
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'PlanningRepository.getLightDays error: $e',
+        error: e,
+        stack: st,
+      );
       return {};
     }
   }

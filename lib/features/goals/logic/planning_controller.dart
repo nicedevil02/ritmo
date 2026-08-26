@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/features/goals/logic/capacity_models.dart';
 import 'package:ritmo/features/goals/logic/execution_factor.dart';
@@ -57,7 +58,13 @@ class PlanningController extends ChangeNotifier {
       if (DatabaseHelper.rawDatabase != null) {
         try {
           agendaMap = await DayAgendaService.instance.agendaForRange(startDate, endDate);
-        } catch (_) {}
+        } catch (e, st) {
+          RitmoLogger.warning(
+            'PlanningController agendaForRange error: $e',
+            error: e,
+            stack: st,
+          );
+        }
       }
 
       final lightDays = await _repo.getLightDays();
@@ -83,7 +90,12 @@ class PlanningController extends ChangeNotifier {
         try {
           final ef = await ExecutionFactor.computeForPastDays(daysHistory: 21);
           executionFactorValue = ef.value;
-        } catch (_) {
+        } catch (e, st) {
+          RitmoLogger.warning(
+            'PlanningController ExecutionFactor error: $e',
+            error: e,
+            stack: st,
+          );
           executionFactorValue = 1.0;
         }
       } else {

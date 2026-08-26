@@ -75,29 +75,26 @@ class GoalsTimelineSection extends StatelessWidget {
     // Group items by month first, and then within each month group by date
     final groupedByMonth = <String, List<TimelineItem>>{}; // Key: "1405-7"
     for (final item in upcomingTimeline) {
-      try {
-        final dt = DateTime.parse(item.dateIso);
+      final dt = DateTime.tryParse(item.dateIso);
+      if (dt != null) {
         final jalali = Jalali.fromDateTime(dt);
         final key = '${jalali.year}-${jalali.month}';
         groupedByMonth.putIfAbsent(key, () => []).add(item);
-      } catch (_) {
+      } else {
         groupedByMonth.putIfAbsent('سایر', () => []).add(item);
       }
     }
 
-    final sortedMonthKeys =
-        groupedByMonth.keys.toList()..sort((a, b) {
-          if (a == 'سایر') return 1;
-          if (b == 'سایر') return -1;
-          final partsA = a.split('-');
-          final partsB = b.split('-');
-          final yrA = int.tryParse(partsA[0]) ?? 0;
-          final mhA = (partsA.length > 1 ? int.tryParse(partsA[1]) : 0) ?? 0;
-          final yrB = int.tryParse(partsB[0]) ?? 0;
-          final mhB = (partsB.length > 1 ? int.tryParse(partsB[1]) : 0) ?? 0;
-          if (yrA != yrB) return yrA.compareTo(yrB);
-          return mhA.compareTo(mhB);
-        });
+    int parseMonthKey(String key) {
+      if (key == 'سایر') return 999999;
+      final parts = key.split('-');
+      final y = int.tryParse(parts[0]) ?? 9999;
+      final m = parts.length > 1 ? (int.tryParse(parts[1]) ?? 99) : 99;
+      return y * 100 + m;
+    }
+
+    final sortedMonthKeys = groupedByMonth.keys.toList()
+      ..sort((a, b) => parseMonthKey(a).compareTo(parseMonthKey(b)));
 
     return RefreshIndicator(
       onRefresh: () async => onRefresh(),

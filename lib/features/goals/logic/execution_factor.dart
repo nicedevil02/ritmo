@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:sqflite/sqflite.dart';
 
 class ExecutionFactor {
@@ -46,7 +47,13 @@ class ExecutionFactor {
           return ExecutionFactor(value: factor, sampleDays: sampleDays);
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'ExecutionFactor.computeForPastDays fallback to 1.0: $e',
+        error: e,
+        stack: st,
+      );
+    }
 
     return fallback;
   }

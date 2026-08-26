@@ -115,6 +115,15 @@ class RealmRepository {
         }
       }
 
+      final activeProfiles = await db.query(
+        'zone_profiles',
+        where: 'isActive = 1',
+        limit: 1,
+      );
+      final activeProfileId = activeProfiles.isNotEmpty
+          ? activeProfiles.first['id'] as String?
+          : null;
+
       final resolver = ActiveRealmResolver(clock: clock);
       return resolver.resolve(
         realms: realms,
@@ -123,6 +132,7 @@ class RealmRepository {
         overrideRealmId: overrideRealmId,
         overrideUntilMs: overrideUntilMs,
         overrideStartedMs: overrideStartedMs,
+        activeProfileId: activeProfileId,
         activeWifiSsid: activeWifiSsid,
         isCharging: isCharging,
         activeCalendarTags: activeCalendarTags,

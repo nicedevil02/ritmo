@@ -18,6 +18,12 @@ class ScheduleResolutionLayer implements RealmResolutionLayer {
     })>[];
 
     for (final schedule in ctx.schedules) {
+      if (!schedule.isEnabled) continue;
+      if (schedule.profileId != null &&
+          ctx.activeProfileId != null &&
+          schedule.profileId != ctx.activeProfileId) {
+        continue;
+      }
       if (!schedule.daysOfWeek.contains(currentWeekday)) continue;
 
       final realm = ctx.realms.where((r) => r.id == schedule.zoneId).firstOrNull;

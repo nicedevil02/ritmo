@@ -15,6 +15,7 @@ class ContextSnapshot {
     required this.activeZoneId,
     String? activeZoneMode,
     RealmMode? activeRealmMode,
+    this.hideOtherRealms = false,
     required this.currentEnergy,
     required this.isMenstruating,
     this.reflectionContext,
@@ -32,6 +33,7 @@ class ContextSnapshot {
   final String? activeZoneId;
   final String? activeZoneMode;
   final RealmMode activeRealmMode;
+  final bool hideOtherRealms;
   final EnergyLevel currentEnergy;
   final bool isMenstruating;
   final ReflectionContext? reflectionContext;

@@ -10,6 +10,7 @@ class RealmData {
     required this.icon,
     required this.mode,
     this.isDefault = false,
+    this.hideOtherRealms = false,
     this.createdAt,
   });
 
@@ -19,6 +20,7 @@ class RealmData {
   final String icon;
   final RealmMode mode;
   final bool isDefault;
+  final bool hideOtherRealms;
   final int? createdAt;
 
   factory RealmData.fromMap(Map<String, dynamic> map) {
@@ -29,6 +31,7 @@ class RealmData {
       icon: map['icon'] as String? ?? '🎯',
       mode: parseRealmMode(map['mode'] as String?),
       isDefault: (map['isDefault'] as int? ?? 0) == 1,
+      hideOtherRealms: (map['hideOtherRealms'] as int? ?? 0) == 1,
       createdAt: map['createdAt'] as int?,
     );
   }
@@ -41,6 +44,7 @@ class RealmData {
       'icon': icon,
       'mode': realmModeToRaw(mode),
       'isDefault': isDefault ? 1 : 0,
+      'hideOtherRealms': hideOtherRealms ? 1 : 0,
       'createdAt': createdAt ?? DateTime.now().millisecondsSinceEpoch,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };
@@ -67,6 +71,8 @@ class RealmScheduleData {
     required this.daysOfWeek,
     required this.startTime,
     required this.endTime,
+    this.profileId,
+    this.isEnabled = true,
     this.createdAt,
   });
 
@@ -75,6 +81,8 @@ class RealmScheduleData {
   final Set<int> daysOfWeek; // 1: Mon ... 7: Sun
   final String startTime; // "HH:mm"
   final String endTime;   // "HH:mm"
+  final String? profileId;
+  final bool isEnabled;
   final int? createdAt;
 
   factory RealmScheduleData.fromMap(Map<String, dynamic> map) {
@@ -91,8 +99,24 @@ class RealmScheduleData {
       daysOfWeek: days,
       startTime: map['startTime'] as String? ?? '00:00',
       endTime: map['endTime'] as String? ?? '23:59',
+      profileId: map['profileId'] as String?,
+      isEnabled: (map['isEnabled'] as int? ?? 1) == 1,
       createdAt: map['createdAt'] as int?,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'zoneId': zoneId,
+      'daysOfWeek': daysOfWeek.join(','),
+      'startTime': startTime,
+      'endTime': endTime,
+      'profileId': profileId,
+      'isEnabled': isEnabled ? 1 : 0,
+      'createdAt': createdAt ?? DateTime.now().millisecondsSinceEpoch,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    };
   }
 }
 

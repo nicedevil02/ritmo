@@ -13,6 +13,7 @@ class RealmContext {
     this.overrideRealmId,
     this.overrideUntilMs,
     this.overrideStartedMs,
+    this.activeProfileId,
     this.activeWifiSsid,
     this.isCharging = false,
     this.activeCalendarTags = const [],
@@ -25,6 +26,7 @@ class RealmContext {
   final String? overrideRealmId;
   final int? overrideUntilMs;
   final int? overrideStartedMs;
+  final String? activeProfileId;
   final String? activeWifiSsid;
   final bool isCharging;
   final List<String> activeCalendarTags;

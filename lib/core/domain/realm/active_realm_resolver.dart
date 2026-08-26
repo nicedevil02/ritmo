@@ -3,6 +3,10 @@ import 'package:ritmo/core/domain/realm/realm_state.dart';
 import 'package:ritmo/core/domain/realm/schedule_bounds.dart';
 import 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
 
+export 'package:ritmo/core/domain/realm/budgets/zone_budget.dart';
+export 'package:ritmo/core/domain/realm/budgets/zone_budget_repository.dart';
+export 'package:ritmo/core/domain/realm/profiles/zone_profile.dart';
+export 'package:ritmo/core/domain/realm/profiles/zone_profile_repository.dart';
 export 'package:ritmo/core/domain/realm/realm_mode.dart';
 export 'package:ritmo/core/domain/realm/realm_state.dart';
 export 'package:ritmo/core/domain/realm/resolution/composite_realm_resolver.dart';
@@ -35,6 +39,7 @@ class ActiveRealmResolver {
     String? overrideRealmId,
     int? overrideUntilMs,
     int? overrideStartedMs,
+    String? activeProfileId,
     String? activeWifiSsid,
     bool isCharging = false,
     List<String> activeCalendarTags = const [],
@@ -159,6 +164,12 @@ class ActiveRealmResolver {
     final currentWeekday = now.weekday;
 
     for (final schedule in schedules) {
+      if (!schedule.isEnabled) continue;
+      if (schedule.profileId != null &&
+          activeProfileId != null &&
+          schedule.profileId != activeProfileId) {
+        continue;
+      }
       if (!schedule.daysOfWeek.contains(currentWeekday)) continue;
 
       final realm = realms.firstWhere(
@@ -225,7 +236,7 @@ class ActiveRealmResolver {
     final defaultRealmCandidates = realms.where((r) => r.isDefault).toList();
     if (defaultRealmCandidates.isNotEmpty) {
       final defaultRealm = defaultRealmCandidates.first;
-      final nextSchedule = findNextSchedule(now, realms, schedules);
+      final nextSchedule = findNextSchedule(now, realms, schedules, activeProfileId: activeProfileId);
 
       final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
       final remaining = nextSchedule != null
@@ -269,8 +280,9 @@ class ActiveRealmResolver {
   static ({RealmData realm, DateTime scheduleStartDt})? findNextSchedule(
     DateTime now,
     List<RealmData> realms,
-    List<RealmScheduleData> schedules,
-  ) {
+    List<RealmScheduleData> schedules, {
+    String? activeProfileId,
+  }) {
     final candidates = <({RealmData realm, DateTime scheduleStartDt})>[];
 
     // Check upcoming schedules for today and tomorrow
@@ -279,6 +291,12 @@ class ActiveRealmResolver {
       final checkWeekday = checkDate.weekday;
 
       for (final s in schedules) {
+        if (!s.isEnabled) continue;
+        if (s.profileId != null &&
+            activeProfileId != null &&
+            s.profileId != activeProfileId) {
+          continue;
+        }
         if (!s.daysOfWeek.contains(checkWeekday)) continue;
         final bounds = calculateScheduleBounds(
           now: checkDate,

@@ -98,6 +98,17 @@ class ZoneAndEssentialFilter implements RoutineFilter {
         return false;
       }
 
+      // F-11: Real separation - strictly hide routines tagged with a different realm
+      if (snapshot.hideOtherRealms &&
+          snapshot.activeZoneId != null &&
+          snapshot.activeZoneId!.isNotEmpty) {
+        if (r.zoneId != null &&
+            r.zoneId!.isNotEmpty &&
+            r.zoneId != snapshot.activeZoneId) {
+          return isCriticalMedical;
+        }
+      }
+
       return true;
     }).toList();
   }

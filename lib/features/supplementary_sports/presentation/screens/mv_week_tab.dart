@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
@@ -13,6 +14,7 @@ class MvWeekTab extends StatelessWidget {
   final int cycleWeek;
   final bool isDeloadWeek;
   final List<MvCommitment> commitments;
+  final MvKindUseCase? kindUseCase;
   final ValueChanged<MvSlot> onSlotUpdated;
   final VoidCallback onRegenerateWeek;
   final VoidCallback? onOpenCommitments;
@@ -23,6 +25,7 @@ class MvWeekTab extends StatelessWidget {
     required this.cycleWeek,
     this.isDeloadWeek = false,
     this.commitments = const [],
+    this.kindUseCase,
     required this.onSlotUpdated,
     required this.onRegenerateWeek,
     this.onOpenCommitments,
@@ -197,6 +200,7 @@ class MvWeekTab extends StatelessWidget {
                   MvDayPlanSheet.show(
                     context: context,
                     slot: slot,
+                    kindUseCase: kindUseCase,
                     onSave: onSlotUpdated,
                   );
                 },

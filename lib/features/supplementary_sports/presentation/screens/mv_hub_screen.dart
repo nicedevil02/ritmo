@@ -339,6 +339,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
             heroAnimationAsset: _heroAnimationAsset,
+            kindUseCase: MvKindUseCase(_controller.kindRepo),
             onStartSession: () => _handleStartOrResumeSession(currentSlot),
             onContinueSession: () => _handleStartOrResumeSession(currentSlot),
             isSessionInProgress: _controller.activeSession != null,
@@ -353,6 +354,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
             weekSlots: _controller.weekSlots,
             cycleWeek: _controller.cycleWeek,
             commitments: _controller.commitments,
+            kindUseCase: MvKindUseCase(_controller.kindRepo),
             onSlotUpdated: _controller.updateSlot,
             onRegenerateWeek: _controller.regenerateWeek,
             onOpenCommitments: () {
@@ -378,6 +380,8 @@ class _MvHubScreenState extends State<MvHubScreen> {
             loadSnapshot: _controller.loadSnapshot,
             insights: _controller.insights,
             personalRecords: _controller.prs,
+            activeCampaign: _controller.activeCampaign,
+            onCreateCampaign: _controller.saveCampaign,
             bodyMapDistribution:
                 _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),

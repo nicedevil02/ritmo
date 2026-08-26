@@ -239,6 +239,30 @@ class RoutingFakeCheckinRepo implements MvDailyCheckinRepository {
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
+class RoutingFakeCampaignRepo implements MvCampaignRepository {
+  @override
+  Future<MvCampaign?> getActive() async => null;
+  @override
+  Future<List<MvCampaign>> getAll() async => [];
+  @override
+  Future<MvCampaign> upsert(MvCampaign c) async => c;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+class RoutingFakeKindProfileRepo implements MvKindProfileRepository {
+  @override
+  Future<MvKindProfile?> getByCode(String kindCode) async => null;
+  @override
+  Future<Map<String, MvKindProfile>> getMapByCodes(List<String> codes) async => {};
+  @override
+  Future<List<MvKindProfile>> getAll() async => [];
+  @override
+  Future<void> upsert(MvKindProfile profile) async {}
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
 Widget createTestApp(Widget child) {
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -294,6 +318,8 @@ void main() {
           final commitmentRepo = RoutingFakeCommitmentRepo();
           final prRepo = RoutingFakePrRepo();
           final checkinRepo = RoutingFakeCheckinRepo();
+          final campaignRepo = RoutingFakeCampaignRepo();
+          final kindProfileRepo = RoutingFakeKindProfileRepo();
 
           final todayIso = MvCalendar.formatDateIso(DateTime.now());
           final initialSlot = MvSlot(
@@ -314,7 +340,9 @@ void main() {
             sessionRepo: sessionRepo,
             exerciseRepo: exerciseRepo,
             kindRepo: kindRepo,
+            kindProfileRepo: kindProfileRepo,
             commitmentRepo: commitmentRepo,
+            campaignRepo: campaignRepo,
             prRepo: prRepo,
             checkinRepo: checkinRepo,
           );

@@ -18,9 +18,11 @@ class MvHubController extends ChangeNotifier {
   final MvPrRepository _prRepo;
   final MvCommitmentRepository _commitmentRepo;
   final MvKindRepository _kindRepo;
+  final MvCampaignRepository _campaignRepo;
 
   MvCommitmentRepository get commitmentRepo => _commitmentRepo;
   MvKindRepository get kindRepo => _kindRepo;
+  MvCampaignRepository get campaignRepo => _campaignRepo;
 
   // Use Cases
   final MvStartSessionUseCase startSessionUseCase;
@@ -40,6 +42,9 @@ class MvHubController extends ChangeNotifier {
 
   MvLoadSnapshot? _loadSnapshot;
   MvLoadSnapshot? get loadSnapshot => _loadSnapshot;
+
+  MvCampaign? _activeCampaign;
+  MvCampaign? get activeCampaign => _activeCampaign;
 
   late MvUserProfile _profile;
   MvUserProfile get profile => _profile;
@@ -88,6 +93,8 @@ class MvHubController extends ChangeNotifier {
     MvPrRepository? prRepo,
     MvCommitmentRepository? commitmentRepo,
     MvKindRepository? kindRepo,
+    MvKindProfileRepository? kindProfileRepo,
+    MvCampaignRepository? campaignRepo,
     MvDailyCheckinRepository? checkinRepo,
     SelectionEngine? selectionEngine,
     ProgressionEngine? progressionEngine,
@@ -104,6 +111,7 @@ class MvHubController extends ChangeNotifier {
        _prRepo = prRepo ?? MvPrRepository(),
        _commitmentRepo = commitmentRepo ?? MvCommitmentRepositoryImpl(),
        _kindRepo = kindRepo ?? MvKindRepository(),
+       _campaignRepo = campaignRepo ?? MvCampaignRepository(),
        startSessionUseCase = MvStartSessionUseCase(
          sessionRepo: sessionRepo,
          exerciseRepo: exerciseRepo,
@@ -119,6 +127,7 @@ class MvHubController extends ChangeNotifier {
        quickLogUseCase = MvQuickLogUseCase(
          sessionRepo: sessionRepo,
          prescriptionRepo: prescriptionRepo,
+         kindRepo: kindRepo,
        ),
        cantTodayUseCase = MvCantTodayUseCase(
          prescriptionRepo: prescriptionRepo,
@@ -132,6 +141,7 @@ class MvHubController extends ChangeNotifier {
          prescriptionRepo: prescriptionRepo,
          commitmentRepo: commitmentRepo,
          kindRepo: kindRepo,
+         kindProfileRepo: kindProfileRepo,
          planEngine: planEngine,
        ),
        _budgetEngine = budgetEngine ?? const BudgetEngine(),
@@ -252,6 +262,9 @@ class MvHubController extends ChangeNotifier {
       referenceDate: today,
     );
 
+    // Fetch Active Campaign (CampaignEngine / S8-T9)
+    _activeCampaign = await _campaignRepo.getActive();
+
     _isLoading = false;
     notifyListeners();
   }
@@ -351,6 +364,12 @@ class MvHubController extends ChangeNotifier {
       dateIso: _selectedDateIso,
     );
     await loadAllData();
+  }
+
+  Future<void> saveCampaign(MvCampaign c) async {
+    await _campaignRepo.upsert(c);
+    _activeCampaign = c;
+    notifyListeners();
   }
 
   Future<void> saveCommitment(MvCommitment c) async {

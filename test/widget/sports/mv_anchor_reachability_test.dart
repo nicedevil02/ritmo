@@ -118,6 +118,30 @@ class FakeDailyCheckinRepo implements MvDailyCheckinRepository {
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
+class FakeCampaignRepo implements MvCampaignRepository {
+  @override
+  Future<MvCampaign?> getActive() async => null;
+  @override
+  Future<List<MvCampaign>> getAll() async => [];
+  @override
+  Future<MvCampaign> upsert(MvCampaign c) async => c;
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+class FakeKindProfileRepo implements MvKindProfileRepository {
+  @override
+  Future<MvKindProfile?> getByCode(String kindCode) async => null;
+  @override
+  Future<Map<String, MvKindProfile>> getMapByCodes(List<String> codes) async => {};
+  @override
+  Future<List<MvKindProfile>> getAll() async => [];
+  @override
+  Future<void> upsert(MvKindProfile profile) async {}
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
 Widget createTestApp(MvHubController controller) {
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -142,6 +166,8 @@ void main() {
         prescriptionRepo: FakePrescriptionRepo(),
         commitmentRepo: FakeCommitmentRepo(),
         kindRepo: FakeKindRepo(),
+        kindProfileRepo: FakeKindProfileRepo(),
+        campaignRepo: FakeCampaignRepo(),
         checkinRepo: FakeDailyCheckinRepo(),
         exerciseRepo: FakeExerciseRepo(),
         sessionRepo: FakeSessionRepo(),

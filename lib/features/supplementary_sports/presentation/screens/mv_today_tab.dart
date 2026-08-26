@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -21,6 +22,7 @@ class MvTodayTab extends StatelessWidget {
   final bool isSessionInProgress;
   final ValueChanged<MvSlot> onSlotUpdated;
   final ValueChanged<MvDailyCheckin> onCheckinSaved;
+  final MvKindUseCase? kindUseCase;
   final Future<void> Function(
     String kindCode,
     int duration,
@@ -41,6 +43,7 @@ class MvTodayTab extends StatelessWidget {
     required this.onStartSession,
     this.onContinueSession,
     this.isSessionInProgress = false,
+    this.kindUseCase,
     required this.onSlotUpdated,
     required this.onCheckinSaved,
     required this.onQuickLogSaved,
@@ -221,6 +224,7 @@ class MvTodayTab extends StatelessWidget {
                   context: context,
                   initialKindCode: MvKindCodes.running,
                   initialDuration: 30,
+                  kindUseCase: kindUseCase,
                   onSave: (kindCode, dur, feel, note) =>
                       onQuickLogSaved(kindCode, dur, feel, note),
                 );

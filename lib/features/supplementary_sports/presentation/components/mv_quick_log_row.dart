@@ -38,6 +38,7 @@ class MvQuickLogRow extends StatelessWidget {
               ),
             ),
             GestureDetector(
+              key: const ValueKey('mv_quick_log_custom'),
               onTap: onCustomLog,
               child: Text(
                 'ثبت سایر...',

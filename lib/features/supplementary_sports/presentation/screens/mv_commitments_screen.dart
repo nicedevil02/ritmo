@@ -72,6 +72,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
     await MvCommitmentEditSheet.show(
       context: context,
       commitment: commitment,
+      kindUseCase: _kindUseCase,
       onSave: (saved) async {
         if (widget.controller != null) {
           await widget.controller!.saveCommitment(saved);

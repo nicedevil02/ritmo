@@ -14,16 +14,18 @@ class MissedReminderRecovery {
       final now = nowOverride ?? DateTime.now();
       final nowMs = now.millisecondsSinceEpoch;
 
+      // RITF-001: Only recover active pending reminders belonging to the tasks module
       final rows = await db.query(
         'pending_reminders',
-        where: 'scheduledTime <= ?',
+        where: "scheduledTime <= ? AND state IN ('SCHEDULED', 'pending') AND (ownerModule = 'tasks' OR ownerModule IS NULL)",
         whereArgs: [nowMs],
       );
 
       if (rows.isEmpty) return 0;
 
       final activeMissedTasks = <(String reminderId, String taskId, String title, String body)>[];
-      final rowsToDelete = <String>[];
+      final recoveredReminderIds = <String>[];
+      final skippedReminderIds = <String>[];
 
       for (final r in rows) {
         final reminderId = r['id'] as String;
@@ -38,18 +40,18 @@ class MissedReminderRecovery {
         }
 
         if (taskId == null || taskId.isEmpty || taskId == 'nudge') {
-          rowsToDelete.add(reminderId);
+          skippedReminderIds.add(reminderId);
           continue;
         }
 
         final task = await SimpleTaskRepository.instance.getById(taskId);
         if (task == null || task.isDone) {
-          rowsToDelete.add(reminderId);
+          skippedReminderIds.add(reminderId);
           continue;
         }
 
         activeMissedTasks.add((reminderId, taskId, task.title, task.note ?? ''));
-        rowsToDelete.add(reminderId);
+        recoveredReminderIds.add(reminderId);
       }
 
       final missedCount = activeMissedTasks.length;
@@ -84,13 +86,30 @@ class MissedReminderRecovery {
         }
       }
 
-      // Clean up processed pending reminders
-      if (rowsToDelete.isNotEmpty) {
-        final placeholders = List.filled(rowsToDelete.length, '?').join(', ');
-        await db.delete(
+      // RITF-001: Logically archive reminders instead of deleting shared table records
+      if (recoveredReminderIds.isNotEmpty) {
+        final placeholders = List.filled(recoveredReminderIds.length, '?').join(', ');
+        await db.update(
           'pending_reminders',
+          {
+            'state': 'RECOVERED',
+            'updatedAt': nowMs,
+          },
           where: 'id IN ($placeholders)',
-          whereArgs: rowsToDelete,
+          whereArgs: recoveredReminderIds,
+        );
+      }
+
+      if (skippedReminderIds.isNotEmpty) {
+        final placeholders = List.filled(skippedReminderIds.length, '?').join(', ');
+        await db.update(
+          'pending_reminders',
+          {
+            'state': 'SKIPPED',
+            'updatedAt': nowMs,
+          },
+          where: 'id IN ($placeholders)',
+          whereArgs: skippedReminderIds,
         );
       }
 

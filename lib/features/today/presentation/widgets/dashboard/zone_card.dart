@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/domain/realm/presets/realm_presets.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_row.dart';
 import 'package:ritmo/core/widgets/ritmo_energy_dial.dart';
@@ -20,7 +21,7 @@ class ZoneCard extends StatelessWidget {
     required this.currentEnergyPercent,
     required this.currentEnergyLabel,
     required this.currentEnergyDesc,
-    this.realmState,
+    required this.realmState,
     required this.activeZone,
     required this.activeZoneName,
     required this.activeZoneIcon,
@@ -34,7 +35,7 @@ class ZoneCard extends StatelessWidget {
   final double? currentEnergyPercent;
   final String currentEnergyLabel;
   final String currentEnergyDesc;
-  final ActiveRealmState? realmState;
+  final ActiveRealmState realmState;
   final Map<String, dynamic>? activeZone;
   final String? activeZoneName;
   final String? activeZoneIcon;
@@ -45,13 +46,7 @@ class ZoneCard extends StatelessWidget {
   final VoidCallback onRealmChanged;
 
   static Color _parseColorSafe(String? colorStr, Color fallback) {
-    if (colorStr == null || colorStr.isEmpty) return fallback;
-    try {
-      var hex = colorStr.replaceAll('#', '').trim();
-      if (hex.length == 6) hex = 'FF$hex';
-      if (hex.length == 8) return Color(int.parse(hex, radix: 16));
-    } catch (_) {}
-    return fallback;
+    return RitmoColor.fromHex(colorStr, fallback: fallback);
   }
 
   @override
@@ -59,45 +54,26 @@ class ZoneCard extends StatelessWidget {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
 
-    final bool isOutOfZone;
-    final String realmName;
-    final String realmTimeRange;
-
-    if (realmState != null) {
-      isOutOfZone = switch (realmState!) {
-        FreeRealmState() => true,
-        ScheduledRealmState(:final isDefaultFallback, :final realm) => isDefaultFallback && realm.id.isEmpty,
-        ManualRealmState() => false,
-        TriggeredRealmState() => false,
-        RealmErrorState() => true,
-      };
-      realmName = isOutOfZone ? l10n.outOfRealm : (realmState!.realmOrNull?.name ?? l10n.outOfRealm);
-      realmTimeRange = switch (realmState!) {
-        ScheduledRealmState(:final schedule) => toPersianDigits('${schedule.startTime} - ${schedule.endTime}'),
-        ManualRealmState(:final remaining) => toPersianDigits('فعال‌سازی دستی (${remaining.inMinutes} دقیقه)'),
-        TriggeredRealmState(:final explanation) => explanation,
-        FreeRealmState() => l10n.noActiveSchedule,
-        RealmErrorState() => l10n.noActiveSchedule,
-      };
-    } else {
-      final zoneId = activeZone?['id'] as String?;
-      isOutOfZone = (zoneId == null ||
-          zoneId.isEmpty ||
-          zoneId == 'default_zone') &&
-          (activeZoneName == null ||
-              activeZoneName == 'خارج از زون' ||
-              activeZoneName == 'خارج از قلمرو' ||
-              activeZoneName == 'Out of Realm');
-
-      realmName = isOutOfZone ? l10n.outOfRealm : (activeZoneName ?? l10n.outOfRealm);
-      final rawTimeRange = activeZoneTimeRange;
-      final isNoSchedule = rawTimeRange == null ||
-          rawTimeRange.isEmpty ||
-          rawTimeRange.replaceAll('\u200c', '').replaceAll(' ', '').contains('بدونزمانبندی') ||
-          rawTimeRange == 'No active schedule';
-
-      realmTimeRange = isNoSchedule ? l10n.noActiveSchedule : toPersianDigits(rawTimeRange);
-    }
+    final bool isOutOfZone = switch (realmState) {
+      FreeRealmState() => true,
+      ScheduledRealmState(:final isDefaultFallback, :final realm) =>
+        isDefaultFallback && realm.id.isEmpty,
+      ManualRealmState() => false,
+      TriggeredRealmState() => false,
+      RealmErrorState() => true,
+    };
+    final String realmName = isOutOfZone
+        ? l10n.outOfRealm
+        : (realmState.realmOrNull?.name ?? l10n.outOfRealm);
+    final String realmTimeRange = switch (realmState) {
+      ScheduledRealmState(:final schedule) =>
+        toPersianDigits('${schedule.startTime} - ${schedule.endTime}'),
+      ManualRealmState(:final remaining) =>
+        toPersianDigits('فعال‌سازی دستی (${remaining.inMinutes} دقیقه)'),
+      TriggeredRealmState(:final explanation) => explanation,
+      FreeRealmState() => l10n.noActiveSchedule,
+      RealmErrorState() => l10n.noActiveSchedule,
+    };
 
     final Color energyColor;
     final IconData energyIcon;

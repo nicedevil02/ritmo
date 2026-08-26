@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 import 'package:ritmo/features/konkur/logic/konkur_repository.dart';
 import 'package:ritmo/features/konkur/models/konkur_models.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_formatters.dart';
@@ -655,9 +656,10 @@ class _KonkurBudgetSectionState extends State<KonkurBudgetSection> {
     RitmoColors colors,
   ) {
     final percent = (readiness * 100).toInt();
-    final circleColor = subject.colorHex != null
-        ? Color(int.parse(subject.colorHex!.replaceFirst('#', '0xFF')))
-        : const Color(0xFF8B5CF6);
+    final circleColor = RitmoColor.fromHex(
+      subject.colorHex,
+      fallback: const Color(0xFF8B5CF6),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

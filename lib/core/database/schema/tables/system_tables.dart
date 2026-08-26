@@ -1,3 +1,4 @@
+import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SystemTables {
@@ -61,6 +62,11 @@ class SystemTables {
           courseSessionId TEXT,
           originalTime INTEGER NOT NULL,
           scheduledTime INTEGER NOT NULL,
+          title TEXT,
+          body TEXT,
+          payloadJson TEXT,
+          channel TEXT DEFAULT 'routine',
+          privacy TEXT DEFAULT 'none',
           state TEXT NOT NULL DEFAULT 'SCHEDULED',
           deferCount INTEGER NOT NULL DEFAULT 0,
           deferReason TEXT,
@@ -525,5 +531,11 @@ class SystemTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_cycle_confirm_answer ON cycle_confirmations(answer);',
     );
+
+    await SchemaManager.safeAddColumn(db, 'pending_reminders', 'payloadJson', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'pending_reminders', 'title', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'pending_reminders', 'body', 'TEXT');
+    await SchemaManager.safeAddColumn(db, 'pending_reminders', 'channel', "TEXT DEFAULT 'routine'");
+    await SchemaManager.safeAddColumn(db, 'pending_reminders', 'privacy', "TEXT DEFAULT 'none'");
   }
 }

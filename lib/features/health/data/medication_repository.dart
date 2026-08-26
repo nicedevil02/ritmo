@@ -620,25 +620,33 @@ class MedicationRepository {
         );
       }
 
-      // ۲. کسر موجودی دارو در صورت مصرف (TAKEN)
+      // ۲. کسر اتمیک موجودی دارو در دیتابیس بدون ریسک Lost Update (RITF-005)
       if (status == 'TAKEN' && med != null && med.profile.hasStockTracking) {
-        final currentStock = med.profile.remainingAmount ?? 0.0;
-        final newStock = (currentStock - deductionUnits).clamp(0.0, double.infinity);
-        await txn.update(
+        await txn.rawUpdate('''
+          UPDATE medication_profiles
+             SET remainingAmount = MAX(0.0, remainingAmount - ?)
+           WHERE routineId = ?
+        ''', [deductionUnits, routineId]);
+
+        final updatedProfile = await txn.query(
           'medication_profiles',
-          {'remainingAmount': newStock},
+          columns: ['remainingAmount'],
           where: 'routineId = ?',
           whereArgs: [routineId],
+          limit: 1,
         );
-        await txn.update(
-          'routines',
-          {
-            'medStockCount': newStock.round(),
-            'updatedAt': now,
-          },
-          where: 'id = ?',
-          whereArgs: [routineId],
-        );
+        if (updatedProfile.isNotEmpty) {
+          final updatedStock = (updatedProfile.first['remainingAmount'] as num?)?.toDouble() ?? 0.0;
+          await txn.update(
+            'routines',
+            {
+              'medStockCount': updatedStock.round(),
+              'updatedAt': now,
+            },
+            where: 'id = ?',
+            whereArgs: [routineId],
+          );
+        }
       }
 
       // ۳. جمع‌آوری آلارم‌های مرتبط با این دوز جهت لغو خارج از تراکنش

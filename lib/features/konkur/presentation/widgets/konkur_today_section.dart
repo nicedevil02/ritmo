@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 import 'package:ritmo/core/domain/models/energy_context.dart';
 import 'package:ritmo/features/konkur/logic/konkur_planner.dart';
 import 'package:ritmo/features/konkur/logic/konkur_replan_service.dart';
@@ -557,9 +558,10 @@ class _KonkurTodaySectionState extends State<KonkurTodaySection> {
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: subject.colorHex != null
-                              ? Color(int.parse(subject.colorHex!.replaceFirst('#', '0xFF')))
-                              : const Color(0xFF8B5CF6),
+                          color: RitmoColor.fromHex(
+                            subject.colorHex,
+                            fallback: const Color(0xFF8B5CF6),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

@@ -75,6 +75,11 @@ class CycleLockService {
     DatabaseExecutor? dbExecutor,
   ]) async {
     try {
+      if (source == CycleLockSource.appLock) {
+        // RITF-002: Close backdoor by purging old dedicated PIN and salt
+        await SecureKeyStore.deleteKey(_keyPinHash, dbExecutor);
+        await SecureKeyStore.deleteKey(_keySalt, dbExecutor);
+      }
       await SecureKeyStore.setKey(
         keyLockSource,
         source == CycleLockSource.appLock ? 'app_lock' : 'dedicated',
@@ -164,13 +169,12 @@ class CycleLockService {
     return await hasCyclePin(dbExecutor);
   }
 
-  /// Sets a new dedicated cycle PIN. Hashes it securely with a salt and stores only in SecureKeyStore.
+  /// Sets a new dedicated cycle PIN. Hashes it securely with PBKDF2 via PinHasher (RITF-003).
   Future<void> setPin(String newPin, [DatabaseExecutor? dbExecutor]) async {
-    final salt = _generateSalt();
-    final hash = _hashPin(newPin, salt);
+    final hash = PinHasher.hashPin(newPin);
 
-    await SecureKeyStore.setKey(_keySalt, salt, dbExecutor);
     await SecureKeyStore.setKey(_keyPinHash, hash, dbExecutor);
+    await SecureKeyStore.deleteKey(_keySalt, dbExecutor);
     await SecureKeyStore.setKey(_keyFailedAttempts, '0', dbExecutor);
     await SecureKeyStore.setKey(_keyLockoutUntilMs, '0', dbExecutor);
 
@@ -223,19 +227,33 @@ class CycleLockService {
     return PinHasher.verifyPin(enteredPin, storedHash);
   }
 
-  /// Specifically verifies against the dedicated cycle PIN.
+  /// Specifically verifies against the dedicated cycle PIN with transparent v2 auto-upgrade (RITF-003).
   Future<bool> verifyDedicatedPin(
     String enteredPin, [
     DatabaseExecutor? dbExecutor,
   ]) async {
-    final salt = await SecureKeyStore.getKey(_keySalt, dbExecutor);
     final storedHash = await SecureKeyStore.getKey(_keyPinHash, dbExecutor);
-    if (salt == null || storedHash == null || storedHash.isEmpty) return false;
-    final computedHash = _hashPin(enteredPin, salt);
-    return _constantTimeEquals(computedHash, storedHash);
+    if (storedHash == null || storedHash.isEmpty) return false;
+
+    if (storedHash.startsWith('v2:')) {
+      return PinHasher.verifyPin(enteredPin, storedHash);
+    }
+
+    // Legacy HMAC-SHA256 transparent upgrade
+    final salt = await SecureKeyStore.getKey(_keySalt, dbExecutor);
+    if (salt != null && salt.isNotEmpty) {
+      final computedHash = _hashPin(enteredPin, salt);
+      final isMatch = _constantTimeEquals(computedHash, storedHash);
+      if (isMatch) {
+        await setPin(enteredPin, dbExecutor);
+      }
+      return isMatch;
+    }
+
+    return false;
   }
 
-  /// Verifies [enteredPin] against active source (or fallback) with brute-force rate limiting.
+  /// Verifies [enteredPin] against active source with brute-force rate limiting (RITF-002).
   Future<bool> verifyPin(
     String enteredPin, [
     DatabaseExecutor? dbExecutor,
@@ -249,18 +267,11 @@ class CycleLockService {
     final source = await getLockSource(dbExecutor);
     bool isMatch = false;
 
+    // RITF-002: Strictly verify active source only (no unintended backdoor fallback)
     if (source == CycleLockSource.appLock) {
       isMatch = await verifyAppLockPin(enteredPin, dbExecutor);
-      // Fallback to dedicated if app lock failed but dedicated matches
-      if (!isMatch) {
-        isMatch = await verifyDedicatedPin(enteredPin, dbExecutor);
-      }
     } else {
       isMatch = await verifyDedicatedPin(enteredPin, dbExecutor);
-      // Fallback to app lock if dedicated is not configured or failed
-      if (!isMatch && !(await hasCyclePin(dbExecutor))) {
-        isMatch = await verifyAppLockPin(enteredPin, dbExecutor);
-      }
     }
 
     if (isMatch) {
@@ -305,7 +316,7 @@ class CycleLockService {
     }
   }
 
-  /// Authenticates using biometrics. Returns true ONLY on successful authentication.
+  /// Authenticates using biometrics (RITF-002: biometricOnly true).
   Future<bool> authenticateBiometric({
     String localizedReason = 'Cycle Vault Biometric Authentication',
   }) async {
@@ -318,7 +329,7 @@ class CycleLockService {
 
       final didAuth = await _auth.authenticate(
         localizedReason: localizedReason,
-        biometricOnly: false,
+        biometricOnly: true,
         persistAcrossBackgrounding: true,
       );
       return didAuth;

@@ -70,7 +70,7 @@ class TaskAgendaSource implements AgendaSource {
       // 2) Dateless pending tasks (M2-7)
       final datelessRows = await db.query(
         'simple_tasks',
-        where: 'isDone = 0 AND (dueDate IS NULL OR dueDate = "")',
+        where: "isDone = 0 AND (dueDate IS NULL OR dueDate = '')",
         orderBy: 'isImportant DESC, updatedAt DESC',
       );
       for (final r in datelessRows) {
@@ -92,7 +92,7 @@ class TaskAgendaSource implements AgendaSource {
       }
 
       const overdueWhere =
-          'isDone = 0 AND dueDate IS NOT NULL AND dueDate != "" AND dueDate < ? AND dueDate >= ?';
+          "isDone = 0 AND dueDate IS NOT NULL AND dueDate != '' AND dueDate < ? AND dueDate >= ?";
       final overdueArgs = [todayStr, effectiveStartDate];
 
       // Count total overdue

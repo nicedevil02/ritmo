@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/features/worship/logic/qibla.dart';
 import 'package:ritmo/features/worship/models/worship_models.dart';
 
 class QiblaCompassSheet extends StatefulWidget {
@@ -129,12 +130,14 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
             return;
           }
 
-          // Normalize heading to 0..360
-          final normalizedHeading = (heading + 360) % 360;
+          // Normalize heading and correct for magnetic declination to get True Heading (M12)
+          final magneticHeading = (heading + 360) % 360;
+          final declination = magneticDeclination(_lat, _lng);
+          final trueHeading = (magneticHeading + declination + 360) % 360;
 
           // Calculate angle difference between top of phone and Qibla
           // When top of phone points to Qibla: (azimuth - heading) = 0
-          double diff = (_qiblaAzimuth - normalizedHeading).abs();
+          double diff = (_qiblaAzimuth - trueHeading).abs();
           if (diff > 180) diff = 360 - diff;
           final isAligned = diff <= 4.0; // Within 4 degrees accuracy
 
@@ -148,7 +151,7 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
           }
 
           setState(() {
-            _deviceHeading = normalizedHeading;
+            _deviceHeading = trueHeading;
             _hasCompassSensor = true;
             _isAlignedWithQibla = isAligned;
           });
@@ -171,24 +174,9 @@ class _QiblaCompassSheetState extends State<QiblaCompassSheet>
   /// Calculates Qibla direction in degrees clockwise from True North.
   /// Kaaba Coordinates: 21.4225° N, 39.8262° E
   static double _calculateQiblaAzimuth(double lat, double lng) {
-    const kaabaLat = 21.4225 * (math.pi / 180.0);
-    const kaabaLng = 39.8262 * (math.pi / 180.0);
-
-    final phi = lat * (math.pi / 180.0);
-    final lambda = lng * (math.pi / 180.0);
-    final deltaLambda = kaabaLng - lambda;
-
-    final y = math.sin(deltaLambda);
-    final x =
-        math.cos(phi) * math.tan(kaabaLat) -
-        math.sin(phi) * math.cos(deltaLambda);
-
-    var azimuth = math.atan2(y, x) * (180.0 / math.pi);
-    if (azimuth < 0) {
-      azimuth += 360.0;
-    }
-    return azimuth;
+    return qiblaBearing(lat, lng);
   }
+
 
   @override
   Widget build(BuildContext context) {

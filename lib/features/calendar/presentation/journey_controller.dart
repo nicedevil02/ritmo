@@ -47,6 +47,7 @@ class JourneyController extends ChangeNotifier {
     RitmoExecutionKernel? kernel,
     OccurrenceOverrideRepository? overrideRepo,
     DayMarkRepository? dayMarkRepo,
+    CommandStack? commandStack,
   }) : _agendaService = agendaService ?? DayAgendaService.instance,
        _snapshotBuilder = snapshotBuilder ?? const DayAgendaSnapshotBuilder(),
        _eventBus = eventBus ?? RitmoEventBus(),
@@ -54,7 +55,8 @@ class JourneyController extends ChangeNotifier {
        _kernel = kernel ?? RitmoExecutionKernel.instance,
        _overrideRepo =
            overrideRepo ?? const SqliteOccurrenceOverrideRepository(),
-       _dayMarkRepo = dayMarkRepo ?? DayMarkRepository.instance {
+       _dayMarkRepo = dayMarkRepo ?? DayMarkRepository.instance,
+       _commandStack = commandStack ?? CommandStack() {
     _subscription = _eventBus.onEvents.listen(_handleEvent);
     RitmoEvents.routineChangedNotifier.addListener(
       _onRoutineChangedNotification,
@@ -68,6 +70,7 @@ class JourneyController extends ChangeNotifier {
   final RitmoExecutionKernel _kernel;
   final OccurrenceOverrideRepository _overrideRepo;
   final DayMarkRepository _dayMarkRepo;
+  final CommandStack _commandStack;
   StreamSubscription<RitmoEvent>? _subscription;
 
   bool _isDisposed = false;
@@ -117,10 +120,10 @@ class JourneyController extends ChangeNotifier {
   String? get warningMessage => _warningMessage;
   TimeSlot? get suggestedSlot => _suggestedSlot;
   String? get pendingSuggestionItemId => _pendingSuggestionItemId;
-  bool get canUndo => CommandStack.instance.canUndo;
-  bool get canRedo => CommandStack.instance.canRedo;
-  String? get lastUndoDescription => CommandStack.instance.lastUndoDescription;
-  String? get lastRedoDescription => CommandStack.instance.lastRedoDescription;
+  bool get canUndo => _commandStack.canUndo;
+  bool get canRedo => _commandStack.canRedo;
+  String? get lastUndoDescription => _commandStack.lastUndoDescription;
+  String? get lastRedoDescription => _commandStack.lastRedoDescription;
   String? get highlightedItemId => _highlightedItemId;
   int? get focusedMinutes => _focusedMinutes;
   String? get manipulatingItemId => _manipulatingItemId;
@@ -204,7 +207,7 @@ class JourneyController extends ChangeNotifier {
     loadForActiveScale();
   }
 
-  void selectDate(DateTime date, {JourneyScale? scaleToSet}) {
+  Future<void> selectDate(DateTime date, {JourneyScale? scaleToSet}) async {
     if (_isDisposed) return;
     _selectedDate = DateKey.dayOf(date);
     if (scaleToSet != null) {
@@ -219,7 +222,7 @@ class JourneyController extends ChangeNotifier {
         notifyListeners();
       }
     }
-    loadForActiveScale();
+    await loadForActiveScale();
   }
 
   void navigatePeriod(int offset) {
@@ -268,6 +271,68 @@ class JourneyController extends ChangeNotifier {
     }
     _errorMessage = null;
     notifyListeners();
+
+    // Bug 13: Year scale uses chunked quarterly loading to avoid UI thread freeze / ANR
+    if (_activeScale == JourneyScale.year) {
+      final j = Jalali.fromDateTime(_selectedDate);
+      final startJ = Jalali(j.year, 1, 1);
+      final endJ = Jalali(j.year, 12, Jalali(j.year, 12, 1).monthLength);
+      _windowStart = startJ.toDateTime();
+      _windowEnd = endJ.toDateTime();
+
+      final yearSnapshots = <String, DayAgendaSnapshot>{};
+
+      try {
+        for (int q = 0; q < 4; q++) {
+          if (_isDisposed || gen != _loadGeneration) return;
+          final qStartMonth = (q * 3) + 1;
+          final qEndMonth = (q * 3) + 3;
+          final qStartDate = Jalali(j.year, qStartMonth, 1).toDateTime();
+          final qEndDate = Jalali(
+            j.year,
+            qEndMonth,
+            Jalali(j.year, qEndMonth, 1).monthLength,
+          ).toDateTime();
+
+          final qDaysMap = await _agendaService.agendaForRange(
+            qStartDate,
+            qEndDate,
+          );
+          if (_isDisposed || gen != _loadGeneration) return;
+
+          for (final entry in qDaysMap.entries) {
+            yearSnapshots[entry.key] = _snapshotBuilder.buildSnapshot(
+              entry.value,
+            );
+          }
+          _rangeSnapshots = Map<String, DayAgendaSnapshot>.from(yearSnapshots);
+          _snapshot = _snapshotForSelectedDate();
+          notifyListeners();
+
+          await Future.delayed(Duration.zero);
+        }
+
+        final mark = await _dayMarkRepo.getMark(DateKey.of(_selectedDate));
+        if (!_isDisposed && gen == _loadGeneration) {
+          _currentDayMark = mark?.kind ?? DayMarkKind.normal;
+        }
+      } catch (e, stackTrace) {
+        if (_isDisposed || gen != _loadGeneration) return;
+        _errorMessage = CalendarMessagesFa.load;
+        RitmoLog.error(
+          'JourneyController',
+          'loadForActiveScale (year) failed',
+          e,
+          stackTrace,
+        );
+      } finally {
+        if (!_isDisposed && gen == _loadGeneration) {
+          _isLoading = false;
+          notifyListeners();
+        }
+      }
+      return;
+    }
 
     try {
       final range = _calculateDateRangeForScale(_activeScale, _selectedDate);
@@ -342,7 +407,7 @@ class JourneyController extends ChangeNotifier {
         actualDurationMinutes: actualDurationMinutes,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
@@ -382,7 +447,7 @@ class JourneyController extends ChangeNotifier {
         overrideRepo: _overrideRepo,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
@@ -410,7 +475,7 @@ class JourneyController extends ChangeNotifier {
         command = _SkipItemCommand(item: item, overrideRepo: _overrideRepo);
       }
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
@@ -548,7 +613,7 @@ class JourneyController extends ChangeNotifier {
         overrideRepo: _overrideRepo,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _actionErrorMessage = CalendarMessagesFa.move;
@@ -643,7 +708,7 @@ class JourneyController extends ChangeNotifier {
         overrideRepo: _overrideRepo,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
     } catch (e, stackTrace) {
       if (_isDisposed) return;
       _actionErrorMessage = CalendarMessagesFa.resize;
@@ -663,7 +728,7 @@ class JourneyController extends ChangeNotifier {
 
   Future<bool> undoLastAction() async {
     if (_isDisposed) return false;
-    final success = await CommandStack.instance.undoLast();
+    final success = await _commandStack.undoLast();
     if (success) {
       await refresh();
     }
@@ -672,7 +737,7 @@ class JourneyController extends ChangeNotifier {
 
   Future<bool> redoLastAction() async {
     if (_isDisposed) return false;
-    final success = await CommandStack.instance.redoLast();
+    final success = await _commandStack.redoLast();
     if (success) {
       await refresh();
     }
@@ -690,7 +755,7 @@ class JourneyController extends ChangeNotifier {
   }
 
   Future<void> loadDate(DateTime date) async {
-    selectDate(date);
+    await selectDate(date);
   }
 
   /// K22 — Reads `calendar_default_scale` from SettingsService and applies it.
@@ -846,7 +911,7 @@ class JourneyController extends ChangeNotifier {
     if (_isDisposed || gen != _loadGeneration) return;
 
     // Bug 8: بارگذاری وضعیت روز انتخاب شده (DayMark)
-    final mark = await DayMarkRepository.instance.getMark(DateKey.of(anchor));
+    final mark = await _dayMarkRepo.getMark(DateKey.of(anchor));
     if (!_isDisposed && gen == _loadGeneration) {
       _currentDayMark = mark?.kind ?? DayMarkKind.normal;
     }
@@ -944,6 +1009,7 @@ class JourneyController extends ChangeNotifier {
     );
     _subscription?.cancel();
     _subscription = null;
+    _commandStack.clear();
     super.dispose();
   }
 
@@ -979,9 +1045,17 @@ class JourneyController extends ChangeNotifier {
         final fri = DateKey.addDays(sat, 6);
         return (start: sat, end: fri);
       case JourneyScale.month:
-        final startJ = Jalali(j.year, j.month, 1);
-        final endJ = Jalali(j.year, j.month, startJ.monthLength);
-        return (start: startJ.toDateTime(), end: endJ.toDateTime());
+        final firstOfMonthDate = Jalali(j.year, j.month, 1).toDateTime();
+        final lastOfMonthDate = Jalali(
+          j.year,
+          j.month,
+          Jalali(j.year, j.month, 1).monthLength,
+        ).toDateTime();
+        final firstGridDay = ShamsiWeek.saturdayOf(firstOfMonthDate);
+        final totalDays = lastOfMonthDate.difference(firstGridDay).inDays + 1;
+        final gridDayCount = (totalDays / 7).ceil() * 7;
+        final lastGridDay = DateKey.addDays(firstGridDay, gridDayCount - 1);
+        return (start: firstGridDay, end: lastGridDay);
       case JourneyScale.year:
         final startJ = Jalali(j.year, 1, 1);
         final endJ = Jalali(j.year, 12, Jalali(j.year, 12, 1).monthLength);
@@ -996,6 +1070,7 @@ class JourneyController extends ChangeNotifier {
   ) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
+    _actionErrorMessage = null;
     notifyListeners();
 
     final newTimeStr = TimeOfDayMinutes.format(startMinutes);
@@ -1007,11 +1082,11 @@ class JourneyController extends ChangeNotifier {
         newDurationMinutes: durationMinutes,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = CalendarMessagesFa.schedule;
+      _actionErrorMessage = CalendarMessagesFa.schedule;
       RitmoLog.error('JourneyController', 'scheduleItem failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -1024,6 +1099,7 @@ class JourneyController extends ChangeNotifier {
   Future<void> unscheduleItem(AgendaItem item) async {
     if (_isDisposed || _isExecutingAction) return;
     _isExecutingAction = true;
+    _actionErrorMessage = null;
     notifyListeners();
 
     try {
@@ -1034,11 +1110,11 @@ class JourneyController extends ChangeNotifier {
         oldDurationMinutes: item.durationMinutes,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       RitmoHapticsPolicy.success();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = CalendarMessagesFa.unschedule;
+      _actionErrorMessage = CalendarMessagesFa.unschedule;
       RitmoLog.error(
         'JourneyController',
         'unscheduleItem failed',
@@ -1059,6 +1135,7 @@ class JourneyController extends ChangeNotifier {
     if (targetDateStr == item.dateStr) return;
 
     _isExecutingAction = true;
+    _actionErrorMessage = null;
     notifyListeners();
 
     try {
@@ -1068,12 +1145,12 @@ class JourneyController extends ChangeNotifier {
         overrideRepo: _overrideRepo,
       );
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       RitmoHapticsPolicy.success();
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'خطا در انتقال رویداد به تاریخ دیگر';
+      _actionErrorMessage = 'خطا در انتقال رویداد به تاریخ دیگر';
       RitmoLog.error(
         'JourneyController',
         'moveItemToDate failed',
@@ -1098,6 +1175,7 @@ class JourneyController extends ChangeNotifier {
     if (prevKind == kind) return;
 
     _isExecutingAction = true;
+    _actionErrorMessage = null;
     notifyListeners();
 
     try {
@@ -1110,12 +1188,12 @@ class JourneyController extends ChangeNotifier {
       );
       await command.execute();
       _currentDayMark = kind;
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       RitmoHapticsPolicy.success();
       await refresh();
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      _errorMessage = 'خطا در تغییر وضعیت روز';
+      _actionErrorMessage = 'خطا در تغییر وضعیت روز';
       RitmoLog.error('JourneyController', 'setDayMark failed', e, stackTrace);
     } finally {
       if (!_isDisposed) {
@@ -1160,6 +1238,7 @@ class JourneyController extends ChangeNotifier {
   Future<bool> applyTemplate(DayTemplate template) async {
     if (_isDisposed || _isExecutingAction) return false;
     _isExecutingAction = true;
+    _actionErrorMessage = null;
     notifyListeners();
 
     try {
@@ -1255,7 +1334,7 @@ class JourneyController extends ChangeNotifier {
       );
 
       await command.execute();
-      CommandStack.instance.push(command);
+      _commandStack.push(command);
       RitmoHapticsPolicy.success();
       await refresh();
       return true;
@@ -1266,7 +1345,7 @@ class JourneyController extends ChangeNotifier {
         e,
         stackTrace,
       );
-      _errorMessage = 'خطا در اعمال قالب روز';
+      _actionErrorMessage = 'خطا در اعمال قالب روز';
       return false;
     } finally {
       if (!_isDisposed) {
@@ -1414,6 +1493,9 @@ class _MoveItemCommand extends _CalendarCommand {
 
   @override
   Future<void> applyForward() async {
+    final untilDateStr = DateKey.of(
+      DateKey.addDays(DateKey.parse(item.dateStr) ?? DateTime.now(), 366),
+    );
     if (!_hasCapturedBefore) {
       if (scope == CalendarEditScope.thisDayOnly) {
         _beforeSnapshot = await _overrideRepo.readOne(
@@ -1426,6 +1508,7 @@ class _MoveItemCommand extends _CalendarCommand {
           item.domain.name,
           item.sourceId,
           item.dateStr,
+          untilDateStr: untilDateStr,
         );
       }
       _hasCapturedBefore = true;
@@ -1438,7 +1521,8 @@ class _MoveItemCommand extends _CalendarCommand {
         sourceId: item.sourceId,
         dateStr: item.dateStr,
         timeOfDay: newTimeOfDay,
-        status: 'MOVED',
+        status: 'TIME_OVERRIDE',
+        note: 'TIME_OVERRIDE',
         createdAt: nowIso,
         updatedAt: nowIso,
       );
@@ -1448,6 +1532,7 @@ class _MoveItemCommand extends _CalendarCommand {
         item.domain.name,
         item.sourceId,
         item.dateStr,
+        untilDateStr: untilDateStr,
       );
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
@@ -1510,6 +1595,9 @@ class _ResizeItemCommand extends _CalendarCommand {
 
   @override
   Future<void> applyForward() async {
+    final untilDateStr = DateKey.of(
+      DateKey.addDays(DateKey.parse(item.dateStr) ?? DateTime.now(), 366),
+    );
     if (!_hasCapturedBefore) {
       if (scope == CalendarEditScope.thisDayOnly) {
         _beforeSnapshot = await _overrideRepo.readOne(
@@ -1522,6 +1610,7 @@ class _ResizeItemCommand extends _CalendarCommand {
           item.domain.name,
           item.sourceId,
           item.dateStr,
+          untilDateStr: untilDateStr,
         );
       }
       _hasCapturedBefore = true;
@@ -1544,6 +1633,7 @@ class _ResizeItemCommand extends _CalendarCommand {
         item.domain.name,
         item.sourceId,
         item.dateStr,
+        untilDateStr: untilDateStr,
       );
       await actionHandler.updateAgendaItemTimeAndDuration(
         item: item,
@@ -1858,7 +1948,7 @@ class _PostponeItemCommand extends _CalendarCommand {
         timeOfDay: item.timeOfDay,
         durationMinutes: item.durationMinutes,
         status: 'MOVED',
-        note: item.title,
+        note: 'from:${item.dateStr}|${item.title}',
         createdAt: nowIso,
         updatedAt: nowIso,
       );
@@ -1986,7 +2076,7 @@ class _MoveItemToDateCommand extends _CalendarCommand {
         timeOfDay: item.timeOfDay,
         durationMinutes: item.durationMinutes,
         status: 'MOVED',
-        note: item.title,
+        note: 'from:${item.dateStr}|${item.title}',
         createdAt: nowIso,
         updatedAt: nowIso,
       );

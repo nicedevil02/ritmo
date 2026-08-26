@@ -228,13 +228,15 @@ class MvWeekTab extends StatelessWidget {
   }
 
   bool _hasBackToBackAnchors(List<MvSlot> slots) {
-    for (int i = 0; i < slots.length - 1; i++) {
-      final current = slots[i];
-      final next = slots[i + 1];
-      if (current.isLocked &&
-          !current.isRest &&
-          next.isLocked &&
-          !next.isRest) {
+    if (slots.length < 2) return false;
+    final sorted = List<MvSlot>.from(slots)
+      ..sort((a, b) => a.dateIso.compareTo(b.dateIso));
+    for (int i = 0; i < sorted.length - 1; i++) {
+      final current = sorted[i];
+      final next = sorted[i + 1];
+      final isCurrentAnchor = (current.source == 'ANCHOR' || current.isLocked) && !current.isRest;
+      final isNextAnchor = (next.source == 'ANCHOR' || next.isLocked) && !next.isRest;
+      if (isCurrentAnchor && isNextAnchor) {
         return true;
       }
     }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Day Slot Card for Week Tab (Section 5.2 & 5.10).
 class MvDaySlotCard extends StatelessWidget {
@@ -15,6 +16,7 @@ class MvDaySlotCard extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final dt = MvCalendar.parseDateIso(slot.dateIso);
     final weekdayName = MvCalendar.persianWeekdayName(
@@ -112,7 +114,7 @@ class MvDaySlotCard extends StatelessWidget {
                                 ),
                                 SizedBox(width: metrics.spaceXs),
                                 Text(
-                                  'ورزش ثابت',
+                                  l10n?.mv_slot_anchor_badge_label ?? 'Fixed',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: colors.accent,
                                     fontWeight: FontWeight.w600,
@@ -136,7 +138,7 @@ class MvDaySlotCard extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              'استراحت',
+                              l10n?.mv_slot_rest_badge_label ?? 'Rest',
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.textSecondary,
                               ),
@@ -158,7 +160,7 @@ class MvDaySlotCard extends StatelessWidget {
                     if (!slot.isRest) ...[
                       SizedBox(height: metrics.spaceXs),
                       Text(
-                        '${slot.targetMinutes} دقیقه · ${slot.intensityTier.titleFa}${slot.plannedTime != null ? ' · ساعت ${toPersianDigits(slot.plannedTime)}' : ''}',
+                        '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'} · ${slot.intensityTier.titleFa}${slot.plannedTime != null ? ' · ${l10n?.mv_at_time(toPersianDigits(slot.plannedTime)) ?? 'at ${slot.plannedTime}'}' : ''}',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),

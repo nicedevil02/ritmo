@@ -38,9 +38,7 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(body: MvDaySlotCard(slot: lockedSlot)),
-          ),
+          createTestApp(MvDaySlotCard(slot: lockedSlot)),
         );
 
         expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
@@ -82,10 +80,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MvWeekRail(weekSlots: slots, selectedDateIso: '2026-08-22'),
-          ),
+        createTestApp(
+          MvWeekRail(weekSlots: slots, selectedDateIso: '2026-08-22'),
         ),
       );
 

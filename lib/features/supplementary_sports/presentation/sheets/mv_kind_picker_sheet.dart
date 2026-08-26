@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../components/components.dart';
 
@@ -186,22 +188,23 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
   }
 
   Future<void> _openCreateCustomDialog() async {
+    final l10n = AppLocalizations.of(context);
     final titleController = TextEditingController();
     final customKind = await showDialog<MvMovementKind>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تعریف ورزش جدید'),
+        title: Text(l10n?.mv_kind_picker_create_new ?? 'New Activity'),
         content: TextField(
           controller: titleController,
           autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'نام فعالیت ورزشی (مثلاً بدمینتون ساحلی)',
+          decoration: InputDecoration(
+            hintText: l10n?.mv_day_plan_custom_title ?? 'Activity Name',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('انصراف'),
+            child: Text(l10n?.cancel ?? 'Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -228,7 +231,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
               );
               Navigator.of(ctx).pop(newKind);
             },
-            child: const Text('ثبت'),
+            child: Text(l10n?.mv_action_save ?? 'Save'),
           ),
         ],
       ),
@@ -247,10 +250,11 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return MvSheetScaffold(
-      title: 'انتخاب نوع ورزش و فعالیت',
-      subtitle: 'از میان بیش از ۴۰ نوع فعالیت ورزشی و حرکتی',
+      title: l10n?.mv_kind_picker_title ?? 'Select Activity',
+      subtitle: l10n?.mv_kind_picker_subtitle ?? 'From diverse sport activities',
       body: _isLoading
           ? const Center(
               child: Padding(
@@ -267,7 +271,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                     controller: _searchController,
                     onChanged: _onSearchChanged,
                     decoration: InputDecoration(
-                      hintText: 'جستجوی ورزش (مثلاً فوتبال، شنا، کوه...)',
+                      hintText: l10n?.mv_kind_picker_search_hint ?? 'Search sports...',
                       prefixIcon: Icon(
                         Icons.search_rounded,
                         color: colors.textSecondary,
@@ -302,7 +306,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                         Padding(
                           padding: EdgeInsets.only(left: metrics.spaceSm),
                           child: FilterChip(
-                            label: const Text('همه'),
+                            label: Text(l10n?.mv_kind_picker_tab_all ?? 'All'),
                             selected: _selectedFamily == null,
                             onSelected: (_) => _onFamilySelected(null),
                           ),
@@ -328,7 +332,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                       _recentKinds.isNotEmpty &&
                       _selectedFamily == null) ...[
                     Text(
-                      'اخیراً استفاده‌شده',
+                      l10n?.mv_kind_picker_recent ?? 'Recently Used',
                       style: textTheme.labelMedium?.copyWith(
                         color: colors.textSecondary,
                         fontWeight: FontWeight.w700,
@@ -354,7 +358,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                       _seasonalKinds.isNotEmpty &&
                       _selectedFamily == null) ...[
                     Text(
-                      'مناسب این فصل',
+                      l10n?.mv_kind_picker_seasonal ?? 'Seasonal',
                       style: textTheme.labelMedium?.copyWith(
                         color: colors.textSecondary,
                         fontWeight: FontWeight.w700,
@@ -383,7 +387,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                       padding: EdgeInsets.all(metrics.spaceXl),
                       child: Center(
                         child: Text(
-                          'هیچ ورزشی با این مشخصات یافت نشد.',
+                          l10n?.mv_kind_picker_empty ?? 'No sports found.',
                           style: textTheme.bodyMedium?.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -481,7 +485,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                                     ),
                                               ),
                                               child: Text(
-                                                'فضای باز 🌿',
+                                                l10n?.mv_kind_picker_outdoor ?? 'Outdoor 🌿',
                                                 style: textTheme.labelSmall
                                                     ?.copyWith(
                                                       color:
@@ -504,7 +508,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                                     ),
                                               ),
                                               child: Text(
-                                                'نیازمند سالن 🏟',
+                                                l10n?.mv_kind_picker_hall ?? 'Indoor Hall 🏟',
                                                 style: textTheme.labelSmall
                                                     ?.copyWith(
                                                       color:
@@ -514,7 +518,8 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                             ),
                                           if (kind.jointImpact > 0)
                                             Text(
-                                              'ضربه: ${kind.jointImpact}/3',
+                                              l10n?.mv_kind_picker_impact(toPersianDigits(kind.jointImpact.toString())) ??
+                                                  'Impact: ${kind.jointImpact}/3',
                                               style: textTheme.labelSmall
                                                   ?.copyWith(
                                                     color: colors.textSecondary,
@@ -525,7 +530,8 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                                               .unitFa
                                               .isNotEmpty)
                                             Text(
-                                              'واحد: ${kind.primaryMetric.unitFa}',
+                                              l10n?.mv_kind_picker_unit(kind.primaryMetric.unitFa) ??
+                                                  'Unit: ${kind.primaryMetric.unitFa}',
                                               style: textTheme.labelSmall
                                                   ?.copyWith(
                                                     color: colors.textSecondary,
@@ -553,7 +559,7 @@ class _MvKindPickerSheetState extends State<MvKindPickerSheet> {
                     key: const ValueKey('mv_kind_picker_create_custom'),
                     onPressed: _openCreateCustomDialog,
                     icon: const Icon(Icons.add_rounded),
-                    label: const Text('تعریف ورزش یا فعالیت جدید'),
+                    label: Text(l10n?.mv_kind_picker_create_new ?? 'Create New Sport'),
                   ),
                   SizedBox(height: metrics.spaceXl),
                 ],

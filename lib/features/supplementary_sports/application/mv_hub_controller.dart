@@ -82,8 +82,16 @@ class MvHubController extends ChangeNotifier {
   int? _continuousActiveWeeks;
   int? get continuousActiveWeeks => _continuousActiveWeeks;
 
+  int _totalSessionsCount = 0;
+  int get totalSessionsCount => _totalSessionsCount;
+
+  double _totalHistoricalMetMinutes = 0;
+  double get totalHistoricalMetMinutes => _totalHistoricalMetMinutes;
+
   List<MvInsight> _insights = const [];
   List<MvInsight> get insights => _insights;
+
+  bool _isFetching = false;
 
   MvHubController({
     MvProfileRepository? profileRepo,
@@ -149,124 +157,154 @@ class MvHubController extends ChangeNotifier {
        _loadEngine = loadEngine ?? const LoadEngine();
 
   /// Loads all required data for the hub.
-  Future<void> loadAllData() async {
-    _isLoading = true;
-    notifyListeners();
+  Future<void> loadAllData({bool showLoadingIndicator = false}) async {
+    if (_isFetching) return;
+    _isFetching = true;
 
-    _profile = await _profileRepo.getProfile();
-    if (!_profile.onboardingCompleted) {
-      _isLoading = false;
+    if (showLoadingIndicator) {
+      _isLoading = true;
       notifyListeners();
-      return;
     }
 
-    final today = DateTime.now();
-    final todayIso = MvCalendar.formatDateIso(today);
-    final weekStartSat = MvCalendar.getWeekDays(today).first;
-    final weekStartIso = MvCalendar.formatDateIso(weekStartSat);
+    try {
+      _profile = await _profileRepo.getProfile();
+      if (!_profile.onboardingCompleted) {
+        _isLoading = false;
+        _isFetching = false;
+        notifyListeners();
+        return;
+      }
 
-    // Fetch commitments
-    _commitments = await _commitmentRepo.getActive();
+      final today = DateTime.now();
+      final todayIso = MvCalendar.formatDateIso(today);
+      final weekStartSat = MvCalendar.getWeekDays(today).first;
+      final weekStartIso = MvCalendar.formatDateIso(weekStartSat);
 
-    // Compute cycleWeek
-    final startDate = _profile.programStartDate != null
-        ? MvCalendar.parseDateIso(_profile.programStartDate!)
-        : weekStartSat;
-    _cycleWeek = MvCalendar.cycleWeekFor(
-      targetDate: weekStartSat,
-      programStartDate: startDate,
-      totalWeeks: _profile.deloadEveryNWeeks > 0 ? _profile.deloadEveryNWeeks : 4,
-    );
+      // Fetch commitments & active campaign
+      _commitments = await _commitmentRepo.getActive();
+      _activeCampaign = await _campaignRepo.getActive();
 
-    // Fetch exercises, PRs, active session
-    _allExercises = await _exerciseRepo.getAllExercises();
-    _prs = await _prRepo.getAllPrs();
-    _activeSession = await _sessionRepo.getActiveSession();
-
-    // Fetch or generate week slots
-    _weekSlots = await _prescriptionRepo.getWeekSlots(weekStartIso);
-    if (_weekSlots.isEmpty) {
-      _weekSlots = await weekRegenUseCase.execute(
-        profile: _profile,
-        weekSaturday: weekStartSat,
-        commitments: _commitments,
+      // Compute cycleWeek
+      final startDate = _profile.programStartDate != null
+          ? MvCalendar.parseDateIso(_profile.programStartDate!)
+          : weekStartSat;
+      _cycleWeek = MvCalendar.cycleWeekFor(
+        targetDate: weekStartSat,
+        programStartDate: startDate,
+        totalWeeks: _profile.deloadEveryNWeeks > 0 ? _profile.deloadEveryNWeeks : 4,
       );
-    }
 
-    // Evaluate Readiness
-    _readinessDecision = await readinessUseCase.execute(
-      dateIso: todayIso,
-      profile: _profile,
-    );
+      // Fetch exercises, PRs, active session
+      _allExercises = await _exerciseRepo.getAllExercises();
+      _prs = await _prRepo.getAllPrs();
+      _activeSession = await _sessionRepo.getActiveSession();
 
-    // Calculate MET-min progress (week-bounded from Saturday 00:00 to Friday 23:59:59)
-    final weekStart = DateTime(
-      weekStartSat.year,
-      weekStartSat.month,
-      weekStartSat.day,
-      0,
-      0,
-      0,
-    );
-    final weekEnd = DateTime(
-      weekStartSat.year,
-      weekStartSat.month,
-      weekStartSat.day + 6,
-      23,
-      59,
-      59,
-      999,
-    );
-    final weekSessions = await _sessionRepo.getCompletedSessionsBetween(
-      weekStart,
-      weekEnd,
-    );
-    _budgetProgress = _budgetEngine
-        .calculateWeeklyProgress(
+      // Evaluate Readiness
+      _readinessDecision = await readinessUseCase.execute(
+        dateIso: todayIso,
+        profile: _profile,
+      );
+
+      // Calculate MET-min progress (week-bounded from Saturday 00:00 to Friday 23:59:59)
+      final weekStart = DateTime(
+        weekStartSat.year,
+        weekStartSat.month,
+        weekStartSat.day,
+        0,
+        0,
+        0,
+      );
+      final weekEnd = DateTime(
+        weekStartSat.year,
+        weekStartSat.month,
+        weekStartSat.day + 6,
+        23,
+        59,
+        59,
+        999,
+      );
+      final weekSessions = await _sessionRepo.getCompletedSessionsBetween(
+        weekStart,
+        weekEnd,
+      );
+      _budgetProgress = _budgetEngine
+          .calculateWeeklyProgress(
+            profile: _profile,
+            weekCompletedSessions: weekSessions,
+            currentDayOfWeekSat0: MvCalendar.dateTimeToSat0(today),
+          )
+          .value;
+
+      // History sessions for streak, ACWR, PRs
+      final historySessions = await _sessionRepo.getSessionHistory(limit: 200);
+      _totalSessionsCount = historySessions.length;
+      _totalHistoricalMetMinutes = historySessions.fold<double>(
+        0.0,
+        (acc, s) => acc + s.elapsedMinutes.toDouble(),
+      );
+      _continuousActiveWeeks = calculateContinuousWeeks(
+        historySessions,
+        referenceDate: today,
+      );
+
+      // Calculate Acute:Chronic Workload Ratio (LoadEngine / S8-T7)
+      final sortedHistory = List<MvSession>.from(historySessions)
+        ..sort((a, b) => a.startedAt.compareTo(b.startedAt));
+      final daysOfHistory = _profile.programStartDate != null
+          ? today.difference(MvCalendar.parseDateIso(_profile.programStartDate!)).inDays + 1
+          : (sortedHistory.isNotEmpty
+              ? today.difference(DateTime.fromMillisecondsSinceEpoch(sortedHistory.first.startedAt)).inDays + 1
+              : 0);
+      _loadSnapshot = _loadEngine.computeLoadSnapshot(
+        completedSessions: historySessions,
+        daysOfHistory: daysOfHistory,
+        referenceDate: today,
+      );
+
+      // Generate Deterministic Progress Insights (InsightEngine / S8-T8)
+      _insights = _insightEngine.generateInsights(
+        completedSessions: historySessions,
+        activeCommitments: _commitments,
+        referenceDate: today,
+      );
+
+      // Fetch or generate week slots with live data
+      _weekSlots = await _prescriptionRepo.getWeekSlots(weekStartIso);
+      if (_weekSlots.isEmpty) {
+        _weekSlots = await weekRegenUseCase.execute(
           profile: _profile,
-          weekCompletedSessions: weekSessions,
-          currentDayOfWeekSat0: MvCalendar.dateTimeToSat0(today),
-        )
-        .value;
+          weekSaturday: weekStartSat,
+          existingSlots: _weekSlots,
+          commitments: _commitments,
+          overrides: const [],
+          budget: _budgetProgress != null
+              ? MvBudgetSnapshot(
+                  moderateEquivalentMinutes: _budgetProgress!.moderateEquivalentMinutes,
+                  rawMetMinutes: _budgetProgress!.rawMetMinutes,
+                  strengthDays: _budgetProgress!.strengthDays,
+                )
+              : const MvBudgetSnapshot(
+                  moderateEquivalentMinutes: 0,
+                  rawMetMinutes: 0,
+                  strengthDays: 0,
+                ),
+          load: _loadSnapshot,
+          readiness: _readinessDecision?.value ?? MvReadinessTier.full,
+          activeCampaign: _activeCampaign,
+        );
+      }
 
-    // Calculate Muscle distribution
-    _bodyMapDistribution = _insightEngine
-        .calculateMuscleDistribution(
-          completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
-        )
-        .value;
-
-    // Calculate continuous active weeks (real streak)
-    final historySessions = await _sessionRepo.getSessionHistory(limit: 100);
-    _continuousActiveWeeks = calculateContinuousWeeks(
-      historySessions,
-      referenceDate: today,
-    );
-
-    // Calculate Acute:Chronic Workload Ratio (LoadEngine / S8-T7)
-    final daysOfHistory = _profile.programStartDate != null
-        ? today.difference(MvCalendar.parseDateIso(_profile.programStartDate!)).inDays + 1
-        : (historySessions.isNotEmpty
-            ? today.difference(DateTime.fromMillisecondsSinceEpoch(historySessions.last.startedAt)).inDays + 1
-            : 0);
-    _loadSnapshot = _loadEngine.computeLoadSnapshot(
-      completedSessions: historySessions,
-      daysOfHistory: daysOfHistory,
-      referenceDate: today,
-    );
-
-    // Generate Deterministic Progress Insights (InsightEngine / S8-T8)
-    _insights = _insightEngine.generateInsights(
-      completedSessions: historySessions,
-      activeCommitments: _commitments,
-      referenceDate: today,
-    );
-
-    // Fetch Active Campaign (CampaignEngine / S8-T9)
-    _activeCampaign = await _campaignRepo.getActive();
-
-    _isLoading = false;
-    notifyListeners();
+      // Calculate Muscle distribution
+      _bodyMapDistribution = _insightEngine
+          .calculateMuscleDistribution(
+            completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
+          )
+          .value;
+    } finally {
+      _isLoading = false;
+      _isFetching = false;
+      notifyListeners();
+    }
   }
 
   /// Calculates real consecutive active weeks (>= 2 completed sessions per week).
@@ -286,7 +324,33 @@ class MvHubController extends ChangeNotifier {
 
     final ref = referenceDate ?? DateTime.now();
     var currentWeekSat = MvCalendar.getWeekSaturday(ref);
+
+    final currentWeekStartMs = DateTime(
+      currentWeekSat.year,
+      currentWeekSat.month,
+      currentWeekSat.day,
+    ).millisecondsSinceEpoch;
+    final currentWeekEndMs = DateTime(
+      currentWeekSat.year,
+      currentWeekSat.month,
+      currentWeekSat.day + 6,
+      23,
+      59,
+      59,
+      999,
+    ).millisecondsSinceEpoch;
+    final currentWeekCount = completed
+        .where((s) => s.startedAt >= currentWeekStartMs && s.startedAt <= currentWeekEndMs)
+        .length;
+
     int streak = 0;
+    if (currentWeekCount >= 2) {
+      streak = 1;
+      currentWeekSat = currentWeekSat.subtract(const Duration(days: 7));
+    } else {
+      // Current week is in progress, check from last finished week
+      currentWeekSat = currentWeekSat.subtract(const Duration(days: 7));
+    }
 
     for (int w = 0; w < 52; w++) {
       final weekStartMs = DateTime(
@@ -337,8 +401,15 @@ class MvHubController extends ChangeNotifier {
     );
     if (idx != -1) {
       _weekSlots[idx] = updated;
-      notifyListeners();
+    } else {
+      _weekSlots.add(updated);
     }
+    _bodyMapDistribution = _insightEngine
+        .calculateMuscleDistribution(
+          completedSlots: _weekSlots.where((s) => s.isCompleted).toList(),
+        )
+        .value;
+    notifyListeners();
   }
 
   Future<void> saveCheckin(MvDailyCheckin checkin) async {
@@ -369,7 +440,8 @@ class MvHubController extends ChangeNotifier {
   Future<void> saveCampaign(MvCampaign c) async {
     await _campaignRepo.upsert(c);
     _activeCampaign = c;
-    notifyListeners();
+    await regenerateWeek();
+    await loadAllData();
   }
 
   Future<void> saveCommitment(MvCommitment c) async {
@@ -386,6 +458,13 @@ class MvHubController extends ChangeNotifier {
     await loadAllData();
   }
 
+  Future<void> toggleCommitmentActive(int id, bool active) async {
+    await _commitmentRepo.toggleActive(id, active);
+    _commitments = await _commitmentRepo.getActive();
+    await regenerateWeek();
+    await loadAllData();
+  }
+
   Future<void> regenerateWeek() async {
     final weekStartSat = MvCalendar.getWeekDays(DateTime.now()).first;
     _weekSlots = await weekRegenUseCase.execute(
@@ -393,6 +472,21 @@ class MvHubController extends ChangeNotifier {
       weekSaturday: weekStartSat,
       existingSlots: _weekSlots,
       commitments: _commitments,
+      overrides: const [],
+      budget: _budgetProgress != null
+          ? MvBudgetSnapshot(
+              moderateEquivalentMinutes: _budgetProgress!.moderateEquivalentMinutes,
+              rawMetMinutes: _budgetProgress!.rawMetMinutes,
+              strengthDays: _budgetProgress!.strengthDays,
+            )
+          : const MvBudgetSnapshot(
+              moderateEquivalentMinutes: 0,
+              rawMetMinutes: 0,
+              strengthDays: 0,
+            ),
+      load: _loadSnapshot,
+      readiness: _readinessDecision?.value ?? MvReadinessTier.full,
+      activeCampaign: _activeCampaign,
     );
     notifyListeners();
   }

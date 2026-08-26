@@ -56,8 +56,16 @@ class CoursesEngineOutput {
 }
 
 class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOutput> {
+  CoursesEngine({this.instanceTtl});
+
+  final Duration? instanceTtl;
+
+  CoursesEngineOutput? _cachedOutput;
+  String? _cachedFingerprint;
+  DateTime? _cachedAt;
+
   @override
-  Duration get ttl => const Duration(minutes: 5);
+  Duration get ttl => instanceTtl ?? const Duration(minutes: 5);
 
   @override
   String fingerprint(CoursesEngineInput input) {
@@ -74,10 +82,32 @@ class CoursesEngine implements CachedEngine<CoursesEngineInput, CoursesEngineOut
   }
 
   @override
-  void invalidate() {}
+  void invalidate() {
+    _cachedOutput = null;
+    _cachedFingerprint = null;
+    _cachedAt = null;
+  }
 
   @override
   Future<CoursesEngineOutput> calculate(CoursesEngineInput input) async {
+    final fp = fingerprint(input);
+    final now = DateTime.now();
+
+    if (_cachedOutput != null &&
+        _cachedFingerprint == fp &&
+        _cachedAt != null &&
+        now.difference(_cachedAt!) < ttl) {
+      return _cachedOutput!;
+    }
+
+    final computed = await _compute(input);
+    _cachedOutput = computed;
+    _cachedFingerprint = fp;
+    _cachedAt = now;
+    return computed;
+  }
+
+  Future<CoursesEngineOutput> _compute(CoursesEngineInput input) async {
     final coursesMap = <String, Course>{for (final c in input.courses) c.id: c};
 
     // 1. planningCourses = ONLY active & non-archived courses

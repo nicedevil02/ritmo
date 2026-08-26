@@ -96,7 +96,7 @@ void main() {
       expect(override, isNotNull);
       expect(override!.durationMinutes, equals(45));
       expect(override.timeOfDay, equals('09:30'));
-      expect(override.status, equals('MOVED'));
+      expect(override.status, equals('TIME_OVERRIDE'));
 
       // 3. Undo Move: Should restore previous snapshot (duration=45, status='RESIZED', timeOfDay=null)
       await moveCmd.undo();

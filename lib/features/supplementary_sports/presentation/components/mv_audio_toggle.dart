@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Accessible Audio Cue Toggle Button (Section 5.10 & 6.4).
 class MvAudioToggle extends StatelessWidget {
@@ -16,11 +17,12 @@ class MvAudioToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return IconButton(
       tooltip: isAudioEnabled
-          ? 'خاموش کردن راهنمای صوتی'
-          : 'روشن کردن راهنمای صوتی',
+          ? (l10n?.mv_audio_mute_tooltip ?? 'Mute audio')
+          : (l10n?.mv_audio_unmute_tooltip ?? 'Enable audio'),
       iconSize: metrics.iconMd,
       style: IconButton.styleFrom(
         minimumSize: Size(metrics.touchTarget, metrics.touchTarget),

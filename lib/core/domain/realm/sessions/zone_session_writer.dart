@@ -125,6 +125,7 @@ class ZoneSessionWriter {
     return switch (state) {
       ManualRealmState(:final expireAt) => expireAt.millisecondsSinceEpoch,
       ScheduledRealmState(:final endsAt) => endsAt.millisecondsSinceEpoch,
+      TriggeredRealmState(:final endsAt) => endsAt?.millisecondsSinceEpoch,
       FreeRealmState() => null,
       RealmErrorState() => null,
     };

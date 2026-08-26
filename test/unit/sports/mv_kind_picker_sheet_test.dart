@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/mv_kind_re
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_kind_picker_sheet.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -38,6 +39,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('fa'),
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(

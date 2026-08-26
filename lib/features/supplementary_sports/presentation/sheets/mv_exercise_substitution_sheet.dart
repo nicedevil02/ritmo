@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Sheet 3: "جایگزینی حرکت" (Section 5.9, N-05, AC-05).
@@ -59,13 +60,6 @@ class _MvExerciseSubstitutionSheetState
   String _selectedReason = 'too_hard';
   late MvDecision<List<MvExercise>> _decision;
 
-  final List<Map<String, String>> _reasons = const [
-    {'code': 'too_hard', 'label': 'سخت است', 'emoji': '💪'},
-    {'code': 'pain', 'label': 'احساس درد یا ناراحتی', 'emoji': '🩹'},
-    {'code': 'no_equipment', 'label': 'وسیله ندارم', 'emoji': '🚫'},
-    {'code': 'noise', 'label': 'سروصدا دارد', 'emoji': '🤫'},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -88,10 +82,19 @@ class _MvExerciseSubstitutionSheetState
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    final reasons = [
+      {'code': 'too_hard', 'label': l10n?.mv_substitute_too_hard ?? 'Too Hard', 'emoji': '💪'},
+      {'code': 'pain', 'label': l10n?.mv_substitute_pain ?? 'Pain or Discomfort', 'emoji': '🩹'},
+      {'code': 'no_equipment', 'label': l10n?.mv_substitute_no_equipment ?? 'No Equipment', 'emoji': '🚫'},
+      {'code': 'noise', 'label': l10n?.mv_substitute_noise ?? 'Too Noisy', 'emoji': '🤫'},
+    ];
 
     return MvSheetScaffold(
-      title: 'جایگزینی حرکت',
-      subtitle: 'علت جایگزینی «${widget.currentExercise.name}» را مشخص کن.',
+      title: l10n?.mv_substitute_title ?? 'Substitute Exercise',
+      subtitle: l10n?.mv_substitute_reason_prompt(widget.currentExercise.name) ??
+          'Why do you want to substitute ${widget.currentExercise.name}?',
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +104,7 @@ class _MvExerciseSubstitutionSheetState
             Wrap(
               spacing: metrics.spaceSm,
               runSpacing: metrics.spaceSm,
-              children: _reasons.map((r) {
+              children: reasons.map((r) {
                 final isSel = r['code'] == _selectedReason;
                 return MvChip(
                   label: r['label']!,
@@ -149,7 +152,7 @@ class _MvExerciseSubstitutionSheetState
 
             // 3. Suggested Substitutes
             Text(
-              'حرکات پیشنهادی جایگزین',
+              l10n?.mv_substitute_suggestions ?? 'Suggested Substitutes',
               style: textTheme.titleSmall?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -162,7 +165,7 @@ class _MvExerciseSubstitutionSheetState
                 padding: EdgeInsets.symmetric(vertical: metrics.spaceXl),
                 child: Center(
                   child: Text(
-                    'حرکت جایگزین دیگری با این شرایط یافت نشد.',
+                    l10n?.mv_substitute_empty ?? 'No matching substitute found.',
                     style: textTheme.bodyMedium?.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -227,7 +230,7 @@ class _MvExerciseSubstitutionSheetState
                               ),
                             ),
                             MvPrimaryAction(
-                              label: 'انتخاب',
+                              label: l10n?.mv_substitute_select ?? 'Select',
                               onPressed: () => widget.onExerciseSubstituted(ex),
                             ),
                           ],

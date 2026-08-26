@@ -73,6 +73,7 @@ class ActiveCoursesSection extends StatelessWidget {
               sessions: sessions,
               today: DateTime.now(),
             );
+            final unscheduledCount = sessions.where((s) => !s.isCompleted && !s.isSkipped && s.plannedDate == null).length;
 
             final isPaused = course.status == CourseStatus.paused;
 
@@ -125,6 +126,28 @@ class ActiveCoursesSection extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     color: colors.textSecondary,
                                   ),
+                                ),
+                              )
+                            else if (unscheduledCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(CupertinoIcons.calendar_badge_minus, size: 10, color: Colors.amber),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${toPersianDigits(unscheduledCount)} جلسه بدون تاریخ',
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               )
                             else if (behindCount > 0)

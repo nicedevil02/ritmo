@@ -48,28 +48,50 @@ class _MvHubScreenState extends State<MvHubScreen> {
     super.dispose();
   }
 
+  late final MvKindUseCase _kindUseCase = MvKindUseCase(_controller.kindRepo);
+
   void _onControllerUpdated() {
     if (mounted) setState(() {});
   }
 
   Future<void> _handleStartOrResumeSession(MvSlot slot) async {
-    final result = await _controller.startSessionUseCase.execute(
-      slot: slot,
-      profile: _controller.profile,
-      preloadedPool: _controller.allExercises,
-    );
+    final activeSession = _controller.activeSession;
+    final MvSession session;
+    final List<MvExercise> exercises;
+    final String? heroAsset;
+
+    if (activeSession != null) {
+      session = activeSession;
+      exercises = _controller.allExercises;
+      heroAsset = null;
+    } else {
+      final result = await _controller.startSessionUseCase.execute(
+        slot: slot,
+        profile: _controller.profile,
+        preloadedPool: _controller.allExercises,
+      );
+      session = result.session;
+      exercises = result.exercises;
+      heroAsset = result.heroAnimationAsset;
+    }
 
     setState(() {
-      _heroAnimationAsset = result.heroAnimationAsset;
+      _heroAnimationAsset = heroAsset;
     });
 
     if (!mounted) return;
 
+    MvSessionFeeling deriveFeeling(int rpe) {
+      if (rpe <= 4) return MvSessionFeeling.easy;
+      if (rpe <= 7) return MvSessionFeeling.good;
+      return MvSessionFeeling.hard;
+    }
+
     Widget playerWidget;
-    switch (result.session.sessionMode) {
+    switch (session.sessionMode) {
       case MvSessionMode.route:
         playerWidget = MvRouteTemplate(
-          session: result.session,
+          session: session,
           onFinish: ({
             required elapsedSeconds,
             required distanceM,
@@ -78,107 +100,137 @@ class _MvHubScreenState extends State<MvHubScreen> {
             required rpe1To10,
             routeId,
           }) async {
-            final finished = result.session.copyWith(
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final finished = session.copyWith(
               distanceM: distanceM,
               elevationGainM: elevationGainM,
               packWeightKg: packWeightKg,
               rpe1To10: rpe1To10,
               routeId: routeId,
               status: MvSessionStatus.completed,
-              endedAt: DateTime.now().millisecondsSinceEpoch,
+              endedAt: elapsedSeconds > 0
+                  ? (session.startedAt + (elapsedSeconds * 1000))
+                  : now,
             );
             await _controller.finishSessionUseCase.execute(
               session: finished,
               setLogs: const [],
-              feeling: MvSessionFeeling.good,
+              feeling: deriveFeeling(rpe1To10),
               rpe1To10: rpe1To10,
             );
             await _controller.loadAllData();
-            if (mounted) Navigator.pop(context);
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+              Navigator.pop(context);
+            }
           },
         );
         break;
       case MvSessionMode.laps:
         playerWidget = MvLapsTemplate(
-          session: result.session,
+          session: session,
           onFinish: (elapsedSeconds, totalLaps, rpe1To10) async {
-            final finished = result.session.copyWith(
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final finished = session.copyWith(
               laps: totalLaps,
               rpe1To10: rpe1To10,
               status: MvSessionStatus.completed,
-              endedAt: DateTime.now().millisecondsSinceEpoch,
+              endedAt: elapsedSeconds > 0
+                  ? (session.startedAt + (elapsedSeconds * 1000))
+                  : now,
             );
             await _controller.finishSessionUseCase.execute(
               session: finished,
               setLogs: const [],
-              feeling: MvSessionFeeling.good,
+              feeling: deriveFeeling(rpe1To10),
               rpe1To10: rpe1To10,
             );
             await _controller.loadAllData();
-            if (mounted) Navigator.pop(context);
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+              Navigator.pop(context);
+            }
           },
         );
         break;
       case MvSessionMode.match:
         playerWidget = MvMatchTemplate(
-          session: result.session,
+          session: session,
           onFinish: (elapsedSeconds, rpe1To10, note) async {
-            final finished = result.session.copyWith(
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final finished = session.copyWith(
               rpe1To10: rpe1To10,
               note: note,
               status: MvSessionStatus.completed,
-              endedAt: DateTime.now().millisecondsSinceEpoch,
+              endedAt: elapsedSeconds > 0
+                  ? (session.startedAt + (elapsedSeconds * 1000))
+                  : now,
             );
             await _controller.finishSessionUseCase.execute(
               session: finished,
               setLogs: const [],
-              feeling: MvSessionFeeling.good,
+              feeling: deriveFeeling(rpe1To10),
               rpe1To10: rpe1To10,
               note: note,
             );
             await _controller.loadAllData();
-            if (mounted) Navigator.pop(context);
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+              Navigator.pop(context);
+            }
           },
         );
         break;
       case MvSessionMode.distance:
         playerWidget = MvDistanceTemplate(
-          session: result.session,
+          session: session,
           onFinish: (elapsedSeconds, distanceM, rpe1To10) async {
-            final finished = result.session.copyWith(
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final finished = session.copyWith(
               distanceM: distanceM,
               rpe1To10: rpe1To10,
               status: MvSessionStatus.completed,
-              endedAt: DateTime.now().millisecondsSinceEpoch,
+              endedAt: elapsedSeconds > 0
+                  ? (session.startedAt + (elapsedSeconds * 1000))
+                  : now,
             );
             await _controller.finishSessionUseCase.execute(
               session: finished,
               setLogs: const [],
-              feeling: MvSessionFeeling.good,
+              feeling: deriveFeeling(rpe1To10),
               rpe1To10: rpe1To10,
             );
             await _controller.loadAllData();
-            if (mounted) Navigator.pop(context);
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+              Navigator.pop(context);
+            }
           },
         );
         break;
       case MvSessionMode.timed:
         playerWidget = MvTimedTemplate(
-          session: result.session,
+          session: session,
           onFinish: (elapsedSeconds, rpe1To10) async {
-            final finished = result.session.copyWith(
+            final now = DateTime.now().millisecondsSinceEpoch;
+            final finished = session.copyWith(
               rpe1To10: rpe1To10,
               status: MvSessionStatus.completed,
-              endedAt: DateTime.now().millisecondsSinceEpoch,
+              endedAt: elapsedSeconds > 0
+                  ? (session.startedAt + (elapsedSeconds * 1000))
+                  : now,
             );
             await _controller.finishSessionUseCase.execute(
               session: finished,
               setLogs: const [],
-              feeling: MvSessionFeeling.good,
+              feeling: deriveFeeling(rpe1To10),
               rpe1To10: rpe1To10,
             );
             await _controller.loadAllData();
-            if (mounted) Navigator.pop(context);
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+              Navigator.pop(context);
+            }
           },
         );
         break;
@@ -186,17 +238,20 @@ class _MvHubScreenState extends State<MvHubScreen> {
       case MvSessionMode.structured:
       case MvSessionMode.quickLog:
         playerWidget = MvSessionPlayerScreen(
-          initialSession: result.session,
-          plannedExercises: result.exercises,
+          initialSession: session,
+          plannedExercises: exercises,
           allCandidatePool: _controller.allExercises,
-          onSessionCompleted: (session, setLogs, feeling, note) async {
+          onSessionCompleted: (completedSession, setLogs, feeling, note) async {
             await _controller.finishSessionUseCase.execute(
-              session: session,
+              session: completedSession,
               setLogs: setLogs,
               feeling: feeling,
               note: note,
             );
             await _controller.loadAllData();
+            if (mounted) {
+              setState(() => _heroAnimationAsset = null);
+            }
           },
         );
         break;
@@ -207,7 +262,9 @@ class _MvHubScreenState extends State<MvHubScreen> {
       MaterialPageRoute(builder: (_) => playerWidget),
     );
 
-    await _controller.loadAllData();
+    if (mounted) {
+      setState(() => _heroAnimationAsset = null);
+    }
   }
 
   @override
@@ -339,7 +396,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
                 _controller.bodyMapDistribution ??
                 const MvBodyMapDistribution(muscleSessionCounts: {}),
             heroAnimationAsset: _heroAnimationAsset,
-            kindUseCase: MvKindUseCase(_controller.kindRepo),
+            kindUseCase: _kindUseCase,
             onStartSession: () => _handleStartOrResumeSession(currentSlot),
             onContinueSession: () => _handleStartOrResumeSession(currentSlot),
             isSessionInProgress: _controller.activeSession != null,
@@ -354,7 +411,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
             weekSlots: _controller.weekSlots,
             cycleWeek: _controller.cycleWeek,
             commitments: _controller.commitments,
-            kindUseCase: MvKindUseCase(_controller.kindRepo),
+            kindUseCase: _kindUseCase,
             onSlotUpdated: _controller.updateSlot,
             onRegenerateWeek: _controller.regenerateWeek,
             onOpenCommitments: () {
@@ -372,9 +429,7 @@ class _MvHubScreenState extends State<MvHubScreen> {
           // Tab 2: پیشرفت
           MvProgressTab(
             continuousActiveWeeks: _controller.continuousActiveWeeks,
-            totalSessionsCount: _controller.weekSlots
-                .where((s) => s.isCompleted)
-                .length,
+            totalSessionsCount: _controller.totalSessionsCount,
             totalMetMinutes: _controller.budgetProgress?.currentMetMinutes ?? 0,
             weeklyBudget: _controller.budgetProgress,
             loadSnapshot: _controller.loadSnapshot,

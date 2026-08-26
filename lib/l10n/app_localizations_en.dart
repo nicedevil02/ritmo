@@ -1388,16 +1388,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cycleSemanticsHasLogs => ', Has recorded symptoms';
 
   @override
-  String get mv_kind_picker_title => 'Select Sport';
+  String get mv_kind_picker_title => 'Select Movement & Sport';
 
   @override
-  String get mv_kind_picker_search_hint => 'Search sport...';
+  String get mv_kind_picker_search_hint =>
+      'Search sports (e.g. soccer, swim, hike...)';
 
   @override
-  String get mv_kind_picker_recent => 'Recent Sports';
+  String get mv_kind_picker_recent => 'Recently Used';
 
   @override
-  String get mv_kind_picker_seasonal => 'Seasonal / Suggested Sports';
+  String get mv_kind_picker_seasonal => 'Seasonal';
 
   @override
   String get mv_kind_picker_all => 'All Sports';
@@ -1406,7 +1407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mv_kind_picker_create_custom => 'New Custom Sport';
 
   @override
-  String get mv_kind_picker_empty => 'No sport found with this name.';
+  String get mv_kind_picker_empty => 'No sports found matching criteria.';
 
   @override
   String get mv_custom_kind_title => 'Create Custom Sport';
@@ -1600,7 +1601,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mv_campaign_title => 'Goal-Oriented Campaign';
 
   @override
-  String get mv_campaign_target_date => 'Target Event Date';
+  String get mv_campaign_target_date => 'Target Event Date:';
 
   @override
   String get mv_campaign_phase_base => 'Base Phase';
@@ -1635,13 +1636,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mv_day_plan_title => 'Day Plan';
 
   @override
-  String get mv_library_title => 'Exercise & Sports Library';
+  String get mv_library_title => 'Sports Library';
 
   @override
   String get mv_week_plan_title => 'Week Plan';
 
   @override
-  String get mv_library_tab_kinds => 'Sports';
+  String get mv_library_tab_kinds => 'Activities';
 
   @override
   String get mv_library_tab_exercises => 'Exercises';
@@ -1851,5 +1852,979 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String mv_quick_log_submit(int minutes) {
     return 'Log Activity ($minutes min)';
+  }
+
+  @override
+  String get mv_exercise_fallback => 'Exercise movement';
+
+  @override
+  String get mv_audio_mute_tooltip => 'Mute audio cues';
+
+  @override
+  String get mv_audio_unmute_tooltip => 'Enable audio cues';
+
+  @override
+  String get mv_body_map_weekly_title => 'This Week\'s Muscle Map';
+
+  @override
+  String get mv_slot_anchor_badge_label => 'Fixed Anchor';
+
+  @override
+  String get mv_slot_rest_badge_label => 'Rest';
+
+  @override
+  String get mv_insufficient_data_default_title => 'Not enough data yet';
+
+  @override
+  String get mv_metric_ring_active_mins => 'Active minutes this week';
+
+  @override
+  String mv_metric_ring_active_days(String activeDays, String targetDays) {
+    return '$activeDays of $targetDays active days';
+  }
+
+  @override
+  String mv_metric_ring_completed_pct(String percent) {
+    return '$percent% completed';
+  }
+
+  @override
+  String get mv_quick_log_custom_action => 'Custom log...';
+
+  @override
+  String get mv_quick_log_walk_20 => '20 min Walk';
+
+  @override
+  String get mv_quick_log_stretch_10 => '10 min Light Stretch';
+
+  @override
+  String get mv_hero_rest_title => 'Rest & Recovery Day';
+
+  @override
+  String get mv_hero_minimal_title => '10-Minute Minimum Effective Dose';
+
+  @override
+  String get mv_hero_rest_subtitle =>
+      'Your body needs time to rebuild. Light stretching is best today.';
+
+  @override
+  String get mv_hero_minimal_subtitle =>
+      'Just 10 minutes today. Keeps your consistency chain alive.';
+
+  @override
+  String get mv_hero_completed => 'Today\'s workout completed successfully';
+
+  @override
+  String get mv_hero_rest_action => '5-min Light Stretch';
+
+  @override
+  String get mv_hero_continue => 'Continue Session';
+
+  @override
+  String get mv_hero_start => 'Start Session';
+
+  @override
+  String get mv_hero_cant_today => 'Can\'t Today';
+
+  @override
+  String get mv_exercise_default_title => 'Exercise';
+
+  @override
+  String get mv_player_rest_time => 'Rest Time';
+
+  @override
+  String get mv_player_skip_exercise_tooltip => 'Skip exercise';
+
+  @override
+  String get mv_player_breathe_ready => 'Breathe deep and get ready';
+
+  @override
+  String mv_player_exercise_counter(String current, String total) {
+    return 'Exercise $current of $total';
+  }
+
+  @override
+  String mv_player_set_counter(String current, String total) {
+    return 'Set $current of $total';
+  }
+
+  @override
+  String mv_player_seconds_remaining(String seconds) {
+    return '$seconds sec';
+  }
+
+  @override
+  String mv_player_reps(String reps) {
+    return '$reps reps';
+  }
+
+  @override
+  String get mv_player_focus_contraction => 'Focus on muscle contraction';
+
+  @override
+  String get mv_player_skip_rest_action => 'Skip rest & start';
+
+  @override
+  String mv_player_complete_set_action(String setNumber) {
+    return 'Complete & Next (Set $setNumber)';
+  }
+
+  @override
+  String get mv_summary_title => 'Session Summary';
+
+  @override
+  String mv_summary_mins_done(String minutes) {
+    return '$minutes min workout recorded';
+  }
+
+  @override
+  String get mv_summary_effort_question => 'How was the effort level?';
+
+  @override
+  String get mv_summary_effort_easy => 'Easy & Light';
+
+  @override
+  String get mv_summary_effort_good => 'Good & Balanced';
+
+  @override
+  String get mv_summary_effort_hard => 'Hard & Challenging';
+
+  @override
+  String get mv_summary_fine_tune_rpe => 'Fine-tune (RPE)';
+
+  @override
+  String get mv_summary_free_note_label => 'Optional note';
+
+  @override
+  String get mv_summary_free_note_hint =>
+      'e.g. Weather was great, steep incline, felt energetic...';
+
+  @override
+  String get mv_summary_new_pr_title => 'New Personal Record (PR)! 🎉';
+
+  @override
+  String mv_summary_new_pr_desc(String exercise, String record) {
+    return 'In $exercise, you reached a record of $record.';
+  }
+
+  @override
+  String mv_summary_equiv_mins_added(String minutes) {
+    return '+$minutes equivalent min added to this week';
+  }
+
+  @override
+  String get mv_summary_goal_achieved =>
+      'Weekly goal successfully achieved! 🎯';
+
+  @override
+  String mv_summary_mins_remaining_to_goal(String minutes) {
+    return '$minutes min remaining to weekly goal';
+  }
+
+  @override
+  String get mv_summary_save_session => 'Save & Record Session';
+
+  @override
+  String mv_summary_error_save(String error) {
+    return 'Error saving session: $error';
+  }
+
+  @override
+  String get mv_stat_distance => 'Distance';
+
+  @override
+  String get mv_stat_elevation => 'Elevation Gain';
+
+  @override
+  String get mv_stat_pack_weight => 'Pack Weight';
+
+  @override
+  String get mv_stat_tempo => 'Tempo';
+
+  @override
+  String get mv_stat_laps => 'Laps';
+
+  @override
+  String get mv_stat_duration => 'Duration';
+
+  @override
+  String get mv_stat_match_duration => 'Match Duration';
+
+  @override
+  String get mv_stat_session_load => 'Session Load';
+
+  @override
+  String get mv_stat_logged_sets => 'Logged Sets';
+
+  @override
+  String get mv_unit_km => 'km';
+
+  @override
+  String get mv_unit_m => 'm';
+
+  @override
+  String get mv_unit_kg => 'kg';
+
+  @override
+  String get mv_unit_laps => 'laps';
+
+  @override
+  String get mv_unit_min => 'min';
+
+  @override
+  String get mv_unit_set => 'sets';
+
+  @override
+  String get mv_unit_pace => 'min/km';
+
+  @override
+  String get mv_template_distance_title => 'Distance Session';
+
+  @override
+  String get mv_template_distance_adjust => 'Adjust Distance';
+
+  @override
+  String mv_template_rpe_label(String rpe) {
+    return 'Effort (RPE: $rpe)';
+  }
+
+  @override
+  String get mv_template_finish => 'Finish Session';
+
+  @override
+  String get mv_template_laps_title => 'Lap Session';
+
+  @override
+  String get mv_template_laps_recorded => 'Laps recorded';
+
+  @override
+  String get mv_template_plus_1_lap => '+1 Lap Recorded';
+
+  @override
+  String get mv_template_match_title => 'Match & Game';
+
+  @override
+  String get mv_template_half_1 => 'First Half / Set 1';
+
+  @override
+  String get mv_template_half_2 => 'Second Half / Set 2';
+
+  @override
+  String get mv_template_start_half_2 => 'Start Second Half';
+
+  @override
+  String get mv_template_team_us => 'Us';
+
+  @override
+  String get mv_template_team_them => 'Them';
+
+  @override
+  String get mv_template_match_note_label =>
+      'Match notes (goals, cards, opponent...)';
+
+  @override
+  String get mv_template_finish_match => 'Finish Match';
+
+  @override
+  String get mv_template_route_title => 'Route & Mountain Session';
+
+  @override
+  String get mv_template_route_label => 'Route';
+
+  @override
+  String get mv_template_route_free => 'Free Route';
+
+  @override
+  String get mv_template_route_tochal => 'Tochal - Shirpala';
+
+  @override
+  String get mv_template_route_darakeh => 'Darakeh - Palangchal';
+
+  @override
+  String get mv_template_timed_title => 'Timed Session';
+
+  @override
+  String get mv_template_phase_warmup => 'Warm-up';
+
+  @override
+  String get mv_template_phase_main => 'Main Workout';
+
+  @override
+  String get mv_template_phase_cooldown => 'Cool-down';
+
+  @override
+  String get mv_commitment_flexible_title => 'Smart Day Flexibility';
+
+  @override
+  String get mv_commitment_flexible_subtitle =>
+      'Allow moving workout day if fatigued or schedule changes';
+
+  @override
+  String get mv_commitment_select_kind_error => 'Please select a workout kind.';
+
+  @override
+  String get mv_action_save => 'Save';
+
+  @override
+  String get mv_action_more => 'More...';
+
+  @override
+  String get mv_action_none => 'None';
+
+  @override
+  String get mv_action_weekly => 'Weekly';
+
+  @override
+  String get mv_action_biweekly => 'Biweekly';
+
+  @override
+  String get mv_action_once => 'Once';
+
+  @override
+  String get mv_action_30_min => '30 minutes';
+
+  @override
+  String get mv_action_2_hours => '2 hours';
+
+  @override
+  String get mv_action_1_day => '1 day';
+
+  @override
+  String get mv_substitute_title => 'Substitute Exercise';
+
+  @override
+  String mv_substitute_reason_prompt(String exercise) {
+    return 'Why do you want to substitute $exercise?';
+  }
+
+  @override
+  String get mv_substitute_too_hard => 'Too Hard';
+
+  @override
+  String get mv_substitute_pain => 'Pain or Discomfort';
+
+  @override
+  String get mv_substitute_no_equipment => 'No Equipment';
+
+  @override
+  String get mv_substitute_noise => 'Too Noisy';
+
+  @override
+  String get mv_substitute_suggestions => 'Suggested Substitutes';
+
+  @override
+  String get mv_substitute_empty => 'No matching substitute found.';
+
+  @override
+  String get mv_substitute_select => 'Select';
+
+  @override
+  String get mv_checkin_title => 'How is your readiness today?';
+
+  @override
+  String get mv_checkin_subtitle =>
+      'One tap adapts today\'s plan to your energy level.';
+
+  @override
+  String get mv_checkin_great_title => 'Great & High Energy';
+
+  @override
+  String get mv_checkin_great_desc => 'Ready for full session';
+
+  @override
+  String get mv_checkin_good_title => 'Good & Normal';
+
+  @override
+  String get mv_checkin_good_desc => 'Balanced energy';
+
+  @override
+  String get mv_checkin_tired_title => 'Tired or Sore';
+
+  @override
+  String get mv_checkin_tired_desc => 'Suggest lighter session';
+
+  @override
+  String get mv_checkin_close_details => 'Close fine details';
+
+  @override
+  String get mv_checkin_open_details =>
+      'More details (soreness, fatigue, pain)...';
+
+  @override
+  String get mv_checkin_energy_label => 'Energy level (1 to 5):';
+
+  @override
+  String get mv_checkin_soreness_label => 'Muscle soreness (1 to 5):';
+
+  @override
+  String get mv_checkin_fatigue_label => 'General fatigue (1 to 5):';
+
+  @override
+  String get mv_checkin_pain_label => 'Local pain level (0 to 10):';
+
+  @override
+  String get mv_checkin_submit_details => 'Save detailed check-in';
+
+  @override
+  String get mv_kind_picker_subtitle => 'From over 40 diverse sport activities';
+
+  @override
+  String get mv_kind_picker_tab_all => 'All';
+
+  @override
+  String get mv_kind_picker_outdoor => 'Outdoor 🌿';
+
+  @override
+  String get mv_kind_picker_hall => 'Indoor Hall 🏟';
+
+  @override
+  String mv_kind_picker_impact(String impact) {
+    return 'Impact: $impact/3';
+  }
+
+  @override
+  String mv_kind_picker_unit(String unit) {
+    return 'Unit: $unit';
+  }
+
+  @override
+  String get mv_kind_picker_create_new => 'Create New Sport';
+
+  @override
+  String get mv_day_plan_type => 'Plan Type';
+
+  @override
+  String get mv_day_plan_kind_select => 'Activity Kind';
+
+  @override
+  String get mv_day_plan_kind_picker_prompt => 'Select activity kind...';
+
+  @override
+  String mv_day_plan_met_factor(String met) {
+    return 'MET Factor: $met';
+  }
+
+  @override
+  String get mv_day_plan_change => 'Change';
+
+  @override
+  String mv_day_plan_custom_header(String title) {
+    return 'Custom Sport $title';
+  }
+
+  @override
+  String mv_day_plan_custom_desc(String met) {
+    return 'Specialized Sport — calorie burning and tracking with $met MET';
+  }
+
+  @override
+  String get mv_day_plan_target_minutes => 'Target Duration (min)';
+
+  @override
+  String get mv_day_plan_start_time => 'Start Time (Optional)';
+
+  @override
+  String get mv_day_plan_not_set => 'Not Set';
+
+  @override
+  String get mv_day_plan_venue => 'Venue (Optional)';
+
+  @override
+  String get mv_day_plan_venue_hint => 'e.g. Local Sports Club, City Stadium';
+
+  @override
+  String get mv_day_plan_intensity => 'Workout Intensity';
+
+  @override
+  String get mv_day_plan_focus => 'Muscle Focus';
+
+  @override
+  String get mv_day_plan_repeat_weekly => 'Repeat Every Week';
+
+  @override
+  String get mv_day_plan_repeat_weekly_desc =>
+      'This slot will be placed on this day every week';
+
+  @override
+  String get mv_day_plan_custom_title => 'Custom Title (Optional)';
+
+  @override
+  String get mv_day_plan_save => 'Save Day Plan';
+
+  @override
+  String get mv_plan_rest => 'Rest';
+
+  @override
+  String get mv_plan_strength => 'Strength Workout';
+
+  @override
+  String get mv_commitment_select_kind => 'Please select a sport kind.';
+
+  @override
+  String get mv_commitment_pick_more => 'More...';
+
+  @override
+  String get mv_commitment_recurrence_weekly => 'Weekly';
+
+  @override
+  String get mv_commitment_recurrence_biweekly => 'Bi-weekly';
+
+  @override
+  String get mv_commitment_recurrence_once => 'Once';
+
+  @override
+  String get mv_commitment_reminder_none => 'None';
+
+  @override
+  String get mv_commitment_reminder_30m => '30 minutes';
+
+  @override
+  String get mv_commitment_reminder_2h => '2 hours';
+
+  @override
+  String get mv_commitment_reminder_1d => '1 day';
+
+  @override
+  String get mv_commitment_smart_flexibility => 'Smart Day Flexibility';
+
+  @override
+  String get mv_commitment_smart_flexibility_desc =>
+      'Allows shifting day in case of high fatigue or busyness';
+
+  @override
+  String get mv_custom_kind_metric_duration => 'Duration Only (min)';
+
+  @override
+  String get mv_custom_kind_metric_distance => 'Distance (km)';
+
+  @override
+  String get mv_custom_kind_metric_sets => 'Sets & Reps';
+
+  @override
+  String get mv_custom_kind_metric_laps => 'Laps / Pools';
+
+  @override
+  String get mv_custom_kind_name_error => 'Please enter a sport name';
+
+  @override
+  String mv_custom_kind_save_error(String error) {
+    return 'Error saving sport: $error';
+  }
+
+  @override
+  String get mv_custom_kind_sheet_title => 'New Custom Sport';
+
+  @override
+  String get mv_custom_kind_sheet_subtitle =>
+      'Add any sport or activity to your library';
+
+  @override
+  String get mv_custom_kind_name_label => 'Sport / Activity Name';
+
+  @override
+  String get mv_custom_kind_name_hint => 'e.g. Padel, Squash, Archery...';
+
+  @override
+  String get mv_custom_kind_emoji_label => 'Choose Icon (Emoji)';
+
+  @override
+  String get mv_custom_kind_family_label => 'Category (Family)';
+
+  @override
+  String mv_custom_kind_met_label(String met) {
+    return 'Metabolic Equivalent (MET): $met';
+  }
+
+  @override
+  String get mv_custom_kind_metric_label => 'Primary Metric';
+
+  @override
+  String get mv_custom_kind_venue_switch => 'Requires Dedicated Venue or Court';
+
+  @override
+  String get mv_custom_kind_outdoor_switch => 'Takes Place Outdoors';
+
+  @override
+  String get mv_custom_kind_submit_btn => 'Add to Sports Library';
+
+  @override
+  String get mv_pr_title => 'Personal Records';
+
+  @override
+  String get mv_pr_empty_desc =>
+      'No records yet. As you finish workout sessions, new PRs will show here.';
+
+  @override
+  String get mv_pr_by_sport => 'Personal Records by Sport';
+
+  @override
+  String get mv_campaign_active_header => 'Active Goal Campaign';
+
+  @override
+  String mv_campaign_pack_weight_label(String weight) {
+    return 'Target Pack Weight this week: $weight kg';
+  }
+
+  @override
+  String get mv_campaign_inactive_desc =>
+      'Reverse planning and training for sports events (hiking, trail, etc.)';
+
+  @override
+  String get mv_streak_continuous_weeks => 'Active Continuous Weeks';
+
+  @override
+  String mv_streak_weeks_count(String count) {
+    return '$count weeks';
+  }
+
+  @override
+  String get mv_progress_insights => 'Progress Insights';
+
+  @override
+  String get mv_campaign_target_sport => 'Target Sport Type:';
+
+  @override
+  String mv_campaign_hiking_title(String code) {
+    return 'Hiking & Trail ($code)';
+  }
+
+  @override
+  String mv_campaign_weeks_later(String weeks, String date) {
+    return '$weeks weeks later ($date)';
+  }
+
+  @override
+  String get mv_campaign_body_weight => 'Body Weight (kg):';
+
+  @override
+  String get mv_campaign_submit => 'Create Campaign';
+
+  @override
+  String mv_commitment_recurrence_summary(
+    String day,
+    String time,
+    String duration,
+  ) {
+    return 'Every $day at $time • $duration min';
+  }
+
+  @override
+  String get mv_day_detail_edit_tooltip => 'Edit Day Plan';
+
+  @override
+  String mv_day_detail_session_exercises(int count) {
+    return 'Session Exercises ($count exercises)';
+  }
+
+  @override
+  String mv_day_detail_reps_count(int count) {
+    return '$count reps';
+  }
+
+  @override
+  String get mv_day_detail_timed => 'Timed';
+
+  @override
+  String get mv_day_detail_start_session => 'Start Workout Session';
+
+  @override
+  String get mv_library_tab_programs => 'Programs';
+
+  @override
+  String get mv_library_search_exercises_hint =>
+      'Search exercise (e.g. push-up, squat, plank)...';
+
+  @override
+  String get mv_library_filter_apartment => 'Quiet (Apartment)';
+
+  @override
+  String get mv_library_filter_no_equipment => 'No Equipment';
+
+  @override
+  String get mv_library_exercises_empty_title => 'No exercise found';
+
+  @override
+  String get mv_library_exercises_empty_desc =>
+      'Change filters or search for another term.';
+
+  @override
+  String mv_library_exercise_skill(String skill) {
+    return 'Skill: Level $skill';
+  }
+
+  @override
+  String get mv_library_exercise_noisy => 'Noisy';
+
+  @override
+  String get mv_library_exercise_quiet => 'Quiet / Apartment';
+
+  @override
+  String get mv_library_exercise_low_impact => 'Low Impact';
+
+  @override
+  String get mv_library_exercise_start_now => 'Start Exercise Now';
+
+  @override
+  String get mv_library_programs_title => '4-Week Training Programs';
+
+  @override
+  String get mv_library_programs_desc =>
+      'Programs adapt to your level and goals from the Week tab.';
+
+  @override
+  String get mv_library_search_kinds_hint =>
+      'Search activity (e.g. football, swim, padel)...';
+
+  @override
+  String get mv_library_create_custom_kind => 'New Custom Sport';
+
+  @override
+  String get mv_library_kinds_empty_title => 'No sport found';
+
+  @override
+  String get mv_library_kinds_empty_desc =>
+      'You can add a new custom sport to the list.';
+
+  @override
+  String get mv_library_custom_tag => 'Custom';
+
+  @override
+  String mv_library_kind_intensity(String family, String met) {
+    return '$family · Intensity: $met MET';
+  }
+
+  @override
+  String get mv_onboarding_title => 'Your Custom Fitness Plan';
+
+  @override
+  String get mv_onboarding_subtitle =>
+      'Answer a few quick questions to build your weekly schedule.';
+
+  @override
+  String get mv_onboarding_q1_title =>
+      '1. How many days per week do you want to workout?';
+
+  @override
+  String mv_onboarding_days_count(String count) {
+    return '$count days';
+  }
+
+  @override
+  String get mv_onboarding_q2_title =>
+      '2. How much time do you have per session?';
+
+  @override
+  String get mv_onboarding_dur_short => '15 min (Short & Quick)';
+
+  @override
+  String get mv_onboarding_dur_medium => '30 min (Balanced & Ideal)';
+
+  @override
+  String get mv_onboarding_dur_long => '45 min or more';
+
+  @override
+  String get mv_onboarding_q3_title => '3. Where is your workout location?';
+
+  @override
+  String get mv_onboarding_loc_home => 'Home (No Equipment)';
+
+  @override
+  String get mv_onboarding_loc_gym => 'Gym';
+
+  @override
+  String get mv_onboarding_loc_outdoor => 'Outdoors / Park';
+
+  @override
+  String get mv_onboarding_q4_title =>
+      '4. Do you have fixed weekly sports commitments?';
+
+  @override
+  String get mv_onboarding_q4_subtitle =>
+      'e.g. Thursday Futsal or Friday Swimming (Optional)';
+
+  @override
+  String get mv_onboarding_anchor_yes => 'Yes, add fixed sport';
+
+  @override
+  String get mv_onboarding_anchor_no => 'Not right now';
+
+  @override
+  String get mv_onboarding_anchor_add_another => 'Add another fixed commitment';
+
+  @override
+  String get mv_onboarding_submit => 'Start Plan & Enter Ritmo';
+
+  @override
+  String mv_onboarding_anchor_sheet_title(String title, String emoji) {
+    return 'Configure Fixed Sport: $title $emoji';
+  }
+
+  @override
+  String get mv_onboarding_anchor_sheet_day => 'Day of Week';
+
+  @override
+  String get mv_onboarding_anchor_sheet_time => 'Start Time';
+
+  @override
+  String get mv_onboarding_anchor_sheet_duration => 'Duration (min)';
+
+  @override
+  String get mv_onboarding_anchor_sheet_confirm => 'Confirm & Add';
+
+  @override
+  String get mv_weekly_health_title => 'Weekly Health';
+
+  @override
+  String get mv_weekly_health_empty =>
+      'No activity recorded this week. Progress will appear once your first session is saved.';
+
+  @override
+  String get mv_weekly_health_who => 'Weekly Health (WHO Guidelines)';
+
+  @override
+  String get mv_weekly_health_moderate => 'Moderate-Intensity Equivalent';
+
+  @override
+  String mv_weekly_health_min_progress(String current, String target) {
+    return '$current / $target min';
+  }
+
+  @override
+  String get mv_weekly_health_strength => 'Strength & Resistance Days';
+
+  @override
+  String mv_weekly_health_day_progress(String current, String target) {
+    return '$current / $target days';
+  }
+
+  @override
+  String get mv_training_load_title => 'Training Load & Balance';
+
+  @override
+  String get mv_training_load_insufficient =>
+      'At least 14 days of history and recorded sessions are required to calculate ACWR accurately.';
+
+  @override
+  String get mv_training_load_card_title => 'Training Load (7-day to 28-day)';
+
+  @override
+  String get mv_training_load_acute => 'Acute Load (7-day)';
+
+  @override
+  String get mv_training_load_chronic => 'Chronic 28-day Weekly Avg';
+
+  @override
+  String mv_training_load_summary(String ratio, String band) {
+    return 'Over the past 4 weeks, your acute-to-chronic workload ratio is $ratio ($band).';
+  }
+
+  @override
+  String get mv_kind_distribution_title => 'Monthly Sport Distribution';
+
+  @override
+  String get mv_kind_distribution_insufficient =>
+      'At least one recorded session is required to show distribution this month.';
+
+  @override
+  String get mv_kind_distribution_card_title =>
+      'Current Month Sport Distribution';
+
+  @override
+  String mv_kind_distribution_progress(String minutes, String percent) {
+    return '$minutes min ($percent%)';
+  }
+
+  @override
+  String mv_kind_distribution_focus(String sport) {
+    return 'Your main activity focus has been on $sport.';
+  }
+
+  @override
+  String get mv_cant_today_title => 'Workout options for today';
+
+  @override
+  String get mv_cant_today_subtitle =>
+      'Every small movement counts towards consistency.';
+
+  @override
+  String get mv_cant_today_option_cancel_anchor_title => 'Cancel for this week';
+
+  @override
+  String get mv_cant_today_option_cancel_anchor_desc =>
+      'Cancel only this week session; weekly commitment stays active.';
+
+  @override
+  String get mv_cant_today_option_minimal_title =>
+      'Minimum effective dose (10 min)';
+
+  @override
+  String get mv_cant_today_option_minimal_desc =>
+      'Just a few light exercises to keep blood flow';
+
+  @override
+  String get mv_cant_today_option_stretch_title => 'Change to 5-min stretch';
+
+  @override
+  String get mv_cant_today_option_stretch_desc => 'Light sweat-free stretching';
+
+  @override
+  String get mv_cant_today_option_tomorrow_title => 'Move to tomorrow';
+
+  @override
+  String get mv_cant_today_option_tomorrow_desc =>
+      'Rest today and workout tomorrow';
+
+  @override
+  String get mv_cant_today_option_rest_title => 'Full rest day';
+
+  @override
+  String get mv_cant_today_option_rest_desc => 'Skip today without guilt';
+
+  @override
+  String get mv_cant_today_recommended => 'Recommended';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get mv_coach_title => 'Ritmo AI Coach';
+
+  @override
+  String get mv_coach_subtitle => 'Your training guide and workout companion';
+
+  @override
+  String get mv_coach_preset_light => 'How to make today workout lighter?';
+
+  @override
+  String get mv_coach_preset_noise => 'Noisy movements for apartment?';
+
+  @override
+  String get mv_coach_preset_stretch => 'What is good for muscle cramps?';
+
+  @override
+  String get mv_coach_preset_general => 'How to stay motivated?';
+
+  @override
+  String get mv_coach_reply_light =>
+      'You can use the 10-minute minimum effective dose option to maintain streak without fatigue.';
+
+  @override
+  String get mv_coach_reply_noise =>
+      'Turn on Neighbor Friendly mode in settings to automatically filter out noisy and jump movements.';
+
+  @override
+  String get mv_coach_reply_stretch =>
+      'A 5-minute hamstring and back stretch combined with water helps reduce lactic acid.';
+
+  @override
+  String get mv_coach_reply_general =>
+      'The most important principle in fitness is consistency; even 5 minutes of light movement is better than none.';
+
+  @override
+  String get mv_coach_input_hint => 'Ask coach...';
+
+  @override
+  String mv_at_time(String time) {
+    return 'at $time';
   }
 }

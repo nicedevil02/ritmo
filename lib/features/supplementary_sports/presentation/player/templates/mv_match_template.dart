@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// قالب پلیر برای بازی‌ها و مسابقات تیمی/راکتی (فوتبال، فوتسال، والیبال، پین‌پنگ) (S4-T3)
 class MvMatchTemplate extends StatefulWidget {
@@ -66,6 +67,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
     final textTheme = Theme.of(context).textTheme;
     final colors = context.ritmoColors;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -76,7 +78,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                widget.kind?.titleFa ?? 'مسابقه و بازی',
+                widget.kind?.titleFa ?? (l10n?.mv_template_match_title ?? 'Match & Game'),
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: metrics.spaceSm),
@@ -88,7 +90,9 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                   borderRadius: BorderRadius.circular(RitmoRadius.pill),
                 ),
                 child: Text(
-                  _half == 1 ? 'نیمه اول / ست اول' : 'نیمه دوم / ست دوم',
+                  _half == 1
+                      ? (l10n?.mv_template_half_1 ?? 'First Half')
+                      : (l10n?.mv_template_half_2 ?? 'Second Half'),
                   style: textTheme.labelMedium?.copyWith(
                     color: colors.primary,
                     fontWeight: FontWeight.bold,
@@ -101,7 +105,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _ScoreColumn(
-                    label: 'ما',
+                    label: l10n?.mv_template_team_us ?? 'Us',
                     score: _teamScore,
                     onAdd: () => setState(() => _teamScore++),
                     onSub: () {
@@ -125,13 +129,13 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                               RitmoHaptics.tap();
                               setState(() => _half = 2);
                             },
-                            child: const Text('شروع نیمه دوم'),
+                            child: Text(l10n?.mv_template_start_half_2 ?? 'Start Second Half'),
                           ),
                       ],
                     ),
                   ),
                   _ScoreColumn(
-                    label: 'حریف',
+                    label: l10n?.mv_template_team_them ?? 'Them',
                     score: _opponentScore,
                     onAdd: () => setState(() => _opponentScore++),
                     onSub: () {
@@ -142,7 +146,10 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
               ),
               SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Text(
+                l10n?.mv_template_rpe_label(toPersianDigits(_rpe.toString())) ?? 'Effort (RPE: $_rpe)',
+                style: textTheme.bodyMedium,
+              ),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -156,7 +163,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
               TextField(
                 controller: _noteController,
                 decoration: InputDecoration(
-                  labelText: 'یادداشت مسابقه (گل‌ها، کارت‌ها، حریف...)',
+                  labelText: l10n?.mv_template_match_note_label ?? 'Match notes',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(metrics.radiusField),
                   ),
@@ -188,7 +195,7 @@ class _MvMatchTemplateState extends State<MvMatchTemplate> {
                       ),
                     ),
                     icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
-                    label: const Text('پایان مسابقه'),
+                    label: Text(l10n?.mv_template_finish_match ?? 'Finish Match'),
                     onPressed: () {
                       RitmoHaptics.success();
                       final note = _noteController.text.trim();

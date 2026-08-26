@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -54,6 +55,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
   late int _selectedDurationMinutes;
   late CommitmentRecurrence _selectedRecurrence;
   late int _selectedReminderMinutes;
+  late bool _isFlexible;
   bool _isLoadingKinds = true;
 
   static const List<int> _durations = [30, 45, 60, 90, 120];
@@ -68,7 +70,8 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
     _selectedDaySat0 = c?.dayOfWeekSat0 ?? 0;
     _selectedDurationMinutes = c?.durationMinutes ?? 60;
     _selectedRecurrence = c?.recurrence ?? CommitmentRecurrence.weekly;
-    _selectedReminderMinutes = 120;
+    _selectedReminderMinutes = c?.reminderMinutes ?? 120;
+    _isFlexible = c?.isFlexible ?? false;
 
     if (c != null && c.startTime.contains(':')) {
       final parts = c.startTime.split(':');
@@ -120,29 +123,29 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
 
   String _dayLabel(int sat0) => MvCalendar.persianWeekdayName(sat0);
 
-  String _recurrenceLabel(CommitmentRecurrence r) {
+  String _recurrenceLabel(CommitmentRecurrence r, AppLocalizations? l10n) {
     switch (r) {
       case CommitmentRecurrence.weekly:
-        return 'هفتگی';
+        return l10n?.mv_commitment_recurrence_weekly ?? 'Weekly';
       case CommitmentRecurrence.biweekly:
-        return 'دوهفته‌یک‌بار';
+        return l10n?.mv_commitment_recurrence_biweekly ?? 'Bi-weekly';
       case CommitmentRecurrence.once:
-        return 'یک‌بار';
+        return l10n?.mv_commitment_recurrence_once ?? 'Once';
     }
   }
 
-  String _reminderLabel(int minutes) {
+  String _reminderLabel(int minutes, AppLocalizations? l10n) {
     switch (minutes) {
       case 0:
-        return 'بدون';
+        return l10n?.mv_commitment_reminder_none ?? 'None';
       case 30:
-        return '۳۰ دقیقه';
+        return l10n?.mv_commitment_reminder_30m ?? '30 minutes';
       case 120:
-        return '۲ ساعت';
+        return l10n?.mv_commitment_reminder_2h ?? '2 hours';
       case 1440:
-        return '۱ روز';
+        return l10n?.mv_commitment_reminder_1d ?? '1 day';
       default:
-        return '$minutes دقیقه';
+        return '$minutes ${l10n?.mv_unit_min ?? 'min'}';
     }
   }
 
@@ -176,10 +179,27 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
   }
 
   Future<void> _handleSave() async {
-    final kindCode = _selectedKind?.code ?? MvKindCodes.walking;
+    final l10n = AppLocalizations.of(context);
+    if (_selectedKind == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n?.mv_commitment_select_kind ?? 'Please select sport kind.')),
+      );
+      return;
+    }
+
+    final kindCode = _selectedKind!.code;
     final title = _titleController.text.trim().isNotEmpty
         ? _titleController.text.trim()
-        : (_selectedKind?.titleFa ?? 'ورزش');
+        : _selectedKind!.titleFa;
+
+    String? endDateIso = widget.commitment?.endDateIso;
+    if (_selectedRecurrence == CommitmentRecurrence.once) {
+      final now = DateTime.now();
+      final currentSat0 = MvCalendar.dateTimeToSat0(now);
+      final daysDiff = (_selectedDaySat0 - currentSat0 + 7) % 7;
+      final targetDate = now.add(Duration(days: daysDiff));
+      endDateIso = MvCalendar.formatDateIso(targetDate);
+    }
 
     final c = MvCommitment(
       id: widget.commitment?.id,
@@ -193,9 +213,11 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
           ? _venueController.text.trim()
           : null,
       isActive: widget.commitment?.isActive ?? true,
-      isFlexible: false,
+      isFlexible: _isFlexible,
       startDateIso: widget.commitment?.startDateIso ??
           MvCalendar.formatDateIso(DateTime.now()),
+      endDateIso: endDateIso,
+      reminderMinutes: _selectedReminderMinutes,
     );
 
     if (widget.onSave != null) {
@@ -262,7 +284,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
                       SizedBox(width: metrics.spaceSm),
                       MvChip(
                         key: const ValueKey('mv_commitment_pick_kind'),
-                        label: 'بیشتر...',
+                        label: l10n.mv_commitment_pick_more,
                         isSelected: false,
                         onTap: _pickKind,
                       ),
@@ -368,7 +390,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
                       final selected = _selectedDurationMinutes == d;
                       return MvChip(
                         key: ValueKey('mv_duration_chip_$d'),
-                        label: '$d دقیقه',
+                        label: '${toPersianDigits(d.toString())} ${l10n.mv_unit_min}',
                         isSelected: selected,
                         onTap: () {
                           setState(() => _selectedDurationMinutes = d);
@@ -393,7 +415,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
                       final selected = _selectedRecurrence == r;
                       return MvChip(
                         key: ValueKey('mv_recurrence_chip_${r.name}'),
-                        label: _recurrenceLabel(r),
+                        label: _recurrenceLabel(r, l10n),
                         isSelected: selected,
                         onTap: () {
                           setState(() => _selectedRecurrence = r);
@@ -435,13 +457,33 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
                       final selected = _selectedReminderMinutes == rem;
                       return MvChip(
                         key: ValueKey('mv_reminder_chip_$rem'),
-                        label: _reminderLabel(rem),
+                        label: _reminderLabel(rem, l10n),
                         isSelected: selected,
                         onTap: () {
                           setState(() => _selectedReminderMinutes = rem);
                         },
                       );
                     }).toList(),
+                  ),
+                  SizedBox(height: metrics.spaceMd),
+
+                  // 9. شناوری هوشمند (isFlexible)
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l10n.mv_commitment_smart_flexibility,
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      l10n.mv_commitment_smart_flexibility_desc,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                    value: _isFlexible,
+                    onChanged: (val) => setState(() => _isFlexible = val),
                   ),
                   SizedBox(height: metrics.spaceLg),
                 ],
@@ -475,7 +517,7 @@ class _MvCommitmentEditSheetState extends State<MvCommitmentEditSheet> {
               ),
               onPressed: _handleSave,
               child: Text(
-                'ذخیره',
+                l10n.mv_action_save,
                 style: textTheme.labelLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

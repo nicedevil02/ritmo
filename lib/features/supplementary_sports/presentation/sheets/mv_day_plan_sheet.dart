@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 import '../components/components.dart';
 import 'mv_kind_picker_sheet.dart';
@@ -116,32 +117,11 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
   String _formatDateSubtitle(String dateIso) {
     try {
       final dt = DateTime.parse(dateIso);
+      final sat0 = MvCalendar.dateTimeToSat0(dt);
       final j = Jalali.fromDateTime(dt);
-      final weekdayName = _persianWeekdayName(dt.weekday);
-      return '$weekdayName، ${toPersianDigits(j.day.toString())} ${j.formatter.mN} ${toPersianDigits(j.year.toString())}';
+      return '${MvCalendar.persianWeekdayName(sat0)} ${toPersianDigits(j.day.toString())} ${j.formatter.mN}';
     } catch (_) {
       return dateIso;
-    }
-  }
-
-  String _persianWeekdayName(int weekday) {
-    switch (weekday) {
-      case DateTime.saturday:
-        return 'شنبه';
-      case DateTime.sunday:
-        return 'یک‌شنبه';
-      case DateTime.monday:
-        return 'دوشنبه';
-      case DateTime.tuesday:
-        return 'سه‌شنبه';
-      case DateTime.wednesday:
-        return 'چهارشنبه';
-      case DateTime.thursday:
-        return 'پنج‌شنبه';
-      case DateTime.friday:
-        return 'جمعه';
-      default:
-        return '';
     }
   }
 
@@ -181,15 +161,16 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
   }
 
   void _onSlotTypeChanged(MvSlotType type) {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _slotType = type;
       if (type == MvSlotType.rest) {
         _kind = null;
         _kindCode = null;
-        _titleController.text = 'استراحت';
+        _titleController.text = l10n?.mv_plan_rest ?? 'Rest';
       } else if (type == MvSlotType.strength) {
         if (_kindCode == null) {
-          _titleController.text = 'تمرین قدرتی';
+          _titleController.text = l10n?.mv_plan_strength ?? 'Strength Workout';
         }
       } else {
         if (_kindCode == null) {
@@ -269,6 +250,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final isRest = _slotType == MvSlotType.rest;
     final isSport =
@@ -280,7 +262,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
     final needsVenue = _kind?.needsVenue == true;
 
     return MvSheetScaffold(
-      title: 'برنامهٔ روز',
+      title: l10n?.mv_day_plan_title ?? 'Day Plan',
       subtitle: _formatDateSubtitle(widget.slot.dateIso),
       body: SingleChildScrollView(
         child: Column(
@@ -289,7 +271,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
           children: [
             // نوع اسلات (۵ چیپ)
             Text(
-              'نوع برنامه',
+              l10n?.mv_day_plan_type ?? 'Plan Type',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -313,7 +295,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             // ۱. انتخاب نوع ورزش (برای تمام حالت‌های غیر استراحت)
             if (!isRest) ...[
               Text(
-                'نوع ورزش / فعالیت',
+                l10n?.mv_day_plan_kind_select ?? 'Activity Kind',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -346,7 +328,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _kind?.titleFa ?? 'انتخاب نوع حرکت...',
+                              _kind?.titleFa ?? (l10n?.mv_day_plan_kind_picker_prompt ?? 'Select activity kind...'),
                               style: textTheme.bodyMedium?.copyWith(
                                 color: colors.textPrimary,
                                 fontWeight: FontWeight.w700,
@@ -354,7 +336,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                             ),
                             if (_kind != null)
                               Text(
-                                'ضریب MET: ${_kind!.baseMet}',
+                                l10n?.mv_day_plan_met_factor(toPersianDigits(_kind!.baseMet.toString())) ?? 'MET Factor: ${_kind!.baseMet}',
                                 style: textTheme.labelSmall?.copyWith(
                                   color: colors.textSecondary,
                                 ),
@@ -371,7 +353,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                           color: colors.accent,
                         ),
                         label: Text(
-                          'تغییر',
+                          l10n?.mv_day_plan_change ?? 'Change',
                           style: textTheme.labelMedium?.copyWith(
                             color: colors.accent,
                             fontWeight: FontWeight.bold,
@@ -406,7 +388,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'ورزش تخصصی ${_kind!.titleFa}',
+                            l10n?.mv_day_plan_custom_header(_kind!.titleFa) ?? 'Custom Sport ${_kind!.titleFa}',
                             style: textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
@@ -414,7 +396,8 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                           ),
                           SizedBox(height: metrics.spaceXs),
                           Text(
-                            'ورزش توپی/تخصصی — کالری‌سوزی و ردیابی زمان جلسه بر اساس ضریب مت (${_kind!.baseMet} MET)',
+                            l10n?.mv_day_plan_custom_desc(toPersianDigits(_kind!.baseMet.toString())) ??
+                                'Specialized Sport (${_kind!.baseMet} MET)',
                             style: textTheme.bodySmall?.copyWith(
                               color: colors.textSecondary,
                             ),
@@ -431,7 +414,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
             if (_slotType != MvSlotType.rest) ...[
               // ۲. مدت پیشنهادی (چیپ‌های ۱۵/۳۰/۴۵/۶۰ دقیقه)
               Text(
-                'مدت هدف (دقیقه)',
+                l10n?.mv_day_plan_target_minutes ?? 'Target Duration (min)',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -444,7 +427,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                 children: _durationOptions.map((d) {
                   return MvChip(
                     key: ValueKey('day_plan_duration_$d'),
-                    label: '$d دقیقه',
+                    label: '${toPersianDigits(d.toString())} ${l10n?.mv_unit_min ?? 'min'}',
                     isSelected: _minutes == d,
                     onTap: () => setState(() => _minutes = d),
                   );
@@ -454,7 +437,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
               // ۳. ساعت شروع (plannedTime) اختیاری
               Text(
-                'ساعت شروع (اختیاری)',
+                l10n?.mv_day_plan_start_time ?? 'Start Time (Optional)',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -495,7 +478,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                       Text(
                         _plannedTime != null
                             ? '${toPersianDigits(_plannedTime!.hour.toString().padLeft(2, '0'))}:${toPersianDigits(_plannedTime!.minute.toString().padLeft(2, '0'))}'
-                            : 'مشخص نشده',
+                            : (l10n?.mv_day_plan_not_set ?? 'Not Set'),
                         style: textTheme.bodyMedium?.copyWith(
                           color: _plannedTime != null
                               ? colors.textPrimary
@@ -511,7 +494,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               // ۴. مکان (venueNote) — فقط اگر kind.needsVenue == true
               if (needsVenue) ...[
                 Text(
-                  'مکان یا سالن (اختیاری)',
+                  l10n?.mv_day_plan_venue ?? 'Venue (Optional)',
                   style: textTheme.labelLarge?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -522,7 +505,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                   key: const ValueKey('day_plan_venue_field'),
                   controller: _venueController,
                   decoration: InputDecoration(
-                    hintText: 'مثلاً سالن شهدای غواص، زمین چمن آزادی',
+                    hintText: l10n?.mv_day_plan_venue_hint ?? 'e.g. Sports Hall',
                     filled: true,
                     fillColor: colors.surface,
                     border: OutlineInputBorder(
@@ -536,7 +519,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
               // ۵. شدت تمرین (۳ گزینهٔ MvIntensityTier)
               Text(
-                'شدت تمرین',
+                l10n?.mv_day_plan_intensity ?? 'Workout Intensity',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -560,7 +543,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
               // ۶. تمرکز عضلانی — فقط اگر family == STRENGTH
               if (isStrength) ...[
                 Text(
-                  'تمرکز عضلانی',
+                  l10n?.mv_day_plan_focus ?? 'Muscle Focus',
                   style: textTheme.labelLarge?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -597,14 +580,14 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
                 key: const ValueKey('day_plan_repeat_weekly_switch'),
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  'هر هفته تکرار شود',
+                  l10n?.mv_day_plan_repeat_weekly ?? 'Repeat Every Week',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 subtitle: Text(
-                  'این فعالیت در هفته‌های بعد در همین روز قرار می‌گیرد',
+                  l10n?.mv_day_plan_repeat_weekly_desc ?? 'Repeat on this day weekly',
                   style: textTheme.labelSmall?.copyWith(
                     color: colors.textSecondary,
                   ),
@@ -616,7 +599,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
 
               // فیلد عنوان دلخواه
               Text(
-                'عنوان دلخواه (اختیاری)',
+                l10n?.mv_day_plan_custom_title ?? 'Custom Title (Optional)',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -642,7 +625,7 @@ class _MvDayPlanSheetState extends State<MvDayPlanSheet> {
       ),
       bottomAction: MvPrimaryAction(
         key: const ValueKey('day_plan_save_action'),
-        label: 'ثبت و ذخیره برنامه',
+        label: l10n?.mv_day_plan_save ?? 'Save Day Plan',
         icon: Icons.check_rounded,
         onPressed: _handleSave,
       ),

@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_cant_today_sheet.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
+
+Widget createTestApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
+    home: Scaffold(body: child),
+  );
+}
 
 void main() {
   group('MvCantTodaySheet Anchor Cancellation Widget Tests (S2-T7)', () {
@@ -21,28 +31,26 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Builder(
-                builder: (context) {
-                  return ElevatedButton(
-                    onPressed: () {
-                      MvCantTodaySheet.show(
-                        context: context,
-                        slot: lockedSlot,
-                        onMinimalDose: () {},
-                        onMoveToTomorrow: () {},
-                        onChangeToStretch: () {},
-                        onSkipEntirely: () {},
-                        onCancelAnchorThisWeek: () {
-                          cancelAnchorTapped = true;
-                        },
-                      );
-                    },
-                    child: const Text('Open Sheet'),
-                  );
-                },
-              ),
+          createTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    MvCantTodaySheet.show(
+                      context: context,
+                      slot: lockedSlot,
+                      onMinimalDose: () {},
+                      onMoveToTomorrow: () {},
+                      onChangeToStretch: () {},
+                      onSkipEntirely: () {},
+                      onCancelAnchorThisWeek: () {
+                        cancelAnchorTapped = true;
+                      },
+                    );
+                  },
+                  child: const Text('Open Sheet'),
+                );
+              },
             ),
           ),
         );
@@ -78,25 +86,23 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return ElevatedButton(
-                  onPressed: () {
-                    MvCantTodaySheet.show(
-                      context: context,
-                      slot: regularSlot,
-                      onMinimalDose: () {},
-                      onMoveToTomorrow: () {},
-                      onChangeToStretch: () {},
-                      onSkipEntirely: () {},
-                    );
-                  },
-                  child: const Text('Open Sheet'),
-                );
-              },
-            ),
+        createTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () {
+                  MvCantTodaySheet.show(
+                    context: context,
+                    slot: regularSlot,
+                    onMinimalDose: () {},
+                    onMoveToTomorrow: () {},
+                    onChangeToStretch: () {},
+                    onSkipEntirely: () {},
+                  );
+                },
+                child: const Text('Open Sheet'),
+              );
+            },
           ),
         ),
       );

@@ -31,11 +31,12 @@ void main() {
       final weekRange = JourneyController.calculateDateRangeForScale(JourneyScale.week, testDate);
       expect(weekRange.end.difference(weekRange.start).inDays, equals(6));
 
-      // Month scale
-      final j = Jalali.fromDateTime(testDateOnly);
+      // Month scale (spans full visible grid from Saturday of 1st)
       final monthRange = JourneyController.calculateDateRangeForScale(JourneyScale.month, testDate);
-      expect(Jalali.fromDateTime(monthRange.start).day, equals(1));
-      expect(Jalali.fromDateTime(monthRange.end).day, equals(Jalali(j.year, j.month, 1).monthLength));
+      final totalDays = monthRange.end.difference(monthRange.start).inDays + 1;
+      expect(totalDays % 7, equals(0), reason: 'Month range must cover full 7-day grid rows');
+      expect(monthRange.start.isBefore(testDate) || monthRange.start.isAtSameMomentAs(testDate), isTrue);
+      expect(monthRange.end.isAfter(testDate) || monthRange.end.isAtSameMomentAs(testDate), isTrue);
 
       // Year scale
       final yearRange = JourneyController.calculateDateRangeForScale(JourneyScale.year, testDate);

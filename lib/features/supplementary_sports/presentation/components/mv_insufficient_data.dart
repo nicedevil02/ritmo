@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Honest "Insufficient Data" View (Section 5.3, 5.10 & Rule 7).
 class MvInsufficientData extends StatelessWidget {
-  final String title;
+  final String? title;
   final String requirementDescription;
 
   const MvInsufficientData({
     super.key,
-    this.title = 'هنوز دادهٔ کافی نیست',
+    this.title,
     required this.requirementDescription,
   });
 
@@ -17,6 +18,9 @@ class MvInsufficientData extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    final displayTitle = title ?? (l10n?.mv_insufficient_data_default_title ?? 'Not enough data yet');
 
     return Container(
       padding: EdgeInsets.all(metrics.spaceLg),
@@ -45,7 +49,7 @@ class MvInsufficientData extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  displayTitle,
                   style: textTheme.labelLarge?.copyWith(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w700,

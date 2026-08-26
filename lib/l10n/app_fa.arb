@@ -951,5 +951,606 @@
         "type": "int"
       }
     }
+  },
+  "mv_exercise_fallback": "حرکت ورزشی",
+  "mv_audio_mute_tooltip": "خاموش کردن راهنمای صوتی",
+  "mv_audio_unmute_tooltip": "روشن کردن راهنمای صوتی",
+  "mv_body_map_weekly_title": "نقشهٔ عضلانی این هفته",
+  "mv_slot_anchor_badge_label": "ورزش ثابت",
+  "mv_slot_rest_badge_label": "استراحت",
+  "mv_insufficient_data_default_title": "هنوز دادهٔ کافی نیست",
+  "mv_metric_ring_active_mins": "دقیقهٔ فعال این هفته",
+  "mv_metric_ring_active_days": "{activeDays} از {targetDays} روز فعال",
+  "@mv_metric_ring_active_days": {
+    "placeholders": {
+      "activeDays": {
+        "type": "String"
+      },
+      "targetDays": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_metric_ring_completed_pct": "{percent}٪ تکمیل شده",
+  "@mv_metric_ring_completed_pct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_quick_log_custom_action": "ثبت سایر...",
+  "mv_quick_log_walk_20": "پیاده‌روی ۲۰ دقیقه",
+  "mv_quick_log_stretch_10": "۱۰ دقیقه نرمش سبک",
+  "mv_hero_rest_title": "روز استراحت و ریکاوری",
+  "mv_hero_minimal_title": "حداقل مؤثر ۱۰ دقیقه‌ای",
+  "mv_hero_rest_subtitle": "بدنت به زمان برای بازسازی نیاز دارد. کشش سبک بهترین همراه امروز است.",
+  "mv_hero_minimal_subtitle": "امروز فقط ۱۰ دقیقه. همین هم زنجیره‌ات را فعال نگه می‌دارد.",
+  "mv_hero_completed": "جلسهٔ امروز با موفقیت انجام شد",
+  "mv_hero_rest_action": "کشش سبک ۵ دقیقه",
+  "mv_hero_continue": "ادامهٔ جلسه",
+  "mv_hero_start": "شروع جلسه",
+  "mv_hero_cant_today": "نمی‌تونم",
+  "mv_exercise_default_title": "تمرین",
+  "mv_player_rest_time": "زمان استراحت",
+  "mv_player_skip_exercise_tooltip": "رد کردن حرکت",
+  "mv_player_breathe_ready": "نفس عمیق بکش و آماده شو",
+  "mv_player_exercise_counter": "حرکت {current} از {total}",
+  "@mv_player_exercise_counter": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_set_counter": "ست {current} از {total}",
+  "@mv_player_set_counter": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_seconds_remaining": "{seconds} ثانیه",
+  "@mv_player_seconds_remaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_reps": "{reps} تکرار",
+  "@mv_player_reps": {
+    "placeholders": {
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_focus_contraction": "تمرکز روی انقباض عضله",
+  "mv_player_skip_rest_action": "رد کردن استراحت و شروع",
+  "mv_player_complete_set_action": "ثبت ست و ادامه (ست {setNumber})",
+  "@mv_player_complete_set_action": {
+    "placeholders": {
+      "setNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_title": "خلاصهٔ جلسه",
+  "mv_summary_mins_done": "{minutes} دقیقه تمرین ثبت شد",
+  "@mv_summary_mins_done": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_effort_question": "میزان تلاش این جلسه چطور بود؟",
+  "mv_summary_effort_easy": "راحت و آسان",
+  "mv_summary_effort_good": "خوب و متناسب",
+  "mv_summary_effort_hard": "سخت و چالشی",
+  "mv_summary_fine_tune_rpe": "دقیق‌ترش کنم (RPE)",
+  "mv_summary_free_note_label": "یادداشت آزاد اختیاری",
+  "mv_summary_free_note_hint": "مثلاً هوا عالی بود، شیب تند بود، یا حس پیشرفت داشتم...",
+  "mv_summary_new_pr_title": "رکورد شخصی جدید (PR)! 🎉",
+  "mv_summary_new_pr_desc": "در حرکت {exercise} به رکورد {record} رسیدی.",
+  "@mv_summary_new_pr_desc": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      },
+      "record": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_equiv_mins_added": "+{minutes} دقیقه فعالیت معادل به این هفته اضافه شد",
+  "@mv_summary_equiv_mins_added": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_goal_achieved": "هدف هفتگی ۱۵۰ دقیقه با موفقیت کامل شد! 🎯",
+  "mv_summary_mins_remaining_to_goal": "{minutes} دقیقه تا دستیابی به هدف هفتگی مانده",
+  "@mv_summary_mins_remaining_to_goal": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_save_session": "ثبت جلسه و ذخیره",
+  "mv_summary_error_save": "خطا در ذخیره جلسه: {error}",
+  "@mv_summary_error_save": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_stat_distance": "مسافت",
+  "mv_stat_elevation": "ارتفاع صعود",
+  "mv_stat_pack_weight": "وزن کوله",
+  "mv_stat_tempo": "تمپو",
+  "mv_stat_laps": "تعداد دور",
+  "mv_stat_duration": "مدت‌زمان",
+  "mv_stat_match_duration": "مدت مسابقه",
+  "mv_stat_session_load": "بار جلسه",
+  "mv_stat_logged_sets": "ست‌های ثبت‌شده",
+  "mv_unit_km": "کیلومتر",
+  "mv_unit_m": "متر",
+  "mv_unit_kg": "کیلوگرم",
+  "mv_unit_laps": "دور",
+  "mv_unit_min": "دقیقه",
+  "mv_unit_set": "ست",
+  "mv_unit_pace": "دق/کم",
+  "mv_template_distance_title": "جلسه مسافتی",
+  "mv_template_distance_adjust": "تنظیم مسافت",
+  "mv_template_rpe_label": "میزان تلاش (RPE: {rpe})",
+  "@mv_template_rpe_label": {
+    "placeholders": {
+      "rpe": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_template_finish": "پایان جلسه",
+  "mv_template_laps_title": "جلسه دورمحور",
+  "mv_template_laps_recorded": "دور ثبت‌شده",
+  "mv_template_plus_1_lap": "+۱ دور ثبت شد",
+  "mv_template_match_title": "مسابقه و بازی",
+  "mv_template_half_1": "نیمه اول / ست اول",
+  "mv_template_half_2": "نیمه دوم / ست دوم",
+  "mv_template_start_half_2": "شروع نیمه دوم",
+  "mv_template_team_us": "ما",
+  "mv_template_team_them": "حریف",
+  "mv_template_match_note_label": "یادداشت مسابقه (گل‌ها، کارت‌ها، حریف...)",
+  "mv_template_finish_match": "پایان مسابقه",
+  "mv_template_route_title": "جلسه مسیر و کوه",
+  "mv_template_route_label": "مسیر",
+  "mv_template_route_free": "مسیر آزاد",
+  "mv_template_route_tochal": "توچال - شیرپلا",
+  "mv_template_route_darakeh": "درکه - پلنگ‌چال",
+  "mv_template_timed_title": "جلسه زمانی",
+  "mv_template_phase_warmup": "گرم کردن",
+  "mv_template_phase_main": "تمرین اصلی",
+  "mv_template_phase_cooldown": "سرد کردن",
+  "mv_commitment_flexible_title": "شناوری هوشمند روز",
+  "mv_commitment_flexible_subtitle": "در صورت خستگی یا فشردگی، امکان جابجایی روز وجود داشته باشد",
+  "mv_commitment_select_kind_error": "لطفاً نوع ورزش را انتخاب کنید.",
+  "mv_action_save": "ذخیره",
+  "mv_action_more": "بیشتر...",
+  "mv_action_none": "بدون",
+  "mv_action_weekly": "هفتگی",
+  "mv_action_biweekly": "دوهفته‌یک‌بار",
+  "mv_action_once": "یک‌بار",
+  "mv_action_30_min": "۳۰ دقیقه",
+  "mv_action_2_hours": "۲ ساعت",
+  "mv_action_1_day": "۱ روز",
+  "mv_substitute_title": "جایگزینی حرکت",
+  "mv_substitute_reason_prompt": "علت جایگزینی «{exercise}» را مشخص کن.",
+  "@mv_substitute_reason_prompt": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_substitute_too_hard": "سخت است",
+  "mv_substitute_pain": "احساس درد یا ناراحتی",
+  "mv_substitute_no_equipment": "وسیله ندارم",
+  "mv_substitute_noise": "سروصدا دارد",
+  "mv_substitute_suggestions": "حرکات پیشنهادی جایگزین",
+  "mv_substitute_empty": "حرکت جایگزین دیگری با این شرایط یافت نشد.",
+  "mv_substitute_select": "انتخاب",
+  "mv_checkin_title": "آمادگی امروزت چطوره؟",
+  "mv_checkin_subtitle": "با یک لمس، برنامهٔ امروز متناسب با انرژی بدنت تنظیم می‌شود.",
+  "mv_checkin_great_title": "عالی و پرانرژی",
+  "mv_checkin_great_desc": "آماده برای جلسهٔ کامل",
+  "mv_checkin_good_title": "خوب و معمولی",
+  "mv_checkin_good_desc": "انرژی متناسب",
+  "mv_checkin_tired_title": "خسته یا کوفته",
+  "mv_checkin_tired_desc": "پیشنهاد جلسه سبک",
+  "mv_checkin_close_details": "بستن جزئیات دقیق‌تر",
+  "mv_checkin_open_details": "ثبت دقیق‌تر (درد، کوفتگی و خستگی)...",
+  "mv_checkin_energy_label": "سطح انرژی (۱ تا ۵):",
+  "mv_checkin_soreness_label": "کوفتگی عضلانی (۱ تا ۵):",
+  "mv_checkin_fatigue_label": "خستگی عمومی (۱ تا ۵):",
+  "mv_checkin_pain_label": "میزان درد موضعی (۰ تا ۱۰):",
+  "mv_checkin_submit_details": "ثبت جزئیات دقیق",
+  "mv_kind_picker_title": "انتخاب نوع ورزش و فعالیت",
+  "mv_kind_picker_subtitle": "از میان بیش از ۴۰ نوع فعالیت ورزشی و حرکتی",
+  "mv_kind_picker_search_hint": "جستجوی ورزش (مثلاً فوتبال، شنا، کوه...)",
+  "mv_kind_picker_tab_all": "همه",
+  "mv_kind_picker_recent": "اخیراً استفاده‌شده",
+  "mv_kind_picker_seasonal": "مناسب این فصل",
+  "mv_kind_picker_empty": "هیچ ورزشی با این مشخصات یافت نشد.",
+  "mv_kind_picker_outdoor": "فضای باز 🌿",
+  "mv_kind_picker_hall": "نیازمند سالن 🏟",
+  "mv_kind_picker_impact": "ضربه: {impact}/3",
+  "@mv_kind_picker_impact": {
+    "placeholders": {
+      "impact": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_picker_unit": "واحد: {unit}",
+  "@mv_kind_picker_unit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_picker_create_new": "تعریف ورزش یا فعالیت جدید",
+  "mv_day_plan_title": "برنامهٔ روز",
+  "mv_day_plan_type": "نوع برنامه",
+  "mv_day_plan_kind_select": "نوع ورزش / فعالیت",
+  "mv_day_plan_kind_picker_prompt": "انتخاب نوع حرکت...",
+  "mv_day_plan_met_factor": "ضریب MET: {met}",
+  "@mv_day_plan_met_factor": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_change": "تغییر",
+  "mv_day_plan_custom_header": "ورزش تخصصی {title}",
+  "@mv_day_plan_custom_header": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_custom_desc": "ورزش توپی/تخصصی — کالری‌سوزی و ردیابی زمان جلسه بر اساس ضریب مت ({met} MET)",
+  "@mv_day_plan_custom_desc": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_target_minutes": "مدت هدف (دقیقه)",
+  "mv_day_plan_start_time": "ساعت شروع (اختیاری)",
+  "mv_day_plan_not_set": "مشخص نشده",
+  "mv_day_plan_venue": "مکان یا سالن (اختیاری)",
+  "mv_day_plan_venue_hint": "مثلاً سالن شهدای غواص، زمین چمن آزادی",
+  "mv_day_plan_intensity": "شدت تمرین",
+  "mv_day_plan_focus": "تمرکز عضلانی",
+  "mv_day_plan_repeat_weekly": "هر هفته تکرار شود",
+  "mv_day_plan_repeat_weekly_desc": "این فعالیت در هفته‌های بعد در همین روز قرار می‌گیرد",
+  "mv_day_plan_custom_title": "عنوان دلخواه (اختیاری)",
+  "mv_day_plan_save": "ثبت و ذخیره برنامه",
+  "mv_plan_rest": "استراحت",
+  "mv_plan_strength": "تمرین قدرتی",
+  "mv_commitment_select_kind": "لطفاً نوع ورزش را انتخاب کنید.",
+  "mv_commitment_pick_more": "بیشتر...",
+  "mv_commitment_recurrence_weekly": "هفتگی",
+  "mv_commitment_recurrence_biweekly": "دوهفته‌یک‌بار",
+  "mv_commitment_recurrence_once": "یک‌بار",
+  "mv_commitment_reminder_none": "بدون",
+  "mv_commitment_reminder_30m": "۳۰ دقیقه",
+  "mv_commitment_reminder_2h": "۲ ساعت",
+  "mv_commitment_reminder_1d": "۱ روز",
+  "mv_commitment_smart_flexibility": "شناوری هوشمند روز",
+  "mv_commitment_smart_flexibility_desc": "در صورت خستگی یا فشردگی، امکان جابجایی روز وجود داشته باشد",
+  "mv_custom_kind_metric_duration": "فقط زمان (دقیقه)",
+  "mv_custom_kind_metric_distance": "مسافت (کیلومتر)",
+  "mv_custom_kind_metric_sets": "ست و تکرار",
+  "mv_custom_kind_metric_laps": "دور / طول",
+  "mv_custom_kind_name_error": "لطفاً نام ورزش را وارد کنید",
+  "mv_custom_kind_save_error": "خطا در ذخیره‌سازی: {error}",
+  "@mv_custom_kind_save_error": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_custom_kind_sheet_title": "ورزش سفارشی جدید",
+  "mv_custom_kind_sheet_subtitle": "ورزش یا فعالیت دلخواهت را به کتابخانه اضافه کن",
+  "mv_custom_kind_name_label": "نام ورزش یا فعالیت",
+  "mv_custom_kind_name_hint": "مثلاً پدل، اسکواش، تیراندازی...",
+  "mv_custom_kind_emoji_label": "انتخاب نماد (ایموجی)",
+  "mv_custom_kind_family_label": "دسته‌بندی (خانواده)",
+  "mv_custom_kind_met_label": "شدت انرژی متابولیک (MET): {met}",
+  "@mv_custom_kind_met_label": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_custom_kind_metric_label": "متریک ثبت اصلی",
+  "mv_custom_kind_venue_switch": "نیاز به سالن یا زمین اختصاصی دارد",
+  "mv_custom_kind_outdoor_switch": "در فضای باز انجام می‌شود",
+  "mv_custom_kind_submit_btn": "افزودن به ورزش‌ها",
+  "mv_pr_title": "رکوردهای شخصی",
+  "mv_pr_empty_desc": "هنوز رکوردی ثبت نشده است. با اتمام جلسات تمرین، رکوردهای جدید شما در اینجا ثبت می‌شوند.",
+  "mv_pr_by_sport": "رکوردهای شخصی به تفکیک ورزش",
+  "mv_campaign_active_header": "دورهٔ هدف‌دار فعال",
+  "mv_campaign_pack_weight_label": "وزن کوله‌پشتی هدف این هفته: {weight} کیلوگرم",
+  "@mv_campaign_pack_weight_label": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_inactive_desc": "برنامه‌ریزی معکوس و تمرین برای رویداد ورزشی (کوهنوردی، پیمایش و ...)",
+  "mv_streak_continuous_weeks": "هفته‌های فعال پیوسته",
+  "mv_streak_weeks_count": "{count} هفته",
+  "@mv_streak_weeks_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_progress_insights": "بینش‌های پیشرفت",
+  "mv_campaign_target_sport": "نوع ورزش هدف:",
+  "mv_campaign_hiking_title": "کوهنوردی و پیمایش ({code})",
+  "@mv_campaign_hiking_title": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_target_date": "تاریخ رویداد هدف:",
+  "mv_campaign_weeks_later": "{weeks} هفته بعد ({date})",
+  "@mv_campaign_weeks_later": {
+    "placeholders": {
+      "weeks": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_body_weight": "وزن بدن (کیلوگرم):",
+  "mv_campaign_submit": "ثبت دوره",
+  "mv_commitment_recurrence_summary": "هر {day} ساعت {time} • {duration} دقیقه",
+  "@mv_commitment_recurrence_summary": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_detail_edit_tooltip": "ویرایش برنامه",
+  "mv_day_detail_session_exercises": "حرکات این جلسه ({count} حرکت)",
+  "@mv_day_detail_session_exercises": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_day_detail_reps_count": "{count} تکرار",
+  "@mv_day_detail_reps_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_day_detail_timed": "زمان‌دار",
+  "mv_day_detail_start_session": "شروع جلسهٔ تمرینی",
+  "mv_library_title": "کتابخانهٔ ورزشی",
+  "mv_library_tab_exercises": "تمرین‌ها",
+  "mv_library_tab_programs": "برنامه‌ها",
+  "mv_library_tab_kinds": "انواع ورزش",
+  "mv_library_search_exercises_hint": "جستجوی حرکت (مثلاً شنا، اسکات، پلانک)...",
+  "mv_library_filter_apartment": "بی‌صدا (آپارتمانی)",
+  "mv_library_filter_no_equipment": "بدون وسیله",
+  "mv_library_exercises_empty_title": "حرکتی پیدا نشد",
+  "mv_library_exercises_empty_desc": "فیلترها را تغییر بده یا عبارت دیگری را جستجو کن.",
+  "mv_library_exercise_skill": "مهارت: سطح {skill}",
+  "@mv_library_exercise_skill": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_library_exercise_noisy": "پرصدا",
+  "mv_library_exercise_quiet": "بی‌صدا / آپارتمانی",
+  "mv_library_exercise_low_impact": "کم‌ضربه",
+  "mv_library_exercise_start_now": "شروع آنی این حرکت",
+  "mv_library_programs_title": "برنامه‌های تمرینی ۴ هفته‌ای",
+  "mv_library_programs_desc": "برنامه‌ها بر اساس سطح و اهداف شما از تب هفته قابل تنظیم و بازتولید هستند.",
+  "mv_library_search_kinds_hint": "جستجوی ورزش و فعالیت (مثلاً فوتبال، شنا، پدل)...",
+  "mv_library_create_custom_kind": "ورزش سفارشی جدید",
+  "mv_library_kinds_empty_title": "ورزشی پیدا نشد",
+  "mv_library_kinds_empty_desc": "می‌توانی ورزش جدیدی به لیست اضافه کنی.",
+  "mv_library_custom_tag": "سفارشی",
+  "mv_library_kind_intensity": "{family} · شدت انرژی: {met} MET",
+  "@mv_library_kind_intensity": {
+    "placeholders": {
+      "family": {
+        "type": "String"
+      },
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_title": "برنامهٔ ورزشی اختصاصی تو",
+  "mv_onboarding_subtitle": "با پاسخ به چند سؤال کوتاه، برنامهٔ هفته‌ات را بساز.",
+  "mv_onboarding_q1_title": "۱. چند روز در هفته می‌خواهی ورزش کنی؟",
+  "mv_onboarding_days_count": "{count} روز",
+  "@mv_onboarding_days_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_q2_title": "۲. چقدر زمان داری در هر جلسه؟",
+  "mv_onboarding_dur_short": "۱۵ دقیقه (کوتاه و سریع)",
+  "mv_onboarding_dur_medium": "۳۰ دقیقه (متعادل و ایده‌آل)",
+  "mv_onboarding_dur_long": "۴۵ دقیقه یا بیشتر",
+  "mv_onboarding_q3_title": "۳. محیط تمرینت کجاست؟",
+  "mv_onboarding_loc_home": "خانه (بدون وسیله)",
+  "mv_onboarding_loc_gym": "باشگاه ورزشی",
+  "mv_onboarding_loc_outdoor": "فضای باز / پارک",
+  "mv_onboarding_q4_title": "۴. ورزش ثابتی داری که هفته‌ای انجام بدهی؟",
+  "mv_onboarding_q4_subtitle": "مثل فوتسال پنجشنبه‌ها یا استخر جمعه‌ها (اختیاری)",
+  "mv_onboarding_anchor_yes": "بله، اضافه کنم",
+  "mv_onboarding_anchor_no": "فعلاً نه",
+  "mv_onboarding_anchor_add_another": "افزودن ورزش ثابت دیگر",
+  "mv_onboarding_submit": "شروع برنامه و ورود به ریتمو",
+  "mv_onboarding_anchor_sheet_title": "تنظیم ورزش ثابت: {title} {emoji}",
+  "@mv_onboarding_anchor_sheet_title": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "emoji": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_anchor_sheet_day": "روز هفته",
+  "mv_onboarding_anchor_sheet_time": "ساعت شروع",
+  "mv_onboarding_anchor_sheet_duration": "مدت زمان (دقیقه)",
+  "mv_onboarding_anchor_sheet_confirm": "تأیید و افزودن",
+  "mv_weekly_health_title": "سلامت این هفته",
+  "mv_weekly_health_empty": "هنوز در این هفته فعالیتی ثبت نشده است. با ثبت اولین جلسه، پیشرفت نمایش داده می‌شود.",
+  "mv_weekly_health_who": "سلامت این هفته (توصیه بهداشت جهانی)",
+  "mv_weekly_health_moderate": "فعالیت معادل متوسط",
+  "mv_weekly_health_min_progress": "{current} / {target} دقیقه",
+  "@mv_weekly_health_min_progress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_weekly_health_strength": "روزهای قدرتی و مقاومتی",
+  "mv_weekly_health_day_progress": "{current} / {target} روز",
+  "@mv_weekly_health_day_progress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_training_load_title": "بار تمرینی و تعادل فشار",
+  "mv_training_load_insufficient": "حداقل ۱۴ روز سابقه و ثبت چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.",
+  "mv_training_load_card_title": "بار تمرینی (۷ روز به ۲۸ روز)",
+  "mv_training_load_acute": "بار حاد (۷ روز)",
+  "mv_training_load_chronic": "میانگین هفتگی ۲۸ روز",
+  "mv_training_load_summary": "به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما {ratio} بوده و در محدودهٔ {band} قرار دارد.",
+  "@mv_training_load_summary": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_distribution_title": "توزیع ورزش‌ها در این ماه",
+  "mv_kind_distribution_insufficient": "برای نمایش سهم ورزش‌ها، حداقل به ثبت یک جلسه تمرین در ماه جاری نیاز است.",
+  "mv_kind_distribution_card_title": "توزیع ورزش‌ها در ماه جاری",
+  "mv_kind_distribution_progress": "{minutes} دقیقه ({percent}٪)",
+  "@mv_kind_distribution_progress": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_distribution_focus": "بیشترین تمرکز فعالیت شما بر {sport} بوده است.",
+  "@mv_kind_distribution_focus": {
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_cant_today_title": "برنامه برای شرایط امروزت",
+  "mv_cant_today_subtitle": "حتی کوچک‌ترین حرکت هم برای حفظ پیوستگی حساب می‌شود.",
+  "mv_cant_today_option_cancel_anchor_title": "این هفته لغو شد",
+  "mv_cant_today_option_cancel_anchor_desc": "لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.",
+  "mv_cant_today_option_minimal_title": "حداقل مؤثر (۱۰ دقیقه سبک)",
+  "mv_cant_today_option_minimal_desc": "فقط چند حرکت ساده برای حفظ زنجیره و جریان خون",
+  "mv_cant_today_option_stretch_title": "تبدیل به ۵ دقیقه کشش و آرامش",
+  "mv_cant_today_option_stretch_desc": "کشش سبک بدون عرق‌ریزی برای رفع خستگی",
+  "mv_cant_today_option_tomorrow_title": "انتقال جلسه به فردا",
+  "mv_cant_today_option_tomorrow_desc": "امروز استراحت کن و جلسه را فردا انجام بده",
+  "mv_cant_today_option_rest_title": "استراحت کامل برای امروز",
+  "mv_cant_today_option_rest_desc": "رد کردن جلسهٔ امروز بدون احساس گناه",
+  "mv_cant_today_recommended": "پیشنهادی",
+  "cancel": "انصراف",
+  "mv_coach_title": "مربی هوشمند ریتمو",
+  "mv_coach_subtitle": "راهنما و همراه تمرینی شما",
+  "mv_coach_preset_light": "چطور تمرین امروز را سبک‌تر کنم؟",
+  "mv_coach_preset_noise": "حرکات پرصدا برای آپارتمان؟",
+  "mv_coach_preset_stretch": "برای گرفتگی عضلات چه حرکتی خوبه؟",
+  "mv_coach_preset_general": "چطور انگیزه‌ام را حفظ کنم؟",
+  "mv_coach_reply_light": "می‌توانید از گزینه حداقل مؤثر ۱۰ دقیقه‌ای استفاده کنید تا بدون خستگی، زنجیره حفظ شود.",
+  "mv_coach_reply_noise": "در تنظیمات، حالت همسایه‌پسند را فعال کنید تا حرکات پرشی و پرصدا خودکار فیلتر شوند.",
+  "mv_coach_reply_stretch": "کشش ۵ دقیقه‌ای همسترینگ و کمر همراه با نوشیدن آب به تخلیه اسید لاکتیک کمک می‌کند.",
+  "mv_coach_reply_general": "مهم‌ترین اصل در تناسب اندام استمرار است؛ حتی ۵ دقیقه حرکت سبک بهتر از صفر است.",
+  "mv_coach_input_hint": "از مربی بپرس...",
+  "mv_at_time": "ساعت {time}",
+  "@mv_at_time": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   }
 }

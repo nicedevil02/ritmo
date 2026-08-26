@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'mv_primary_action.dart';
 
 /// Hero Card for Today Tab (Section 5.1 & 5.10).
@@ -30,21 +32,22 @@ class MvHeroCard extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final isRest = slot.isRest;
     final isMinimal = readinessTier == MvReadinessTier.minimal;
 
     final title = isRest
-        ? 'روز استراحت و ریکاوری'
+        ? (l10n?.mv_hero_rest_title ?? 'Rest & Recovery Day')
         : isMinimal
-        ? 'حداقل مؤثر ۱۰ دقیقه‌ای'
+        ? (l10n?.mv_hero_minimal_title ?? '10-Minute Minimum Effective Dose')
         : slot.headlineFa;
 
     final subtitle = isRest
-        ? 'بدنت به زمان برای بازسازی نیاز دارد. کشش سبک بهترین همراه امروز است.'
+        ? (l10n?.mv_hero_rest_subtitle ?? 'Light stretching is best today.')
         : isMinimal
-        ? 'امروز فقط ۱۰ دقیقه. همین هم زنجیره‌ات را فعال نگه می‌دارد.'
-        : '${slot.targetMinutes} دقیقه · شدت ${slot.intensityTier.titleFa}';
+        ? (l10n?.mv_hero_minimal_subtitle ?? 'Just 10 minutes today.')
+        : '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'} · ${slot.intensityTier.titleFa}';
 
     return Container(
       decoration: BoxDecoration(
@@ -90,7 +93,7 @@ class MvHeroCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(RitmoRadius.pill),
                       ),
                       child: Text(
-                        isRest ? 'استراحت' : slot.slotType.titleFa,
+                        isRest ? (l10n?.mv_slot_rest_badge_label ?? 'Rest') : slot.slotType.titleFa,
                         style: textTheme.labelSmall?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w700,
@@ -100,7 +103,7 @@ class MvHeroCard extends StatelessWidget {
                     const Spacer(),
                     if (!isRest)
                       Text(
-                        '${slot.targetMinutes} دقیقه',
+                        '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'}',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -148,7 +151,7 @@ class MvHeroCard extends StatelessWidget {
                         ),
                         SizedBox(width: metrics.spaceSm),
                         Text(
-                          'جلسهٔ امروز با موفقیت انجام شد',
+                          l10n?.mv_hero_completed ?? 'Today session completed',
                           style: textTheme.labelLarge?.copyWith(
                             color: colors.success,
                             fontWeight: FontWeight.w700,
@@ -159,13 +162,13 @@ class MvHeroCard extends StatelessWidget {
                   )
                 else if (isRest)
                   MvPrimaryAction(
-                    label: 'کشش سبک ۵ دقیقه',
+                    label: l10n?.mv_hero_rest_action ?? '5-min Light Stretch',
                     icon: Icons.self_improvement_rounded,
                     onPressed: onStart,
                   )
                 else if (isInProgress && onContinue != null)
                   MvPrimaryAction(
-                    label: 'ادامهٔ جلسه',
+                    label: l10n?.mv_hero_continue ?? 'Continue Session',
                     icon: Icons.play_arrow_rounded,
                     onPressed: onContinue,
                   )
@@ -176,7 +179,7 @@ class MvHeroCard extends StatelessWidget {
                         flex: 3,
                         child: MvPrimaryAction(
                           key: const ValueKey('mv_hero_start_btn'),
-                          label: 'شروع جلسه',
+                          label: l10n?.mv_hero_start ?? 'Start Session',
                           icon: Icons.play_arrow_rounded,
                           onPressed: onStart,
                         ),
@@ -185,7 +188,7 @@ class MvHeroCard extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: MvPrimaryAction(
-                          label: 'نمی‌تونم',
+                          label: l10n?.mv_hero_cant_today ?? 'Can\'t Today',
                           isSecondary: true,
                           onPressed: onCantToday,
                         ),

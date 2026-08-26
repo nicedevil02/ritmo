@@ -1387,16 +1387,17 @@ class AppLocalizationsFa extends AppLocalizations {
   String get cycleSemanticsHasLogs => '، دارای علائم ثبت‌شده';
 
   @override
-  String get mv_kind_picker_title => 'انتخاب نوع ورزش';
+  String get mv_kind_picker_title => 'انتخاب نوع ورزش و فعالیت';
 
   @override
-  String get mv_kind_picker_search_hint => 'جستجوی ورزش...';
+  String get mv_kind_picker_search_hint =>
+      'جستجوی ورزش (مثلاً فوتبال، شنا، کوه...)';
 
   @override
-  String get mv_kind_picker_recent => 'ورزش‌های اخیر';
+  String get mv_kind_picker_recent => 'اخیراً استفاده‌شده';
 
   @override
-  String get mv_kind_picker_seasonal => 'ورزش‌های فصلی / پیشنهادی';
+  String get mv_kind_picker_seasonal => 'مناسب این فصل';
 
   @override
   String get mv_kind_picker_all => 'همهٔ ورزش‌ها';
@@ -1405,7 +1406,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get mv_kind_picker_create_custom => 'ورزش جدید دلخواه';
 
   @override
-  String get mv_kind_picker_empty => 'ورزشی با این عنوان یافت نشد.';
+  String get mv_kind_picker_empty => 'هیچ ورزشی با این مشخصات یافت نشد.';
 
   @override
   String get mv_custom_kind_title => 'ساخت نوع ورزش سفارشی';
@@ -1599,7 +1600,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get mv_campaign_title => 'دورهٔ هدف‌دار';
 
   @override
-  String get mv_campaign_target_date => 'تاریخ رویداد هدف';
+  String get mv_campaign_target_date => 'تاریخ رویداد هدف:';
 
   @override
   String get mv_campaign_phase_base => 'مرحله پایه';
@@ -1634,16 +1635,16 @@ class AppLocalizationsFa extends AppLocalizations {
   String get mv_day_plan_title => 'برنامهٔ روز';
 
   @override
-  String get mv_library_title => 'کتابخانهٔ حرکات و ورزش‌ها';
+  String get mv_library_title => 'کتابخانهٔ ورزشی';
 
   @override
   String get mv_week_plan_title => 'برنامهٔ هفته';
 
   @override
-  String get mv_library_tab_kinds => 'ورزش‌ها';
+  String get mv_library_tab_kinds => 'انواع ورزش';
 
   @override
-  String get mv_library_tab_exercises => 'حرکات';
+  String get mv_library_tab_exercises => 'تمرین‌ها';
 
   @override
   String get mv_commitments_title => 'ورزش‌های ثابت هفتگی';
@@ -1849,5 +1850,979 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String mv_quick_log_submit(int minutes) {
     return 'ثبت فعالیت ($minutes دقیقه)';
+  }
+
+  @override
+  String get mv_exercise_fallback => 'حرکت ورزشی';
+
+  @override
+  String get mv_audio_mute_tooltip => 'خاموش کردن راهنمای صوتی';
+
+  @override
+  String get mv_audio_unmute_tooltip => 'روشن کردن راهنمای صوتی';
+
+  @override
+  String get mv_body_map_weekly_title => 'نقشهٔ عضلانی این هفته';
+
+  @override
+  String get mv_slot_anchor_badge_label => 'ورزش ثابت';
+
+  @override
+  String get mv_slot_rest_badge_label => 'استراحت';
+
+  @override
+  String get mv_insufficient_data_default_title => 'هنوز دادهٔ کافی نیست';
+
+  @override
+  String get mv_metric_ring_active_mins => 'دقیقهٔ فعال این هفته';
+
+  @override
+  String mv_metric_ring_active_days(String activeDays, String targetDays) {
+    return '$activeDays از $targetDays روز فعال';
+  }
+
+  @override
+  String mv_metric_ring_completed_pct(String percent) {
+    return '$percent٪ تکمیل شده';
+  }
+
+  @override
+  String get mv_quick_log_custom_action => 'ثبت سایر...';
+
+  @override
+  String get mv_quick_log_walk_20 => 'پیاده‌روی ۲۰ دقیقه';
+
+  @override
+  String get mv_quick_log_stretch_10 => '۱۰ دقیقه نرمش سبک';
+
+  @override
+  String get mv_hero_rest_title => 'روز استراحت و ریکاوری';
+
+  @override
+  String get mv_hero_minimal_title => 'حداقل مؤثر ۱۰ دقیقه‌ای';
+
+  @override
+  String get mv_hero_rest_subtitle =>
+      'بدنت به زمان برای بازسازی نیاز دارد. کشش سبک بهترین همراه امروز است.';
+
+  @override
+  String get mv_hero_minimal_subtitle =>
+      'امروز فقط ۱۰ دقیقه. همین هم زنجیره‌ات را فعال نگه می‌دارد.';
+
+  @override
+  String get mv_hero_completed => 'جلسهٔ امروز با موفقیت انجام شد';
+
+  @override
+  String get mv_hero_rest_action => 'کشش سبک ۵ دقیقه';
+
+  @override
+  String get mv_hero_continue => 'ادامهٔ جلسه';
+
+  @override
+  String get mv_hero_start => 'شروع جلسه';
+
+  @override
+  String get mv_hero_cant_today => 'نمی‌تونم';
+
+  @override
+  String get mv_exercise_default_title => 'تمرین';
+
+  @override
+  String get mv_player_rest_time => 'زمان استراحت';
+
+  @override
+  String get mv_player_skip_exercise_tooltip => 'رد کردن حرکت';
+
+  @override
+  String get mv_player_breathe_ready => 'نفس عمیق بکش و آماده شو';
+
+  @override
+  String mv_player_exercise_counter(String current, String total) {
+    return 'حرکت $current از $total';
+  }
+
+  @override
+  String mv_player_set_counter(String current, String total) {
+    return 'ست $current از $total';
+  }
+
+  @override
+  String mv_player_seconds_remaining(String seconds) {
+    return '$seconds ثانیه';
+  }
+
+  @override
+  String mv_player_reps(String reps) {
+    return '$reps تکرار';
+  }
+
+  @override
+  String get mv_player_focus_contraction => 'تمرکز روی انقباض عضله';
+
+  @override
+  String get mv_player_skip_rest_action => 'رد کردن استراحت و شروع';
+
+  @override
+  String mv_player_complete_set_action(String setNumber) {
+    return 'ثبت ست و ادامه (ست $setNumber)';
+  }
+
+  @override
+  String get mv_summary_title => 'خلاصهٔ جلسه';
+
+  @override
+  String mv_summary_mins_done(String minutes) {
+    return '$minutes دقیقه تمرین ثبت شد';
+  }
+
+  @override
+  String get mv_summary_effort_question => 'میزان تلاش این جلسه چطور بود؟';
+
+  @override
+  String get mv_summary_effort_easy => 'راحت و آسان';
+
+  @override
+  String get mv_summary_effort_good => 'خوب و متناسب';
+
+  @override
+  String get mv_summary_effort_hard => 'سخت و چالشی';
+
+  @override
+  String get mv_summary_fine_tune_rpe => 'دقیق‌ترش کنم (RPE)';
+
+  @override
+  String get mv_summary_free_note_label => 'یادداشت آزاد اختیاری';
+
+  @override
+  String get mv_summary_free_note_hint =>
+      'مثلاً هوا عالی بود، شیب تند بود، یا حس پیشرفت داشتم...';
+
+  @override
+  String get mv_summary_new_pr_title => 'رکورد شخصی جدید (PR)! 🎉';
+
+  @override
+  String mv_summary_new_pr_desc(String exercise, String record) {
+    return 'در حرکت $exercise به رکورد $record رسیدی.';
+  }
+
+  @override
+  String mv_summary_equiv_mins_added(String minutes) {
+    return '+$minutes دقیقه فعالیت معادل به این هفته اضافه شد';
+  }
+
+  @override
+  String get mv_summary_goal_achieved =>
+      'هدف هفتگی ۱۵۰ دقیقه با موفقیت کامل شد! 🎯';
+
+  @override
+  String mv_summary_mins_remaining_to_goal(String minutes) {
+    return '$minutes دقیقه تا دستیابی به هدف هفتگی مانده';
+  }
+
+  @override
+  String get mv_summary_save_session => 'ثبت جلسه و ذخیره';
+
+  @override
+  String mv_summary_error_save(String error) {
+    return 'خطا در ذخیره جلسه: $error';
+  }
+
+  @override
+  String get mv_stat_distance => 'مسافت';
+
+  @override
+  String get mv_stat_elevation => 'ارتفاع صعود';
+
+  @override
+  String get mv_stat_pack_weight => 'وزن کوله';
+
+  @override
+  String get mv_stat_tempo => 'تمپو';
+
+  @override
+  String get mv_stat_laps => 'تعداد دور';
+
+  @override
+  String get mv_stat_duration => 'مدت‌زمان';
+
+  @override
+  String get mv_stat_match_duration => 'مدت مسابقه';
+
+  @override
+  String get mv_stat_session_load => 'بار جلسه';
+
+  @override
+  String get mv_stat_logged_sets => 'ست‌های ثبت‌شده';
+
+  @override
+  String get mv_unit_km => 'کیلومتر';
+
+  @override
+  String get mv_unit_m => 'متر';
+
+  @override
+  String get mv_unit_kg => 'کیلوگرم';
+
+  @override
+  String get mv_unit_laps => 'دور';
+
+  @override
+  String get mv_unit_min => 'دقیقه';
+
+  @override
+  String get mv_unit_set => 'ست';
+
+  @override
+  String get mv_unit_pace => 'دق/کم';
+
+  @override
+  String get mv_template_distance_title => 'جلسه مسافتی';
+
+  @override
+  String get mv_template_distance_adjust => 'تنظیم مسافت';
+
+  @override
+  String mv_template_rpe_label(String rpe) {
+    return 'میزان تلاش (RPE: $rpe)';
+  }
+
+  @override
+  String get mv_template_finish => 'پایان جلسه';
+
+  @override
+  String get mv_template_laps_title => 'جلسه دورمحور';
+
+  @override
+  String get mv_template_laps_recorded => 'دور ثبت‌شده';
+
+  @override
+  String get mv_template_plus_1_lap => '+۱ دور ثبت شد';
+
+  @override
+  String get mv_template_match_title => 'مسابقه و بازی';
+
+  @override
+  String get mv_template_half_1 => 'نیمه اول / ست اول';
+
+  @override
+  String get mv_template_half_2 => 'نیمه دوم / ست دوم';
+
+  @override
+  String get mv_template_start_half_2 => 'شروع نیمه دوم';
+
+  @override
+  String get mv_template_team_us => 'ما';
+
+  @override
+  String get mv_template_team_them => 'حریف';
+
+  @override
+  String get mv_template_match_note_label =>
+      'یادداشت مسابقه (گل‌ها، کارت‌ها، حریف...)';
+
+  @override
+  String get mv_template_finish_match => 'پایان مسابقه';
+
+  @override
+  String get mv_template_route_title => 'جلسه مسیر و کوه';
+
+  @override
+  String get mv_template_route_label => 'مسیر';
+
+  @override
+  String get mv_template_route_free => 'مسیر آزاد';
+
+  @override
+  String get mv_template_route_tochal => 'توچال - شیرپلا';
+
+  @override
+  String get mv_template_route_darakeh => 'درکه - پلنگ‌چال';
+
+  @override
+  String get mv_template_timed_title => 'جلسه زمانی';
+
+  @override
+  String get mv_template_phase_warmup => 'گرم کردن';
+
+  @override
+  String get mv_template_phase_main => 'تمرین اصلی';
+
+  @override
+  String get mv_template_phase_cooldown => 'سرد کردن';
+
+  @override
+  String get mv_commitment_flexible_title => 'شناوری هوشمند روز';
+
+  @override
+  String get mv_commitment_flexible_subtitle =>
+      'در صورت خستگی یا فشردگی، امکان جابجایی روز وجود داشته باشد';
+
+  @override
+  String get mv_commitment_select_kind_error =>
+      'لطفاً نوع ورزش را انتخاب کنید.';
+
+  @override
+  String get mv_action_save => 'ذخیره';
+
+  @override
+  String get mv_action_more => 'بیشتر...';
+
+  @override
+  String get mv_action_none => 'بدون';
+
+  @override
+  String get mv_action_weekly => 'هفتگی';
+
+  @override
+  String get mv_action_biweekly => 'دوهفته‌یک‌بار';
+
+  @override
+  String get mv_action_once => 'یک‌بار';
+
+  @override
+  String get mv_action_30_min => '۳۰ دقیقه';
+
+  @override
+  String get mv_action_2_hours => '۲ ساعت';
+
+  @override
+  String get mv_action_1_day => '۱ روز';
+
+  @override
+  String get mv_substitute_title => 'جایگزینی حرکت';
+
+  @override
+  String mv_substitute_reason_prompt(String exercise) {
+    return 'علت جایگزینی «$exercise» را مشخص کن.';
+  }
+
+  @override
+  String get mv_substitute_too_hard => 'سخت است';
+
+  @override
+  String get mv_substitute_pain => 'احساس درد یا ناراحتی';
+
+  @override
+  String get mv_substitute_no_equipment => 'وسیله ندارم';
+
+  @override
+  String get mv_substitute_noise => 'سروصدا دارد';
+
+  @override
+  String get mv_substitute_suggestions => 'حرکات پیشنهادی جایگزین';
+
+  @override
+  String get mv_substitute_empty => 'حرکت جایگزین دیگری با این شرایط یافت نشد.';
+
+  @override
+  String get mv_substitute_select => 'انتخاب';
+
+  @override
+  String get mv_checkin_title => 'آمادگی امروزت چطوره؟';
+
+  @override
+  String get mv_checkin_subtitle =>
+      'با یک لمس، برنامهٔ امروز متناسب با انرژی بدنت تنظیم می‌شود.';
+
+  @override
+  String get mv_checkin_great_title => 'عالی و پرانرژی';
+
+  @override
+  String get mv_checkin_great_desc => 'آماده برای جلسهٔ کامل';
+
+  @override
+  String get mv_checkin_good_title => 'خوب و معمولی';
+
+  @override
+  String get mv_checkin_good_desc => 'انرژی متناسب';
+
+  @override
+  String get mv_checkin_tired_title => 'خسته یا کوفته';
+
+  @override
+  String get mv_checkin_tired_desc => 'پیشنهاد جلسه سبک';
+
+  @override
+  String get mv_checkin_close_details => 'بستن جزئیات دقیق‌تر';
+
+  @override
+  String get mv_checkin_open_details => 'ثبت دقیق‌تر (درد، کوفتگی و خستگی)...';
+
+  @override
+  String get mv_checkin_energy_label => 'سطح انرژی (۱ تا ۵):';
+
+  @override
+  String get mv_checkin_soreness_label => 'کوفتگی عضلانی (۱ تا ۵):';
+
+  @override
+  String get mv_checkin_fatigue_label => 'خستگی عمومی (۱ تا ۵):';
+
+  @override
+  String get mv_checkin_pain_label => 'میزان درد موضعی (۰ تا ۱۰):';
+
+  @override
+  String get mv_checkin_submit_details => 'ثبت جزئیات دقیق';
+
+  @override
+  String get mv_kind_picker_subtitle =>
+      'از میان بیش از ۴۰ نوع فعالیت ورزشی و حرکتی';
+
+  @override
+  String get mv_kind_picker_tab_all => 'همه';
+
+  @override
+  String get mv_kind_picker_outdoor => 'فضای باز 🌿';
+
+  @override
+  String get mv_kind_picker_hall => 'نیازمند سالن 🏟';
+
+  @override
+  String mv_kind_picker_impact(String impact) {
+    return 'ضربه: $impact/3';
+  }
+
+  @override
+  String mv_kind_picker_unit(String unit) {
+    return 'واحد: $unit';
+  }
+
+  @override
+  String get mv_kind_picker_create_new => 'تعریف ورزش یا فعالیت جدید';
+
+  @override
+  String get mv_day_plan_type => 'نوع برنامه';
+
+  @override
+  String get mv_day_plan_kind_select => 'نوع ورزش / فعالیت';
+
+  @override
+  String get mv_day_plan_kind_picker_prompt => 'انتخاب نوع حرکت...';
+
+  @override
+  String mv_day_plan_met_factor(String met) {
+    return 'ضریب MET: $met';
+  }
+
+  @override
+  String get mv_day_plan_change => 'تغییر';
+
+  @override
+  String mv_day_plan_custom_header(String title) {
+    return 'ورزش تخصصی $title';
+  }
+
+  @override
+  String mv_day_plan_custom_desc(String met) {
+    return 'ورزش توپی/تخصصی — کالری‌سوزی و ردیابی زمان جلسه بر اساس ضریب مت ($met MET)';
+  }
+
+  @override
+  String get mv_day_plan_target_minutes => 'مدت هدف (دقیقه)';
+
+  @override
+  String get mv_day_plan_start_time => 'ساعت شروع (اختیاری)';
+
+  @override
+  String get mv_day_plan_not_set => 'مشخص نشده';
+
+  @override
+  String get mv_day_plan_venue => 'مکان یا سالن (اختیاری)';
+
+  @override
+  String get mv_day_plan_venue_hint => 'مثلاً سالن شهدای غواص، زمین چمن آزادی';
+
+  @override
+  String get mv_day_plan_intensity => 'شدت تمرین';
+
+  @override
+  String get mv_day_plan_focus => 'تمرکز عضلانی';
+
+  @override
+  String get mv_day_plan_repeat_weekly => 'هر هفته تکرار شود';
+
+  @override
+  String get mv_day_plan_repeat_weekly_desc =>
+      'این فعالیت در هفته‌های بعد در همین روز قرار می‌گیرد';
+
+  @override
+  String get mv_day_plan_custom_title => 'عنوان دلخواه (اختیاری)';
+
+  @override
+  String get mv_day_plan_save => 'ثبت و ذخیره برنامه';
+
+  @override
+  String get mv_plan_rest => 'استراحت';
+
+  @override
+  String get mv_plan_strength => 'تمرین قدرتی';
+
+  @override
+  String get mv_commitment_select_kind => 'لطفاً نوع ورزش را انتخاب کنید.';
+
+  @override
+  String get mv_commitment_pick_more => 'بیشتر...';
+
+  @override
+  String get mv_commitment_recurrence_weekly => 'هفتگی';
+
+  @override
+  String get mv_commitment_recurrence_biweekly => 'دوهفته‌یک‌بار';
+
+  @override
+  String get mv_commitment_recurrence_once => 'یک‌بار';
+
+  @override
+  String get mv_commitment_reminder_none => 'بدون';
+
+  @override
+  String get mv_commitment_reminder_30m => '۳۰ دقیقه';
+
+  @override
+  String get mv_commitment_reminder_2h => '۲ ساعت';
+
+  @override
+  String get mv_commitment_reminder_1d => '۱ روز';
+
+  @override
+  String get mv_commitment_smart_flexibility => 'شناوری هوشمند روز';
+
+  @override
+  String get mv_commitment_smart_flexibility_desc =>
+      'در صورت خستگی یا فشردگی، امکان جابجایی روز وجود داشته باشد';
+
+  @override
+  String get mv_custom_kind_metric_duration => 'فقط زمان (دقیقه)';
+
+  @override
+  String get mv_custom_kind_metric_distance => 'مسافت (کیلومتر)';
+
+  @override
+  String get mv_custom_kind_metric_sets => 'ست و تکرار';
+
+  @override
+  String get mv_custom_kind_metric_laps => 'دور / طول';
+
+  @override
+  String get mv_custom_kind_name_error => 'لطفاً نام ورزش را وارد کنید';
+
+  @override
+  String mv_custom_kind_save_error(String error) {
+    return 'خطا در ذخیره‌سازی: $error';
+  }
+
+  @override
+  String get mv_custom_kind_sheet_title => 'ورزش سفارشی جدید';
+
+  @override
+  String get mv_custom_kind_sheet_subtitle =>
+      'ورزش یا فعالیت دلخواهت را به کتابخانه اضافه کن';
+
+  @override
+  String get mv_custom_kind_name_label => 'نام ورزش یا فعالیت';
+
+  @override
+  String get mv_custom_kind_name_hint => 'مثلاً پدل، اسکواش، تیراندازی...';
+
+  @override
+  String get mv_custom_kind_emoji_label => 'انتخاب نماد (ایموجی)';
+
+  @override
+  String get mv_custom_kind_family_label => 'دسته‌بندی (خانواده)';
+
+  @override
+  String mv_custom_kind_met_label(String met) {
+    return 'شدت انرژی متابولیک (MET): $met';
+  }
+
+  @override
+  String get mv_custom_kind_metric_label => 'متریک ثبت اصلی';
+
+  @override
+  String get mv_custom_kind_venue_switch => 'نیاز به سالن یا زمین اختصاصی دارد';
+
+  @override
+  String get mv_custom_kind_outdoor_switch => 'در فضای باز انجام می‌شود';
+
+  @override
+  String get mv_custom_kind_submit_btn => 'افزودن به ورزش‌ها';
+
+  @override
+  String get mv_pr_title => 'رکوردهای شخصی';
+
+  @override
+  String get mv_pr_empty_desc =>
+      'هنوز رکوردی ثبت نشده است. با اتمام جلسات تمرین، رکوردهای جدید شما در اینجا ثبت می‌شوند.';
+
+  @override
+  String get mv_pr_by_sport => 'رکوردهای شخصی به تفکیک ورزش';
+
+  @override
+  String get mv_campaign_active_header => 'دورهٔ هدف‌دار فعال';
+
+  @override
+  String mv_campaign_pack_weight_label(String weight) {
+    return 'وزن کوله‌پشتی هدف این هفته: $weight کیلوگرم';
+  }
+
+  @override
+  String get mv_campaign_inactive_desc =>
+      'برنامه‌ریزی معکوس و تمرین برای رویداد ورزشی (کوهنوردی، پیمایش و ...)';
+
+  @override
+  String get mv_streak_continuous_weeks => 'هفته‌های فعال پیوسته';
+
+  @override
+  String mv_streak_weeks_count(String count) {
+    return '$count هفته';
+  }
+
+  @override
+  String get mv_progress_insights => 'بینش‌های پیشرفت';
+
+  @override
+  String get mv_campaign_target_sport => 'نوع ورزش هدف:';
+
+  @override
+  String mv_campaign_hiking_title(String code) {
+    return 'کوهنوردی و پیمایش ($code)';
+  }
+
+  @override
+  String mv_campaign_weeks_later(String weeks, String date) {
+    return '$weeks هفته بعد ($date)';
+  }
+
+  @override
+  String get mv_campaign_body_weight => 'وزن بدن (کیلوگرم):';
+
+  @override
+  String get mv_campaign_submit => 'ثبت دوره';
+
+  @override
+  String mv_commitment_recurrence_summary(
+    String day,
+    String time,
+    String duration,
+  ) {
+    return 'هر $day ساعت $time • $duration دقیقه';
+  }
+
+  @override
+  String get mv_day_detail_edit_tooltip => 'ویرایش برنامه';
+
+  @override
+  String mv_day_detail_session_exercises(int count) {
+    return 'حرکات این جلسه ($count حرکت)';
+  }
+
+  @override
+  String mv_day_detail_reps_count(int count) {
+    return '$count تکرار';
+  }
+
+  @override
+  String get mv_day_detail_timed => 'زمان‌دار';
+
+  @override
+  String get mv_day_detail_start_session => 'شروع جلسهٔ تمرینی';
+
+  @override
+  String get mv_library_tab_programs => 'برنامه‌ها';
+
+  @override
+  String get mv_library_search_exercises_hint =>
+      'جستجوی حرکت (مثلاً شنا، اسکات، پلانک)...';
+
+  @override
+  String get mv_library_filter_apartment => 'بی‌صدا (آپارتمانی)';
+
+  @override
+  String get mv_library_filter_no_equipment => 'بدون وسیله';
+
+  @override
+  String get mv_library_exercises_empty_title => 'حرکتی پیدا نشد';
+
+  @override
+  String get mv_library_exercises_empty_desc =>
+      'فیلترها را تغییر بده یا عبارت دیگری را جستجو کن.';
+
+  @override
+  String mv_library_exercise_skill(String skill) {
+    return 'مهارت: سطح $skill';
+  }
+
+  @override
+  String get mv_library_exercise_noisy => 'پرصدا';
+
+  @override
+  String get mv_library_exercise_quiet => 'بی‌صدا / آپارتمانی';
+
+  @override
+  String get mv_library_exercise_low_impact => 'کم‌ضربه';
+
+  @override
+  String get mv_library_exercise_start_now => 'شروع آنی این حرکت';
+
+  @override
+  String get mv_library_programs_title => 'برنامه‌های تمرینی ۴ هفته‌ای';
+
+  @override
+  String get mv_library_programs_desc =>
+      'برنامه‌ها بر اساس سطح و اهداف شما از تب هفته قابل تنظیم و بازتولید هستند.';
+
+  @override
+  String get mv_library_search_kinds_hint =>
+      'جستجوی ورزش و فعالیت (مثلاً فوتبال، شنا، پدل)...';
+
+  @override
+  String get mv_library_create_custom_kind => 'ورزش سفارشی جدید';
+
+  @override
+  String get mv_library_kinds_empty_title => 'ورزشی پیدا نشد';
+
+  @override
+  String get mv_library_kinds_empty_desc =>
+      'می‌توانی ورزش جدیدی به لیست اضافه کنی.';
+
+  @override
+  String get mv_library_custom_tag => 'سفارشی';
+
+  @override
+  String mv_library_kind_intensity(String family, String met) {
+    return '$family · شدت انرژی: $met MET';
+  }
+
+  @override
+  String get mv_onboarding_title => 'برنامهٔ ورزشی اختصاصی تو';
+
+  @override
+  String get mv_onboarding_subtitle =>
+      'با پاسخ به چند سؤال کوتاه، برنامهٔ هفته‌ات را بساز.';
+
+  @override
+  String get mv_onboarding_q1_title => '۱. چند روز در هفته می‌خواهی ورزش کنی؟';
+
+  @override
+  String mv_onboarding_days_count(String count) {
+    return '$count روز';
+  }
+
+  @override
+  String get mv_onboarding_q2_title => '۲. چقدر زمان داری در هر جلسه؟';
+
+  @override
+  String get mv_onboarding_dur_short => '۱۵ دقیقه (کوتاه و سریع)';
+
+  @override
+  String get mv_onboarding_dur_medium => '۳۰ دقیقه (متعادل و ایده‌آل)';
+
+  @override
+  String get mv_onboarding_dur_long => '۴۵ دقیقه یا بیشتر';
+
+  @override
+  String get mv_onboarding_q3_title => '۳. محیط تمرینت کجاست؟';
+
+  @override
+  String get mv_onboarding_loc_home => 'خانه (بدون وسیله)';
+
+  @override
+  String get mv_onboarding_loc_gym => 'باشگاه ورزشی';
+
+  @override
+  String get mv_onboarding_loc_outdoor => 'فضای باز / پارک';
+
+  @override
+  String get mv_onboarding_q4_title =>
+      '۴. ورزش ثابتی داری که هفته‌ای انجام بدهی؟';
+
+  @override
+  String get mv_onboarding_q4_subtitle =>
+      'مثل فوتسال پنجشنبه‌ها یا استخر جمعه‌ها (اختیاری)';
+
+  @override
+  String get mv_onboarding_anchor_yes => 'بله، اضافه کنم';
+
+  @override
+  String get mv_onboarding_anchor_no => 'فعلاً نه';
+
+  @override
+  String get mv_onboarding_anchor_add_another => 'افزودن ورزش ثابت دیگر';
+
+  @override
+  String get mv_onboarding_submit => 'شروع برنامه و ورود به ریتمو';
+
+  @override
+  String mv_onboarding_anchor_sheet_title(String title, String emoji) {
+    return 'تنظیم ورزش ثابت: $title $emoji';
+  }
+
+  @override
+  String get mv_onboarding_anchor_sheet_day => 'روز هفته';
+
+  @override
+  String get mv_onboarding_anchor_sheet_time => 'ساعت شروع';
+
+  @override
+  String get mv_onboarding_anchor_sheet_duration => 'مدت زمان (دقیقه)';
+
+  @override
+  String get mv_onboarding_anchor_sheet_confirm => 'تأیید و افزودن';
+
+  @override
+  String get mv_weekly_health_title => 'سلامت این هفته';
+
+  @override
+  String get mv_weekly_health_empty =>
+      'هنوز در این هفته فعالیتی ثبت نشده است. با ثبت اولین جلسه، پیشرفت نمایش داده می‌شود.';
+
+  @override
+  String get mv_weekly_health_who => 'سلامت این هفته (توصیه بهداشت جهانی)';
+
+  @override
+  String get mv_weekly_health_moderate => 'فعالیت معادل متوسط';
+
+  @override
+  String mv_weekly_health_min_progress(String current, String target) {
+    return '$current / $target دقیقه';
+  }
+
+  @override
+  String get mv_weekly_health_strength => 'روزهای قدرتی و مقاومتی';
+
+  @override
+  String mv_weekly_health_day_progress(String current, String target) {
+    return '$current / $target روز';
+  }
+
+  @override
+  String get mv_training_load_title => 'بار تمرینی و تعادل فشار';
+
+  @override
+  String get mv_training_load_insufficient =>
+      'حداقل ۱۴ روز سابقه و ثبت چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.';
+
+  @override
+  String get mv_training_load_card_title => 'بار تمرینی (۷ روز به ۲۸ روز)';
+
+  @override
+  String get mv_training_load_acute => 'بار حاد (۷ روز)';
+
+  @override
+  String get mv_training_load_chronic => 'میانگین هفتگی ۲۸ روز';
+
+  @override
+  String mv_training_load_summary(String ratio, String band) {
+    return 'به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما $ratio بوده و در محدودهٔ $band قرار دارد.';
+  }
+
+  @override
+  String get mv_kind_distribution_title => 'توزیع ورزش‌ها در این ماه';
+
+  @override
+  String get mv_kind_distribution_insufficient =>
+      'برای نمایش سهم ورزش‌ها، حداقل به ثبت یک جلسه تمرین در ماه جاری نیاز است.';
+
+  @override
+  String get mv_kind_distribution_card_title => 'توزیع ورزش‌ها در ماه جاری';
+
+  @override
+  String mv_kind_distribution_progress(String minutes, String percent) {
+    return '$minutes دقیقه ($percent٪)';
+  }
+
+  @override
+  String mv_kind_distribution_focus(String sport) {
+    return 'بیشترین تمرکز فعالیت شما بر $sport بوده است.';
+  }
+
+  @override
+  String get mv_cant_today_title => 'برنامه برای شرایط امروزت';
+
+  @override
+  String get mv_cant_today_subtitle =>
+      'حتی کوچک‌ترین حرکت هم برای حفظ پیوستگی حساب می‌شود.';
+
+  @override
+  String get mv_cant_today_option_cancel_anchor_title => 'این هفته لغو شد';
+
+  @override
+  String get mv_cant_today_option_cancel_anchor_desc =>
+      'لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.';
+
+  @override
+  String get mv_cant_today_option_minimal_title => 'حداقل مؤثر (۱۰ دقیقه سبک)';
+
+  @override
+  String get mv_cant_today_option_minimal_desc =>
+      'فقط چند حرکت ساده برای حفظ زنجیره و جریان خون';
+
+  @override
+  String get mv_cant_today_option_stretch_title =>
+      'تبدیل به ۵ دقیقه کشش و آرامش';
+
+  @override
+  String get mv_cant_today_option_stretch_desc =>
+      'کشش سبک بدون عرق‌ریزی برای رفع خستگی';
+
+  @override
+  String get mv_cant_today_option_tomorrow_title => 'انتقال جلسه به فردا';
+
+  @override
+  String get mv_cant_today_option_tomorrow_desc =>
+      'امروز استراحت کن و جلسه را فردا انجام بده';
+
+  @override
+  String get mv_cant_today_option_rest_title => 'استراحت کامل برای امروز';
+
+  @override
+  String get mv_cant_today_option_rest_desc =>
+      'رد کردن جلسهٔ امروز بدون احساس گناه';
+
+  @override
+  String get mv_cant_today_recommended => 'پیشنهادی';
+
+  @override
+  String get cancel => 'انصراف';
+
+  @override
+  String get mv_coach_title => 'مربی هوشمند ریتمو';
+
+  @override
+  String get mv_coach_subtitle => 'راهنما و همراه تمرینی شما';
+
+  @override
+  String get mv_coach_preset_light => 'چطور تمرین امروز را سبک‌تر کنم؟';
+
+  @override
+  String get mv_coach_preset_noise => 'حرکات پرصدا برای آپارتمان؟';
+
+  @override
+  String get mv_coach_preset_stretch => 'برای گرفتگی عضلات چه حرکتی خوبه؟';
+
+  @override
+  String get mv_coach_preset_general => 'چطور انگیزه‌ام را حفظ کنم؟';
+
+  @override
+  String get mv_coach_reply_light =>
+      'می‌توانید از گزینه حداقل مؤثر ۱۰ دقیقه‌ای استفاده کنید تا بدون خستگی، زنجیره حفظ شود.';
+
+  @override
+  String get mv_coach_reply_noise =>
+      'در تنظیمات، حالت همسایه‌پسند را فعال کنید تا حرکات پرشی و پرصدا خودکار فیلتر شوند.';
+
+  @override
+  String get mv_coach_reply_stretch =>
+      'کشش ۵ دقیقه‌ای همسترینگ و کمر همراه با نوشیدن آب به تخلیه اسید لاکتیک کمک می‌کند.';
+
+  @override
+  String get mv_coach_reply_general =>
+      'مهم‌ترین اصل در تناسب اندام استمرار است؛ حتی ۵ دقیقه حرکت سبک بهتر از صفر است.';
+
+  @override
+  String get mv_coach_input_hint => 'از مربی بپرس...';
+
+  @override
+  String mv_at_time(String time) {
+    return 'ساعت $time';
   }
 }

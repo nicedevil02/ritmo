@@ -1348,6 +1348,7 @@ class DashboardController {
     final sessionSource = switch (realmState) {
       ManualRealmState() => ZoneSource.manual,
       ScheduledRealmState s => s.isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+      TriggeredRealmState() => ZoneSource.trigger,
       FreeRealmState() => ZoneSource.schedule,
       RealmErrorState() => ZoneSource.schedule,
     };
@@ -1368,6 +1369,10 @@ class DashboardController {
           ...s.realm.toMap(),
           'startTime': s.schedule.startTime,
           'endTime': s.schedule.endTime,
+        },
+      TriggeredRealmState t => {
+          ...t.realm.toMap(),
+          'isTriggered': true,
         },
       FreeRealmState() => null,
       RealmErrorState() => null,

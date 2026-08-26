@@ -1,6 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:ritmo/core/database/database_helper.dart';
+
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 
 /// Central repository for the Worship domain.
@@ -11,13 +13,20 @@ import 'package:ritmo/core/services/prayer_time_provider.dart';
 /// prayer times independently.
 class WorshipRepository {
   WorshipRepository._() {
-    RitmoEventBus().onEvents.listen((event) {
+    _eventSub = RitmoEventBus().onEvents.listen((event) {
       if (event.type == 'WorshipPracticeChanged' || event.type == 'WorshipUpdated') {
         invalidateCache();
       }
     });
   }
   static final WorshipRepository instance = WorshipRepository._();
+
+  StreamSubscription<RitmoEvent>? _eventSub;
+
+  void dispose() {
+    _eventSub?.cancel();
+    _eventSub = null;
+  }
 
   final Map<String, Map<String, String>> _prayerTimesCache = {};
   List<Map<String, dynamic>>? _cachedPrayerPractices;
@@ -37,12 +46,14 @@ class WorshipRepository {
     final settings = settingsMap ??
         {
           for (final row in await db.query('app_settings'))
-            row['key']! as String: row['value']! as String
+            (row['key'] as String? ?? ''): (row['value'] as String? ?? '')
         };
 
     final cityId = settings['prayer_city_id'] ?? settings['home_city_id'] ?? 'TEHRAN_TEHRAN';
+    final calcMethod = settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final ihtiyat = settings['ihtiyat_minutes'] ?? '0';
     final dateStr = date.toIso8601String().substring(0, 10);
-    final cacheKey = '$cityId|$dateStr';
+    final cacheKey = '$cityId|$dateStr|$calcMethod|$ihtiyat';
 
     if (_prayerTimesCache.containsKey(cacheKey)) {
       return _prayerTimesCache[cacheKey]!;
@@ -58,8 +69,8 @@ class WorshipRepository {
       }
       _prayerTimesCache[cacheKey] = times;
       return times;
-    } catch (e) {
-      debugPrint('[WorshipRepository] Failed to calculate prayer times: $e');
+    } catch (e, st) {
+      RitmoLogger.error('WorshipRepository.getPrayerTimesForDate failed: $e', error: e, stack: st);
       return const {};
     }
   }

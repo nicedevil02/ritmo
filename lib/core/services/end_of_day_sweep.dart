@@ -183,7 +183,7 @@ class EndOfDaySweep {
 
     for (final row in uncompletedRows) {
       final practice = WorshipPractice.fromMap(row);
-      final recordId = 'wc_missed_${practice.id}_$yesterdayStr';
+      final recordId = 'wc_${practice.id}_$yesterdayStr';
 
       final resultType = WorshipEngine.resolveMissResult(
         practice: practice,
@@ -211,10 +211,10 @@ class EndOfDaySweep {
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
         if (addQada) {
-          final debtId = 'debt_${practice.practiceType}_${practice.id}';
           final debtType = practice.practiceType == 'FASTING'
-              ? 'FAST'
-              : 'PRAYER';
+              ? 'FASTING'
+              : (practice.practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
+          final debtId = 'debt_${debtType}_${practice.id}';
           final debtTitle = practice.practiceType == 'FASTING'
               ? 'روزه قضا'
               : practice.title;
@@ -230,6 +230,7 @@ class EndOfDaySweep {
               UPDATE worship_debts
               SET totalCount = totalCount + 1,
                   remainingCount = remainingCount + 1,
+                  isArchived = 0,
                   updatedAt = ?
               WHERE id = ?
             ''',
@@ -255,6 +256,7 @@ class EndOfDaySweep {
         RitmoLog.error('EndOfDaySweep', 'Worship sweep error for ${practice.id}', e, st);
       }
     }
+
 
     // Reset dailyDone for active practices
     await txn.update('worship_practices', {
@@ -314,15 +316,14 @@ class EndOfDaySweep {
             'note': 'مختومه به دلیل پایان روز',
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-          if (activePlanId != null) {
-            await txn.update(
-              'ss_session_prescription',
-              {'status': 'DONE', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
-              where: 'id = ?',
-              whereArgs: [activePlanId],
-            );
-          }
           await txn.update(
+            'ss_session_prescription',
+            {'status': 'DONE', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+            where: 'id = ?',
+            whereArgs: [activePlanId],
+          );
+          await txn.update(
+
             'movement_sessions',
             {'status': 'COMPLETED', 'endedAt': finishedAt, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
             where: 'id = ?',

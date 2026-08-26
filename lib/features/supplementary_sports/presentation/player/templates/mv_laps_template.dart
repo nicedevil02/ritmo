@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// قالب پلیر برای ورزش‌های دور‌محور (شنا، دو پیست، پله‌نوردی) (S4-T3)
 class MvLapsTemplate extends StatefulWidget {
@@ -61,6 +62,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
     final textTheme = Theme.of(context).textTheme;
     final colors = context.ritmoColors;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -71,7 +73,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                widget.kind?.titleFa ?? 'جلسه دورمحور',
+                widget.kind?.titleFa ?? (l10n?.mv_template_laps_title ?? 'Lap Session'),
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: metrics.spaceSm),
@@ -81,7 +83,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                 style: textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               Text(
-                'دور ثبت‌شده',
+                l10n?.mv_template_laps_recorded ?? 'Laps recorded',
                 style: textTheme.titleMedium?.copyWith(color: colors.textSecondary),
               ),
               SizedBox(height: metrics.spaceXs),
@@ -108,7 +110,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                   ),
                   icon: Icon(Icons.add_rounded, size: metrics.iconLg),
                   label: Text(
-                    '+۱ دور ثبت شد',
+                    l10n?.mv_template_plus_1_lap ?? '+1 Lap',
                     style: textTheme.titleMedium?.copyWith(
                       color: colors.onPrimary,
                       fontWeight: FontWeight.bold,
@@ -122,7 +124,10 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
               ),
               SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Text(
+                l10n?.mv_template_rpe_label(toPersianDigits(_rpe.toString())) ?? 'Effort (RPE: $_rpe)',
+                style: textTheme.bodyMedium,
+              ),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -155,7 +160,7 @@ class _MvLapsTemplateState extends State<MvLapsTemplate> {
                       ),
                     ),
                     icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
-                    label: const Text('پایان جلسه'),
+                    label: Text(l10n?.mv_template_finish ?? 'Finish Session'),
                     onPressed: () {
                       RitmoHaptics.success();
                       widget.onFinish?.call(_seconds, _laps, _rpe);

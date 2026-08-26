@@ -5,7 +5,17 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/mv_kind_re
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_day_plan_sheet.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+Widget createTestApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
+    home: Scaffold(body: child),
+  );
+}
 
 void main() {
   late Database db;
@@ -47,22 +57,20 @@ void main() {
         MvSlot? savedSlot;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => ElevatedButton(
-                  onPressed: () {
-                    MvDayPlanSheet.show(
-                      context: context,
-                      slot: initialSlot,
-                      kindUseCase: kindUseCase,
-                      onSave: (slot) {
-                        savedSlot = slot;
-                      },
-                    );
-                  },
-                  child: const Text('Open Day Plan'),
-                ),
+          createTestApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  MvDayPlanSheet.show(
+                    context: context,
+                    slot: initialSlot,
+                    kindUseCase: kindUseCase,
+                    onSave: (slot) {
+                      savedSlot = slot;
+                    },
+                  );
+                },
+                child: const Text('Open Day Plan'),
               ),
             ),
           ),
@@ -172,20 +180,18 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => ElevatedButton(
-                  onPressed: () {
-                    MvDayPlanSheet.show(
-                      context: context,
-                      slot: initialSlot,
-                      kindUseCase: kindUseCase,
-                      onSave: (_) {},
-                    );
-                  },
-                  child: const Text('Open Day Plan'),
-                ),
+          createTestApp(
+            Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  MvDayPlanSheet.show(
+                    context: context,
+                    slot: initialSlot,
+                    kindUseCase: kindUseCase,
+                    onSave: (_) {},
+                  );
+                },
+                child: const Text('Open Day Plan'),
               ),
             ),
           ),

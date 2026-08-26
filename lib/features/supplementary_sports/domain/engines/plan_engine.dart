@@ -18,6 +18,8 @@ class PlanEngine {
     required MvBudgetSnapshot budget,
     required MvLoadSnapshot? load,
     required MvReadinessTier readiness,
+    List<MvSlot> existingSlots = const [],
+    MvCampaign? activeCampaign,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     final weekDays = MvCalendar.getWeekDays(weekStartSat);
@@ -28,6 +30,8 @@ class PlanEngine {
       commitments: commitments,
       overrides: overrides,
       kinds: kinds,
+      existingSlots: existingSlots,
+      activeCampaign: activeCampaign,
     );
 
     // 2. HARD_LIMITS (S3-T5)
@@ -671,11 +675,13 @@ class PlanEngine {
   }
 
   /// مرحلهٔ ۱: جانمایی لنگرها (S3-T4)
-  List<MvSlot> _placeAnchors({
+  static List<MvSlot> _placeAnchors({
     required DateTime weekStartSat,
     required List<MvCommitment> commitments,
     required List<MvSlotOverride> overrides,
     required Map<String, MvMovementKind> kinds,
+    List<MvSlot> existingSlots = const [],
+    MvCampaign? activeCampaign,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     final placed = <MvSlot>[];
@@ -731,6 +737,20 @@ class PlanEngine {
           updatedAt: now,
         ),
       );
+    }
+
+    // Preserve manual locked slots from existingSlots
+    for (final s in existingSlots) {
+      if (!s.isLocked || s.source == 'ANCHOR') continue;
+      final isOverridden = overrides.any(
+        (o) =>
+            o.dateIso == s.dateIso &&
+            (o.action.toUpperCase() == 'SKIP' ||
+                o.action.toUpperCase() == 'CANCEL'),
+      );
+      if (isOverridden) continue;
+      if (placed.any((p) => p.dateIso == s.dateIso)) continue;
+      placed.add(s);
     }
 
     return placed;

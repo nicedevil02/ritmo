@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/insight_engine.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Interactive Muscle Body Map & Balance Widget (Section 5.3 & N-03).
 class MvBodyMap extends StatelessWidget {
@@ -21,6 +22,7 @@ class MvBodyMap extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final counts = distribution.muscleSessionCounts;
 
@@ -37,7 +39,7 @@ class MvBodyMap extends StatelessWidget {
           Row(
             children: [
               Text(
-                'نقشهٔ عضلانی این هفته',
+                l10n?.mv_body_map_weekly_title ?? 'Muscle Map',
                 style: textTheme.titleMedium?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,

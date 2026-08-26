@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Sheet: "ورزش سفارشی جدید" (S1-T8 & Section 5.9).
@@ -118,25 +119,26 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
     }
   }
 
-  String _formatMetricTitle(MovementMetric metric) {
+  String _formatMetricTitle(MovementMetric metric, AppLocalizations? l10n) {
     switch (metric) {
       case MovementMetric.duration:
-        return 'فقط زمان (دقیقه)';
+        return l10n?.mv_custom_kind_metric_duration ?? 'Duration Only (min)';
       case MovementMetric.distance:
-        return 'مسافت (کیلومتر)';
+        return l10n?.mv_custom_kind_metric_distance ?? 'Distance (km)';
       case MovementMetric.sets:
-        return 'ست و تکرار';
+        return l10n?.mv_custom_kind_metric_sets ?? 'Sets & Reps';
       case MovementMetric.laps:
-        return 'دور / طول';
+        return l10n?.mv_custom_kind_metric_laps ?? 'Laps / Pools';
       default:
         return metric.unitFa;
     }
   }
 
   Future<void> _handleSave() async {
+    final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _errorMessage = 'لطفاً نام ورزش را وارد کنید');
+      setState(() => _errorMessage = l10n?.mv_custom_kind_name_error ?? 'Please enter sport name');
       return;
     }
 
@@ -177,7 +179,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'خطا در ذخیره‌سازی: $e';
+          _errorMessage = l10n?.mv_custom_kind_save_error(e.toString()) ?? 'Save error: $e';
           _isSaving = false;
         });
       }
@@ -189,10 +191,11 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return MvSheetScaffold(
-      title: 'ورزش سفارشی جدید',
-      subtitle: 'ورزش یا فعالیت دلخواهت را به کتابخانه اضافه کن',
+      title: l10n?.mv_custom_kind_sheet_title ?? 'New Custom Sport',
+      subtitle: l10n?.mv_custom_kind_sheet_subtitle ?? 'Add any sport or activity to library',
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +203,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
           children: [
             // ۱. نام فارسی (اجباری)
             Text(
-              'نام ورزش یا فعالیت',
+              l10n?.mv_custom_kind_name_label ?? 'Sport Name',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -211,7 +214,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
               key: const ValueKey('custom_kind_title_field'),
               controller: _titleController,
               decoration: InputDecoration(
-                hintText: 'مثلاً پدل، اسکواش، تیراندازی...',
+                hintText: l10n?.mv_custom_kind_name_hint ?? 'e.g. Squash, Archery...',
                 errorText: _errorMessage,
                 filled: true,
                 fillColor: colors.surface,
@@ -225,7 +228,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
 
             // ۲. انتخاب ایموجی
             Text(
-              'انتخاب نماد (ایموجی)',
+              l10n?.mv_custom_kind_emoji_label ?? 'Choose Icon (Emoji)',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -265,7 +268,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
 
             // ۳. خانواده ورزش
             Text(
-              'دسته‌بندی (خانواده)',
+              l10n?.mv_custom_kind_family_label ?? 'Category (Family)',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -294,7 +297,8 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
 
             // ۴. MET تقریبی
             Text(
-              'شدت انرژی متابولیک (MET): ${toPersianDigits(_baseMet.toStringAsFixed(1))}',
+              l10n?.mv_custom_kind_met_label(toPersianDigits(_baseMet.toStringAsFixed(1))) ??
+                  'MET Factor: ${_baseMet.toStringAsFixed(1)}',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -313,7 +317,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
 
             // ۵. متریک اولیه
             Text(
-              'متریک ثبت اصلی',
+              l10n?.mv_custom_kind_metric_label ?? 'Primary Metric',
               style: textTheme.labelLarge?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -327,7 +331,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
                 final isSel = met == _selectedMetric;
                 return MvChip(
                   key: ValueKey('metric_${met.name}'),
-                  label: _formatMetricTitle(met),
+                  label: _formatMetricTitle(met, l10n),
                   isSelected: isSel,
                   onTap: () => setState(() => _selectedMetric = met),
                 );
@@ -340,7 +344,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
               key: const ValueKey('custom_kind_needs_venue'),
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'نیاز به سالن یا زمین اختصاصی دارد',
+                l10n?.mv_custom_kind_venue_switch ?? 'Requires venue',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -353,7 +357,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
               key: const ValueKey('custom_kind_is_outdoor'),
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'در فضای باز انجام می‌شود',
+                l10n?.mv_custom_kind_outdoor_switch ?? 'Takes place outdoors',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -368,7 +372,7 @@ class _MvCustomKindSheetState extends State<MvCustomKindSheet> {
       ),
       bottomAction: MvPrimaryAction(
         key: const ValueKey('custom_kind_save_action'),
-        label: 'افزودن به ورزش‌ها',
+        label: l10n?.mv_custom_kind_submit_btn ?? 'Add to sports',
         icon: Icons.add_circle_outline_rounded,
         isLoading: _isSaving,
         onPressed: _handleSave,

@@ -112,7 +112,11 @@ class MvTodayTab extends StatelessWidget {
                                 tomorrowSlot.headlineFa,
                                 toPersianDigits(tomorrowSlot.plannedTime),
                               )
-                            : 'یادآوری: فردا ${tomorrowSlot.headlineFa}${tomorrowSlot.plannedTime != null ? ' (ساعت ${toPersianDigits(tomorrowSlot.plannedTime)})' : ''}',
+                            : (l10n?.mv_tomorrow_anchor_notice(
+                                  tomorrowSlot.headlineFa,
+                                  toPersianDigits(tomorrowSlot.plannedTime ?? ''),
+                                ) ??
+                                'Tomorrow: ${tomorrowSlot.headlineFa}'),
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textPrimary,
                           fontWeight: FontWeight.w600,
@@ -167,8 +171,8 @@ class MvTodayTab extends StatelessWidget {
                   onMinimalDose: () {
                     final adapted = todaySlot.copyWith(
                       targetMinutes: 10,
-                      headlineFa: 'حداقل مؤثر ۱۰ دقیقه‌ای',
-                      coachNoteFa: 'جلسهٔ کوتاه و سبک برای حفظ پیوستگی.',
+                      headlineFa: l10n?.mv_cant_today_option_minimal_title ?? 'Minimal Effective Dose',
+                      coachNoteFa: l10n?.mv_cant_today_option_minimal_desc ?? 'Short and light session.',
                     );
                     onSlotUpdated(adapted);
                   },
@@ -187,7 +191,7 @@ class MvTodayTab extends StatelessWidget {
                     final stretch = todaySlot.copyWith(
                       slotType: MvSlotType.mobility,
                       targetMinutes: 10,
-                      headlineFa: 'کشش و آرامش عضلات',
+                      headlineFa: l10n?.mv_cant_today_option_stretch_title ?? 'Stretch & Recovery',
                     );
                     onSlotUpdated(stretch);
                   },

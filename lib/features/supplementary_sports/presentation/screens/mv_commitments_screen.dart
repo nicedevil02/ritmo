@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/l10n/app_localizations.dart';
@@ -93,9 +94,10 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
   }
 
   Future<void> _toggleActive(MvCommitment commitment, bool active) async {
-    await _commitmentUseCase.toggleCommitmentActive(commitment.id!, active);
     if (widget.controller != null) {
-      await widget.controller!.loadAllData();
+      await widget.controller!.toggleCommitmentActive(commitment.id!, active);
+    } else {
+      await _commitmentUseCase.toggleCommitmentActive(commitment.id!, active);
     }
     await _loadData();
   }
@@ -207,7 +209,7 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    c.titleFa ?? 'ورزش',
+                                    c.titleFa ?? l10n.mv_exercise_fallback,
                                     style: textTheme.titleSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
@@ -215,7 +217,11 @@ class _MvCommitmentsScreenState extends State<MvCommitmentsScreen> {
                                   ),
                                   SizedBox(height: metrics.spaceXs),
                                   Text(
-                                    'هر ${_dayLabel(c.dayOfWeekSat0)} ساعت ${c.startTime} • ${c.durationMinutes} دقیقه',
+                                    l10n.mv_commitment_recurrence_summary(
+                                      _dayLabel(c.dayOfWeekSat0),
+                                      toPersianDigits(c.startTime),
+                                      toPersianDigits(c.durationMinutes.toString()),
+                                    ),
                                     style: textTheme.bodySmall?.copyWith(
                                       color: colors.textSecondary,
                                     ),

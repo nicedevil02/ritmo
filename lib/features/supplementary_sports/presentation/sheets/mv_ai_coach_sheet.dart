@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Sheet 6: "مربی هوشمند" (Section 5.9 & 7.10).
@@ -32,13 +33,6 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
   final List<Map<String, String>> _messages = [];
   final _textController = TextEditingController();
 
-  final List<String> _promptPresets = const [
-    'چگونه تمرین امروز را سبک‌تر کنم؟',
-    'حرکات مناسب بدون صدا برای آپارتمان چیه؟',
-    'برای رفع گرفتگی عضلات چه حرکتی خوبه؟',
-    'چطور انگیزهٔ ورزشی‌ام را حفظ کنم؟',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -50,14 +44,14 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
           const MvSlot(
             id: '0',
             dateIso: '',
-            headlineFa: 'ورزش',
+            headlineFa: 'Workout',
             createdAt: 0,
             updatedAt: 0,
           ),
     );
     _messages.add({
       'role': 'assistant',
-      'text': 'سلام! من مربی هوشمند ریتمو هستم. ${initialTip.value.textFa}',
+      'text': initialTip.value.textFa,
     });
   }
 
@@ -69,6 +63,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
 
   void _sendMessage(String query) {
     if (query.trim().isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _messages.add({'role': 'user', 'text': query});
     });
@@ -76,18 +71,28 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
 
     // Instant smart response based on keywords
     String reply;
-    if (query.contains('سبک') || query.contains('خسته')) {
-      reply =
-          'می‌توانی از گزینهٔ «حداقل مؤثر ۱۰ دقیقه‌ای» استفاده کنی تا بدون خستگی، پیوستگی تمرینت حفظ شود.';
-    } else if (query.contains('آپارتمان') || query.contains('صدا')) {
-      reply =
-          'در تنظیمات کلید «حالت همسایه‌پسند» را روشن کن تا تمام حرکات پرشی و پرصدا به‌طور خودکار فیلتر شوند.';
-    } else if (query.contains('گرفتگی') || query.contains('کشش')) {
-      reply =
-          'کشش ۵ دقیقه‌ای عضلات همسترینگ و پشت همراه با نوشیدن آب به کاهش اسید لاکتیک کمک زیادی می‌کند.';
+    final qLower = query.toLowerCase();
+    if (qLower.contains('light') ||
+        qLower.contains('tired') ||
+        qLower.contains('\u0633\u0628\u06a9') ||
+        qLower.contains('\u062e\u0633\u062a\u0647')) {
+      reply = l10n?.mv_coach_reply_light ??
+          'You can use the 10-minute minimum effective dose option to maintain streak without fatigue.';
+    } else if (qLower.contains('apartment') ||
+        qLower.contains('noise') ||
+        qLower.contains('\u0622\u067e\u0627\u0631\u062a\u0645\u0627\u0646') ||
+        qLower.contains('\u0635\u062f\u0627')) {
+      reply = l10n?.mv_coach_reply_noise ??
+          'Turn on Neighbor Friendly mode in settings to automatically filter out noisy and jump movements.';
+    } else if (qLower.contains('stretch') ||
+        qLower.contains('cramp') ||
+        qLower.contains('\u06af\u0631\u0641\u062a\u06af\u06cc') ||
+        qLower.contains('\u06a9\u0634\u0634')) {
+      reply = l10n?.mv_coach_reply_stretch ??
+          'A 5-minute hamstring and back stretch combined with water helps reduce lactic acid.';
     } else {
-      reply =
-          'مهم‌ترین اصل در ورزش پیوستگی است؛ حتی ۵ دقیقه فعالیت سبک بهتر از انجام ندادن است.';
+      reply = l10n?.mv_coach_reply_general ??
+          'The most important principle in fitness is consistency; even 5 minutes of light movement is better than none.';
     }
 
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -104,10 +109,18 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    final promptPresets = [
+      l10n?.mv_coach_preset_light ?? 'How to make today workout lighter?',
+      l10n?.mv_coach_preset_noise ?? 'Noisy movements for apartment?',
+      l10n?.mv_coach_preset_stretch ?? 'What is good for muscle cramps?',
+      l10n?.mv_coach_preset_general ?? 'How to stay motivated?',
+    ];
 
     return MvSheetScaffold(
-      title: 'مربی هوشمند ریتمو',
-      subtitle: 'راهنما و همراه تمرینی تو (قواعد ایمنی و علمی)',
+      title: l10n?.mv_coach_title ?? 'Ritmo AI Coach',
+      subtitle: l10n?.mv_coach_subtitle ?? 'Your training guide and workout companion',
       headerActions: [
         Container(
           padding: EdgeInsets.symmetric(
@@ -180,7 +193,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: _promptPresets.map((p) {
+                children: promptPresets.map((p) {
                   return Padding(
                     padding: EdgeInsets.only(left: metrics.spaceSm),
                     child: ActionChip(
@@ -200,7 +213,7 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                   child: TextField(
                     controller: _textController,
                     decoration: InputDecoration(
-                      hintText: 'سؤالت از مربی...',
+                      hintText: l10n?.mv_coach_input_hint ?? 'Ask coach...',
                       filled: true,
                       fillColor: colors.surface,
                       border: OutlineInputBorder(
@@ -219,14 +232,13 @@ class _MvAiCoachSheetState extends State<MvAiCoachSheet> {
                 ),
                 SizedBox(width: metrics.spaceSm),
                 IconButton(
-                  style: IconButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    minimumSize: Size(metrics.touchTarget, metrics.touchTarget),
-                  ),
                   icon: Icon(
                     Icons.send_rounded,
                     color: colors.onPrimary,
                     size: metrics.iconMd,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: colors.primary,
                   ),
                   onPressed: () => _sendMessage(_textController.text),
                 ),

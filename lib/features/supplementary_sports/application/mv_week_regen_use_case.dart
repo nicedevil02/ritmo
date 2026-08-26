@@ -29,6 +29,15 @@ class MvWeekRegenUseCase {
     required DateTime weekSaturday,
     List<MvSlot> existingSlots = const [],
     List<MvCommitment>? commitments,
+    List<MvSlotOverride> overrides = const [],
+    MvBudgetSnapshot budget = const MvBudgetSnapshot(
+      moderateEquivalentMinutes: 0,
+      rawMetMinutes: 0,
+      strengthDays: 0,
+    ),
+    MvLoadSnapshot? load,
+    MvReadinessTier readiness = MvReadinessTier.full,
+    MvCampaign? activeCampaign,
   }) async {
     final activeCommitments = commitments ?? await _commitmentRepo.getActive();
     final allKinds = await _kindRepo.getAll();
@@ -41,16 +50,14 @@ class MvWeekRegenUseCase {
       weekStartSat: weekSaturday,
       profile: profile,
       commitments: activeCommitments,
-      overrides: const [],
+      overrides: overrides,
       kinds: kindsMap,
       kindProfiles: kindProfiles,
-      budget: const MvBudgetSnapshot(
-        moderateEquivalentMinutes: 0,
-        rawMetMinutes: 0,
-        strengthDays: 0,
-      ),
-      load: null,
-      readiness: MvReadinessTier.full,
+      budget: budget,
+      load: load,
+      readiness: readiness,
+      existingSlots: existingSlots,
+      activeCampaign: activeCampaign,
     );
 
     final newSlots = result.slots;

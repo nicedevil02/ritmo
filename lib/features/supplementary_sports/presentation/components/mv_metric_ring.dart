@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Circular / Linear Metric Ring for Weekly Active MET-min (Section 5.1 & 5.10).
 class MvMetricRing extends StatelessWidget {
@@ -21,6 +23,7 @@ class MvMetricRing extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final ratio = targetMet > 0
         ? (currentMet / targetMet).clamp(0.0, 1.0)
@@ -40,14 +43,14 @@ class MvMetricRing extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'دقیقهٔ فعال این هفته',
+                l10n?.mv_metric_ring_active_mins ?? 'Active minutes this week',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                '${currentMet.round()} / ${targetMet.round()}',
+                '${toPersianDigits(currentMet.round().toString())} / ${toPersianDigits(targetMet.round().toString())}',
                 style: textTheme.labelLarge?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w800,
@@ -73,13 +76,20 @@ class MvMetricRing extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$activeDays از $targetDays روز فعال',
+                l10n?.mv_metric_ring_active_days(
+                      toPersianDigits(activeDays.toString()),
+                      toPersianDigits(targetDays.toString()),
+                    ) ??
+                    '$activeDays of $targetDays active days',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
               Text(
-                '${(ratio * 100).round()}٪ تکمیل شده',
+                l10n?.mv_metric_ring_completed_pct(
+                      toPersianDigits((ratio * 100).round().toString()),
+                    ) ??
+                    '${(ratio * 100).round()}% completed',
                 style: textTheme.labelSmall?.copyWith(
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,

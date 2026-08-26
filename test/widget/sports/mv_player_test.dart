@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/player/player.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Widget createTestApp(Widget child) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
     theme: ThemeData.light(),
     home: Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(body: child),
+      child: child,
     ),
   );
 }
@@ -50,11 +54,11 @@ void main() {
         );
 
         expect(find.text('شنا سوئدی'), findsWidgets);
-        expect(find.text('ست 1 از 3'), findsOneWidget);
-        expect(find.text('12 تکرار'), findsOneWidget);
+        expect(find.text('ست ۱ از ۳'), findsOneWidget);
+        expect(find.text('۱۲ تکرار'), findsOneWidget);
 
         // Complete Set 1
-        await tester.tap(find.text('ثبت ست و ادامه (ست 1)'));
+        await tester.tap(find.text('ثبت ست و ادامه (ست ۱)'));
         await tester.pumpAndSettle();
 
         expect(find.text('زمان استراحت'), findsOneWidget);

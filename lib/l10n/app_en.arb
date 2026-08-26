@@ -951,5 +951,606 @@
         "type": "int"
       }
     }
+  },
+  "mv_exercise_fallback": "Exercise movement",
+  "mv_audio_mute_tooltip": "Mute audio cues",
+  "mv_audio_unmute_tooltip": "Enable audio cues",
+  "mv_body_map_weekly_title": "This Week's Muscle Map",
+  "mv_slot_anchor_badge_label": "Fixed Anchor",
+  "mv_slot_rest_badge_label": "Rest",
+  "mv_insufficient_data_default_title": "Not enough data yet",
+  "mv_metric_ring_active_mins": "Active minutes this week",
+  "mv_metric_ring_active_days": "{activeDays} of {targetDays} active days",
+  "@mv_metric_ring_active_days": {
+    "placeholders": {
+      "activeDays": {
+        "type": "String"
+      },
+      "targetDays": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_metric_ring_completed_pct": "{percent}% completed",
+  "@mv_metric_ring_completed_pct": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_quick_log_custom_action": "Custom log...",
+  "mv_quick_log_walk_20": "20 min Walk",
+  "mv_quick_log_stretch_10": "10 min Light Stretch",
+  "mv_hero_rest_title": "Rest & Recovery Day",
+  "mv_hero_minimal_title": "10-Minute Minimum Effective Dose",
+  "mv_hero_rest_subtitle": "Your body needs time to rebuild. Light stretching is best today.",
+  "mv_hero_minimal_subtitle": "Just 10 minutes today. Keeps your consistency chain alive.",
+  "mv_hero_completed": "Today's workout completed successfully",
+  "mv_hero_rest_action": "5-min Light Stretch",
+  "mv_hero_continue": "Continue Session",
+  "mv_hero_start": "Start Session",
+  "mv_hero_cant_today": "Can't Today",
+  "mv_exercise_default_title": "Exercise",
+  "mv_player_rest_time": "Rest Time",
+  "mv_player_skip_exercise_tooltip": "Skip exercise",
+  "mv_player_breathe_ready": "Breathe deep and get ready",
+  "mv_player_exercise_counter": "Exercise {current} of {total}",
+  "@mv_player_exercise_counter": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_set_counter": "Set {current} of {total}",
+  "@mv_player_set_counter": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_seconds_remaining": "{seconds} sec",
+  "@mv_player_seconds_remaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_reps": "{reps} reps",
+  "@mv_player_reps": {
+    "placeholders": {
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_player_focus_contraction": "Focus on muscle contraction",
+  "mv_player_skip_rest_action": "Skip rest & start",
+  "mv_player_complete_set_action": "Complete & Next (Set {setNumber})",
+  "@mv_player_complete_set_action": {
+    "placeholders": {
+      "setNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_title": "Session Summary",
+  "mv_summary_mins_done": "{minutes} min workout recorded",
+  "@mv_summary_mins_done": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_effort_question": "How was the effort level?",
+  "mv_summary_effort_easy": "Easy & Light",
+  "mv_summary_effort_good": "Good & Balanced",
+  "mv_summary_effort_hard": "Hard & Challenging",
+  "mv_summary_fine_tune_rpe": "Fine-tune (RPE)",
+  "mv_summary_free_note_label": "Optional note",
+  "mv_summary_free_note_hint": "e.g. Weather was great, steep incline, felt energetic...",
+  "mv_summary_new_pr_title": "New Personal Record (PR)! 🎉",
+  "mv_summary_new_pr_desc": "In {exercise}, you reached a record of {record}.",
+  "@mv_summary_new_pr_desc": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      },
+      "record": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_equiv_mins_added": "+{minutes} equivalent min added to this week",
+  "@mv_summary_equiv_mins_added": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_goal_achieved": "Weekly goal successfully achieved! 🎯",
+  "mv_summary_mins_remaining_to_goal": "{minutes} min remaining to weekly goal",
+  "@mv_summary_mins_remaining_to_goal": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_summary_save_session": "Save & Record Session",
+  "mv_summary_error_save": "Error saving session: {error}",
+  "@mv_summary_error_save": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_stat_distance": "Distance",
+  "mv_stat_elevation": "Elevation Gain",
+  "mv_stat_pack_weight": "Pack Weight",
+  "mv_stat_tempo": "Tempo",
+  "mv_stat_laps": "Laps",
+  "mv_stat_duration": "Duration",
+  "mv_stat_match_duration": "Match Duration",
+  "mv_stat_session_load": "Session Load",
+  "mv_stat_logged_sets": "Logged Sets",
+  "mv_unit_km": "km",
+  "mv_unit_m": "m",
+  "mv_unit_kg": "kg",
+  "mv_unit_laps": "laps",
+  "mv_unit_min": "min",
+  "mv_unit_set": "sets",
+  "mv_unit_pace": "min/km",
+  "mv_template_distance_title": "Distance Session",
+  "mv_template_distance_adjust": "Adjust Distance",
+  "mv_template_rpe_label": "Effort (RPE: {rpe})",
+  "@mv_template_rpe_label": {
+    "placeholders": {
+      "rpe": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_template_finish": "Finish Session",
+  "mv_template_laps_title": "Lap Session",
+  "mv_template_laps_recorded": "Laps recorded",
+  "mv_template_plus_1_lap": "+1 Lap Recorded",
+  "mv_template_match_title": "Match & Game",
+  "mv_template_half_1": "First Half / Set 1",
+  "mv_template_half_2": "Second Half / Set 2",
+  "mv_template_start_half_2": "Start Second Half",
+  "mv_template_team_us": "Us",
+  "mv_template_team_them": "Them",
+  "mv_template_match_note_label": "Match notes (goals, cards, opponent...)",
+  "mv_template_finish_match": "Finish Match",
+  "mv_template_route_title": "Route & Mountain Session",
+  "mv_template_route_label": "Route",
+  "mv_template_route_free": "Free Route",
+  "mv_template_route_tochal": "Tochal - Shirpala",
+  "mv_template_route_darakeh": "Darakeh - Palangchal",
+  "mv_template_timed_title": "Timed Session",
+  "mv_template_phase_warmup": "Warm-up",
+  "mv_template_phase_main": "Main Workout",
+  "mv_template_phase_cooldown": "Cool-down",
+  "mv_commitment_flexible_title": "Smart Day Flexibility",
+  "mv_commitment_flexible_subtitle": "Allow moving workout day if fatigued or schedule changes",
+  "mv_commitment_select_kind_error": "Please select a workout kind.",
+  "mv_action_save": "Save",
+  "mv_action_more": "More...",
+  "mv_action_none": "None",
+  "mv_action_weekly": "Weekly",
+  "mv_action_biweekly": "Biweekly",
+  "mv_action_once": "Once",
+  "mv_action_30_min": "30 minutes",
+  "mv_action_2_hours": "2 hours",
+  "mv_action_1_day": "1 day",
+  "mv_substitute_title": "Substitute Exercise",
+  "mv_substitute_reason_prompt": "Why do you want to substitute {exercise}?",
+  "@mv_substitute_reason_prompt": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_substitute_too_hard": "Too Hard",
+  "mv_substitute_pain": "Pain or Discomfort",
+  "mv_substitute_no_equipment": "No Equipment",
+  "mv_substitute_noise": "Too Noisy",
+  "mv_substitute_suggestions": "Suggested Substitutes",
+  "mv_substitute_empty": "No matching substitute found.",
+  "mv_substitute_select": "Select",
+  "mv_checkin_title": "How is your readiness today?",
+  "mv_checkin_subtitle": "One tap adapts today's plan to your energy level.",
+  "mv_checkin_great_title": "Great & High Energy",
+  "mv_checkin_great_desc": "Ready for full session",
+  "mv_checkin_good_title": "Good & Normal",
+  "mv_checkin_good_desc": "Balanced energy",
+  "mv_checkin_tired_title": "Tired or Sore",
+  "mv_checkin_tired_desc": "Suggest lighter session",
+  "mv_checkin_close_details": "Close fine details",
+  "mv_checkin_open_details": "More details (soreness, fatigue, pain)...",
+  "mv_checkin_energy_label": "Energy level (1 to 5):",
+  "mv_checkin_soreness_label": "Muscle soreness (1 to 5):",
+  "mv_checkin_fatigue_label": "General fatigue (1 to 5):",
+  "mv_checkin_pain_label": "Local pain level (0 to 10):",
+  "mv_checkin_submit_details": "Save detailed check-in",
+  "mv_kind_picker_title": "Select Movement & Sport",
+  "mv_kind_picker_subtitle": "From over 40 diverse sport activities",
+  "mv_kind_picker_search_hint": "Search sports (e.g. soccer, swim, hike...)",
+  "mv_kind_picker_tab_all": "All",
+  "mv_kind_picker_recent": "Recently Used",
+  "mv_kind_picker_seasonal": "Seasonal",
+  "mv_kind_picker_empty": "No sports found matching criteria.",
+  "mv_kind_picker_outdoor": "Outdoor 🌿",
+  "mv_kind_picker_hall": "Indoor Hall 🏟",
+  "mv_kind_picker_impact": "Impact: {impact}/3",
+  "@mv_kind_picker_impact": {
+    "placeholders": {
+      "impact": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_picker_unit": "Unit: {unit}",
+  "@mv_kind_picker_unit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_picker_create_new": "Create New Sport",
+  "mv_day_plan_title": "Day Plan",
+  "mv_day_plan_type": "Plan Type",
+  "mv_day_plan_kind_select": "Activity Kind",
+  "mv_day_plan_kind_picker_prompt": "Select activity kind...",
+  "mv_day_plan_met_factor": "MET Factor: {met}",
+  "@mv_day_plan_met_factor": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_change": "Change",
+  "mv_day_plan_custom_header": "Custom Sport {title}",
+  "@mv_day_plan_custom_header": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_custom_desc": "Specialized Sport — calorie burning and tracking with {met} MET",
+  "@mv_day_plan_custom_desc": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_plan_target_minutes": "Target Duration (min)",
+  "mv_day_plan_start_time": "Start Time (Optional)",
+  "mv_day_plan_not_set": "Not Set",
+  "mv_day_plan_venue": "Venue (Optional)",
+  "mv_day_plan_venue_hint": "e.g. Local Sports Club, City Stadium",
+  "mv_day_plan_intensity": "Workout Intensity",
+  "mv_day_plan_focus": "Muscle Focus",
+  "mv_day_plan_repeat_weekly": "Repeat Every Week",
+  "mv_day_plan_repeat_weekly_desc": "This slot will be placed on this day every week",
+  "mv_day_plan_custom_title": "Custom Title (Optional)",
+  "mv_day_plan_save": "Save Day Plan",
+  "mv_plan_rest": "Rest",
+  "mv_plan_strength": "Strength Workout",
+  "mv_commitment_select_kind": "Please select a sport kind.",
+  "mv_commitment_pick_more": "More...",
+  "mv_commitment_recurrence_weekly": "Weekly",
+  "mv_commitment_recurrence_biweekly": "Bi-weekly",
+  "mv_commitment_recurrence_once": "Once",
+  "mv_commitment_reminder_none": "None",
+  "mv_commitment_reminder_30m": "30 minutes",
+  "mv_commitment_reminder_2h": "2 hours",
+  "mv_commitment_reminder_1d": "1 day",
+  "mv_commitment_smart_flexibility": "Smart Day Flexibility",
+  "mv_commitment_smart_flexibility_desc": "Allows shifting day in case of high fatigue or busyness",
+  "mv_custom_kind_metric_duration": "Duration Only (min)",
+  "mv_custom_kind_metric_distance": "Distance (km)",
+  "mv_custom_kind_metric_sets": "Sets & Reps",
+  "mv_custom_kind_metric_laps": "Laps / Pools",
+  "mv_custom_kind_name_error": "Please enter a sport name",
+  "mv_custom_kind_save_error": "Error saving sport: {error}",
+  "@mv_custom_kind_save_error": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_custom_kind_sheet_title": "New Custom Sport",
+  "mv_custom_kind_sheet_subtitle": "Add any sport or activity to your library",
+  "mv_custom_kind_name_label": "Sport / Activity Name",
+  "mv_custom_kind_name_hint": "e.g. Padel, Squash, Archery...",
+  "mv_custom_kind_emoji_label": "Choose Icon (Emoji)",
+  "mv_custom_kind_family_label": "Category (Family)",
+  "mv_custom_kind_met_label": "Metabolic Equivalent (MET): {met}",
+  "@mv_custom_kind_met_label": {
+    "placeholders": {
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_custom_kind_metric_label": "Primary Metric",
+  "mv_custom_kind_venue_switch": "Requires Dedicated Venue or Court",
+  "mv_custom_kind_outdoor_switch": "Takes Place Outdoors",
+  "mv_custom_kind_submit_btn": "Add to Sports Library",
+  "mv_pr_title": "Personal Records",
+  "mv_pr_empty_desc": "No records yet. As you finish workout sessions, new PRs will show here.",
+  "mv_pr_by_sport": "Personal Records by Sport",
+  "mv_campaign_active_header": "Active Goal Campaign",
+  "mv_campaign_pack_weight_label": "Target Pack Weight this week: {weight} kg",
+  "@mv_campaign_pack_weight_label": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_inactive_desc": "Reverse planning and training for sports events (hiking, trail, etc.)",
+  "mv_streak_continuous_weeks": "Active Continuous Weeks",
+  "mv_streak_weeks_count": "{count} weeks",
+  "@mv_streak_weeks_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_progress_insights": "Progress Insights",
+  "mv_campaign_target_sport": "Target Sport Type:",
+  "mv_campaign_hiking_title": "Hiking & Trail ({code})",
+  "@mv_campaign_hiking_title": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_target_date": "Target Event Date:",
+  "mv_campaign_weeks_later": "{weeks} weeks later ({date})",
+  "@mv_campaign_weeks_later": {
+    "placeholders": {
+      "weeks": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_campaign_body_weight": "Body Weight (kg):",
+  "mv_campaign_submit": "Create Campaign",
+  "mv_commitment_recurrence_summary": "Every {day} at {time} • {duration} min",
+  "@mv_commitment_recurrence_summary": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_day_detail_edit_tooltip": "Edit Day Plan",
+  "mv_day_detail_session_exercises": "Session Exercises ({count} exercises)",
+  "@mv_day_detail_session_exercises": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_day_detail_reps_count": "{count} reps",
+  "@mv_day_detail_reps_count": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mv_day_detail_timed": "Timed",
+  "mv_day_detail_start_session": "Start Workout Session",
+  "mv_library_title": "Sports Library",
+  "mv_library_tab_exercises": "Exercises",
+  "mv_library_tab_programs": "Programs",
+  "mv_library_tab_kinds": "Activities",
+  "mv_library_search_exercises_hint": "Search exercise (e.g. push-up, squat, plank)...",
+  "mv_library_filter_apartment": "Quiet (Apartment)",
+  "mv_library_filter_no_equipment": "No Equipment",
+  "mv_library_exercises_empty_title": "No exercise found",
+  "mv_library_exercises_empty_desc": "Change filters or search for another term.",
+  "mv_library_exercise_skill": "Skill: Level {skill}",
+  "@mv_library_exercise_skill": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_library_exercise_noisy": "Noisy",
+  "mv_library_exercise_quiet": "Quiet / Apartment",
+  "mv_library_exercise_low_impact": "Low Impact",
+  "mv_library_exercise_start_now": "Start Exercise Now",
+  "mv_library_programs_title": "4-Week Training Programs",
+  "mv_library_programs_desc": "Programs adapt to your level and goals from the Week tab.",
+  "mv_library_search_kinds_hint": "Search activity (e.g. football, swim, padel)...",
+  "mv_library_create_custom_kind": "New Custom Sport",
+  "mv_library_kinds_empty_title": "No sport found",
+  "mv_library_kinds_empty_desc": "You can add a new custom sport to the list.",
+  "mv_library_custom_tag": "Custom",
+  "mv_library_kind_intensity": "{family} · Intensity: {met} MET",
+  "@mv_library_kind_intensity": {
+    "placeholders": {
+      "family": {
+        "type": "String"
+      },
+      "met": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_title": "Your Custom Fitness Plan",
+  "mv_onboarding_subtitle": "Answer a few quick questions to build your weekly schedule.",
+  "mv_onboarding_q1_title": "1. How many days per week do you want to workout?",
+  "mv_onboarding_days_count": "{count} days",
+  "@mv_onboarding_days_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_q2_title": "2. How much time do you have per session?",
+  "mv_onboarding_dur_short": "15 min (Short & Quick)",
+  "mv_onboarding_dur_medium": "30 min (Balanced & Ideal)",
+  "mv_onboarding_dur_long": "45 min or more",
+  "mv_onboarding_q3_title": "3. Where is your workout location?",
+  "mv_onboarding_loc_home": "Home (No Equipment)",
+  "mv_onboarding_loc_gym": "Gym",
+  "mv_onboarding_loc_outdoor": "Outdoors / Park",
+  "mv_onboarding_q4_title": "4. Do you have fixed weekly sports commitments?",
+  "mv_onboarding_q4_subtitle": "e.g. Thursday Futsal or Friday Swimming (Optional)",
+  "mv_onboarding_anchor_yes": "Yes, add fixed sport",
+  "mv_onboarding_anchor_no": "Not right now",
+  "mv_onboarding_anchor_add_another": "Add another fixed commitment",
+  "mv_onboarding_submit": "Start Plan & Enter Ritmo",
+  "mv_onboarding_anchor_sheet_title": "Configure Fixed Sport: {title} {emoji}",
+  "@mv_onboarding_anchor_sheet_title": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "emoji": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_onboarding_anchor_sheet_day": "Day of Week",
+  "mv_onboarding_anchor_sheet_time": "Start Time",
+  "mv_onboarding_anchor_sheet_duration": "Duration (min)",
+  "mv_onboarding_anchor_sheet_confirm": "Confirm & Add",
+  "mv_weekly_health_title": "Weekly Health",
+  "mv_weekly_health_empty": "No activity recorded this week. Progress will appear once your first session is saved.",
+  "mv_weekly_health_who": "Weekly Health (WHO Guidelines)",
+  "mv_weekly_health_moderate": "Moderate-Intensity Equivalent",
+  "mv_weekly_health_min_progress": "{current} / {target} min",
+  "@mv_weekly_health_min_progress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_weekly_health_strength": "Strength & Resistance Days",
+  "mv_weekly_health_day_progress": "{current} / {target} days",
+  "@mv_weekly_health_day_progress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_training_load_title": "Training Load & Balance",
+  "mv_training_load_insufficient": "At least 14 days of history and recorded sessions are required to calculate ACWR accurately.",
+  "mv_training_load_card_title": "Training Load (7-day to 28-day)",
+  "mv_training_load_acute": "Acute Load (7-day)",
+  "mv_training_load_chronic": "Chronic 28-day Weekly Avg",
+  "mv_training_load_summary": "Over the past 4 weeks, your acute-to-chronic workload ratio is {ratio} ({band}).",
+  "@mv_training_load_summary": {
+    "placeholders": {
+      "ratio": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_distribution_title": "Monthly Sport Distribution",
+  "mv_kind_distribution_insufficient": "At least one recorded session is required to show distribution this month.",
+  "mv_kind_distribution_card_title": "Current Month Sport Distribution",
+  "mv_kind_distribution_progress": "{minutes} min ({percent}%)",
+  "@mv_kind_distribution_progress": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_kind_distribution_focus": "Your main activity focus has been on {sport}.",
+  "@mv_kind_distribution_focus": {
+    "placeholders": {
+      "sport": {
+        "type": "String"
+      }
+    }
+  },
+  "mv_cant_today_title": "Workout options for today",
+  "mv_cant_today_subtitle": "Every small movement counts towards consistency.",
+  "mv_cant_today_option_cancel_anchor_title": "Cancel for this week",
+  "mv_cant_today_option_cancel_anchor_desc": "Cancel only this week session; weekly commitment stays active.",
+  "mv_cant_today_option_minimal_title": "Minimum effective dose (10 min)",
+  "mv_cant_today_option_minimal_desc": "Just a few light exercises to keep blood flow",
+  "mv_cant_today_option_stretch_title": "Change to 5-min stretch",
+  "mv_cant_today_option_stretch_desc": "Light sweat-free stretching",
+  "mv_cant_today_option_tomorrow_title": "Move to tomorrow",
+  "mv_cant_today_option_tomorrow_desc": "Rest today and workout tomorrow",
+  "mv_cant_today_option_rest_title": "Full rest day",
+  "mv_cant_today_option_rest_desc": "Skip today without guilt",
+  "mv_cant_today_recommended": "Recommended",
+  "cancel": "Cancel",
+  "mv_coach_title": "Ritmo AI Coach",
+  "mv_coach_subtitle": "Your training guide and workout companion",
+  "mv_coach_preset_light": "How to make today workout lighter?",
+  "mv_coach_preset_noise": "Noisy movements for apartment?",
+  "mv_coach_preset_stretch": "What is good for muscle cramps?",
+  "mv_coach_preset_general": "How to stay motivated?",
+  "mv_coach_reply_light": "You can use the 10-minute minimum effective dose option to maintain streak without fatigue.",
+  "mv_coach_reply_noise": "Turn on Neighbor Friendly mode in settings to automatically filter out noisy and jump movements.",
+  "mv_coach_reply_stretch": "A 5-minute hamstring and back stretch combined with water helps reduce lactic acid.",
+  "mv_coach_reply_general": "The most important principle in fitness is consistency; even 5 minutes of light movement is better than none.",
+  "mv_coach_input_hint": "Ask coach...",
+  "mv_at_time": "at {time}",
+  "@mv_at_time": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   }
 }

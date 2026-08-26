@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 
@@ -24,6 +26,7 @@ class MvDayDetailScreen extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final dt = MvCalendar.parseDateIso(slot.dateIso);
     final dayName = MvCalendar.persianWeekdayName(
@@ -32,12 +35,12 @@ class MvDayDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$dayName (${slot.dateIso})'),
+        title: Text('$dayName (${toPersianDigits(slot.dateIso)})'),
         centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_rounded),
-            tooltip: 'ویرایش برنامه',
+            tooltip: l10n?.mv_day_detail_edit_tooltip ?? 'Edit Day Plan',
             onPressed: () {
               MvDayPlanSheet.show(
                 context: context,
@@ -83,7 +86,7 @@ class MvDayDetailScreen extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      '${slot.targetMinutes} دقیقه',
+                      '${toPersianDigits(slot.targetMinutes.toString())} ${l10n?.mv_unit_min ?? 'min'}',
                       style: textTheme.titleMedium?.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w800,
@@ -116,13 +119,17 @@ class MvDayDetailScreen extends StatelessWidget {
           // Exercise List
           if (!slot.isRest && plannedExercises.isNotEmpty) ...[
             Text(
-              'حرکات این جلسه (${plannedExercises.length} حرکت)',
+              l10n?.mv_day_detail_session_exercises(plannedExercises.length) ??
+                  'Session Exercises (${plannedExercises.length})',
               style: textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             SizedBox(height: metrics.spaceSm),
             ...plannedExercises.map((ex) {
+              final repsStr = ex.defaultReps > 0
+                  ? (l10n?.mv_day_detail_reps_count(ex.defaultReps) ?? '${ex.defaultReps} reps')
+                  : (l10n?.mv_day_detail_timed ?? 'Timed');
               return Container(
                 margin: EdgeInsets.only(bottom: metrics.spaceSm),
                 padding: EdgeInsets.all(metrics.spaceMd),
@@ -159,7 +166,7 @@ class MvDayDetailScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${ex.category} · ${ex.defaultReps > 0 ? "${ex.defaultReps} تکرار" : "زمان‌دار"}',
+                            '${ex.category} · $repsStr',
                             style: textTheme.bodySmall?.copyWith(
                               color: colors.textSecondary,
                             ),
@@ -176,7 +183,7 @@ class MvDayDetailScreen extends StatelessWidget {
 
           if (!slot.isRest && !slot.isCompleted)
             MvPrimaryAction(
-              label: 'شروع جلسهٔ تمرینی',
+              label: l10n?.mv_day_detail_start_session ?? 'Start Session',
               icon: Icons.play_arrow_rounded,
               onPressed: onStartSession,
             ),

@@ -127,7 +127,7 @@ class _JourneyMonthViewState extends State<JourneyMonthView> {
                       : 48.0;
 
                   return GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
                       crossAxisSpacing: spacing,

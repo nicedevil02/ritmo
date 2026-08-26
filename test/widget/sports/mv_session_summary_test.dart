@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/player/mv_session_summary_screen.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
+
+Widget createTestApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
+    home: Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(body: child),
+    ),
+  );
+}
 
 void main() {
   group('S4-T5 MvSessionSummaryScreen Unit & Widget Tests', () {
@@ -61,22 +74,17 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Scaffold(
-                body: MvSessionSummaryScreen(
-                  session: hikingSession,
-                  kind: hikingKind,
-                  onFinish:
-                      ({
-                        required feeling,
-                        required rpe1To10,
-                        required effortSource,
-                        note,
-                      }) async {},
-                ),
-              ),
+          createTestApp(
+            MvSessionSummaryScreen(
+              session: hikingSession,
+              kind: hikingKind,
+              onFinish:
+                  ({
+                    required feeling,
+                    required rpe1To10,
+                    required effortSource,
+                    note,
+                  }) async {},
             ),
           ),
         );
@@ -105,22 +113,17 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Scaffold(
-                body: MvSessionSummaryScreen(
-                  session: futsalSession,
-                  kind: futsalKind,
-                  onFinish:
-                      ({
-                        required feeling,
-                        required rpe1To10,
-                        required effortSource,
-                        note,
-                      }) async {},
-                ),
-              ),
+          createTestApp(
+            MvSessionSummaryScreen(
+              session: futsalSession,
+              kind: futsalKind,
+              onFinish:
+                  ({
+                    required feeling,
+                    required rpe1To10,
+                    required effortSource,
+                    note,
+                  }) async {},
             ),
           ),
         );
@@ -155,25 +158,20 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Scaffold(
-                body: MvSessionSummaryScreen(
-                  session: session,
-                  onFinish:
-                      ({
-                        required feeling,
-                        required rpe1To10,
-                        required effortSource,
-                        note,
-                      }) async {
-                        reportedRpe = rpe1To10;
-                        reportedSource = effortSource;
-                        reportedNote = note;
-                      },
-                ),
-              ),
+          createTestApp(
+            MvSessionSummaryScreen(
+              session: session,
+              onFinish:
+                  ({
+                    required feeling,
+                    required rpe1To10,
+                    required effortSource,
+                    note,
+                  }) async {
+                    reportedRpe = rpe1To10;
+                    reportedSource = effortSource;
+                    reportedNote = note;
+                  },
             ),
           ),
         );

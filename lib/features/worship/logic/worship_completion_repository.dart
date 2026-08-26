@@ -1,10 +1,12 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
 import 'package:ritmo/features/worship/logic/worship_cache_bus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
+
 
 class WorshipDayStatus {
   const WorshipDayStatus({
@@ -207,6 +209,7 @@ class WorshipCompletionRepository {
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
     WorshipCacheBus.invalidateAll(dateStr: dateStr);
+    WorshipEngine.instance.invalidate(date: DateTime.tryParse(dateStr));
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -263,6 +266,7 @@ class WorshipCompletionRepository {
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
     WorshipCacheBus.invalidateAll(dateStr: dateStr);
+    WorshipEngine.instance.invalidate(date: DateTime.tryParse(dateStr));
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -272,7 +276,7 @@ class WorshipCompletionRepository {
     return recordId;
   }
 
-  /// Undo a completion record and reset dailyDone state, safely rolling back debts (Fixes C3, H11).
+  /// Undo a completion record and reset dailyDone state, safely rolling back debts (Fixes C3, H11, N4).
   Future<bool> undo(String recordId) async {
     final db = await DatabaseHelper.instance.database;
 
@@ -288,8 +292,7 @@ class WorshipCompletionRepository {
     final practiceId = row['practiceId']! as String;
     final dateStr = row['dateStr']! as String;
     final practiceType = row['practiceType'] as String? ?? 'PRAYER';
-    final wasQada = row['resultType'] == 'QADA_ADDED';
-    final isSuspendedFasting = practiceType == 'FASTING' && row['resultType'] == 'SKIPPED';
+    final wasQada = row['resultType'] == 'QADA_ADDED' || row['resultType'] == 'QADA';
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     await db.transaction((txn) async {
@@ -313,7 +316,8 @@ class WorshipCompletionRepository {
         );
       }
 
-      if (wasQada || isSuspendedFasting) {
+      // Decrement debt ONLY if a QADA debt was genuinely created (Fixes N4)
+      if (wasQada) {
         final debtType = practiceType == 'FASTING' ? 'FASTING' : (practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
         final debtId = 'debt_${debtType}_$practiceId';
         await txn.rawUpdate('''
@@ -342,6 +346,7 @@ class WorshipCompletionRepository {
     DayAgendaService.instance.invalidateDate(dateStr);
     WorshipRepository.instance.invalidateCache();
     WorshipCacheBus.invalidateAll(dateStr: dateStr);
+    WorshipEngine.instance.invalidate(date: DateTime.tryParse(dateStr));
     RitmoEventBus().fire(RitmoEvent(
       type: 'WorshipUpdated',
       timestamp: DateTime.now(),
@@ -362,7 +367,12 @@ class WorshipCompletionRepository {
       whereArgs: [practiceId],
       limit: 1,
     );
-    final freq = practiceRows.isNotEmpty ? (practiceRows.first['reminderFrequency'] as String? ?? 'DAILY') : 'DAILY';
+    final freq = practiceRows.isNotEmpty
+        ? (practiceRows.first['reminderFrequency'] as String? ?? 'DAILY').toUpperCase()
+        : 'DAILY';
+    final daysOfWeekStr = practiceRows.isNotEmpty
+        ? practiceRows.first['reminderDaysOfWeek'] as String?
+        : null;
 
     final rows = await db.query(
       'worship_completions',
@@ -374,16 +384,52 @@ class WorshipCompletionRepository {
 
     if (rows.isEmpty) return 0;
 
-    int streak = 0;
-    DateTime? currentExpected;
+    final Set<int> allowedWeekdays = {};
+    if (freq == 'WEEKLY' || freq == 'SPECIFIC_DAYS') {
+      if (daysOfWeekStr != null && daysOfWeekStr.isNotEmpty) {
+        for (final part in daysOfWeekStr.split(',')) {
+          final trimmed = part.trim();
+          final parsed = int.tryParse(trimmed);
+          if (parsed != null && parsed >= 1 && parsed <= 7) {
+            allowedWeekdays.add(parsed);
+          } else {
+            if (trimmed.contains('شنبه') || trimmed.contains('Saturday')) allowedWeekdays.add(DateTime.saturday);
+            if (trimmed.contains('یکشنبه') || trimmed.contains('Sunday')) allowedWeekdays.add(DateTime.sunday);
+            if (trimmed.contains('دوشنبه') || trimmed.contains('Monday')) allowedWeekdays.add(DateTime.monday);
+            if (trimmed.contains('سه‌شنبه') || trimmed.contains('Tuesday')) allowedWeekdays.add(DateTime.tuesday);
+            if (trimmed.contains('چهارشنبه') || trimmed.contains('Wednesday')) allowedWeekdays.add(DateTime.wednesday);
+            if (trimmed.contains('پنجشنبه') || trimmed.contains('Thursday')) allowedWeekdays.add(DateTime.thursday);
+            if (trimmed.contains('جمعه') || trimmed.contains('Friday')) allowedWeekdays.add(DateTime.friday);
+          }
+        }
+      }
+    }
 
-    // Check if the most recent completion is timely (today or yesterday for daily)
+    int streak = 0;
+    DateTime? lastProcessedDate;
+
+    // Check if the most recent completion is timely
     final firstRowDate = DateTime.tryParse(rows.first['dateStr'] as String);
     final upToDate = DateTime.tryParse(upToDateStr);
     if (firstRowDate != null && upToDate != null) {
-      final daysDiff = upToDate.difference(firstRowDate).inDays;
-      if (freq == 'DAILY' && daysDiff > 1) {
-        return 0; // Streak is broken if no completion today or yesterday
+      if (freq == 'DAILY') {
+        final daysDiff = upToDate.difference(firstRowDate).inDays;
+        if (daysDiff > 1) {
+          return 0; // Streak is broken if no completion today or yesterday
+        }
+      } else if (allowedWeekdays.isNotEmpty) {
+        var checkDate = upToDate;
+        var missedScheduledDay = false;
+        while (checkDate.isAfter(firstRowDate)) {
+          if (checkDate != upToDate && allowedWeekdays.contains(checkDate.weekday)) {
+            missedScheduledDay = true;
+            break;
+          }
+          checkDate = checkDate.subtract(const Duration(days: 1));
+        }
+        if (missedScheduledDay) {
+          return 0;
+        }
       }
     }
 
@@ -392,31 +438,44 @@ class WorshipCompletionRepository {
       final date = DateTime.tryParse(dStr);
       if (date == null) break;
 
-      if (currentExpected != null) {
+      final resType = row['resultType'] as String;
+
+      // Only DONE counts toward a valid streak (Fixes H9 — QADA_ADDED or SKIPPED breaks streak)
+      if (resType != 'DONE') {
+        break;
+      }
+
+      if (lastProcessedDate != null) {
         if (freq == 'DAILY') {
-          final expectedPrev = currentExpected.subtract(const Duration(days: 1));
+          final expectedPrev = lastProcessedDate.subtract(const Duration(days: 1));
           if (date.year != expectedPrev.year ||
               date.month != expectedPrev.month ||
               date.day != expectedPrev.day) {
             break;
           }
+        } else if (allowedWeekdays.isNotEmpty) {
+          var checkDate = lastProcessedDate.subtract(const Duration(days: 1));
+          var missedScheduledDay = false;
+          while (checkDate.isAfter(date)) {
+            if (allowedWeekdays.contains(checkDate.weekday)) {
+              missedScheduledDay = true;
+              break;
+            }
+            checkDate = checkDate.subtract(const Duration(days: 1));
+          }
+          if (missedScheduledDay) {
+            break;
+          }
         }
       }
 
-      final resType = row['resultType'] as String;
-
-      // Only DONE counts toward a valid streak (Fixes H9 — QADA_ADDED does NOT maintain streak)
-      if (resType == 'DONE') {
-        streak++;
-        currentExpected = date;
-      } else {
-        // SKIPPED, MISSED or QADA_ADDED breaks the streak
-        break;
-      }
+      streak++;
+      lastProcessedDate = date;
     }
 
     return streak;
   }
+
 
   String _defaultPracticeTitle(String id) {
     final lower = id.toLowerCase();

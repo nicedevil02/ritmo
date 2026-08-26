@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import '../sheets/mv_custom_kind_sheet.dart';
 
@@ -42,7 +43,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
   bool _isLoadingKinds = true;
 
   final List<Map<String, String>> _categories = [
-    const {'code': 'ALL', 'title': 'همه'},
+    const {'code': 'ALL', 'title': 'ALL'},
     ...MvMuscleGroup.all.map((m) => {'code': m.code, 'title': m.titleFa}),
   ];
 
@@ -150,6 +151,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
         final metrics = context.metrics;
         final colors = context.ritmoColors;
         final textTheme = Theme.of(context).textTheme;
+        final l10n = AppLocalizations.of(context);
 
         return MvSheetScaffold(
           title: ex.name,
@@ -174,15 +176,21 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
               SizedBox(height: metrics.spaceMd),
               Row(
                 children: [
-                  _buildTag('مهارت: سطح ${ex.skillRequired}', colors.primary),
+                  _buildTag(
+                    l10n?.mv_library_exercise_skill(toPersianDigits(ex.skillRequired.toString())) ??
+                        'Skill: Level ${ex.skillRequired}',
+                    colors.primary,
+                  ),
                   SizedBox(width: metrics.spaceSm),
                   _buildTag(
-                    ex.noisy ? 'پرصدا' : 'بی‌صدا / آپارتمانی',
+                    ex.noisy
+                        ? (l10n?.mv_library_exercise_noisy ?? 'Noisy')
+                        : (l10n?.mv_library_exercise_quiet ?? 'Quiet / Apartment'),
                     ex.noisy ? colors.warning : colors.success,
                   ),
                   if (ex.impact <= 1) ...[
                     SizedBox(width: metrics.spaceSm),
-                    _buildTag('کم‌ضربه', colors.success),
+                    _buildTag(l10n?.mv_library_exercise_low_impact ?? 'Low Impact', colors.success),
                   ],
                 ],
               ),
@@ -190,7 +198,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
             ],
           ),
           bottomAction: MvPrimaryAction(
-            label: 'شروع آنی این حرکت',
+            label: l10n?.mv_library_exercise_start_now ?? 'Start Exercise Now',
             icon: Icons.play_arrow_rounded,
             onPressed: () {
               Navigator.pop(ctx);
@@ -224,20 +232,21 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('کتابخانهٔ ورزشی'),
+        title: Text(l10n?.mv_library_title ?? 'Sports Library'),
         centerTitle: false,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: colors.primary,
           labelColor: colors.primary,
           unselectedLabelColor: colors.textSecondary,
-          tabs: const [
-            Tab(text: 'تمرین‌ها'),
-            Tab(text: 'برنامه‌ها'),
-            Tab(key: ValueKey('library_tab_kinds'), text: 'انواع ورزش'),
+          tabs: [
+            Tab(text: l10n?.mv_library_tab_exercises ?? 'Exercises'),
+            Tab(text: l10n?.mv_library_tab_programs ?? 'Programs'),
+            Tab(key: const ValueKey('library_tab_kinds'), text: l10n?.mv_library_tab_kinds ?? 'Activities'),
           ],
         ),
       ),
@@ -261,6 +270,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     TextTheme textTheme,
   ) {
     final filtered = _filteredExercises;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -273,7 +283,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'جستجوی حرکت (مثلاً شنا، اسکات، پلانک)...',
+                  hintText: l10n?.mv_library_search_exercises_hint ?? 'Search exercises...',
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -301,7 +311,9 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                     return Padding(
                       padding: EdgeInsets.only(left: metrics.spaceSm),
                       child: MvChip(
-                        label: c['title']!,
+                        label: c['code'] == 'ALL'
+                            ? (l10n?.mv_kind_picker_tab_all ?? 'All')
+                            : c['title']!,
                         isSelected: isSel,
                         onTap: () =>
                             setState(() => _selectedCategory = c['code']!),
@@ -316,14 +328,14 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
               Row(
                 children: [
                   FilterChip(
-                    label: const Text('بی‌صدا (آپارتمانی)'),
+                    label: Text(l10n?.mv_library_filter_apartment ?? 'Quiet (Apartment)'),
                     selected: _onlyApartmentFriendly,
                     onSelected: (v) =>
                         setState(() => _onlyApartmentFriendly = v),
                   ),
                   SizedBox(width: metrics.spaceSm),
                   FilterChip(
-                    label: const Text('بدون وسیله'),
+                    label: Text(l10n?.mv_library_filter_no_equipment ?? 'No Equipment'),
                     selected: _onlyNoEquipment,
                     onSelected: (v) => setState(() => _onlyNoEquipment = v),
                   ),
@@ -336,11 +348,10 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
         // Exercise List
         Expanded(
           child: filtered.isEmpty
-              ? const MvEmptyState(
+              ? MvEmptyState(
                   icon: Icons.search_off_rounded,
-                  title: 'حرکتی پیدا نشد',
-                  description:
-                      'فیلترها را تغییر بده یا عبارت دیگری را جستجو کن.',
+                  title: l10n?.mv_library_exercises_empty_title ?? 'No exercise found',
+                  description: l10n?.mv_library_exercises_empty_desc ?? 'Change filters or search another term.',
                 )
               : ListView.separated(
                   padding: EdgeInsets.symmetric(
@@ -398,7 +409,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                                     ),
                                     SizedBox(height: metrics.spaceXs),
                                     Text(
-                                      '${ex.category} · سطح ${ex.skillRequired}',
+                                      '${ex.category} · ${l10n?.mv_library_exercise_skill(toPersianDigits(ex.skillRequired.toString())) ?? "Level ${ex.skillRequired}"}',
                                       style: textTheme.bodySmall?.copyWith(
                                         color: colors.textSecondary,
                                       ),
@@ -427,6 +438,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
     dynamic metrics,
     TextTheme textTheme,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: EdgeInsets.all(metrics.spaceLg),
@@ -436,7 +448,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
             Icon(Icons.calendar_month_rounded, size: metrics.spaceXxxl, color: colors.primary),
             SizedBox(height: metrics.spaceMd),
             Text(
-              'برنامه‌های تمرینی ۴ هفته‌ای',
+              l10n?.mv_library_programs_title ?? '4-Week Training Programs',
               style: textTheme.titleMedium?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -444,7 +456,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
             ),
             SizedBox(height: metrics.spaceSm),
             Text(
-              'برنامه‌ها بر اساس سطح و اهداف شما از تب هفته قابل تنظیم و بازتولید هستند.',
+              l10n?.mv_library_programs_desc ?? 'Programs adapt from the Week tab.',
               style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
               textAlign: TextAlign.center,
             ),
@@ -456,6 +468,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
 
   Widget _buildKindsTab(dynamic colors, dynamic metrics, TextTheme textTheme) {
     final kinds = _filteredKinds;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -469,7 +482,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                 controller: _kindsSearchController,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'جستجوی ورزش و فعالیت (مثلاً فوتبال، شنا، پدل)...',
+                  hintText: l10n?.mv_library_search_kinds_hint ?? 'Search activities...',
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _kindsSearchController.text.isNotEmpty
                       ? IconButton(
@@ -491,7 +504,7 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
               // Button to create custom kind
               MvPrimaryAction(
                 key: const ValueKey('library_create_custom_kind_button'),
-                label: 'ورزش سفارشی جدید',
+                label: l10n?.mv_library_create_custom_kind ?? 'New Custom Sport',
                 icon: Icons.add_rounded,
                 onPressed: _openCreateCustomKind,
               ),
@@ -502,10 +515,10 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
           child: _isLoadingKinds
               ? const Center(child: CircularProgressIndicator())
               : kinds.isEmpty
-              ? const MvEmptyState(
+              ? MvEmptyState(
                   icon: Icons.search_off_rounded,
-                  title: 'ورزشی پیدا نشد',
-                  description: 'می‌توانی ورزش جدیدی به لیست اضافه کنی.',
+                  title: l10n?.mv_library_kinds_empty_title ?? 'No sport found',
+                  description: l10n?.mv_library_kinds_empty_desc ?? 'You can add a new custom sport to list.',
                 )
               : ListView.separated(
                   padding: EdgeInsets.symmetric(
@@ -543,13 +556,17 @@ class _MvLibraryScreenState extends State<MvLibraryScreen>
                                     ),
                                     if (kind.isCustom) ...[
                                       SizedBox(width: metrics.spaceSm),
-                                      _buildTag('سفارشی', colors.primary),
+                                      _buildTag(l10n?.mv_library_custom_tag ?? 'Custom', colors.primary),
                                     ],
                                   ],
                                 ),
                                 SizedBox(height: metrics.spaceXs),
                                 Text(
-                                  '${kind.family.titleFa} · شدت انرژی: ${toPersianDigits(kind.baseMet.toStringAsFixed(1))} MET',
+                                  l10n?.mv_library_kind_intensity(
+                                        kind.family.titleFa,
+                                        toPersianDigits(kind.baseMet.toStringAsFixed(1)),
+                                      ) ??
+                                      '${kind.family.titleFa} · ${kind.baseMet} MET',
                                   style: textTheme.bodySmall?.copyWith(
                                     color: colors.textSecondary,
                                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Sheet 1: "امروز نمی‌تونم" (Section 4, 5.1 & S2-T7).
@@ -65,10 +66,11 @@ class MvCantTodaySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return MvSheetScaffold(
-      title: 'برنامه برای شرایط امروزت',
-      subtitle: 'حتی کوچک‌ترین حرکت هم برای حفظ پیوستگی حساب می‌شود.',
+      title: l10n?.mv_cant_today_title ?? 'Workout options for today',
+      subtitle: l10n?.mv_cant_today_subtitle ?? 'Every small movement counts towards consistency.',
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -77,9 +79,9 @@ class MvCantTodaySheet extends StatelessWidget {
               key: const ValueKey('mv_anchor_cancelled_this_week'),
               context: context,
               icon: Icons.event_busy_rounded,
-              title: 'این هفته لغو شد',
-              description:
-                  'لغو این جلسه فقط برای این هفته؛ تعهد هفتگی شما فعال می‌ماند.',
+              title: l10n?.mv_cant_today_option_cancel_anchor_title ?? 'Cancel for this week',
+              description: l10n?.mv_cant_today_option_cancel_anchor_desc ??
+                  'Cancel only this week session; weekly commitment stays active.',
               onTap: onCancelAnchorThisWeek!,
               isRecommended: true,
             ),
@@ -88,8 +90,8 @@ class MvCantTodaySheet extends StatelessWidget {
           _buildOption(
             context: context,
             icon: Icons.timer_outlined,
-            title: 'حداقل مؤثر (۱۰ دقیقه سبک)',
-            description: 'فقط چند حرکت ساده برای حفظ زنجیره و جریان خون',
+            title: l10n?.mv_cant_today_option_minimal_title ?? 'Minimum effective dose (10 min)',
+            description: l10n?.mv_cant_today_option_minimal_desc ?? 'Just a few light exercises to keep blood flow',
             onTap: onMinimalDose,
             isRecommended: !slot.isLocked,
           ),
@@ -97,24 +99,24 @@ class MvCantTodaySheet extends StatelessWidget {
           _buildOption(
             context: context,
             icon: Icons.self_improvement_rounded,
-            title: 'تبدیل به ۵ دقیقه کشش و آرامش',
-            description: 'کشش سبک بدون عرق‌ریزی برای رفع خستگی',
+            title: l10n?.mv_cant_today_option_stretch_title ?? 'Change to 5-min stretch',
+            description: l10n?.mv_cant_today_option_stretch_desc ?? 'Light sweat-free stretching',
             onTap: onChangeToStretch,
           ),
           SizedBox(height: metrics.spaceSm),
           _buildOption(
             context: context,
             icon: Icons.event_repeat_rounded,
-            title: 'انتقال جلسه به فردا',
-            description: 'امروز استراحت کن و جلسه را فردا انجام بده',
+            title: l10n?.mv_cant_today_option_tomorrow_title ?? 'Move to tomorrow',
+            description: l10n?.mv_cant_today_option_tomorrow_desc ?? 'Rest today and workout tomorrow',
             onTap: onMoveToTomorrow,
           ),
           SizedBox(height: metrics.spaceSm),
           _buildOption(
             context: context,
             icon: Icons.close_rounded,
-            title: 'استراحت کامل برای امروز',
-            description: 'رد کردن جلسهٔ امروز بدون احساس گناه',
+            title: l10n?.mv_cant_today_option_rest_title ?? 'Full rest day',
+            description: l10n?.mv_cant_today_option_rest_desc ?? 'Skip today without guilt',
             onTap: onSkipEntirely,
             isDestructive: true,
           ),
@@ -137,6 +139,7 @@ class MvCantTodaySheet extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final Color itemBg = isRecommended
         ? colors.primary.withValues(alpha: 0.1)
@@ -203,7 +206,7 @@ class MvCantTodaySheet extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              'پیشنهادی',
+                              l10n?.mv_cant_today_recommended ?? 'Recommended',
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.onPrimary,
                                 fontWeight: FontWeight.bold,

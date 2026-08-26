@@ -5,6 +5,7 @@ import 'package:ritmo/features/supplementary_sports/application/application.dart
 import 'package:ritmo/features/supplementary_sports/domain/engines/engines.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/sheets/mv_kind_picker_sheet.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Screen 6: "آنبوردینگ ورزشی ریتمو" (Section 5.6, AC-01 & S2-T5).
@@ -123,6 +124,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
             final metrics = context.metrics;
             final textTheme = Theme.of(context).textTheme;
 
+            final l10n = AppLocalizations.of(context);
+
             return Padding(
               padding: EdgeInsets.only(
                 left: metrics.spaceLg,
@@ -137,7 +140,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'تنظیم ورزش ثابت: ${kind.titleFa} ${kind.emoji}',
+                      l10n?.mv_onboarding_anchor_sheet_title(kind.titleFa, kind.emoji) ??
+                          'Configure Fixed Sport: ${kind.titleFa} ${kind.emoji}',
                       style: textTheme.titleMedium?.copyWith(
                         color: colors.textPrimary,
                         fontWeight: FontWeight.w700,
@@ -146,7 +150,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                     SizedBox(height: metrics.spaceMd),
 
                     // روز هفته
-                    Text('روز هفته', style: textTheme.labelMedium),
+                    Text(l10n?.mv_onboarding_anchor_sheet_day ?? 'Day of Week', style: textTheme.labelMedium),
                     SizedBox(height: metrics.spaceXs),
                     Wrap(
                       spacing: metrics.spaceSm,
@@ -165,7 +169,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                     SizedBox(height: metrics.spaceMd),
 
                     // ساعت شروع
-                    Text('ساعت شروع', style: textTheme.labelMedium),
+                    Text(l10n?.mv_onboarding_anchor_sheet_time ?? 'Start Time', style: textTheme.labelMedium),
                     SizedBox(height: metrics.spaceXs),
                     InkWell(
                       key: const ValueKey('onboarding_time_picker_btn'),
@@ -196,7 +200,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                     SizedBox(height: metrics.spaceMd),
 
                     // مدت زمان
-                    Text('مدت زمان (دقیقه)', style: textTheme.labelMedium),
+                    Text(l10n?.mv_onboarding_anchor_sheet_duration ?? 'Duration (min)', style: textTheme.labelMedium),
                     SizedBox(height: metrics.spaceXs),
                     Wrap(
                       spacing: metrics.spaceSm,
@@ -204,7 +208,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                       children: [45, 60, 90, 120].map((dur) {
                         return ChoiceChip(
                           label: Text(
-                            '${toPersianDigits(dur.toString())} دقیقه',
+                            '${toPersianDigits(dur.toString())} ${l10n?.mv_unit_min ?? 'min'}',
                           ),
                           selected: selectedDuration == dur,
                           onSelected: (_) =>
@@ -217,7 +221,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                     // دکمه تایید
                     MvPrimaryAction(
                       key: const ValueKey('confirm_anchor_commitment_btn'),
-                      label: 'تأیید و افزودن',
+                      label: l10n?.mv_onboarding_anchor_sheet_confirm ?? 'Confirm & Add',
                       icon: Icons.check_rounded,
                       onPressed: () {
                         final timeStr =
@@ -256,6 +260,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -266,7 +271,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
             children: [
               // Header
               Text(
-                'برنامهٔ ورزشی اختصاصی تو',
+                l10n?.mv_onboarding_title ?? 'Your Custom Fitness Plan',
                 style: textTheme.headlineSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -274,7 +279,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
               ),
               SizedBox(height: metrics.spaceXs),
               Text(
-                'با پاسخ به چند سؤال کوتاه، برنامهٔ هفته‌ات را بساز.',
+                l10n?.mv_onboarding_subtitle ?? 'Answer a few quick questions to build your weekly schedule.',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -288,7 +293,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                     children: [
                       // Question 1: Days per week
                       _buildQuestionTitle(
-                        '۱. چند روز در هفته می‌خواهی ورزش کنی؟',
+                        l10n?.mv_onboarding_q1_title ?? '1. How many days per week do you want to workout?',
                       ),
                       SizedBox(height: metrics.spaceSm),
                       Row(
@@ -301,7 +306,8 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                               ),
                               child: ChoiceChip(
                                 label: Text(
-                                  '${toPersianDigits(d.toString())} روز',
+                                  l10n?.mv_onboarding_days_count(toPersianDigits(d.toString())) ??
+                                      '${toPersianDigits(d.toString())} days',
                                 ),
                                 selected: isSel,
                                 onSelected: (_) =>
@@ -314,28 +320,28 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                       SizedBox(height: metrics.spaceXl),
 
                       // Question 2: Session duration
-                      _buildQuestionTitle('۲. چقدر زمان داری در هر جلسه؟'),
+                      _buildQuestionTitle(l10n?.mv_onboarding_q2_title ?? '2. How much time do you have per session?'),
                       SizedBox(height: metrics.spaceSm),
                       Wrap(
                         spacing: metrics.spaceSm,
                         runSpacing: metrics.spaceSm,
                         children: [
                           _buildChoice(
-                            label: '۱۵ دقیقه (کوتاه و سریع)',
+                            label: l10n?.mv_onboarding_dur_short ?? '15 min (Short & Quick)',
                             emoji: '⚡',
                             isSelected: _sessionDuration == 'short',
                             onTap: () =>
                                 setState(() => _sessionDuration = 'short'),
                           ),
                           _buildChoice(
-                            label: '۳۰ دقیقه (متعادل و ایده‌آل)',
+                            label: l10n?.mv_onboarding_dur_medium ?? '30 min (Balanced & Ideal)',
                             emoji: '⏱️',
                             isSelected: _sessionDuration == 'medium',
                             onTap: () =>
                                 setState(() => _sessionDuration = 'medium'),
                           ),
                           _buildChoice(
-                            label: '۴۵ دقیقه یا بیشتر',
+                            label: l10n?.mv_onboarding_dur_long ?? '45 min or more',
                             emoji: '🔥',
                             isSelected: _sessionDuration == 'long',
                             onTap: () =>
@@ -346,28 +352,28 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                       SizedBox(height: metrics.spaceXl),
 
                       // Question 3: Location
-                      _buildQuestionTitle('۳. محیط تمرینت کجاست؟'),
+                      _buildQuestionTitle(l10n?.mv_onboarding_q3_title ?? '3. Where is your workout location?'),
                       SizedBox(height: metrics.spaceSm),
                       Wrap(
                         spacing: metrics.spaceSm,
                         runSpacing: metrics.spaceSm,
                         children: [
                           _buildChoice(
-                            label: 'خانه (بدون وسیله)',
+                            label: l10n?.mv_onboarding_loc_home ?? 'Home (No Equipment)',
                             emoji: '🏠',
                             isSelected: _trainingLocation == 'home',
                             onTap: () =>
                                 setState(() => _trainingLocation = 'home'),
                           ),
                           _buildChoice(
-                            label: 'باشگاه ورزشی',
+                            label: l10n?.mv_onboarding_loc_gym ?? 'Gym',
                             emoji: '🏋️',
                             isSelected: _trainingLocation == 'gym',
                             onTap: () =>
                                 setState(() => _trainingLocation = 'gym'),
                           ),
                           _buildChoice(
-                            label: 'فضای باز / پارک',
+                            label: l10n?.mv_onboarding_loc_outdoor ?? 'Outdoors / Park',
                             emoji: '🌳',
                             isSelected: _trainingLocation == 'outdoor',
                             onTap: () =>
@@ -379,12 +385,12 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
 
                       // Question 4: Anchor Commitment (S2-T5)
                       _buildQuestionTitle(
-                        '۴. ورزش ثابتی داری که هفته‌ای انجام بدهی؟',
+                        l10n?.mv_onboarding_q4_title ?? '4. Do you have fixed weekly sports commitments?',
                         key: const ValueKey('mv_onboarding_anchor_title'),
                       ),
                       SizedBox(height: metrics.spaceXs),
                       Text(
-                        'مثل فوتسال پنجشنبه‌ها یا استخر جمعه‌ها (اختیاری)',
+                        l10n?.mv_onboarding_q4_subtitle ?? 'e.g. Thursday Futsal or Friday Swimming (Optional)',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -399,7 +405,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                 key: const ValueKey(
                                   'onboarding_add_anchor_btn',
                                 ),
-                                label: 'بله، اضافه کنم',
+                                label: l10n?.mv_onboarding_anchor_yes ?? 'Yes, add fixed sport',
                                 emoji: '⚽',
                                 isSelected: _hasFixedAnchor == true,
                                 onTap: _openAddAnchorFlow,
@@ -411,7 +417,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                 key: const ValueKey(
                                   'onboarding_skip_anchor_btn',
                                 ),
-                                label: 'فعلاً نه',
+                                label: l10n?.mv_onboarding_anchor_no ?? 'Not right now',
                                 emoji: '⏭️',
                                 isSelected: _hasFixedAnchor == false,
                                 onTap: () =>
@@ -446,7 +452,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                                 SizedBox(width: metrics.spaceSm),
                                 Expanded(
                                   child: Text(
-                                    '${c.persianWeekdayName}: ${c.titleFa ?? c.kindCode} (ساعت ${toPersianDigits(c.startTime)} — ${toPersianDigits(c.durationMinutes.toString())} دقیقه)',
+                                    '${c.persianWeekdayName}: ${c.titleFa ?? c.kindCode} (${toPersianDigits(c.startTime)} — ${toPersianDigits(c.durationMinutes.toString())} ${l10n?.mv_unit_min ?? "min"})',
                                     style: textTheme.bodyMedium?.copyWith(
                                       color: colors.textPrimary,
                                       fontWeight: FontWeight.w600,
@@ -474,7 +480,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
                               'onboarding_add_another_anchor_btn',
                             ),
                             icon: Icon(Icons.add_rounded, size: metrics.iconSm),
-                            label: const Text('افزودن ورزش ثابت دیگر'),
+                            label: Text(l10n?.mv_onboarding_anchor_add_another ?? 'Add another fixed commitment'),
                             onPressed: _openAddAnchorFlow,
                           ),
                         ],
@@ -488,7 +494,7 @@ class _MvOnboardingScreenState extends State<MvOnboardingScreen> {
               // CTA
               MvPrimaryAction(
                 key: const ValueKey('onboarding_submit_action'),
-                label: 'شروع برنامه و ورود به ریتمو',
+                label: l10n?.mv_onboarding_submit ?? 'Start Plan & Enter Ritmo',
                 icon: Icons.check_circle_outline_rounded,
                 isLoading: _isLoading,
                 onPressed: _handleFinish,

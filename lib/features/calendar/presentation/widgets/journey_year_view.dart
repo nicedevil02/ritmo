@@ -99,6 +99,7 @@ class JourneyYearView extends StatelessWidget {
                   );
 
                   return GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
                       crossAxisSpacing: spacing,

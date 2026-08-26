@@ -162,20 +162,22 @@ class CoursesRepository {
     return getSessionsForDateRange(dateStr, dateStr);
   }
 
-  /// Save course: routes to createCourse if isNew==true, or updateCourse if isNew==false
-  Future<void> saveCourse(Course course, {required bool isNew}) async {
+  /// Save course: routes to createCourse if isNew==true, or updateCourse if isNew==false (Fixes N2)
+  Future<ScheduleResult?> saveCourse(Course course, {required bool isNew}) async {
     if (isNew) {
-      await createCourse(course);
+      return await createCourse(course);
     } else {
       await updateCourse(course);
+      return null;
     }
   }
 
-  /// Create a new course and schedule its sessions
-  Future<void> createCourse(Course course) async {
+  /// Create a new course and schedule its sessions (Fixes N2)
+  Future<ScheduleResult> createCourse(Course course) async {
     CourseValidator.validateCourse(course);
     final db = await _database;
     final now = DateTime.now();
+    late ScheduleResult scheduleResult;
 
     await db.transaction((txn) async {
       await txn.insert(
@@ -184,7 +186,7 @@ class CoursesRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      final scheduleResult = CourseScheduler.distributeSessions(
+      scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: course.totalSessions,
         from: now,
         weeklyTarget: course.weeklyTargetSessions,
@@ -222,14 +224,16 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('CREATE', courseId: course.id);
+    return scheduleResult;
   }
 
-  /// Create a course with pre-defined draft sessions (AI Syllabus import) - Fixes D-6 SOT totalSessions & M8
-  Future<void> createCourseWithSessions(Course course, List<CourseSession> draftSessions) async {
+  /// Create a course with pre-defined draft sessions (AI Syllabus import) - Fixes D-6 SOT totalSessions & M8 & N2
+  Future<ScheduleResult> createCourseWithSessions(Course course, List<CourseSession> draftSessions) async {
     final syncedCourse = course.copyWith(totalSessions: draftSessions.length);
     CourseValidator.validateCourse(syncedCourse);
     final db = await _database;
     final now = DateTime.now();
+    late ScheduleResult scheduleResult;
 
     await db.transaction((txn) async {
       await txn.insert(
@@ -239,7 +243,7 @@ class CoursesRepository {
       );
 
       final pendingCount = draftSessions.length;
-      final scheduleResult = CourseScheduler.distributeSessions(
+      scheduleResult = CourseScheduler.distributeSessions(
         pendingCount: pendingCount,
         from: now,
         weeklyTarget: syncedCourse.weeklyTargetSessions,
@@ -277,6 +281,7 @@ class CoursesRepository {
 
     await syncCourseAlarms();
     _fireEvent('CREATE', courseId: syncedCourse.id);
+    return scheduleResult;
   }
 
   /// Update / edit course details with transactional session count adjustment and rescheduling (Fixes Root 1, D-5, K-10, K-11, C4, H5, M8)
@@ -313,18 +318,24 @@ class CoursesRepository {
       }
     }
 
-    // Reminder-only changes (preferredTime / reminderEnabled) must NOT trigger a
-    // date redistribution — reminders are rebuilt separately in step 4 below.
+    // Reminder-only changes (preferredTime / reminderEnabled / status / isArchived) must NOT trigger a
+    // date redistribution — reminders are rebuilt conditionally in step 4 below (Fixes H7).
     final needsReschedule = existingCourse.weeklyTargetSessions != updatedCourse.weeklyTargetSessions ||
         !listEquals(existingCourse.preferredDays, updatedCourse.preferredDays) ||
         existingCourse.totalSessions != updatedCourse.totalSessions;
 
+    final reminderSettingsChanged = existingCourse.reminderEnabled != updatedCourse.reminderEnabled ||
+        existingCourse.preferredTime != updatedCourse.preferredTime ||
+        existingCourse.status != updatedCourse.status ||
+        existingCourse.isArchived != updatedCourse.isArchived;
+
     final alarmsToCancel = <String>[];
 
     await db.transaction((txn) async {
-      // 1. Adjust session count if totalSessions changed (Fixes K-11 & M8)
-      if (updatedCourse.totalSessions > existingCourse.totalSessions) {
-        final countToAdd = updatedCourse.totalSessions - existingCourse.totalSessions;
+      // 1. Adjust session count if totalSessions changed (Fixes K-11, M8, and Session Reduction Inconsistency)
+      final actualExistingCount = existingSessions.length;
+      if (updatedCourse.totalSessions > actualExistingCount) {
+        final countToAdd = updatedCourse.totalSessions - actualExistingCount;
         final maxNumRes = await txn.rawQuery(
           'SELECT COALESCE(MAX(sessionNumber), 0) + 1 as nextNum FROM course_sessions WHERE courseId = ?',
           [updatedCourse.id],
@@ -356,8 +367,8 @@ class CoursesRepository {
             conflictAlgorithm: ConflictAlgorithm.abort,
           );
         }
-      } else if (updatedCourse.totalSessions < existingCourse.totalSessions) {
-        final countToRemove = existingCourse.totalSessions - updatedCourse.totalSessions;
+      } else if (updatedCourse.totalSessions < actualExistingCount) {
+        final countToRemove = actualExistingCount - updatedCourse.totalSessions;
         final pendingFromEnd = existingSessions.reversed.where((s) => !s.isCompleted && !s.isSkipped && !s.isReview).take(countToRemove).toList();
         for (final s in pendingFromEnd) {
           final rems = await txn.query('pending_reminders', where: 'courseSessionId = ?', whereArgs: [s.id]);
@@ -443,13 +454,15 @@ class CoursesRepository {
         }
       }
 
-      // 4. Rebuild reminders for course
-      final rebuildAlarms = await _rebuildRemindersForCourse(txn, syncedCourse);
-      alarmsToCancel.addAll(rebuildAlarms);
+      // 4. Rebuild reminders for course only if schedule or reminder configuration changed (Fixes H7)
+      if (needsReschedule || reminderSettingsChanged) {
+        final rebuildAlarms = await _rebuildRemindersForCourse(txn, syncedCourse);
+        alarmsToCancel.addAll(rebuildAlarms);
+      }
     });
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -557,6 +570,9 @@ class CoursesRepository {
               sessionTitle: 'مرور: ${session.sessionTitle ?? '${course.unitLabelResolved} ${session.sessionNumber}'}',
             );
             await txn.insert('course_sessions', reviewSession.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
+
+            final reviewAlarms = await _rebuildReminderForSession(txn, course, reviewSession);
+            alarmsToCancel.addAll(reviewAlarms);
           }
         }
 
@@ -596,9 +612,6 @@ class CoursesRepository {
             whereArgs: [course.linkedGoalId],
           );
         }
-
-        final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
-        alarmsToCancel.addAll(rebuildAlarms);
       }
 
       // Check remaining pending sessions to complete course
@@ -634,7 +647,7 @@ class CoursesRepository {
     await CourseTimerService.instance.checkAndCancelTimerForSession(sessionId);
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -734,8 +747,21 @@ class CoursesRepository {
           );
         }
 
-        // Rebuild reminders and collect alarms to cancel (Fixes H1)
-        final rebuildAlarms = await _rebuildRemindersForCourse(txn, course);
+        // Rebuild reminder point-wise for this restored session (Fixes H7)
+        final rebuildAlarms = await _rebuildReminderForSession(
+          txn,
+          course,
+          session.copyWith(
+            completionStatus: SessionStatus.pending,
+            completedAtSet: true,
+            completedAt: null,
+            actualDurationMinutesSet: true,
+            actualDurationMinutes: null,
+            understandingScoreSet: true,
+            understandingScore: null,
+            needsReview: false,
+          ),
+        );
         alarmsToCancel.addAll(rebuildAlarms);
       }
       return CourseMutationResult.applied;
@@ -745,7 +771,7 @@ class CoursesRepository {
 
     // Cancel zombie alarms (Fixes H1)
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -826,7 +852,7 @@ class CoursesRepository {
     await CourseTimerService.instance.checkAndCancelTimerForSession(sessionId);
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -901,7 +927,7 @@ class CoursesRepository {
     if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1017,7 +1043,7 @@ class CoursesRepository {
     if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1067,7 +1093,7 @@ class CoursesRepository {
     if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1121,7 +1147,7 @@ class CoursesRepository {
     });
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1220,7 +1246,7 @@ class CoursesRepository {
     if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1277,9 +1303,10 @@ class CoursesRepository {
     await CourseTimerService.instance.checkAndCancelTimerForCourse(courseId);
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
+    await syncCourseAlarms();
     await SnapshotSyncService.syncAll();
     _fireEvent('DELETE', courseId: courseId);
     return CourseMutationResult.applied;
@@ -1344,7 +1371,7 @@ class CoursesRepository {
     });
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
@@ -1400,12 +1427,20 @@ class CoursesRepository {
     if (!mutation.isApplied) return mutation;
 
     for (final id in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(id);
+      await _cancelAlarmSafely(id);
     }
 
     await syncCourseAlarms();
     _fireEvent('STATUS', courseId: courseId);
     return CourseMutationResult.applied;
+  }
+
+  Future<void> _cancelAlarmSafely(String id) async {
+    try {
+      if (sl.isRegistered<AlarmPlatform>()) {
+        await sl<AlarmPlatform>().cancelAlarm(id);
+      }
+    } catch (_) {}
   }
 
   /// Point reminder rebuild for a single session without wiping course reminders (Fixes H7)

@@ -3,9 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/engines/insight_engine.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/components/components.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 Widget createTestApp(Widget child) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
     theme: ThemeData.light(),
     home: Directionality(
       textDirection: TextDirection.rtl,
@@ -90,7 +94,7 @@ void main() {
       await tester.pumpWidget(createTestApp(const MvDaySlotCard(slot: slot)));
 
       expect(find.text('قدرت پایین‌تنه'), findsOneWidget);
-      expect(find.text('45 دقیقه · متوسط'), findsOneWidget);
+      expect(find.text('۴۵ دقیقه · متوسط'), findsOneWidget);
     });
 
     testWidgets('MvQuickLogRow renders quick activity items', (tester) async {
@@ -145,7 +149,7 @@ void main() {
       );
 
       expect(find.text('دقیقهٔ فعال این هفته'), findsOneWidget);
-      expect(find.text('300 / 500'), findsOneWidget);
+      expect(find.text('۳۰۰ / ۵۰۰'), findsOneWidget);
       expect(find.text('هفته‌های فعال'), findsOneWidget);
       expect(find.text('۵'), findsOneWidget);
     });

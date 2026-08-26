@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/features/worship/logic/prayer_timeline.dart';
+import 'package:ritmo/features/worship/logic/prayer_times.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
+
 
 // Helper to convert English digits to Persian digits
 String toPersianDigits(String input) {
@@ -365,7 +367,8 @@ class WorshipDebt {
     );
   }
   final String id;
-  final String debtType; // 'PRAYER', 'FAST', 'ATONEMENT'
+  /// 'PRAYER' | 'FASTING' | 'MUSTAHAB' | 'ATONEMENT' (M12)
+  final String debtType;
   final String title;
   final int totalCount;
   final int remainingCount;
@@ -376,7 +379,7 @@ class WorshipDebt {
   final int updatedAt;
 
   double get progressPercent {
-    if (totalCount == 0) return 100;
+    if (totalCount <= 0) return 0.0;
     final done = totalCount - remainingCount;
     return (done / totalCount * 100).clamp(0.0, 100.0);
   }
@@ -462,12 +465,14 @@ class WorshipSeason {
   /// W-7: Hijri month number (1-12) for DAYS_OF_HIJRI_MONTH / NIGHTS_OF_HIJRI_MONTH
   final int? hijriMonth;
 
-  bool isActiveNow([HijriDate? todayHijri, DateTime? targetDate]) {
+  bool isActiveNow([HijriDate? todayHijri, DateTime? targetDate, PrayerTimes? times, int? hijriOffset]) {
     if (!isActive) return false;
     final now = targetDate ?? DateTime.now();
-    final h = todayHijri ?? HijriCalendarCalculator.hijriFromGregorian(now);
+    final h = todayHijri ?? HijriCalendarCalculator.hijriFromGregorian(now, offsetDays: hijriOffset ?? 0);
+    final rec = (recurrence ?? calendar).toUpperCase();
 
-    switch (recurrence) {
+    switch (rec) {
+      case 'RANGE_SOLAR':
       case 'SOLAR_DATE_RANGE':
         try {
           final j = Jalali.fromDateTime(now);
@@ -481,6 +486,10 @@ class WorshipSeason {
           return false;
         }
 
+      case 'RANGE_HIJRI':
+      case 'HIJRI_DATE_RANGE':
+        return _hijriInRangeStatic(h, startDate, endDate);
+
       case 'DAYS_OF_EVERY_HIJRI_MONTH':
         final list = _parseDayListStatic(dayList);
         return list.contains(h.day);
@@ -490,11 +499,24 @@ class WorshipSeason {
         return (hijriMonth == null || hijriMonth == h.month) && list.contains(h.day);
 
       case 'NIGHTS_OF_HIJRI_MONTH':
-        final isAfterMaghrib = now.hour >= 19;
-        final effDate = isAfterMaghrib ? now.add(const Duration(days: 1)) : now;
-        final effH = HijriCalendarCalculator.hijriFromGregorian(effDate);
+        // After maghrib → the night belongs to the NEXT Hijri day (Fixes H5)
+        final isAfterMaghrib = times != null
+            ? (now.isAfter(times.maghrib) || now.isAtSameMomentAs(times.maghrib))
+            : (now.hour >= 19);
+        final int targetDay;
+        final int targetMonth;
+        if (todayHijri != null) {
+          targetDay = isAfterMaghrib ? todayHijri.day + 1 : todayHijri.day;
+          targetMonth = todayHijri.month;
+        } else {
+          final effDate = isAfterMaghrib ? now.add(const Duration(days: 1)) : now;
+          final effH = HijriCalendarCalculator.hijriFromGregorian(effDate, offsetDays: hijriOffset ?? 0);
+          targetDay = effH.day;
+          targetMonth = effH.month;
+        }
         final list = _parseDayListStatic(dayList);
-        return (hijriMonth == null || hijriMonth == effH.month) && list.contains(effH.day);
+        return (hijriMonth == null || hijriMonth == targetMonth) && list.contains(targetDay);
+
 
       default:
         if (calendar.toUpperCase() == 'HIJRI') {
@@ -522,6 +544,7 @@ class WorshipSeason {
         }
     }
   }
+
 
   static List<int> _parseDayListStatic(String? json) {
     if (json == null) return [];

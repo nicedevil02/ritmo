@@ -319,14 +319,23 @@ class _CreateCourseSheetState extends State<CreateCourseSheet> {
     });
 
     try {
-      await CoursesRepository.instance.saveCourse(courseToSave, isNew: !isEditing);
+      final scheduleResult = await CoursesRepository.instance.saveCourse(courseToSave, isNew: !isEditing);
       widget.onCourseCreated();
       if (mounted) {
-        RitmoToast.show(
-          context,
-          isEditing ? 'تغییرات دوره "$title" ذخیره شد.' : 'دوره "$title" با موفقیت ثبت شد.',
-          iconColor: const Color(0xff10B981),
-        );
+        if (scheduleResult != null && scheduleResult.hasUnscheduled) {
+          RitmoToast.show(
+            context,
+            'دوره "$title" ایجاد شد، اما ${RitmoNumber.toFa(scheduleResult.unscheduledCount)} جلسه به دلیل محدودیت روزها بدون تاریخ ماند.',
+            icon: Icons.info_outline,
+            iconColor: Colors.amber,
+          );
+        } else {
+          RitmoToast.show(
+            context,
+            isEditing ? 'تغییرات دوره "$title" ذخیره شد.' : 'دوره "$title" با موفقیت ثبت شد.',
+            iconColor: const Color(0xff10B981),
+          );
+        }
         Navigator.pop(context);
       }
     } on CourseValidationException catch (e) {

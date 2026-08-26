@@ -42,6 +42,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   String _currentEnergyLevel = 'MEDIUM';
   CoursesEngineOutput? _engineOutput;
+  final CoursesEngine _engine = CoursesEngine();
 
   bool _coursesEnabled = true;
   StreamSubscription<dynamic>? _eventSub;
@@ -52,6 +53,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     super.initState();
     _loadAllData();
     _eventSub = CoursesRepository.instance.events.listen((_) {
+      _engine.invalidate();
       _debounceTimer?.cancel();
       _debounceTimer = Timer(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -93,10 +95,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
       _courseSessionsMap.addAll(sessionsBatchMap);
       final allSessions = sessionsBatchMap.values.expand((element) => element).toList();
 
-      // 4. Run CoursesEngine (Fixes M13)
-      final engine = CoursesEngine();
+      // 4. Run cached CoursesEngine (Fixes M13)
       if (allCourses.isNotEmpty) {
-        _engineOutput = await engine.calculate(
+        _engineOutput = await _engine.calculate(
           CoursesEngineInput(
             courses: allCourses,
             sessions: allSessions,
@@ -259,7 +260,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         const RitmoSkeletonCard(height: 150),
                         const SizedBox(height: 24),
                         const RitmoSkeletonList(itemCount: 3, itemHeight: 90),
-                      ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty) ...[
+                      ] else if (_activeCourses.isEmpty && _completedCourses.isEmpty && _archivedCourses.isEmpty) ...[
                         RitmoEmptyState(
                           icon: CupertinoIcons.book,
                           title: 'هنوز هیچ دوره‌ای ایجاد نکرده‌اید',
@@ -269,15 +270,16 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         ),
                       ] else ...[
                         // 1. "What to Read Now" Single Decision Hero Card (Fixes 7.2)
-                        WhatToReadNowCard(
-                          courses: _activeCourses,
-                          sessionsMap: _courseSessionsMap,
-                          currentEnergyLevel: _currentEnergyLevel,
-                          todayStr: todayStr,
-                          onStartSession: _loadAllData,
-                        ),
-
-                        const SizedBox(height: 16),
+                        if (_activeCourses.isNotEmpty) ...[
+                          WhatToReadNowCard(
+                            courses: _activeCourses,
+                            sessionsMap: _courseSessionsMap,
+                            currentEnergyLevel: _currentEnergyLevel,
+                            todayStr: todayStr,
+                            onStartSession: _loadAllData,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
                         // 2. Weekly aggregates card
                         if (_engineOutput != null)

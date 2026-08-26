@@ -787,18 +787,33 @@ class DayAgendaService {
         return updated;
       }).toList();
 
-      // Bug 2: Synthesize virtual occurrence for MOVED overrides without host base item
+      // Bug 2 & Risk 1: Synthesize virtual occurrence ONLY for cross-day MOVED overrides
       for (final ovr in dayOverrides) {
         final key = OccurrenceOverride.formatKey(ovr.sourceType, ovr.sourceId);
         if (ovr.status == 'MOVED' && !matchedKeys.contains(key)) {
-          String title = ovr.note ?? 'رویداد انتقال‌یافته';
+          // Check if this override originated from a different date
+          final isCrossDayMove = ovr.note?.startsWith('from:') == true ||
+              (ovr.note != null && ovr.note!.isNotEmpty && ovr.note != 'TIME_OVERRIDE');
+          if (!isCrossDayMove) {
+            // Intra-day override without host item should NOT synthesize a ghost item
+            continue;
+          }
+
+          String title = 'رویداد انتقال‌یافته';
+          if (ovr.note != null && !ovr.note!.startsWith('from:')) {
+            title = ovr.note!;
+          }
           int duration = ovr.durationMinutes ?? 30;
           if (ovr.sourceType.toLowerCase() == 'routine') {
             final rMatch = ctx.routineSource.routines.firstWhere(
               (r) => r['id']?.toString() == ovr.sourceId,
               orElse: () => const {},
             );
-            if (rMatch.isNotEmpty && rMatch['title'] != null) {
+            if (rMatch.isEmpty) {
+              // Routine was deleted or does not exist; do not synthesize ghost item
+              continue;
+            }
+            if (rMatch['title'] != null) {
               title = rMatch['title'].toString();
               if (ovr.durationMinutes == null && rMatch['targetDuration'] is num) {
                 duration = (rMatch['targetDuration'] as num).toInt();
@@ -806,10 +821,17 @@ class DayAgendaService {
             }
           }
 
-          final domain = AgendaDomain.values.firstWhere(
+          final domainIndex = AgendaDomain.values.indexWhere(
             (d) => d.name.toLowerCase() == ovr.sourceType.toLowerCase(),
-            orElse: () => AgendaDomain.routine,
           );
+          if (domainIndex == -1) {
+            RitmoLog.warning(
+              'DayAgendaService',
+              'Unknown domain in override: ${ovr.sourceType}',
+            );
+            continue;
+          }
+          final domain = AgendaDomain.values[domainIndex];
           final virtualItem = AgendaItem(
             id: 'moved_${ovr.sourceType}_${ovr.sourceId}_$dateStr',
             domain: domain,

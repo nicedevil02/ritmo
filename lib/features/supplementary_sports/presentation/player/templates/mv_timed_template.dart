@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// قالب پلیر برای ورزش‌های زمان‌محور (یوگا، پیلاتس، کشش، تنفس) (S4-T3)
 class MvTimedTemplate extends StatefulWidget {
@@ -26,7 +27,7 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
   late int _seconds;
   bool _isPaused = false;
   Timer? _timer;
-  String _currentPhase = 'تمرین اصلی';
+  int _currentPhaseIndex = 1; // 0: warmup, 1: main, 2: cooldown
   int _rpe = 6;
 
   @override
@@ -60,6 +61,13 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
+
+    final phases = [
+      l10n?.mv_template_phase_warmup ?? 'Warm-up',
+      l10n?.mv_template_phase_main ?? 'Main Workout',
+      l10n?.mv_template_phase_cooldown ?? 'Cool-down',
+    ];
 
     return Scaffold(
       body: SafeArea(
@@ -70,7 +78,7 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                widget.kind?.titleFa ?? 'جلسه زمانی',
+                widget.kind?.titleFa ?? (l10n?.mv_template_timed_title ?? 'Timed Session'),
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: metrics.spaceMd),
@@ -86,20 +94,23 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
               // Phase selector
               Wrap(
                 spacing: metrics.spaceSm,
-                children: ['گرم کردن', 'تمرین اصلی', 'سرد کردن'].map((phase) {
-                  final isSel = _currentPhase == phase;
+                children: List.generate(phases.length, (idx) {
+                  final isSel = _currentPhaseIndex == idx;
                   return ChoiceChip(
-                    label: Text(phase),
+                    label: Text(phases[idx]),
                     selected: isSel,
                     onSelected: (v) {
-                      if (v) setState(() => _currentPhase = phase);
+                      if (v) setState(() => _currentPhaseIndex = idx);
                     },
                   );
-                }).toList(),
+                }),
               ),
               SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Text(
+                l10n?.mv_template_rpe_label(toPersianDigits(_rpe.toString())) ?? 'Effort (RPE: $_rpe)',
+                style: textTheme.bodyMedium,
+              ),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -132,7 +143,7 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                       ),
                     ),
                     icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
-                    label: const Text('پایان جلسه'),
+                    label: Text(l10n?.mv_template_finish ?? 'Finish Session'),
                     onPressed: () {
                       RitmoHaptics.success();
                       widget.onFinish?.call(_seconds, _rpe);

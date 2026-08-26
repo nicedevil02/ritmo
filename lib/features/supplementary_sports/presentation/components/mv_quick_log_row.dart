@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Quick Log 2-Tap Activity Row on Today Tab (Section 5.1, N-01, AC-03).
 class MvQuickLogRow extends StatelessWidget {
@@ -23,6 +24,7 @@ class MvQuickLogRow extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +33,7 @@ class MvQuickLogRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'ثبت سریع فعالیت',
+              l10n?.mv_quick_log_title ?? 'Quick Log',
               style: textTheme.titleSmall?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -41,7 +43,7 @@ class MvQuickLogRow extends StatelessWidget {
               key: const ValueKey('mv_quick_log_custom'),
               onTap: onCustomLog,
               child: Text(
-                'ثبت سایر...',
+                l10n?.mv_quick_log_custom_action ?? 'Custom...',
                 style: textTheme.labelMedium?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w600,
@@ -59,14 +61,14 @@ class MvQuickLogRow extends StatelessWidget {
               _buildQuickItem(
                 context: context,
                 emoji: '🚶',
-                title: 'پیاده‌روی ۲۰ دقیقه',
+                title: l10n?.mv_quick_log_walk_20 ?? '20 min Walk',
                 onTap: onQuickWalk,
               ),
               SizedBox(width: metrics.spaceSm),
               _buildQuickItem(
                 context: context,
                 emoji: '🧘',
-                title: '۱۰ دقیقه نرمش سبک',
+                title: l10n?.mv_quick_log_stretch_10 ?? '10 min Light Stretch',
                 onTap: onQuickStretch,
               ),
               if (lastActivityTitle != null && onRepeatLast != null) ...[

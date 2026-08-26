@@ -3,6 +3,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Unified Post-Workout Summary Screen (Section 6.5 & S4-T5).
@@ -87,9 +88,10 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
       debugPrint('Error saving session: $e\n$st');
       if (mounted) {
         setState(() => _isLoading = false);
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('خطا در ذخیره جلسه: $e'),
+            content: Text(l10n?.mv_summary_error_save(e.toString()) ?? 'Error saving session: $e'),
           ),
         );
       }
@@ -108,6 +110,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final durationMin = widget.session.elapsedMinutes > 0
         ? widget.session.elapsedMinutes
@@ -119,12 +122,12 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
       9999,
     );
 
-    final title = widget.kind?.titleFa ?? 'ورزش و فعالیت';
+    final title = widget.kind?.titleFa ?? (l10n?.mv_stat_duration ?? 'Workout');
     final emoji = widget.kind?.emoji ?? '🏃‍♂️';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('خلاصهٔ جلسه'),
+        title: Text(l10n?.mv_summary_title ?? 'Session Summary'),
         automaticallyImplyLeading: false,
       ),
       body: ListView(
@@ -156,7 +159,8 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                 ),
                 SizedBox(height: metrics.spaceXs),
                 Text(
-                  '${toPersianDigits(durationMin.toString())} دقیقه تمرین ثبت شد',
+                  l10n?.mv_summary_mins_done(toPersianDigits(durationMin.toString())) ??
+                      '$durationMin min recorded',
                   style: textTheme.bodyLarge?.copyWith(
                     color: colors.onPrimary.withValues(alpha: 0.95),
                     fontWeight: FontWeight.w600,
@@ -173,7 +177,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
 
           // 3. Effort Question (3 buttons: Easy (3), Good (6), Hard (8))
           Text(
-            'میزان تلاش این جلسه چطور بود؟',
+            l10n?.mv_summary_effort_question ?? 'How was the effort level?',
             style: textTheme.titleSmall?.copyWith(
               color: colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -186,21 +190,21 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                 key: const Key('mv_effort_easy'),
                 targetRpe: 3,
                 emoji: '😊',
-                label: 'راحت و آسان',
+                label: l10n?.mv_summary_effort_easy ?? 'Easy & Light',
               ),
               SizedBox(width: metrics.spaceSm),
               _buildEffortButton(
                 key: const Key('mv_effort_good'),
                 targetRpe: 6,
                 emoji: '💪',
-                label: 'خوب و متناسب',
+                label: l10n?.mv_summary_effort_good ?? 'Good & Balanced',
               ),
               SizedBox(width: metrics.spaceSm),
               _buildEffortButton(
                 key: const Key('mv_effort_hard'),
                 targetRpe: 8,
                 emoji: '🥵',
-                label: 'سخت و چالشی',
+                label: l10n?.mv_summary_effort_hard ?? 'Hard & Challenging',
               ),
             ],
           ),
@@ -211,7 +215,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'دقیق‌ترش کنم (RPE)',
+                l10n?.mv_summary_fine_tune_rpe ?? 'Fine-tune (RPE)',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -243,7 +247,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
 
           // 5. Free Note Field
           Text(
-            'یادداشت آزاد اختیاری',
+            l10n?.mv_summary_free_note_label ?? 'Optional note',
             style: textTheme.titleSmall?.copyWith(
               color: colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -253,8 +257,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           TextField(
             controller: _noteController,
             decoration: InputDecoration(
-              hintText:
-                  'مثلاً هوا عالی بود، شیب تند بود، یا حس پیشرفت داشتم...',
+              hintText: l10n?.mv_summary_free_note_hint ?? 'e.g. Felt great today...',
               filled: true,
               fillColor: colors.surface,
               border: OutlineInputBorder(
@@ -291,14 +294,18 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'رکورد شخصی جدید (PR)! 🎉',
+                          l10n?.mv_summary_new_pr_title ?? 'New PR! 🎉',
                           style: textTheme.labelLarge?.copyWith(
                             color: colors.textPrimary,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         Text(
-                          'در حرکت ${widget.newPrs.first.exerciseId} به رکورد ${widget.newPrs.first.formattedValue} رسیدی.',
+                          l10n?.mv_summary_new_pr_desc(
+                                widget.newPrs.first.exerciseId,
+                                widget.newPrs.first.formattedValue,
+                              ) ??
+                              'Record reached.',
                           style: textTheme.bodySmall?.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -328,7 +335,8 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                     Icon(Icons.bolt_rounded, color: colors.primary, size: metrics.iconMd),
                     SizedBox(width: metrics.spaceSm),
                     Text(
-                      '+${toPersianDigits(earnedEquivMin.toString())} دقیقه فعالیت معادل به این هفته اضافه شد',
+                      l10n?.mv_summary_equiv_mins_added(toPersianDigits(earnedEquivMin.toString())) ??
+                          '+$earnedEquivMin min added to this week',
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
@@ -351,8 +359,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
                     SizedBox(width: metrics.spaceSm),
                     Text(
                       remainingToGoal == 0
-                          ? 'هدف هفتگی ۱۵۰ دقیقه با موفقیت کامل شد! 🎯'
-                          : '${toPersianDigits(remainingToGoal.toString())} دقیقه تا دستیابی به هدف هفتگی مانده',
+                          ? (l10n?.mv_summary_goal_achieved ?? 'Weekly goal completed!')
+                          : (l10n?.mv_summary_mins_remaining_to_goal(toPersianDigits(remainingToGoal.toString())) ??
+                              '$remainingToGoal min remaining to goal'),
                       style: textTheme.bodySmall?.copyWith(
                         color: colors.textSecondary,
                       ),
@@ -366,7 +375,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
 
           // Submit CTA
           MvPrimaryAction(
-            label: 'ثبت جلسه و ذخیره',
+            label: l10n?.mv_summary_save_session ?? 'Save Session',
             icon: Icons.check_circle_rounded,
             isLoading: _isLoading,
             onPressed: _handleSave,
@@ -378,6 +387,7 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
   }
 
   Widget _buildModeMetricsCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final mode = widget.session.sessionMode;
     final distM = widget.session.distanceM;
     final elevM = widget.session.elevationGainM;
@@ -394,9 +404,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             if (distM != null)
               Expanded(
                 child: MvStatTile(
-                  title: 'مسافت',
+                  title: l10n?.mv_stat_distance ?? 'Distance',
                   value: toPersianDigits((distM / 1000.0).toStringAsFixed(1)),
-                  unit: 'کیلومتر',
+                  unit: l10n?.mv_unit_km ?? 'km',
                   icon: Icons.route_rounded,
                 ),
               ),
@@ -404,9 +414,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             if (elevM != null)
               Expanded(
                 child: MvStatTile(
-                  title: 'ارتفاع صعود',
+                  title: l10n?.mv_stat_elevation ?? 'Elevation',
                   value: toPersianDigits(elevM.round().toString()),
-                  unit: 'متر',
+                  unit: l10n?.mv_unit_m ?? 'm',
                   icon: Icons.terrain_rounded,
                 ),
               ),
@@ -414,9 +424,9 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
             if (packKg != null)
               Expanded(
                 child: MvStatTile(
-                  title: 'وزن کوله',
+                  title: l10n?.mv_stat_pack_weight ?? 'Pack Weight',
                   value: toPersianDigits(packKg.toStringAsFixed(1)),
-                  unit: 'کیلوگرم',
+                  unit: l10n?.mv_unit_kg ?? 'kg',
                   icon: Icons.backpack_rounded,
                 ),
               ),
@@ -428,22 +438,22 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           children: [
             Expanded(
               child: MvStatTile(
-                title: 'مسافت',
+                title: l10n?.mv_stat_distance ?? 'Distance',
                 value: distM != null
                     ? toPersianDigits((distM / 1000.0).toStringAsFixed(2))
                     : '—',
-                unit: 'کیلومتر',
+                unit: l10n?.mv_unit_km ?? 'km',
                 icon: Icons.directions_run_rounded,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: MvStatTile(
-                title: 'تمپو',
+                title: l10n?.mv_stat_tempo ?? 'Tempo',
                 value: toPersianDigits(
                   _formatPace(widget.session.paceSecPerKm),
                 ),
-                unit: 'دق/کم',
+                unit: l10n?.mv_unit_pace ?? 'min/km',
                 icon: Icons.speed_rounded,
               ),
             ),
@@ -455,18 +465,18 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           children: [
             Expanded(
               child: MvStatTile(
-                title: 'تعداد دور',
-                value: laps != null ? toPersianDigits(laps.toString()) : '۰',
-                unit: 'دور',
+                title: l10n?.mv_stat_laps ?? 'Laps',
+                value: laps != null ? toPersianDigits(laps.toString()) : toPersianDigits('0'),
+                unit: l10n?.mv_unit_laps ?? 'laps',
                 icon: Icons.pool_rounded,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: MvStatTile(
-                title: 'مدت‌زمان',
+                title: l10n?.mv_stat_duration ?? 'Duration',
                 value: toPersianDigits(durationMin.toString()),
-                unit: 'دقیقه',
+                unit: l10n?.mv_unit_min ?? 'min',
                 icon: Icons.timer_rounded,
               ),
             ),
@@ -478,16 +488,16 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           children: [
             Expanded(
               child: MvStatTile(
-                title: 'مدت مسابقه',
+                title: l10n?.mv_stat_match_duration ?? 'Match Duration',
                 value: toPersianDigits(durationMin.toString()),
-                unit: 'دقیقه',
+                unit: l10n?.mv_unit_min ?? 'min',
                 icon: Icons.sports_soccer_rounded,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: MvStatTile(
-                title: 'بار جلسه',
+                title: l10n?.mv_stat_session_load ?? 'Session Load',
                 value: widget.session.sessionLoad != null
                     ? toPersianDigits(widget.session.sessionLoad.toString())
                     : '—',
@@ -505,18 +515,18 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
           children: [
             Expanded(
               child: MvStatTile(
-                title: 'مدت‌زمان',
+                title: l10n?.mv_stat_duration ?? 'Duration',
                 value: toPersianDigits(durationMin.toString()),
-                unit: 'دقیقه',
+                unit: l10n?.mv_unit_min ?? 'min',
                 icon: Icons.timer_rounded,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: MvStatTile(
-                title: 'ست‌های ثبت‌شده',
+                title: l10n?.mv_stat_logged_sets ?? 'Logged Sets',
                 value: toPersianDigits(widget.setLogs.length.toString()),
-                unit: 'ست',
+                unit: l10n?.mv_unit_set ?? 'sets',
                 icon: Icons.repeat_rounded,
               ),
             ),

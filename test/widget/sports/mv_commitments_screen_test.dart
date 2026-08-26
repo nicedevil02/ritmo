@@ -178,7 +178,7 @@ void main() {
 
       expect(find.text('فوتسال هفتگی'), findsOneWidget);
       expect(find.textContaining('پنج'), findsOneWidget);
-      expect(find.textContaining('21:00'), findsOneWidget);
+      expect(find.textContaining('۲۱:۰۰'), findsOneWidget);
       expect(find.byKey(const ValueKey('mv_commitment_switch_1')), findsOneWidget);
 
       // Toggle switch deactivates

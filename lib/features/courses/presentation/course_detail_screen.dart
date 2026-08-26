@@ -8,7 +8,9 @@ import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/core/utils/ritmo_date_picker.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
+import 'package:ritmo/features/courses/logic/course_adaptive_engine.dart';
 import 'package:ritmo/features/courses/logic/course_date_contract.dart';
 import 'package:ritmo/features/courses/logic/course_scheduler.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
@@ -39,6 +41,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   List<CourseSession> _sessions = [];
   bool _isLoading = true;
   bool _isReordering = false;
+  bool _isProposalDismissed = false;
 
   Map<String, dynamic>? _linkedGoal;
   double _linkedGoalProgress = 0;
@@ -240,6 +243,89 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _rescheduleUnscheduledSessions() async {
+    try {
+      await CoursesRepository.instance.rescheduleCoursePendingSessions(_course.id);
+      await _loadCourseData();
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'جلسات بدون تاریخ با موفقیت زمان‌بندی شدند.',
+          iconColor: const Color(0xff10B981),
+        );
+      }
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error rescheduling pending sessions', e, st);
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'خطا در زمان‌بندی جلسات.',
+          iconColor: Colors.red,
+        );
+      }
+    }
+  }
+
+  Future<void> _applyAdaptiveProposal(AdaptiveAdjustmentResult proposal) async {
+    try {
+      await CourseAdaptiveEngine.applyAdjustment(_course, proposal);
+      await _loadCourseData();
+      if (mounted) {
+        RitmoToast.show(
+          context,
+          'ریتم مطالعه دوره به ${RitmoNumber.toFa(proposal.newWeeklyTarget)} جلسه در هفته به‌روزرسانی شد.',
+          iconColor: const Color(0xff10B981),
+        );
+      }
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error applying adaptive proposal', e, st);
+    }
+  }
+
+  Future<void> _rollbackAdaptive() async {
+    final colors = context.colors;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          backgroundColor: colors.surface,
+          title: const Text('بازگردانی ریتم قبلی'),
+          content: const Text('آیا می‌خواهید تنظیم هوشمند ریتم مطالعه را لغو کرده و به وضعیت قبل از تنظیم خودکار بازگردید؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('انصراف', style: TextStyle(color: colors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: colors.primary),
+              child: const Text('تأیید بازگردانی', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final result = await CoursesRepository.instance.rollbackAdaptiveAdjustment(_course.id);
+      if (result.isApplied) {
+        await _loadCourseData();
+        if (mounted) {
+          RitmoToast.show(
+            context,
+            'ریتم مطالعه قبلی با موفقیت بازگردانی شد.',
+            iconColor: const Color(0xff10B981),
+          );
+        }
+      }
+    } catch (e, st) {
+      RitmoLog.error('COURSES', 'Error rolling back adaptive adjustment', e, st);
     }
   }
 
@@ -457,6 +543,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         : 0.0;
     final progressPercent = (progress * 100).round();
     final overdueCount = CourseScheduler.daysBehind(sessions: _sessions, today: DateTime.now());
+    final unscheduledCount = _sessions.where((s) => !s.isCompleted && !s.isSkipped && s.plannedDate == null).length;
+    final adaptiveProposal = !_isProposalDismissed
+        ? CourseAdaptiveEngine.proposeAdjustment(course: _course, sessions: _sessions, today: DateTime.now())
+        : null;
+    final hasRecentAdaptive = _course.adaptiveLastAppliedAt != null &&
+        (DateTime.now().millisecondsSinceEpoch - _course.adaptiveLastAppliedAt!) < (24 * 60 * 60 * 1000);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -602,7 +694,143 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Overdue / Catchup Banner
+              // 2. Unscheduled sessions banner (Fixes N2)
+              if (unscheduledCount > 0) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(CupertinoIcons.calendar_badge_minus, color: Colors.amber, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${RitmoNumber.toFa(unscheduledCount)} جلسه بدون تاریخ زمان‌بندی',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'جلسات را بر اساس روزهای ترجیحی خود به صورت هوشمند زمان‌بندی کنید.',
+                              style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: _rescheduleUnscheduledSessions,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('زمان‌بندی خودکار 📅', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 3. Adaptive Proposal Banner (Fixes H3 UI)
+              if (adaptiveProposal != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'پیشنهاد هوشمند تنظیم ریتم مطالعه',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        adaptiveProposal.reasonFa,
+                        style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => setState(() => _isProposalDismissed = true),
+                            child: Text('رد پیشنهاد', style: TextStyle(fontSize: 11.5, color: colors.textSecondary)),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _applyAdaptiveProposal(adaptiveProposal),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(
+                              'اعمال (${RitmoNumber.toFa(adaptiveProposal.newWeeklyTarget)} جلسه/هفته)',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 4. 24h Undo Banner for Adaptive Adjustment (Fixes H3 Rollback UI)
+              if (hasRecentAdaptive) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.card.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: colors.border.withValues(alpha: 0.6)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(CupertinoIcons.info_circle, color: colors.primary, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'ریتم این دوره اخیراً به صورت هوشمند تنظیم شده است.',
+                          style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _rollbackAdaptive,
+                        icon: const Icon(CupertinoIcons.arrow_counterclockwise, size: 13),
+                        label: const Text('بازگردانی (Undo)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        style: TextButton.styleFrom(foregroundColor: colors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 5. Overdue / Catchup Banner
               if (overdueCount > 0) ...[
                 Container(
                   width: double.infinity,

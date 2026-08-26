@@ -11,7 +11,9 @@ import 'package:ritmo/features/supplementary_sports/data/repositories/mv_session
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/worship/logic/worship_completion_repository.dart';
 import 'package:ritmo/features/worship/domain/prayer_log_quality.dart';
+import 'package:ritmo/features/worship/logic/worship_engine.dart';
 import 'package:ritmo/features/worship/logic/worship_repository.dart';
+
 
 /// Single gateway entry point for all completion and state-change requests across Ritmo.
 class CompletionGateway {
@@ -191,18 +193,21 @@ class CompletionGateway {
   Future<CompletionOutcome> _handlePrayerCompletion(PrayerCompletion req) async {
     final quality = PrayerLogQuality.fromCode(req.mode);
     final resultType = quality == PrayerLogQuality.qada ? 'QADA_ADDED' : 'DONE';
+    final practice = await WorshipEngine.instance.getPractice(req.prayerKey);
+    final target = practice?.dailyTarget ?? 1;
     final recordId = await WorshipCompletionRepository.instance.logDone(
       practiceId: req.prayerKey,
       dateStr: req.dateStr,
-      practiceType: 'PRAYER',
+      practiceType: practice?.practiceType ?? 'PRAYER',
       quality: quality,
-      countDone: 1,
-      countTarget: 1,
+      countDone: target,
+      countTarget: target,
     );
 
     _notifySuccess(domain: 'prayer', itemId: req.prayerKey, dateStr: req.dateStr, result: resultType);
     return CompletionOutcome.success(undoToken: 'prayer:$recordId');
   }
+
 
   Future<CompletionOutcome> _handleWorshipSkip(WorshipSkip req) async {
     final recordId = await WorshipCompletionRepository.instance.logSkip(

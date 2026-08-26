@@ -9,10 +9,11 @@ abstract class UndoableCommand {
 
 /// A lightweight stack managing undoable operations and redo history for calendar and domain actions.
 class CommandStack {
-  CommandStack._();
-  static final CommandStack instance = CommandStack._();
-
+  CommandStack({int maxDepth = maxStackDepth}) : depthLimit = maxDepth;
   static const int maxStackDepth = 50;
+  static final CommandStack instance = CommandStack();
+
+  final int depthLimit;
   final List<UndoableCommand> _undoStack = [];
   final List<UndoableCommand> _redoStack = [];
 
@@ -26,7 +27,7 @@ class CommandStack {
 
   void push(UndoableCommand command) {
     _undoStack.add(command);
-    if (_undoStack.length > maxStackDepth) {
+    if (_undoStack.length > depthLimit) {
       _undoStack.removeAt(0);
     }
     _redoStack.clear(); // Pushing a new command invalidates redo history
@@ -38,7 +39,7 @@ class CommandStack {
     try {
       await command.undo();
       _redoStack.add(command);
-      if (_redoStack.length > maxStackDepth) {
+      if (_redoStack.length > depthLimit) {
         _redoStack.removeAt(0);
       }
       return true;
@@ -59,7 +60,7 @@ class CommandStack {
     try {
       await command.execute();
       _undoStack.add(command);
-      if (_undoStack.length > maxStackDepth) {
+      if (_undoStack.length > depthLimit) {
         _undoStack.removeAt(0);
       }
       return true;

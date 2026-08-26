@@ -97,14 +97,15 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final budget = weeklyBudget;
     if (budget == null ||
         (budget.moderateEquivalentMinutes == 0 && budget.strengthDays == 0)) {
-      return const MvInsufficientData(
-        title: 'سلامت این هفته',
-        requirementDescription:
-            'هنوز در این هفته فعالیتی ثبت نشده است. با ثبت اولین جلسه، پیشرفت نمایش داده می‌شود.',
+      return MvInsufficientData(
+        title: l10n?.mv_weekly_health_title ?? 'Weekly Health',
+        requirementDescription: l10n?.mv_weekly_health_empty ??
+            'No activity recorded this week. Progress will appear once your first session is saved.',
       );
     }
 
@@ -136,7 +137,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'سلامت این هفته (توصیه بهداشت جهانی)',
+                l10n?.mv_weekly_health_who ?? 'Weekly Health (WHO Guidelines)',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -151,13 +152,17 @@ class MvProgressTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'فعالیت معادل متوسط',
+                l10n?.mv_weekly_health_moderate ?? 'Moderate-Intensity Equivalent',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
               Text(
-                '${toPersianDigits(modMinutes)} / ${toPersianDigits(targetMod)} دقیقه',
+                l10n?.mv_weekly_health_min_progress(
+                      toPersianDigits(modMinutes.toString()),
+                      toPersianDigits(targetMod.toString()),
+                    ) ??
+                    '${toPersianDigits(modMinutes.toString())} / ${toPersianDigits(targetMod.toString())} min',
                 style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -181,13 +186,17 @@ class MvProgressTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'روزهای قدرتی و مقاومتی',
+                l10n?.mv_weekly_health_strength ?? 'Strength & Resistance Days',
                 style: textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                 ),
               ),
               Text(
-                '${toPersianDigits(strDays)} / ${toPersianDigits(targetStr)} روز',
+                l10n?.mv_weekly_health_day_progress(
+                      toPersianDigits(strDays.toString()),
+                      toPersianDigits(targetStr.toString()),
+                    ) ??
+                    '${toPersianDigits(strDays.toString())} / ${toPersianDigits(targetStr.toString())} days',
                 style: textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -214,14 +223,15 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final load = loadSnapshot;
     if (load == null || !load.hasEnoughData) {
-      return const MvInsufficientData(
-        key: ValueKey('mv_load_insufficient_data'),
-        title: 'بار تمرینی و تعادل فشار',
-        requirementDescription:
-            'حداقل ۱۴ روز سابقه و ثبت چند جلسهٔ دیگر لازم است تا نسبت بار حاد به مزمن (ACWR) به درستی محاسبه شود.',
+      return MvInsufficientData(
+        key: const ValueKey('mv_load_insufficient_data'),
+        title: l10n?.mv_training_load_title ?? 'Training Load & Balance',
+        requirementDescription: l10n?.mv_training_load_insufficient ??
+            'At least 14 days of history and recorded sessions are required to calculate ACWR accurately.',
       );
     }
 
@@ -260,7 +270,7 @@ class MvProgressTab extends StatelessWidget {
                   ),
                   SizedBox(width: metrics.spaceSm),
                   Text(
-                    'بار تمرینی (۷ روز به ۲۸ روز)',
+                    l10n?.mv_training_load_card_title ?? 'Training Load (7-day to 28-day)',
                     style: textTheme.titleSmall?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -294,8 +304,8 @@ class MvProgressTab extends StatelessWidget {
             children: [
               Expanded(
                 child: MvStatTile(
-                  title: 'بار حاد (۷ روز)',
-                  value: toPersianDigits(load.acuteLoad),
+                  title: l10n?.mv_training_load_acute ?? 'Acute Load (7-day)',
+                  value: toPersianDigits(load.acuteLoad.toString()),
                   unit: 'sRPE',
                   icon: Icons.bolt_rounded,
                 ),
@@ -303,8 +313,8 @@ class MvProgressTab extends StatelessWidget {
               SizedBox(width: metrics.spaceMd),
               Expanded(
                 child: MvStatTile(
-                  title: 'میانگین هفتگی ۲۸ روز',
-                  value: toPersianDigits(load.chronicWeeklyLoad.round()),
+                  title: l10n?.mv_training_load_chronic ?? 'Chronic 28-day Weekly Avg',
+                  value: toPersianDigits(load.chronicWeeklyLoad.round().toString()),
                   unit: 'sRPE',
                   icon: Icons.timeline_rounded,
                 ),
@@ -325,7 +335,11 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceSm),
           Text(
-            'به نظر می‌رسد در ۴ هفتهٔ گذشته، نسبت بار حاد به مزمن شما ${toPersianDigits(load.ratio!.toStringAsFixed(2))} بوده و در محدودهٔ ${load.bandTitleFa} قرار دارد.',
+            l10n?.mv_training_load_summary(
+                  toPersianDigits(load.ratio!.toStringAsFixed(2)),
+                  load.bandTitleFa,
+                ) ??
+                'Over the past 4 weeks, your acute-to-chronic workload ratio is ${load.ratio!.toStringAsFixed(2)} (${load.bandTitleFa}).',
             key: const ValueKey('mv_load_ratio_text'),
             style: textTheme.bodySmall?.copyWith(
               color: colors.textSecondary,
@@ -342,13 +356,14 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     final kindMinutes = monthlyKindMinutes;
     if (kindMinutes == null || kindMinutes.isEmpty) {
-      return const MvInsufficientData(
-        title: 'توزیع ورزش‌ها در این ماه',
-        requirementDescription:
-            'برای نمایش سهم ورزش‌ها، حداقل به ثبت یک جلسه تمرین در ماه جاری نیاز است.',
+      return MvInsufficientData(
+        title: l10n?.mv_kind_distribution_title ?? 'Monthly Sport Distribution',
+        requirementDescription: l10n?.mv_kind_distribution_insufficient ??
+            'At least one recorded session is required to show distribution this month.',
       );
     }
 
@@ -375,7 +390,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'توزیع ورزش‌ها در ماه جاری',
+                l10n?.mv_kind_distribution_card_title ?? 'Current Month Sport Distribution',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -412,7 +427,11 @@ class MvProgressTab extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        '${toPersianDigits(entry.value)} دقیقه (${toPersianDigits((pct * 100).toInt())}٪)',
+                        l10n?.mv_kind_distribution_progress(
+                              toPersianDigits(entry.value.toString()),
+                              toPersianDigits((pct * 100).toInt().toString()),
+                            ) ??
+                            '${entry.value} min (${(pct * 100).toInt()}%)',
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -436,7 +455,8 @@ class MvProgressTab extends StatelessWidget {
           if (sorted.isNotEmpty) ...[
             SizedBox(height: metrics.spaceXs),
             Text(
-              'بیشترین تمرکز فعالیت شما بر ${kindsMap?[sorted.first.key]?.titleFa ?? sorted.first.key} بوده است.',
+              l10n?.mv_kind_distribution_focus(kindsMap?[sorted.first.key]?.titleFa ?? sorted.first.key) ??
+                  'Your main activity focus has been on ${kindsMap?[sorted.first.key]?.titleFa ?? sorted.first.key}.',
               style: textTheme.bodySmall?.copyWith(
                 color: colors.textSecondary,
               ),
@@ -452,12 +472,13 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     if (personalRecords.isEmpty) {
-      return const MvInsufficientData(
-        title: 'رکوردهای شخصی',
-        requirementDescription:
-            'هنوز رکوردی ثبت نشده است. با اتمام جلسات تمرین، رکوردهای جدید شما در اینجا ثبت می‌شوند.',
+      return MvInsufficientData(
+        title: l10n?.mv_pr_title ?? 'Personal Records',
+        requirementDescription: l10n?.mv_pr_empty_desc ??
+            'No records yet. As you finish workout sessions, new PRs will show here.',
       );
     }
 
@@ -480,7 +501,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                'رکوردهای شخصی به تفکیک ورزش',
+                l10n?.mv_pr_by_sport ?? 'Personal Records by Sport',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -541,7 +562,7 @@ class MvProgressTab extends StatelessWidget {
     final plan = engine.buildOutdoorPlan(totalWeeks: campaign.weeks, bodyWeightKg: 75.0);
     final weekPlan = plan.getWeekPlan(currentWeek);
 
-    String phaseTitle = 'پایه';
+    String phaseTitle = l10n?.mv_campaign_phase_base ?? 'Base';
     if (l10n != null) {
       if (weekPlan?.phase == MvCampaignPhase.base) {
         phaseTitle = l10n.mv_campaign_phase_base;
@@ -577,7 +598,7 @@ class MvProgressTab extends StatelessWidget {
                   ),
                   SizedBox(width: metrics.spaceSm),
                   Text(
-                    'دورهٔ هدف‌دار فعال',
+                    l10n?.mv_campaign_active_header ?? 'Active Goal Campaign',
                     style: textTheme.titleSmall?.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w800,
@@ -613,14 +634,15 @@ class MvProgressTab extends StatelessWidget {
           Text(
             l10n != null
                 ? l10n.mv_campaign_active_phase(phaseTitle, currentWeek, campaign.weeks)
-                : 'فاز $phaseTitle • هفتهٔ ${toPersianDigits(currentWeek)} از ${toPersianDigits(campaign.weeks)}',
+                : 'Phase $phaseTitle • Week $currentWeek of ${campaign.weeks}',
             key: const ValueKey('mv_campaign_phase_text'),
             style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           if (packWeight > 0) ...[
             SizedBox(height: metrics.spaceXs),
             Text(
-              'وزن کوله‌پشتی هدف این هفته: ${toPersianDigits(packWeight)} کیلوگرم',
+              l10n?.mv_campaign_pack_weight_label(toPersianDigits(packWeight.toStringAsFixed(1))) ??
+                  'Target pack weight this week: $packWeight kg',
               key: const ValueKey('mv_campaign_pack_weight'),
               style: textTheme.bodySmall?.copyWith(
                 color: colors.accent,
@@ -660,7 +682,7 @@ class MvProgressTab extends StatelessWidget {
               ),
               SizedBox(width: metrics.spaceSm),
               Text(
-                l10n?.mv_campaign_title ?? 'دورهٔ هدف‌دار',
+                l10n?.mv_campaign_title ?? 'Goal Campaign',
                 style: textTheme.titleSmall?.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -670,7 +692,7 @@ class MvProgressTab extends StatelessWidget {
           ),
           SizedBox(height: metrics.spaceSm),
           Text(
-            'برنامه‌ریزی معکوس و تمرین برای رویداد ورزشی (کوهنوردی، پیمایش و ...)',
+            l10n?.mv_campaign_inactive_desc ?? 'Reverse planning and training for sports event (hiking, trail, etc.)',
             style: textTheme.bodySmall?.copyWith(color: colors.textSecondary),
           ),
           SizedBox(height: metrics.spaceMd),
@@ -678,7 +700,7 @@ class MvProgressTab extends StatelessWidget {
             key: const ValueKey('mv_campaign_create'),
             onPressed: () => _openCreateCampaignDialog(context),
             icon: Icon(Icons.add_rounded, size: metrics.iconSm),
-            label: Text(l10n?.mv_campaign_create ?? 'ساخت دورهٔ تمرینی'),
+            label: Text(l10n?.mv_campaign_create ?? 'Create Training Campaign'),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
@@ -708,6 +730,7 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: EdgeInsets.all(metrics.spaceLg),
@@ -737,14 +760,15 @@ class MvProgressTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'هفته‌های فعال پیوسته',
+                  l10n?.mv_streak_continuous_weeks ?? 'Active Continuous Weeks',
                   style: textTheme.labelMedium?.copyWith(
                     color: colors.onPrimary.withValues(alpha: 0.9),
                   ),
                 ),
                 SizedBox(height: metrics.spaceXs),
                 Text(
-                  '${toPersianDigits(weeks)} هفته',
+                  l10n?.mv_streak_weeks_count(toPersianDigits(weeks.toString())) ??
+                      '${toPersianDigits(weeks.toString())} weeks',
                   style: textTheme.headlineMedium?.copyWith(
                     color: colors.onPrimary,
                     fontWeight: FontWeight.w900,
@@ -766,6 +790,7 @@ class MvProgressTab extends StatelessWidget {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       key: const ValueKey('mv_insights_section'),
@@ -780,7 +805,7 @@ class MvProgressTab extends StatelessWidget {
             ),
             SizedBox(width: metrics.spaceXs),
             Text(
-              'بینش‌های پیشرفت',
+              l10n?.mv_progress_insights ?? 'Progress Insights',
               style: textTheme.titleSmall?.copyWith(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w800,
@@ -856,16 +881,10 @@ class _CreateCampaignDialog extends StatefulWidget {
 }
 
 class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
-  late final TextEditingController _weightController;
-  DateTime _targetDate = DateTime.now().add(const Duration(days: 70)); // 10 weeks
+  DateTime _targetDate = DateTime.now().add(const Duration(days: 84)); // 12 weeks
   final String _sportKind = MvKindCodes.hiking;
+  final TextEditingController _weightController = TextEditingController(text: '75');
   String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _weightController = TextEditingController(text: '75');
-  }
 
   @override
   void dispose() {
@@ -876,12 +895,12 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
   void _submit() {
     final l10n = AppLocalizations.of(context);
     final days = _targetDate.difference(DateTime.now()).inDays;
-    final weeks = days ~/ 7;
+    final weeks = (days / 7).round();
 
     if (weeks < 4) {
       setState(() {
         _errorMessage = l10n?.mv_campaign_too_short ??
-            'زمان باقیمانده تا رویداد کمتر از ۴ هفته است';
+            'Remaining time to event is less than 4 weeks';
       });
       return;
     }
@@ -889,7 +908,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     final now = DateTime.now();
     final campaign = MvCampaign(
       id: 'camp_${now.millisecondsSinceEpoch}',
-      titleFa: 'دورهٔ هدف‌دار کوهنوردی',
+      titleFa: l10n?.mv_campaign_hiking_title(MvKindCodes.hiking) ?? 'Goal Campaign: Hiking',
       goalCode: _sportKind,
       startDate: MvCalendar.formatDateIso(now),
       weeks: weeks,
@@ -911,7 +930,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
 
     return AlertDialog(
       title: Text(
-        l10n?.mv_campaign_create ?? 'ساخت دورهٔ تمرینی',
+        l10n?.mv_campaign_create ?? 'Create Training Campaign',
         style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
@@ -919,7 +938,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('نوع ورزش هدف:', style: textTheme.labelMedium),
+            Text(l10n?.mv_campaign_target_sport ?? 'Target Sport:', style: textTheme.labelMedium),
             SizedBox(height: metrics.spaceXs),
             Container(
               padding: EdgeInsets.all(metrics.spaceSm),
@@ -932,12 +951,16 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                 children: [
                   const Text('🏔️'),
                   SizedBox(width: metrics.spaceSm),
-                  Text('کوهنوردی و پیمایش (${MvKindCodes.hiking})', style: textTheme.bodyMedium),
+                  Text(
+                    l10n?.mv_campaign_hiking_title(MvKindCodes.hiking) ??
+                        'Hiking & Trail (${MvKindCodes.hiking})',
+                    style: textTheme.bodyMedium,
+                  ),
                 ],
               ),
             ),
             SizedBox(height: metrics.spaceMd),
-            Text(l10n?.mv_campaign_target_date ?? 'تاریخ رویداد هدف:', style: textTheme.labelMedium),
+            Text(l10n?.mv_campaign_target_date ?? 'Target Event Date:', style: textTheme.labelMedium),
             SizedBox(height: metrics.spaceXs),
             InkWell(
               key: const ValueKey('mv_campaign_date_field'),
@@ -967,7 +990,11 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                     Icon(Icons.calendar_today_rounded, size: metrics.iconSm, color: colors.primary),
                     SizedBox(width: metrics.spaceSm),
                     Text(
-                      '${toPersianDigits(_targetDate.difference(DateTime.now()).inDays ~/ 7)} هفته بعد (${toPersianDigits(MvCalendar.formatDateIso(_targetDate))})',
+                      l10n?.mv_campaign_weeks_later(
+                            toPersianDigits((_targetDate.difference(DateTime.now()).inDays ~/ 7).toString()),
+                            toPersianDigits(MvCalendar.formatDateIso(_targetDate)),
+                          ) ??
+                          '${_targetDate.difference(DateTime.now()).inDays ~/ 7} weeks later',
                       style: textTheme.bodyMedium,
                     ),
                   ],
@@ -975,7 +1002,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
               ),
             ),
             SizedBox(height: metrics.spaceMd),
-            Text('وزن بدن (کیلوگرم):', style: textTheme.labelMedium),
+            Text(l10n?.mv_campaign_body_weight ?? 'Body Weight (kg):', style: textTheme.labelMedium),
             SizedBox(height: metrics.spaceXs),
             TextField(
               key: const ValueKey('mv_campaign_weight_field'),
@@ -1004,12 +1031,12 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('انصراف'),
+          child: Text(l10n?.cancel ?? 'Cancel'),
         ),
         ElevatedButton(
           key: const ValueKey('mv_campaign_submit_btn'),
           onPressed: _submit,
-          child: const Text('ثبت دوره'),
+          child: Text(l10n?.mv_campaign_submit ?? 'Create Campaign'),
         ),
       ],
     );

@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/application/application.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 import '../sheets/sheets.dart';
 import 'mv_audio_cue_player.dart';
@@ -306,9 +308,10 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
 
+    final l10n = AppLocalizations.of(context);
     final currentEx =
         _currentExercise ??
-        const MvExercise(id: '0', name: 'تمرین', category: 'تمرین');
+        MvExercise(id: '0', name: l10n?.mv_exercise_default_title ?? 'Exercise', category: l10n?.mv_exercise_default_title ?? 'Exercise');
 
     return Scaffold(
       appBar: AppBar(
@@ -317,13 +320,13 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
           onPressed: _handleExitMidSession,
         ),
         title: Text(
-          _isResting ? 'زمان استراحت' : currentEx.name,
+          _isResting ? (l10n?.mv_player_rest_time ?? 'Rest') : currentEx.name,
           style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.skip_next_rounded),
-            tooltip: 'رد کردن حرکت',
+            tooltip: l10n?.mv_player_skip_exercise_tooltip ?? 'Skip',
             onPressed: _skipExercise,
           ),
           MvAudioToggle(
@@ -365,7 +368,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                         ),
                         SizedBox(height: metrics.spaceSm),
                         Text(
-                          'نفس عمیق بکش و آماده شو',
+                          l10n?.mv_player_breathe_ready ?? 'Breathe and get ready',
                           style: textTheme.titleSmall?.copyWith(
                             color: colors.primary,
                             fontWeight: FontWeight.w700,
@@ -382,13 +385,21 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'حرکت ${_currentExerciseIndex + 1} از ${_exercises.length}',
+                    l10n?.mv_player_exercise_counter(
+                          toPersianDigits((_currentExerciseIndex + 1).toString()),
+                          toPersianDigits(_exercises.length.toString()),
+                        ) ??
+                        '${_currentExerciseIndex + 1} / ${_exercises.length}',
                     style: textTheme.labelMedium?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
                   Text(
-                    'ست $_currentSet از $_totalSets',
+                    l10n?.mv_player_set_counter(
+                          toPersianDigits(_currentSet.toString()),
+                          toPersianDigits(_totalSets.toString()),
+                        ) ??
+                        '$_currentSet / $_totalSets',
                     style: textTheme.labelLarge?.copyWith(
                       color: colors.primary,
                       fontWeight: FontWeight.w800,
@@ -406,10 +417,10 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                     children: [
                       Text(
                         _isResting
-                            ? '$_restSecondsRemaining ثانیه'
+                            ? (l10n?.mv_player_seconds_remaining(toPersianDigits(_restSecondsRemaining.toString())) ?? '$_restSecondsRemaining s')
                             : currentEx.isTimeBased
-                            ? '$_timerSeconds ثانیه'
-                            : '${currentEx.defaultReps} تکرار',
+                            ? (l10n?.mv_player_seconds_remaining(toPersianDigits(_timerSeconds.toString())) ?? '$_timerSeconds s')
+                            : (l10n?.mv_player_reps(toPersianDigits(currentEx.defaultReps.toString())) ?? '${currentEx.defaultReps} reps'),
                         style: textTheme.displayMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: colors.textPrimary,
@@ -417,7 +428,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                       ),
                       SizedBox(height: metrics.spaceSm),
                       Text(
-                        _isResting ? 'استراحت' : 'تمرکز روی انقباض عضله',
+                        _isResting ? (l10n?.mv_slot_rest_badge_label ?? 'Rest') : (l10n?.mv_player_focus_contraction ?? 'Focus on muscle contraction'),
                         style: textTheme.bodyMedium?.copyWith(
                           color: colors.textSecondary,
                         ),
@@ -441,7 +452,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.swap_horiz_rounded),
-                      label: const Text('جایگزینی حرکت'),
+                      label: Text(l10n?.mv_substitute_title ?? 'Substitute'),
                       onPressed: () async {
                         // Fetch similar candidates from controller
                         final similar = await _sessionController
@@ -483,8 +494,8 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
               // Primary Action: Complete Set / Skip Rest
               MvPrimaryAction(
                 label: _isResting
-                    ? 'رد کردن استراحت و شروع'
-                    : 'ثبت ست و ادامه (ست $_currentSet)',
+                    ? (l10n?.mv_player_skip_rest_action ?? 'Skip Rest')
+                    : (l10n?.mv_player_complete_set_action(toPersianDigits(_currentSet.toString())) ?? 'Complete set $_currentSet'),
                 icon: Icons.check_circle_rounded,
                 onPressed: _isResting ? _endRest : _handleSetComplete,
               ),

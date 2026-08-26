@@ -2,11 +2,10 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
-import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
@@ -68,22 +67,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
     try {
       final now = DateTime.now();
       final day = await WorshipEngine.instance.loadDay(now);
-
-      final db = await DatabaseHelper.instance.database;
-      final settings = await db.query('app_settings');
-      final settingsMap = {
-        for (final r in settings) r['key'] as String: r['value'] as String
-      };
-      final cityId = settingsMap['prayer_city_id'] ?? 'TEHRAN_TEHRAN';
-      String name = 'تهران';
-      if (cityId.startsWith('CUSTOM_') || cityId.startsWith('INTL_')) {
-        name = settingsMap['prayer_custom_city_name'] ?? 'موقعیت سفارشی';
-      } else {
-        final rows = await db.query('iran_cities', columns: ['city'], where: 'id = ?', whereArgs: [cityId], limit: 1);
-        if (rows.isNotEmpty) {
-          name = rows.first['city'] as String? ?? 'تهران';
-        }
-      }
+      final name = await WorshipEngine.instance.getCityName();
 
       if (mounted) {
         setState(() {
@@ -96,9 +80,12 @@ class _WorshipScreenState extends State<WorshipScreen> {
       debugPrint('Error loading worship screen data: $e');
       await Future.delayed(const Duration(milliseconds: 500));
       try {
-        final day = await WorshipEngine.instance.loadDay(DateTime.now());
+        final now = DateTime.now();
+        final day = await WorshipEngine.instance.loadDay(now);
+        final name = await WorshipEngine.instance.getCityName();
         if (mounted) {
           setState(() {
+            _cityName = name;
             _worshipDay = day;
             _isLoading = false;
           });
@@ -132,16 +119,13 @@ class _WorshipScreenState extends State<WorshipScreen> {
   Future<void> _refresh() async {
     unawaited(HapticFeedback.mediumImpact());
     try {
-      final db = await DatabaseHelper.instance.database;
-      final settings = await db.query('app_settings', where: 'key = ?', whereArgs: ['prayer_city_id'], limit: 1);
-      final cityId = settings.isNotEmpty ? settings.first['value']! as String : 'TEHRAN_TEHRAN';
-      
-      await PrayerTimeProvider.instance.cachePrayerTimes(cityId: cityId, date: DateTime.now());
+      await WorshipEngine.instance.refreshPrayerTimes(date: _worshipDay?.date);
       _onDataChanged();
     } catch (e) {
       debugPrint('Error refreshing worship screen: $e');
     }
   }
+
 
   void _openCityPicker(int tabIndex) {
     showModalBottomSheet(
@@ -264,29 +248,31 @@ class _WorshipScreenState extends State<WorshipScreen> {
                       PrayerArcHero(
                         day: _worshipDay!,
                         onPracticeToggle: (practiceId, isDone) async {
+                          final dayDate = _worshipDay!.date;
                           String group = 'FAJR';
                           if (practiceId.contains('dhuhr') || practiceId.contains('asr')) group = 'DHUHR_ASR';
                           if (practiceId.contains('maghrib') || practiceId.contains('isha')) group = 'MAGHRIB_ISHA';
 
                           if (isDone) {
-                            final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                            final target = await PrayerTarget.fromGroupKey(group, dayDate);
                             if (!context.mounted) return;
                             final res = await PrayerSheet.show(context, target);
                             if (res == true) {
                               _onDataChanged();
                             }
                           } else {
-                            final target = await PrayerTarget.fromGroupKey(group, DateTime.now());
+                            final target = await PrayerTarget.fromGroupKey(group, dayDate);
                             for (final pId in target.practiceIds) {
-                              await WorshipEngine.instance.clearLog(practiceId: pId, date: DateTime.now());
+                              await WorshipEngine.instance.clearLog(practiceId: pId, date: dayDate);
                             }
                             _onDataChanged();
                           }
                         },
                         onTravellerToggle: (isTraveller) async {
                           final currentCtx = _worshipDay?.context;
+                          final dayDate = _worshipDay?.date ?? DateTime.now();
                           final ctx = WorshipDayContext(
-                            date: currentCtx?.date ?? DateTime.now(),
+                            date: currentCtx?.date ?? dayDate,
                             isTraveller: isTraveller,
                             prayerExempt: currentCtx?.prayerExempt ?? false,
                             fastingExempt: isTraveller || (currentCtx?.fastingExempt ?? false),
@@ -297,6 +283,7 @@ class _WorshipScreenState extends State<WorshipScreen> {
                         },
                         onOpenCityPicker: () => _openCityPicker(0),
                       ),
+
                       const SizedBox(height: 12),
 
                       // 2. NIGHT PRAYER RITUAL CARD (after Shari Midnight)

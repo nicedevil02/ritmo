@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// قالب پلیر برای ورزش‌های مسیرمحور / کوهنوردی / تریل (S4-T3)
 class MvRouteTemplate extends StatefulWidget {
@@ -76,6 +77,7 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
     final textTheme = Theme.of(context).textTheme;
     final colors = context.ritmoColors;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -86,7 +88,7 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                widget.kind?.titleFa ?? 'جلسه مسیر و کوه',
+                widget.kind?.titleFa ?? (l10n?.mv_template_route_title ?? 'Route & Mountain Session'),
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: metrics.spaceSm),
@@ -104,9 +106,9 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                 children: [
                   Expanded(
                     child: _MetricCard(
-                      title: 'مسافت',
+                      title: l10n?.mv_stat_distance ?? 'Distance',
                       value:
-                          '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ک‌م',
+                          '${toPersianDigits(_distanceKm.toStringAsFixed(1))} ${l10n?.mv_unit_km ?? 'km'}',
                       onAdd: () => setState(() => _distanceKm += 0.5),
                       onSub: () {
                         if (_distanceKm > 0.5) setState(() => _distanceKm -= 0.5);
@@ -116,9 +118,9 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                   SizedBox(width: metrics.spaceSm),
                   Expanded(
                     child: _MetricCard(
-                      title: 'ارتفاع صعود',
+                      title: l10n?.mv_stat_elevation ?? 'Elevation',
                       value:
-                          '${toPersianDigits(_elevationGainM.toInt().toString())} متر',
+                          '${toPersianDigits(_elevationGainM.toInt().toString())} ${l10n?.mv_unit_m ?? 'm'}',
                       onAdd: () => setState(() => _elevationGainM += 50.0),
                       onSub: () {
                         if (_elevationGainM > 50) {
@@ -130,9 +132,9 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                   SizedBox(width: metrics.spaceSm),
                   Expanded(
                     child: _MetricCard(
-                      title: 'وزن کوله',
+                      title: l10n?.mv_stat_pack_weight ?? 'Pack Weight',
                       value:
-                          '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ک‌گ',
+                          '${toPersianDigits(_packWeightKg.toStringAsFixed(1))} ${l10n?.mv_unit_kg ?? 'kg'}',
                       onAdd: () => setState(() => _packWeightKg += 0.5),
                       onSub: () {
                         if (_packWeightKg > 0.5) {
@@ -162,25 +164,25 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'مسیر',
+                            l10n?.mv_template_route_label ?? 'Route',
                             style: textTheme.labelSmall?.copyWith(color: colors.textSecondary),
                           ),
                           DropdownButton<int?>(
                             value: _selectedRouteId,
                             isExpanded: true,
                             underline: const SizedBox.shrink(),
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: null,
-                                child: Text('مسیر آزاد'),
+                                child: Text(l10n?.mv_template_route_free ?? 'Free Route'),
                               ),
                               DropdownMenuItem(
                                 value: 1,
-                                child: Text('توچال - شیرپلا'),
+                                child: Text(l10n?.mv_template_route_tochal ?? 'Tochal - Shirpala'),
                               ),
                               DropdownMenuItem(
                                 value: 2,
-                                child: Text('درکه - پلنگ‌چال'),
+                                child: Text(l10n?.mv_template_route_darakeh ?? 'Darakeh - Palangchal'),
                               ),
                             ],
                             onChanged: (id) {
@@ -195,7 +197,10 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
               ),
               SizedBox(height: metrics.spaceLg),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Text(
+                l10n?.mv_template_rpe_label(toPersianDigits(_rpe.toString())) ?? 'Effort (RPE: $_rpe)',
+                style: textTheme.bodyMedium,
+              ),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -228,7 +233,7 @@ class _MvRouteTemplateState extends State<MvRouteTemplate> {
                       ),
                     ),
                     icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
-                    label: const Text('پایان جلسه'),
+                    label: Text(l10n?.mv_template_finish ?? 'Finish Session'),
                     onPressed: () {
                       RitmoHaptics.success();
                       widget.onFinish?.call(

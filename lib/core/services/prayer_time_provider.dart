@@ -23,6 +23,7 @@ class PrayerTimeProvider {
 
     final calcMethodStr =
         settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
+    final ihtiyatMinutes = int.tryParse(settings['ihtiyat_minutes'] ?? '0') ?? 0;
 
     // 1. Fetch coordinates: check for custom/GPS settings, otherwise query iran_cities
     var latitude = 35.6892; // default Tehran
@@ -44,8 +45,8 @@ class PrayerTimeProvider {
       );
 
       if (cityResult.isNotEmpty) {
-        latitude = cityResult.first['latitude']! as double;
-        longitude = cityResult.first['longitude']! as double;
+        latitude = (cityResult.first['latitude'] as num?)?.toDouble() ?? 35.6892;
+        longitude = (cityResult.first['longitude'] as num?)?.toDouble() ?? 51.3890;
       }
     }
 
@@ -63,11 +64,11 @@ class PrayerTimeProvider {
       }
     }
 
-    // 3. Check SQLite cache
+    // 3. Check SQLite cache with calculationMethod (C5)
     final cacheRows = await db.query(
       'prayer_times_cache',
-      where: 'date = ? AND cityId = ?',
-      whereArgs: [dateStr, cityId],
+      where: 'date = ? AND cityId = ? AND calculationMethod = ?',
+      whereArgs: [dateStr, cityId, calcMethodStr],
       limit: 1,
     );
 
@@ -98,12 +99,13 @@ class PrayerTimeProvider {
       return onlineTimes;
     }
 
-    // 5. Offline Fallback: compute astronomical prayer times locally via package:adhan
+    // 5. Offline Fallback: compute astronomical prayer times locally via package:adhan with ihtiyat (C5)
     return computePrayerTimesLocally(
       latitude: latitude,
       longitude: longitude,
       calcMethodStr: calcMethodStr,
       date: date,
+      ihtiyatMinutes: ihtiyatMinutes,
     );
   }
 
@@ -112,6 +114,7 @@ class PrayerTimeProvider {
     required double longitude,
     required String calcMethodStr,
     required DateTime date,
+    int ihtiyatMinutes = 0,
   }) {
     var method = CalculationMethod.tehran;
     if (calcMethodStr == 'MWL') {
@@ -143,14 +146,19 @@ class PrayerTimeProvider {
       params,
     );
 
-    final fajr = todayTimes.fajr;
+    final rawFajr = todayTimes.fajr;
     final sunrise = todayTimes.sunrise;
     final dhuhr = todayTimes.dhuhr;
     final asr = todayTimes.asr;
-    final maghrib = todayTimes.maghrib;
+    final rawMaghrib = todayTimes.maghrib;
     final isha = todayTimes.isha;
 
-    final tomorrowFajr = tomorrowTimes.fajr;
+    final rawTomorrowFajr = tomorrowTimes.fajr;
+
+    // Apply ihtiyat minutes if configured (C5)
+    final fajr = ihtiyatMinutes != 0 ? rawFajr.add(Duration(minutes: ihtiyatMinutes)) : rawFajr;
+    final maghrib = ihtiyatMinutes != 0 ? rawMaghrib.add(Duration(minutes: ihtiyatMinutes)) : rawMaghrib;
+    final tomorrowFajr = ihtiyatMinutes != 0 ? rawTomorrowFajr.add(Duration(minutes: ihtiyatMinutes)) : rawTomorrowFajr;
 
     final sunniParams = CalculationMethod.muslim_world_league.getParameters();
     final sunniTimes = PrayerTimes(
@@ -193,7 +201,7 @@ class PrayerTimeProvider {
     final settingsResult = await db.query('app_settings');
     final settings = {
       for (final row in settingsResult)
-        row['key']! as String: row['value']! as String,
+        (row['key'] as String? ?? ''): (row['value'] as String? ?? ''),
     };
     final calcMethodStr =
         settings['prayer_calculation_method'] ?? 'TEHRAN_GEOPHYSICS';
@@ -214,6 +222,7 @@ class PrayerTimeProvider {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+
   Future<int> cacheRange({
     required String cityId,
     required DateTime from,
@@ -227,12 +236,13 @@ class PrayerTimeProvider {
     final settingsResult = await db.query('app_settings');
     final settings = {
       for (final row in settingsResult)
-        row['key']! as String: row['value']! as String,
+        (row['key'] as String? ?? ''): (row['value'] as String? ?? ''),
     };
 
     final calcMethodStr = calculationMethod ??
         settings['prayer_calculation_method'] ??
         'TEHRAN_GEOPHYSICS';
+    final ihtiyatMinutes = int.tryParse(settings['ihtiyat_minutes'] ?? '0') ?? 0;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     // 2. Fetch coordinates
@@ -255,8 +265,8 @@ class PrayerTimeProvider {
       );
 
       if (cityResult.isNotEmpty) {
-        latitude = cityResult.first['latitude']! as double;
-        longitude = cityResult.first['longitude']! as double;
+        latitude = (cityResult.first['latitude'] as num?)?.toDouble() ?? 35.6892;
+        longitude = (cityResult.first['longitude'] as num?)?.toDouble() ?? 51.3890;
       }
     }
 
@@ -264,13 +274,14 @@ class PrayerTimeProvider {
     final batch = db.batch();
 
     for (int i = 0; i < days; i++) {
-      final date = from.add(Duration(days: i));
+      final date = DateTime(from.year, from.month, from.day + i);
       final dateStr = date.toIso8601String().substring(0, 10);
       final times = computePrayerTimesLocally(
         latitude: latitude,
         longitude: longitude,
         calcMethodStr: calcMethodStr,
         date: date,
+        ihtiyatMinutes: ihtiyatMinutes,
       );
 
       batch.insert('prayer_times_cache', {
@@ -288,6 +299,7 @@ class PrayerTimeProvider {
         'computedAt': nowMs,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
+
 
     await batch.commit(noResult: true);
 

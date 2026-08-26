@@ -120,9 +120,17 @@ class _JourneyScreenState extends State<JourneyScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       final now = DateTime.now();
-      if (_controller.activeScale == JourneyScale.day &&
-          _isSameDay(_controller.selectedDate, DateKey.addDays(now, -1))) {
-        _controller.selectDate(now);
+      _invalidateDayMarkCache();
+      final isDateChanged = !_isSameDay(_controller.selectedDate, now);
+
+      if (isDateChanged) {
+        if (_controller.activeScale == JourneyScale.day) {
+          _controller.selectDate(now);
+        } else if (_controller.activeScale == JourneyScale.agenda) {
+          _controller.loadAgendaRange(anchorDate: now);
+        } else {
+          _controller.refresh();
+        }
       } else {
         _controller.refresh();
       }
@@ -214,7 +222,15 @@ class _JourneyScreenState extends State<JourneyScreen>
       final isToday = _isSameDay(_controller.selectedDate, now);
       if (isToday && _controller.activeScale == JourneyScale.day) {
         final nowMinutes = (now.hour * 60) + now.minute;
-        _scrollToMinutesValue(nowMinutes);
+        if (_splitDayKey.currentState != null) {
+          _scrollToMinutesValue(nowMinutes);
+        } else {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _splitDayKey.currentState != null) {
+              _scrollToMinutesValue(nowMinutes);
+            }
+          });
+        }
       }
     });
   }
@@ -301,8 +317,7 @@ class _JourneyScreenState extends State<JourneyScreen>
     DateTime date,
     DayAgendaSnapshot? existingSnapshot,
   ) async {
-    final ds =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final ds = DateKey.of(date);
     DayAgendaSnapshot? snap = existingSnapshot;
     if (snap == null) {
       final dayAgenda = await DayAgendaService.instance.agendaForDate(date);
@@ -554,6 +569,7 @@ class _JourneyScreenState extends State<JourneyScreen>
       tooltip: 'وضعیت روز ($label)',
       icon: Icon(icon, color: iconColor, size: 20),
       onSelected: (newKind) async {
+        _invalidateDayMarkCache();
         await _controller.setDayMark(newKind);
         if (mounted) {
           final desc = newKind == DayMarkKind.rest
@@ -712,7 +728,7 @@ class _JourneyScreenState extends State<JourneyScreen>
                                   initialDate: selectedDate,
                                 );
                                 if (picked != null && mounted) {
-                                  _controller.selectDate(picked);
+                                  await _controller.selectDate(picked);
                                 }
                               },
                               borderRadius: BorderRadius.circular(
@@ -773,8 +789,8 @@ class _JourneyScreenState extends State<JourneyScreen>
                                     label: 'پرش به امروز',
                                     button: true,
                                     child: GestureDetector(
-                                      onTap: () {
-                                        _controller.selectDate(
+                                      onTap: () async {
+                                        await _controller.selectDate(
                                           DateTime.now(),
                                           scaleToSet: JourneyScale.day,
                                         );
@@ -1360,7 +1376,7 @@ class _JourneyScreenState extends State<JourneyScreen>
             context: context,
             onSaved: _controller.refresh,
           ),
-          errorMessage: _controller.errorMessage,
+          errorMessage: _controller.loadErrorMessage,
           agendaLoadStatus: _controller.agendaLoadStatus,
           onRetry: _controller.loadForActiveScale,
           olderOverdueCount: _controller.olderOverdueCount,

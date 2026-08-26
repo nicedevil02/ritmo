@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 import '../components/components.dart';
 
 /// Sheet 5: "چک‌این کوتاه" (Section 5.9 & D-07).
@@ -62,10 +64,11 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
     final colors = context.ritmoColors;
     final metrics = context.metrics;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
 
     return MvSheetScaffold(
-      title: 'آمادگی امروزت چطوره؟',
-      subtitle: 'با یک لمس، برنامهٔ امروز متناسب با انرژی بدنت تنظیم می‌شود.',
+      title: l10n?.mv_checkin_title ?? 'How is your readiness today?',
+      subtitle: l10n?.mv_checkin_subtitle ?? 'One tap adapts today plan to your energy level.',
       body: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -75,24 +78,24 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
               children: [
                 _buildQuickCard(
                   emoji: '⚡',
-                  title: 'عالی و پرانرژی',
-                  desc: 'آماده برای جلسهٔ کامل',
+                  title: l10n?.mv_checkin_great_title ?? 'Great',
+                  desc: l10n?.mv_checkin_great_desc ?? 'Ready for full session',
                   color: colors.success,
                   onTap: () => _handleQuickOption(5, 1, 1),
                 ),
                 SizedBox(width: metrics.spaceSm),
                 _buildQuickCard(
                   emoji: '🌤️',
-                  title: 'خوب و معمولی',
-                  desc: 'انرژی متناسب',
+                  title: l10n?.mv_checkin_good_title ?? 'Good',
+                  desc: l10n?.mv_checkin_good_desc ?? 'Balanced energy',
                   color: colors.primary,
                   onTap: () => _handleQuickOption(3, 2, 2),
                 ),
                 SizedBox(width: metrics.spaceSm),
                 _buildQuickCard(
                   emoji: '😴',
-                  title: 'خسته یا کوفته',
-                  desc: 'پیشنهاد جلسه سبک',
+                  title: l10n?.mv_checkin_tired_title ?? 'Tired',
+                  desc: l10n?.mv_checkin_tired_desc ?? 'Suggest lighter session',
                   color: colors.warning,
                   onTap: () => _handleQuickOption(2, 4, 4),
                 ),
@@ -111,8 +114,8 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
                   children: [
                     Text(
                       _showDeepSliders
-                          ? 'بستن جزئیات دقیق‌تر'
-                          : 'ثبت دقیق‌تر (درد، کوفتگی و خستگی)...',
+                          ? (l10n?.mv_checkin_close_details ?? 'Close details')
+                          : (l10n?.mv_checkin_open_details ?? 'More details...'),
                       style: textTheme.labelMedium?.copyWith(
                         color: colors.primary,
                         fontWeight: FontWeight.w600,
@@ -133,28 +136,28 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
             if (_showDeepSliders) ...[
               SizedBox(height: metrics.spaceMd),
               _buildSliderRow(
-                'سطح انرژی (۱ تا ۵):',
+                l10n?.mv_checkin_energy_label ?? 'Energy level (1 to 5):',
                 _energy.toDouble(),
                 1,
                 5,
                 (v) => setState(() => _energy = v.round()),
               ),
               _buildSliderRow(
-                'کوفتگی عضلانی (۱ تا ۵):',
+                l10n?.mv_checkin_soreness_label ?? 'Muscle soreness (1 to 5):',
                 _soreness.toDouble(),
                 1,
                 5,
                 (v) => setState(() => _soreness = v.round()),
               ),
               _buildSliderRow(
-                'خستگی عمومی (۱ تا ۵):',
+                l10n?.mv_checkin_fatigue_label ?? 'General fatigue (1 to 5):',
                 _fatigue.toDouble(),
                 1,
                 5,
                 (v) => setState(() => _fatigue = v.round()),
               ),
               _buildSliderRow(
-                'میزان درد موضعی (۰ تا ۱۰):',
+                l10n?.mv_checkin_pain_label ?? 'Local pain level (0 to 10):',
                 _pain.toDouble(),
                 0,
                 10,
@@ -162,7 +165,7 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
               ),
               SizedBox(height: metrics.spaceLg),
               MvPrimaryAction(
-                label: 'ثبت جزئیات دقیق',
+                label: l10n?.mv_checkin_submit_details ?? 'Save detailed check-in',
                 onPressed: () =>
                     _handleQuickOption(_energy, _soreness, _fatigue),
               ),
@@ -253,7 +256,7 @@ class _MvQuickCheckinSheetState extends State<MvQuickCheckinSheet> {
               ),
             ),
             Text(
-              value.round().toString(),
+              toPersianDigits(value.round().toString()),
               style: textTheme.labelMedium?.copyWith(
                 color: colors.primary,
                 fontWeight: FontWeight.w700,

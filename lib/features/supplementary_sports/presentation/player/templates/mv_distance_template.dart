@@ -4,6 +4,7 @@ import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// قالب پلیر برای ورزش‌های مسافت‌محور (دویدن، دوچرخه، پیاده‌روی تند) (S4-T3)
 class MvDistanceTemplate extends StatefulWidget {
@@ -65,6 +66,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
     final textTheme = Theme.of(context).textTheme;
     final colors = context.ritmoColors;
     final metrics = context.metrics;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -75,7 +77,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                widget.kind?.titleFa ?? 'جلسه مسافتی',
+                widget.kind?.titleFa ?? (l10n?.mv_template_distance_title ?? 'Distance Session'),
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: metrics.spaceMd),
@@ -93,7 +95,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                   ),
                   SizedBox(width: metrics.spaceSm),
                   Text(
-                    'کیلومتر',
+                    l10n?.mv_unit_km ?? 'km',
                     style: textTheme.titleMedium?.copyWith(color: colors.textSecondary),
                   ),
                 ],
@@ -122,7 +124,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                   ),
                   SizedBox(width: metrics.spaceLg),
                   Text(
-                    'تنظیم مسافت',
+                    l10n?.mv_template_distance_adjust ?? 'Adjust Distance',
                     style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   SizedBox(width: metrics.spaceLg),
@@ -137,7 +139,10 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
               ),
               SizedBox(height: metrics.spaceXl),
               // Effort slider
-              Text('میزان تلاش (RPE: ${toPersianDigits(_rpe.toString())})', style: textTheme.bodyMedium),
+              Text(
+                l10n?.mv_template_rpe_label(toPersianDigits(_rpe.toString())) ?? 'Effort (RPE: $_rpe)',
+                style: textTheme.bodyMedium,
+              ),
               Slider(
                 value: _rpe.toDouble(),
                 min: 1,
@@ -170,7 +175,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                       ),
                     ),
                     icon: Icon(Icons.check_circle_rounded, size: metrics.iconMd),
-                    label: const Text('پایان جلسه'),
+                    label: Text(l10n?.mv_template_finish ?? 'Finish Session'),
                     onPressed: () {
                       RitmoHaptics.success();
                       final distanceMeters = _distanceKm * 1000.0;

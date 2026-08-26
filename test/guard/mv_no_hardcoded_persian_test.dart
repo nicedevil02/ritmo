@@ -58,7 +58,11 @@ void main() {
         print('=== Total ${violations.length} violations across ${fileMap.length} files ===');
         fileMap.forEach((file, list) {
           // ignore: avoid_print
-          print('$file: ${list.length} violations');
+          print('\n--- $file ---');
+          for (final item in list) {
+            // ignore: avoid_print
+            print('  $item');
+          }
         });
       }
 

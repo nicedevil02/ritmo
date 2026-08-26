@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
 
 /// Full-width Animation Stage for Workout Sessions and Hero Cards (Section 5.10 & 6.3).
 class MvAnimationStage extends StatelessWidget {
@@ -54,7 +55,7 @@ class MvAnimationStage extends StatelessWidget {
                 ),
                 SizedBox(height: metrics.spaceSm),
                 Text(
-                  'حرکت ورزشی',
+                  AppLocalizations.of(context)?.mv_exercise_fallback ?? 'Movement',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),

@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:ritmo/features/supplementary_sports/presentation/player/templates/templates.dart';
+import 'package:ritmo/l10n/app_localizations.dart';
+
+Widget createTestApp(Widget child) {
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('fa'),
+    home: Scaffold(body: child),
+  );
+}
 
 void main() {
   group('S4-T3 Five Player Templates Widget Tests', () {
@@ -20,15 +30,13 @@ void main() {
         int? reportedRpe;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvTimedTemplate(
-                session: dummySession,
-                onFinish: (sec, rpe) {
-                  reportedSec = sec;
-                  reportedRpe = rpe;
-                },
-              ),
+          createTestApp(
+            MvTimedTemplate(
+              session: dummySession,
+              onFinish: (sec, rpe) {
+                reportedSec = sec;
+                reportedRpe = rpe;
+              },
             ),
           ),
         );
@@ -57,15 +65,13 @@ void main() {
         int? reportedRpe;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvDistanceTemplate(
-                session: dummySession,
-                onFinish: (sec, dist, rpe) {
-                  reportedDist = dist;
-                  reportedRpe = rpe;
-                },
-              ),
+          createTestApp(
+            MvDistanceTemplate(
+              session: dummySession,
+              onFinish: (sec, dist, rpe) {
+                reportedDist = dist;
+                reportedRpe = rpe;
+              },
             ),
           ),
         );
@@ -95,23 +101,21 @@ void main() {
         double? reportedPack;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvRouteTemplate(
-                session: dummySession,
-                onFinish:
-                    ({
-                      required elapsedSeconds,
-                      required distanceM,
-                      required elevationGainM,
-                      required packWeightKg,
-                      required rpe1To10,
-                      routeId,
-                    }) {
-                      reportedElev = elevationGainM;
-                      reportedPack = packWeightKg;
-                    },
-              ),
+          createTestApp(
+            MvRouteTemplate(
+              session: dummySession,
+              onFinish:
+                  ({
+                    required elapsedSeconds,
+                    required distanceM,
+                    required elevationGainM,
+                    required packWeightKg,
+                    required rpe1To10,
+                    routeId,
+                  }) {
+                    reportedElev = elevationGainM;
+                    reportedPack = packWeightKg;
+                  },
             ),
           ),
         );
@@ -137,14 +141,12 @@ void main() {
         int? reportedLaps;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvLapsTemplate(
-                session: dummySession,
-                onFinish: (sec, laps, rpe) {
-                  reportedLaps = laps;
-                },
-              ),
+          createTestApp(
+            MvLapsTemplate(
+              session: dummySession,
+              onFinish: (sec, laps, rpe) {
+                reportedLaps = laps;
+              },
             ),
           ),
         );
@@ -175,14 +177,12 @@ void main() {
         String? reportedNote;
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MvMatchTemplate(
-                session: dummySession,
-                onFinish: (sec, rpe, note) {
-                  reportedNote = note;
-                },
-              ),
+          createTestApp(
+            MvMatchTemplate(
+              session: dummySession,
+              onFinish: (sec, rpe, note) {
+                reportedNote = note;
+              },
             ),
           ),
         );

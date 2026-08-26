@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
+import 'package:ritmo/core/utils/date_key.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/features/worship/logic/worship_engine.dart';
 
@@ -13,12 +13,21 @@ class PrayerReminderScheduler {
   PrayerReminderScheduler._();
   static final PrayerReminderScheduler instance = PrayerReminderScheduler._();
 
-  static const _activePrayerKeys = ['fajr', 'dhuhr', 'maghrib'];
+  static const int kPrayerScheduleHorizonDays = 7;
+  static const _allPrayerKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+  static bool _parseBool(String? val, {bool defaultValue = true}) {
+    if (val == null || val.isEmpty) return defaultValue;
+    final lower = val.toLowerCase().trim();
+    if (lower == 'true' || lower == '1') return true;
+    if (lower == 'false' || lower == '0') return false;
+    return defaultValue;
+  }
 
   /// Reads current worship settings and schedules exact & pre-reminders for [daysAhead] days.
   Future<void> schedulePrayerReminders({
     DateTime? fromDate,
-    int daysAhead = 2,
+    int daysAhead = kPrayerScheduleHorizonDays,
   }) async {
     try {
       final db = await DatabaseHelper.instance.database;
@@ -26,40 +35,57 @@ class PrayerReminderScheduler {
         'app_settings',
         where: "key LIKE 'worship_%'",
       );
-      final settings = {
-        for (final r in rows) r['key']! as String: r['value']! as String,
-      };
+      final settings = <String, String>{};
+      for (final r in rows) {
+        final k = r['key']?.toString();
+        final v = r['value']?.toString();
+        if (k != null && v != null) {
+          settings[k] = v;
+        }
+      }
 
-      final isEnabled = settings['worship_adhan_enabled'] != 'false' &&
-          settings['worship_prayer_reminders_enabled'] != 'false';
+      final isAdhanEnabled = _parseBool(settings['worship_adhan_enabled']);
+      final isRemindersEnabled = _parseBool(settings['worship_prayer_reminders_enabled']);
+      final isEnabled = isAdhanEnabled && isRemindersEnabled;
+
+      // Always clear previous schedules in horizon to prevent stale alarms
+      await cancelAll(horizonDays: daysAhead);
 
       if (!isEnabled) {
-        await cancelAll();
         return;
       }
 
-      final adhanFajr = settings['worship_adhan_fajr'] != 'false';
-      final adhanDhuhr = settings['worship_adhan_dhuhr'] != 'false';
-      final adhanMaghrib = settings['worship_adhan_maghrib'] != 'false';
+      final separatePrayers = _parseBool(settings['worship_separate_prayers'], defaultValue: false);
+      final adhanFajr = _parseBool(settings['worship_adhan_fajr']);
+      final adhanDhuhr = _parseBool(settings['worship_adhan_dhuhr']);
+      final adhanAsr = _parseBool(settings['worship_adhan_asr'], defaultValue: separatePrayers);
+      final adhanMaghrib = _parseBool(settings['worship_adhan_maghrib']);
+      final adhanIsha = _parseBool(settings['worship_adhan_isha'], defaultValue: separatePrayers);
       final preReminderMinutes =
           int.tryParse(settings['worship_pre_reminder_minutes'] ?? '0') ?? 0;
 
       final enabledMap = {
         'fajr': adhanFajr,
         'dhuhr': adhanDhuhr,
+        'asr': separatePrayers ? adhanAsr : false,
         'maghrib': adhanMaghrib,
+        'isha': separatePrayers ? adhanIsha : false,
       };
 
       final prayerLabels = {
         'fajr': 'نماز صبح',
         'dhuhr': 'نماز ظهر',
+        'asr': 'نماز عصر',
         'maghrib': 'نماز مغرب',
+        'isha': 'نماز عشا',
       };
 
       final prayerEmojis = {
         'fajr': '🌅',
         'dhuhr': '☀️',
+        'asr': '🌤️',
         'maghrib': '🌇',
+        'isha': '🌙',
       };
 
       final now = DateTime.now();
@@ -67,18 +93,19 @@ class PrayerReminderScheduler {
 
       for (int i = 0; i < daysAhead; i++) {
         final targetDate = DateTime(baseDate.year, baseDate.month, baseDate.day + i);
-        final dateStr =
-            '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+        final dateStr = DateKey.of(targetDate);
 
         final times = await WorshipEngine.instance.prayerTimes(targetDate);
         final timesMap = {
           'fajr': times.fajr,
           'dhuhr': times.dhuhr,
+          'asr': times.asr,
           'maghrib': times.maghrib,
+          'isha': times.isha,
         };
 
-        for (final key in _activePrayerKeys) {
-          final isPrayerActive = enabledMap[key] ?? true;
+        for (final key in _allPrayerKeys) {
+          final isPrayerActive = enabledMap[key] ?? false;
           final prayerTime = timesMap[key];
           if (!isPrayerActive || prayerTime == null) continue;
 
@@ -134,21 +161,20 @@ class PrayerReminderScheduler {
     }
   }
 
-  /// Cancels all scheduled prayer reminders.
-  Future<void> cancelAll() async {
+  /// Cancels all scheduled prayer reminders for [horizonDays] days.
+  Future<void> cancelAll({int horizonDays = kPrayerScheduleHorizonDays}) async {
     try {
       final now = DateTime.now();
-      for (int i = 0; i < 7; i++) {
+      for (int i = 0; i < horizonDays; i++) {
         final targetDate = DateTime(now.year, now.month, now.day + i);
-        final dateStr =
-            '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
-        for (final key in _activePrayerKeys) {
+        final dateStr = DateKey.of(targetDate);
+        for (final key in _allPrayerKeys) {
           await NotificationGateway.cancel('prayer_exact_${key}_$dateStr');
           await NotificationGateway.cancel('prayer_pre_${key}_$dateStr');
         }
       }
-    } catch (e) {
-      debugPrint('PrayerReminderScheduler: Error canceling prayer alarms: $e');
+    } catch (e, st) {
+      RitmoLog.error('PrayerReminderScheduler', 'Error canceling prayer alarms', e, st);
     }
   }
 }

@@ -23,13 +23,29 @@ class NightPrayerCard extends StatefulWidget {
 class _NightPrayerCardState extends State<NightPrayerCard> {
   int _currentRakah = 0;
   Timer? _tickerTimer;
+  bool _isNightTime = false;
 
   @override
   void initState() {
     super.initState();
+    _checkNightTime();
     _tickerTimer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        _checkNightTime();
+      }
     });
+  }
+
+  void _checkNightTime() {
+    final now = DateTime.now();
+    final midnight = widget.day.times.midnightShari;
+    final fajr = widget.day.times.fajr;
+    final isNight = now.isAfter(midnight) || now.isBefore(fajr);
+    if (_isNightTime != isNight) {
+      setState(() {
+        _isNightTime = isNight;
+      });
+    }
   }
 
   @override
@@ -40,14 +56,7 @@ class _NightPrayerCardState extends State<NightPrayerCard> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final midnight = widget.day.times.midnightShari;
-    final fajr = widget.day.times.fajr;
-
-    // Is it night time (after midnight or before fajr)?
-    final isNightTime = now.isAfter(midnight) || now.isBefore(fajr);
-
-    if (!isNightTime) {
+    if (!_isNightTime) {
       return const SizedBox.shrink(); // Hide during day
     }
 

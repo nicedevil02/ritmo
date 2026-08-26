@@ -726,7 +726,6 @@ class WorshipEngine {
       }
     }
 
-    // ─ Query 2: completions for this date ─
     List<Map<String, dynamic>> completionRows = [];
     try {
       completionRows = await db.query(
@@ -734,7 +733,9 @@ class WorshipEngine {
         where: 'dateStr = ?',
         whereArgs: [cacheKey],
       );
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning('WorshipEngine.getWorshipDay completions query error: $e', error: e, stack: st);
+    }
 
     // ─ Query 3: prayer times (self-healing) ─
     final times = await _prayerTimesFromDb(db, date);
@@ -1362,7 +1363,9 @@ class WorshipEngine {
         }
         return ctx;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning('WorshipEngine.getWorshipContext cycle query error: $e', error: e, stack: st);
+    }
 
     if (suspended) {
       return WorshipDayContext(

@@ -330,10 +330,15 @@ class PrayerTime {
   }
 
   DateTime _parseTime(String timeStr, DateTime baseDate) {
-    final parts = timeStr.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
-    return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        final hour = int.tryParse(parts[0].trim()) ?? 0;
+        final minute = int.tryParse(parts[1].trim()) ?? 0;
+        return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
+      }
+    } catch (_) {}
+    return DateTime(baseDate.year, baseDate.month, baseDate.day, 0, 0);
   }
 }
 
@@ -528,13 +533,27 @@ class WorshipSeason {
             return todayStr.compareTo(startDate) >= 0 && todayStr.compareTo(endDate) <= 0;
           }
           final currentYear = now.year;
-          final start = DateTime.parse('$currentYear-$startDate');
-          final end = DateTime.parse('$currentYear-$endDate');
+          DateTime? parseMonthDay(int year, String raw) {
+            final p = raw.split('-');
+            if (p.length >= 2) {
+              final m = int.tryParse(p[0].trim());
+              final d = int.tryParse(p[1].trim());
+              if (m != null && d != null) {
+                return DateTime(year, m, d);
+              }
+            }
+            return DateTime.tryParse('$year-$raw');
+          }
+
+          final start = parseMonthDay(currentYear, startDate);
+          final end = parseMonthDay(currentYear, endDate);
+          if (start == null || end == null) return false;
+
           if (end.isBefore(start)) {
-            final nextYearEnd = DateTime.parse('${currentYear + 1}-$endDate');
-            final prevYearStart = DateTime.parse('${currentYear - 1}-$startDate');
-            return (now.isAfter(start) && now.isBefore(nextYearEnd)) || 
-                   (now.isAfter(prevYearStart) && now.isBefore(end));
+            final nextYearEnd = parseMonthDay(currentYear + 1, endDate);
+            final prevYearStart = parseMonthDay(currentYear - 1, startDate);
+            return (nextYearEnd != null && now.isAfter(start) && now.isBefore(nextYearEnd)) || 
+                   (prevYearStart != null && now.isAfter(prevYearStart) && now.isBefore(end));
           }
           return now.isAfter(start.subtract(const Duration(days: 1))) && 
                  now.isBefore(end.add(const Duration(days: 1)));

@@ -62,7 +62,7 @@ class _PrayerArcHeroState extends State<PrayerArcHero>
 
     _loadSettings();
 
-    _tickerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _tickerTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
         setState(() {
           _now = DateTime.now();

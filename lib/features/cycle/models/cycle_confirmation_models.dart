@@ -37,7 +37,11 @@ class CycleConfirmationRequest {
   final int? createdAt;
   final int? updatedAt;
 
-  bool get isAnswered => answer != null;
+  bool get isAnswered =>
+      answer != null &&
+      answer != CycleConfirmationAnswer.snoozed &&
+      answer != CycleConfirmationAnswer.notStartedYet &&
+      answer != CycleConfirmationAnswer.stillOngoing;
 
   static String buildId(CycleConfirmationKind kind, DateTime targetDate) =>
       '${kind.name}_${CycleDateContract.toDayKey(targetDate)}';

@@ -40,6 +40,7 @@ class CycleTables {
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS index_cycle_periods_startDate ON cycle_periods(startDate);');
     await db.execute('CREATE INDEX IF NOT EXISTS index_cycle_periods_endDate ON cycle_periods(endDate);');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS uq_cycle_periods_single_open ON cycle_periods(autoClosed) WHERE endDate IS NULL;');
 
     // V14 cycle_day_logs table
     await db.execute('''

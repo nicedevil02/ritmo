@@ -118,6 +118,23 @@ class MigrationV117CycleHardening extends Migration {
     // ۵. اصلاح چند دورهٔ باز همزمان (بستن دوره‌های قدیمی‌تر با autoClosed = 1)
     int closedOldOpen = 0;
     try {
+      // Fetch user's period duration setting if configured (fallback 6 days)
+      int userDurationDays = 6;
+      try {
+        final settingsRows = await db.query(
+          'app_settings',
+          where:
+              "key = 'period_duration_days' OR key = 'user_period_duration_days'",
+        );
+        for (final s in settingsRows) {
+          final val = int.tryParse(s['value']?.toString() ?? '');
+          if (val != null && val >= 3 && val <= 10) {
+            userDurationDays = val;
+            break;
+          }
+        }
+      } catch (_) {}
+
       final openPeriods = await db.query(
         'cycle_periods',
         where: 'endDate IS NULL',
@@ -130,7 +147,9 @@ class MigrationV117CycleHardening extends Migration {
           final startRaw = oldOpen['startDate']?.toString();
           final startDt = CycleDateContract.parseDayKey(startRaw);
           if (id != null && startDt != null) {
-            final estimatedEnd = startDt.add(const Duration(days: 5));
+            final estimatedEnd = startDt.add(
+              Duration(days: userDurationDays - 1),
+            );
             final endKey = CycleDateContract.toDayKey(estimatedEnd);
             final existingNote = oldOpen['note']?.toString() ?? '';
             final newNote = existingNote.isNotEmpty
@@ -155,6 +174,15 @@ class MigrationV117CycleHardening extends Migration {
       debugPrint('[MigrationV117] Error closing multiple open periods: $e');
     }
 
+    // ۶. ایجاد ایندکس یکتا برای تضمین عدم وجود چند دورهٔ باز همزمان
+    try {
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS uq_cycle_periods_single_open ON cycle_periods(autoClosed) WHERE endDate IS NULL;',
+      );
+    } catch (e) {
+      debugPrint('[MigrationV117] Error creating unique open period index: $e');
+    }
+
     debugPrint(
       '[MigrationV117] Cycle hardening completed: normalizedPeriods=$normalizedPeriods, normalizedLogs=$normalizedLogs, normalizedConfirms=$normalizedConfirms, cleanedConfirms=$cleanedConfirms, closedOldOpen=$closedOldOpen',
     );
@@ -164,5 +192,6 @@ class MigrationV117CycleHardening extends Migration {
   Future<void> down(covariant DatabaseExecutor db) async {
     await db.execute('DROP INDEX IF EXISTS index_cycle_periods_startDate;');
     await db.execute('DROP INDEX IF EXISTS index_cycle_periods_endDate;');
+    await db.execute('DROP INDEX IF EXISTS uq_cycle_periods_single_open;');
   }
 }

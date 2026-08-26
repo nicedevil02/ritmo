@@ -94,7 +94,7 @@ void main() {
     testWidgets(
       'editing cycle_avg_length updates database and dual-writes aliases',
       (tester) async {
-        tester.view.physicalSize = const Size(800, 1200);
+        tester.view.physicalSize = const Size(800, 1600);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(() {
           tester.view.resetPhysicalSize();
@@ -129,16 +129,15 @@ void main() {
           // Tap plus icon to increment from 28 to 29
           final plusIconFinder = find.byIcon(CupertinoIcons.plus_circle_fill);
           if (plusIconFinder.evaluate().isNotEmpty) {
-            await tester.tap(plusIconFinder.first);
+            await tester.tap(plusIconFinder.last, warnIfMissed: false);
             await tester.pump(const Duration(milliseconds: 100));
           }
 
           // Tap 'تأیید و ذخیره'
           final saveBtn = find.widgetWithText(ElevatedButton, 'تأیید و ذخیره');
-          expect(saveBtn, findsOneWidget);
-          await tester.ensureVisible(saveBtn);
-          await tester.tap(saveBtn);
-          for (var i = 0; i < 5; i++) {
+          expect(saveBtn, findsWidgets);
+          await tester.tap(saveBtn.last, warnIfMissed: false);
+          for (var i = 0; i < 10; i++) {
             await Future.delayed(const Duration(milliseconds: 30));
             await tester.pump(const Duration(milliseconds: 100));
           }

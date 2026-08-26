@@ -30,45 +30,54 @@ class CyclePeriodStatus {
   }
 
   /// فقط روزهای قطعی: دورهٔ بسته در بازهٔ [start, end]،
-  /// یا دورهٔ باز در بازهٔ [start, today]. هرگز بر اساس pDur حدس نمی‌زند.
+  /// یا دورهٔ باز در بازهٔ [start, effectiveEnd] با اعمال سقف منطقی. هرگز بر اساس pDur حدس نمی‌زند.
   static bool isConfirmedPeriodDay(
     List<CyclePeriod> periods,
     DateTime day,
-    DateTime today,
-  ) {
+    DateTime today, {
+    int? ceilingDays,
+  }) {
     final cleanDay = CycleDateContract.cleanDate(day);
     final cleanToday = CycleDateContract.cleanDate(today);
+    final maxDays = ceilingDays ?? CycleSettings.maxPlausiblePeriodDays;
 
     for (final p in periods) {
       final cleanStart = CycleDateContract.cleanDate(p.startDate);
-      if (p.isOpen) {
-        if (CycleDateContract.inWindow(cleanDay, cleanStart, cleanToday)) {
-          return true;
-        }
-      } else {
-        final cleanEnd = CycleDateContract.cleanDate(p.endDate!);
-        if (CycleDateContract.inWindow(cleanDay, cleanStart, cleanEnd)) {
-          return true;
-        }
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: cleanStart,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: maxDays,
+      );
+      if (CycleDateContract.inWindow(cleanDay, cleanStart, pEnd)) {
+        return true;
       }
     }
     return false;
   }
 
-  /// شمارهٔ روز درون دورهٔ فعال (۱-مبنا). اگر روز قاعدگی نیست، null.
+  /// شمارهٔ روز درون دورهٔ فعال (۱-مبنا). اگر روز قاعدگی نیست یا از سقف گذشته، null.
   /// هرگز فال‌بک 1 برنمی‌گرداند.
-  static int? activeDayNumber(List<CyclePeriod> periods, DateTime today) {
+  static int? activeDayNumber(
+    List<CyclePeriod> periods,
+    DateTime today, {
+    int? ceilingDays,
+  }) {
     final cleanToday = CycleDateContract.cleanDate(today);
+    final maxDays = ceilingDays ?? CycleSettings.maxPlausiblePeriodDays;
+
     for (final p in periods) {
       final cleanStart = CycleDateContract.cleanDate(p.startDate);
-      if (p.isOpen) {
-        if (CycleDateContract.inWindow(cleanToday, cleanStart, cleanToday)) {
-          return CycleDateContract.daysBetween(cleanStart, cleanToday) + 1;
-        }
-      } else {
-        final cleanEnd = CycleDateContract.cleanDate(p.endDate!);
-        if (CycleDateContract.inWindow(cleanToday, cleanStart, cleanEnd)) {
-          return CycleDateContract.daysBetween(cleanStart, cleanToday) + 1;
+      final pEnd = CycleDateContract.effectiveEnd(
+        start: cleanStart,
+        end: p.endDate,
+        today: cleanToday,
+        maxPlausibleDays: maxDays,
+      );
+      if (CycleDateContract.inWindow(cleanToday, cleanStart, pEnd)) {
+        final dayNum = CycleDateContract.daysBetween(cleanStart, cleanToday) + 1;
+        if (dayNum <= maxDays) {
+          return dayNum;
         }
       }
     }

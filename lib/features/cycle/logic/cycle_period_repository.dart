@@ -172,10 +172,31 @@ class CyclePeriodRepository {
       }
       final elapsed = active.elapsedDaysAt(cleanToday);
       if (elapsed >= CycleSettings.forgottenOpenPeriodDays) {
-        // Auto-close with estimated duration (6 days or before cleanStart) with autoClosed = 1
-        const estimatedDurationDays = 6;
+        // Auto-close with user-configured period duration (fallback 6 days) or before cleanStart with autoClosed = 1
+        int estimatedDurationDays = 6;
+        try {
+          final settingsList = await db.query(
+            'app_settings',
+            where:
+                "key = 'period_duration_days' OR key = 'user_period_duration_days'",
+          );
+          for (final s in settingsList) {
+            final val = int.tryParse(s['value']?.toString() ?? '');
+            if (val != null && val >= 3 && val <= 10) {
+              estimatedDurationDays = val;
+              break;
+            }
+          }
+        } catch (e, st) {
+          RitmoLogger.warning(
+            '[CyclePeriodRepository] Failed to read period_duration_days: $e',
+            error: e,
+            stack: st,
+          );
+        }
+
         final estimatedEnd = active.startDate.add(
-          const Duration(days: estimatedDurationDays - 1),
+          Duration(days: estimatedDurationDays - 1),
         );
         final safeEnd = estimatedEnd.isBefore(cleanStart)
             ? estimatedEnd
@@ -225,9 +246,12 @@ class CyclePeriodRepository {
 
     // R4: Overlap check with existing periods using contract overlaps & effectiveEnd
     final all = await getAllPeriods(db);
-    final newEffectiveEnd = cleanToday.isAfter(cleanStart)
-        ? cleanToday
-        : cleanStart;
+    final newEffectiveEnd = CycleDateContract.effectiveEnd(
+      start: cleanStart,
+      end: null,
+      today: cleanToday,
+      maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+    );
     for (final p in all) {
       final pEnd = CycleDateContract.effectiveEnd(
         start: p.startDate,
@@ -298,7 +322,10 @@ class CyclePeriodRepository {
       throw StateError('Period with specified id not found.');
     }
 
-    final period = CyclePeriod.fromMap(rows.first);
+    final period = CyclePeriod.tryFromMap(rows.first);
+    if (period == null) {
+      throw StateError('Period with specified id has corrupt or invalid data.');
+    }
     if (!period.isOpen) {
       throw StateError('Period is already closed.');
     }
@@ -389,7 +416,10 @@ class CyclePeriodRepository {
       throw StateError('Period with specified id for update not found.');
     }
 
-    final period = CyclePeriod.fromMap(rows.first);
+    final period = CyclePeriod.tryFromMap(rows.first);
+    if (period == null) {
+      throw StateError('Period with specified id for update has corrupt or invalid data.');
+    }
 
     // R4: Guards
     if (cleanStart.isAfter(cleanToday)) {
@@ -412,11 +442,21 @@ class CyclePeriodRepository {
 
     // Check overlap with OTHER periods
     final targetEnd = clearEndDate
-        ? cleanToday
+        ? CycleDateContract.effectiveEnd(
+            start: cleanStart,
+            end: null,
+            today: cleanToday,
+            maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+          )
         : (cleanEnd ??
             (period.endDate != null
                 ? CycleDateContract.cleanDate(period.endDate!)
-                : cleanToday));
+                : CycleDateContract.effectiveEnd(
+                    start: cleanStart,
+                    end: null,
+                    today: cleanToday,
+                    maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
+                  )));
 
     final all = await getAllPeriods(db);
     for (final p in all) {

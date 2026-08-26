@@ -34,7 +34,7 @@ class CycleConfirmationService {
       if (snoozeUntilStr != null && snoozeUntilStr.isNotEmpty) {
         final snoozeDate = CycleDateContract.parseDayKey(snoozeUntilStr);
         if (snoozeDate != null &&
-            CycleDateContract.isSameOrBefore(cleanNow, snoozeDate)) {
+            cleanNow.isBefore(snoozeDate)) {
           return null;
         }
       }
@@ -67,7 +67,7 @@ class CycleConfirmationService {
         }
 
         final nowMs = effectiveNow.millisecondsSinceEpoch;
-        return CycleConfirmationRequest(
+        final newReq = CycleConfirmationRequest(
           id: reqId,
           kind: kind,
           targetDate: targetDate,
@@ -75,6 +75,12 @@ class CycleConfirmationService {
           createdAt: nowMs,
           updatedAt: nowMs,
         );
+        await db.insert(
+          'cycle_confirmations',
+          newReq.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+        return newReq;
       }
 
       // ۲. بررسی تأیید پایان
@@ -95,12 +101,21 @@ class CycleConfirmationService {
           return existing;
         }
 
-        return CycleConfirmationRequest(
+        final nowMs = effectiveNow.millisecondsSinceEpoch;
+        final newReq = CycleConfirmationRequest(
           id: reqId,
           kind: kind,
           targetDate: targetDate,
           askCount: 0,
+          createdAt: nowMs,
+          updatedAt: nowMs,
         );
+        await db.insert(
+          'cycle_confirmations',
+          newReq.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+        return newReq;
       }
 
       return null;
@@ -149,6 +164,21 @@ class CycleConfirmationService {
           },
           where: 'id = ?',
           whereArgs: [requestId],
+        );
+      } else {
+        // Upsert new confirmation with askCount = 1
+        await db.insert(
+          'cycle_confirmations',
+          {
+            'id': requestId,
+            'kind': requestId.split('_').first,
+            'targetDate': requestId.contains('_') ? requestId.substring(requestId.indexOf('_') + 1) : CycleDateContract.toDayKey(effectiveNow),
+            'askCount': 1,
+            'lastAskedAt': nowMs,
+            'createdAt': nowMs,
+            'updatedAt': nowMs,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
     } catch (e, st) {
@@ -260,12 +290,10 @@ class CycleConfirmationService {
     }
 
     CycleEngine().invalidate();
-    if (db is Database) {
-      await CycleReminderScheduler.rescheduleAll(
-        dbExecutor: db,
-        now: effectiveNow,
-      );
-    }
+    await CycleReminderScheduler.rescheduleAll(
+      dbExecutor: db,
+      now: effectiveNow,
+    );
 
     RitmoEventBus().fire(
       RitmoEvent(

@@ -10,6 +10,7 @@ import 'package:ritmo/core/services/cycle_notification_service.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
+import 'package:ritmo/features/cycle/models/cycle_forecast_models.dart';
 import 'package:ritmo/features/cycle/models/cycle_intelligence_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -58,11 +59,15 @@ class CycleReminderScheduler {
           );
 
       if (engineOutput.hasData && engineOutput.forecast.isNotEmpty) {
-        // F-24: Take at most 3 cycles, filter out low-confidence cycles
-        final eligibleCycles = engineOutput.forecast
-            .take(3)
-            .where((c) => c.confidenceLevel != PredictionConfidenceLevel.low)
-            .toList();
+        // F-24: Take at most 3 cycles. For cycle #0 (immediate next), always include so new users receive reminders.
+        final eligibleCycles = <PredictedCycle>[];
+        final candidates = engineOutput.forecast.take(3).toList();
+        for (var i = 0; i < candidates.length; i++) {
+          final c = candidates[i];
+          if (i == 0 || c.confidenceLevel != PredictionConfidenceLevel.low) {
+            eligibleCycles.add(c);
+          }
+        }
 
         if (eligibleCycles.isNotEmpty) {
           final leadDays = CycleSettings.getReminderLeadDays(settings);

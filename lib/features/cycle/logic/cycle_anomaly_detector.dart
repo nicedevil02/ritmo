@@ -36,6 +36,7 @@ class CycleAnomaly {
 class CycleAnomalyDetector {
   static List<CycleAnomaly> detectAnomalies({
     required List<Map<String, dynamic>> periodRows,
+    List<Map<String, dynamic>>? dayLogRows,
     required double avgCycleLength,
     CycleEngineOutput? engineOutput,
     DateTime? now,
@@ -78,6 +79,38 @@ class CycleAnomalyDetector {
       }
     }
 
+    // 2. Check for unusually heavy flow streak (>= 3 consecutive days of heavy flow)
+    if (dayLogRows != null && dayLogRows.isNotEmpty) {
+      final sortedLogs = [...dayLogRows]
+        ..sort((a, b) => (a['logDate']?.toString() ?? '')
+            .compareTo(b['logDate']?.toString() ?? ''));
+      int heavyStreak = 0;
+      int maxHeavyStreak = 0;
+      for (final log in sortedLogs) {
+        final flow = log['flowLevel']?.toString().toUpperCase();
+        if (flow == 'HEAVY' || flow == 'VERY_HEAVY') {
+          heavyStreak++;
+          if (heavyStreak > maxHeavyStreak) maxHeavyStreak = heavyStreak;
+        } else {
+          heavyStreak = 0;
+        }
+      }
+      if (maxHeavyStreak >= 3) {
+        final isSevere = maxHeavyStreak >= 5;
+        anomalies.add(
+          CycleAnomaly(
+            type: CycleAnomalyType.unusuallyHeavyFlowStreak,
+            severity: isSevere
+                ? CycleAnomalySeverity.consultClinician
+                : CycleAnomalySeverity.watch,
+            paramValue: maxHeavyStreak,
+            referenceValue: 3,
+            isMild: !isSevere,
+          ),
+        );
+      }
+    }
+
     if (periodRows.length < 2) return anomalies;
 
     // Sort periods chronologically ascending
@@ -88,7 +121,7 @@ class CycleAnomalyDetector {
         return aStart.compareTo(bStart);
       });
 
-    // 2. Extract cycle lengths
+    // 3. Extract cycle lengths
     final cycleLengths = <int>[];
     final periodDurations = <int>[];
 
@@ -117,7 +150,7 @@ class CycleAnomalyDetector {
       }
     }
 
-    // 3. Leave-one-out baseline comparison for completed cycles
+    // 4. Leave-one-out baseline comparison for completed cycles
     if (cycleLengths.isNotEmpty) {
       final lastCycle = cycleLengths.last;
 
@@ -165,7 +198,7 @@ class CycleAnomalyDetector {
       }
     }
 
-    // 4. Check for unusually long bleeding duration (> 8 days)
+    // 5. Check for unusually long bleeding duration (> 8 days)
     int? currentBleedingDuration;
     if (engineOutput != null && engineOutput.openPeriodDayCount > 0) {
       currentBleedingDuration = engineOutput.openPeriodDayCount;

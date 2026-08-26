@@ -177,7 +177,7 @@ class CycleDayLogsRepository {
         limit: 1,
       );
       if (rows.isEmpty) return null;
-      return CycleDayLog.fromMap(rows.first);
+      return CycleDayLog.tryFromMap(rows.first);
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleDayLogsRepository] getLogForDate error',
@@ -205,7 +205,10 @@ class CycleDayLogsRepository {
         whereArgs: [fromKey, toKey],
         orderBy: 'logDate ASC',
       );
-      return rows.map((r) => CycleDayLog.fromMap(r)).toList();
+      return rows
+          .map((r) => CycleDayLog.tryFromMap(r))
+          .whereType<CycleDayLog>()
+          .toList();
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleDayLogsRepository] getLogsForRange error',

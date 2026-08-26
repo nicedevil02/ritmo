@@ -172,7 +172,7 @@ class CycleNotificationService {
       await NotificationGateway.cancelForEntity('cycle', 'cycle_period');
       // Cancel lead reminder IDs and confirmation IDs across all lookahead cycles
       for (var c = 0; c < 15; c++) {
-        for (final d in [1, 2, 3, 5, 7, 10, 14]) {
+        for (var d = 1; d <= 14; d++) {
           await NotificationGateway.cancel('cycle_lead_c${c}_d$d');
           await NotificationGateway.cancel(
             NotificationIds.leadReminder(c, d).toString(),

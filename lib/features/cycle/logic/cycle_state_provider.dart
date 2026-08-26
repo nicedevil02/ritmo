@@ -141,7 +141,7 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
   /// Loads full cycle state from database, settings, and calculation engine.
   Future<void> loadState({int? horizonCycles}) async {
     final effectiveHorizon = horizonCycles ?? value.horizonCycles;
-    value = value.copyWith(isLoading: true, errorMessage: null);
+    value = value.copyWith(isLoading: true, clearErrorMessage: true);
     try {
       final db = await DatabaseHelper.instance.database;
       final settingsList = await db.query('app_settings');
@@ -206,8 +206,10 @@ class CycleStateNotifier extends ValueNotifier<CycleState> {
         }
 
         // F-21: Anomaly detection
+        final dayLogRows = await db.query('cycle_day_logs');
         anomalies = CycleAnomalyDetector.detectAnomalies(
           periodRows: periodRows,
+          dayLogRows: dayLogRows,
           avgCycleLength: engineOutput.stats.avgCycleLength,
           engineOutput: engineOutput,
           now: now,

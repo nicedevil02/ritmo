@@ -152,6 +152,7 @@ class SettingDescriptor {
     this.dependsOn,
     this.affectsAgenda = false,
     this.requiresRestart = false,
+    this.isResettable = true,
     this.icon,
     this.unitFa,
     this.optionLabelsFa,
@@ -205,10 +206,17 @@ class SettingDescriptor {
   final SettingCondition? dependsOn;
   final bool affectsAgenda;
   final bool requiresRestart;
+  final bool isResettable;
   final IconData? icon;
   final String? unitFa;
   final Map<String, String>? optionLabelsFa;
   final List<String> searchTermsEn;
+
+  bool get isSecret =>
+      scope == SettingScope.secure ||
+      key.contains('password') ||
+      key.contains('api_key') ||
+      key.contains('token');
 
   bool isEnabled(Map<String, dynamic> currentSettings) {
     final c = dependsOn;
@@ -917,6 +925,7 @@ class SettingsRegistry {
       labelFa: 'کلید دسترسی هوش مصنوعی',
       group: SettingsGroup.assistant,
       visibility: SettingVisibility.advanced,
+      isResettable: false,
       dependsOn: SettingCondition('ai_mode', 'personal_key'),
       descriptionFa: 'ذخیره رمزنگاری‌شده در حافظه امن دستگاه',
       searchTerms: ['کلید api', 'api key', 'رمز هوش مصنوعی'],
@@ -1181,6 +1190,7 @@ class SettingsRegistry {
       defaultValue: '',
       labelFa: 'رمز قفل برنامه',
       group: SettingsGroup.security,
+      isResettable: false,
       dependsOn: SettingCondition('app_lock_enabled'),
       descriptionFa: 'رمز عددی برای باز کردن برنامه',
       searchTerms: ['پین', 'رمز', 'پسورد'],
@@ -1230,6 +1240,7 @@ class SettingsRegistry {
       defaultValue: '',
       labelFa: 'رمز اختصاصی بخش چرخه زیستی',
       group: SettingsGroup.security,
+      isResettable: false,
       dependsOn: SettingCondition('module_cycle_enabled'),
       descriptionFa: 'رمز مجزا برای ورود به بخش خصوصی چرخه سلامت بانوان',
       searchTerms: ['رمز چرخه', 'قفل چرخه', 'حریم خصوصی'],

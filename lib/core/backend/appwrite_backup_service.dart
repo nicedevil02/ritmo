@@ -2,9 +2,7 @@
 
 import 'dart:io';
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as models;
 import 'package:ritmo/core/backend/app_config.dart';
-import 'package:ritmo/core/backend/appwrite_gateway.dart';
 import 'package:ritmo/core/backend/models/auth_result.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 

@@ -28,7 +28,7 @@ class PinHasher {
     return derivator.process(Uint8List.fromList(utf8.encode(normalizedPin)));
   }
 
-  /// Hashes a PIN using the hardened v2 format: v2:<salt_hex>:<hash_hex>
+  /// Hashes a PIN using the hardened v2 format: `v2:<salt_hex>:<hash_hex>`
   static String hashPin(String pin) {
     final norm = _normalize(pin);
     final random = Random.secure();
@@ -49,15 +49,23 @@ class PinHasher {
     return !storedHash.startsWith('v2:');
   }
 
-  /// Verifies a PIN against any of the 3 supported formats:
-  /// 1. v2: `v2:<salt_hex>:<hash_hex>` (PBKDF2-HMAC-SHA256)
-  /// 2. v1: 64-character SHA-256 with static salt
-  /// 3. Plaintext legacy (length <= 6)
+  /// Compares two strings in constant time to mitigate timing side-channel attacks (RIT-032).
+  static bool _constantTimeEquals(String a, String b) {
+    if (a.length != b.length) return false;
+    var result = 0;
+    for (var i = 0; i < a.length; i++) {
+      result |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
+    }
+    return result == 0;
+  }
+
+  /// Verifies a PIN against hardened v2 (PBKDF2) or legacy v1 (salted SHA-256) formats.
+  /// Plaintext passwords are rejected (RIT-031).
   static bool verifyPin(String pin, String storedHash) {
     if (storedHash.isEmpty) return false;
     final norm = _normalize(pin);
 
-    // Format 1: Hardened v2 format
+    // Format 1: Hardened v2 format (PBKDF2-HMAC-SHA256)
     if (storedHash.startsWith('v2:')) {
       final parts = storedHash.split(':');
       if (parts.length != 3) return false;
@@ -76,18 +84,17 @@ class PinHasher {
 
       final derivedBytes = _pbkdf2Derive(norm, saltBytes);
       final derivedHashHex = derivedBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-      return derivedHashHex == expectedHashHex;
-    }
-
-    // Format 3: Plaintext legacy (length <= 6)
-    if (storedHash.length <= 6) {
-      return storedHash == norm || storedHash == pin;
+      return _constantTimeEquals(derivedHashHex, expectedHashHex);
     }
 
     // Format 2: Legacy v1 SHA-256 with static salt
-    final legacyBytes = utf8.encode('$_legacySaltV1:$norm');
-    final legacyDigest = sha256.convert(legacyBytes).toString();
-    return legacyDigest == storedHash;
+    if (storedHash.length == 64) {
+      final legacyBytes = utf8.encode('$_legacySaltV1:$norm');
+      final legacyDigest = sha256.convert(legacyBytes).toString();
+      return _constantTimeEquals(legacyDigest, storedHash);
+    }
+
+    return false;
   }
 
   /// Verifies PIN and returns an upgraded hash if verification was successful

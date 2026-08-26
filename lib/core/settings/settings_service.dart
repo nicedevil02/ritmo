@@ -5,6 +5,7 @@ import 'package:ritmo/core/app_mode/app_mode_service.dart';
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -140,7 +141,7 @@ class SettingsService {
 
       // Invariant: If app_lock_enabled is true but password is missing/empty, fail-safe disable to prevent lockout
       final lockEnabled = _cache['app_lock_enabled'] == true;
-      final lockPassword = _cache['app_lock_password']?.toString() ?? '';
+      var lockPassword = _cache['app_lock_password']?.toString() ?? '';
       if (lockEnabled && lockPassword.isEmpty) {
         _cache['app_lock_enabled'] = false;
         RitmoLog.warning('Settings', 'Invariant violation: app_lock_enabled is true with empty password. Auto-disabled.');
@@ -151,6 +152,23 @@ class SettingsService {
             'value': 'false',
             'updatedAt': DateTime.now().millisecondsSinceEpoch,
           }, conflictAlgorithm: ConflictAlgorithm.replace);
+        } catch (_) {}
+      } else if (lockPassword.isNotEmpty && !lockPassword.startsWith('v2:') && lockPassword.length <= 6) {
+        // Auto-upgrade legacy plaintext PIN to hardened v2 hash (RIT-031)
+        try {
+          final upgraded = PinHasher.hashPin(lockPassword);
+          _cache['app_lock_password'] = upgraded;
+          lockPassword = upgraded;
+          unawaited(SecureKeyStore.setKey('app_lock_password', upgraded));
+        } catch (_) {}
+      }
+
+      final cyclePassword = _cache['cycle_lock_password']?.toString() ?? '';
+      if (cyclePassword.isNotEmpty && !cyclePassword.startsWith('v2:') && cyclePassword.length <= 6) {
+        try {
+          final upgraded = PinHasher.hashPin(cyclePassword);
+          _cache['cycle_lock_password'] = upgraded;
+          unawaited(SecureKeyStore.setKey('cycle_lock_password', upgraded));
         } catch (_) {}
       }
 
@@ -295,9 +313,18 @@ class SettingsService {
     }
   }
 
-  Map<String, String> getAllStringMap() {
+  Map<String, String> getAllStringMap({bool includeSecrets = false}) {
     final map = <String, String>{};
     for (final entry in _cache.entries) {
+      final desc = SettingsRegistry.find(entry.key);
+      if (!includeSecrets &&
+          (desc?.isSecret == true ||
+              desc?.scope == SettingScope.secure ||
+              entry.key.contains('password') ||
+              entry.key.contains('api_key') ||
+              entry.key.contains('token'))) {
+        continue;
+      }
       map[entry.key] = entry.value.toString();
     }
     return map;
@@ -625,17 +652,21 @@ class SettingsService {
   Future<bool> resetGroup(SettingsGroup group) async {
     final descriptors = SettingsRegistry.byGroup(group);
     final batch = <String, Object>{
-      for (final d in descriptors) d.key: d.defaultValue,
+      for (final d in descriptors)
+        if (d.isResettable && d.scope != SettingScope.secure)
+          d.key: d.defaultValue,
     };
+    if (batch.isEmpty) return true;
     return setMany(batch);
   }
 
   Future<bool> resetAll({bool includeSecure = false}) async {
     final batch = <String, Object>{
       for (final d in SettingsRegistry.all)
-        if (includeSecure || d.scope != SettingScope.secure)
+        if (d.isResettable && (includeSecure || d.scope != SettingScope.secure))
           d.key: d.defaultValue,
     };
+    if (batch.isEmpty) return true;
     return setMany(batch);
   }
 

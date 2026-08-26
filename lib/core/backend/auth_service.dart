@@ -165,6 +165,25 @@ class AuthService extends ChangeNotifier {
 
   /// Verifies current remote session status quietly in background
   Future<void> checkRemoteSession({String? explicitProvider}) async {
+    // Retry any pending remote logout first (RIT-035)
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final pendingRows = await db.query(
+        'app_settings',
+        where: "key = 'auth_pending_remote_logout'",
+      );
+      if (pendingRows.isNotEmpty && pendingRows.first['value'] == 'true') {
+        final retryLogout = await _gateway.logout();
+        if (retryLogout.isSuccess) {
+          await db.delete(
+            'app_settings',
+            where: "key = 'auth_pending_remote_logout'",
+          );
+        }
+        return;
+      }
+    } catch (_) {}
+
     final result = await _gateway.getCurrentUser();
     if (result.isSuccess && result.data != null) {
       final user = result.data!;
@@ -237,9 +256,28 @@ class AuthService extends ChangeNotifier {
     return const AuthResult.success(true);
   }
 
-  /// Logout (Preserves local SQLite data completely!)
+  /// Logout (Preserves local SQLite data completely and schedules remote retry if offline - RIT-035)
   Future<AuthResult<bool>> logout() async {
     final res = await _gateway.logout();
+    if (!res.isSuccess) {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.insert('app_settings', {
+          'key': 'auth_pending_remote_logout',
+          'value': 'true',
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      } catch (_) {}
+    } else {
+      try {
+        final db = await DatabaseHelper.instance.database;
+        await db.delete(
+          'app_settings',
+          where: "key = 'auth_pending_remote_logout'",
+        );
+      } catch (_) {}
+    }
+
     await _saveStateToLocalDb(
       loggedIn: false,
       provider: 'anonymous',

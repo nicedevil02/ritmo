@@ -8,6 +8,7 @@ import 'package:ritmo/core/security/app_lock_service.dart';
 import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppLockGate extends StatefulWidget {
   const AppLockGate({super.key, required this.child});
@@ -56,6 +57,55 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
     return 4;
   }
 
+  Future<void> _loadCooldownState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _failedAttempts = prefs.getInt('app_lock_failed_attempts') ?? 0;
+      final lockoutUntilMs = prefs.getInt('app_lock_lockout_until_ms');
+      if (lockoutUntilMs != null) {
+        final lockoutUntil = DateTime.fromMillisecondsSinceEpoch(lockoutUntilMs);
+        if (DateTime.now().isBefore(lockoutUntil)) {
+          _lockoutEndTime = lockoutUntil;
+          _startCooldownTimer();
+        } else {
+          await _clearCooldownState();
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _recordFailedAttempt() async {
+    _failedAttempts++;
+    int cooldownSeconds = 0;
+    if (_failedAttempts >= 10) {
+      cooldownSeconds = 300; // 5 minutes
+    } else if (_failedAttempts >= 5) {
+      cooldownSeconds = 30; // 30 seconds
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('app_lock_failed_attempts', _failedAttempts);
+      if (cooldownSeconds > 0) {
+        final lockoutUntil = DateTime.now().add(Duration(seconds: cooldownSeconds));
+        _lockoutEndTime = lockoutUntil;
+        await prefs.setInt('app_lock_lockout_until_ms', lockoutUntil.millisecondsSinceEpoch);
+        _startCooldownTimer();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _clearCooldownState() async {
+    _failedAttempts = 0;
+    _lockoutEndTime = null;
+    _cooldownTimer?.cancel();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('app_lock_failed_attempts');
+      await prefs.remove('app_lock_lockout_until_ms');
+    } catch (_) {}
+  }
+
   void _startCooldownTimer() {
     _cooldownTimer?.cancel();
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -65,9 +115,8 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       }
       if (!_isCooldownActive) {
         timer.cancel();
+        _clearCooldownState();
         setState(() {
-          _failedAttempts = 0;
-          _lockoutEndTime = null;
           _pinErrorMessage = '';
         });
       } else {
@@ -80,7 +129,7 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadSettingsAndAuth();
+    _loadCooldownState().then((_) => _loadSettingsAndAuth());
   }
 
   @override
@@ -201,15 +250,13 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
       if (success) {
         await HapticFeedback.mediumImpact();
+        await _clearCooldownState();
         if (mounted) {
           setState(() {
             _isLocked = false;
             _enteredPin = '';
             _pinErrorMessage = '';
-            _failedAttempts = 0;
-            _lockoutEndTime = null;
           });
-          _cooldownTimer?.cancel();
         }
       } else {
         await HapticFeedback.heavyImpact();
@@ -247,31 +294,28 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       Future.delayed(const Duration(milliseconds: 200), () async {
         final result = PinHasher.verifyAndUpgrade(_enteredPin, correctPin);
         if (result.isValid) {
-          if (result.upgradedHash != null) {
-            await _lockService.setLockPassword(result.upgradedHash!);
-            _lockPassword = result.upgradedHash!;
+          final upgraded = result.upgradedHash;
+          if (upgraded != null) {
+            await _lockService.setLockPassword(upgraded);
+            _lockPassword = upgraded;
           }
           await HapticFeedback.mediumImpact();
+          await _clearCooldownState();
           if (mounted) {
             setState(() {
               _isLocked = false;
               _enteredPin = '';
               _pinErrorMessage = '';
-              _failedAttempts = 0;
-              _lockoutEndTime = null;
             });
-            _cooldownTimer?.cancel();
           }
         } else {
           await HapticFeedback.heavyImpact();
+          await _recordFailedAttempt();
           if (mounted) {
             setState(() {
               _enteredPin = '';
-              _failedAttempts++;
-              if (_failedAttempts >= 5) {
-                _lockoutEndTime = DateTime.now().add(const Duration(seconds: 30));
-                _startCooldownTimer();
-                _pinErrorMessage = 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً ۳۰ ثانیه صبر کنید.';
+              if (_isCooldownActive) {
+                _pinErrorMessage = 'تعداد تلاش‌های ناموفق بیش از حد مجاز است. لطفاً $_cooldownRemainingSeconds ثانیه صبر کنید.';
               } else {
                 _pinErrorMessage = 'رمز عبور نادرست است. دوباره تلاش کنید.';
               }

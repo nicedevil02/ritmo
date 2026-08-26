@@ -5,7 +5,6 @@ import 'package:ritmo/core/database/migration/migration_interface.dart';
 import 'package:ritmo/core/database/migration/migration_runner.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/core/services/end_of_day_sweep.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _TestMigration10 extends Migration {
@@ -125,8 +124,7 @@ void main() {
 
       // App start date: 5 days ago
       final now = DateTime(2026, 8, 20, 10, 0);
-      final fourDaysAgo = DateTime(2026, 8, 16);
-      final fourDaysAgoStr = '2026-08-16';
+      const fourDaysAgoStr = '2026-08-16';
 
       await db.insert('app_settings', {
         'key': 'app_start_date',

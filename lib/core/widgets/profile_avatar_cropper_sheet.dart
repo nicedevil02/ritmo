@@ -10,7 +10,9 @@ import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 
-/// Interactive circular avatar cropper sheet and manager.
+/// Full-canvas interactive profile avatar cropper sheet.
+/// Displays the full uncropped image on a dark canvas with a circular mask overlay,
+/// allowing free pan & zoom, and slicing to 512x512 only on user confirmation.
 class ProfileAvatarCropperSheet extends StatefulWidget {
   const ProfileAvatarCropperSheet({super.key, required this.imageFile});
 
@@ -33,6 +35,7 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
   final GlobalKey _cropBoundaryKey = GlobalKey();
   final TransformationController _transformController = TransformationController();
   bool _isSaving = false;
+  static const double _cropDiameter = 240.0;
 
   @override
   void dispose() {
@@ -58,16 +61,43 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
     setState(() => _isSaving = true);
 
     try {
-      // Allow frame to settle
       await Future<void>.delayed(const Duration(milliseconds: 60));
       final boundary = _cropBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         throw Exception('Render boundary not found');
       }
 
-      // 260px * 2.0 pixelRatio = 520x520 crisp high-res avatar
-      final uiImage = await boundary.toImage(pixelRatio: 2.0);
-      final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+      // 1. Capture the full canvas viewport image
+      final fullCanvasImage = await boundary.toImage(pixelRatio: 2.0);
+      final canvasWidth = fullCanvasImage.width.toDouble();
+      final canvasHeight = fullCanvasImage.height.toDouble();
+
+      // 2. Compute exact center crop rect matching the overlay circle in image coordinates
+      final renderBox = _cropBoundaryKey.currentContext?.findRenderObject() as RenderBox?;
+      final logicalSize = renderBox?.size ?? Size(canvasWidth / 2.0, canvasHeight / 2.0);
+      final pixelRatio = canvasWidth / logicalSize.width;
+
+      final cropRadiusInPx = (_cropDiameter / 2.0) * pixelRatio;
+      final centerInPx = Offset(canvasWidth / 2.0, canvasHeight / 2.0);
+      final srcRect = Rect.fromCircle(center: centerInPx, radius: cropRadiusInPx);
+
+      // 3. Draw onto a clean 512x512 canvas with circular clipping
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      const outSize = 512.0;
+      const dstRect = Rect.fromLTWH(0, 0, outSize, outSize);
+
+      canvas.clipPath(Path()..addOval(dstRect));
+      canvas.drawImageRect(
+        fullCanvasImage,
+        srcRect,
+        dstRect,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+
+      final picture = recorder.endRecording();
+      final croppedImage = await picture.toImage(512, 512);
+      final byteData = await croppedImage.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
         throw Exception('Failed to encode image bytes');
       }
@@ -110,13 +140,13 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final cropSize = (screenWidth * 0.68).clamp(220.0, 270.0);
+    final canvasHeight = (screenWidth * 0.88).clamp(300.0, 360.0);
 
     final content = Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Drag handle
           Center(
@@ -162,65 +192,59 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            'تصویر را با دو انگشت جابه‌جا کنید و اندازه کادر را تنظیم نمایید.',
+            'تصویر را جابه‌جا کنید و زوم نمایید تا در کادر قرار گیرد.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: colors.textSecondary.withValues(alpha: 0.8)),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
-          // Interactive Circular Cropping Viewport
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              ClipOval(
-                child: SizedBox(
-                  width: cropSize,
-                  height: cropSize,
-                  child: RepaintBoundary(
+          // Full-Canvas Interactive Viewport with Mask Overlay
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: canvasHeight,
+              color: Colors.black,
+              child: Stack(
+                fit: StackFit.expand,
+                alignment: Alignment.center,
+                children: [
+                  // Full Interactive Image Viewport
+                  RepaintBoundary(
                     key: _cropBoundaryKey,
-                    child: ColoredBox(
+                    child: Container(
                       color: Colors.black,
                       child: InteractiveViewer(
                         transformationController: _transformController,
-                        minScale: 0.6,
+                        minScale: 0.5,
                         maxScale: 4.0,
-                        boundaryMargin: EdgeInsets.all(cropSize * 1.5),
-                        child: Image.file(
-                          widget.imageFile,
-                          fit: BoxFit.cover,
+                        boundaryMargin: const EdgeInsets.all(double.infinity),
+                        child: Center(
+                          child: Image.file(
+                            widget.imageFile,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
 
-              // Glowing Circular Ring Indicator
-              IgnorePointer(
-                child: Container(
-                  width: cropSize,
-                  height: cropSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colors.primary,
-                      width: 2.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
+                  // Overlay Mask with Circular Cutout & Grid
+                  IgnorePointer(
+                    child: CustomPaint(
+                      painter: _CropMaskOverlayPainter(
+                        cropDiameter: _cropDiameter,
+                        borderColor: colors.primary,
+                        maskColor: Colors.black.withValues(alpha: 0.65),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Zoom Controls Toolbar
           Row(
@@ -233,10 +257,10 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
                 color: colors.textSecondary,
                 onPressed: () => _zoomBy(0.85),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   side: BorderSide(color: colors.border.withValues(alpha: 0.6)),
                 ),
@@ -244,7 +268,7 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
                 label: const Text('بازنشانی', style: TextStyle(fontSize: 12)),
                 onPressed: _resetZoom,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               IconButton(
                 tooltip: 'بزرگ‌نمایی',
                 icon: const Icon(CupertinoIcons.plus_circle),
@@ -254,7 +278,7 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Bottom Action Buttons
           Row(
@@ -285,7 +309,7 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
                       ? SizedBox(width: 18, height: 18, child: CupertinoActivityIndicator(color: colors.onPrimary))
                       : const Icon(CupertinoIcons.checkmark_alt, size: 18),
                   label: Text(
-                    _isSaving ? 'در حال ذخیره‌سازی...' : 'تأیید و اعمال',
+                    _isSaving ? 'در حال برش و فشرده‌سازی...' : 'تأیید و اعمال',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   onPressed: _isSaving ? null : _cropAndSave,
@@ -312,6 +336,67 @@ class _ProfileAvatarCropperSheetState extends State<ProfileAvatarCropperSheet> {
   }
 }
 
+/// Semi-transparent dark mask with circular cutout, glowing border ring, and subtle rule-of-thirds grid.
+class _CropMaskOverlayPainter extends CustomPainter {
+  const _CropMaskOverlayPainter({
+    required this.cropDiameter,
+    required this.borderColor,
+    required this.maskColor,
+  });
+
+  final double cropDiameter;
+  final Color borderColor;
+  final Color maskColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2.0, size.height / 2.0);
+    final radius = cropDiameter / 2.0;
+
+    // 1. Semi-transparent dark mask outside the circle
+    final fullRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final fullPath = Path()..addRect(fullRect);
+    final circlePath = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+    final maskPath = Path.combine(PathOperation.difference, fullPath, circlePath);
+
+    final maskPaint = Paint()
+      ..color = maskColor
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(maskPath, maskPaint);
+
+    // 2. Circular glowing border
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+    canvas.drawCircle(center, radius, borderPaint);
+
+    // 3. Rule of thirds subtle grid lines inside circle
+    final guidePaint = Paint()
+      ..color = borderColor.withValues(alpha: 0.22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final third = (radius * 2.0) / 3.0;
+    final leftX = center.dx - radius;
+    final topY = center.dy - radius;
+
+    canvas.save();
+    canvas.clipPath(circlePath);
+    canvas.drawLine(Offset(leftX, topY + third), Offset(leftX + radius * 2.0, topY + third), guidePaint);
+    canvas.drawLine(Offset(leftX, topY + third * 2.0), Offset(leftX + radius * 2.0, topY + third * 2.0), guidePaint);
+    canvas.drawLine(Offset(leftX + third, topY), Offset(leftX + third, topY + radius * 2.0), guidePaint);
+    canvas.drawLine(Offset(leftX + third * 2.0, topY), Offset(leftX + third * 2.0, topY + radius * 2.0), guidePaint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CropMaskOverlayPainter oldDelegate) =>
+      oldDelegate.cropDiameter != cropDiameter ||
+      oldDelegate.borderColor != borderColor ||
+      oldDelegate.maskColor != maskColor;
+}
+
 /// Service providing unified, robust avatar picking, cropping, and persistence.
 class ProfileAvatarService {
   const ProfileAvatarService._();
@@ -326,7 +411,7 @@ class ProfileAvatarService {
         source: source,
         maxWidth: 2048,
         maxHeight: 2048,
-        imageQuality: 92,
+        imageQuality: 95,
       );
       if (picked == null) return null;
 

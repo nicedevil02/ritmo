@@ -123,8 +123,8 @@ class ZoneSessionWriter {
 
   int? _calculatePlannedEndMs(ActiveRealmState state) {
     return switch (state) {
-      ManualRealmState m => m.expireAt.millisecondsSinceEpoch,
-      ScheduledRealmState s => s.endsAt.millisecondsSinceEpoch,
+      ManualRealmState(:final expireAt) => expireAt.millisecondsSinceEpoch,
+      ScheduledRealmState(:final endsAt) => endsAt.millisecondsSinceEpoch,
       FreeRealmState() => null,
       RealmErrorState() => null,
     };

@@ -1,5 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/domain/realm/presets/realm_presets.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RealmRepository {
@@ -276,5 +277,56 @@ class RealmRepository {
         await txn.update('routines', {'zoneId': zoneId}, where: 'id = ?', whereArgs: [rId]);
       }
     });
+  }
+
+  /// Creates a realm and its default schedule from a 1-tap template preset (F-05).
+  Future<String> createFromPreset(
+    RealmPreset preset, {
+    DatabaseExecutor? executor,
+  }) async {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final zoneId = 'zone_${preset.id.replaceAll('preset_', '')}_$nowMs';
+    final scheduleId = 'sched_${preset.id.replaceAll('preset_', '')}_$nowMs';
+
+    final db = executor ?? await _dbHelper.database;
+
+    Future<void> insertZone(DatabaseExecutor txn) async {
+      await txn.insert(
+        'zones',
+        {
+          'id': zoneId,
+          'name': preset.name,
+          'color': preset.colorHex,
+          'icon': preset.icon,
+          'mode': realmModeToRaw(preset.mode),
+          'isDefault': 0,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'zone_schedules',
+        {
+          'id': scheduleId,
+          'zoneId': zoneId,
+          'daysOfWeek': preset.daysOfWeek.join(','),
+          'startTime': preset.startTime,
+          'endTime': preset.endTime,
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    if (db is Database) {
+      await db.transaction(insertZone);
+    } else {
+      await insertZone(db);
+    }
+
+    return zoneId;
   }
 }

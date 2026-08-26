@@ -4,7 +4,7 @@ import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 void main() {
   group('Foreground Notification Realm Sync (B-01)', () {
     test('ActiveRealmStateX extension extracts realm and effective mode accurately', () {
-      final focusRealm = RealmData(
+      const focusRealm = RealmData(
         id: 'work_focus',
         name: 'قلمرو کار متمرکز',
         colorHex: '#3B82F6',
@@ -12,7 +12,7 @@ void main() {
         mode: RealmMode.focus,
       );
 
-      final silentRealm = RealmData(
+      const silentRealm = RealmData(
         id: 'family_silent',
         name: 'قلمرو خانواده',
         colorHex: '#10B981',

@@ -10,7 +10,7 @@ class TestClock implements Clock {
 
 void main() {
   group('ActiveRealmResolver Priority & Edge Cases (B-06, B-07, B-12)', () {
-    final workRealm = RealmData(
+    const workRealm = RealmData(
       id: 'work',
       name: 'قلمرو کار',
       colorHex: '#3B82F6',
@@ -18,7 +18,7 @@ void main() {
       mode: RealmMode.focus,
     );
 
-    final familyRealm = RealmData(
+    const familyRealm = RealmData(
       id: 'family',
       name: 'قلمرو خانواده',
       colorHex: '#10B981',
@@ -26,7 +26,7 @@ void main() {
       mode: RealmMode.silent,
     );
 
-    final defaultRealm = RealmData(
+    const defaultRealm = RealmData(
       id: 'personal',
       name: 'قلمرو شخصی',
       colorHex: '#8B5CF6',

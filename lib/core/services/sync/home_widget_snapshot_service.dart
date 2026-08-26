@@ -7,7 +7,9 @@ import 'package:ritmo/core/domain/agenda/agenda_item.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
+import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 import 'package:ritmo/core/services/sync/models/today_snapshot_state.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -19,6 +21,7 @@ import 'package:ritmo/features/worship/models/worship_models.dart'
 import 'package:sqflite/sqflite.dart';
 
 const Map<String, String> kWidgetModuleEmoji = {
+  'realm': '🎯',
   'sleep': '🌙',
   'sports': '🏋️',
   'energy': '⚡',
@@ -31,6 +34,7 @@ const Map<String, String> kWidgetModuleEmoji = {
 };
 
 const Map<String, String> kWidgetModuleColor = {
+  'realm': '#3B82F6',
   'sleep': '#8B5CF6',
   'sports': '#10B981',
   'energy': '#EC4899',
@@ -111,6 +115,25 @@ class HomeWidgetSnapshotService {
       'emoji': kWidgetModuleEmoji[id] ?? '•',
       'color': kWidgetModuleColor[id] ?? '#10B981',
     };
+    // قلمرو فعال (F-07)
+    try {
+      final realmState = await RealmRepository().getActiveRealmState();
+      final activeRealm = realmState.realmOrNull;
+      if (activeRealm != null) {
+        final realmRemainingStr = switch (realmState) {
+          ManualRealmState(:final remaining) => '${fa(remaining.inMinutes)} دقیقه',
+          ScheduledRealmState(:final remaining) => '${fa(remaining.inMinutes)} دقیقه',
+          FreeRealmState() => 'آزاد',
+          RealmErrorState() => '—',
+        };
+        out.add(row(
+          'realm',
+          'قلمرو ${activeRealm.name}',
+          realmRemainingStr,
+          'قلمرو فعال کنونی',
+        ));
+      }
+    } catch (_) {}
 
     // خواب
     if (ModuleGate.instance.isEnabledFrom(s, 'module_sleep_enabled')) {

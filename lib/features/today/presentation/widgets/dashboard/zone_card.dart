@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/domain/realm/presets/realm_presets.dart';
+import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_row.dart';
@@ -64,14 +66,14 @@ class ZoneCard extends StatelessWidget {
     if (realmState != null) {
       isOutOfZone = switch (realmState!) {
         FreeRealmState() => true,
-        ScheduledRealmState s => s.isDefaultFallback && s.realm.id.isEmpty,
+        ScheduledRealmState(:final isDefaultFallback, :final realm) => isDefaultFallback && realm.id.isEmpty,
         ManualRealmState() => false,
         RealmErrorState() => true,
       };
       realmName = isOutOfZone ? l10n.outOfRealm : (realmState!.realmOrNull?.name ?? l10n.outOfRealm);
       realmTimeRange = switch (realmState!) {
-        ScheduledRealmState s => toPersianDigits('${s.schedule.startTime} - ${s.schedule.endTime}'),
-        ManualRealmState m => toPersianDigits('فعال‌سازی دستی (${m.remaining.inMinutes} دقیقه)'),
+        ScheduledRealmState(:final schedule) => toPersianDigits('${schedule.startTime} - ${schedule.endTime}'),
+        ManualRealmState(:final remaining) => toPersianDigits('فعال‌سازی دستی (${remaining.inMinutes} دقیقه)'),
         FreeRealmState() => l10n.noActiveSchedule,
         RealmErrorState() => l10n.noActiveSchedule,
       };
@@ -123,14 +125,6 @@ class ZoneCard extends StatelessWidget {
         : isLow
             ? l10n.energyDescLow
             : l10n.energyDescMedium;
-
-    final realmName = isOutOfZone ? l10n.outOfRealm : activeZoneName!;
-    // G-9: بازهٔ زمانی قلمرو با ارقام فارسی نمایش داده میشود.
-    final realmTimeRange = (activeZoneTimeRange == null ||
-            activeZoneTimeRange == 'بدون زمانبندی فعال' ||
-            activeZoneTimeRange == 'No active schedule')
-        ? l10n.noActiveSchedule
-        : toPersianDigits(activeZoneTimeRange);
 
     final m = context.metrics;
 
@@ -374,6 +368,10 @@ class ZoneCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (isOutOfZone) ...[
+                    SizedBox(height: m.spaceSm),
+                    _buildPresetChips(context, colors, m),
+                  ],
                   SizedBox(height: m.spaceMd),
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -414,13 +412,70 @@ class ZoneCard extends StatelessWidget {
       ),
     );
 
+    // F-04: realmCard is now PRIMARY to give time realms prominent visual hierarchy
     return RitmoAdaptiveRow(
-      primary: energyCard,
-      secondary: realmCard,
+      primary: realmCard,
+      secondary: energyCard,
       spacing: m.spaceMd,
       minWidthForRow: 280.0,
       crossAxisAlignment: CrossAxisAlignment.start,
       expandSecondary: true,
+    );
+  }
+
+  Widget _buildPresetChips(BuildContext context, RitmoColors colors, RitmoMetrics m) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: RealmPreset.standardPresets.map((preset) {
+          final presetColor = _parseColorSafe(preset.colorHex, colors.primary);
+          return Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: InkWell(
+              onTap: () async {
+                await RealmRepository().createFromPreset(preset);
+                onRealmChanged();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('قلمرو «${preset.name}» با موفقیت فعال شد'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(m.radiusCard),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: m.spaceSm,
+                  vertical: m.spaceXs,
+                ),
+                decoration: BoxDecoration(
+                  color: presetColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(m.radiusCard),
+                  border: Border.all(
+                    color: presetColor.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(preset.icon, style: const TextStyle(fontSize: 12)),
+                    const SizedBox(width: 4),
+                    Text(
+                      preset.name.split(' ').first,
+                      style: RitmoTextStyles.badge(
+                        presetColor,
+                      ).copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

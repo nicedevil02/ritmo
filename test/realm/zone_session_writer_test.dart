@@ -86,7 +86,7 @@ void main() {
     await db.close();
   });
 
-  final workRealm = RealmData(
+  const workRealm = RealmData(
     id: 'work_zone',
     name: 'قلمرو کار',
     colorHex: '#3B82F6',
@@ -94,7 +94,7 @@ void main() {
     mode: RealmMode.focus,
   );
 
-  final familyRealm = RealmData(
+  const familyRealm = RealmData(
     id: 'family_zone',
     name: 'قلمرو خانواده',
     colorHex: '#10B981',

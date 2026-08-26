@@ -11,7 +11,7 @@ class TestClock implements Clock {
 
 void main() {
   group('ActiveRealmResolver & ZoneEngine Tests (Prompt 054)', () {
-    final realmWork = RealmData(
+    const realmWork = RealmData(
       id: 'z_work',
       name: 'کار عمیق',
       colorHex: '#6366F1',
@@ -20,7 +20,7 @@ void main() {
       createdAt: 1000,
     );
 
-    final realmSleep = RealmData(
+    const realmSleep = RealmData(
       id: 'z_sleep',
       name: 'خواب و استراحت',
       colorHex: '#8B5CF6',
@@ -29,7 +29,7 @@ void main() {
       createdAt: 2000,
     );
 
-    final schedWork = RealmScheduleData(
+    const schedWork = RealmScheduleData(
       id: 's_work',
       zoneId: 'z_work',
       daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
@@ -37,7 +37,7 @@ void main() {
       endTime: '17:00',
     );
 
-    final schedSleepOvernight = RealmScheduleData(
+    const schedSleepOvernight = RealmScheduleData(
       id: 's_sleep',
       zoneId: 'z_sleep',
       daysOfWeek: {1, 2, 3, 4, 5, 6, 7},
@@ -93,7 +93,7 @@ void main() {
     });
 
     test('4. Shorter duration schedule wins in overlapping schedules (ق-۹)', () {
-      final realmShort = RealmData(
+      const realmShort = RealmData(
         id: 'z_meeting',
         name: 'جلسه فوری',
         colorHex: '#EF4444',
@@ -102,7 +102,7 @@ void main() {
         createdAt: 3000,
       );
 
-      final schedShort = RealmScheduleData(
+      const schedShort = RealmScheduleData(
         id: 's_meeting',
         zoneId: 'z_meeting',
         daysOfWeek: {1, 2, 3, 4, 5, 6, 7},

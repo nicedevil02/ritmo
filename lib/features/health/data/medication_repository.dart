@@ -3,6 +3,8 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/medical_engine.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_execution_kernel.dart';
+import 'package:ritmo/core/domain/execution/kernel_mutation_result.dart';
+import 'package:ritmo/core/domain/execution/post_commit_pipeline.dart';
 import 'package:ritmo/core/domain/medication/medication_identity.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
@@ -51,6 +53,46 @@ class MedicationRepository {
     }
 
     return effectiveAmount.clamp(0.0, double.infinity);
+  }
+
+  /// دریافت یک دارو بر اساس شناسه روتین (درون تراکنش)
+  Future<Medication?> _getByRoutineIdTxn(Transaction txn, String routineId) async {
+    try {
+      final routineRows = await txn.query(
+        'routines',
+        where: 'id = ?',
+        whereArgs: [routineId],
+        limit: 1,
+      );
+      if (routineRows.isEmpty) return null;
+      final routine = routineRows.first;
+
+      final profileRows = await txn.query(
+        'medication_profiles',
+        where: 'routineId = ?',
+        whereArgs: [routineId],
+        limit: 1,
+      );
+      final profileMap = profileRows.isNotEmpty ? profileRows.first : null;
+
+      final scheduleRows = await txn.query(
+        'routine_schedules',
+        where: 'routineId = ?',
+        whereArgs: [routineId],
+        orderBy: 'id ASC',
+        limit: 1,
+      );
+      final scheduleMap = scheduleRows.isNotEmpty ? scheduleRows.first : null;
+
+      return Medication.fromRoutineAndProfile(
+        routine,
+        profileMap,
+        scheduleMap: scheduleMap,
+      );
+    } catch (e, st) {
+      debugPrint('[MedicationRepository] _getByRoutineIdTxn error: $e\n$st');
+      return null;
+    }
   }
 
   /// دریافت یک دارو بر اساس شناسه روتین
@@ -235,26 +277,34 @@ class MedicationRepository {
     };
 
     final db = await DatabaseHelper.instance.database;
+    final postCommitTasks = <Future<void> Function()>[];
+    final domainEvents = <RitmoEvent>[];
 
     // H-12: اجرای ذخیره دستورات روتین و پروفایل دارویی در یک تراکنش اتمیک
     await db.transaction((txn) async {
+      KernelMutationResult kernelRes;
       if (isEdit) {
-        await RitmoExecutionKernel.instance.execute(
+        kernelRes = await RitmoExecutionKernel.instance.execute(
           EditRoutineCommand(
             routineId: routineId,
             routineData: routineData,
             scheduleData: scheduleData,
             applyToAll: true,
           ),
+          txn: txn,
         );
       } else {
-        await RitmoExecutionKernel.instance.execute(
+        kernelRes = await RitmoExecutionKernel.instance.execute(
           CreateRoutineCommand(
             routineData: routineData,
             scheduleData: scheduleData,
           ),
+          txn: txn,
         );
       }
+
+      postCommitTasks.addAll(kernelRes.postCommitTasks);
+      domainEvents.addAll(kernelRes.domainEvents);
 
       final profileData = medication.profile.copyWith(routineId: routineId).toMap();
       await txn.insert(
@@ -263,6 +313,12 @@ class MedicationRepository {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
+
+    // اجرای کارهای پس از کامیت و انتشار رویدادها خارج از تراکنش
+    await PostCommitPipeline.run(postCommitTasks);
+    for (final event in domainEvents) {
+      RitmoEventBus().fire(event);
+    }
 
     return routineId;
   }
@@ -334,43 +390,29 @@ class MedicationRepository {
     }
   }
 
-  /// آرشیو کردن دارو
+  /// آرشیو کردن دارو همراه با لغو فیزیکی آلارم‌ها و حذف یادآورهای آینده
   Future<void> archive(String routineId) async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      await db.update(
-        'routines',
-        {
-          'isArchived': 1,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [routineId],
+      await RitmoExecutionKernel.instance.execute(
+        ArchiveRoutineCommand(routineId: routineId),
       );
     } catch (e, st) {
       debugPrint('[MedicationRepository] archive error: $e\n$st');
     }
   }
 
-  /// خروج از آرشیو
+  /// خروج از آرشیو همراه با بازسازی یادآورها
   Future<void> unarchive(String routineId) async {
     try {
-      final db = await DatabaseHelper.instance.database;
-      await db.update(
-        'routines',
-        {
-          'isArchived': 0,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        },
-        where: 'id = ?',
-        whereArgs: [routineId],
+      await RitmoExecutionKernel.instance.execute(
+        UnarchiveRoutineCommand(routineId: routineId),
       );
     } catch (e, st) {
       debugPrint('[MedicationRepository] unarchive error: $e\n$st');
     }
   }
 
-  /// حذف دارو (به صورت پیش‌فرض آرشیو ایمن جهت حفظ سوابق بالینی)
+  /// حذف دارو (به صورت پیش‌فرض آرشیو ایمن همراه با لغو کامل آلارم‌ها جهت حفظ سوابق بالینی)
   Future<void> delete(String routineId, {bool hardDelete = false}) async {
     try {
       if (!hardDelete) {
@@ -386,6 +428,16 @@ class MedicationRepository {
       final db = await DatabaseHelper.instance.database;
       await db.delete(
         'medication_profiles',
+        where: 'routineId = ?',
+        whereArgs: [routineId],
+      );
+      await db.delete(
+        'prn_logs',
+        where: 'routineId = ?',
+        whereArgs: [routineId],
+      );
+      await db.delete(
+        'medication_logs',
         where: 'routineId = ?',
         whereArgs: [routineId],
       );
@@ -522,6 +574,8 @@ class MedicationRepository {
     final targetDate = DateTime.fromMillisecondsSinceEpoch(eventMs);
     final targetDateStr = targetDate.toIso8601String().substring(0, 10);
 
+    final alarmsToCancel = <String>[];
+
     await db.transaction((txn) async {
       // بررسی عدم ثبت دوباره دوز قبلاً ثبت‌شده (Idempotency)
       if (scheduledTime != null && status == 'TAKEN') {
@@ -535,7 +589,7 @@ class MedicationRepository {
         }
       }
 
-      // ۱. درج یا به‌روزرسانی لاگ
+      // ۱. درج یا به‌روزرسانی لاگ در medication_logs
       await txn.insert(
         'medication_logs',
         {
@@ -549,6 +603,22 @@ class MedicationRepository {
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+
+      // درج در جدول prn_logs برای ثبت مصرف‌های موردی (PRN) جهت همگام‌سازی تایمرها و سوابق
+      if (status == 'TAKEN' && (med?.isPrn == true || scheduledTime == null)) {
+        final doseFormatted = '${deductionUnits == deductionUnits.toInt() ? deductionUnits.toInt() : deductionUnits} $effectiveUnit';
+        await txn.insert(
+          'prn_logs',
+          {
+            'id': 'prn_${routineId}_${takenTime ?? now}',
+            'routineId': routineId,
+            'takenAt': takenTime ?? now,
+            'dosage': doseFormatted,
+            'createdAt': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
 
       // ۲. کسر موجودی دارو در صورت مصرف (TAKEN)
       if (status == 'TAKEN' && med != null && med.profile.hasStockTracking) {
@@ -571,7 +641,7 @@ class MedicationRepository {
         );
       }
 
-      // ۳. لغو آلارم‌های مرتبط با این دوز
+      // ۳. جمع‌آوری آلارم‌های مرتبط با این دوز جهت لغو خارج از تراکنش
       if (scheduledTime != null) {
         final scheduledDate = DateTime.fromMillisecondsSinceEpoch(scheduledTime);
         final dateStr = scheduledDate.toIso8601String().substring(0, 10);
@@ -595,7 +665,7 @@ class MedicationRepository {
         );
         for (final rem in matchingReminders) {
           final rId = rem['id'] as String;
-          await NotificationGateway.cancel(rId);
+          alarmsToCancel.add(rId);
         }
       } else {
         // M-21: لغو یادآورهای فعال نزدیک برای مصرف زودهنگام / موردی در ۲ ساعت آینده
@@ -617,11 +687,18 @@ class MedicationRepository {
           );
           for (final rem in upcomingReminders) {
             final rId = rem['id'] as String;
-            await NotificationGateway.cancel(rId);
+            alarmsToCancel.add(rId);
           }
         }
       }
     });
+
+    // لغو فیزیکی آلارم‌ها خارج از بلاک تراکنش SQL
+    for (final remId in alarmsToCancel) {
+      try {
+        await NotificationGateway.cancel(remId);
+      } catch (_) {}
+    }
 
     // ۴. ثبت نتیجه در هسته اجرای ریتمو با تاریخ درست
     try {
@@ -659,6 +736,8 @@ class MedicationRepository {
     try {
       final db = await DatabaseHelper.instance.database;
       final now = DateTime.now().millisecondsSinceEpoch;
+      final postCommitTasks = <Future<void> Function()>[];
+      final domainEvents = <RitmoEvent>[];
 
       await db.transaction((txn) async {
         final logs = await txn.query(
@@ -679,7 +758,7 @@ class MedicationRepository {
 
         // اگر دوز مصرف شده بود، موجودی را پس بده
         if (status == 'TAKEN') {
-          final med = await getByRoutineId(routineId);
+          final med = await _getByRoutineIdTxn(txn, routineId);
           final deductionUnits = med != null
               ? calculateDeductionUnits(profile: med.profile)
               : 1.0;
@@ -712,38 +791,44 @@ class MedicationRepository {
           }
         }
 
-        // اگر دوز زمان‌بندی‌شده بود، وضعیت را به PENDING برگردان؛ وگرنه رکورد را حذف کن
-        if (scheduledTime != null) {
-          await txn.update(
-            'medication_logs',
-            {
-              'takenTime': null,
-              'status': 'PENDING',
-            },
-            where: 'id = ?',
-            whereArgs: [logId],
-          );
-        } else {
-          await txn.delete(
-            'medication_logs',
-            where: 'id = ?',
-            whereArgs: [logId],
-          );
+        // حذف لاگ از جدول medication_logs
+        await txn.delete(
+          'medication_logs',
+          where: 'id = ?',
+          whereArgs: [logId],
+        );
+
+        // در صورت PRN بودن، رکورد متناظر در prn_logs را نیز حذف کن
+        if (scheduledTime == null) {
+          final takenAtVal = takenTime ?? (log['takenTime'] as num?)?.toInt() ?? (log['createdAt'] as num?)?.toInt();
+          if (takenAtVal != null) {
+            await txn.delete(
+              'prn_logs',
+              where: 'routineId = ? AND takenAt = ?',
+              whereArgs: [routineId, takenAtVal],
+            );
+          }
         }
 
         final eventMs = scheduledTime ?? takenTime ?? now;
         final dateStr = DateTime.fromMillisecondsSinceEpoch(eventMs).toIso8601String().substring(0, 10);
-        try {
-          await RitmoExecutionKernel.instance.execute(
-            CompleteOccurrenceCommand(
-              routineId: routineId,
-              dateStr: dateStr,
-              resultType: 'EMPTY',
-              durationMinutes: 0,
-            ),
-          );
-        } catch (_) {}
+        final kRes = await RitmoExecutionKernel.instance.execute(
+          CompleteOccurrenceCommand(
+            routineId: routineId,
+            dateStr: dateStr,
+            resultType: 'EMPTY',
+            durationMinutes: 0,
+          ),
+          txn: txn,
+        );
+        postCommitTasks.addAll(kRes.postCommitTasks);
+        domainEvents.addAll(kRes.domainEvents);
       });
+
+      await PostCommitPipeline.run(postCommitTasks);
+      for (final event in domainEvents) {
+        RitmoEventBus().fire(event);
+      }
 
       RitmoEventBus().fire(RitmoEvent(
         type: 'medication_intake_undone',

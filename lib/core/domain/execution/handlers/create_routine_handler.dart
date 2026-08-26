@@ -43,10 +43,23 @@ class CreateRoutineHandler
 
     await context.txn.insert('routines', routineMap);
     final schedulesToInsert = command.schedules ??
-        (command.scheduleData != null ? [command.scheduleData!] : <Map<String, dynamic>>[]);
+        (command.scheduleData != null && command.scheduleData!.isNotEmpty
+            ? [command.scheduleData!]
+            : <Map<String, dynamic>>[]);
 
     for (final schedule in schedulesToInsert) {
-      await context.txn.insert('routine_schedules', schedule);
+      if (schedule.isEmpty) continue;
+      final scheduleMap = Map<String, dynamic>.from(schedule);
+      if (scheduleMap['scheduleType'] == null) {
+        scheduleMap['scheduleType'] = 'fixed_time';
+      }
+      if (scheduleMap['createdAt'] == null) {
+        scheduleMap['createdAt'] = context.now.millisecondsSinceEpoch;
+      }
+      if (scheduleMap['updatedAt'] == null) {
+        scheduleMap['updatedAt'] = context.now.millisecondsSinceEpoch;
+      }
+      await context.txn.insert('routine_schedules', scheduleMap);
 
       final ruleMap = jsonDecode(schedule['recurrenceRule'] as String? ?? '{}');
       var rule = RecurrenceRule.fromMap(ruleMap);

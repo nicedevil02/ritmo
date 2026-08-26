@@ -28,6 +28,7 @@ enum NotificationLevel {
   silent,
   normal,
   important,
+  alarm,
 }
 
 enum EnergyRule {
@@ -117,9 +118,9 @@ class Routine {
       orElse: () => RoutineType.asNeeded,
     );
 
-    final notifLevelStr = map['notificationLevel'] as String;
+    final notifLevelStr = (map['notificationLevel'] as String?)?.toLowerCase();
     final notifLevelEnum = NotificationLevel.values.firstWhere(
-      (e) => e.name == notifLevelStr,
+      (e) => e.name.toLowerCase() == notifLevelStr,
       orElse: () => NotificationLevel.normal,
     );
 

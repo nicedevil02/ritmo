@@ -201,5 +201,35 @@ class HealthTables {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_wellbeing_entry_loggedAt ON wellbeing_entry(loggedAt);',
     );
+
+    // 37. medication_profiles (Clinical medication profiles)
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS medication_profiles (
+          routineId TEXT PRIMARY KEY,
+          form TEXT NOT NULL DEFAULT 'TABLET',
+          route TEXT,
+          doseAmount REAL,
+          doseUnit TEXT,
+          strength TEXT,
+          activeIngredient TEXT,
+          foodRelation TEXT NOT NULL DEFAULT 'NONE',
+          startDate INTEGER,
+          endDate INTEGER,
+          isChronic INTEGER NOT NULL DEFAULT 1,
+          durationDays INTEGER,
+          prescriberName TEXT,
+          instructions TEXT,
+          criticality TEXT NOT NULL DEFAULT 'NORMAL',
+          packageSize REAL,
+          packageUnit TEXT,
+          remainingAmount REAL,
+          refillThresholdAmount REAL,
+          injectionSites TEXT,
+          lastInjectionSite TEXT,
+          needsSiteRotation INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE CASCADE
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_medprof_routine ON medication_profiles(routineId);');
   }
 }

@@ -29,7 +29,9 @@ class DeleteRoutineHandler
 
     for (final pMap in pending) {
       final remId = pMap['id']! as String;
-      tasks.add(() => sl<AlarmPlatform>().cancelAlarm(remId));
+      if (sl.isRegistered<AlarmPlatform>()) {
+        tasks.add(() => sl<AlarmPlatform>().cancelAlarm(remId));
+      }
     }
 
     // 2. Cascading delete from all routine-related tables

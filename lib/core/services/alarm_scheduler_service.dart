@@ -23,6 +23,14 @@ import 'package:ritmo/features/simple_tasks/logic/missed_reminder_recovery.dart'
 import 'package:sqflite/sqflite.dart';
 
 class AlarmSchedulerService {
+  static Future<void> _cancelAlarmSafely(String id) async {
+    try {
+      if (sl.isRegistered<AlarmPlatform>()) {
+        await sl<AlarmPlatform>().cancelAlarm(id);
+      }
+    } catch (_) {}
+  }
+
   static NotificationChannelId _channelForCategory(String? category) {
     final cat = (category ?? '').toLowerCase();
     if (cat == 'medical' || cat == 'health') {
@@ -55,7 +63,7 @@ class AlarmSchedulerService {
       );
       for (final r in scheduledReminders) {
         final id = r['id'] as String;
-        await sl<AlarmPlatform>().cancelAlarm(id);
+        await _cancelAlarmSafely(id);
       }
       await db.update('pending_reminders', {
         'nativeScheduled': 0,
@@ -72,9 +80,14 @@ class AlarmSchedulerService {
 
     await sweepMissedAlarms();
 
-    // Load active routines and schedules
+    // Load active routines, schedules, and medication clinical profiles
     final routines = await db.query('routines', where: 'isArchived = 0');
-    final schedules = await db.query('routine_schedules');
+    final schedules = await db.query('routine_schedules', orderBy: 'id ASC');
+    final profiles = await db.query('medication_profiles');
+    final profilesMap = <String, Map<String, dynamic>>{
+      for (final p in profiles)
+        if (p['routineId'] != null) p['routineId']! as String: p,
+    };
 
     // Fetch calendar exceptions and routines map
     final exceptions = await db.query('calendar_exceptions');
@@ -106,7 +119,7 @@ class AlarmSchedulerService {
       if (behavior == 'SILENCE_ALL' ||
           (behavior == 'ESSENTIAL_ONLY' && !isEssential)) {
         // Cancel physical alarm
-        await sl<AlarmPlatform>().cancelAlarm(id);
+        await _cancelAlarmSafely(id);
         // Mark as CANCELLED in db
         await db.update(
           'pending_reminders',
@@ -138,6 +151,7 @@ class AlarmSchedulerService {
       final year = targetDate.year;
       final month = targetDate.month;
       final day = targetDate.day;
+      final targetDateMs = targetDate.millisecondsSinceEpoch;
 
       for (final r in routines) {
         final rId = r['id']! as String;
@@ -146,6 +160,28 @@ class AlarmSchedulerService {
         final isPrivate = r['isPrivate'] == 1;
         final categoryStr = r['category'] as String? ?? '';
         final isMedical = categoryStr == 'medical' || categoryStr == 'health';
+
+        // بررسی پایان دوره مصرف برای داروهای غیرمزمن (Fixes #4)
+        if (isMedical) {
+          final prof = profilesMap[rId];
+          if (prof != null) {
+            final isChronic = prof['isChronic'] == 1 || prof['isChronic'] == true;
+            if (!isChronic) {
+              final endDate = (prof['endDate'] as num?)?.toInt();
+              if (endDate != null && targetDateMs > endDate) {
+                continue;
+              }
+              final startDate = (prof['startDate'] as num?)?.toInt();
+              final durationDays = (prof['durationDays'] as num?)?.toInt();
+              if (startDate != null && durationDays != null && durationDays > 0) {
+                final courseEndMs = startDate + (durationDays * 24 * 60 * 60 * 1000);
+                if (targetDateMs > courseEndMs) {
+                  continue;
+                }
+              }
+            }
+          }
+        }
 
         final sched = schedules.firstWhere(
           (s) => s['routineId'] == rId,
@@ -167,7 +203,7 @@ class AlarmSchedulerService {
               weekdays: const [6, 7, 1, 2, 3, 4, 5],
               reminderTimes: sched['timeOfDay'] != null
                   ? [sched['timeOfDay'] as String]
-                  : const ['08:00'],
+                  : const <String>[],
             );
           }
         } else {
@@ -181,7 +217,7 @@ class AlarmSchedulerService {
             weekdays: days,
             reminderTimes: sched['timeOfDay'] != null
                 ? [sched['timeOfDay'] as String]
-                : const ['08:00'],
+                : const <String>[],
           );
         }
 
@@ -190,12 +226,13 @@ class AlarmSchedulerService {
           continue;
         }
 
-        // Extract all reminder times (multi-dose support)
+        // Extract all reminder times (multi-dose support, no speculative 08:00 times)
         final times = rule.reminderTimes.isNotEmpty
             ? rule.reminderTimes
             : (sched['timeOfDay'] != null
                   ? [sched['timeOfDay'] as String]
-                  : const ['08:00']);
+                  : const <String>[]);
+        if (times.isEmpty) continue;
 
         for (final rawTime in times) {
           final timeStr = rawTime.trim();
@@ -581,7 +618,7 @@ class AlarmSchedulerService {
 
     // Run native cancel alarms outside the transaction
     for (final remId in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(remId);
+      await _cancelAlarmSafely(remId);
     }
 
     // Run syncAll outside the transaction
@@ -743,7 +780,7 @@ class AlarmSchedulerService {
 
     // Run native cancel alarms outside the transaction
     for (final remId in alarmsToCancel) {
-      await sl<AlarmPlatform>().cancelAlarm(remId);
+      await _cancelAlarmSafely(remId);
     }
 
     await SnapshotSyncService.syncAll();

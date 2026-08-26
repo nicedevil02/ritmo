@@ -50,8 +50,11 @@ class EditRoutineHandler implements KernelCommandHandler<EditRoutineCommand> {
       final ruleStr = command.schedules!.first['recurrenceRule'] as String? ?? '{}';
       final ruleMap = jsonDecode(ruleStr) as Map<String, dynamic>;
       rule = RecurrenceRule.fromMap(ruleMap);
-    } else if (command.scheduleData != null) {
+    } else if (command.scheduleData != null && command.scheduleData!.isNotEmpty) {
       final scheduleMap = Map<String, dynamic>.from(command.scheduleData!)..remove('id');
+      if (scheduleMap['scheduleType'] == null) {
+        scheduleMap['scheduleType'] = 'fixed_time';
+      }
       final updated = await context.txn.update(
         'routine_schedules',
         scheduleMap,
@@ -63,6 +66,15 @@ class EditRoutineHandler implements KernelCommandHandler<EditRoutineCommand> {
         final newSchedule = Map<String, dynamic>.from(command.scheduleData!)
           ..['id'] = command.scheduleData!['id'] ?? 'sched_$id'
           ..['routineId'] = id;
+        if (newSchedule['scheduleType'] == null) {
+          newSchedule['scheduleType'] = 'fixed_time';
+        }
+        if (newSchedule['createdAt'] == null) {
+          newSchedule['createdAt'] = context.now.millisecondsSinceEpoch;
+        }
+        if (newSchedule['updatedAt'] == null) {
+          newSchedule['updatedAt'] = context.now.millisecondsSinceEpoch;
+        }
         await context.txn.insert('routine_schedules', newSchedule, conflictAlgorithm: ConflictAlgorithm.replace);
       }
 

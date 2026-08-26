@@ -507,7 +507,7 @@ class MedicationProfile {
 
   bool get hasStockTracking =>
       (packageSize != null && packageSize! > 0) ||
-      (remainingAmount != null && remainingAmount! > 0) ||
+      remainingAmount != null ||
       (refillThresholdAmount != null && refillThresholdAmount! > 0);
   bool get isLowStock =>
       hasStockTracking &&
@@ -562,7 +562,7 @@ class MedicationProfile {
 
     return MedicationProfile(
       routineId: map['routineId'] as String? ?? '',
-      form: MedicationForm.fromString(map['form'] as String?),
+      form: MedicationForm.fromStringOrNull(map['form'] as String?) ?? MedicationForm.TABLET,
       route: MedicationRoute.fromString(map['route'] as String?),
       doseAmount: (map['doseAmount'] as num?)?.toDouble(),
       doseUnit: map['doseUnit'] != null
@@ -753,7 +753,7 @@ class Medication {
     final formatted = remaining == remaining.toInt()
         ? remaining.toInt().toString()
         : remaining.toStringAsFixed(1);
-    final unit = profile.packageUnit ?? profile.doseUnit?.shortLabelFa ?? 'عدد';
+    final unit = profile.doseUnit?.shortLabelFa ?? profile.packageUnit ?? 'عدد';
     return '$formatted $unit';
   }
 
@@ -766,6 +766,8 @@ class Medication {
     Map<String, dynamic>? scheduleMap,
   }) {
     final routineId = routine['id'] as String? ?? '';
+    final createdAt = (routine['createdAt'] as num?)?.toInt() ?? 0;
+    final updatedAt = (routine['updatedAt'] as num?)?.toInt() ?? createdAt;
     final profile = profileMap != null
         ? MedicationProfile.fromMap(profileMap)
         : MedicationProfile(
@@ -779,7 +781,7 @@ class Medication {
             remainingAmount: (routine['medStockCount'] as num?)?.toDouble(),
             refillThresholdAmount: (routine['medRefillThreshold'] as num?)
                 ?.toDouble(),
-            startDate: routine['createdAt'] as int?,
+            startDate: createdAt > 0 ? createdAt : null,
           );
 
     return Medication(
@@ -794,10 +796,8 @@ class Medication {
       isPrivate: routine['isPrivate'] == 1 || routine['isPrivate'] == true,
       minIntervalHours: (routine['minIntervalHours'] as num?)?.toInt() ?? 0,
       maxDosesPerDay: (routine['maxDosesPerDay'] as num?)?.toInt() ?? 0,
-      createdAt:
-          routine['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt:
-          routine['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       profile: profile,
       scheduleMap: scheduleMap,
     );

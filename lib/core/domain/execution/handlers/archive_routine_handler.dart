@@ -39,7 +39,9 @@ class ArchiveRoutineHandler implements KernelCommandHandler<ArchiveRoutineComman
 
     for (final pMap in pending) {
       final remId = pMap['id']! as String;
-      tasks.add(() => sl<AlarmPlatform>().cancelAlarm(remId));
+      if (sl.isRegistered<AlarmPlatform>()) {
+        tasks.add(() => sl<AlarmPlatform>().cancelAlarm(remId));
+      }
     }
 
     await context.txn.update(

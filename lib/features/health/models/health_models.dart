@@ -99,12 +99,14 @@ class BloodSugarLog { // epoch ms
   });
 
   factory BloodSugarLog.fromMap(Map<String, dynamic> map) {
+    final rawVal = map['value'];
+    final int val = rawVal is num ? rawVal.round() : (int.tryParse(rawVal?.toString() ?? '') ?? 0);
     return BloodSugarLog(
-      id: map['id'] as String,
-      value: map['value'] as int,
+      id: map['id'] as String? ?? '',
+      value: val,
       measurementType: map['measurementType'] as String? ?? 'FASTING',
       note: map['note'] as String?,
-      loggedAt: map['loggedAt'] as int,
+      loggedAt: (map['loggedAt'] as num?)?.toInt() ?? 0,
     );
   }
   final String id;

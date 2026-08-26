@@ -8,18 +8,28 @@ class MigrationV118MedicationIntegrityAndSafety extends Migration {
 
   @override
   Future<void> up(covariant DatabaseExecutor db) async {
-    // ۱. نرمال‌سازی ستون itemType برای تمام رکوردهای قدیمی با پیشوند routine_med_ یا ستون‌های دارویی
+    // ۱. نرمال‌سازی ستون itemType فقط برای رکوردهای قطعی دارویی
     await db.execute('''
       UPDATE routines
       SET itemType = 'MEDICINE'
       WHERE (itemType IS NULL OR itemType = '' OR itemType = 'ROUTINE')
         AND (
           id LIKE 'routine_med_%'
-          OR COALESCE(medStockCount, 0) > 0
-          OR COALESCE(medRefillThreshold, 0) > 0
-          OR COALESCE(minIntervalHours, 0) > 0
-          OR COALESCE(maxDosesPerDay, 0) > 0
+          OR category = 'medical'
+          OR category = 'health'
+          OR id IN (SELECT routineId FROM medication_profiles)
         );
+    ''');
+
+    // ۱.۵. بازگردانی روتین‌های عادی که به اشتباه به دلیل minIntervalHours یا maxDosesPerDay دارو شده بودند
+    await db.execute('''
+      UPDATE routines
+      SET itemType = 'ROUTINE'
+      WHERE itemType = 'MEDICINE'
+        AND id NOT LIKE 'routine_med_%'
+        AND category != 'medical'
+        AND category != 'health'
+        AND id NOT IN (SELECT routineId FROM medication_profiles);
     ''');
 
     // ۲. بک‌فیل پروفایل دارویی برای رکوردهایی که احیاناً در مایگریشن ۱۱۲ جا مانده‌اند

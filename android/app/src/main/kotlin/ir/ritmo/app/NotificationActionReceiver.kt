@@ -44,10 +44,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
         if (actionType == "CHANGE_ZONE") {
             val zoneId = intent.getStringExtra("zoneId") ?: ""
             val cleanZoneId = if (zoneId == "default_zone") "" else zoneId
-            val untilMs = if (cleanZoneId.isEmpty()) "0" else (System.currentTimeMillis() + 60 * 60 * 1000).toString()
+            val explicitDuration = intent.getLongExtra("durationMinutes", 0L)
+            val durationMinutes = if (explicitDuration > 0L) explicitDuration else defaultOverrideMinutes(context)
+            val now = System.currentTimeMillis()
+            val untilMs = if (cleanZoneId.isEmpty()) "0" else (now + durationMinutes * 60 * 1000).toString()
+            val startedMs = if (cleanZoneId.isEmpty()) "0" else now.toString()
             
             saveSettingToDb(context, "realm_override_id", cleanZoneId)
             saveSettingToDb(context, "realm_override_until_ms", untilMs)
+            saveSettingToDb(context, "realm_override_started_ms", startedMs)
             
             triggerServiceUpdate(context)
         } else if (actionType == "CHANGE_ENERGY") {
@@ -269,6 +274,26 @@ class NotificationActionReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             Log.e(TAG, "Error writing DB setting " + key + ": " + e.message)
         }
+    }
+
+    private fun defaultOverrideMinutes(context: Context): Long {
+        try {
+            val dbPath = context.getDatabasePath(DatabaseConfig.DATABASE_NAME)
+            if (dbPath.exists()) {
+                val db = SQLiteDatabase.openDatabase(dbPath.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+                val c = db.rawQuery(
+                    "SELECT value FROM app_settings WHERE key = ?",
+                    arrayOf("realm_quick_override_minutes")
+                )
+                val v = if (c.moveToFirst()) c.getString(0)?.toLongOrNull() else null
+                c.close()
+                db.close()
+                if (v != null && v > 0L) return v
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading override minutes: " + e.message)
+        }
+        return 50L
     }
 
     private fun triggerServiceUpdate(context: Context) {

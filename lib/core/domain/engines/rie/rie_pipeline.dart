@@ -51,26 +51,13 @@ class RitmoIntelligencePipeline {
       }
     }
 
-    // Layer 2: Zone & Essential Rules
-    final zoneCheckedRoutines = <Routine>[];
-    final suppressedByZone = <Routine>[];
-    for (final r in biologicalRoutines) {
-      final isZoneBlocked =
-          snapshot.blockedRoutineIdsInZone.contains(r.id) ||
-          ((snapshot.activeZoneMode == 'SILENT' ||
-                  snapshot.activeZoneMode == 'FOCUS') &&
-              !r.isEssential);
-
-      if (isZoneBlocked) {
-        if (r.isEssential) {
-          zoneCheckedRoutines.add(r);
-        } else {
-          suppressedByZone.add(r);
-        }
-      } else {
-        zoneCheckedRoutines.add(r);
-      }
-    }
+    // Layer 2: Zone & Essential Rules (B-04)
+    const zoneFilter = ZoneAndEssentialFilter();
+    final zoneCheckedRoutines = zoneFilter.filter(biologicalRoutines, snapshot);
+    final zonePassedSet = zoneCheckedRoutines.map((r) => r.id).toSet();
+    final suppressedByZone = biologicalRoutines
+        .where((r) => !zonePassedSet.contains(r.id))
+        .toList();
 
     // Layer 3: Energy Engine
     final energyCheckedRoutines = <Routine>[];

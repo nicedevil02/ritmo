@@ -53,7 +53,15 @@ class RiemockDatabase implements Database {
       return list;
     }
     if (table == 'routine_zone_rules') {
-      final zoneId = whereArgs![0]! as String;
+      if (whereArgs == null || whereArgs.isEmpty) return list;
+      if (whereArgs.length == 1) {
+        final arg = whereArgs[0]! as String;
+        if (where.contains('ruleType = ?')) {
+          return list.where((row) => row['ruleType'] == arg).toList();
+        }
+        return list.where((row) => row['zoneId'] == arg).toList();
+      }
+      final zoneId = whereArgs[0]! as String;
       final ruleType = whereArgs[1]! as String;
       return list.where((row) => row['zoneId'] == zoneId && row['ruleType'] == ruleType).toList();
     }

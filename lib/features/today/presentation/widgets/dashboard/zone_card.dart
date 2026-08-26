@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_row.dart';
@@ -17,6 +18,7 @@ class ZoneCard extends StatelessWidget {
     required this.currentEnergyPercent,
     required this.currentEnergyLabel,
     required this.currentEnergyDesc,
+    this.realmState,
     required this.activeZone,
     required this.activeZoneName,
     required this.activeZoneIcon,
@@ -30,6 +32,7 @@ class ZoneCard extends StatelessWidget {
   final double? currentEnergyPercent;
   final String currentEnergyLabel;
   final String currentEnergyDesc;
+  final ActiveRealmState? realmState;
   final Map<String, dynamic>? activeZone;
   final String? activeZoneName;
   final String? activeZoneIcon;
@@ -54,10 +57,43 @@ class ZoneCard extends StatelessWidget {
     final colors = context.colors;
     final l10n = AppLocalizations.of(context)!;
 
-    final isOutOfZone = activeZoneName == null ||
-        activeZoneName == 'خارج از زون' ||
-        activeZoneName == 'خارج از قلمرو' ||
-        activeZoneName == 'Out of Realm';
+    final bool isOutOfZone;
+    final String realmName;
+    final String realmTimeRange;
+
+    if (realmState != null) {
+      isOutOfZone = switch (realmState!) {
+        FreeRealmState() => true,
+        ScheduledRealmState s => s.isDefaultFallback && s.realm.id.isEmpty,
+        ManualRealmState() => false,
+        RealmErrorState() => true,
+      };
+      realmName = isOutOfZone ? l10n.outOfRealm : (realmState!.realmOrNull?.name ?? l10n.outOfRealm);
+      realmTimeRange = switch (realmState!) {
+        ScheduledRealmState s => toPersianDigits('${s.schedule.startTime} - ${s.schedule.endTime}'),
+        ManualRealmState m => toPersianDigits('فعال‌سازی دستی (${m.remaining.inMinutes} دقیقه)'),
+        FreeRealmState() => l10n.noActiveSchedule,
+        RealmErrorState() => l10n.noActiveSchedule,
+      };
+    } else {
+      final zoneId = activeZone?['id'] as String?;
+      isOutOfZone = (zoneId == null ||
+          zoneId.isEmpty ||
+          zoneId == 'default_zone') &&
+          (activeZoneName == null ||
+              activeZoneName == 'خارج از زون' ||
+              activeZoneName == 'خارج از قلمرو' ||
+              activeZoneName == 'Out of Realm');
+
+      realmName = isOutOfZone ? l10n.outOfRealm : (activeZoneName ?? l10n.outOfRealm);
+      final rawTimeRange = activeZoneTimeRange;
+      final isNoSchedule = rawTimeRange == null ||
+          rawTimeRange.isEmpty ||
+          rawTimeRange.replaceAll('\u200c', '').replaceAll(' ', '').contains('بدونزمانبندی') ||
+          rawTimeRange == 'No active schedule';
+
+      realmTimeRange = isNoSchedule ? l10n.noActiveSchedule : toPersianDigits(rawTimeRange);
+    }
 
     final Color energyColor;
     final IconData energyIcon;

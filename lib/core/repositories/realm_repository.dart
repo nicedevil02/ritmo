@@ -18,7 +18,7 @@ class RealmRepository {
   /// Loads all realm schedules from `zone_schedules`.
   Future<List<RealmScheduleData>> loadSchedules() async {
     final db = await _dbHelper.database;
-    final rows = await db.query('zone_schedules');
+    final rows = await db.query('zone_schedules', orderBy: 'startTime ASC, id ASC');
     return rows.map(RealmScheduleData.fromMap).toList();
   }
 
@@ -80,15 +80,27 @@ class RealmRepository {
         where: 'key = ?',
         whereArgs: ['realm_override_until_ms'],
       );
+      final overrideStartedRows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: ['realm_override_started_ms'],
+      );
 
       String? overrideRealmId;
       int? overrideUntilMs;
+      int? overrideStartedMs;
 
       if (overrideIdRows.isNotEmpty && overrideUntilRows.isNotEmpty) {
         overrideRealmId = overrideIdRows.first['value'] as String?;
         final untilStr = overrideUntilRows.first['value'] as String?;
         if (untilStr != null) {
           overrideUntilMs = int.tryParse(untilStr);
+        }
+      }
+      if (overrideStartedRows.isNotEmpty) {
+        final startedStr = overrideStartedRows.first['value'] as String?;
+        if (startedStr != null) {
+          overrideStartedMs = int.tryParse(startedStr);
         }
       }
 
@@ -98,13 +110,14 @@ class RealmRepository {
         schedules: schedules,
         overrideRealmId: overrideRealmId,
         overrideUntilMs: overrideUntilMs,
+        overrideStartedMs: overrideStartedMs,
       );
     } catch (e) {
       return RealmErrorState(e);
     }
   }
 
-  /// Atomically sets manual override for a realm (ق-۷).
+  /// Atomically sets manual override for a realm (ق-۷, B-07).
   Future<void> setManualOverride({
     required String realmId,
     required int durationMinutes,
@@ -124,6 +137,11 @@ class RealmRepository {
         {'key': 'realm_override_until_ms', 'value': untilMs.toString(), 'updatedAt': nowMs},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
+      await txn.insert(
+        'app_settings',
+        {'key': 'realm_override_started_ms', 'value': nowMs.toString(), 'updatedAt': nowMs},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     });
   }
 
@@ -141,6 +159,11 @@ class RealmRepository {
       await txn.insert(
         'app_settings',
         {'key': 'realm_override_until_ms', 'value': '0', 'updatedAt': nowMs},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await txn.insert(
+        'app_settings',
+        {'key': 'realm_override_started_ms', 'value': '0', 'updatedAt': nowMs},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });

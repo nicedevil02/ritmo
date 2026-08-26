@@ -19,7 +19,9 @@ import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
+import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
 import 'package:ritmo/core/modules/routine_visibility.dart';
 import 'package:ritmo/core/utils/time_of_day_minutes.dart';
@@ -1338,114 +1340,20 @@ class DashboardController {
     Database db,
     DateTime now,
   ) async {
-    // Check override settings first
-    final overrideIdQuery = await db.query(
-      'app_settings',
-      where: 'key = ?',
-      whereArgs: ['realm_override_id'],
-    );
-    final overrideUntilQuery = await db.query(
-      'app_settings',
-      where: 'key = ?',
-      whereArgs: ['realm_override_until_ms'],
-    );
-
-    if (overrideIdQuery.isNotEmpty && overrideUntilQuery.isNotEmpty) {
-      final overrideId = overrideIdQuery.first['value'] as String?;
-      final overrideUntilStr = overrideUntilQuery.first['value'] as String?;
-      if (overrideId != null &&
-          overrideId.isNotEmpty &&
-          overrideUntilStr != null) {
-        final overrideUntilMs = int.tryParse(overrideUntilStr) ?? 0;
-        if (now.millisecondsSinceEpoch < overrideUntilMs) {
-          final zoneQuery = await db.query(
-            'zones',
-            where: 'id = ?',
-            whereArgs: [overrideId],
-          );
-          if (zoneQuery.isNotEmpty) {
-            final zone = Map<String, dynamic>.from(zoneQuery.first);
-            zone['isOverride'] = true;
-            zone['overrideUntilMs'] = overrideUntilMs;
-            return zone;
-          }
-        }
-      }
-    }
-
-    final weekday = now.weekday;
-    final currentMinutes = now.hour * 60 + now.minute;
-
-    final schedulesRaw = await db.query('zone_schedules');
-    final schedules = schedulesRaw.map(Map<String, dynamic>.from).toList();
-
-    // G-5: همهٔ زمانبندیهای منطبق جمع میشوند؛ با پشتیبانی از بازههای شبانه
-    // (عبور از نیمهشب) و انتخاب قطعی در همپوشانی.
-    final matches = <Map<String, dynamic>>[];
-    for (final sched in schedules) {
-      final daysOfWeekStr = sched['daysOfWeek'] as String? ?? '';
-      final days = daysOfWeekStr
-          .split(',')
-          .map((d) => int.tryParse(d.trim()) ?? -1)
-          .toSet();
-      final startTimeStr = sched['startTime'] as String? ?? '00:00';
-      final endTimeStr = sched['endTime'] as String? ?? '23:59';
-
-      final startParts = startTimeStr.split(':');
-      final endParts = endTimeStr.split(':');
-      if (startParts.length != 2 || endParts.length != 2) continue;
-      final startMin =
-          (int.tryParse(startParts[0]) ?? 0) * 60 +
-          (int.tryParse(startParts[1]) ?? 0);
-      final endMin =
-          (int.tryParse(endParts[0]) ?? 0) * 60 +
-          (int.tryParse(endParts[1]) ?? 0);
-
-      final crossesMidnight = startMin > endMin;
-      // برای بازهٔ شبانه، ساعات بعد از شروع متعلق به «همین روز» و ساعات قبل از
-      // پایان متعلق به «روز قبل» است.
-      final prevWeekday = weekday == 1 ? 7 : weekday - 1;
-      final dayMatches = crossesMidnight
-          ? (currentMinutes >= startMin
-                ? days.contains(weekday)
-                : days.contains(prevWeekday))
-          : days.contains(weekday);
-      if (!dayMatches) continue;
-
-      final inWindow = crossesMidnight
-          ? (currentMinutes >= startMin || currentMinutes <= endMin)
-          : (currentMinutes >= startMin && currentMinutes <= endMin);
-      if (!inWindow) continue;
-
-      matches.add({
-        'zoneId': sched['zoneId'] as String,
-        'startTime': startTimeStr,
-        'endTime': endTimeStr,
-        'startMin': startMin,
-      });
-    }
-
-    if (matches.isNotEmpty) {
-      // G-5: انتخاب قطعی — شروعِ دیرتر (خاصتر) برنده است؛ در تساوی، zoneId
-      // نتیجه را پایدار و قابلتکرار نگه میدارد.
-      matches.sort((a, b) {
-        final c = (b['startMin'] as int).compareTo(a['startMin'] as int);
-        if (c != 0) return c;
-        return (a['zoneId'] as String).compareTo(b['zoneId'] as String);
-      });
-      final chosen = matches.first;
-      final zoneQuery = await db.query(
-        'zones',
-        where: 'id = ?',
-        whereArgs: [chosen['zoneId']],
-      );
-      if (zoneQuery.isNotEmpty) {
-        final zone = Map<String, dynamic>.from(zoneQuery.first);
-        zone['startTime'] = chosen['startTime'];
-        zone['endTime'] = chosen['endTime'];
-        return zone;
-      }
-    }
-    return null;
+    final realmState = await RealmRepository().getActiveRealmState();
+    return switch (realmState) {
+      ManualRealmState m => {
+          ...m.realm.toMap(),
+          'isOverride': true,
+          'overrideUntilMs': m.expireAt.millisecondsSinceEpoch,
+        },
+      ScheduledRealmState s => {
+          ...s.realm.toMap(),
+          'startTime': s.schedule.startTime,
+          'endTime': s.schedule.endTime,
+        },
+      FreeRealmState() => null,
+      RealmErrorState() => null,
+    };
   }
 }

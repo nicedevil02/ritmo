@@ -6,7 +6,9 @@ import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
+import 'package:ritmo/core/repositories/realm_repository.dart';
 
 class ForegroundNotificationUpdater {
   static Future<void> update() async {
@@ -28,27 +30,18 @@ class ForegroundNotificationUpdater {
         return;
       }
 
-      // RIE details
-      final activeZoneId = settingsMap['active_zone_id'] ?? 'default_zone';
-      final activeZoneMode = settingsMap['active_zone_mode'] ?? 'WORK';
+      // RIE details — Single source of truth for active realm (B-01, B-03)
+      final realmRepo = RealmRepository();
+      final realmState = await realmRepo.getActiveRealmState();
+      final activeZoneId = realmState.realmOrNull?.id;
+      final activeZoneMode = realmModeToRaw(realmState.effectiveMode);
+      final actZoneName = realmState.realmOrNull?.name ?? 'آزاد';
+
       final currentEnergyStr = settingsMap['current_energy_state'] ?? 'MEDIUM';
       final currentEnergy = EnergyLevel.values.firstWhere(
         (e) => e.name.toLowerCase() == currentEnergyStr.toLowerCase(),
         orElse: () => EnergyLevel.medium,
       );
-
-      // Determine zone name
-      var actZoneName = 'آزاد';
-      if (activeZoneId != 'default_zone') {
-        final List<Map<String, dynamic>> zones = await db.query(
-          'zones',
-          where: 'id = ?',
-          whereArgs: [activeZoneId],
-        );
-        if (zones.isNotEmpty) {
-          actZoneName = zones.first['name'] as String;
-        }
-      }
 
       // Is menstruating
       final isMenstruating = await DatabaseHelper.instance.isUserMenstruating();

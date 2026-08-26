@@ -69,6 +69,7 @@ class MvSession {
   }
 
   int get elapsedMinutes => (elapsedMs / 60000).round();
+  double get earnedMetMinutes => elapsedMinutes.toDouble();
   int get elapsedSeconds => elapsedMs ~/ 1000;
   double? get distanceMeters => distanceM;
   double? get elevationGainMeters => elevationGainM;

@@ -64,17 +64,48 @@ class ContextResolver {
         .map((c) => c['routineId']! as String)
         .toSet();
 
-    // 7. Fetch Zone blocked rules
+    // 7. Fetch Zone rules (B-13: BLOCKED, ALLOWED, BOOSTED)
     final blockedRoutineIdsInZone = <String>{};
+    final boostedRoutineIdsInZone = <String>{};
+
     if (activeZoneId != null) {
       final zoneRules = await db.query(
         'routine_zone_rules',
-        where: 'zoneId = ? AND ruleType = ?',
-        whereArgs: [activeZoneId, 'BLOCKED'],
+        where: 'zoneId = ?',
+        whereArgs: [activeZoneId],
       );
       for (final rule in zoneRules) {
         final rId = rule['routineId'] as String?;
+        final type = rule['ruleType'] as String? ?? 'BLOCKED';
         if (rId != null) {
+          if (type == 'BLOCKED') {
+            blockedRoutineIdsInZone.add(rId);
+          } else if (type == 'BOOSTED') {
+            boostedRoutineIdsInZone.add(rId);
+          }
+        }
+      }
+    }
+
+    // Handle ALLOWED rules (whitelist): routine is ONLY visible in specified zone(s)
+    final allowedRules = await db.query(
+      'routine_zone_rules',
+      where: 'ruleType = ?',
+      whereArgs: ['ALLOWED'],
+    );
+    if (allowedRules.isNotEmpty) {
+      final allowedZonesPerRoutine = <String, Set<String>>{};
+      for (final rule in allowedRules) {
+        final rId = rule['routineId'] as String?;
+        final zId = rule['zoneId'] as String?;
+        if (rId != null && zId != null) {
+          allowedZonesPerRoutine.putIfAbsent(rId, () => <String>{}).add(zId);
+        }
+      }
+      for (final entry in allowedZonesPerRoutine.entries) {
+        final rId = entry.key;
+        final allowedZones = entry.value;
+        if (activeZoneId == null || !allowedZones.contains(activeZoneId)) {
           blockedRoutineIdsInZone.add(rId);
         }
       }
@@ -110,6 +141,7 @@ class ContextResolver {
       reflectionContext: reflectionContext,
       dailyBehavior: dailyBehavior,
       blockedRoutineIdsInZone: blockedRoutineIdsInZone,
+      boostedRoutineIdsInZone: boostedRoutineIdsInZone,
       completedRoutineIdsToday: completedRoutineIdsToday,
       routineSchedulesByRoutineId: routineSchedulesByRoutineId,
       enteredRoutines: routines,

@@ -1,9 +1,8 @@
-// lib/core/domain/engines/rie/rie_filters.dart
-
-import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/domain/engines/rie/context_snapshot.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
+import 'package:ritmo/core/domain/realm/realm_mode.dart';
+import 'package:ritmo/core/modules/module_gate.dart';
 
 abstract interface class RoutineFilter {
   /// Returns a filtered list of routines based on the environment rules
@@ -60,9 +59,9 @@ class BiologicalConstraintsFilter implements RoutineFilter {
 
   @override
   List<Routine> filter(List<Routine> routines, ContextSnapshot snapshot) {
-    // Consent is strictly opt-in: an absent key must mean "no effect".
+    // Consent is enabled by default unless explicitly disabled with 'false'
     final worshipConsent =
-        snapshot.appSettings['cycle_consent_worship'] == 'true';
+        snapshot.appSettings['cycle_consent_worship'] != 'false';
 
     return routines.where((r) {
       // Menstruation suppresses religious routines if consent is enabled
@@ -76,25 +75,29 @@ class BiologicalConstraintsFilter implements RoutineFilter {
   }
 }
 
-/// Layer 2: Zone & Essential Rules Filter
+/// Layer 2: Zone & Essential Rules Filter (B-02, B-10, B-11, B-13)
 class ZoneAndEssentialFilter implements RoutineFilter {
   const ZoneAndEssentialFilter();
 
   @override
   List<Routine> filter(List<Routine> routines, ContextSnapshot snapshot) {
-    final activeZoneMode = snapshot.activeZoneMode;
+    final mode = snapshot.activeRealmMode;
     final blockedRoutineIds = snapshot.blockedRoutineIdsInZone;
 
     return routines.where((r) {
-      final isZoneBlocked =
-          blockedRoutineIds.contains(r.id) ||
-          ((activeZoneMode == 'SILENT' || activeZoneMode == 'FOCUS') &&
-              !r.isEssential);
+      final explicitlyBlocked = blockedRoutineIds.contains(r.id);
+      final isCriticalMedical = r.category == Category.medical && r.isEssential;
 
-      if (isZoneBlocked) {
-        // Bypass blocked zone constraint if the routine is marked essential
-        return r.isEssential;
+      // Safety exception: medical + essential always passes explicit block
+      if (explicitlyBlocked) {
+        return isCriticalMedical;
       }
+
+      // Mode-based suppression for non-essential routines (B-02, B-10)
+      if (mode.suppressesNonEssential && !r.isEssential) {
+        return false;
+      }
+
       return true;
     }).toList();
   }

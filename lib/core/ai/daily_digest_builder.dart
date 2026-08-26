@@ -2,6 +2,8 @@ import 'package:ritmo/core/ai/engines/helpers/ai_quality_gate.dart';
 import 'package:ritmo/core/ai/engines/helpers/sensitive_reflection_filter.dart';
 import 'package:ritmo/core/behavior/behavioral_intelligence_orchestrator.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/repositories/realm_repository.dart';
 
 class DailyDigest {
 
@@ -136,13 +138,9 @@ class DailyDigestBuilder {
       avgMood = (sum / recentMood.length).round();
     }
 
-    // Active Zone
-    final activeZoneCheck = await db.rawQuery('''
-      SELECT name FROM zones WHERE id = (
-        SELECT value FROM app_settings WHERE key = 'active_zone_id'
-      )
-    ''');
-    final activeZone = activeZoneCheck.isNotEmpty ? activeZoneCheck.first['name']! as String : 'کار';
+    // Active Zone (B-01: Single Source of Truth)
+    final realmState = await RealmRepository().getActiveRealmState();
+    final activeZone = realmState.realmOrNull?.name ?? 'کار';
 
     // 3. Assemble full digest JSON
     final fullDigestJson = <String, dynamic>{

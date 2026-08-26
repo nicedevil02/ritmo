@@ -10,16 +10,19 @@ abstract interface class RoutineScorer {
   double score(Routine routine, ContextSnapshot snapshot);
 }
 
-/// 1. Zone Match Scorer
+/// 1. Zone Match Scorer (B-13: supports BOOSTED and active realm match)
 class ZoneMatchScorer implements RoutineScorer {
   const ZoneMatchScorer();
 
   @override
   double score(Routine routine, ContextSnapshot snapshot) {
-    if (routine.zoneId != null && routine.zoneId == snapshot.activeZoneId) {
-      return 1;
+    if (snapshot.boostedRoutineIdsInZone.contains(routine.id)) {
+      return 1.5;
     }
-    return 0;
+    if (routine.zoneId != null && routine.zoneId == snapshot.activeZoneId) {
+      return 1.0;
+    }
+    return 0.0;
   }
 }
 

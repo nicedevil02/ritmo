@@ -4,6 +4,7 @@ import 'package:ritmo/core/domain/engines/zone_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
+import 'package:ritmo/core/domain/realm/realm_mode.dart';
 
 /// Immutable point-in-time snapshot of the user's daily life environment, settings,
 /// active constraints, and pre-fetched database records.
@@ -12,20 +13,25 @@ class ContextSnapshot {
     required this.now,
     required this.appSettings,
     required this.activeZoneId,
-    required this.activeZoneMode,
+    String? activeZoneMode,
+    RealmMode? activeRealmMode,
     required this.currentEnergy,
     required this.isMenstruating,
     this.reflectionContext,
     required this.dailyBehavior,
     required this.blockedRoutineIdsInZone,
+    this.boostedRoutineIdsInZone = const {},
     required this.completedRoutineIdsToday,
     required this.routineSchedulesByRoutineId,
     required this.enteredRoutines,
-  });
+  })  : activeRealmMode = activeRealmMode ?? parseRealmMode(activeZoneMode),
+        activeZoneMode = activeZoneMode ?? realmModeToRaw(activeRealmMode ?? RealmMode.normal);
+
   final DateTime now;
   final Map<String, String> appSettings;
   final String? activeZoneId;
   final String? activeZoneMode;
+  final RealmMode activeRealmMode;
   final EnergyLevel currentEnergy;
   final bool isMenstruating;
   final ReflectionContext? reflectionContext;
@@ -33,6 +39,7 @@ class ContextSnapshot {
 
   // Pre-fetched sets and maps to avoid database calls inside pipeline loops
   final Set<String> blockedRoutineIdsInZone;
+  final Set<String> boostedRoutineIdsInZone;
   final Set<String> completedRoutineIdsToday;
 
   /// Mapped by routineId to its routine_schedules record

@@ -1347,8 +1347,16 @@ class DashboardController {
     // Reconcile zone presence session (F-02)
     final sessionSource = switch (realmState) {
       ManualRealmState() => ZoneSource.manual,
-      ScheduledRealmState s => s.isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
-      TriggeredRealmState() => ZoneSource.trigger,
+      ScheduledRealmState(:final isDefaultFallback) =>
+        isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+      TriggeredRealmState(:final trigger) => switch (trigger.kind) {
+          TriggerKind.wifiSsid => ZoneSource.wifi,
+          TriggerKind.geofence => ZoneSource.geofence,
+          TriggerKind.calendarTag => ZoneSource.calendar,
+          TriggerKind.bluetooth => ZoneSource.bluetooth,
+          TriggerKind.nfc => ZoneSource.nfc,
+          TriggerKind.charger => ZoneSource.schedule,
+        },
       FreeRealmState() => ZoneSource.schedule,
       RealmErrorState() => ZoneSource.schedule,
     };
@@ -1360,18 +1368,18 @@ class DashboardController {
     );
 
     return switch (realmState) {
-      ManualRealmState m => {
-          ...m.realm.toMap(),
+      ManualRealmState(:final realm, :final expireAt) => {
+          ...realm.toMap(),
           'isOverride': true,
-          'overrideUntilMs': m.expireAt.millisecondsSinceEpoch,
+          'overrideUntilMs': expireAt.millisecondsSinceEpoch,
         },
-      ScheduledRealmState s => {
-          ...s.realm.toMap(),
-          'startTime': s.schedule.startTime,
-          'endTime': s.schedule.endTime,
+      ScheduledRealmState(:final realm, :final schedule) => {
+          ...realm.toMap(),
+          'startTime': schedule.startTime,
+          'endTime': schedule.endTime,
         },
-      TriggeredRealmState t => {
-          ...t.realm.toMap(),
+      TriggeredRealmState(:final realm) => {
+          ...realm.toMap(),
           'isTriggered': true,
         },
       FreeRealmState() => null,

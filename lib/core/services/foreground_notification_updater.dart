@@ -42,7 +42,16 @@ class ForegroundNotificationUpdater {
       // Reconcile zone presence session (F-02)
       final sessionSource = switch (realmState) {
         ManualRealmState() => ZoneSource.manual,
-        ScheduledRealmState s => s.isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+        ScheduledRealmState(:final isDefaultFallback) =>
+          isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+        TriggeredRealmState(:final trigger) => switch (trigger.kind) {
+            TriggerKind.wifiSsid => ZoneSource.wifi,
+            TriggerKind.geofence => ZoneSource.geofence,
+            TriggerKind.calendarTag => ZoneSource.calendar,
+            TriggerKind.bluetooth => ZoneSource.bluetooth,
+            TriggerKind.nfc => ZoneSource.nfc,
+            TriggerKind.charger => ZoneSource.schedule,
+          },
         FreeRealmState() => ZoneSource.schedule,
         RealmErrorState() => ZoneSource.schedule,
       };

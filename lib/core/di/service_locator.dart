@@ -52,23 +52,72 @@ final sl = GetIt.instance;
 class AppBootstrapper {
   AppBootstrapper._();
 
-  static bool _initialized = false;
+  static bool _initializedCore = false;
+  static bool _initializedFull = false;
   static Future<void>? _initFuture;
 
-  /// Standalone initializer that registers all core singletons.
-  /// Decoupled from WidgetsFlutterBinding and runApp for isolate compatibility (BOOT-01).
+  /// Lightweight initializer that registers only essential core singletons (BOOT-01).
+  /// Safe and fast for background isolates (RIT-045).
+  static Future<void> initCore() async {
+    if (_initializedCore && sl.isRegistered<ThemeRepository>()) {
+      return;
+    }
+
+    if (!sl.isRegistered<RitmoClock>()) {
+      sl.registerSingleton<RitmoClock>(const SystemClock());
+    }
+    if (!sl.isRegistered<DatabaseHelper>()) {
+      sl.registerSingleton<DatabaseHelper>(DatabaseHelper.instance);
+    }
+    if (!sl.isRegistered<PremiumService>()) {
+      sl.registerSingleton<PremiumService>(PremiumService.instance);
+    }
+    if (!sl.isRegistered<DeviceService>()) {
+      sl.registerSingleton<DeviceService>(DeviceService.instance);
+    }
+    if (!sl.isRegistered<AlarmPlatform>()) {
+      sl.registerSingleton<AlarmPlatform>(const MethodChannelAlarmPlatform());
+    }
+    if (!sl.isRegistered<NotificationPlatform>()) {
+      sl.registerSingleton<NotificationPlatform>(
+        const MethodChannelNotificationPlatform(),
+      );
+    }
+    if (!sl.isRegistered<BackupPlatform>()) {
+      sl.registerSingleton<BackupPlatform>(GoogleDriveBackupService.instance);
+    }
+    if (!sl.isRegistered<ThemeRepository>()) {
+      sl.registerSingleton<ThemeRepository>(ThemeRepository());
+    }
+    if (!sl.isRegistered<LocaleRepository>()) {
+      sl.registerSingleton<LocaleRepository>(LocaleRepository());
+    }
+    if (!sl.isRegistered<AuthService>()) {
+      sl.registerSingleton<AuthService>(AuthService.instance);
+    }
+
+    _initializedCore = true;
+  }
+
+  /// Full initializer that registers all singletons, analytical engines, personas, and command bus.
+  /// Used by the main UI application (BOOT-01).
   static Future<void> init() {
-    if (_initialized && sl.isRegistered<ThemeRepository>())
+    if (_initializedFull && sl.isRegistered<RitmoIntelligenceOrchestrator>()) {
       return Future<void>.value();
-    return _initFuture ??= _doInit();
+    }
+    return _initFuture ??= _doInit().whenComplete(() {
+      _initFuture = null;
+    });
   }
 
   static Future<void> _doInit() async {
     try {
       await sl.reset();
+      _initializedCore = false;
+      _initializedFull = false;
 
-      // 0. Register Time Abstraction (BOOT-12)
-      sl.registerSingleton<RitmoClock>(const SystemClock());
+      // 0. Register Core Singletons first
+      await initCore();
 
       // 1. Initialize Event Bus, Commands and Agent Tools
       registerAllRitmoCommands();
@@ -130,11 +179,8 @@ class AppBootstrapper {
       );
       sl.registerSingleton<RitmoIntelligenceOrchestrator>(orchestrator);
 
-      // 3. Register Core Services and Singletons
+      // 3. Register Additional Services and Singletons
       sl.registerSingleton<DayAgendaService>(DayAgendaService.instance);
-      sl.registerSingleton<DatabaseHelper>(DatabaseHelper.instance);
-      sl.registerSingleton<PremiumService>(PremiumService.instance);
-      sl.registerSingleton<DeviceService>(DeviceService.instance);
 
       // 4. Register Feature Repositories
       sl.registerSingleton<CoursesRepository>(CoursesRepository.instance);
@@ -142,27 +188,11 @@ class AppBootstrapper {
       sl.registerSingleton<KonkurRepository>(KonkurRepository.instance);
       sl.registerSingleton<MvSessionRepository>(MvSessionRepository());
 
-      // 5. Register Repositories requiring async initialization
-      final themeRepository = ThemeRepository();
-      sl.registerSingleton<ThemeRepository>(themeRepository);
-
-      final localeRepository = LocaleRepository();
-      sl.registerSingleton<LocaleRepository>(localeRepository);
-
-      // 6. Register Platform Implementations
-      sl.registerSingleton<AlarmPlatform>(const MethodChannelAlarmPlatform());
-      sl.registerSingleton<NotificationPlatform>(
-        const MethodChannelNotificationPlatform(),
-      );
-      sl.registerSingleton<BackupPlatform>(GoogleDriveBackupService.instance);
-
-      // 7. Register Backend Auth Services (BOOT-02: init deferred to non-critical path)
-      sl.registerSingleton<AuthService>(AuthService.instance);
-
-      _initialized = true;
+      _initializedFull = true;
     } catch (e, st) {
       await sl.reset();
-      _initialized = false;
+      _initializedCore = false;
+      _initializedFull = false;
       _initFuture = null;
       RitmoLog.error(
         'AppBootstrapper',

@@ -278,6 +278,9 @@ class RitmoApp extends StatefulWidget {
   final LocaleRepository localeRepository;
   final RitmoIntelligenceOrchestrator orchestrator;
 
+  @visibleForTesting
+  static Duration? debugOverrideAnimationDuration;
+
   @override
   State<RitmoApp> createState() => _RitmoAppState();
 }
@@ -286,7 +289,14 @@ class _RitmoAppState extends State<RitmoApp> {
   bool _showSplash = true;
   bool _onboardingCompleted = false;
   Object? _initError;
+  int _initRetryCount = 0;
   late Future<void> _initializationFuture;
+
+  Duration get _effectiveAnimationDuration =>
+      RitmoApp.debugOverrideAnimationDuration ??
+      (kDebugMode
+          ? const Duration(milliseconds: 100)
+          : const Duration(milliseconds: 650));
 
   @override
   void initState() {
@@ -315,6 +325,25 @@ class _RitmoAppState extends State<RitmoApp> {
         const Duration(seconds: 5),
         onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
       );
+
+      // 3. Save device timezone for background isolates (RIT-040)
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('app_timezone', 'Asia/Tehran');
+      } catch (_) {}
+
+      // 4. Ensure periodic backup registration if enabled in settings (RIT-041)
+      try {
+        final autoBackup = SettingsService.instance.get<bool>('backup_auto_enabled');
+        if (autoBackup == true) {
+          await Workmanager().registerPeriodicTask(
+            'weekly_backup_task',
+            'weekly_backup_task',
+            frequency: const Duration(days: 7),
+            existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+          );
+        }
+      } catch (_) {}
 
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
@@ -347,21 +376,6 @@ class _RitmoAppState extends State<RitmoApp> {
         });
       }
     }
-  }
-
-  void _applySystemOverlay(RitmoColors colors, Brightness brightness) {
-    final isDark = brightness == Brightness.dark;
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        statusBarBrightness: brightness,
-        systemNavigationBarColor: colors.systemNavBar,
-        systemNavigationBarIconBrightness: isDark
-            ? Brightness.light
-            : Brightness.dark,
-      ),
-    );
   }
 
   ThemeData? _lightCache;
@@ -400,125 +414,142 @@ class _RitmoAppState extends State<RitmoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemePreferences>(
-      valueListenable: widget.themeRepository.preferencesNotifier,
-      builder: (context, prefs, _) {
-        final palette = RitmoPalette.byId(prefs.paletteId);
-        _ensureThemes(palette, prefs);
+    return ValueListenableBuilder<Locale>(
+      valueListenable: widget.localeRepository.localeNotifier,
+      builder: (context, currentLocale, _) {
+        return ValueListenableBuilder<ThemePreferences>(
+          valueListenable: widget.themeRepository.preferencesNotifier,
+          builder: (context, prefs, _) {
+            final palette = RitmoPalette.byId(prefs.paletteId);
+            _ensureThemes(palette, prefs);
 
-        return MaterialApp(
-          title: 'ریتمو',
-          navigatorKey: RitmoRouter.navigatorKey,
-          onGenerateRoute: RitmoRouter.onGenerateRoute,
-          themeMode: prefs.mode,
-          theme: _lightCache,
-          darkTheme: _darkCache,
-          locale: const Locale('fa'),
-          supportedLocales: const [Locale('fa')],
-          localizationsDelegates: const [
-            PersianMaterialLocalizations.delegate,
-            PersianCupertinoLocalizations.delegate,
-            ...AppLocalizations.localizationsDelegates,
-          ],
-          debugShowCheckedModeBanner: false,
-          builder: (context, child) {
-            final mq = MediaQuery.of(context);
-            final brightness = Theme.of(context).brightness;
-            final colors =
-                Theme.of(context).extension<RitmoColors>() ??
-                palette.forBrightness(brightness);
-            _applySystemOverlay(colors, brightness);
-            final effective = RitmoUiScale.effectiveTextScale(
-              osScale: mq.textScaler.scale(1.0),
-              appPercent: prefs.textScalePercent,
-              followOs: prefs.followOsTextScale,
-            );
-            return MediaQuery(
-              data: mq.copyWith(textScaler: TextScaler.linear(effective)),
-              child: AppLockGate(child: child!),
-            );
-          },
-          home: _initError != null
-              ? Scaffold(
-                  body: SafeArea(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: Colors.amber,
+            return MaterialApp(
+              title: 'ریتمو',
+              navigatorKey: RitmoRouter.navigatorKey,
+              onGenerateRoute: RitmoRouter.onGenerateRoute,
+              themeMode: prefs.mode,
+              theme: _lightCache,
+              darkTheme: _darkCache,
+              locale: currentLocale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: const [
+                PersianMaterialLocalizations.delegate,
+                PersianCupertinoLocalizations.delegate,
+                ...AppLocalizations.localizationsDelegates,
+              ],
+              debugShowCheckedModeBanner: false,
+              builder: (context, child) {
+                final mq = MediaQuery.of(context);
+                final brightness = Theme.of(context).brightness;
+                final colors =
+                    Theme.of(context).extension<RitmoColors>() ??
+                    palette.forBrightness(brightness);
+                final isDark = brightness == Brightness.dark;
+                final effective = RitmoUiScale.effectiveTextScale(
+                  osScale: mq.textScaler.scale(1.0),
+                  appPercent: prefs.textScalePercent,
+                  followOs: prefs.followOsTextScale,
+                );
+                return AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness:
+                        isDark ? Brightness.light : Brightness.dark,
+                    statusBarBrightness: brightness,
+                    systemNavigationBarColor: colors.systemNavBar,
+                    systemNavigationBarIconBrightness:
+                        isDark ? Brightness.light : Brightness.dark,
+                  ),
+                  child: MediaQuery(
+                    data: mq.copyWith(textScaler: TextScaler.linear(effective)),
+                    child: AppLockGate(child: child!),
+                  ),
+                );
+              },
+              home: _initError != null
+                  ? Scaffold(
+                      body: SafeArea(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'خطا در راه‌اندازی برنامه',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'مشکلی در بارگذاری اطلاعات پیش آمده است: $_initError',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _initRetryCount++;
+                                      _initError = null;
+                                      _showSplash = true;
+                                      _initializationFuture = _initialize();
+                                    });
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('تلاش مجدد'),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'خطا در راه‌اندازی برنامه',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'مشکلی در بارگذاری اطلاعات پیش آمده است: $_initError',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _initializationFuture = _initialize();
-                                });
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('تلاش مجدد'),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
+                    )
+                  : AnimatedSwitcher(
+                      duration: _effectiveAnimationDuration,
+                      switchInCurve: Curves.easeInOut,
+                      switchOutCurve: Curves.easeInOut,
+                      child: _showSplash
+                          ? SplashScreen(
+                              key: ValueKey('splash_$_initRetryCount'),
+                              initializationFuture: _initializationFuture,
+                              onInitializationComplete: () {
+                                setState(() {
+                                  _showSplash = false;
+                                });
+                              },
+                            )
+                          : (_onboardingCompleted
+                                ? HomeNavigationShell(
+                                    key: const ValueKey('home'),
+                                    themeRepository: widget.themeRepository,
+                                    localeRepository: widget.localeRepository,
+                                    onLogout: () async {
+                                      await AuthService.instance.logout();
+                                    },
+                                  )
+                                : OnboardingScreen(
+                                    key: const ValueKey('onboarding'),
+                                    onFinished: () {
+                                      debugPrint(
+                                        '[Main] Onboarding onFinished received! Setting _onboardingCompleted = true',
+                                      );
+                                      setState(() {
+                                        _onboardingCompleted = true;
+                                      });
+                                    },
+                                  )),
                     ),
-                  ),
-                )
-              : AnimatedSwitcher(
-                  duration: kDebugMode
-                      ? const Duration(milliseconds: 100)
-                      : const Duration(milliseconds: 650),
-                  switchInCurve: Curves.easeInOut,
-                  switchOutCurve: Curves.easeInOut,
-                  child: _showSplash
-                      ? SplashScreen(
-                          key: const ValueKey('splash'),
-                          initializationFuture: _initializationFuture,
-                          onInitializationComplete: () {
-                            setState(() {
-                              _showSplash = false;
-                            });
-                          },
-                        )
-                      : (_onboardingCompleted
-                            ? HomeNavigationShell(
-                                key: const ValueKey('home'),
-                                themeRepository: widget.themeRepository,
-                                localeRepository: widget.localeRepository,
-                                onLogout: () async {
-                                  await AuthService.instance.logout();
-                                },
-                              )
-                            : OnboardingScreen(
-                                key: const ValueKey('onboarding'),
-                                onFinished: () {
-                                  debugPrint(
-                                    '[Main] Onboarding onFinished received! Setting _onboardingCompleted = true',
-                                  );
-                                  setState(() {
-                                    _onboardingCompleted = true;
-                                  });
-                                },
-                              )),
-                ),
+            );
+          },
         );
       },
     );

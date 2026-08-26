@@ -11,12 +11,13 @@ import 'package:ritmo/core/services/alarm_scheduler_service.dart';
 import 'package:ritmo/core/services/backup_passcode_manager.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:workmanager/workmanager.dart';
 
-/// Timezone the background isolate schedules against.
-const String _backgroundTimeZone = 'Asia/Tehran';
+/// Fallback timezone if device timezone preference is unavailable.
+const String _defaultBackgroundTimeZone = 'Asia/Tehran';
 
 /// Top-level callback dispatcher entry-point for background tasks (Workmanager).
 @pragma('vm:entry-point')
@@ -26,14 +27,18 @@ void ritmoCallbackDispatcher() {
     WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();
 
-    // 2. Timezone Initialization
-    // This used to be wrapped in a bare `catch (_) {}`. On failure the isolate
-    // silently stays on UTC, so every alarm scheduled by this run fires hours
-    // off with nothing in the logs to explain it. Scheduling nothing and
-    // letting Workmanager retry is strictly better than scheduling wrong times.
+    // 2. Timezone Initialization from SharedPreferences (RIT-040)
     try {
       tz.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation(_backgroundTimeZone));
+      final prefs = await SharedPreferences.getInstance();
+      final zoneName = prefs.getString('app_timezone') ?? _defaultBackgroundTimeZone;
+      tz.Location location;
+      try {
+        location = tz.getLocation(zoneName);
+      } catch (_) {
+        location = tz.getLocation(_defaultBackgroundTimeZone);
+      }
+      tz.setLocalLocation(location);
     } catch (e, st) {
       RitmoLog.error(
         'BgWorker',
@@ -44,9 +49,9 @@ void ritmoCallbackDispatcher() {
       return false;
     }
 
-    // 3. DI Bootstrapping & Services Registration in Background Isolate (P0-05)
+    // 3. DI Core Bootstrapping & Services Registration in Background Isolate (RIT-045)
     try {
-      await AppBootstrapper.init();
+      await AppBootstrapper.initCore();
       await SettingsService.instance.init();
       await AppModeService.instance.load();
     } catch (e, st) {
@@ -76,10 +81,15 @@ void ritmoCallbackDispatcher() {
 }
 
 Future<bool> _runWeeklyBackup() async {
+  final prefs = await SharedPreferences.getInstance();
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  await prefs.setInt('last_backup_attempt_at', nowMs);
+
   try {
     final passcodeManager = BackupPasscodeManager();
     final hasCode = await passcodeManager.hasPasscode();
     if (!hasCode) {
+      await prefs.setString('last_backup_error', 'passcode_not_set');
       await NotificationGateway.schedule(
         NotificationRequest(
           id: 'immediate_backup_${NotificationIds.weeklyBackup}',
@@ -100,11 +110,15 @@ Future<bool> _runWeeklyBackup() async {
     }
 
     final passcode = await passcodeManager.getPasscode();
-    if (passcode == null) return true;
+    if (passcode == null) {
+      await prefs.setString('last_backup_error', 'passcode_null');
+      return true;
+    }
 
     final driveService = GoogleDriveBackupService.instance;
     final signedIn = await driveService.signIn(silentOnly: true);
     if (!signedIn) {
+      await prefs.setString('last_backup_error', 'auth_expired');
       RitmoLog.warning(
         'BgWorker',
         'Weekly backup task aborted: not signed in to Google Drive (silent auth expired).',
@@ -114,9 +128,12 @@ Future<bool> _runWeeklyBackup() async {
 
     await driveService.uploadBackup(passcode);
     await driveService.pruneOldBackups();
+    await prefs.setInt('last_backup_at', nowMs);
+    await prefs.remove('last_backup_error');
     RitmoLog.info('BgWorker', 'Weekly backup completed successfully.');
     return true;
   } catch (e, st) {
+    await prefs.setString('last_backup_error', e.toString());
     RitmoLog.error(
       'BgWorker',
       'Weekly backup background task execution failed',

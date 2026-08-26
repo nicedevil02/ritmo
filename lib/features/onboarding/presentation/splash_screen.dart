@@ -128,6 +128,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   @override
+  void didUpdateWidget(covariant SplashScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initializationFuture != oldWidget.initializationFuture) {
+      _syncInitialization();
+    }
+  }
+
+  @override
   void dispose() {
     _backgroundGlowController.dispose();
     _ringRotationController.dispose();

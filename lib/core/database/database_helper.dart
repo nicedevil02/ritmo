@@ -46,9 +46,9 @@ class DatabaseHelper {
     _database = db;
     _dbInitCompleter = null;
   }
+  @visibleForTesting
   void overrideDatabaseForTesting(Database db) {
-    _database = db;
-    _dbInitCompleter = null;
+    databaseInstance = db;
   }
   static Database? get rawDatabase => _database;
 
@@ -395,35 +395,38 @@ class DatabaseHelper {
     }
   }
 
+  /// Centralized gender normalizer (RIT-073)
+  static String? normalizeGender(dynamic raw) {
+    if (raw == null) return null;
+    final val = raw.toString().trim().toUpperCase();
+    if (val == 'FEMALE' || val == 'WOMAN' || val == 'ZAN' || val == 'زن') return 'FEMALE';
+    if (val == 'MALE' || val == 'MAN' || val == 'MARD' || val == 'مرد') return 'MALE';
+    return null;
+  }
+
   /// Fetches user gender ('FEMALE', 'MALE', or null if unknown) from app_settings, ss_user_profile, or SharedPreferences.
   Future<String?> getUserGender({DatabaseExecutor? executor}) async {
     final exec = executor ?? await database;
     try {
       final genderQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['user_gender']);
-      if (genderQuery.isNotEmpty && genderQuery.first['value'] != null) {
-        final val = genderQuery.first['value'].toString().toUpperCase();
-        if (val == 'FEMALE' || val == 'WOMAN' || val == 'ZAN' || val == 'زن') return 'FEMALE';
-        if (val == 'MALE' || val == 'MAN' || val == 'MARD' || val == 'مرد') return 'MALE';
+      if (genderQuery.isNotEmpty) {
+        final g = normalizeGender(genderQuery.first['value']);
+        if (g != null) return g;
       }
 
       final ssProfileRows = await exec.query('ss_user_profile', limit: 1);
-      if (ssProfileRows.isNotEmpty && ssProfileRows.first['gender'] != null) {
-        final val = ssProfileRows.first['gender'].toString().toUpperCase();
-        if (val == 'FEMALE' || val == 'WOMAN' || val == 'ZAN' || val == 'زن') return 'FEMALE';
-        if (val == 'MALE' || val == 'MAN' || val == 'MARD' || val == 'مرد') return 'MALE';
+      if (ssProfileRows.isNotEmpty) {
+        final g = normalizeGender(ssProfileRows.first['gender']);
+        if (g != null) return g;
       }
 
       final prefs = await SharedPreferences.getInstance();
       final spGender = prefs.getString('ss_onboarding_gender') ?? prefs.getString('user_gender');
-      if (spGender != null && spGender.isNotEmpty) {
-        final val = spGender.toUpperCase();
-        if (val == 'FEMALE' || val == 'WOMAN' || val == 'ZAN' || val == 'زن') return 'FEMALE';
-        if (val == 'MALE' || val == 'MAN' || val == 'MARD' || val == 'مرد') return 'MALE';
-      }
+      return normalizeGender(spGender);
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Error getting user gender', e, st);
+      return null;
     }
-    return null;
   }
 
   Future<bool> isUserMenstruating({DatabaseExecutor? executor}) async {

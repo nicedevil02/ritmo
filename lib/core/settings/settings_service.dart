@@ -481,6 +481,7 @@ class SettingsService {
           'value': shouldShowAdvanced.toString(),
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
+        _changeController.add('show_advanced_settings');
       } else if (key == 'show_advanced_settings') {
         final targetMode = (normalized == true) ? 'full' : 'simple';
         AppModeService.instance.syncFromSettings(targetMode);
@@ -491,6 +492,7 @@ class SettingsService {
           'value': targetMode,
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
+        _changeController.add('app_mode');
       }
 
       return const SettingWriteOk();
@@ -513,134 +515,9 @@ class SettingsService {
   }
 
   Future<bool> setMany(Map<String, Object> values) async {
-    if (!_initialized) {
-      final ok = await retryInit();
-      if (!ok) {
-        RitmoLog.warning('Settings', 'عدم امکان ذخیره‌سازی دسته‌ای به دلیل عدم راه‌اندازی موفق سرویس تنظیمات');
-        return false;
-      }
-    }
-
-    final dbEntries = <String, Object>{};
-    final prefsEntries = <String, (SettingDescriptor, Object)>{};
-    final secureEntries = <String, Object>{};
-    bool affectsAgendaAny = false;
-    bool hasNotifChange = false;
-
-    for (final entry in values.entries) {
-      final key = entry.key;
-      final rawVal = entry.value;
-      final desc = SettingsRegistry.find(key);
-      if (desc == null) {
-        RitmoLog.warning('Settings', 'رد ذخیره‌سازی دسته‌ای برای کلید نامشخص: $key');
-        continue;
-      }
-
-      final normalized = _validateAndNormalize(desc, rawVal);
-      if (normalized == null) continue;
-
-      final currentVal = _cache[key];
-      if (currentVal == normalized) continue;
-
-      if (desc.scope == SettingScope.db) {
-        dbEntries[key] = normalized;
-      } else if (desc.scope == SettingScope.prefs) {
-        prefsEntries[key] = (desc, normalized);
-      } else if (desc.scope == SettingScope.secure) {
-        secureEntries[key] = normalized;
-      }
-
-      if (desc.affectsAgenda) {
-        affectsAgendaAny = true;
-      }
-      if (desc.group == SettingsGroup.notifications) {
-        hasNotifChange = true;
-      }
-    }
-
-    if (dbEntries.isEmpty && prefsEntries.isEmpty && secureEntries.isEmpty) {
-      return true;
-    }
-
-    try {
-      if (dbEntries.isNotEmpty) {
-        final db = await DatabaseHelper.instance.database;
-        final now = DateTime.now().millisecondsSinceEpoch;
-        final batch = db.batch();
-        for (final entry in dbEntries.entries) {
-          batch.insert(
-            'app_settings',
-            {
-              'key': entry.key,
-              'value': entry.value.toString(),
-              'updatedAt': now,
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
-        await batch.commit(noResult: true);
-      }
-
-      if (prefsEntries.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        for (final item in prefsEntries.values) {
-          final desc = item.$1;
-          final val = item.$2;
-          if (val is bool) {
-            await prefs.setBool(desc.key, val);
-          } else if (val is int) {
-            await prefs.setInt(desc.key, val);
-          } else {
-            await prefs.setString(desc.key, val.toString());
-          }
-        }
-      }
-
-      if (secureEntries.isNotEmpty) {
-        for (final entry in secureEntries.entries) {
-          await SecureKeyStore.setKey(entry.key, entry.value.toString());
-        }
-      }
-
-      // Update cache
-      dbEntries.forEach((k, v) => _cache[k] = v);
-      prefsEntries.forEach((k, pair) => _cache[k] = pair.$2);
-      secureEntries.forEach((k, v) => _cache[k] = v);
-
-      revision.value++;
-
-      for (final k in dbEntries.keys) {
-        _changeController.add(k);
-      }
-      for (final k in prefsEntries.keys) {
-        _changeController.add(k);
-      }
-      for (final k in secureEntries.keys) {
-        _changeController.add(k);
-      }
-
-      if (affectsAgendaAny) {
-        _scheduleAgendaRefreshSignal();
-      }
-
-      if (hasNotifChange) {
-        try {
-          final notifSettings = <String, String>{
-            'digest_mode': get<String>('digest_mode'),
-            'coalescing_window_minutes': get<int>('coalescing_window_minutes').toString(),
-            'max_non_essential_per_hour': get<int>('max_non_essential_per_hour').toString(),
-          };
-          await SnapshotHelper.updateNotificationSettingsSnapshot(notifSettings);
-        } catch (e, st) {
-          RitmoLog.error('Settings', 'به‌روزرسانی اسنپ‌شات اعلان ناموفق بود', e, st);
-        }
-      }
-
-      return true;
-    } catch (e, st) {
-      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات', e, st);
-      return false;
-    }
+    if (values.isEmpty) return true;
+    final count = await setBatch(values);
+    return count > 0;
   }
 
   Future<bool> reset(String key) async {
@@ -680,7 +557,8 @@ class SettingsService {
       RitmoLog.warning('Settings', 'AI مجاز به تغییر تنظیم غیرقابل‌دسترس $key نیست');
       return false;
     }
-    return set(key, value);
+    final result = await setChecked(key, value, origin: SettingsWriteOrigin.ai);
+    return result is SettingWriteOk;
   }
 
   Future<bool> setManyFromAi(Map<String, Object> values) async {
@@ -737,7 +615,7 @@ class SettingsService {
     });
   }
 
-  /// اعمال دسته‌ای مجموعه‌ای از تنظیمات با اعتبارسنجی و تحریک فقط یک بار رویداد تغییر
+  /// اعمال دسته‌ای مجموعه‌ای از تنظیمات با اعتبارسنجی و تحریک فقط یک بار رویداد تغییر (RIT-070)
   Future<int> setBatch(
     Map<String, Object> newValues, {
     SettingsWriteOrigin origin = SettingsWriteOrigin.user,
@@ -753,6 +631,8 @@ class SettingsService {
     final dbEntries = <String, String>{};
     final prefEntries = <String, Object>{};
     final secureEntries = <String, String>{};
+    final normalizedMap = <String, Object>{};
+    final oldCacheSnapshot = <String, Object?>{};
     final changedKeys = <String>[];
     bool hasAgendaAffecting = false;
     bool hasNotifGroup = false;
@@ -781,7 +661,8 @@ class SettingsService {
       final currentVal = _cache[key];
       if (currentVal == normalized) continue;
 
-      _cache[key] = normalized;
+      oldCacheSnapshot[key] = currentVal;
+      normalizedMap[key] = normalized;
       changedKeys.add(key);
 
       if (desc.requiresRestart) {
@@ -844,6 +725,9 @@ class SettingsService {
         }
       }
 
+      // Update cache only AFTER persistence succeeds (RIT-070)
+      normalizedMap.forEach((k, v) => _cache[k] = v);
+
       revision.value++;
       for (final k in changedKeys) {
         _changeController.add(k);
@@ -869,8 +753,16 @@ class SettingsService {
       RitmoLog.info('Settings', 'ذخیره‌سازی دسته‌ای موفق: ${changedKeys.length} کلید تغییر یافت.');
       return changedKeys.length;
     } catch (e, st) {
-      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات', e, st);
-      return changedKeys.length;
+      for (final k in changedKeys) {
+        final prev = oldCacheSnapshot[k];
+        if (prev != null) {
+          _cache[k] = prev;
+        } else {
+          _cache.remove(k);
+        }
+      }
+      RitmoLog.error('Settings', 'خطا در ذخیره‌سازی دسته‌ای تنظیمات - rollback cache اعمال شد', e, st);
+      return 0;
     }
   }
 

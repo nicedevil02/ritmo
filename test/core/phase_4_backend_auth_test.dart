@@ -3,6 +3,7 @@ import 'package:ritmo/core/backend/app_config.dart';
 import 'package:ritmo/core/backend/auth_service.dart';
 import 'package:ritmo/core/backend/models/auth_result.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -11,6 +12,26 @@ void main() {
   databaseFactory = databaseFactoryFfi;
 
   group('Phase 4: Backend & Auth Tests', () {
+    late Database testDb;
+
+    setUp(() async {
+      testDb = await databaseFactory.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, version) async {
+            await SchemaManager.createAll(db);
+          },
+        ),
+      );
+      await DatabaseHelper.ensureCriticalSchema(testDb);
+      DatabaseHelper.instance.overrideDatabaseForTesting(testDb);
+    });
+
+    tearDown(() async {
+      await testDb.close();
+    });
+
     test('RIT-050: AppConfig.cleanEndpoint preserves regional non-NYC endpoints', () {
       // Default endpoint
       expect(AppConfig.cleanEndpoint, isNotEmpty);

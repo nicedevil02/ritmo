@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -355,14 +355,14 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Future<void> _pickAttachment() async {
     RitmoHapticsPolicy.selection();
     try {
-      final result = await FilePickerPlatform.instance.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'm4a', 'wav'],
+      const typeGroup = XTypeGroup(
+        label: 'attachments',
+        extensions: ['jpg', 'jpeg', 'png', 'pdf', 'mp3', 'm4a', 'wav'],
       );
+      final XFile? file = await openFile(acceptedTypeGroups: const [typeGroup]);
 
-      if (result.isNotEmpty &&
-          result.first.path != null) {
-        final pickedFile = File(result.first.path!);
+      if (file != null && file.path.isNotEmpty) {
+        final pickedFile = File(file.path);
 
         if (_activeNote == null) {
           await _save();
@@ -372,7 +372,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           final created = await NoteAttachmentRepository.instance.add(
             noteId: _activeNote!.id,
             sourceFile: pickedFile,
-            fileName: result.first.name,
+            fileName: file.name,
           );
           setState(() {
             _attachments.add(created);

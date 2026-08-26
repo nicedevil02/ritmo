@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -22,13 +22,13 @@ class TaskAttachmentsSection extends StatelessWidget {
 
   Future<void> _pickAttachment(BuildContext context) async {
     try {
-      final result = await FilePickerPlatform.instance.pickFiles();
-      if (result.isNotEmpty && result.first.path != null) {
-        final file = File(result.first.path!);
+      final XFile? file = await openFile();
+      if (file != null && file.path.isNotEmpty) {
+        final localFile = File(file.path);
         await TaskAttachmentRepository.instance.add(
           taskId: taskId,
-          sourceFile: file,
-          fileName: result.first.name,
+          sourceFile: localFile,
+          fileName: file.name,
         );
         onAttachmentsChanged();
       }

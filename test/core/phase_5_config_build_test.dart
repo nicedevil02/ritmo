@@ -32,7 +32,7 @@ void main() {
 
       final content = file.readAsStringSync();
       expect(content.contains('12.0.0-beta.7'), isFalse);
-      expect(content.contains('file_picker: ^12.1.1'), isTrue);
+      expect(content.contains('file_selector: ^1.0.3'), isTrue);
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -49,10 +50,11 @@ class MvPrRepository {
   /// Saves or updates a personal record.
   Future<void> recordPr(MvPersonalRecord pr) async {
     final db = await _db;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'movement_pr',
       pr.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['kind', 'prType'],
     );
   }
 }

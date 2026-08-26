@@ -26,6 +26,8 @@ class MvDistanceTemplate extends StatefulWidget {
 
 class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
   late int _seconds;
+  late int _accumulatedSeconds;
+  DateTime? _runningStart;
   late double _distanceKm;
   int _rpe = 7;
   bool _isPaused = false;
@@ -34,8 +36,10 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
   @override
   void initState() {
     super.initState();
-    _seconds = widget.session.elapsedSeconds;
+    _accumulatedSeconds = widget.session.elapsedSeconds;
+    _seconds = _accumulatedSeconds;
     _distanceKm = (widget.session.distanceMeters ?? 3000.0) / 1000.0;
+    _runningStart = DateTime.now();
     _startTimer();
   }
 
@@ -46,12 +50,37 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!_isPaused && mounted) {
-        setState(() {
-          _seconds++;
-        });
+      if (!_isPaused && _runningStart != null && mounted) {
+        final elapsed = _accumulatedSeconds +
+            DateTime.now().difference(_runningStart!).inSeconds;
+        if (elapsed != _seconds) {
+          setState(() {
+            _seconds = elapsed;
+          });
+        }
       }
+    });
+  }
+
+  void _togglePause() {
+    RitmoHaptics.tap();
+    setState(() {
+      if (!_isPaused) {
+        // Pausing
+        if (_runningStart != null) {
+          _accumulatedSeconds +=
+              DateTime.now().difference(_runningStart!).inSeconds;
+          _runningStart = null;
+        }
+        _isPaused = true;
+      } else {
+        // Resuming
+        _runningStart = DateTime.now();
+        _isPaused = false;
+      }
+      _seconds = _accumulatedSeconds;
     });
   }
 
@@ -161,10 +190,7 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
-                    onPressed: () {
-                      RitmoHaptics.tap();
-                      setState(() => _isPaused = !_isPaused);
-                    },
+                    onPressed: _togglePause,
                   ),
                   SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
@@ -179,7 +205,11 @@ class _MvDistanceTemplateState extends State<MvDistanceTemplate> {
                     onPressed: () {
                       RitmoHaptics.success();
                       final distanceMeters = _distanceKm * 1000.0;
-                      widget.onFinish?.call(_seconds, distanceMeters, _rpe);
+                      final finalSeconds = _accumulatedSeconds +
+                          (!_isPaused && _runningStart != null
+                              ? DateTime.now().difference(_runningStart!).inSeconds
+                              : 0);
+                      widget.onFinish?.call(finalSeconds, distanceMeters, _rpe);
                     },
                   ),
                 ],

@@ -1,5 +1,7 @@
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 /// Single place that turns stored metric values into what the user sees.
 ///
@@ -16,7 +18,19 @@ class SsUnitFormatter {
   static const double _kgPerLb = 0.45359237;
   static const double _cmPerInch = 2.54;
 
-  static Future<bool> isMetric() async {
+  static Future<bool> isMetric([DatabaseExecutor? executor]) async {
+    try {
+      final db = executor ?? await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: [prefsKey],
+        limit: 1,
+      );
+      if (rows.isNotEmpty) {
+        return rows.first['value'] == 'true';
+      }
+    } catch (_) {}
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(prefsKey) ?? true;
   }

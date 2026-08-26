@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -52,31 +53,19 @@ class MvPrescriptionRepository {
   /// Saves or updates a single prescription slot.
   Future<void> savePrescription(MvSlot slot) async {
     final db = await _db;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'ss_session_prescription',
       slot.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 
   /// Batch saves multiple prescription slots.
   Future<void> savePrescriptions(List<MvSlot> slots) async {
     if (slots.isEmpty) return;
-    final db = await _db;
-    if (db is Database) {
-      final batch = db.batch();
-      for (final slot in slots) {
-        batch.insert(
-          'ss_session_prescription',
-          slot.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-      await batch.commit(noResult: true);
-    } else {
-      for (final slot in slots) {
-        await savePrescription(slot);
-      }
+    for (final slot in slots) {
+      await savePrescription(slot);
     }
   }
 

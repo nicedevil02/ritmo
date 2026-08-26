@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 
 class SportsDetailMode {
   static final ValueNotifier<bool> notifier = ValueNotifier(false);
@@ -18,7 +19,12 @@ class SportsDetailMode {
       final value = rows.first['value'] == 'true';
       notifier.value = value;
       return value;
-    } catch (_) {
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'Failed to query sports_detail_mode: $e',
+        error: e,
+        stack: st,
+      );
       return false;
     }
   }
@@ -26,14 +32,23 @@ class SportsDetailMode {
   static Future<void> setEnabled(bool enabled) async {
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert('app_settings', {
-        'key': 'sports_detail_mode',
-        'value': enabled ? 'true' : 'false',
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'sports_detail_mode',
+          'value': enabled ? 'true' : 'false',
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictColumns: const ['key'],
+      );
       notifier.value = enabled;
-    } catch (e) {
-      debugPrint('[ss] sports_detail_mode.dart: $e');
+    } catch (e, st) {
+      RitmoLogger.error(
+        'Failed to set sports_detail_mode: $e',
+        error: e,
+        stack: st,
+      );
     }
   }
 }

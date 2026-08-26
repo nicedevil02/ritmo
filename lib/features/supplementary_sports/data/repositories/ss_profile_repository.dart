@@ -1,5 +1,6 @@
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/tables/supplementary_sports_tables.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/supplementary_sports/data/models/ss_user_profile_model.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -33,10 +34,11 @@ class SSProfileRepository {
   }) async {
     final db = executor ?? await DatabaseHelper.instance.database;
     await SupplementarySportsTables.ensureUserProfileSchema(db);
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'ss_user_profile',
       profile.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
     _cachedProfile = profile;
   }
@@ -74,14 +76,19 @@ class SSProfileRepository {
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     final nowMs = today.millisecondsSinceEpoch;
 
-    await db.insert('workout_recovery_logs', {
-      'id': 'rec_$nowMs',
-      'date': dateKey,
-      'soreness': soreness,
-      'fatigue': fatigue,
-      'hydration': hydration,
-      'loggedAt': nowMs,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await UpsertHelper.upsert(
+      db,
+      'workout_recovery_logs',
+      {
+        'id': 'rec_$nowMs',
+        'date': dateKey,
+        'soreness': soreness,
+        'fatigue': fatigue,
+        'hydration': hydration,
+        'loggedAt': nowMs,
+      },
+      conflictColumns: const ['id'],
+    );
   }
 
   /// Returns true if recovery is logged for today

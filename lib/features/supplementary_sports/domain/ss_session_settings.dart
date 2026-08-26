@@ -32,13 +32,32 @@ class SSSessionSettings {
     final neighborFriendly =
         profileRows.isNotEmpty && (profileRows.first['neighborFriendly'] == 1);
 
+    Map<String, String> appSettings = {};
+    try {
+      final rows = await db.query(
+        'app_settings',
+        where: "key IN ('ss_default_rest_seconds', 'ss_tts_enabled', 'ss_tts_countdown_enabled', 'ss_audio_cues_enabled', 'ss_units_metric')",
+      );
+      appSettings = {
+        for (final r in rows) (r['key'] as String): r['value'] as String,
+      };
+    } catch (_) {}
+
     final prefs = await SharedPreferences.getInstance();
-    final defaultRestSeconds = prefs.getInt('ss_default_rest_seconds') ?? 90;
-    final ttsEnabled = prefs.getBool('ss_tts_enabled') ?? true;
-    final ttsCountdownEnabled =
-        prefs.getBool('ss_tts_countdown_enabled') ?? true;
-    final audioCuesEnabled = prefs.getBool('ss_audio_cues_enabled') ?? true;
-    final unitsMetric = prefs.getBool('ss_units_metric') ?? true;
+    final defaultRestSeconds = int.tryParse(appSettings['ss_default_rest_seconds'] ?? '') ??
+        prefs.getInt('ss_default_rest_seconds') ?? 90;
+    final ttsEnabled = appSettings['ss_tts_enabled'] != null
+        ? appSettings['ss_tts_enabled'] == 'true'
+        : prefs.getBool('ss_tts_enabled') ?? true;
+    final ttsCountdownEnabled = appSettings['ss_tts_countdown_enabled'] != null
+        ? appSettings['ss_tts_countdown_enabled'] == 'true'
+        : prefs.getBool('ss_tts_countdown_enabled') ?? true;
+    final audioCuesEnabled = appSettings['ss_audio_cues_enabled'] != null
+        ? appSettings['ss_audio_cues_enabled'] == 'true'
+        : prefs.getBool('ss_audio_cues_enabled') ?? true;
+    final unitsMetric = appSettings['ss_units_metric'] != null
+        ? appSettings['ss_units_metric'] == 'true'
+        : prefs.getBool('ss_units_metric') ?? true;
 
     return SSSessionSettings(
       defaultRestSeconds: defaultRestSeconds,

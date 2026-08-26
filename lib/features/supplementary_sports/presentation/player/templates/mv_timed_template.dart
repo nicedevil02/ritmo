@@ -25,6 +25,8 @@ class MvTimedTemplate extends StatefulWidget {
 
 class _MvTimedTemplateState extends State<MvTimedTemplate> {
   late int _seconds;
+  late int _accumulatedSeconds;
+  DateTime? _runningStart;
   bool _isPaused = false;
   Timer? _timer;
   int _currentPhaseIndex = 1; // 0: warmup, 1: main, 2: cooldown
@@ -33,15 +35,42 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
   @override
   void initState() {
     super.initState();
-    _seconds = widget.session.elapsedSeconds;
+    _accumulatedSeconds = widget.session.elapsedSeconds;
+    _seconds = _accumulatedSeconds;
+    _runningStart = DateTime.now();
     _startTimer();
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!_isPaused && mounted) {
-        setState(() => _seconds++);
+      if (!_isPaused && _runningStart != null && mounted) {
+        final elapsed = _accumulatedSeconds +
+            DateTime.now().difference(_runningStart!).inSeconds;
+        if (elapsed != _seconds) {
+          setState(() => _seconds = elapsed);
+        }
       }
+    });
+  }
+
+  void _togglePause() {
+    RitmoHaptics.tap();
+    setState(() {
+      if (!_isPaused) {
+        // Pausing
+        if (_runningStart != null) {
+          _accumulatedSeconds +=
+              DateTime.now().difference(_runningStart!).inSeconds;
+          _runningStart = null;
+        }
+        _isPaused = true;
+      } else {
+        // Resuming
+        _runningStart = DateTime.now();
+        _isPaused = false;
+      }
+      _seconds = _accumulatedSeconds;
     });
   }
 
@@ -129,10 +158,7 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                     icon: Icon(
                       _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                     ),
-                    onPressed: () {
-                      RitmoHaptics.tap();
-                      setState(() => _isPaused = !_isPaused);
-                    },
+                    onPressed: _togglePause,
                   ),
                   SizedBox(width: metrics.spaceXl),
                   ElevatedButton.icon(
@@ -146,7 +172,11 @@ class _MvTimedTemplateState extends State<MvTimedTemplate> {
                     label: Text(l10n?.mv_template_finish ?? 'Finish Session'),
                     onPressed: () {
                       RitmoHaptics.success();
-                      widget.onFinish?.call(_seconds, _rpe);
+                      final finalSeconds = _accumulatedSeconds +
+                          (!_isPaused && _runningStart != null
+                              ? DateTime.now().difference(_runningStart!).inSeconds
+                              : 0);
+                      widget.onFinish?.call(finalSeconds, _rpe);
                     },
                   ),
                 ],

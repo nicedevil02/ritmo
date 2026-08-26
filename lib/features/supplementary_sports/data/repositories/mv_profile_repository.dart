@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -34,10 +35,11 @@ class MvProfileRepository {
     final cleanProfile = profile.copyWith(
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'ss_user_profile',
       cleanProfile.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 }

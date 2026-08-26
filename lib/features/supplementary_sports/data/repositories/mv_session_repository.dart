@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -30,10 +31,11 @@ class MvSessionRepository {
   /// Starts a new session and persists it.
   Future<void> startSession(MvSession session) async {
     final db = await _db;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'movement_sessions',
       session.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 
@@ -51,10 +53,11 @@ class MvSessionRepository {
   /// Records a lifecycle event for crash recovery and audit.
   Future<void> recordEvent(MvSessionEvent event) async {
     final db = await _db;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'movement_session_events',
       event.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 
@@ -90,17 +93,19 @@ class MvSessionRepository {
     );
 
     Future<void> runInternal(DatabaseExecutor executor) async {
-      await executor.insert(
+      await UpsertHelper.upsert(
+        executor,
         'movement_sessions',
         completedSession.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
 
       for (final setLog in setLogs) {
-        await executor.insert(
+        await UpsertHelper.upsert(
+          executor,
           'ss_session_set_log',
           setLog.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          conflictColumns: const ['id'],
         );
       }
 
@@ -133,10 +138,11 @@ class MvSessionRepository {
   /// Records a single workout set.
   Future<void> recordSetLog(MvSetLog setLog) async {
     final db = await _db;
-    await db.insert(
+    await UpsertHelper.upsert(
+      db,
       'ss_session_set_log',
       setLog.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      conflictColumns: const ['id'],
     );
   }
 

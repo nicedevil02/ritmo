@@ -55,6 +55,9 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   int _restSecondsRemaining = 0;
   Timer? _ticker;
 
+  late int _accumulatedPausedMs;
+  DateTime? _pauseStartTime;
+
   final List<MvSetLog> _setLogs = [];
   bool _isPaused = false;
   bool _isAudioEnabled = true;
@@ -64,6 +67,7 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     super.initState();
     _sessionController = widget.controller ?? MvSessionController();
     _session = widget.initialSession;
+    _accumulatedPausedMs = widget.initialSession.pausedMs;
     _exercises = List.from(widget.plannedExercises);
     _isAudioEnabled = widget.initialAudioEnabled;
     _audioPlayer = MvAudioCuePlayer(isEnabled: _isAudioEnabled);
@@ -236,7 +240,17 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
 
   void _togglePause() {
     setState(() {
-      _isPaused = !_isPaused;
+      if (!_isPaused) {
+        _pauseStartTime = DateTime.now();
+        _isPaused = true;
+      } else {
+        if (_pauseStartTime != null) {
+          _accumulatedPausedMs +=
+              DateTime.now().difference(_pauseStartTime!).inMilliseconds;
+          _pauseStartTime = null;
+        }
+        _isPaused = false;
+      }
     });
 
     _sessionController.recordEvent(
@@ -246,8 +260,12 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
   }
 
   Future<void> _handleExitMidSession() async {
+    final totalPaused = _accumulatedPausedMs +
+        (_isPaused && _pauseStartTime != null
+            ? DateTime.now().difference(_pauseStartTime!).inMilliseconds
+            : 0);
     await _sessionController.savePartialExit(
-      session: _session,
+      session: _session.copyWith(pausedMs: totalPaused),
       setLogs: _setLogs,
     );
     if (mounted) Navigator.pop(context);
@@ -258,9 +276,14 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
     _audioPlayer.playFinish();
 
     final now = DateTime.now().millisecondsSinceEpoch;
+    final totalPaused = _accumulatedPausedMs +
+        (_isPaused && _pauseStartTime != null
+            ? DateTime.now().difference(_pauseStartTime!).inMilliseconds
+            : 0);
     final finishedSession = _session.copyWith(
       status: MvSessionStatus.completed,
       endedAt: now,
+      pausedMs: totalPaused,
     );
 
     Navigator.pushReplacement(

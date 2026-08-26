@@ -111,8 +111,8 @@ class MvCommitment {
     if (!isActive) return null;
 
     final parts = startTime.split(':');
-    final startHour = int.parse(parts[0]);
-    final startMinute = int.parse(parts[1]);
+    final startHour = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
+    final startMinute = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
 
     final targetDartWeekday = MvCalendar.sat0ToDartWeekday(dayOfWeekSat0);
 

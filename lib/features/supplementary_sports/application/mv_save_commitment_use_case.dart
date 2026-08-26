@@ -51,7 +51,7 @@ class MvSaveCommitmentUseCase {
     String? venueNote,
     String? partnerNote,
   }) async {
-    final slotDate = DateTime.parse(slot.dateIso);
+    final slotDate = DateTime.tryParse(slot.dateIso) ?? DateTime.now();
     final sat0 = MvCalendar.dateTimeToSat0(slotDate);
     final plannedTime = slot.plannedTime ?? '20:00';
 

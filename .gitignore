@@ -56,3 +56,4 @@ build.env
 test_out.txt
 *.dll
 scratch/
+tool/*.txt

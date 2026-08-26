@@ -517,7 +517,7 @@ class SettingsService {
   Future<bool> setMany(Map<String, Object> values) async {
     if (values.isEmpty) return true;
     final count = await setBatch(values);
-    return count > 0;
+    return count >= 0;
   }
 
   Future<bool> reset(String key) async {

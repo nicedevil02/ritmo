@@ -8,7 +8,7 @@ class ZoneBudget {
     this.minMinutes,
     this.maxMinutes,
     this.period = 'WEEK',
-    required this.updatedAt,
+    this.updatedAt = 0,
   });
 
   final String zoneId;

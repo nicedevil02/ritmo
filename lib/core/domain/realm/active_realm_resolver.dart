@@ -9,6 +9,8 @@ export 'package:ritmo/core/domain/realm/profiles/zone_profile.dart';
 export 'package:ritmo/core/domain/realm/profiles/zone_profile_repository.dart';
 export 'package:ritmo/core/domain/realm/realm_mode.dart';
 export 'package:ritmo/core/domain/realm/realm_state.dart';
+export 'package:ritmo/core/domain/realm/reports/zone_report_models.dart';
+export 'package:ritmo/core/domain/realm/reports/zone_report_repository.dart';
 export 'package:ritmo/core/domain/realm/resolution/composite_realm_resolver.dart';
 export 'package:ritmo/core/domain/realm/resolution/realm_context.dart';
 export 'package:ritmo/core/domain/realm/resolution/realm_resolution_layer.dart';

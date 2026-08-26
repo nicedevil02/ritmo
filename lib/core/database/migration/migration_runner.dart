@@ -68,6 +68,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v126_mv_kind_
 import 'package:ritmo/core/database/migration/migrations/migration_v127_session_metrics.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v128_mv_routes.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v129_realm_stabilization.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v130_zone_sessions.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -199,6 +200,7 @@ class MigrationRunner {
     MigrationV127SessionMetrics(), // Session metrics columns (distanceM, elevationGainM, laps, packWeightKg, rpe1To10, effortSource, routeId)
     MigrationV128MvRoutes(), // Recurring trails and routes table mv_routes
     MigrationV129RealmStabilization(), // Realm stabilization: orphan keys cleanup, started timestamp, quick override minutes, default index
+    MigrationV130ZoneSessions(), // Zone presence history: zone_sessions table and single open session partial unique index (F-01, F-02)
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

@@ -9,6 +9,7 @@ import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/core/database/seed/mock_data_seeder.dart';
 import 'package:ritmo/core/database/seed/seed_service.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session_writer.dart';
 import 'package:ritmo/core/time/ritmo_clock.dart';
 import 'package:ritmo/core/services/end_of_day_sweep.dart';
 import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
@@ -21,7 +22,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 129;
+  static const int _dbVersion = 130;
   static int get dbVersionForTest => _dbVersion;
 
   /// Optional decoupled warmup hooks registered by application features.
@@ -82,6 +83,11 @@ class DatabaseHelper {
         await AiMemoryService.instance.backfillSensitiveFlags();
       } catch (e) {
         RitmoLog.warning('DatabaseHelper', 'backfillSensitiveFlags non-fatal error: $e');
+      }
+      try {
+        await ZoneSessionWriter().recoverAbandonedSessions(executor: db);
+      } catch (e) {
+        RitmoLog.warning('DatabaseHelper', 'recoverAbandonedSessions non-fatal error: $e');
       }
       for (final hook in warmupHooks) {
         try {

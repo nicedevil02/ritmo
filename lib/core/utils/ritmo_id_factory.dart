@@ -22,6 +22,7 @@ class RitmoIdFactory {
   static String worshipLog() => 'worship_${_stamp()}';
   static String medicationLog() => 'med_${_stamp()}';
   static String completion() => 'comp_${_stamp()}';
+  static String zoneSession() => 'zs_${_stamp()}';
 
   // Supplementary Sports IDs
   static String ssPlan() => 'ssplan_${_stamp()}';

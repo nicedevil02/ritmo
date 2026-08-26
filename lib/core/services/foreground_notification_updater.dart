@@ -7,6 +7,8 @@ import 'package:ritmo/core/domain/engines/ritmo_intelligence_engine.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session_writer.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 
@@ -36,6 +38,19 @@ class ForegroundNotificationUpdater {
       final activeZoneId = realmState.realmOrNull?.id;
       final activeZoneMode = realmModeToRaw(realmState.effectiveMode);
       final actZoneName = realmState.realmOrNull?.name ?? 'آزاد';
+
+      // Reconcile zone presence session (F-02)
+      final sessionSource = switch (realmState) {
+        ManualRealmState() => ZoneSource.manual,
+        ScheduledRealmState s => s.isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+        FreeRealmState() => ZoneSource.schedule,
+        RealmErrorState() => ZoneSource.schedule,
+      };
+      await ZoneSessionWriter(dbHelper: DatabaseHelper.instance).reconcile(
+        realmState,
+        source: sessionSource,
+        executor: db,
+      );
 
       final currentEnergyStr = settingsMap['current_energy_state'] ?? 'MEDIUM';
       final currentEnergy = EnergyLevel.values.firstWhere(

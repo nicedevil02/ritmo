@@ -20,6 +20,8 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/domain/models/daily_behavior.dart';
 import 'package:ritmo/core/domain/models/reflection_context.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session.dart';
+import 'package:ritmo/core/domain/realm/sessions/zone_session_writer.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/services/snapshot_sync_service.dart';
@@ -1341,6 +1343,21 @@ class DashboardController {
     DateTime now,
   ) async {
     final realmState = await RealmRepository().getActiveRealmState();
+
+    // Reconcile zone presence session (F-02)
+    final sessionSource = switch (realmState) {
+      ManualRealmState() => ZoneSource.manual,
+      ScheduledRealmState s => s.isDefaultFallback ? ZoneSource.defaultRealm : ZoneSource.schedule,
+      FreeRealmState() => ZoneSource.schedule,
+      RealmErrorState() => ZoneSource.schedule,
+    };
+    await ZoneSessionWriter().reconcile(
+      realmState,
+      source: sessionSource,
+      now: now,
+      executor: db,
+    );
+
     return switch (realmState) {
       ManualRealmState m => {
           ...m.realm.toMap(),

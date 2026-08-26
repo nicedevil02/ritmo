@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
@@ -27,14 +28,18 @@ class CycleLockService {
   static const String _keyLockoutUntilMs = 'cycle_lockout_until_ms';
   static const String keyLockSource = 'cycle_lock_source';
 
-  /// Constant-time string comparison to prevent timing attacks.
+  /// RITF-071: Constant-time byte comparison without early return on length mismatch.
   bool _constantTimeEquals(String a, String b) {
-    if (a.length != b.length) return false;
-    var result = 0;
-    for (var i = 0; i < a.length; i++) {
-      result |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
+    final aUnits = utf8.encode(a);
+    final bUnits = utf8.encode(b);
+    final maxLength = max(aUnits.length, bUnits.length);
+    var diff = aUnits.length ^ bUnits.length;
+    for (var i = 0; i < maxLength; i++) {
+      final aByte = i < aUnits.length ? aUnits[i] : 0;
+      final bByte = i < bUnits.length ? bUnits[i] : 0;
+      diff |= aByte ^ bByte;
     }
-    return result == 0;
+    return diff == 0;
   }
 
   /// Hashes [pin] with [salt] using HMAC-SHA256.
@@ -42,13 +47,6 @@ class CycleLockService {
     final hmac = Hmac(sha256, utf8.encode(salt));
     final digest = hmac.convert(utf8.encode(pin));
     return digest.toString();
-  }
-
-  /// Generates a cryptographically secure random salt.
-  String _generateSalt() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(32, (_) => random.nextInt(256));
-    return base64Url.encode(bytes);
   }
 
   /// Returns the current lock source (dedicated or appLock).
@@ -127,7 +125,8 @@ class CycleLockService {
         error: e,
         stack: st,
       );
-      return false;
+      // RITF-069: Fail-closed / fail-secure
+      return true;
     }
   }
 
@@ -139,11 +138,17 @@ class CycleLockService {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final now = CycleClock.nowMillisecondsSinceEpoch;
-      await db.insert('app_settings', {
-        'key': 'cycle_lock_enabled',
-        'value': enabled ? 'true' : 'false',
-        'updatedAt': now,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      // RITF-070: Use atomic UpsertHelper instead of ConflictAlgorithm.replace
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'cycle_lock_enabled',
+          'value': enabled ? 'true' : 'false',
+          'updatedAt': now,
+        },
+        conflictColumns: const ['key'],
+      );
     } catch (e, st) {
       RitmoLogger.error(
         '[CycleLockService] error saving lock enabled setting',
@@ -169,14 +174,89 @@ class CycleLockService {
     return await hasCyclePin(dbExecutor);
   }
 
-  /// Sets a new dedicated cycle PIN. Hashes it securely with PBKDF2 via PinHasher (RITF-003).
+  /// RITF-066: Non-secret failed attempts storage in app_settings with fail-closed default.
+  Future<int> _getFailedAttempts([DatabaseExecutor? dbExecutor]) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: [_keyFailedAttempts],
+        limit: 1,
+      );
+      if (rows.isEmpty) return 0;
+      return int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
+    } catch (e, st) {
+      RitmoLogger.error('[CycleLockService] error reading failed attempts', error: e, stack: st);
+      return 15; // fail-closed
+    }
+  }
+
+  Future<void> _setFailedAttempts(int attempts, [DatabaseExecutor? dbExecutor]) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final now = CycleClock.nowMillisecondsSinceEpoch;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': _keyFailedAttempts,
+          'value': attempts.toString(),
+          'updatedAt': now,
+        },
+        conflictColumns: const ['key'],
+      );
+    } catch (e, st) {
+      RitmoLogger.error('[CycleLockService] error saving failed attempts', error: e, stack: st);
+    }
+  }
+
+  /// RITF-066: Lockout until timestamp storage in app_settings with fail-closed handling.
+  Future<int> _getLockoutUntilMs([DatabaseExecutor? dbExecutor]) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'app_settings',
+        where: 'key = ?',
+        whereArgs: [_keyLockoutUntilMs],
+        limit: 1,
+      );
+      if (rows.isEmpty) return 0;
+      return int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
+    } catch (e, st) {
+      RitmoLogger.error('[CycleLockService] error reading lockout until ms', error: e, stack: st);
+      return CycleClock.nowMillisecondsSinceEpoch + 300000; // fail-closed: 5 min
+    }
+  }
+
+  Future<void> _setLockoutUntilMs(int lockoutUntilMs, [DatabaseExecutor? dbExecutor]) async {
+    try {
+      final db = dbExecutor ?? await DatabaseHelper.instance.database;
+      final now = CycleClock.nowMillisecondsSinceEpoch;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': _keyLockoutUntilMs,
+          'value': lockoutUntilMs.toString(),
+          'updatedAt': now,
+        },
+        conflictColumns: const ['key'],
+      );
+    } catch (e, st) {
+      RitmoLogger.error('[CycleLockService] error saving lockout until ms', error: e, stack: st);
+    }
+  }
+
+  /// Sets a new dedicated cycle PIN. Hashes it securely with PBKDF2 via PinHasher (RITF-003, RITF-068).
   Future<void> setPin(String newPin, [DatabaseExecutor? dbExecutor]) async {
     final hash = PinHasher.hashPin(newPin);
 
+    // Atomic composite key write
     await SecureKeyStore.setKey(_keyPinHash, hash, dbExecutor);
     await SecureKeyStore.deleteKey(_keySalt, dbExecutor);
-    await SecureKeyStore.setKey(_keyFailedAttempts, '0', dbExecutor);
-    await SecureKeyStore.setKey(_keyLockoutUntilMs, '0', dbExecutor);
+    await _setFailedAttempts(0, dbExecutor);
+    await _setLockoutUntilMs(0, dbExecutor);
 
     await setLockSource(CycleLockSource.dedicated, dbExecutor);
     await setLockEnabled(true, dbExecutor);
@@ -186,26 +266,27 @@ class CycleLockService {
   Future<void> clearPin([DatabaseExecutor? dbExecutor]) async {
     await SecureKeyStore.deleteKey(_keyPinHash, dbExecutor);
     await SecureKeyStore.deleteKey(_keySalt, dbExecutor);
-    await SecureKeyStore.deleteKey(_keyFailedAttempts, dbExecutor);
-    await SecureKeyStore.deleteKey(_keyLockoutUntilMs, dbExecutor);
+    await _setFailedAttempts(0, dbExecutor);
+    await _setLockoutUntilMs(0, dbExecutor);
     await SecureKeyStore.deleteKey(keyLockSource, dbExecutor);
 
     await setLockEnabled(false, dbExecutor);
   }
 
-  /// Calculates remaining lockout seconds. Returns 0 if not locked out.
+  /// Calculates remaining lockout seconds. Returns 0 if not locked out (RITF-067).
   Future<int> remainingLockoutSeconds([DatabaseExecutor? dbExecutor]) async {
-    final lockoutMsStr = await SecureKeyStore.getKey(
-      _keyLockoutUntilMs,
-      dbExecutor,
-    );
-    if (lockoutMsStr == null || lockoutMsStr.isEmpty) return 0;
+    final lockoutMs = await _getLockoutUntilMs(dbExecutor);
+    if (lockoutMs <= 0) return 0;
 
-    final lockoutMs = int.tryParse(lockoutMsStr) ?? 0;
     final nowMs = CycleClock.nowMillisecondsSinceEpoch;
     final diffMs = lockoutMs - nowMs;
 
-    if (diffMs <= 0) return 0;
+    if (diffMs <= 0) {
+      // RITF-067: Lockout expired, reset lockout timestamp and failed attempts
+      await _setLockoutUntilMs(0, dbExecutor);
+      await _setFailedAttempts(0, dbExecutor);
+      return 0;
+    }
     return (diffMs / 1000).ceil();
   }
 
@@ -253,7 +334,7 @@ class CycleLockService {
     return false;
   }
 
-  /// Verifies [enteredPin] against active source with brute-force rate limiting (RITF-002).
+  /// Verifies [enteredPin] against active source with brute-force rate limiting (RITF-002, RITF-066, RITF-067).
   Future<bool> verifyPin(
     String enteredPin, [
     DatabaseExecutor? dbExecutor,
@@ -276,21 +357,13 @@ class CycleLockService {
 
     if (isMatch) {
       // Reset failed attempts on success
-      await SecureKeyStore.setKey(_keyFailedAttempts, '0', dbExecutor);
-      await SecureKeyStore.setKey(_keyLockoutUntilMs, '0', dbExecutor);
+      await _setFailedAttempts(0, dbExecutor);
+      await _setLockoutUntilMs(0, dbExecutor);
       return true;
     } else {
       // Increment failed attempts
-      final attemptsStr = await SecureKeyStore.getKey(
-        _keyFailedAttempts,
-        dbExecutor,
-      );
-      final attempts = (int.tryParse(attemptsStr ?? '0') ?? 0) + 1;
-      await SecureKeyStore.setKey(
-        _keyFailedAttempts,
-        attempts.toString(),
-        dbExecutor,
-      );
+      final attempts = (await _getFailedAttempts(dbExecutor)) + 1;
+      await _setFailedAttempts(attempts, dbExecutor);
 
       // Calculate exponential backoff lockout
       int lockoutSecs = 0;
@@ -305,11 +378,7 @@ class CycleLockService {
       if (lockoutSecs > 0) {
         final lockoutUntilMs =
             CycleClock.nowMillisecondsSinceEpoch + (lockoutSecs * 1000);
-        await SecureKeyStore.setKey(
-          _keyLockoutUntilMs,
-          lockoutUntilMs.toString(),
-          dbExecutor,
-        );
+        await _setLockoutUntilMs(lockoutUntilMs, dbExecutor);
       }
 
       return false;

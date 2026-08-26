@@ -1,6 +1,7 @@
 // C-13, C-15: CycleOnboardingController
 // Clean onboarding coordinator using CycleSettings façade, CycleDateContract, and schema-compliant period records.
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
@@ -8,7 +9,6 @@ import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
 import 'package:ritmo/features/cycle/logic/cycle_date_contract.dart';
 import 'package:ritmo/features/cycle/logic/cycle_period_repository.dart';
 import 'package:ritmo/features/cycle/logic/cycle_settings.dart';
-import 'package:sqflite/sqflite.dart';
 
 enum CyclePeriodStatusChoice {
   currentlyInPeriod,
@@ -157,8 +157,6 @@ class CycleOnboardingController {
     final db = await DatabaseHelper.instance.database;
     final nowMs = CycleClock.nowMillisecondsSinceEpoch;
 
-    final batch = db.batch();
-
     // 1. Unconditionally enable cycle module & save setup flags
     final settingsToSave = <String, String>{
       'module_cycle_enabled': 'true',
@@ -188,25 +186,22 @@ class CycleOnboardingController {
     settingsToSave['pregnancy_mode'] = isPregnant ? 'true' : 'false';
     settingsToSave['cycle_is_pregnant'] = isPregnant ? 'true' : 'false';
 
-    for (final entry in settingsToSave.entries) {
-      batch.insert('app_settings', {
-        'key': entry.key,
-        'value': entry.value,
-        'updatedAt': nowMs,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-    }
-
     // 2. Lock Preference
-    batch.insert('app_settings', {
-      'key': CycleSettings.keyLockEnabled,
-      'value': data.enableLock ? 'true' : 'false',
-      'updatedAt': nowMs,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
-    batch.insert('app_settings', {
-      'key': 'cycle_biometric_enabled',
-      'value': data.enableLock ? 'true' : 'false',
-      'updatedAt': nowMs,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    settingsToSave[CycleSettings.keyLockEnabled] = data.enableLock ? 'true' : 'false';
+    settingsToSave['cycle_biometric_enabled'] = data.enableLock ? 'true' : 'false';
+
+    for (final entry in settingsToSave.entries) {
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': entry.key,
+          'value': entry.value,
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['key'],
+      );
+    }
 
     // 3. Handle Period Insertion / Update idempotently (C-15: stable id = 'period_onboarding_seed')
     final cleanStart = CycleDateContract.cleanDate(data.startDate);
@@ -220,34 +215,42 @@ class CycleOnboardingController {
         (data.periodStatus == CyclePeriodStatusChoice.endedWithKnownStart &&
             isPeriodActive)) {
       // Active / ongoing period: do not prematurely clamp to today, keep period open (endDate = null)
-      batch.insert('cycle_periods', {
-        'id': 'period_onboarding_seed',
-        'startDate': cleanStartStr,
-        'endDate': null,
-        'flowIntensity': 'MEDIUM',
-        'isPredicted': 0,
-        'note': 'onboarding_seed',
-        'createdAt': nowMs,
-        'updatedAt': nowMs,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await UpsertHelper.upsert(
+        db,
+        'cycle_periods',
+        {
+          'id': 'period_onboarding_seed',
+          'startDate': cleanStartStr,
+          'endDate': null,
+          'flowIntensity': 'MEDIUM',
+          'isPredicted': 0,
+          'note': 'onboarding_seed',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['id'],
+      );
     } else if (data.periodStatus ==
         CyclePeriodStatusChoice.endedWithKnownStart) {
       // Fully completed past period: save exact closed end date
       final cleanEndStr = CycleDateContract.toDayKey(expectedEnd);
 
-      batch.insert('cycle_periods', {
-        'id': 'period_onboarding_seed',
-        'startDate': cleanStartStr,
-        'endDate': cleanEndStr,
-        'flowIntensity': 'MEDIUM',
-        'isPredicted': 0,
-        'note': 'onboarding_seed',
-        'createdAt': nowMs,
-        'updatedAt': nowMs,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await UpsertHelper.upsert(
+        db,
+        'cycle_periods',
+        {
+          'id': 'period_onboarding_seed',
+          'startDate': cleanStartStr,
+          'endDate': cleanEndStr,
+          'flowIntensity': 'MEDIUM',
+          'isPredicted': 0,
+          'note': 'onboarding_seed',
+          'createdAt': nowMs,
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['id'],
+      );
     }
-
-    await batch.commit(noResult: true);
     try {
       await ModuleManagementService.instance.setModuleEnabled(
         'module_cycle_enabled',

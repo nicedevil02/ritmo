@@ -1,7 +1,7 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
-import 'package:sqflite/sqflite.dart';
 
 /// UX-04 KickSessionTracker logic with 2-minute burst gap, 2-hour auto-end,
 /// app_settings persistence, and 7-session personal baseline comparison.
@@ -92,8 +92,9 @@ class KickSessionTracker {
 
       final countVal = int.tryParse(map['preg_kick_session_count'] ?? '0') ?? 0;
       final lastTapMsStr = map['preg_kick_session_last_tap'];
-      final lastTapDt = lastTapMsStr != null
-          ? DateTime.fromMillisecondsSinceEpoch(int.parse(lastTapMsStr))
+      final lastTapMs = lastTapMsStr != null ? int.tryParse(lastTapMsStr) : null;
+      final lastTapDt = lastTapMs != null
+          ? DateTime.fromMillisecondsSinceEpoch(lastTapMs)
           : null;
 
       return KickSessionTracker(
@@ -124,19 +125,38 @@ class KickSessionTracker {
     if (start == null) return;
     try {
       final db = await DatabaseHelper.instance.database;
-      await db.insert('app_settings', {
-        'key': 'preg_kick_session_start',
-        'value': start!.millisecondsSinceEpoch.toString(),
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-      await db.insert('app_settings', {
-        'key': 'preg_kick_session_count',
-        'value': count.toString(),
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      final nowMs = CycleClock.nowMillisecondsSinceEpoch;
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'preg_kick_session_start',
+          'value': start!.millisecondsSinceEpoch.toString(),
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['key'],
+      );
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': 'preg_kick_session_count',
+          'value': count.toString(),
+          'updatedAt': nowMs,
+        },
+        conflictColumns: const ['key'],
+      );
       if (lastTap != null) {
-        await db.insert('app_settings', {
-          'key': 'preg_kick_session_last_tap',
-          'value': lastTap!.millisecondsSinceEpoch.toString(),
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        await UpsertHelper.upsert(
+          db,
+          'app_settings',
+          {
+            'key': 'preg_kick_session_last_tap',
+            'value': lastTap!.millisecondsSinceEpoch.toString(),
+            'updatedAt': nowMs,
+          },
+          conflictColumns: const ['key'],
+        );
       }
     } catch (e, st) {
       RitmoLogger.error(

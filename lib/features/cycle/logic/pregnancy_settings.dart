@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/domain/engines/cycle_engine.dart';
 import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
@@ -137,11 +138,16 @@ class PregnancySettings {
         final now = CycleClock.nowMillisecondsSinceEpoch;
         for (final k in pregnancyFlagKeys) {
           settings[k] = 'true';
-          await executor.insert('app_settings', {
-            'key': k,
-            'value': 'true',
-            'updatedAt': now,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
+          await UpsertHelper.upsert(
+            executor,
+            'app_settings',
+            {
+              'key': k,
+              'value': 'true',
+              'updatedAt': now,
+            },
+            conflictColumns: const ['key'],
+          );
         }
       }
     }
@@ -156,24 +162,17 @@ class PregnancySettings {
       final now = CycleClock.nowMillisecondsSinceEpoch;
       final valueStr = active ? 'true' : 'false';
 
-      if (executor is Database) {
-        final batch = executor.batch();
-        for (final key in pregnancyFlagKeys) {
-          batch.insert('app_settings', {
+      for (final key in pregnancyFlagKeys) {
+        await UpsertHelper.upsert(
+          executor,
+          'app_settings',
+          {
             'key': key,
             'value': valueStr,
             'updatedAt': now,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-        }
-        await batch.commit(noResult: true);
-      } else {
-        for (final key in pregnancyFlagKeys) {
-          await executor.insert('app_settings', {
-            'key': key,
-            'value': valueStr,
-            'updatedAt': now,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-        }
+          },
+          conflictColumns: const ['key'],
+        );
       }
 
       if (!active) {
@@ -288,24 +287,17 @@ class PregnancySettings {
       final now = CycleClock.nowMillisecondsSinceEpoch;
       final map = profile.toMap();
 
-      if (db is Database) {
-        final batch = db.batch();
-        map.forEach((k, v) {
-          batch.insert('app_settings', {
-            'key': k,
-            'value': v,
-            'updatedAt': now,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-        });
-        await batch.commit(noResult: true);
-      } else {
-        for (final entry in map.entries) {
-          await db.insert('app_settings', {
+      for (final entry in map.entries) {
+        await UpsertHelper.upsert(
+          db,
+          'app_settings',
+          {
             'key': entry.key,
             'value': entry.value,
             'updatedAt': now,
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-        }
+          },
+          conflictColumns: const ['key'],
+        );
       }
       CycleEngine().invalidate();
     } catch (e, st) {
@@ -326,11 +318,16 @@ class PregnancySettings {
     try {
       final db = dbExecutor ?? await DatabaseHelper.instance.database;
       final now = CycleClock.nowMillisecondsSinceEpoch;
-      await db.insert('app_settings', {
-        'key': key,
-        'value': value,
-        'updatedAt': now,
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await UpsertHelper.upsert(
+        db,
+        'app_settings',
+        {
+          'key': key,
+          'value': value,
+          'updatedAt': now,
+        },
+        conflictColumns: const ['key'],
+      );
       CycleEngine().invalidate();
     } catch (e, st) {
       RitmoLogger.error(

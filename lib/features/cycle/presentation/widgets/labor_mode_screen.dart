@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/cycle/logic/cycle_clock.dart';
@@ -37,7 +37,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
   bool _isContracting = false;
   DateTime? _contractionStart;
   Timer? _timer;
-  int _elapsedSeconds = 0;
+  final ValueNotifier<int> _elapsedSecondsNotifier = ValueNotifier<int>(0);
 
   final List<Map<String, dynamic>> _contractions = [];
   String? _hospitalPhone;
@@ -53,6 +53,7 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _elapsedSecondsNotifier.dispose();
     _disableWakelock();
     super.dispose();
   }
@@ -137,13 +138,12 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       setState(() {
         _isContracting = true;
         _contractionStart = now;
-        _elapsedSeconds = 0;
       });
+      _elapsedSecondsNotifier.value = 0;
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) {
-          setState(() {
-            _elapsedSeconds++;
-          });
+        if (_contractionStart != null) {
+          _elapsedSecondsNotifier.value =
+              CycleClock.now.difference(_contractionStart!).inSeconds;
         }
       });
     } else {
@@ -159,8 +159,8 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       setState(() {
         _isContracting = false;
         _contractionStart = null;
-        _elapsedSeconds = 0;
       });
+      _elapsedSecondsNotifier.value = 0;
     }
   }
 
@@ -260,10 +260,17 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
       _hospitalPhone = input.trim();
       try {
         final db = await DatabaseHelper.instance.database;
-        await db.insert('app_settings', {
-          'key': 'preg_hospital_phone',
-          'value': _hospitalPhone,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
+        final now = CycleClock.nowMillisecondsSinceEpoch;
+        await UpsertHelper.upsert(
+          db,
+          'app_settings',
+          {
+            'key': 'preg_hospital_phone',
+            'value': _hospitalPhone,
+            'updatedAt': now,
+          },
+          conflictColumns: const ['key'],
+        );
       } catch (e, st) {
         RitmoLog.error(
           'LaborModeScreen',
@@ -442,13 +449,18 @@ class _LaborModeScreenState extends State<LaborModeScreen> {
               const Spacer(),
 
               // Timer Display (mm:ss)
-              Text(
-                _formatMmSs(_elapsedSeconds),
-                style: TextStyle(
-                  fontSize: 54,
-                  fontWeight: FontWeight.bold,
-                  color: _isContracting ? colors.primary : colors.textSecondary,
-                ),
+              ValueListenableBuilder<int>(
+                valueListenable: _elapsedSecondsNotifier,
+                builder: (context, elapsed, _) {
+                  return Text(
+                    _formatMmSs(elapsed),
+                    style: TextStyle(
+                      fontSize: 54,
+                      fontWeight: FontWeight.bold,
+                      color: _isContracting ? colors.primary : colors.textSecondary,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 20),
 

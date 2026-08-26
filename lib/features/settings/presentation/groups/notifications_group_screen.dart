@@ -186,7 +186,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
         padding: EdgeInsets.zero,
         appBar: RitmoModuleAppBar.fromContext(
           context: context,
-          title: 'مرکز کنترل اعلان‌ها',
+          title: 'اعلان‌ها و یادآوری‌ها',
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),
@@ -342,7 +342,7 @@ class _NotificationsGroupScreenState extends State<NotificationsGroupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'مرکز حریم خصوصی و اعلان‌های مبدل',
+                      'حریم خصوصی و پوشش اعلان‌ها',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

@@ -130,7 +130,7 @@ class _AssistantPrivacyGroupScreenState extends State<AssistantPrivacyGroupScree
       padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'دستیار و حریم خصوصی',
+        title: 'دستیار و هوش مصنوعی',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),

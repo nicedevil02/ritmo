@@ -233,7 +233,7 @@ class _ModulesGroupScreenState extends State<ModulesGroupScreen> {
       padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'ماژول‌ها و بخش‌های برنامه',
+        title: 'مدیریت ماژول‌ها و بخش‌ها',
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

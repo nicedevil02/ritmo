@@ -237,7 +237,7 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
               title: 'پشتیبان‌گیری محلی و ابری',
               children: [
                 SettingsTile(
-                  title: 'مدیریت و استخراج پشتیبان (Backup)',
+                  title: 'پشتیبان‌گیری و استخراج داده',
                   subtitle: 'وضعیت: $_lastBackupDate',
                   leading: Icon(CupertinoIcons.cloud_upload_fill, color: colors.primary),
                   onTap: () {
@@ -300,7 +300,7 @@ class _DataBackupGroupScreenState extends State<DataBackupGroupScreen> {
                 title: 'پایداری و گزارش خطا',
                 children: [
                   SettingsTile(
-                    title: 'مشاهده گزارش خطاهای سیستم (Crash Reports)',
+                    title: 'گزارش خطاهای سیستم (Crash Reports)',
                     subtitle: 'ثبت و بررسی گزارش خطاهای غیرمنتظره',
                     leading: Icon(CupertinoIcons.ant_fill, color: colors.primary),
                     onTap: () {

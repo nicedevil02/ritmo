@@ -480,7 +480,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
       padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'اتصال هوش مصنوعی',
+        title: 'اتصال و سرور هوش مصنوعی',
         subtitle: _statusSubtitle,
       ),
       body: Directionality(

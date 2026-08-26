@@ -556,7 +556,7 @@ class _BackupScreenState extends State<BackupScreen> {
         padding: EdgeInsets.zero,
         appBar: RitmoModuleAppBar.fromContext(
           context: context,
-          title: 'پشتیبان‌گیری ابری',
+          title: 'پشتیبان‌گیری و استخراج داده',
         ),
         body: Stack(
           children: [

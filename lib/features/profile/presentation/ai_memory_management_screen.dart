@@ -370,7 +370,7 @@ class _AiMemoryManagementScreenState extends State<AiMemoryManagementScreen> {
         padding: EdgeInsets.zero,
         appBar: RitmoModuleAppBar.fromContext(
           context: context,
-          title: 'مدیریت حافظه دستیار',
+          title: 'حافظه و یادگیری شناختی',
         ),
         body: _isLoading
             ? const Center(child: CupertinoActivityIndicator())

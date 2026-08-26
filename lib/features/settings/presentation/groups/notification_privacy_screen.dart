@@ -61,7 +61,7 @@ class _NotificationPrivacyScreenState extends State<NotificationPrivacyScreen> {
         padding: EdgeInsets.zero,
         appBar: RitmoModuleAppBar.fromContext(
           context: context,
-          title: 'حریم خصوصی اعلان‌ها',
+          title: 'حریم خصوصی و پوشش اعلان‌ها',
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),

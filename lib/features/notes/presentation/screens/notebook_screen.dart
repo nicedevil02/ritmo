@@ -324,7 +324,7 @@ class _NotebookScreenState extends State<NotebookScreen>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'دفترچه و تجارب',
+                                  'دفترچه و تجربه‌ها',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

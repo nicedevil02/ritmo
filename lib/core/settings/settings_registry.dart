@@ -19,17 +19,17 @@ enum SettingsGroup {
       case SettingsGroup.identity:
         return 'حساب و هویت';
       case SettingsGroup.modules:
-        return 'ماژول‌ها و بخش‌های برنامه';
+        return 'مدیریت ماژول‌ها و بخش‌ها';
       case SettingsGroup.notifications:
         return 'اعلان‌ها و یادآوری‌ها';
       case SettingsGroup.appearance:
         return 'ظاهر و زبان';
       case SettingsGroup.assistant:
-        return 'دستیار و روان‌شناسی';
+        return 'دستیار و هوش مصنوعی';
       case SettingsGroup.dataBackup:
         return 'داده و پشتیبان';
       case SettingsGroup.security:
-        return 'امنیت و قفل برنامه';
+        return 'امنیت و حریم خصوصی';
       case SettingsGroup.calendar:
         return 'تقویم و برنامه‌ریزی';
     }

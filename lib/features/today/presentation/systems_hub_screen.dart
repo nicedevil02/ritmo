@@ -502,7 +502,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'مدیریت ماژول‌های فعال',
+                              'مدیریت ماژول‌ها و بخش‌ها',
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
@@ -1154,12 +1154,13 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     }
 
     // 5. Goals Module
-    if (_matchesSearch('اهداف و برنامه‌ها', 'برنامه‌ریزی برای بهترین خود')) {
+    if (_matchesSearch('اهداف و دستاوردها', 'برنامه‌ریزی برای بهترین خود') ||
+        _matchesSearch('اهداف', 'برنامه‌ریزی برای بهترین خود')) {
       allItemsMap['goals'] = _SystemModuleItem(
         key: 'goals',
         icon: CupertinoIcons.flag_fill,
         iconColor: const Color(0xffF59E0B),
-        title: 'اهداف و برنامه‌ها',
+        title: 'اهداف و دستاوردها',
         description: 'برنامه‌ریزی برای بهترین خود',
         status: _goalsStatus,
         illustrationAsset: 'assets/images/konkur_card_top.png',
@@ -1210,12 +1211,13 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     }
 
     // 9. Religion Module
-    if (_matchesSearch('عبادت', 'رشد روح، آرامش قلب')) {
+    if (_matchesSearch('عبادت و معنویت', 'رشد روح، آرامش قلب') ||
+        _matchesSearch('عبادت', 'رشد روح، آرامش قلب')) {
       allItemsMap['religion'] = _SystemModuleItem(
         key: 'religion',
         icon: CupertinoIcons.circle_grid_hex,
         iconColor: const Color(0xffFBBF24),
-        title: 'عبادت',
+        title: 'عبادت و معنویت',
         description: 'رشد روح، آرامش قلب',
         status: SystemsHubLogic.determineReligionStatus(
           _religionEnabled,

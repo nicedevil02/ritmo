@@ -300,7 +300,7 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
       padding: EdgeInsets.zero,
       appBar: RitmoModuleAppBar.fromContext(
         context: context,
-        title: 'امنیت و قفل برنامه',
+        title: 'امنیت و حریم خصوصی',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 60),

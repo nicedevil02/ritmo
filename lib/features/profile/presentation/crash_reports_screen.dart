@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:ritmo/core/observability/privacy_error_sink.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_pressable.dart';
 
 class CrashReportsScreen extends StatefulWidget {
   const CrashReportsScreen({super.key});
@@ -50,7 +49,7 @@ class _CrashReportsScreenState extends State<CrashReportsScreen> {
         backgroundColor: colors.background,
         appBar: AppBar(
           backgroundColor: colors.background,
-          title: const Text('گزارش‌های فنی خطا', style: TextStyle()),
+          title: const Text('گزارش خطاهای سیستم', style: TextStyle()),
           actions: [
             if (_reports.isNotEmpty)
               IconButton(

@@ -12,6 +12,7 @@ import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/core/widgets/profile_avatar_cropper_sheet.dart';
 import 'package:ritmo/features/settings/presentation/widgets/identity_app_mode_toggle.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -201,14 +202,14 @@ class _IdentityHeaderState extends State<IdentityHeader>
                   ),
                   onTap: () async {
                     Navigator.pop(ctx);
-                    final picker = ImagePicker();
-                    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-                    if (picked != null) {
-                      await SettingsService.instance.set('user_avatar_path', picked.path);
-                      if (mounted) {
-                        setState(() => _avatarPath = picked.path);
-                        RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
-                      }
+                    final croppedPath = await ProfileAvatarService.pickAndCropAvatar(
+                      context,
+                      source: ImageSource.gallery,
+                    );
+                    if (croppedPath != null && mounted) {
+                      setState(() => _avatarPath = croppedPath);
+                      RitmoHapticsPolicy.success();
+                      RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد ✨');
                     }
                   },
                 ),
@@ -247,14 +248,14 @@ class _IdentityHeaderState extends State<IdentityHeader>
                   ),
                   onTap: () async {
                     Navigator.pop(ctx);
-                    final picker = ImagePicker();
-                    final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
-                    if (picked != null) {
-                      await SettingsService.instance.set('user_avatar_path', picked.path);
-                      if (mounted) {
-                        setState(() => _avatarPath = picked.path);
-                        RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد.');
-                      }
+                    final croppedPath = await ProfileAvatarService.pickAndCropAvatar(
+                      context,
+                      source: ImageSource.camera,
+                    );
+                    if (croppedPath != null && mounted) {
+                      setState(() => _avatarPath = croppedPath);
+                      RitmoHapticsPolicy.success();
+                      RitmoToast.show(context, 'عکس پروفایل با موفقیت به‌روزرسانی شد 📸');
                     }
                   },
                 ),
@@ -290,9 +291,10 @@ class _IdentityHeaderState extends State<IdentityHeader>
                     ),
                     onTap: () async {
                       Navigator.pop(ctx);
-                      await SettingsService.instance.set('user_avatar_path', '');
+                      await ProfileAvatarService.removeAvatar(context);
                       if (mounted) {
                         setState(() => _avatarPath = '');
+                        RitmoHapticsPolicy.warning();
                         RitmoToast.show(context, 'عکس پروفایل حذف شد.');
                       }
                     },

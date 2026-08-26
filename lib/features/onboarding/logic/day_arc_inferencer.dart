@@ -1,4 +1,5 @@
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/prayer_time_provider.dart';
 
 class DayArcSuggestion {
@@ -59,7 +60,13 @@ class DayArcInferencer {
           );
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'DayArcInferencer.suggest fallback to default arc: $e',
+        error: e,
+        stack: st,
+      );
+    }
 
     return const DayArcSuggestion(
       wakeTime: '07:00',

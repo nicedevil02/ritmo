@@ -23,14 +23,14 @@ class StarterRoutineTemplate {
 class StarterPackCatalog {
   const StarterPackCatalog._();
 
-  static final List<StarterRoutineTemplate> allTemplates = [
+  static const List<StarterRoutineTemplate> allTemplates = [
     StarterRoutineTemplate(
       id: 'water_habit',
       titleFa: '💧 نوشیدن آب',
       category: Category.personal,
       durationMinutes: DurationBounds.defaultMinutes,
       defaultTime: '08:00',
-      forAreas: const [FocusArea.health],
+      forAreas: [FocusArea.health],
     ),
     StarterRoutineTemplate(
       id: 'morning_stretch',
@@ -38,7 +38,7 @@ class StarterPackCatalog {
       category: Category.personal,
       durationMinutes: 15,
       defaultTime: '07:30',
-      forAreas: const [FocusArea.sport, FocusArea.health],
+      forAreas: [FocusArea.sport, FocusArea.health],
     ),
     StarterRoutineTemplate(
       id: 'focus_reading',
@@ -46,7 +46,7 @@ class StarterPackCatalog {
       category: Category.personal,
       durationMinutes: 30,
       defaultTime: '21:00',
-      forAreas: const [FocusArea.study, FocusArea.skill],
+      forAreas: [FocusArea.study, FocusArea.skill],
     ),
     StarterRoutineTemplate(
       id: 'daily_planning',
@@ -54,7 +54,7 @@ class StarterPackCatalog {
       category: Category.work,
       durationMinutes: 15,
       defaultTime: '08:30',
-      forAreas: const [FocusArea.work, FocusArea.income],
+      forAreas: [FocusArea.work, FocusArea.income],
     ),
     StarterRoutineTemplate(
       id: 'night_winddown',
@@ -62,7 +62,7 @@ class StarterPackCatalog {
       category: Category.personal,
       durationMinutes: 20,
       defaultTime: '22:30',
-      forAreas: const [FocusArea.sleep, FocusArea.stress],
+      forAreas: [FocusArea.sleep, FocusArea.stress],
     ),
     StarterRoutineTemplate(
       id: 'family_checkin',
@@ -70,7 +70,7 @@ class StarterPackCatalog {
       category: Category.personal,
       durationMinutes: 30,
       defaultTime: '20:00',
-      forAreas: const [FocusArea.family],
+      forAreas: [FocusArea.family],
     ),
     StarterRoutineTemplate(
       id: 'quiet_reflection',
@@ -78,7 +78,7 @@ class StarterPackCatalog {
       category: Category.religious,
       durationMinutes: 15,
       defaultTime: '05:30',
-      forAreas: const [FocusArea.worship],
+      forAreas: [FocusArea.worship],
     ),
   ];
 

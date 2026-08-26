@@ -19,6 +19,7 @@ import 'package:ritmo/features/onboarding/logic/onboarding_module_map.dart';
 import 'package:ritmo/features/onboarding/logic/starter_pack_catalog.dart';
 import 'package:ritmo/features/onboarding/models/focus_area.dart';
 import 'package:ritmo/core/domain/agenda/day_agenda_service.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 class OnboardingController extends ChangeNotifier {
@@ -230,49 +231,46 @@ class OnboardingController extends ChangeNotifier {
         final rId = 'onboarding_routine_${t.id}';
         final duration = DurationBounds.sanitize(t.durationMinutes);
 
-        final routineData = {
-          'id': rId,
-          'title': t.titleFa,
-          'category': t.category.name,
-          'routineType': 'timeBased',
-          'notificationLevel': 'normal',
-          'isEssential': 0,
-          'energyRule': 'NONE',
-          'priority': 1.0,
-          'targetDurationMinutes': duration,
-          'displayOrder': 1,
-          'description': 'اولین روتین روتین ثبت‌شده در آنبوردینگ',
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        };
-
         final rule = RecurrenceRule(
           startDate: DateTime.now(),
           weekdays: const [1, 2, 3, 4, 5, 6, 7],
           reminderTimes: [t.defaultTime],
         );
 
-        final scheduleData = {
-          'id': 'sched_$rId',
-          'routineId': rId,
-          'scheduleType': 'DAILY',
-          'timeOfDay': t.defaultTime,
-          'daysOfWeek': '1,2,3,4,5,6,7',
-          'recurrenceRule': jsonEncode(rule.toMap()),
-          'createdAt': nowMs,
-          'updatedAt': nowMs,
-        };
+        batch.rawInsert('''
+          INSERT INTO routines (id, title, category, routineType, notificationLevel, isEssential, energyRule, priority, targetDurationMinutes, displayOrder, description, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET title = excluded.title, category = excluded.category, routineType = excluded.routineType, notificationLevel = excluded.notificationLevel, isEssential = excluded.isEssential, energyRule = excluded.energyRule, priority = excluded.priority, targetDurationMinutes = excluded.targetDurationMinutes, displayOrder = excluded.displayOrder, description = excluded.description, updatedAt = excluded.updatedAt
+        ''', [
+          rId,
+          t.titleFa,
+          t.category.name,
+          'timeBased',
+          'normal',
+          0,
+          'NONE',
+          1.0,
+          duration,
+          1,
+          'اولین روتین ثبت‌شده در آنبوردینگ',
+          nowMs,
+          nowMs,
+        ]);
 
-        batch.insert(
-          'routines',
-          routineData,
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-        batch.insert(
-          'routine_schedules',
-          scheduleData,
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.rawInsert('''
+          INSERT INTO routine_schedules (id, routineId, scheduleType, timeOfDay, daysOfWeek, recurrenceRule, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET routineId = excluded.routineId, scheduleType = excluded.scheduleType, timeOfDay = excluded.timeOfDay, daysOfWeek = excluded.daysOfWeek, recurrenceRule = excluded.recurrenceRule, updatedAt = excluded.updatedAt
+        ''', [
+          'sched_$rId',
+          rId,
+          'DAILY',
+          t.defaultTime,
+          '1,2,3,4,5,6,7',
+          jsonEncode(rule.toMap()),
+          nowMs,
+          nowMs,
+        ]);
 
         // Add future occurrences to batch
         final now = DateTime.now();
@@ -307,15 +305,11 @@ class OnboardingController extends ChangeNotifier {
       );
 
       for (final entry in moduleStates.entries) {
-        batch.insert(
-          'app_settings',
-          {
-            'key': entry.key,
-            'value': entry.value,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.rawInsert('''
+          INSERT INTO app_settings (key, value, updatedAt)
+          VALUES (?, ?, ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = excluded.updatedAt
+        ''', [entry.key, entry.value, nowMs]);
       }
 
       final btParts = sleepTime.split(':');
@@ -346,15 +340,11 @@ class OnboardingController extends ChangeNotifier {
       };
 
       for (final entry in settingsToSave.entries) {
-        batch.insert(
-          'app_settings',
-          {
-            'key': entry.key,
-            'value': entry.value,
-            'updatedAt': nowMs,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        batch.rawInsert('''
+          INSERT INTO app_settings (key, value, updatedAt)
+          VALUES (?, ?, ?)
+          ON CONFLICT(key) DO UPDATE SET value = excluded.value, updatedAt = excluded.updatedAt
+        ''', [entry.key, entry.value, nowMs]);
       }
 
       await batch.commit(noResult: true).timeout(const Duration(seconds: 15));
@@ -386,6 +376,9 @@ class OnboardingController extends ChangeNotifier {
         version: OnboardingGate.currentVersion,
         userName: userName,
       ));
+
+      // Reload SettingsService cache asynchronously
+      unawaited(SettingsService.instance.reload().catchError((_) {}));
 
       // ── CRITICAL STEP COMPLETED: Release user navigation immediately ──
       isSaving = false;

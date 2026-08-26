@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/onboarding/presentation/ritmo_orb.dart';
 import 'package:sqflite/sqflite.dart';
@@ -93,18 +95,29 @@ class _StepNotificationsState extends State<StepNotifications> {
       try {
         final db = await DatabaseHelper.instance.database;
         final now = DateTime.now().millisecondsSinceEpoch;
-        await db.insert(
+        await UpsertHelper.upsert(
+          db,
           'app_settings',
           {
             'key': 'persistent_status_notification_enabled',
             'value': 'true',
-            'updatedAt': now
+            'updatedAt': now,
           },
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          conflictColumns: const ['key'],
         );
-      } catch (_) {}
-    } catch (e) {
-      debugPrint('Error in _executePermissionFlow: $e');
+      } catch (e, st) {
+        RitmoLogger.warning(
+          'StepNotifications error saving notification setting: $e',
+          error: e,
+          stack: st,
+        );
+      }
+    } catch (e, st) {
+      RitmoLogger.error(
+        'StepNotifications error in _executePermissionFlow: $e',
+        error: e,
+        stack: st,
+      );
     }
   }
 

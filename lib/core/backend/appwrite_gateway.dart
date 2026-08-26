@@ -67,12 +67,18 @@ class AppwriteGateway {
   }
 
   AuthErrorCode _mapAppwriteError(int? code, String? type) {
-    if (code == 401 || type == 'user_invalid_credentials' || type == 'user_invalid_token') {
-      return AuthErrorCode.wrongOtp;
+    if (code == 401 ||
+        type == 'user_invalid_credentials' ||
+        type == 'user_invalid_token' ||
+        type == 'user_session_not_found' ||
+        type == 'user_unauthorized') {
+      return AuthErrorCode.sessionExpired;
     } else if (code == 429 || type == 'user_more_requests_than_limit') {
       return AuthErrorCode.maxAttemptsReached;
     } else if (code == 400 || type == 'user_phone_not_valid') {
       return AuthErrorCode.invalidPhone;
+    } else if (type == 'user_email_not_valid') {
+      return AuthErrorCode.invalidEmail;
     } else if (type == 'user_already_exists' || type == 'user_phone_already_exists') {
       return AuthErrorCode.accountAlreadyLinked;
     } else if (code == 503 || code == 500) {

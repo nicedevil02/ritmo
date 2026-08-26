@@ -2,8 +2,11 @@
 
 enum AuthErrorCode {
   invalidPhone,
+  invalidEmail,
   wrongOtp,
   expiredOtp,
+  sessionExpired,
+  unauthorized,
   maxAttemptsReached,
   smsDeliveryFailed,
   networkError,
@@ -18,10 +21,15 @@ extension AuthErrorCodeExtension on AuthErrorCode {
     switch (this) {
       case AuthErrorCode.invalidPhone:
         return 'شماره تلفن واردشده معتبر نیست. لطفا شماره را به فرمت ۰۹۱۲xxxxxxx وارد کنید.';
+      case AuthErrorCode.invalidEmail:
+        return 'ایمیل واردشده معتبر نیست.';
       case AuthErrorCode.wrongOtp:
         return 'کد تأیید واردشده نادرست است.';
       case AuthErrorCode.expiredOtp:
         return 'کد تأیید منقضی شده است. لطفا مجددا درخواست کد دهید.';
+      case AuthErrorCode.sessionExpired:
+      case AuthErrorCode.unauthorized:
+        return 'نشست کاربری شما منقضی شده است. لطفا مجددا وارد شوید.';
       case AuthErrorCode.maxAttemptsReached:
         return 'تعداد تلاش‌های مجاز به پایان رسید. لطفا مجددا درخواست کد دهید.';
       case AuthErrorCode.smsDeliveryFailed:

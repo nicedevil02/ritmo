@@ -21,18 +21,12 @@ class AppConfig {
     defaultValue: 'ritmo-core',
   );
 
-  /// Flag to indicate if SMS OTP is enabled (or feature-flagged off)
-  @Deprecated('SMS OTP flow decommissioned')
-  static const bool smsEnabled = bool.fromEnvironment(
-    'SMS_ENABLED',
-    defaultValue: true,
-  );
-
   static String get cleanEndpoint {
-    if (appwriteEndpoint.contains('cloud.appwrite.io') && !appwriteEndpoint.contains('nyc.')) {
-      return appwriteEndpoint.replaceAll('cloud.appwrite.io', 'nyc.cloud.appwrite.io');
+    final ep = appwriteEndpoint.trim();
+    if (ep == 'https://cloud.appwrite.io/v1') {
+      return 'https://nyc.cloud.appwrite.io/v1';
     }
-    return appwriteEndpoint;
+    return ep;
   }
 
   static bool get isAppwriteConfigured =>

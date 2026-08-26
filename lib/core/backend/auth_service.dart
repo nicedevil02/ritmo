@@ -87,6 +87,11 @@ class AuthService extends ChangeNotifier {
     return identifier;
   }
 
+  /// Regular expression for email validation (RFC 5322 compatible subset - RIT-054)
+  static final RegExp _emailRegExp = RegExp(
+    r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',
+  );
+
   /// Non-blocking initialization of local account state & background SDK sync
   Future<void> init() async {
     await _loadStateFromLocalDb();
@@ -97,10 +102,18 @@ class AuthService extends ChangeNotifier {
   Future<void> _loadStateFromLocalDb() async {
     try {
       final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('app_settings');
+      // Targeted WHERE clause to avoid table-scan and type casting fragility (RIT-053)
+      final rows = await db.query(
+        'app_settings',
+        where: "key IN ('auth_logged_in', 'auth_provider', 'auth_identifier_masked', 'auth_google_linked')",
+      );
       final map = <String, String>{};
       for (final r in rows) {
-        map[r['key'] as String] = r['value'] as String;
+        final k = r['key']?.toString();
+        final v = r['value']?.toString();
+        if (k != null && v != null) {
+          map[k] = v;
+        }
       }
 
       final loggedIn = map['auth_logged_in'] == 'true';
@@ -128,25 +141,42 @@ class AuthService extends ChangeNotifier {
   }) async {
     try {
       final db = await DatabaseHelper.instance.database;
+      final nowMs = DateTime.now().millisecondsSinceEpoch;
       final batch = db.batch();
       batch.insert(
         'app_settings',
-        {'key': 'auth_logged_in', 'value': loggedIn ? 'true' : 'false'},
+        {
+          'key': 'auth_logged_in',
+          'value': loggedIn ? 'true' : 'false',
+          'updatedAt': nowMs,
+        },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       batch.insert(
         'app_settings',
-        {'key': 'auth_provider', 'value': provider},
+        {
+          'key': 'auth_provider',
+          'value': provider,
+          'updatedAt': nowMs,
+        },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       batch.insert(
         'app_settings',
-        {'key': 'auth_identifier_masked', 'value': maskedIdentifier},
+        {
+          'key': 'auth_identifier_masked',
+          'value': maskedIdentifier,
+          'updatedAt': nowMs,
+        },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       batch.insert(
         'app_settings',
-        {'key': 'auth_google_linked', 'value': isGoogleLinked ? 'true' : 'false'},
+        {
+          'key': 'auth_google_linked',
+          'value': isGoogleLinked ? 'true' : 'false',
+          'updatedAt': nowMs,
+        },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       await batch.commit(noResult: true);
@@ -192,7 +222,7 @@ class AuthService extends ChangeNotifier {
       final rawId = email.isNotEmpty ? email : (phone.isNotEmpty ? phone : user.name);
       final masked = maskIdentifier(rawId);
 
-      // Determine provider without heuristics
+      // Determine provider without brittle heuristics (RIT-052)
       final resolvedProvider = explicitProvider ??
           (_state.provider != 'anonymous'
               ? _state.provider
@@ -204,6 +234,19 @@ class AuthService extends ChangeNotifier {
         provider: resolvedProvider,
         maskedIdentifier: masked,
         isGoogleLinked: googleLinked,
+      );
+    } else if (result.errorCode == AuthErrorCode.sessionExpired ||
+               result.errorCode == AuthErrorCode.unauthorized) {
+      // Remote session expired/invalidated: clear local auth state (RIT-051)
+      RitmoLog.warning(
+        'AuthService',
+        'Remote session expired/unauthorized. Invalidating local session.',
+      );
+      await _saveStateToLocalDb(
+        loggedIn: false,
+        provider: 'anonymous',
+        maskedIdentifier: '',
+        isGoogleLinked: false,
       );
     }
   }
@@ -235,10 +278,14 @@ class AuthService extends ChangeNotifier {
 
   /// Flow 3: Email OTP (Magic Token)
   Future<AuthResult<String>> requestEmailOtp(String email) async {
-    if (!email.contains('@') || !email.contains('.')) {
-      return const AuthResult.failure(AuthErrorCode.unknown, 'ایمیل واردشده معتبر نیست.');
+    final cleanEmail = email.trim().toLowerCase();
+    if (!_emailRegExp.hasMatch(cleanEmail)) {
+      return const AuthResult.failure(
+        AuthErrorCode.invalidEmail,
+        'ایمیل واردشده معتبر نیست.',
+      );
     }
-    final res = await _gateway.createEmailToken('unique()', email.trim());
+    final res = await _gateway.createEmailToken('unique()', cleanEmail);
     if (!res.isSuccess || res.data == null) return AuthResult.failure(res.errorCode, res.errorMessage);
     return AuthResult.success(res.data!.userId);
   }

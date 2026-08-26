@@ -294,7 +294,6 @@ class _MvSessionPlayerScreenState extends State<MvSessionPlayerScreen> {
                     note: note,
                   );
                 }
-                if (mounted) Navigator.pop(context);
               },
         ),
       ),

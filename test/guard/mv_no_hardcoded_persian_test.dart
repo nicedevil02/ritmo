@@ -17,14 +17,6 @@ void main() {
       final persianStringRegex = RegExp(r"""(?<!//.*)['"][^'"]*[\u0600-\u06FF][^'"]*['"]""");
       final violations = <String>[];
 
-      // Target files from S8-T11: mv_hub_screen.dart, mv_week_tab.dart, mv_settings_screen.dart, mv_quick_log_sheet.dart
-      final targetCoreFiles = {
-        'mv_hub_screen.dart',
-        'mv_week_tab.dart',
-        'mv_settings_screen.dart',
-        'mv_quick_log_sheet.dart',
-      };
-
       for (final file in dartFiles) {
         final lines = file.readAsLinesSync();
 
@@ -51,24 +43,29 @@ void main() {
         }
       }
 
-      if (violations.isNotEmpty) {
-        // ignore: avoid_print
-        print('=== Found ${violations.length} Hardcoded Persian Violations in Presentation ===');
-        for (final v in violations) {
-          // ignore: avoid_print
-          print(v);
-        }
+      final fileMap = <String, List<String>>{};
+      for (final v in violations) {
+        final parts = v.split(' -> ');
+        final fileLoc = parts[0];
+        final str = parts.length > 1 ? parts[1] : '';
+        final file = fileLoc.split(':')[0];
+        final line = fileLoc.split(':')[1];
+        fileMap.putIfAbsent(file, () => []).add('Line $line: $str');
       }
 
-      // Check specifically that the core 4 files from S8-T11 are 100% clean
-      final coreViolations = violations.where((v) {
-        return targetCoreFiles.any((target) => v.contains(target));
-      }).toList();
+      if (fileMap.isNotEmpty) {
+        // ignore: avoid_print
+        print('=== Total ${violations.length} violations across ${fileMap.length} files ===');
+        fileMap.forEach((file, list) {
+          // ignore: avoid_print
+          print('$file: ${list.length} violations');
+        });
+      }
 
       expect(
-        coreViolations,
-        isEmpty,
-        reason: 'The 4 target presentation files must have 0 hardcoded Persian strings:\n${coreViolations.join('\n')}',
+        violations.length,
+        equals(0),
+        reason: 'All presentation files must have 0 hardcoded Persian strings, but found ${violations.length}',
       );
     });
   });

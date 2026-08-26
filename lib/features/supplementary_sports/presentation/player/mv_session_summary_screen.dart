@@ -67,17 +67,33 @@ class _MvSessionSummaryScreenState extends State<MvSessionSummaryScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
-    final note = _noteController.text.trim().isEmpty
-        ? null
-        : _noteController.text.trim();
-    final effortSource = _effortSelectedByUser ? 'user' : 'estimated';
-    await widget.onFinish(
-      feeling: _feeling,
-      rpe1To10: _rpe,
-      effortSource: effortSource,
-      note: note,
-    );
+    try {
+      final note = _noteController.text.trim().isEmpty
+          ? null
+          : _noteController.text.trim();
+      final effortSource = _effortSelectedByUser ? 'user' : 'estimated';
+      await widget.onFinish(
+        feeling: _feeling,
+        rpe1To10: _rpe,
+        effortSource: effortSource,
+        note: note,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e, st) {
+      debugPrint('Error saving session: $e\n$st');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('خطا در ذخیره جلسه: $e'),
+          ),
+        );
+      }
+    }
   }
 
   String _formatPace(double? paceSec) {

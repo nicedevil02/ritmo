@@ -138,6 +138,22 @@ class SettingsService {
         _cache['show_advanced_settings'] = true;
       }
 
+      // Invariant: If app_lock_enabled is true but password is missing/empty, fail-safe disable to prevent lockout
+      final lockEnabled = _cache['app_lock_enabled'] == true;
+      final lockPassword = _cache['app_lock_password']?.toString() ?? '';
+      if (lockEnabled && lockPassword.isEmpty) {
+        _cache['app_lock_enabled'] = false;
+        RitmoLog.warning('Settings', 'Invariant violation: app_lock_enabled is true with empty password. Auto-disabled.');
+        try {
+          final db = await DatabaseHelper.instance.database;
+          await db.insert('app_settings', {
+            'key': 'app_lock_enabled',
+            'value': 'false',
+            'updatedAt': DateTime.now().millisecondsSinceEpoch,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        } catch (_) {}
+      }
+
       _initialized = true;
       revision.value++;
     } catch (e, st) {

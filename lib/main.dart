@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:persian_datetime_picker/persian_datetime_picker.dart';
@@ -67,6 +69,25 @@ void main() async {
   // Sliding window rate limiter for error storms (10 errors within 60s)
   final List<DateTime> errorTimestamps = [];
   bool hasShownErrorStormDialog = false;
+  Timer? errorStormCooldownTimer;
+
+  bool isTolerableAsyncError(Object error) {
+    if (error is SocketException ||
+        error is HttpException ||
+        error is TimeoutException ||
+        error is HandshakeException ||
+        error is TlsException) {
+      return true;
+    }
+    final errStr = error.toString().toLowerCase();
+    return errStr.contains('socketexception') ||
+        errStr.contains('httpexception') ||
+        errStr.contains('handshake') ||
+        errStr.contains('connection reset') ||
+        errStr.contains('clientexception') ||
+        errStr.contains('failed host lookup') ||
+        errStr.contains('network is unreachable');
+  }
 
   PlatformDispatcher.instance.onError = (error, stack) {
     // 1. Guaranteed logging to PrivacyErrorSink and logger
@@ -85,6 +106,11 @@ void main() async {
 
     if (errorTimestamps.length >= 10 && !hasShownErrorStormDialog) {
       hasShownErrorStormDialog = true;
+      errorStormCooldownTimer?.cancel();
+      errorStormCooldownTimer = Timer(const Duration(minutes: 10), () {
+        hasShownErrorStormDialog = false;
+      });
+
       unawaited(
         SharedPreferences.getInstance().then((prefs) {
           final count = prefs.getInt('error_storm_count') ?? 0;
@@ -92,52 +118,57 @@ void main() async {
         }),
       );
 
-      final navContext = RitmoRouter.navigatorKey.currentContext;
-      if (navContext != null && navContext.mounted) {
-        showDialog<void>(
-          context: navContext,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              'مشکلی پیش آمده',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        final navContext = RitmoRouter.navigatorKey.currentContext;
+        if (navContext != null && navContext.mounted) {
+          showDialog<void>(
+            context: navContext,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-            content: const Text(
-              'برنامه با خطاهای متوالی مواجه شده است. داده‌های شما محفوظ هستند اما در صورت تداوم مشکل، راه‌اندازی مجدد برنامه توصیه می‌شود.',
-              style: TextStyle(
-                fontFamily: 'Vazirmatn',
-                fontSize: 13,
-                height: 1.6,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  'متوجه شدم',
-                  style: TextStyle(
-                    fontFamily: 'Vazirmatn',
-                    fontWeight: FontWeight.bold,
-                  ),
+              title: const Text(
+                'مشکلی پیش آمده',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
-            ],
-          ),
-        );
-      }
+              content: const Text(
+                'برنامه با خطاهای متوالی مواجه شده است. داده‌های شما محفوظ هستند اما در صورت تداوم مشکل، راه‌اندازی مجدد برنامه توصیه می‌شود.',
+                style: TextStyle(
+                  fontFamily: 'Vazirmatn',
+                  fontSize: 13,
+                  height: 1.6,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'متوجه شدم',
+                    style: TextStyle(
+                      fontFamily: 'Vazirmatn',
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      });
     }
 
-    // Explicit Policy Rationale:
-    // In release mode, return true after guaranteed sink logging to prevent fatal UI thread
-    // termination on unhandled async microtasks, while tracking storm frequency.
-    // In debug mode, return false to surface uncaught async errors in the developer console.
-    return kReleaseMode;
+    // Explicit Policy Rationale (RIT-004):
+    // In release mode, only mark known tolerable network/transient async errors as handled (return true).
+    // Unknown or unexpected fatal exceptions return false to be properly captured by crash reporting sinks.
+    // In debug mode, always return false to surface uncaught async errors in the developer console.
+    if (kReleaseMode) {
+      return isTolerableAsyncError(error);
+    }
+    return false;
   };
 
   if (!kIsWeb &&
@@ -266,23 +297,34 @@ class _RitmoAppState extends State<RitmoApp> {
   Future<void> _initialize() async {
     try {
       if (mounted) setState(() => _initError = null);
+
+      // Check if SettingsService is in degraded state (RIT-002 fail-closed)
+      if (SettingsService.instance.isDegraded) {
+        throw StateError(
+          'سرویس تنظیمات در حالت غیرقابل‌اتکا قرار دارد: ${SettingsService.instance.initError}',
+        );
+      }
+
       final db = await DatabaseHelper.instance.database;
 
-      // WarmUp database tasks and sweep with safety timeout (BOOT-07)
+      // 1. Critical DDL schema verification - blocking without timeout (RIT-003)
+      await DatabaseHelper.ensureCriticalSchema(db);
+
+      // 2. Non-critical background warmup tasks with timeout (BOOT-07)
       await DatabaseHelper.warmUp(db).timeout(
-        const Duration(seconds: 4),
+        const Duration(seconds: 5),
         onTimeout: () => RitmoLog.warning('Init', 'Database warmup timed out'),
       );
 
       // قدم صفر: همگام‌سازی یادآور پیش‌خواب با تنظیمات در هر شروع اپ
       unawaited(SleepWinddownReminderService.syncFromSettings());
 
-      // Restore any in-progress course study timer with timeout (C8)
-      await CourseTimerService.instance.initOnAppStart().timeout(
-        const Duration(seconds: 2),
-        onTimeout: () =>
-            RitmoLog.warning('Init', 'Course timer init timed out'),
-      );
+      // Restore any in-progress course study timer safely
+      try {
+        await CourseTimerService.instance.initOnAppStart();
+      } catch (e, st) {
+        RitmoLog.warning('Init', 'Course timer init non-fatal error: $e', e, st);
+      }
 
       // Check if onboarding is completed via OnboardingGate
       _onboardingCompleted = await OnboardingGate.isCompleted(db);

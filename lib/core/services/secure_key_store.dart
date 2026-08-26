@@ -56,7 +56,7 @@ class SecureKeyStore {
     return null;
   }
 
-  static Future<void> setKey(
+  static Future<bool> setKey(
     String keyName,
     String value, [
     DatabaseExecutor? dbExecutor,
@@ -74,12 +74,14 @@ class SecureKeyStore {
           );
         }
       } catch (_) {}
+      return true;
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در نوشتن کلید امن $keyName', e, st);
+      rethrow;
     }
   }
 
-  static Future<void> deleteKey(
+  static Future<bool> deleteKey(
     String keyName, [
     DatabaseExecutor? dbExecutor,
   ]) async {
@@ -95,12 +97,14 @@ class SecureKeyStore {
           );
         }
       } catch (_) {}
+      return true;
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در حذف کلید امن $keyName', e, st);
+      rethrow;
     }
   }
 
-  static Future<void> clearAll([DatabaseExecutor? dbExecutor]) async {
+  static Future<bool> clearAll([DatabaseExecutor? dbExecutor]) async {
     try {
       await _storage.deleteAll();
       try {
@@ -113,8 +117,10 @@ class SecureKeyStore {
           );
         }
       } catch (_) {}
+      return true;
     } catch (e, st) {
       RitmoLog.error('Settings', 'خطا در پاک‌سازی کامل مخزن امن', e, st);
+      rethrow;
     }
   }
 }

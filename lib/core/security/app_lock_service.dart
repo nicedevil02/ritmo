@@ -36,8 +36,15 @@ class AppLockService {
     await SettingsService.instance.set('app_lock_enabled', enabled);
   }
 
-  Future<void> setLockPassword(String? password) async {
-    await SettingsService.instance.set('app_lock_password', password ?? '');
+  Future<bool> setLockPassword(String? password) async {
+    final pass = password ?? '';
+    final res = await SettingsService.instance.setChecked('app_lock_password', pass);
+    if (res is! SettingWriteOk) {
+      RitmoLog.error('AppLockService', 'Failed to write app_lock_password to secure store');
+      return false;
+    }
+    final readBack = await getLockPassword();
+    return readBack == pass;
   }
 
   Future<void> setUseDeviceLock(bool useDeviceLock) async {

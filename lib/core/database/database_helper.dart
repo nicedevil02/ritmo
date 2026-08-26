@@ -16,6 +16,7 @@ import 'package:ritmo/features/worship/logic/hijri_calendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:uuid/uuid.dart';
 
 class DatabaseHelper {
 
@@ -25,8 +26,17 @@ class DatabaseHelper {
   static const int _dbVersion = 134;
   static int get dbVersionForTest => _dbVersion;
 
-  /// Optional decoupled warmup hooks registered by application features.
-  static final List<Future<void> Function()> warmupHooks = [];
+  static bool _isClosing = false;
+  static final Set<Future<void> Function()> _warmupHooks = {};
+
+  static void registerWarmupHook(Future<void> Function() hook) {
+    _warmupHooks.add(hook);
+  }
+
+  @visibleForTesting
+  static void clearWarmupHooks() {
+    _warmupHooks.clear();
+  }
 
   /// Hijri month number of Ramadan - the only month qada fasting is owed for.
   static const int _ramadanHijriMonth = 9;
@@ -45,6 +55,9 @@ class DatabaseHelper {
   static Completer<Database>? _dbInitCompleter;
 
   Future<Database> get database async {
+    while (_isClosing) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
     final existing = _database;
     if (existing != null && existing.isOpen) return existing;
 
@@ -68,14 +81,19 @@ class DatabaseHelper {
     }
   }
 
+  /// Executes critical DDL schema migrations/verifications blocking before proceeding (RIT-003).
+  static Future<void> ensureCriticalSchema(Database db) async {
+    await SchemaManager.ensureAllSchemas(db);
+    await SchemaManager.safeAddColumn(db, 'worship_practices', 'showInCalendar', 'INTEGER DEFAULT 0');
+    try {
+      await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
+    } catch (_) {}
+  }
+
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).
   static Future<void> warmUp(Database db) async {
     try {
-      await SchemaManager.ensureAllSchemas(db);
-      await SchemaManager.safeAddColumn(db, 'worship_practices', 'showInCalendar', 'INTEGER DEFAULT 0');
-      try {
-        await db.execute("UPDATE routines SET energyRule = 'NONE' WHERE energyRule = 'none';");
-      } catch (_) {}
+      await ensureCriticalSchema(db);
       await SeedService.seedSupplementarySports(db);
       await MockDataSeeder.purgeIfLegacyMock(db);
       await _checkDailySweep(db);
@@ -89,10 +107,14 @@ class DatabaseHelper {
       } catch (e) {
         RitmoLog.warning('DatabaseHelper', 'recoverAbandonedSessions non-fatal error: $e');
       }
-      for (final hook in warmupHooks) {
-        try {
-          unawaited(hook());
-        } catch (_) {}
+      if (_warmupHooks.isNotEmpty) {
+        await Future.wait(
+          _warmupHooks.map(
+            (hook) => hook().catchError((e, st) {
+              RitmoLog.warning('DatabaseHelper', 'Warmup hook error: $e', e, st);
+            }),
+          ),
+        );
       }
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Warmup error', e, st);
@@ -207,9 +229,17 @@ class DatabaseHelper {
   }
 
   Future<void> _onConfigure(Database db) async {
-    await db.execute('PRAGMA foreign_keys = ON;');
-    await db.rawQuery('PRAGMA journal_mode=WAL;');
-    await db.rawQuery('PRAGMA synchronous=NORMAL;');
+    try {
+      await db.execute('PRAGMA foreign_keys = ON;');
+    } catch (_) {}
+    if (!kIsWeb) {
+      try {
+        await db.rawQuery('PRAGMA journal_mode=WAL;');
+      } catch (_) {}
+      try {
+        await db.rawQuery('PRAGMA synchronous=NORMAL;');
+      } catch (_) {}
+    }
     try {
       await db.rawQuery('PRAGMA cache_size = -2000;'); // Bound SQLite cache to ~2MB
       await db.rawQuery('PRAGMA temp_store = MEMORY;');
@@ -227,16 +257,17 @@ class DatabaseHelper {
     try {
       final exec = executor ?? await database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
+      final uniqueId = const Uuid().v4();
       await exec.insert(
         'notification_history',
         {
-          'id': 'notif_${nowMs}_${routineId ?? "sys"}',
+          'id': 'notif_${nowMs}_${routineId ?? "sys"}_$uniqueId',
           'routineId': routineId,
           'notificationType': notificationType,
           'sentAt': nowMs,
           'actionTaken': actionTaken,
         },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictAlgorithm: ConflictAlgorithm.abort,
       );
     } catch (e, st) {
       RitmoLog.error('DatabaseHelper', 'Failed to log notification event', e, st);
@@ -323,9 +354,13 @@ class DatabaseHelper {
         }
       }
 
+      if (overlapDays >= maxPeriodDays) {
+        RitmoLog.warning('DatabaseHelper', 'addFastingDebtIfNeeded reached maxPeriodDays ceiling ($maxPeriodDays)');
+      }
+
       if (overlapDays <= 0) {
-        // No Ramadan overlap -> no qada debt for this period.
-        await db.delete('fasting_debt', where: 'id = ?', whereArgs: [debtId]);
+        // No Ramadan overlap -> only delete auto-created debt if it exists.
+        await db.delete('fasting_debt', where: 'id = ? AND reason LIKE ?', whereArgs: [debtId, '%(دوره ماهانه)%']);
         return;
       }
 
@@ -387,26 +422,31 @@ class DatabaseHelper {
   }
 
   Future<bool> isUserMenstruating({DatabaseExecutor? executor}) async {
-    final exec = executor ?? await database;
+    try {
+      final exec = executor ?? await database;
 
-    final gender = await getUserGender(executor: exec);
-    if (gender != 'FEMALE') {
+      final gender = await getUserGender(executor: exec);
+      if (gender != 'FEMALE') {
+        return false;
+      }
+
+      final cycleEnabledQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['module_cycle_enabled']);
+      if (cycleEnabledQuery.isEmpty || cycleEnabledQuery.first['value'].toString().toLowerCase() != 'true') {
+        return false;
+      }
+
+      final todayStr = DayKey.from(DateTime.now()).value;
+      final activePeriods = await exec.query(
+        'cycle_periods',
+        where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
+        whereArgs: [todayStr, todayStr],
+      );
+
+      return activePeriods.isNotEmpty;
+    } catch (e, st) {
+      RitmoLog.error('DatabaseHelper', 'Error checking isUserMenstruating', e, st);
       return false;
     }
-
-    final cycleEnabledQuery = await exec.query('app_settings', where: 'key = ?', whereArgs: ['module_cycle_enabled']);
-    if (cycleEnabledQuery.isEmpty || cycleEnabledQuery.first['value'].toString().toLowerCase() != 'true') {
-      return false;
-    }
-
-    final todayStr = DayKey.from(DateTime.now()).value;
-    final activePeriods = await exec.query(
-      'cycle_periods',
-      where: 'startDate <= ? AND (endDate IS NULL OR endDate >= ?)',
-      whereArgs: [todayStr, todayStr],
-    );
-
-    return activePeriods.isNotEmpty;
   }
 
   Future<List<Map<String, dynamic>>> getCycleLogs({DatabaseExecutor? executor}) async {
@@ -458,11 +498,17 @@ class DatabaseHelper {
   }
 
   Future<void> close() async {
-    final db = _database;
-    _database = null;
-    _dbInitCompleter = null;
-    if (db != null && db.isOpen) {
-      await db.close();
+    if (_isClosing) return;
+    _isClosing = true;
+    try {
+      final db = _database;
+      _database = null;
+      _dbInitCompleter = null;
+      if (db != null && db.isOpen) {
+        await db.close();
+      }
+    } finally {
+      _isClosing = false;
     }
   }
 }

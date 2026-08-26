@@ -91,10 +91,10 @@ class GoalsTimelineSection extends StatelessWidget {
           if (b == 'سایر') return -1;
           final partsA = a.split('-');
           final partsB = b.split('-');
-          final yrA = int.parse(partsA[0]);
-          final mhA = int.parse(partsA[1]);
-          final yrB = int.parse(partsB[0]);
-          final mhB = int.parse(partsB[1]);
+          final yrA = int.tryParse(partsA[0]) ?? 0;
+          final mhA = (partsA.length > 1 ? int.tryParse(partsA[1]) : 0) ?? 0;
+          final yrB = int.tryParse(partsB[0]) ?? 0;
+          final mhB = (partsB.length > 1 ? int.tryParse(partsB[1]) : 0) ?? 0;
           if (yrA != yrB) return yrA.compareTo(yrB);
           return mhA.compareTo(mhB);
         });

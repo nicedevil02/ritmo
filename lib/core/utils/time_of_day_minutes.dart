@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 
 /// تک‌منبع تبدیل 'HH:mm' ↔ دقیقهٔ روز (۰..۱۴۳۹).
@@ -13,6 +14,13 @@ abstract final class TimeOfDayMinutes {
     final min = int.parse(m.group(2)!);
     if (h < 0 || h > 23 || min < 0 || min > 59) return null;
     return h * 60 + min;
+  }
+
+  /// null برای ورودی نامعتبر.
+  static TimeOfDay? tryParseTimeOfDay(String? raw) {
+    final mins = tryParse(raw);
+    if (mins == null) return null;
+    return TimeOfDay(hour: mins ~/ 60, minute: mins % 60);
   }
 
   static String format(int minutesOfDay) {

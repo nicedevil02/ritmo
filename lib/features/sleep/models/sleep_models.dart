@@ -1,4 +1,5 @@
 import 'package:ritmo/core/time/ritmo_time.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 
 enum SleepQuality {
   terrible,
@@ -61,11 +62,25 @@ class SleepTarget {
   final String wake;    // "HH:mm"
   final int durationMinutes;
 
-  int get bedtimeHour => int.parse(bedtime.split(':')[0]);
-  int get bedtimeMinute => int.parse(bedtime.split(':')[1]);
+  int get bedtimeHour {
+    final mins = TimeOfDayMinutes.tryParse(bedtime);
+    return mins != null ? (mins ~/ 60) : 23;
+  }
 
-  int get wakeHour => int.parse(wake.split(':')[0]);
-  int get wakeMinute => int.parse(wake.split(':')[1]);
+  int get bedtimeMinute {
+    final mins = TimeOfDayMinutes.tryParse(bedtime);
+    return mins != null ? (mins % 60) : 30;
+  }
+
+  int get wakeHour {
+    final mins = TimeOfDayMinutes.tryParse(wake);
+    return mins != null ? (mins ~/ 60) : 7;
+  }
+
+  int get wakeMinute {
+    final mins = TimeOfDayMinutes.tryParse(wake);
+    return mins != null ? (mins % 60) : 0;
+  }
 }
 
 class SleepLog {

@@ -184,6 +184,9 @@ class SettingsService {
         } catch (_) {}
       }
 
+      // Pattern P-E: One-time migration of standalone SharedPreferences keys into DB
+      await _migrateSharedPreferencesToDb(db);
+
       _initialized = true;
       revision.value++;
     } catch (e, st) {
@@ -195,6 +198,48 @@ class SettingsService {
         _cache[desc.key] = desc.defaultValue;
       }
       revision.value++;
+    }
+  }
+
+  Future<void> _migrateSharedPreferencesToDb(Database db) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keysToMigrate = [
+        'goals_view_mode',
+        'onboarding_completed',
+        'ss_default_rest_seconds',
+        'ss_tts_enabled',
+        'ss_metric_unit',
+        'assistant_cloud_consent',
+        'ai_deep_analysis_consent',
+        'weekly_backup_enabled',
+        'planner_draft_text',
+        'ai_deep_analysis_result_v1',
+        'systems_custom_order_banner_dismissed',
+      ];
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      for (final key in keysToMigrate) {
+        if (prefs.containsKey(key)) {
+          final desc = SettingsRegistry.find(key);
+          if (desc != null) {
+            final dynamic rawVal = prefs.get(key);
+            if (rawVal != null) {
+              final strVal = rawVal.toString();
+              final parsed = desc.parseValue(strVal);
+              _cache[key] = parsed;
+              await db.insert('app_settings', {
+                'key': key,
+                'value': strVal,
+                'updatedAt': now,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
+              await prefs.remove(key);
+            }
+          }
+        }
+      }
+    } catch (e, st) {
+      RitmoLog.warning('Settings', 'SP migration non-fatal warning: $e', e, st);
     }
   }
 

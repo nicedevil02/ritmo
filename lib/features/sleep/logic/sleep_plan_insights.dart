@@ -33,12 +33,17 @@ class SleepPlanInsights {
     return '${_pad(m ~/ 60)}:${_pad(m % 60)}';
   }
 
-  static String _pad(int value) => value
-      .toString()
-      .padLeft(2, '0')
-      .split('')
-      .map((c) => _faDigits[int.parse(c)])
-      .join();
+  static String _pad(int value) {
+    final absVal = value.abs();
+    final prefix = value < 0 ? '-' : '';
+    final digits = absVal
+        .toString()
+        .padLeft(2, '0')
+        .split('')
+        .map((c) => _faDigits[int.tryParse(c) ?? 0])
+        .join();
+    return '$prefix$digits';
+  }
 
   /// اختلاف علامت‌دار روی ساعت ۲۴ ساعته (کوتاه‌ترین مسیر).
   static int _signedDiff(int from, int to) {

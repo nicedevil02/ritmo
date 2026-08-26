@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
+import 'package:ritmo/features/study/domain/study_validation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -140,6 +141,44 @@ void main() {
       await db.delete('study_deadlines', where: 'id = ?', whereArgs: ['dl_101']);
       final afterDelete = await db.query('study_deadlines', where: 'id = ?', whereArgs: ['dl_101']);
       expect(afterDelete.isEmpty, isTrue);
+    });
+
+    test('StudyValidator.validateDeadline throws for empty title, invalid id, or missing dueDate (Fixes د.۳)', () {
+      const emptyTitleDeadline = StudyDeadline(
+        id: 'dl_valid_id',
+        title: '   ',
+        dueDateIso: '2026-09-01',
+        createdAtMs: 0,
+        updatedAtMs: 0,
+      );
+      expect(
+        () => StudyValidator.validateDeadline(emptyTitleDeadline),
+        throwsA(isA<StudyValidationException>().having((e) => e.code, 'code', 'EMPTY_TITLE')),
+      );
+
+      const emptyIdDeadline = StudyDeadline(
+        id: '  ',
+        title: 'امتحان میان‌ترم',
+        dueDateIso: '2026-09-01',
+        createdAtMs: 0,
+        updatedAtMs: 0,
+      );
+      expect(
+        () => StudyValidator.validateDeadline(emptyIdDeadline),
+        throwsA(isA<StudyValidationException>().having((e) => e.code, 'code', 'INVALID_ID')),
+      );
+
+      const emptyDateDeadline = StudyDeadline(
+        id: 'dl_123',
+        title: 'امتحان میان‌ترم',
+        dueDateIso: '',
+        createdAtMs: 0,
+        updatedAtMs: 0,
+      );
+      expect(
+        () => StudyValidator.validateDeadline(emptyDateDeadline),
+        throwsA(isA<StudyValidationException>().having((e) => e.code, 'code', 'INVALID_DUE_DATE')),
+      );
     });
   });
 }

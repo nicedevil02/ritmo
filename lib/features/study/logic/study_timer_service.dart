@@ -80,6 +80,7 @@ class StudyTimerService {
     final updated = _currentSession!.copyWith(
       startedAtMs: nowMs,
       accumulatedSeconds: currentElapsed,
+      phaseAccumulatedSeconds: 0,
       pomodoroPhase: phase,
       pomodoroCycle: nextCycle ?? _currentSession!.pomodoroCycle,
       targetSeconds: targetSeconds ?? _currentSession!.targetSeconds,
@@ -97,10 +98,12 @@ class StudyTimerService {
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final elapsedSec = _currentSession!.elapsedSeconds(nowMs);
+    final phaseElapsedSec = _currentSession!.phaseElapsedSeconds(nowMs);
 
     final updated = _currentSession!.copyWith(
       startedAtMs: nowMs,
       accumulatedSeconds: elapsedSec,
+      phaseAccumulatedSeconds: phaseElapsedSec,
       isPaused: true,
     );
 

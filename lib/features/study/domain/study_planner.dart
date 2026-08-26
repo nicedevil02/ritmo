@@ -28,6 +28,7 @@ class StudyPlanner {
     required DateTime today,
     int dailyCapacityMinutes = 90,
     bool reviewEnabled = true,
+    int? limit,
   }) {
     if (subjects.isEmpty || topics.isEmpty) return [];
 
@@ -116,13 +117,15 @@ class StudyPlanner {
         score -= 30;
       }
 
-      recs.add(StudyRecommendation(
-        subject: subject,
-        topic: topic,
-        suggestedMinutes: suggestedMin,
-        reason: winnerReason,
-        score: score,
-      ));
+      if (score > 0) {
+        recs.add(StudyRecommendation(
+          subject: subject,
+          topic: topic,
+          suggestedMinutes: suggestedMin,
+          reason: winnerReason,
+          score: score,
+        ));
+      }
     }
 
     recs.sort((a, b) {
@@ -130,6 +133,10 @@ class StudyPlanner {
       if (cmp != 0) return cmp;
       return a.topic.orderIndex.compareTo(b.topic.orderIndex);
     });
+
+    if (limit != null && limit > 0 && recs.length > limit) {
+      return recs.sublist(0, limit);
+    }
 
     return recs;
   }

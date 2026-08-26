@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:ritmo/features/notes/presentation/widgets/module_note_history.dart';
 import 'package:ritmo/features/study/data/study_repository.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
+import 'package:ritmo/features/study/domain/study_review_policy.dart';
 import 'package:ritmo/features/study/domain/study_stats.dart';
 import 'package:ritmo/features/study/presentation/widgets/bulk_topics_sheet.dart';
 import 'package:ritmo/features/study/presentation/widgets/session_timer_sheet.dart';
@@ -151,25 +153,15 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
       nextReviewCount = 0;
       nextReviewDate = null;
     } else {
-      switch (topic.mastery) {
-        case StudyMastery.notStarted:
-          next = StudyMastery.learning;
-          nextReviewCount = 0;
-          break;
-        case StudyMastery.learning:
-          next = StudyMastery.review;
-          nextReviewCount = 1;
-          break;
-        case StudyMastery.review:
-          next = StudyMastery.mastered;
-          nextReviewCount = 3;
-          break;
-        case StudyMastery.mastered:
-          next = StudyMastery.notStarted;
-          nextReviewCount = 0;
-          nextReviewDate = null;
-          break;
-      }
+      final res = StudyReviewPolicy.evaluate(
+        feedback: SessionFeedback.understood,
+        currentMastery: topic.mastery,
+        reviewCount: topic.reviewCount,
+      );
+      next = res.nextMastery;
+      nextReviewCount = topic.reviewCount + 1;
+      final nextDt = DateTime.now().add(Duration(days: res.nextReviewDays));
+      nextReviewDate = RitmoDate.dayKey(nextDt);
     }
 
     final updated = topic.copyWith(
@@ -211,93 +203,113 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
                 controller: _tabController,
                 children: [
                   // Tab 1: Topics & Stats
-                  ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // Stats Overview Card
-                      Container(
+                  CustomScrollView(
+                    slivers: [
+                      SliverPadding(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: colors.border.withValues(alpha: 0.5)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Column(
-                              children: [
-                                Text('${RitmoNumber.faInt(totalMinutes)} دقیقه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
-                                const SizedBox(height: 2),
-                                Text('مجموع مطالعه', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                              ],
-                            ),
-                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
-                            Column(
-                              children: [
-                                Text('${RitmoNumber.faInt(totalTests)} تست', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
-                                const SizedBox(height: 2),
-                                Text('تست‌های حل‌شده', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                              ],
-                            ),
-                            Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
-                            Column(
-                              children: [
-                                Text(RitmoNumber.faPercent(accuracy), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.success)),
-                                const SizedBox(height: 2),
-                                Text('درصد دقت', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
-                              ],
-                            ),
-                          ],
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Stats Overview Card
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: colors.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: colors.border.withValues(alpha: 0.5)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Text('${RitmoNumber.faInt(totalMinutes)} دقیقه', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                        const SizedBox(height: 2),
+                                        Text('مجموع مطالعه', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                      ],
+                                    ),
+                                    Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                                    Column(
+                                      children: [
+                                        Text('${RitmoNumber.faInt(totalTests)} تست', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.primary)),
+                                        const SizedBox(height: 2),
+                                        Text('تست‌های حل‌شده', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                      ],
+                                    ),
+                                    Container(width: 1, height: 32, color: colors.border.withValues(alpha: 0.5)),
+                                    Column(
+                                      children: [
+                                        Text(RitmoNumber.faPercent(accuracy), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.success)),
+                                        const SizedBox(height: 2),
+                                        Text('درصد دقت', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _addTopicSingle,
+                                      icon: const Icon(Icons.add, color: Colors.white),
+                                      label: const Text('افزودن سرفصل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                      style: ElevatedButton.styleFrom(backgroundColor: colors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _addBulkTopics,
+                                      icon: Icon(Icons.playlist_add, color: colors.primary),
+                                      label: Text('افزودن دسته‌جمعی', style: TextStyle(color: colors.primary)),
+                                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              if (_topics.isEmpty)
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Text(
+                                      'هنوز هیچ سرفصلی برای این درس ثبت نشده است.',
+                                      style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _addTopicSingle,
-                              icon: const Icon(Icons.add, color: Colors.white),
-                              label: const Text('افزودن سرفصل', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                              style: ElevatedButton.styleFrom(backgroundColor: colors.primary, padding: const EdgeInsets.symmetric(vertical: 12)),
-                            ),
+                      if (_topics.isNotEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverList.builder(
+                            itemCount: _topics.length,
+                            itemBuilder: (context, index) {
+                              final topic = _topics[index];
+                              return _buildTopicTile(topic);
+                            },
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _addBulkTopics,
-                              icon: Icon(Icons.playlist_add, color: colors.primary),
-                              label: Text('افزودن دسته‌جمعی', style: TextStyle(color: colors.primary)),
-                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (_topics.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Text(
-                              'هنوز هیچ سرفصلی برای این درس ثبت نشده است.',
-                              style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _topics.length,
-                          itemBuilder: (context, index) {
-                            final topic = _topics[index];
-                            return _buildTopicTile(topic);
-                          },
                         ),
-                      const SizedBox(height: 24),
-                      Text('یادداشت‌های این درس', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
-                      const SizedBox(height: 8),
-                      ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 8),
+                              Text('یادداشت‌های این درس', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                              const SizedBox(height: 8),
+                              ModuleNoteHistorySection(module: 'study', entityId: widget.subject.id),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   // Tab 2: Deadlines & Exams
@@ -361,7 +373,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> with SingleTi
     }
 
     final lastStudiedText = topic.lastStudiedAtMs != null
-        ? StudyDate.formatRelative(DateTime.fromMillisecondsSinceEpoch(topic.lastStudiedAtMs!).toIso8601String().substring(0, 10))
+        ? StudyDate.formatRelative(RitmoDate.dayKey(DateTime.fromMillisecondsSinceEpoch(topic.lastStudiedAtMs!)))
         : 'هرگز';
 
     return Container(

@@ -31,8 +31,8 @@ class CourseValidator {
     }
 
     final validDaysCount = c.preferredDays.where((d) => d >= 0 && d <= 6).toSet().length;
-    if (validDaysCount == 0 && c.preferredDays.isNotEmpty) {
-      throw CourseValidationException('INVALID_PREFERRED_DAYS', 'روزهای ترجیحی انتخاب‌شده نامعتبر هستند.');
+    if (c.preferredDays.isEmpty || validDaysCount == 0) {
+      throw CourseValidationException('INVALID_PREFERRED_DAYS', 'حداقل یک روز از روزهای هفته باید برای زمان‌بندی دوره انتخاب شود.');
     }
     if (validDaysCount > 0) {
       final maxWeeklyPossible = validDaysCount * CourseLimits.maxSessionsPerDay;

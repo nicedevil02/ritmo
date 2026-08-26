@@ -13,6 +13,7 @@ class StudyValidationException implements Exception {
 abstract final class StudyLimits {
   static const int maxSubjectNameLength = 80;
   static const int maxTopicNameLength = 120;
+  static const int maxDeadlineTitleLength = 120;
   static const int maxSessionDurationMinutes = 1440; // 24 hours
   static const int maxWeeklyTargetMinutes = 10080; // 7 * 24 * 60
 }
@@ -101,6 +102,25 @@ class StudyValidator {
     }
     if (session.dateIso.trim().isEmpty) {
       throw const StudyValidationException('INVALID_DATE', 'تاریخ جلسه الزامی است.');
+    }
+  }
+
+  static void validateDeadline(StudyDeadline deadline) {
+    if (deadline.id.trim().isEmpty) {
+      throw const StudyValidationException('INVALID_ID', 'شناسه ددلاین نمی‌تواند خالی باشد.');
+    }
+    final title = deadline.title.trim();
+    if (title.isEmpty) {
+      throw const StudyValidationException('EMPTY_TITLE', 'عنوان ددلاین یا امتحان نمی‌تواند خالی باشد.');
+    }
+    if (title.length > StudyLimits.maxDeadlineTitleLength) {
+      throw const StudyValidationException(
+        'TITLE_TOO_LONG',
+        'عنوان ددلاین نمی‌تواند بیش از ۱۲۰ کاراکتر باشد.',
+      );
+    }
+    if (deadline.dueDateIso.trim().isEmpty) {
+      throw const StudyValidationException('INVALID_DUE_DATE', 'تاریخ موعد ددلاین الزامی است.');
     }
   }
 }

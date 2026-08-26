@@ -305,6 +305,7 @@ class StudyRepository {
   }
 
   Future<void> saveDeadline(StudyDeadline deadline) async {
+    StudyValidator.validateDeadline(deadline);
     final db = await _database;
     await db.insert(
       'study_deadlines',

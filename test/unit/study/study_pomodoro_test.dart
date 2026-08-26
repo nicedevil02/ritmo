@@ -67,5 +67,51 @@ void main() {
       expect(restored.targetSeconds, 600);
       expect(restored.isPaused, isTrue);
     });
+
+    test('Pause and resume preserves phase elapsed and remaining seconds (Fixes د.۱)', () {
+      const startTime = 1000000;
+      const runningState = ActiveStudySessionState(
+        id: 'singleton',
+        subjectId: 's1',
+        startedAtMs: startTime,
+        accumulatedSeconds: 0,
+        phaseAccumulatedSeconds: 0,
+        isPaused: false,
+        pomodoroPhase: 'FOCUS',
+        pomodoroCycle: 1,
+        targetSeconds: 1500, // 25 min
+        createdAtMs: startTime,
+      );
+
+      // Run for 7 minutes (420 seconds)
+      const now7min = startTime + 420 * 1000;
+      expect(runningState.phaseElapsedSeconds(now7min), 420);
+      expect(runningState.remainingSeconds(now7min), 1080); // 18 min left
+
+      // Pause the session
+      final pausedState = runningState.copyWith(
+        startedAtMs: now7min,
+        accumulatedSeconds: 420,
+        phaseAccumulatedSeconds: 420,
+        isPaused: true,
+      );
+
+      // While paused, even 10 minutes later, phase elapsed stays 420 and remaining stays 1080
+      const now17min = now7min + 600 * 1000;
+      expect(pausedState.phaseElapsedSeconds(now17min), 420);
+      expect(pausedState.remainingSeconds(now17min), 1080);
+
+      // Resume the session at now17min
+      final resumedState = pausedState.copyWith(
+        startedAtMs: now17min,
+        isPaused: false,
+      );
+
+      // 3 minutes after resume (now20min)
+      const now20min = now17min + 180 * 1000;
+      expect(resumedState.phaseElapsedSeconds(now20min), 420 + 180); // 600 seconds total in this phase
+      expect(resumedState.remainingSeconds(now20min), 900); // 15 min left
+      expect(resumedState.elapsedSeconds(now20min), 600);
+    });
   });
 }

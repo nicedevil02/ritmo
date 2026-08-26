@@ -647,6 +647,7 @@ class ActiveStudySessionState {
     this.mode = StudyMode.learn,
     required this.startedAtMs,
     this.accumulatedSeconds = 0,
+    this.phaseAccumulatedSeconds = 0,
     this.isPaused = false,
     this.plannedMinutes,
     this.pomodoroPhase = 'FOCUS',
@@ -661,6 +662,7 @@ class ActiveStudySessionState {
   final StudyMode mode;
   final int startedAtMs;
   final int accumulatedSeconds;
+  final int phaseAccumulatedSeconds;
   final bool isPaused;
   final int? plannedMinutes;
   final String pomodoroPhase; // 'FOCUS' or 'BREAK'
@@ -681,10 +683,10 @@ class ActiveStudySessionState {
 
   int phaseElapsedSeconds(int nowMs) {
     if (isPaused) {
-      return 0;
+      return phaseAccumulatedSeconds;
     }
     final runSec = ((nowMs - startedAtMs) / 1000).floor();
-    return runSec > 0 ? runSec : 0;
+    return phaseAccumulatedSeconds + (runSec > 0 ? runSec : 0);
   }
 
   int remainingSeconds(int nowMs) {
@@ -702,6 +704,7 @@ class ActiveStudySessionState {
       mode: StudyModeExtension.fromDbValue(map['mode'] as String?),
       startedAtMs: map['startedAtMs'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       accumulatedSeconds: map['accumulatedSeconds'] as int? ?? 0,
+      phaseAccumulatedSeconds: map['phaseAccumulatedSeconds'] as int? ?? 0,
       isPaused: (map['isPaused'] as int? ?? 0) == 1,
       plannedMinutes: map['plannedMinutes'] as int?,
       pomodoroPhase: map['pomodoroPhase'] as String? ?? 'FOCUS',
@@ -719,6 +722,7 @@ class ActiveStudySessionState {
       'mode': mode.dbValue,
       'startedAtMs': startedAtMs,
       'accumulatedSeconds': accumulatedSeconds,
+      'phaseAccumulatedSeconds': phaseAccumulatedSeconds,
       'isPaused': isPaused ? 1 : 0,
       'plannedMinutes': plannedMinutes,
       'pomodoroPhase': pomodoroPhase,
@@ -735,6 +739,7 @@ class ActiveStudySessionState {
     StudyMode? mode,
     int? startedAtMs,
     int? accumulatedSeconds,
+    int? phaseAccumulatedSeconds,
     bool? isPaused,
     int? plannedMinutes,
     String? pomodoroPhase,
@@ -749,6 +754,7 @@ class ActiveStudySessionState {
       mode: mode ?? this.mode,
       startedAtMs: startedAtMs ?? this.startedAtMs,
       accumulatedSeconds: accumulatedSeconds ?? this.accumulatedSeconds,
+      phaseAccumulatedSeconds: phaseAccumulatedSeconds ?? this.phaseAccumulatedSeconds,
       isPaused: isPaused ?? this.isPaused,
       plannedMinutes: plannedMinutes ?? this.plannedMinutes,
       pomodoroPhase: pomodoroPhase ?? this.pomodoroPhase,

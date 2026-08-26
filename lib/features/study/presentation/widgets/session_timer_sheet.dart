@@ -68,9 +68,13 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
 
             if (state.targetSeconds == 1500 || state.targetSeconds == 300) {
               _timerMode = TimerModeType.pomodoro25;
-            } else if (state.targetSeconds == 3000 || state.targetSeconds == 600) {
+            } else if (state.targetSeconds >= 2400 || state.targetSeconds == 600) {
               _timerMode = TimerModeType.pomodoro50;
+            } else if (state.targetSeconds > 0) {
+              _timerMode = state.targetSeconds > 1800 ? TimerModeType.pomodoro50 : TimerModeType.pomodoro25;
             }
+          } else if (state != null && !state.isPomodoro) {
+            _timerMode = TimerModeType.stopwatch;
           }
         });
       }
@@ -113,39 +117,44 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
     super.dispose();
   }
 
-  void _onTimerModeChanged(TimerModeType mode) {
+  void _onTimerModeChanged(TimerModeType mode) async {
     RitmoHapticsPolicy.selection();
     setState(() => _timerMode = mode);
     int targetSec = 0;
     if (mode == TimerModeType.pomodoro25) {
       targetSec = 1500; // 25 min
     } else if (mode == TimerModeType.pomodoro50) {
-      targetSec = 3000; // 50 min
+      final settings = await StudySettingsRepository.instance.load();
+      final focusMins = settings.focusBlockMinutes > 0 ? settings.focusBlockMinutes : 50;
+      targetSec = focusMins * 60;
     }
 
-    StudyTimerService.instance.switchPomodoroPhase(
+    await StudyTimerService.instance.switchPomodoroPhase(
       phase: 'FOCUS',
       nextCycle: 1,
       targetSeconds: targetSec,
     );
   }
 
-  void _togglePomodoroPhase() {
+  void _togglePomodoroPhase() async {
     final cur = _state;
     if (cur == null) return;
     RitmoHapticsPolicy.selection();
 
+    final settings = await StudySettingsRepository.instance.load();
+    final focusMins = settings.focusBlockMinutes > 0 ? settings.focusBlockMinutes : 50;
+
     if (cur.pomodoroPhase == 'FOCUS') {
-      final breakSec = _timerMode == TimerModeType.pomodoro50 ? 600 : 300;
-      StudyTimerService.instance.switchPomodoroPhase(
+      final breakSec = _timerMode == TimerModeType.pomodoro50 ? (focusMins >= 45 ? 600 : 300) : 300;
+      await StudyTimerService.instance.switchPomodoroPhase(
         phase: 'BREAK',
         nextCycle: cur.pomodoroCycle,
         targetSeconds: breakSec,
       );
     } else {
-      final focusSec = _timerMode == TimerModeType.pomodoro50 ? 3000 : 1500;
+      final focusSec = _timerMode == TimerModeType.pomodoro50 ? (focusMins * 60) : 1500;
       final nextCycle = cur.pomodoroCycle < 4 ? cur.pomodoroCycle + 1 : 1;
-      StudyTimerService.instance.switchPomodoroPhase(
+      await StudyTimerService.instance.switchPomodoroPhase(
         phase: 'FOCUS',
         nextCycle: nextCycle,
         targetSeconds: focusSec,
@@ -287,7 +296,7 @@ class _SessionTimerSheetState extends State<SessionTimerSheet> {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final elapsedSec = _state?.elapsedSeconds(nowMs) ?? 0;
     final isPaused = _state?.isPaused ?? false;
-    final isPomodoro = _timerMode != TimerModeType.stopwatch;
+    final isPomodoro = _state?.isPomodoro ?? (_timerMode != TimerModeType.stopwatch);
     final isBreak = _state?.pomodoroPhase == 'BREAK';
     final targetSec = _state?.targetSeconds ?? 0;
 

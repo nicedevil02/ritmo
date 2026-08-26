@@ -213,8 +213,23 @@ class MigrationRunner {
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);
 
+  static Future<void> _ensureSchemaMigrationsTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        appliedAt INTEGER NOT NULL
+      );
+    ''');
+  }
+
   static Future<void> run(Database db, int oldVersion, int newVersion) async {
     RitmoLog.info('MigrationRunner', 'Running migrations from v$oldVersion to v$newVersion');
+    await _ensureSchemaMigrationsTable(db);
+
+    final appliedRows = await db.query('schema_migrations');
+    final appliedVersions = {
+      for (final r in appliedRows) r['version'] as int,
+    };
 
     final sorted = [..._migrations]..sort((a, b) => a.version.compareTo(b.version));
 
@@ -227,13 +242,29 @@ class MigrationRunner {
 
     for (final migration in sorted) {
       if (migration.version > oldVersion && migration.version <= newVersion) {
+        if (appliedVersions.contains(migration.version)) {
+          RitmoLog.info(
+            'MigrationRunner',
+            'Skipping migration v${migration.version} (already recorded in schema_migrations)',
+          );
+          continue;
+        }
         try {
+          final nowMs = DateTime.now().millisecondsSinceEpoch;
           if (migration.requiresTransaction) {
             await db.transaction((txn) async {
               await migration.up(txn);
+              await txn.insert('schema_migrations', {
+                'version': migration.version,
+                'appliedAt': nowMs,
+              }, conflictAlgorithm: ConflictAlgorithm.replace);
             });
           } else {
             await migration.up(db);
+            await db.insert('schema_migrations', {
+              'version': migration.version,
+              'appliedAt': nowMs,
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
           RitmoLog.info('MigrationRunner', 'Successfully applied migration v${migration.version}');
         } catch (e, st) {
@@ -245,23 +276,8 @@ class MigrationRunner {
   }
 
   /// Completes the schema of a **freshly created** database (onCreate path).
-  ///
-  /// `onCreate` builds the canonical schema with `SchemaManager.createAll`, so
-  /// historically the migration chain never ran on a new install. Everything
-  /// that exists *only* inside a migration - extra tables such as `day_marks`
-  /// (v83), added columns, default settings rows - was therefore present on
-  /// every upgraded install but missing on a brand-new device, which surfaced
-  /// at runtime as `no such table` / `no such column` errors. Replaying the
-  /// chain here makes a new database equivalent to a migrated one.
-  ///
-  /// Differences from [run], on purpose:
-  /// - **Never fatal.** On a canonical base schema many historical steps are
-  ///   legitimately redundant (adding a column that already exists, back-filling
-  ///   empty tables). A redundant step must not be able to break first launch,
-  ///   so each step is isolated and only logged.
-  /// - **No nested transactions.** sqflite already runs `onCreate` inside a
-  ///   transaction, so every step is applied directly on [db].
   static Future<void> runForFreshInstall(Database db, int newVersion) async {
+    await _ensureSchemaMigrationsTable(db);
     final sorted = [..._migrations]..sort((a, b) => a.version.compareTo(b.version));
 
     var applied = 0;
@@ -270,13 +286,38 @@ class MigrationRunner {
       if (migration.version > newVersion) continue;
       try {
         await migration.up(db);
+        await db.insert('schema_migrations', {
+          'version': migration.version,
+          'appliedAt': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
         applied++;
-      } catch (e) {
-        skipped++;
-        RitmoLog.warning(
-          'MigrationRunner',
-          'Fresh-install step v${migration.version} skipped (already satisfied by base schema): $e',
-        );
+      } catch (e, st) {
+        final errStr = e.toString().toLowerCase();
+        final isExpected = errStr.contains('duplicate column name') ||
+            errStr.contains('already exists') ||
+            errStr.contains('no such column') ||
+            errStr.contains('unique constraint failed');
+        if (isExpected) {
+          skipped++;
+          RitmoLog.warning(
+            'MigrationRunner',
+            'Fresh-install step v${migration.version} skipped (already satisfied by base schema): $e',
+          );
+          try {
+            await db.insert('schema_migrations', {
+              'version': migration.version,
+              'appliedAt': DateTime.now().millisecondsSinceEpoch,
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          } catch (_) {}
+        } else {
+          RitmoLog.error(
+            'MigrationRunner',
+            'Fatal error in fresh-install migration v${migration.version}',
+            e,
+            st,
+          );
+          rethrow;
+        }
       }
     }
 

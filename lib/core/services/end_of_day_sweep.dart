@@ -20,9 +20,7 @@ class EndOfDaySweep {
   static Future<int> runSweep(Database db, {DateTime? now}) async {
     final today = now ?? DateTime.now();
     final todayStr = RitmoDate(today).value;
-    final yesterdayStr = RitmoDate(
-      today.subtract(const Duration(days: 1)),
-    ).value;
+    final yesterdayDate = today.subtract(const Duration(days: 1));
 
     var sweptCount = 0;
 
@@ -37,12 +35,88 @@ class EndOfDaySweep {
         [todayStr],
       );
 
-      // Pre-fetch worship context before transaction to avoid SQLite deadlock (BOOT-DEADLOCK)
+      // Determine multi-day worship sweep range (RIT-014)
+      final lastSweepRows = await db.query(
+        'app_settings',
+        where: "key = 'last_worship_sweep_date'",
+      );
+      final lastSweepStr =
+          lastSweepRows.isNotEmpty ? lastSweepRows.first['value'] as String? : null;
+
+      DateTime startDateToSweep;
+      if (lastSweepStr != null && lastSweepStr.isNotEmpty) {
+        final parsed = DateKey.parse(lastSweepStr);
+        if (parsed != null) {
+          startDateToSweep = parsed.add(const Duration(days: 1));
+        } else {
+          startDateToSweep = yesterdayDate;
+        }
+      } else {
+        startDateToSweep = yesterdayDate;
+      }
+
+      // Cap back-sweep window to at most 60 days
+      final earliestAllowed = today.subtract(const Duration(days: 60));
+      if (startDateToSweep.isBefore(earliestAllowed)) {
+        startDateToSweep = earliestAllowed;
+      }
+
+      final sweepDates = <DateTime>[];
+      var curDate = DateTime(
+        startDateToSweep.year,
+        startDateToSweep.month,
+        startDateToSweep.day,
+      );
+      final endTarget = DateTime(
+        yesterdayDate.year,
+        yesterdayDate.month,
+        yesterdayDate.day,
+      );
+
+      while (!curDate.isAfter(endTarget)) {
+        sweepDates.add(curDate);
+        curDate = curDate.add(const Duration(days: 1));
+      }
+
+      // Pre-fetch worship context for each sweep date outside transaction (BOOT-DEADLOCK, RIT-016)
       final suspended = await CycleConsentBridge.isWorshipSuspended();
-      final yesterdayDate =
-          DateTime.tryParse(yesterdayStr) ??
-          DateTime.now().subtract(const Duration(days: 1));
-      final dayCtx = await WorshipEngine.instance.dayContext(yesterdayDate);
+      final dayContexts = <String, WorshipDayContext>{};
+      for (final d in sweepDates) {
+        final dStr = RitmoDate(d).value;
+        dayContexts[dStr] = await WorshipEngine.instance.dayContext(d);
+      }
+
+      // Pre-fetch sports session state from SharedPreferences outside transaction (RIT-016)
+      SharedPreferences? prefs;
+      Map<String, dynamic>? sportsState;
+      try {
+        prefs = await SharedPreferences.getInstance();
+        final activeSessionId = prefs.getString('ss_active_session_id');
+        final startedAt = prefs.getInt('ss_active_session_started_at');
+        final activePlanId = prefs.getString('ss_active_plan_id');
+        final rawState = prefs.getString('ss_exercises_state');
+
+        if (activeSessionId != null &&
+            startedAt != null &&
+            activePlanId != null) {
+          final startOfToday = DateTime(
+            today.year,
+            today.month,
+            today.day,
+          ).millisecondsSinceEpoch;
+
+          if (startedAt < startOfToday) {
+            sportsState = {
+              'activeSessionId': activeSessionId,
+              'startedAt': startedAt,
+              'activePlanId': activePlanId,
+              'rawState': rawState,
+            };
+          }
+        }
+      } catch (e, st) {
+        RitmoLog.warning('EndOfDaySweep', 'Failed to read sports prefs: $e', e, st);
+      }
 
       await db.transaction((txn) async {
         for (final row in staleRows) {
@@ -88,22 +162,60 @@ class EndOfDaySweep {
           );
         }
 
-        // Worship Sweep with pre-fetched contexts
-        await _sweepWorship(
-          txn,
-          yesterdayStr,
-          todayStr,
-          dayCtx: dayCtx,
-          suspended: suspended,
-          yesterdayDate: yesterdayDate,
-        );
+        // Multi-day Worship Sweep (RIT-013, RIT-014)
+        for (final targetDate in sweepDates) {
+          final targetDateStr = RitmoDate(targetDate).value;
+          final dayCtx = dayContexts[targetDateStr] ??
+              await WorshipEngine.instance.dayContext(targetDate);
 
-        // Sports Sweep
-        await _sweepSports(txn);
+          await _sweepWorshipForDate(
+            txn,
+            targetDateStr: targetDateStr,
+            targetDate: targetDate,
+            dayCtx: dayCtx,
+            suspended: suspended,
+          );
+        }
+
+        // Reset dailyDone for active practices for today
+        await txn.update('worship_practices', {
+          'dailyDone': 0,
+          'dailyDoneDate': todayStr,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, where: 'isActive = 1');
+
+        // Sports Sweep with pre-fetched state (RIT-015, RIT-016)
+        if (sportsState != null) {
+          await _sweepSports(txn, sportsState);
+        }
+
+        // Update last_worship_sweep_date in the same transaction (RIT-013)
+        await txn.insert('app_settings', {
+          'key': 'last_worship_sweep_date',
+          'value': todayStr,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       });
 
+      // Clear sports preferences after transaction committed (RIT-016)
+      if (prefs != null && sportsState != null) {
+        try {
+          await prefs.remove('ss_active_session_id');
+          await prefs.remove('ss_active_plan_id');
+          await prefs.remove('ss_exercises_state');
+          await prefs.remove('ss_active_session_index');
+          await prefs.remove('ss_active_session_started_at');
+          await prefs.remove('ss_active_session_status');
+          await prefs.remove('ss_active_session_target_timestamp');
+          await prefs.remove('ss_active_session_elapsed');
+          await prefs.remove('ss_active_session_paused');
+        } catch (_) {}
+      }
+
       WorshipRepository.instance.invalidateCache();
-      DayAgendaService.instance.invalidateDate(yesterdayStr);
+      for (final d in sweepDates) {
+        DayAgendaService.instance.invalidateDate(RitmoDate(d).value);
+      }
       DayAgendaService.instance.invalidateDate(todayStr);
 
       // Cleanup notification_history older than 90 days (DB-07)
@@ -115,11 +227,6 @@ class EndOfDaySweep {
         where: 'sentAt < ?',
         whereArgs: [ninetyDaysAgoMs],
       );
-
-      await db.execute(
-        "INSERT OR REPLACE INTO app_settings (key, value, updatedAt) VALUES ('last_worship_sweep_date', ?, ?)",
-        [todayStr, DateTime.now().millisecondsSinceEpoch],
-      );
     } catch (e, st) {
       RitmoLog.error('EndOfDaySweep', 'EndOfDaySweep error', e, st);
     }
@@ -127,13 +234,12 @@ class EndOfDaySweep {
     return sweptCount;
   }
 
-  static Future<void> _sweepWorship(
-    DatabaseExecutor txn,
-    String yesterdayStr,
-    String todayStr, {
+  static Future<void> _sweepWorshipForDate(
+    DatabaseExecutor txn, {
+    required String targetDateStr,
+    required DateTime targetDate,
     required WorshipDayContext dayCtx,
     required bool suspended,
-    required DateTime yesterdayDate,
   }) async {
     final religionRows = await txn.query(
       'app_settings',
@@ -151,7 +257,7 @@ class EndOfDaySweep {
       final appStartStr = appStartRows.first['value'] as String?;
       if (appStartStr != null && appStartStr.isNotEmpty) {
         final parsedAppStart = DateKey.parse(appStartStr);
-        if (parsedAppStart != null && yesterdayDate.isBefore(parsedAppStart)) {
+        if (parsedAppStart != null && targetDate.isBefore(parsedAppStart)) {
           return;
         }
       }
@@ -159,9 +265,9 @@ class EndOfDaySweep {
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-    // Calculate end-of-yesterday cutoff: practices created AFTER this point
-    // were not active yesterday and should NOT be swept (prevents false qada on fresh install).
-    final yesterdayEnd = (yesterdayDate.add(
+    // Calculate end-of-target cutoff: practices created AFTER this point
+    // were not active on targetDate and should NOT be swept.
+    final targetEnd = (targetDate.add(
       const Duration(days: 1),
     )).millisecondsSinceEpoch;
 
@@ -178,12 +284,12 @@ class EndOfDaySweep {
         WHERE c.practiceId = p.id AND c.dateStr = ?
       )
     ''',
-      [yesterdayEnd, yesterdayStr],
+      [targetEnd, targetDateStr],
     );
 
     for (final row in uncompletedRows) {
       final practice = WorshipPractice.fromMap(row);
-      final recordId = 'wc_${practice.id}_$yesterdayStr';
+      final recordId = 'wc_${practice.id}_$targetDateStr';
 
       final resultType = WorshipEngine.resolveMissResult(
         practice: practice,
@@ -198,10 +304,10 @@ class EndOfDaySweep {
       );
 
       try {
-        await txn.insert('worship_completions', {
+        final insertedRowId = await txn.insert('worship_completions', {
           'id': recordId,
           'practiceId': practice.id,
-          'dateStr': yesterdayStr,
+          'dateStr': targetDateStr,
           'practiceType': practice.practiceType,
           'resultType': resultType,
           'countDone': 0,
@@ -210,7 +316,8 @@ class EndOfDaySweep {
           'createdAt': nowMs,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
-        if (addQada) {
+        // Idempotent: only increment debt if worship_completions row was genuinely newly inserted (RIT-013)
+        if (insertedRowId > 0 && addQada) {
           final debtType = practice.practiceType == 'FASTING'
               ? 'FASTING'
               : (practice.practiceType == 'MUSTAHAB' ? 'MUSTAHAB' : 'PRAYER');
@@ -256,92 +363,77 @@ class EndOfDaySweep {
         RitmoLog.error('EndOfDaySweep', 'Worship sweep error for ${practice.id}', e, st);
       }
     }
-
-
-    // Reset dailyDone for active practices
-    await txn.update('worship_practices', {
-      'dailyDone': 0,
-      'dailyDoneDate': todayStr,
-      'updatedAt': nowMs,
-    }, where: 'isActive = 1');
   }
 
-  static Future<void> _sweepSports(DatabaseExecutor txn) async {
+  static Future<void> _sweepSports(
+    DatabaseExecutor txn,
+    Map<String, dynamic> sportsState,
+  ) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final activeSessionId = prefs.getString('ss_active_session_id');
-      final startedAt = prefs.getInt('ss_active_session_started_at');
-      final activePlanId = prefs.getString('ss_active_plan_id');
+      final activeSessionId = sportsState['activeSessionId'] as String;
+      final startedAt = sportsState['startedAt'] as int;
+      final activePlanId = sportsState['activePlanId'] as String;
+      final rawState = sportsState['rawState'] as String?;
 
-      if (activeSessionId != null &&
-          startedAt != null &&
-          activePlanId != null) {
-        final today = DateTime.now();
-        final startOfToday = DateTime(
-          today.year,
-          today.month,
-          today.day,
-        ).millisecondsSinceEpoch;
-
-        // If the session was started before today, it's a stale/unfinished session from a previous day.
-        if (startedAt < startOfToday) {
-          final rawState = prefs.getString('ss_exercises_state');
-          int completedCount = 0;
-          int totalCount = 1;
-          if (rawState != null) {
-            try {
-              final list = jsonDecode(rawState) as List;
-              totalCount = list.length;
-              for (final item in list) {
-                if (item['status'] == 'ExerciseStatus.done') {
-                  completedCount++;
-                }
-              }
-            } catch (_) {}
+      int completedCount = 0;
+      int totalCount = 1;
+      if (rawState != null) {
+        try {
+          final list = jsonDecode(rawState) as List;
+          totalCount = list.length;
+          for (final item in list) {
+            if (item['status'] == 'ExerciseStatus.done') {
+              completedCount++;
+            }
           }
-
-          final durationSec = ((startOfToday - 1000) - startedAt) ~/ 1000;
-          final finishedAt =
-              startOfToday - 1000; // Fake finish time at 23:59:59 yesterday
-
-          await txn.insert('ss_workout_session_log', {
-            'id': activeSessionId,
-            'planId': activePlanId,
-            'prescriptionId': activePlanId,
-            'startedAt': startedAt,
-            'finishedAt': finishedAt,
-            'durationSeconds': durationSec > 0 ? durationSec : 0,
-            'completedExercisesCount': completedCount,
-            'totalExercisesCount': totalCount,
-            'note': 'مختومه به دلیل پایان روز',
-          }, conflictAlgorithm: ConflictAlgorithm.replace);
-
-          await txn.update(
-            'ss_session_prescription',
-            {'status': 'DONE', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
-            where: 'id = ?',
-            whereArgs: [activePlanId],
-          );
-          await txn.update(
-
-            'movement_sessions',
-            {'status': 'COMPLETED', 'endedAt': finishedAt, 'updatedAt': DateTime.now().millisecondsSinceEpoch},
-            where: 'id = ?',
-            whereArgs: [activeSessionId],
-          );
-
-          // Clear preferences so it doesn't get swept again and dashboard doesn't show it as resumable
-          await prefs.remove('ss_active_session_id');
-          await prefs.remove('ss_active_plan_id');
-          await prefs.remove('ss_exercises_state');
-          await prefs.remove('ss_active_session_index');
-          await prefs.remove('ss_active_session_started_at');
-          await prefs.remove('ss_active_session_status');
-          await prefs.remove('ss_active_session_target_timestamp');
-          await prefs.remove('ss_active_session_elapsed');
-          await prefs.remove('ss_active_session_paused');
-        }
+        } catch (_) {}
       }
+
+      // Calculate end of start day and clip duration to max 4 hours (14400 seconds) (RIT-015)
+      final startDate = DateTime.fromMillisecondsSinceEpoch(startedAt);
+      final endOfStartDay = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+        23,
+        59,
+        59,
+      ).millisecondsSinceEpoch;
+
+      final rawDuration = ((endOfStartDay - startedAt) ~/ 1000);
+      final durationSec = rawDuration > 0
+          ? (rawDuration > 14400 ? 14400 : rawDuration)
+          : 0;
+      final finishedAt = endOfStartDay;
+
+      await txn.insert('ss_workout_session_log', {
+        'id': activeSessionId,
+        'planId': activePlanId,
+        'prescriptionId': activePlanId,
+        'startedAt': startedAt,
+        'finishedAt': finishedAt,
+        'durationSeconds': durationSec,
+        'completedExercisesCount': completedCount,
+        'totalExercisesCount': totalCount,
+        'note': 'مختومه به دلیل پایان روز (خودکار)',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+      await txn.update(
+        'ss_session_prescription',
+        {'status': 'DONE', 'updatedAt': DateTime.now().millisecondsSinceEpoch},
+        where: 'id = ?',
+        whereArgs: [activePlanId],
+      );
+      await txn.update(
+        'movement_sessions',
+        {
+          'status': 'COMPLETED',
+          'endedAt': finishedAt,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        where: 'id = ?',
+        whereArgs: [activeSessionId],
+      );
     } catch (e, st) {
       RitmoLog.error('EndOfDaySweep', 'Sports sweep error', e, st);
     }

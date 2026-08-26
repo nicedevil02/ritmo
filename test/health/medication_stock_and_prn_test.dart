@@ -3,7 +3,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/database/schema/schema_manager.dart';
 import 'package:ritmo/features/health/data/medication_repository.dart';
 import 'package:ritmo/features/health/models/health_models.dart';
-import 'package:ritmo/features/health/models/medication_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 

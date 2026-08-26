@@ -52,18 +52,22 @@ class SystemsHubScreen extends StatefulWidget {
 }
 
 class _SystemsHubScreenState extends State<SystemsHubScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late AnimationController _controller;
   late List<Animation<double>> _fadeAnimations;
   late List<Animation<Offset>> _slideAnimations;
 
-  bool _isLoading = true;
-  bool _isFirstLoad = true;
+  bool _isLoading = false;
+  bool _isFirstLoad = false;
+  bool _precacheDone = false;
   bool _avatarFileExists = false;
   Map<String, String> _settingsMap = {};
 
   bool _isSearching = false;
   String _searchQuery = '';
+
+  @override
+  bool get wantKeepAlive => true;
 
   bool _matchesSearch(String title, String description) {
     if (_searchQuery.isEmpty) return true;
@@ -117,19 +121,20 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
   @override
   void initState() {
     super.initState();
+    _initFromCache();
     RitmoEvents.routineChanges.addListener(_onRoutineChanges);
-    _loadAllData();
+    _loadAllData(showLoading: false);
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 700),
     );
 
     const itemsCount = 12;
 
     _fadeAnimations = List.generate(itemsCount, (i) {
-      final start = i * 0.06;
-      final end = (start + 0.5).clamp(0.0, 1.0);
+      final start = i * 0.05;
+      final end = (start + 0.45).clamp(0.0, 1.0);
 
       return CurvedAnimation(
         parent: _controller,
@@ -138,11 +143,11 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     });
 
     _slideAnimations = List.generate(itemsCount, (i) {
-      final start = i * 0.06;
-      final end = (start + 0.6).clamp(0.0, 1.0);
+      final start = i * 0.05;
+      final end = (start + 0.5).clamp(0.0, 1.0);
 
       return Tween<Offset>(
-        begin: const Offset(0, 0.25),
+        begin: const Offset(0, 0.15),
         end: Offset.zero,
       ).animate(
         CurvedAnimation(
@@ -153,6 +158,112 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     });
 
     _controller.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precacheDone) {
+      _precacheDone = true;
+      const cardAssets = [
+        'assets/images/goals_card_top.png',
+        'assets/images/konkur_card_top.png',
+        'assets/images/medicine_card_top.png',
+        'assets/images/courses_card_top.png',
+        'assets/images/worship_card_top.png',
+        'assets/images/sports_card_top.png',
+        'assets/images/assistant_card_top.png',
+        'assets/images/energy_card_top.png',
+        'assets/images/notes_card_top.png',
+        'assets/images/reflection_card_top.png',
+        'assets/images/insights_card_top.png',
+        'assets/images/cycle_card_top.png',
+      ];
+      for (final asset in cardAssets) {
+        precacheImage(AssetImage(asset), context);
+      }
+    }
+  }
+
+  void _initFromCache() {
+    final cached = SettingsService.instance.cachedEntries;
+    _settingsMap = <String, String>{
+      for (final e in cached.entries) e.key: e.value.toString(),
+    };
+    _religionEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_religion_enabled',
+    );
+    _medicineEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_medicine_enabled',
+    );
+    _cycleEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_cycle_enabled',
+    );
+    _coursesEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_courses_enabled',
+    );
+    _konkurEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_study_enabled',
+    );
+    _goalsEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_goals_enabled',
+    );
+    _assistantEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_assistant_enabled',
+    );
+    _sportsEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_sports_enabled',
+    );
+    _supplementarySportsEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_supplementary_sports_enabled',
+    );
+    _notesEnabled = ModuleGate.instance.isEnabledFrom(
+      _settingsMap,
+      'module_notes_enabled',
+    );
+    _groupingEnabled = _settingsMap['systems_grouping_enabled'] != 'false';
+
+    final customOrderRaw = _settingsMap['systems_custom_order'];
+    if (customOrderRaw != null && customOrderRaw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(customOrderRaw);
+        if (decoded is List) {
+          final parsed = decoded.map((e) => e.toString()).toList();
+          const allStandardKeys = [
+            'goals',
+            'notes',
+            'courses',
+            'konkur',
+            'religion',
+            'assistant',
+            'wellbeing',
+            'sports',
+            'medicine',
+            'cycle',
+          ];
+          for (final k in allStandardKeys) {
+            if (!parsed.contains(k)) {
+              parsed.add(k);
+            }
+          }
+          _customModuleOrder = parsed;
+        }
+      } catch (_) {}
+    }
+
+    _konkurStatus = SystemsHubLogic.determineGenericStatus(_konkurEnabled);
+    _goalsStatus = SystemsHubLogic.determineGenericStatus(_goalsEnabled);
+    _assistantStatus = SystemsHubLogic.determineGenericStatus(_assistantEnabled);
+    _notesStatus = SystemsHubLogic.determineGenericStatus(_notesEnabled);
   }
 
   void _onRoutineChanges() {
@@ -320,6 +431,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -1328,7 +1440,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
           fit: StackFit.expand,
           children: [
             // 🎨 Full Card Image
-            Image.asset(imageAsset, cacheWidth: 600, fit: BoxFit.cover),
+            Image.asset(imageAsset, cacheWidth: 360, fit: BoxFit.cover),
 
             // Subtle gradient overlay (iOS depth feel)
             Container(
@@ -2066,7 +2178,7 @@ class ParallaxImage extends StatelessWidget {
           builder: (context, value, _) {
             return Transform.translate(
               offset: Offset(0, 6 * (1 - value)),
-              child: Image.asset(asset, cacheWidth: 600, fit: BoxFit.cover),
+              child: Image.asset(asset, cacheWidth: 360, fit: BoxFit.cover),
             );
           },
         );

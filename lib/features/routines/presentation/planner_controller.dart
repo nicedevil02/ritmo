@@ -22,6 +22,7 @@ import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_save_context.dart';
 import 'package:ritmo/features/routines/domain/strategies/planner_strategy_registry.dart';
 import 'package:ritmo/features/routines/presentation/quick_add_parser.dart';
+import 'package:ritmo/core/utils/time_of_day_minutes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OccupiedRange {
@@ -1184,17 +1185,8 @@ class PlannerController extends ChangeNotifier {
       
       final dayAgenda = await DayAgendaService.instance.agendaForDate(date);
       
-      var bedtime = 1410; // 23:30
-      var wake = 420; // 07:00
-      try {
-        final bp = sleepBedtime.split(':');
-        bedtime = int.parse(bp[0]) * 60 + int.parse(bp[1]);
-      } catch (_) {}
-      try {
-        final wp = sleepWake.split(':');
-        wake = int.parse(wp[0]) * 60 + int.parse(wp[1]);
-      } catch (_) {}
-
+      final bedtime = TimeOfDayMinutes.tryParse(sleepBedtime) ?? 1410; // 23:30
+      final wake = TimeOfDayMinutes.tryParse(sleepWake) ?? 420; // 07:00
       final isSleepCrossMidnight = bedtime > wake;
       
       final ranges = <OccupiedRange>[];
@@ -1391,16 +1383,8 @@ class PlannerController extends ChangeNotifier {
   void adjustDuration(int delta) {
     targetDuration = DurationBounds.sanitize(targetDuration + delta);
     
-    var bedtime = 1410; // 23:30
-    var wake = 420; // 07:00
-    try {
-      final bp = sleepBedtime.split(':');
-      bedtime = int.parse(bp[0]) * 60 + int.parse(bp[1]);
-    } catch (_) {}
-    try {
-      final wp = sleepWake.split(':');
-      wake = int.parse(wp[0]) * 60 + int.parse(wp[1]);
-    } catch (_) {}
+    final bedtime = TimeOfDayMinutes.tryParse(sleepBedtime) ?? 1410; // 23:30
+    final wake = TimeOfDayMinutes.tryParse(sleepWake) ?? 420; // 07:00
     final isSleepCrossMidnight = bedtime > wake;
     suggestedTimeSlots = _calculateSuggestions(bedtime, wake, isSleepCrossMidnight);
     

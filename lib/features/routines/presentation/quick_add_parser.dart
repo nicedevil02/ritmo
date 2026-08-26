@@ -92,9 +92,9 @@ class QuickAddParser {
         else if (i == 1) targetDurationMinutes = 60;
         else if (i == 2) targetDurationMinutes = 30;
         else if (i == 3) targetDurationMinutes = 15;
-        else if (i == 4) targetDurationMinutes = int.parse(m.group(1)!) * 60 + 30;
-        else if (i == 5) targetDurationMinutes = int.parse(m.group(1)!) * 60;
-        else if (i == 6) targetDurationMinutes = int.parse(m.group(1)!);
+        else if (i == 4) targetDurationMinutes = ((int.tryParse(m.group(1) ?? '') ?? 0).clamp(0, 24) * 60 + 30).clamp(1, 1440);
+        else if (i == 5) targetDurationMinutes = ((int.tryParse(m.group(1) ?? '') ?? 0).clamp(0, 24) * 60).clamp(1, 1440);
+        else if (i == 6) targetDurationMinutes = (int.tryParse(m.group(1) ?? '') ?? 0).clamp(1, 1440);
         
         addSpan(m);
         break; // Only parse one duration
@@ -133,8 +133,8 @@ class QuickAddParser {
     final mColon = timeColonRegex.firstMatch(text);
     
     if (mColon != null) {
-      final h = int.parse(mColon.group(1)!);
-      final m = int.parse(mColon.group(2)!);
+      final h = (int.tryParse(mColon.group(1) ?? '') ?? 0).clamp(0, 23);
+      final m = (int.tryParse(mColon.group(2) ?? '') ?? 0).clamp(0, 59);
       
       final modRegexAfter = RegExp(r'^\s*(' + modCore + r')');
       final modRegexBefore = RegExp(r'(' + modCore + r')\s*(?:ساعت\s*)?$');
@@ -167,13 +167,13 @@ class QuickAddParser {
       if (mText != null) {
         // BUT we need to make sure we don't just match a random digit as time if it doesn't have 'ساعت' or a modifier!
         final modBefore = mText.group(1);
-        final hourStr = mText.group(2)!;
+        final hourStr = mText.group(2) ?? '';
         final modAfter = mText.group(3);
         final hasSaaat = text.substring(mText.start, mText.end).contains('ساعت');
         final hasNim = text.substring(mText.start, mText.end).contains('نیم');
         
         if (modBefore != null || modAfter != null || hasSaaat || hasNim) {
-          final h = int.parse(hourStr);
+          final h = (int.tryParse(hourStr) ?? 0).clamp(0, 23);
           final m = hasNim ? 30 : 0;
           timeOfDay = TimeOfDay(hour: _adjustHour(h, modBefore ?? modAfter), minute: m);
           addSpan(mText);
@@ -197,14 +197,14 @@ class QuickAddParser {
       final mDays = intervalDaysRegex.firstMatch(text);
       if (mDays != null) {
         recurrenceType = 'INTERVAL_DAYS';
-        intervalDays = int.parse(mDays.group(1)!);
+        intervalDays = (int.tryParse(mDays.group(1) ?? '') ?? 1).clamp(1, 365);
         addSpan(mDays);
       } else {
         final intervalHoursRegex = RegExp(r'هر\s+(\d+)\s+ساعت');
         final mHours = intervalHoursRegex.firstMatch(text);
         if (mHours != null) {
           recurrenceType = 'INTERVAL_HOURS';
-          intervalHours = int.parse(mHours.group(1)!);
+          intervalHours = (int.tryParse(mHours.group(1) ?? '') ?? 1).clamp(1, 24);
           addSpan(mHours);
         }
       }

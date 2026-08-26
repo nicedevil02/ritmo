@@ -29,21 +29,35 @@ class TaskStrategy implements PlannerCategoryStrategy {
     final dueTime = '${c.selectedTime.hour.toString().padLeft(2, '0')}:${c.selectedTime.minute.toString().padLeft(2, '0')}';
     final isImportant = c.priority > 1.5;
 
-    await db.insert(
+    final existing = await db.query(
       'simple_tasks',
-      {
-        'id': taskId,
-        'title': c.title,
-        'note': c.description.isNotEmpty ? c.description : null,
-        'isDone': 0,
-        'dueDate': dueDate,
-        'dueTime': dueTime,
-        'isImportant': isImportant ? 1 : 0,
-        'createdAt': now,
-        'updatedAt': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
+      where: 'id = ?',
+      whereArgs: [taskId],
+      limit: 1,
     );
+    final values = {
+      'title': c.title,
+      'note': c.description.isNotEmpty ? c.description : null,
+      'dueDate': dueDate,
+      'dueTime': dueTime,
+      'isImportant': isImportant ? 1 : 0,
+      'updatedAt': now,
+    };
+
+    if (existing.isNotEmpty) {
+      await db.update('simple_tasks', values, where: 'id = ?', whereArgs: [taskId]);
+    } else {
+      await db.insert(
+        'simple_tasks',
+        {
+          'id': taskId,
+          'isDone': 0,
+          'createdAt': now,
+          ...values,
+        },
+        conflictAlgorithm: ConflictAlgorithm.abort,
+      );
+    }
 
     RitmoEventBus().fire(RitmoEvent(
       type: 'task_created',

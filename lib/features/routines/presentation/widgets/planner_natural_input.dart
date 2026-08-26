@@ -21,7 +21,7 @@ class PlannerNaturalInput extends StatefulWidget {
 class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
   Timer? _debounce;
   Timer? _placeholderTimer;
-  int _placeholderIndex = 0;
+  final ValueNotifier<int> _placeholderIndexNotifier = ValueNotifier<int>(0);
 
   static const _placeholders = [
     'مثلاً: هر روز ساعت ۸ صبح مطالعه ۲۰ دقیقه',
@@ -36,9 +36,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
     super.initState();
     _placeholderTimer = Timer.periodic(const Duration(seconds: 4), (t) {
       if (mounted && widget.controller.inputController.text.isEmpty) {
-        setState(() {
-          _placeholderIndex = (_placeholderIndex + 1) % _placeholders.length;
-        });
+        _placeholderIndexNotifier.value = (_placeholderIndexNotifier.value + 1) % _placeholders.length;
       }
     });
   }
@@ -47,6 +45,7 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
   void dispose() {
     _debounce?.cancel();
     _placeholderTimer?.cancel();
+    _placeholderIndexNotifier.dispose();
     super.dispose();
   }
 
@@ -150,30 +149,35 @@ class _PlannerNaturalInputState extends State<PlannerNaturalInput> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextFormField(
-                    controller: widget.controller.inputController,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colors.textPrimary,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: _placeholders[_placeholderIndex],
-                      hintStyle: TextStyle(
-                        fontSize: 12.5,
-                        color: colors.textSecondary.withValues(alpha: 0.4),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    onFieldSubmitted: (text) {
-                      _debounce?.cancel();
-                      widget.controller.onInputTextChanged(text, immediate: true);
-                    },
-                    onChanged: (text) {
-                      if (_debounce?.isActive ?? false) _debounce!.cancel();
-                      _debounce = Timer(const Duration(milliseconds: 350), () {
-                        widget.controller.onInputTextChanged(text);
-                      });
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _placeholderIndexNotifier,
+                    builder: (context, placeholderIndex, _) {
+                      return TextFormField(
+                        controller: widget.controller.inputController,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _placeholders[placeholderIndex],
+                          hintStyle: TextStyle(
+                            fontSize: 12.5,
+                            color: colors.textSecondary.withValues(alpha: 0.4),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onFieldSubmitted: (text) {
+                          _debounce?.cancel();
+                          widget.controller.onInputTextChanged(text, immediate: true);
+                        },
+                        onChanged: (text) {
+                          if (_debounce?.isActive ?? false) _debounce!.cancel();
+                          _debounce = Timer(const Duration(milliseconds: 350), () {
+                            widget.controller.onInputTextChanged(text);
+                          });
+                        },
+                      );
                     },
                   ),
                 ),

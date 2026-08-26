@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 
 class RoutineCategoryHelper {
   static String getCategoryTitle(String catId, Map<String, CustomCategory> customCategoriesMap) {
@@ -37,16 +38,14 @@ class RoutineCategoryHelper {
   }
 
   static Color getCategoryColor(BuildContext context, String catId, Map<String, CustomCategory> customCategoriesMap) {
+    final colors = context.colors;
     if (catId.startsWith('custom_')) {
       final hex = customCategoriesMap[catId]?.color;
-      if (hex != null) {
-        try {
-          return Color(int.parse(hex.replaceFirst('#', 'FF'), radix: 16));
-        } catch (_) {}
+      if (hex != null && hex.isNotEmpty) {
+        return RitmoColor.fromHex(hex, fallback: colors.primary);
       }
-      return context.colors.primary;
+      return colors.primary;
     }
-    final colors = context.colors;
     switch (catId) {
       case 'religious': return const Color(0xff9B89FF);
       case 'medical': return colors.medicalRed;
@@ -63,10 +62,13 @@ class RoutineCategoryHelper {
     if (completions.isEmpty) return 0;
     
     final dates = completions
-        .map((c) => c['completionDate'] as String)
+        .map((c) => c['completionDate'] as String? ?? '')
+        .where((s) => s.isNotEmpty)
         .toSet()
         .toList();
     dates.sort((a, b) => b.compareTo(a));
+
+    if (dates.isEmpty) return 0;
 
     final todayStr = DateTime.now().toIso8601String().substring(0, 10);
     final yesterdayStr = DateTime.now().subtract(const Duration(days: 1)).toIso8601String().substring(0, 10);
@@ -77,8 +79,9 @@ class RoutineCategoryHelper {
 
     var streak = 1;
     for (var i = 0; i < dates.length - 1; i++) {
-      final current = DateTime.parse(dates[i]);
-      final next = DateTime.parse(dates[i + 1]);
+      final current = DateTime.tryParse(dates[i]);
+      final next = DateTime.tryParse(dates[i + 1]);
+      if (current == null || next == null) continue;
       final diff = current.difference(next).inDays;
       if (diff == 1) {
         streak++;

@@ -28,26 +28,38 @@ class ReflectionStrategy implements PlannerCategoryStrategy {
     final now = DateTime.now().millisecondsSinceEpoch;
     final todayStr = c.formatDate(c.selectedDate);
 
-    await db.insert(
-      'daily_reflections',
-      {
-        'id': 'reflection_$todayStr',
-        'date': todayStr,
-        'mood_score': c.reflectionMood,
-        'reflection_text': c.title,
-        // DEPRECATED — do not write: 'reflectionNote': c.title,
-        'learnings': c.reflectionLearnings.isNotEmpty ? c.reflectionLearnings : null,
-        'gratitude': c.reflectionGratitude.isNotEmpty ? c.reflectionGratitude : null,
-        'wins': c.reflectionWins.isNotEmpty ? c.reflectionWins : null,
-        // DEPRECATED — do not write: 'goodThing': c.reflectionWins.isNotEmpty ? c.reflectionWins : null,
-        'challenges': null,
-        'tomorrowFocus': null,
-        // DEPRECATED — do not write: 'timestamp': now,
-        'isPrivate': c.reflectionIsPrivate ? 1 : 0,
-        'createdAt': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final refId = 'reflection_$todayStr';
+    final existing = await db.query(
+       'daily_reflections',
+       where: 'id = ?',
+       whereArgs: [refId],
+       limit: 1,
+     );
+     final values = {
+       'date': todayStr,
+       'mood_score': c.reflectionMood,
+       'reflection_text': c.title,
+       'learnings': c.reflectionLearnings.isNotEmpty ? c.reflectionLearnings : null,
+       'gratitude': c.reflectionGratitude.isNotEmpty ? c.reflectionGratitude : null,
+       'wins': c.reflectionWins.isNotEmpty ? c.reflectionWins : null,
+       'challenges': null,
+       'tomorrowFocus': null,
+       'isPrivate': c.reflectionIsPrivate ? 1 : 0,
+     };
+
+     if (existing.isNotEmpty) {
+       await db.update('daily_reflections', values, where: 'id = ?', whereArgs: [refId]);
+     } else {
+       await db.insert(
+         'daily_reflections',
+         {
+           'id': refId,
+           'createdAt': now,
+           ...values,
+         },
+         conflictAlgorithm: ConflictAlgorithm.abort,
+       );
+     }
     RitmoEventBus().fire(RitmoEvent(
       type: 'ReflectionChanged',
       timestamp: DateTime.now(),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -48,7 +47,7 @@ class RoutineActions {
     VoidCallback? onDone,
   }) async {
     final db = await DatabaseHelper.instance.database;
-    final selectedDateMidnight = DateTime.parse(dateStr);
+    final selectedDateMidnight = DateTime.tryParse(dateStr) ?? DateTime.now();
     final startOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day).millisecondsSinceEpoch;
     final endOfDay = DateTime(selectedDateMidnight.year, selectedDateMidnight.month, selectedDateMidnight.day, 23, 59, 59).millisecondsSinceEpoch;
 

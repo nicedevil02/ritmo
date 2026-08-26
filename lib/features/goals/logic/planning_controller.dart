@@ -50,8 +50,8 @@ class PlanningController extends ChangeNotifier {
       activeCycle = await _repo.activeCycle(horizon, todayKey);
 
       final weekDayKeys = PlanningWeek.dayKeysOfWeekContaining(now);
-      final startDate = DateTime.parse(weekDayKeys.first);
-      final endDate = DateTime.parse(weekDayKeys.last);
+      final startDate = (weekDayKeys.isNotEmpty ? DateTime.tryParse(weekDayKeys.first) : null) ?? now;
+      final endDate = (weekDayKeys.isNotEmpty ? DateTime.tryParse(weekDayKeys.last) : null) ?? now.add(const Duration(days: 6));
 
       Map<String, dynamic> agendaMap = {};
       if (DatabaseHelper.rawDatabase != null) {

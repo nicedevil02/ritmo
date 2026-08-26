@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/realm/realm_mode.dart';
+import 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
 
 class RealmData {
   const RealmData({
@@ -98,7 +99,10 @@ class RealmScheduleData {
 sealed class ActiveRealmState {
   const ActiveRealmState();
 
-  bool get isActive => this is ScheduledRealmState || this is ManualRealmState;
+  bool get isActive =>
+      this is ScheduledRealmState ||
+      this is ManualRealmState ||
+      this is TriggeredRealmState;
   bool get isFree => this is FreeRealmState;
 }
 
@@ -146,6 +150,23 @@ final class ManualRealmState extends ActiveRealmState {
   final String? nextRealmTimeStr;
 }
 
+/// Represents an automated realm activated by a hardware or contextual trigger (F-08, F-10).
+final class TriggeredRealmState extends ActiveRealmState {
+  const TriggeredRealmState({
+    required this.realm,
+    required this.trigger,
+    required this.startsAt,
+    this.endsAt,
+    required this.explanation,
+  });
+
+  final RealmData realm;
+  final ZoneTrigger trigger;
+  final DateTime startsAt;
+  final DateTime? endsAt;
+  final String explanation;
+}
+
 final class FreeRealmState extends ActiveRealmState {
   const FreeRealmState({
     this.explanation = 'الان در زمان آزاد هستی و هیچ قلمرویی فعال نیست.',
@@ -162,6 +183,7 @@ extension ActiveRealmStateX on ActiveRealmState {
   RealmData? get realmOrNull => switch (this) {
     ScheduledRealmState(:final realm) => realm,
     ManualRealmState(:final realm) => realm,
+    TriggeredRealmState(:final realm) => realm,
     FreeRealmState() => null,
     RealmErrorState() => null,
   };

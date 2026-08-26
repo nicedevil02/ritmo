@@ -1,11 +1,16 @@
-import 'package:ritmo/core/domain/engines/zone_engine.dart';
 import 'package:ritmo/core/domain/realm/realm_mode.dart';
 import 'package:ritmo/core/domain/realm/realm_state.dart';
 import 'package:ritmo/core/domain/realm/schedule_bounds.dart';
+import 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
 
 export 'package:ritmo/core/domain/realm/realm_mode.dart';
 export 'package:ritmo/core/domain/realm/realm_state.dart';
+export 'package:ritmo/core/domain/realm/resolution/composite_realm_resolver.dart';
+export 'package:ritmo/core/domain/realm/resolution/realm_context.dart';
+export 'package:ritmo/core/domain/realm/resolution/realm_resolution_layer.dart';
 export 'package:ritmo/core/domain/realm/schedule_bounds.dart';
+export 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
+export 'package:ritmo/core/domain/realm/triggers/zone_trigger_repository.dart';
 
 abstract class Clock {
   DateTime now();
@@ -26,9 +31,13 @@ class ActiveRealmResolver {
   ActiveRealmState resolve({
     required List<RealmData> realms,
     required List<RealmScheduleData> schedules,
+    List<ZoneTrigger> triggers = const [],
     String? overrideRealmId,
     int? overrideUntilMs,
     int? overrideStartedMs,
+    String? activeWifiSsid,
+    bool isCharging = false,
+    List<String> activeCalendarTags = const [],
   }) {
     final now = clock.now();
     final nowMs = now.millisecondsSinceEpoch;
@@ -66,10 +75,10 @@ class ActiveRealmResolver {
       }
 
       // Find next scheduled realm to build honest explanation
-      final nextSchedule = _findNextSchedule(now, realms, schedules);
+      final nextSchedule = findNextSchedule(now, realms, schedules);
 
       final explanation =
-          'چون خودت تا ساعت ${_formatTime(expireAt)} این قلمرو را به صورت دستی فعال کردی.';
+          'چون خودت تا ساعت ${formatTime(expireAt)} این قلمرو را به صورت دستی فعال کردی.';
 
       return ManualRealmState(
         realm: overrideRealm,
@@ -80,12 +89,64 @@ class ActiveRealmResolver {
         explanation: explanation,
         nextRealmName: nextSchedule?.realm.name,
         nextRealmTimeStr: nextSchedule != null
-            ? _formatTime(nextSchedule.scheduleStartDt)
+            ? formatTime(nextSchedule.scheduleStartDt)
             : null,
       );
     }
 
-    // 2. Check scheduled realms
+    // 2. Check hardware / network triggers (F-08, F-10)
+    final enabledTriggers = triggers.where((t) => t.isEnabled).toList()
+      ..sort((a, b) => b.priority.compareTo(a.priority));
+
+    for (final trigger in enabledTriggers) {
+      final realm = realms.where((r) => r.id == trigger.zoneId).firstOrNull;
+      if (realm == null) continue;
+
+      bool isMatched = false;
+      String reason = '';
+
+      if (trigger.kind == TriggerKind.wifiSsid && activeWifiSsid != null && activeWifiSsid.isNotEmpty) {
+        final current = activeWifiSsid.replaceAll('"', '').trim().toLowerCase();
+        final target = trigger.value.replaceAll('"', '').trim().toLowerCase();
+        if (current == target || current.contains(target)) {
+          isMatched = true;
+          reason = 'به دلیل اتصال خودکار به شبکه وای‌فای «$activeWifiSsid».';
+        }
+      } else if (trigger.kind == TriggerKind.charger && isCharging) {
+        final trimmed = trigger.value.trim();
+        if (trimmed.isEmpty || trimmed.toUpperCase() == 'ALL_DAY') {
+          isMatched = true;
+        } else {
+          final parts = trimmed.split('-');
+          if (parts.length == 2) {
+            final startP = parts[0].trim().split(':');
+            final endP = parts[1].trim().split(':');
+            final sMin = (int.tryParse(startP[0]) ?? 0) * 60 + (int.tryParse(startP[1]) ?? 0);
+            final eMin = (int.tryParse(endP[0]) ?? 0) * 60 + (int.tryParse(endP[1]) ?? 0);
+            final nMin = now.hour * 60 + now.minute;
+            isMatched = sMin <= eMin ? (nMin >= sMin && nMin < eMin) : (nMin >= sMin || nMin < eMin);
+          }
+        }
+        if (isMatched) reason = 'به دلیل اتصال به شارژر.';
+      } else if (trigger.kind == TriggerKind.calendarTag && activeCalendarTags.isNotEmpty) {
+        final target = trigger.value.trim().toLowerCase();
+        if (activeCalendarTags.any((t) => t.trim().toLowerCase().contains(target))) {
+          isMatched = true;
+          reason = 'به دلیل رویداد تقویم با برچسب «${trigger.value}».';
+        }
+      }
+
+      if (isMatched) {
+        return TriggeredRealmState(
+          realm: realm,
+          trigger: trigger,
+          startsAt: now,
+          explanation: reason,
+        );
+      }
+    }
+
+    // 3. Check scheduled realms
     final activeMatchingSchedules =
         <({
           RealmData realm,
@@ -98,85 +159,73 @@ class ActiveRealmResolver {
     final currentWeekday = now.weekday;
 
     for (final schedule in schedules) {
-      if (!schedule.daysOfWeek.contains(currentWeekday)) {
-        continue;
-      }
+      if (!schedule.daysOfWeek.contains(currentWeekday)) continue;
 
-      final isWithin = ZoneEngine.isTimeWithinRange(
-        time: now,
-        startTimeStr: schedule.startTime,
-        endTimeStr: schedule.endTime,
+      final realm = realms.firstWhere(
+        (r) => r.id == schedule.zoneId,
+        orElse: () => RealmData(
+          id: schedule.zoneId,
+          name: 'قلمرو',
+          colorHex: '#6366F1',
+          icon: '🎯',
+          mode: RealmMode.normal,
+        ),
       );
 
-      if (isWithin) {
-        final realm = realms.firstWhere(
-          (r) => r.id == schedule.zoneId,
-          orElse: () => RealmData(
-            id: schedule.zoneId,
-            name: 'قلمرو زمان‌بندی‌شده',
-            colorHex: '#6366F1',
-            icon: '🎯',
-            mode: RealmMode.normal,
-          ),
-        );
+      final bounds = calculateScheduleBounds(
+        now: now,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+      );
 
-        final times = calculateScheduleBounds(
-          now: now,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-        );
-        final durMin = times.endDt.difference(times.startDt).inMinutes;
-
+      if (now.isAfter(bounds.startDt) && now.isBefore(bounds.endDt) ||
+          now.isAtSameMomentAs(bounds.startDt)) {
+        final durationMin = bounds.endDt.difference(bounds.startDt).inMinutes;
         activeMatchingSchedules.add((
           realm: realm,
           schedule: schedule,
-          durationMin: durMin > 0 ? durMin : 1,
-          startDt: times.startDt,
-          endDt: times.endDt,
+          durationMin: durationMin,
+          startDt: bounds.startDt,
+          endDt: bounds.endDt,
         ));
       }
     }
 
     if (activeMatchingSchedules.isNotEmpty) {
-      // Priority Rule (ق-۹):
-      // 1. Shorter duration schedule wins (more specific window)
-      // 2. Tie-breaker: Newer created date
+      // Sort by shortest duration (ق-۹) then by creation order
       activeMatchingSchedules.sort((a, b) {
-        final durComp = a.durationMin.compareTo(b.durationMin);
-        if (durComp != 0) return durComp;
-        final aCreated = a.realm.createdAt ?? 0;
-        final bCreated = b.realm.createdAt ?? 0;
-        return bCreated.compareTo(aCreated);
+        final durCmp = a.durationMin.compareTo(b.durationMin);
+        if (durCmp != 0) return durCmp;
+        return (a.realm.createdAt ?? 0).compareTo(b.realm.createdAt ?? 0);
       });
 
-      final winner = activeMatchingSchedules.first;
-      final totalDuration = winner.endDt.difference(winner.startDt);
-      final elapsed = now.difference(winner.startDt);
-      final remaining = winner.endDt.difference(now);
-
-      final progress = totalDuration.inSeconds > 0
-          ? (elapsed.inSeconds / totalDuration.inSeconds).clamp(0.0, 1.0)
-          : 1.0;
+      final winning = activeMatchingSchedules.first;
+      final remaining = winning.endDt.difference(now);
+      final totalDuration = winning.endDt.difference(winning.startDt);
+      final elapsed = now.difference(winning.startDt);
+      final progress = totalDuration.inSeconds <= 0
+          ? 1.0
+          : (elapsed.inSeconds / totalDuration.inSeconds).clamp(0.0, 1.0);
 
       final explanation =
-          'چون امروز ${_weekdayFa(now.weekday)} است و ساعت ${_formatTime(now)} در بازه ${_formatTime(winner.startDt)} الی ${_formatTime(winner.endDt)} قلمرو «${winner.realm.name}» قرار دارد.';
+          'چون طبق زمان‌بندی «${winning.schedule.startTime} تا ${winning.schedule.endTime}» فعال است.';
 
       return ScheduledRealmState(
-        realm: winner.realm,
-        schedule: winner.schedule,
-        startsAt: winner.startDt,
-        endsAt: winner.endDt,
+        realm: winning.realm,
+        schedule: winning.schedule,
+        startsAt: winning.startDt,
+        endsAt: winning.endDt,
         remaining: remaining.isNegative ? Duration.zero : remaining,
         progress: progress,
         explanation: explanation,
       );
     }
 
-    // 3. Check default realm fallback (B-12)
+    // 4. Check default realm fallback (B-12)
     final defaultRealmCandidates = realms.where((r) => r.isDefault).toList();
     if (defaultRealmCandidates.isNotEmpty) {
       final defaultRealm = defaultRealmCandidates.first;
-      final nextSchedule = _findNextSchedule(now, realms, schedules);
+      final nextSchedule = findNextSchedule(now, realms, schedules);
 
       final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
       final remaining = nextSchedule != null
@@ -184,7 +233,7 @@ class ActiveRealmResolver {
           : endOfToday.difference(now);
 
       final explanation = nextSchedule != null
-          ? 'چون خارج از زمان‌بندی هستی، قلمرو پیش‌فرض «${defaultRealm.name}» تا شروع قلمرو بعدی (${_formatTime(nextSchedule.scheduleStartDt)}) فعال است.'
+          ? 'چون خارج از زمان‌بندی هستی، قلمرو پیش‌فرض «${defaultRealm.name}» تا شروع قلمرو بعدی (${formatTime(nextSchedule.scheduleStartDt)}) فعال است.'
           : 'چون هیچ زمان‌بندی دیگری فعال نیست، قلمرو پیش‌فرض «${defaultRealm.name}» فعال است.';
 
       final startOfDay = DateTime(now.year, now.month, now.day, 0, 0);
@@ -213,11 +262,11 @@ class ActiveRealmResolver {
       );
     }
 
-    // 4. Free realm state
+    // 5. Free realm state
     return const FreeRealmState();
   }
 
-  static ({RealmData realm, DateTime scheduleStartDt})? _findNextSchedule(
+  static ({RealmData realm, DateTime scheduleStartDt})? findNextSchedule(
     DateTime now,
     List<RealmData> realms,
     List<RealmScheduleData> schedules,
@@ -259,13 +308,13 @@ class ActiveRealmResolver {
     return candidates.first;
   }
 
-  static String _formatTime(DateTime dt) {
+  static String formatTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 
-  static String _weekdayFa(int weekday) {
+  static String weekdayFa(int weekday) {
     switch (weekday) {
       case DateTime.saturday:
         return 'شنبه';

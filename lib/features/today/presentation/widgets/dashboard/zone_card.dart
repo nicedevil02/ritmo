@@ -68,12 +68,14 @@ class ZoneCard extends StatelessWidget {
         FreeRealmState() => true,
         ScheduledRealmState(:final isDefaultFallback, :final realm) => isDefaultFallback && realm.id.isEmpty,
         ManualRealmState() => false,
+        TriggeredRealmState() => false,
         RealmErrorState() => true,
       };
       realmName = isOutOfZone ? l10n.outOfRealm : (realmState!.realmOrNull?.name ?? l10n.outOfRealm);
       realmTimeRange = switch (realmState!) {
         ScheduledRealmState(:final schedule) => toPersianDigits('${schedule.startTime} - ${schedule.endTime}'),
         ManualRealmState(:final remaining) => toPersianDigits('فعال‌سازی دستی (${remaining.inMinutes} دقیقه)'),
+        TriggeredRealmState(:final explanation) => explanation,
         FreeRealmState() => l10n.noActiveSchedule,
         RealmErrorState() => l10n.noActiveSchedule,
       };

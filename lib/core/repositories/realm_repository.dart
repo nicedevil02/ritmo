@@ -63,12 +63,22 @@ class RealmRepository {
   }
 
   /// Resolves the active realm state through the unified resolver.
-  Future<ActiveRealmState> getActiveRealmState({Clock clock = const SystemClock()}) async {
+  Future<ActiveRealmState> getActiveRealmState({
+    Clock clock = const SystemClock(),
+    String? activeWifiSsid,
+    bool isCharging = false,
+    List<String> activeCalendarTags = const [],
+    DatabaseExecutor? executor,
+  }) async {
     try {
-      final db = await _dbHelper.database;
+      final db = executor ?? await _dbHelper.database;
 
       final realms = await loadRealms();
       final schedules = await loadSchedules();
+      final triggers = await ZoneTriggerRepository(dbHelper: _dbHelper).loadTriggers(
+        onlyEnabled: true,
+        executor: db,
+      );
 
       // Read manual override settings
       final overrideIdRows = await db.query(
@@ -109,9 +119,13 @@ class RealmRepository {
       return resolver.resolve(
         realms: realms,
         schedules: schedules,
+        triggers: triggers,
         overrideRealmId: overrideRealmId,
         overrideUntilMs: overrideUntilMs,
         overrideStartedMs: overrideStartedMs,
+        activeWifiSsid: activeWifiSsid,
+        isCharging: isCharging,
+        activeCalendarTags: activeCalendarTags,
       );
     } catch (e) {
       return RealmErrorState(e);

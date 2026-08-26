@@ -123,6 +123,7 @@ class HomeWidgetSnapshotService {
         final realmRemainingStr = switch (realmState) {
           ManualRealmState(:final remaining) => '${fa(remaining.inMinutes)} دقیقه',
           ScheduledRealmState(:final remaining) => '${fa(remaining.inMinutes)} دقیقه',
+          TriggeredRealmState(:final trigger) => trigger.value,
           FreeRealmState() => 'آزاد',
           RealmErrorState() => '—',
         };

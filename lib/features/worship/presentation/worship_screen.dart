@@ -211,43 +211,51 @@ class _WorshipScreenState extends State<WorshipScreen> {
         context: context,
         child: Scaffold(
           backgroundColor: Colors.transparent,
+          appBar: RitmoModuleAppBar.fromContext(
+            context: context,
+            title: 'عبادت و معنویت',
+            subtitle: _worshipDay != null
+                ? '$_cityName • ${_worshipDay!.hijri.formatted}'
+                : 'در حال بارگذاری...',
+            actions: [
+              IconButton(
+                icon: Icon(CupertinoIcons.sparkles, color: colors.primary, size: 20),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                tooltip: 'دستیار معنوی هوشمند',
+                onPressed: _openAiAssistantSheet,
+              ),
+              IconButton(
+                icon: Icon(CupertinoIcons.compass, color: colors.accent, size: 20),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                tooltip: 'قبله‌نما',
+                onPressed: _openQiblaCompass,
+              ),
+              IconButton(
+                icon: Icon(CupertinoIcons.settings, color: colors.textSecondary, size: 20),
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                tooltip: 'تنظیمات عبادات',
+                onPressed: _openWorshipSettings,
+              ),
+            ],
+          ),
           body: SafeArea(
+            top: false,
+            bottom: false,
             child: RefreshIndicator(
               color: colors.primary,
               backgroundColor: colors.surface,
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 40),
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 40),
                 child: Column(
                   children: [
-                    // 1. MODULE APP BAR WITH QUICK ACTIONS & STATUS BADGES
-                    RitmoModuleAppBar.fromContext(
-                      context: context,
-                      title: 'عبادت و معنویت',
-                      subtitle: _worshipDay != null
-                          ? '$_cityName • ${_worshipDay!.hijri.formatted}'
-                          : 'در حال بارگذاری...',
-                      actions: [
-                        IconButton(
-                          icon: Icon(CupertinoIcons.sparkles, color: colors.primary),
-                          tooltip: 'دستیار معنوی هوشمند',
-                          onPressed: _openAiAssistantSheet,
-                        ),
-                        IconButton(
-                          icon: Icon(CupertinoIcons.compass, color: colors.accent),
-                          tooltip: 'قبله‌نما',
-                          onPressed: _openQiblaCompass,
-                        ),
-                        IconButton(
-                          icon: Icon(CupertinoIcons.settings, color: colors.textSecondary),
-                          tooltip: 'تنظیمات عبادات',
-                          onPressed: _openWorshipSettings,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
                     if (_isLoading && _worshipDay == null) ...[
                       const RitmoSkeletonCard(height: 320),
                       const SizedBox(height: 16),

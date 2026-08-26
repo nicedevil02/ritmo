@@ -241,7 +241,7 @@ flutter test
 
 ---
 
-### - [ ] S8-T13 — گاردتست دسترس‌پذیری (مهم‌ترین تسک این اسپرینت)
+### - [x] S8-T13 — گاردتست دسترس‌پذیری (مهم‌ترین تسک این اسپرینت) — ec6aeb5b
 
 **فایل جدید:** `test/guard/mv_reachability_guard_test.dart`
 
@@ -291,7 +291,8 @@ flutter test
 | S8-T10 | DONE | d93dc28b | تأیید مسیردهی ۵ قالب پلیر (Route, Laps, Match, Distance, Timed) از هاب |
 | S8-T11 | DONE | d910b27f | پاک‌سازی کامل رشته‌های هاردکد در presentation و گاردتست mv_no_hardcoded_persian_test |
 | S8-T12 | DONE | c45d9278 | پاک‌سازی کامل تایپوگرافی و اندازه‌های خام و گاردتست mv_no_raw_typography_test |
-| S8-T13 | | | |
+| S8-T13 | DONE | ec6aeb5b | گاردتست دسترس‌پذیری ۶ مسیر بحرانی (R-01 تا R-06) از هاب به صورت end-to-end |
+| S8-T14 | | | |
 | S8-T14 | | | |
 
 ---

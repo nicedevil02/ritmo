@@ -28,13 +28,28 @@ class SleepTonightShortcut extends StatefulWidget {
   State<SleepTonightShortcut> createState() => _SleepTonightShortcutState();
 }
 
-class _SleepTonightShortcutState extends State<SleepTonightShortcut> {
+class _SleepTonightShortcutState extends State<SleepTonightShortcut> with WidgetsBindingObserver {
   SleepProgramState? _state;
   Timer? _ticker;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startTimer();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startTimer();
+    } else if (state == AppLifecycleState.paused) {
+      _stopTimer();
+    }
+  }
+
+  void _startTimer() {
+    _stopTimer();
     _load();
     // پنجره زمانی است؛ بدون تیک، کاربری که صفحه را باز گذاشته میانبر را نمی‌بیند.
     _ticker = Timer.periodic(const Duration(minutes: 5), (_) {
@@ -42,9 +57,15 @@ class _SleepTonightShortcutState extends State<SleepTonightShortcut> {
     });
   }
 
+  void _stopTimer() {
+    _ticker?.cancel();
+    _ticker = null;
+  }
+
   @override
   void dispose() {
-    _ticker?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
     super.dispose();
   }
 

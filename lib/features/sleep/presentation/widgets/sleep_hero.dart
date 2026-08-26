@@ -23,7 +23,7 @@ class SleepHero extends StatefulWidget {
   State<SleepHero> createState() => _SleepHeroState();
 }
 
-class _SleepHeroState extends State<SleepHero> {
+class _SleepHeroState extends State<SleepHero> with WidgetsBindingObserver {
   Timer? _timer;
   String _countdownText = '';
   bool _isWinddownActive = false;
@@ -31,15 +31,36 @@ class _SleepHeroState extends State<SleepHero> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startTimer();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startTimer();
+    } else if (state == AppLifecycleState.paused) {
+      _stopTimer();
+    }
+  }
+
+  void _startTimer() {
+    _stopTimer();
     _updateCountdown();
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _updateCountdown();
     });
   }
 
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
   @override
   void dispose() {
-    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
     super.dispose();
   }
 

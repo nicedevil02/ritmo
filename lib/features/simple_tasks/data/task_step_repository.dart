@@ -45,7 +45,7 @@ class TaskStepRepository {
       createdAt: now,
     );
 
-    await db.insert('task_steps', step.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('task_steps', step.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
     return step;
   }
 

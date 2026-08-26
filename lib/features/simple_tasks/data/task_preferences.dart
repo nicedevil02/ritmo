@@ -34,11 +34,21 @@ class TaskPreferences {
     try {
       final db = await DatabaseHelper.instance.database;
       final nowMs = DateTime.now().millisecondsSinceEpoch;
-      await db.insert(
-        'app_settings',
-        {'key': key, 'value': value, 'updatedAt': nowMs},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      final existing = await db.query('app_settings', where: 'key = ?', whereArgs: [key], limit: 1);
+      if (existing.isNotEmpty) {
+        await db.update(
+          'app_settings',
+          {'value': value, 'updatedAt': nowMs},
+          where: 'key = ?',
+          whereArgs: [key],
+        );
+      } else {
+        await db.insert(
+          'app_settings',
+          {'key': key, 'value': value, 'updatedAt': nowMs},
+          conflictAlgorithm: ConflictAlgorithm.abort,
+        );
+      }
     } catch (e, st) {
       RitmoLog.error('TaskPreferences', 'Failed to set setting $key', e, st);
     }

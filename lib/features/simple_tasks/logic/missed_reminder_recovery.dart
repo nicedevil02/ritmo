@@ -5,7 +5,7 @@ import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
-import 'package:ritmo/features/simple_tasks/data/simple_task_repository.dart';
+import 'package:ritmo/features/simple_tasks/domain/simple_task.dart';
 
 class MissedReminderRecovery {
   static Future<int> recoverMissedReminders({DateTime? nowOverride}) async {
@@ -14,17 +14,18 @@ class MissedReminderRecovery {
       final now = nowOverride ?? DateTime.now();
       final nowMs = now.millisecondsSinceEpoch;
 
-      // RITF-001: Only recover active pending reminders belonging to the tasks module
+      // RITF-001 & RITF-062: Only recover active pending reminders belonging to the tasks module with safe batch limit
       final rows = await db.query(
         'pending_reminders',
         where: "scheduledTime <= ? AND state IN ('SCHEDULED', 'pending') AND (ownerModule = 'tasks' OR ownerModule IS NULL)",
         whereArgs: [nowMs],
+        limit: 50,
       );
 
       if (rows.isEmpty) return 0;
 
-      final activeMissedTasks = <(String reminderId, String taskId, String title, String body)>[];
-      final recoveredReminderIds = <String>[];
+      // Extract all valid task IDs for batch retrieval (RITF-062)
+      final reminderTaskPairs = <(String reminderId, String taskId)>[];
       final skippedReminderIds = <String>[];
 
       for (final r in rows) {
@@ -44,25 +45,53 @@ class MissedReminderRecovery {
           continue;
         }
 
-        final task = await SimpleTaskRepository.instance.getById(taskId);
+        reminderTaskPairs.add((reminderId, taskId));
+      }
+
+      final taskIds = reminderTaskPairs.map((p) => p.$2).toSet().toList();
+      final tasksMap = <String, SimpleTask>{};
+
+      if (taskIds.isNotEmpty) {
+        final placeholders = List.filled(taskIds.length, '?').join(', ');
+        final taskRows = await db.query(
+          'simple_tasks',
+          where: 'id IN ($placeholders)',
+          whereArgs: taskIds,
+        );
+        for (final tr in taskRows) {
+          final t = SimpleTask.fromMap(tr);
+          tasksMap[t.id] = t;
+        }
+      }
+
+      final activeMissedTasks = <(String reminderId, String taskId, String title, String body, bool isPrivate)>[];
+      final recoveredReminderIds = <String>[];
+
+      for (final pair in reminderTaskPairs) {
+        final task = tasksMap[pair.$2];
         if (task == null || task.isDone) {
-          skippedReminderIds.add(reminderId);
+          skippedReminderIds.add(pair.$1);
           continue;
         }
 
-        activeMissedTasks.add((reminderId, taskId, task.title, task.note ?? ''));
-        recoveredReminderIds.add(reminderId);
+        final isPrivate = task.isImportant || task.tags.any((t) => t == 'محرمانه' || t == 'شخصی' || t == 'private');
+        final bodyText = isPrivate ? 'یک کار شخصی' : (task.note ?? '');
+
+        activeMissedTasks.add((pair.$1, pair.$2, task.title, bodyText, isPrivate));
+        recoveredReminderIds.add(pair.$1);
       }
 
       final missedCount = activeMissedTasks.length;
+      final scheduleTarget = now.add(const Duration(seconds: 2));
 
       if (missedCount > 3) {
-        // Aggregated notification for more than 3 missed reminders
+        // RITF-060 & RITF-061: Idempotent daily summary notification + slight offset
+        final dayKey = '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}';
         await NotificationGateway.schedule(
           NotificationRequest(
-            id: 'missed_tasks_summary_${now.millisecondsSinceEpoch}',
+            id: 'missed_tasks_summary_$dayKey',
             channel: NotificationChannelId.planning,
-            scheduledAt: now,
+            scheduledAt: scheduleTarget,
             title: 'یادآور کارهای گذشته',
             body: '${PersianDigits.toPersian(missedCount)} یادآور را ندیدی',
             sourceSystem: 'tasks',
@@ -70,15 +99,18 @@ class MissedReminderRecovery {
           ),
         );
       } else {
-        // Dispatch individual instant notifications (up to 3)
+        // RITF-061 & RITF-063: Dispatch individual notifications with privacy protection
         for (final item in activeMissedTasks) {
           await NotificationGateway.schedule(
             NotificationRequest(
               id: 'missed_${item.$1}',
               channel: NotificationChannelId.planning,
-              scheduledAt: now,
-              title: 'یادآور کار: ${item.$3}',
+              scheduledAt: scheduleTarget,
+              title: item.$5 ? 'ریتمو: یادآور کار' : 'یادآور کار: ${item.$3}',
               body: item.$4,
+              privacy: item.$5 ? NotificationPrivacy.redacted : NotificationPrivacy.none,
+              redactedTitle: 'ریتمو: یادآور کار',
+              redactedBody: 'یک یادآور کار داری',
               sourceSystem: 'tasks',
               entityId: item.$2,
             ),

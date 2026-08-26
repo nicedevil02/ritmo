@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/utils/persian_text.dart';
 import 'package:ritmo/core/utils/ritmo_id_factory.dart';
 
@@ -59,7 +60,9 @@ class SimpleTask {
         if (decoded is List) {
           parsedTags = decoded.map((e) => e.toString()).toList();
         }
-      } catch (_) {}
+      } catch (e, st) {
+        RitmoLog.warning('SimpleTask', 'Failed to parse tagsJson: $rawTagsJson', e, st);
+      }
     }
 
     return SimpleTask(

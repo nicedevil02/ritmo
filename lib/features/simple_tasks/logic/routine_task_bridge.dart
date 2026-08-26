@@ -80,7 +80,7 @@ class RoutineTaskBridge {
           updatedAt: now,
         );
 
-        await db.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        await db.insert('simple_tasks', task.toMap(), conflictAlgorithm: ConflictAlgorithm.abort);
         existingRoutineIds.add(routineId);
         createdCount++;
       }

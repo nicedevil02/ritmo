@@ -71,6 +71,7 @@ import 'package:ritmo/core/database/migration/migrations/migration_v129_realm_st
 import 'package:ritmo/core/database/migration/migrations/migration_v130_zone_sessions.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v131_zone_triggers.dart';
 import 'package:ritmo/core/database/migration/migrations/migration_v132_zone_separation.dart';
+import 'package:ritmo/core/database/migration/migrations/migration_v133_zone_rituals.dart';
 
 class MigrationRunner {
   static final List<Migration> _migrations = [
@@ -205,6 +206,7 @@ class MigrationRunner {
     MigrationV130ZoneSessions(), // Zone presence history: zone_sessions table and single open session partial unique index (F-01, F-02)
     MigrationV131ZoneTriggers(), // Zone automation triggers: zone_triggers table and kind index (F-08)
     MigrationV132ZoneSeparation(), // Zone separation: hideOtherRealms, zone_budgets, zone_profiles, profileId, isEnabled (F-11, F-12, F-13)
+    MigrationV133ZoneRituals(), // Zone rituals: ritualOnEnter, ritualOnExit JSON fields (F-14)
   ];
 
   static List<Migration> get debugMigrations => List.unmodifiable(_migrations);

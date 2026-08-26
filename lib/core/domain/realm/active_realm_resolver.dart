@@ -12,6 +12,8 @@ export 'package:ritmo/core/domain/realm/realm_state.dart';
 export 'package:ritmo/core/domain/realm/resolution/composite_realm_resolver.dart';
 export 'package:ritmo/core/domain/realm/resolution/realm_context.dart';
 export 'package:ritmo/core/domain/realm/resolution/realm_resolution_layer.dart';
+export 'package:ritmo/core/domain/realm/rituals/zone_ritual.dart';
+export 'package:ritmo/core/domain/realm/rituals/zone_ritual_service.dart';
 export 'package:ritmo/core/domain/realm/schedule_bounds.dart';
 export 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
 export 'package:ritmo/core/domain/realm/triggers/zone_trigger_repository.dart';

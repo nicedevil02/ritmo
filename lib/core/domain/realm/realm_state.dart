@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/domain/realm/realm_mode.dart';
+import 'package:ritmo/core/domain/realm/rituals/zone_ritual.dart';
 import 'package:ritmo/core/domain/realm/triggers/zone_trigger.dart';
 
 class RealmData {
@@ -11,6 +12,8 @@ class RealmData {
     required this.mode,
     this.isDefault = false,
     this.hideOtherRealms = false,
+    this.ritualOnEnter,
+    this.ritualOnExit,
     this.createdAt,
   });
 
@@ -21,6 +24,8 @@ class RealmData {
   final RealmMode mode;
   final bool isDefault;
   final bool hideOtherRealms;
+  final ZoneRitualConfig? ritualOnEnter;
+  final ZoneRitualConfig? ritualOnExit;
   final int? createdAt;
 
   factory RealmData.fromMap(Map<String, dynamic> map) {
@@ -32,6 +37,8 @@ class RealmData {
       mode: parseRealmMode(map['mode'] as String?),
       isDefault: (map['isDefault'] as int? ?? 0) == 1,
       hideOtherRealms: (map['hideOtherRealms'] as int? ?? 0) == 1,
+      ritualOnEnter: ZoneRitualConfig.fromJson(map['ritualOnEnter'] as String?),
+      ritualOnExit: ZoneRitualConfig.fromJson(map['ritualOnExit'] as String?),
       createdAt: map['createdAt'] as int?,
     );
   }
@@ -45,6 +52,8 @@ class RealmData {
       'mode': realmModeToRaw(mode),
       'isDefault': isDefault ? 1 : 0,
       'hideOtherRealms': hideOtherRealms ? 1 : 0,
+      'ritualOnEnter': ritualOnEnter?.toJson(),
+      'ritualOnExit': ritualOnExit?.toJson(),
       'createdAt': createdAt ?? DateTime.now().millisecondsSinceEpoch,
       'updatedAt': DateTime.now().millisecondsSinceEpoch,
     };

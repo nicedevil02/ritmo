@@ -1,3 +1,5 @@
+import 'package:ritmo/core/util/ritmo_date.dart';
+
 enum StudyMastery { notStarted, learning, review, mastered }
 
 extension StudyMasteryExtension on StudyMastery {
@@ -427,6 +429,12 @@ class StudyDeadline {
 
   int daysRemaining(DateTime today) {
     try {
+      final dueDt = RitmoDate.tryParseDayKey(dueDateIso);
+      if (dueDt != null) {
+        final due = DateTime(dueDt.year, dueDt.month, dueDt.day);
+        final current = DateTime(today.year, today.month, today.day);
+        return due.difference(current).inDays;
+      }
       final parts = dueDateIso.split('-');
       final due = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final current = DateTime(today.year, today.month, today.day);

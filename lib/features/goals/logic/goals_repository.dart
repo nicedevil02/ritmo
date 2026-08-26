@@ -95,19 +95,28 @@ class GoalsRepository {
 
   Future<List<KonkurSubject>> getKonkurSubjects() async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.query('konkur_subjects');
+    final res = await db.query(
+      'konkur_subjects',
+      where: "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)",
+    );
     return res.map(KonkurSubject.fromMap).toList();
   }
 
   Future<List<KonkurTopic>> getKonkurTopics() async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.query('konkur_topics');
+    final res = await db.query(
+      'konkur_topics',
+      where: "subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1))",
+    );
     return res.map(KonkurTopic.fromMap).toList();
   }
 
   Future<List<KonkurPlanItem>> getKonkurPlanItems() async {
     final db = await DatabaseHelper.instance.database;
-    final res = await db.query('konkur_plan_items');
+    final res = await db.query(
+      'konkur_plan_items',
+      where: "subjectId IN (SELECT id FROM konkur_subjects WHERE isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1))",
+    );
     return res.map(KonkurPlanItem.fromMap).toList();
   }
 

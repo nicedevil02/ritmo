@@ -198,8 +198,9 @@ class StudyTimerService {
   void _startTicker() {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_currentSession != null) {
-        _controller.add(_currentSession!.copyWith());
+      final session = _currentSession;
+      if (session != null && !session.isPaused) {
+        _controller.add(session.copyWith());
       }
     });
   }

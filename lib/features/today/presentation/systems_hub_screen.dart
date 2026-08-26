@@ -341,7 +341,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       // 3. Load konkur subjects to determine status (active vs setupRequired)
       final subjects = await db.query(
         'konkur_subjects',
-        where: 'isArchived = 0',
+        where: "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)",
       );
       final hasSubjects = subjects.isNotEmpty;
       _konkurStatus = SystemsHubLogic.determineKonkurStatus(

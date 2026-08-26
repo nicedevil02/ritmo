@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 @immutable
 class RitmoDate {
@@ -57,6 +58,21 @@ class RitmoDate {
 
   static DateTime? tryParseDayKey(String? value) {
     if (value == null || value.isEmpty) return null;
+    try {
+      final clean = value.trim();
+      final parts = clean.split('-');
+      if (parts.length >= 3) {
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final day = int.parse(parts[2].split('T')[0].split(' ')[0]);
+        if (year < 1800) {
+          final jalali = Jalali(year, month, day);
+          return jalali.toDateTime();
+        } else {
+          return DateTime(year, month, day);
+        }
+      }
+    } catch (_) {}
     return DateTime.tryParse(value);
   }
 

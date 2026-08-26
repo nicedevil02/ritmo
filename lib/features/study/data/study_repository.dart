@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/util/ritmo_date.dart';
 import 'package:ritmo/features/study/domain/study_models.dart';
 import 'package:ritmo/features/study/domain/study_validation.dart';
@@ -57,9 +59,14 @@ class StudyRepository {
   }
 
   Future<void> saveSubject(StudySubject subject) async {
-    StudyValidator.validateSubject(subject);
-    final db = await _database;
-    await db.insert('konkur_subjects', subject.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    try {
+      StudyValidator.validateSubject(subject);
+      final db = await _database;
+      await db.insert('konkur_subjects', subject.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (e, st) {
+      RitmoLog.error('StudyRepository', 'saveSubject validation or db error', e, st);
+      rethrow;
+    }
   }
 
   Future<void> deleteSubject(String id) async {
@@ -70,6 +77,7 @@ class StudyRepository {
       await txn.delete('konkur_study_sessions', where: 'subjectId = ?', whereArgs: [id]);
       await txn.delete('study_active_session', where: 'subjectId = ?', whereArgs: [id]);
       await txn.delete('study_deadlines', where: 'subjectId = ?', whereArgs: [id]);
+      await txn.delete('konkur_plan_items', where: 'subjectId = ?', whereArgs: [id]);
     });
   }
 
@@ -95,19 +103,30 @@ class StudyRepository {
   }
 
   Future<void> saveTopic(StudyTopic topic) async {
-    StudyValidator.validateTopic(topic);
-    final db = await _database;
-    await db.insert('konkur_topics', topic.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    try {
+      StudyValidator.validateTopic(topic);
+      final db = await _database;
+      final map = topic.toMap();
+      if (map['origin'] == null || (map['origin'] as String).isEmpty) {
+        map['origin'] = 'USER';
+      }
+      await db.insert('konkur_topics', map, conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (e, st) {
+      RitmoLog.error('StudyRepository', 'saveTopic validation or db error', e, st);
+      rethrow;
+    }
   }
 
   Future<void> saveTopicsBulk(List<StudyTopic> topics) async {
-    for (final topic in topics) {
-      StudyValidator.validateTopic(topic);
-    }
     final db = await _database;
     await db.transaction((txn) async {
       for (final topic in topics) {
-        await txn.insert('konkur_topics', topic.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+        StudyValidator.validateTopic(topic);
+        final map = topic.toMap();
+        if (map['origin'] == null || (map['origin'] as String).isEmpty) {
+          map['origin'] = 'USER';
+        }
+        await txn.insert('konkur_topics', map, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });
   }
@@ -171,20 +190,35 @@ class StudyRepository {
     String? nextReviewDateIso,
     int? newReviewCount,
   }) async {
-    StudyValidator.validateSession(session);
+    try {
+      StudyValidator.validateSession(session);
+    } catch (e, st) {
+      RitmoLog.error('StudyRepository', 'recordSession validation error', e, st);
+      rethrow;
+    }
     final db = await _database;
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final sessionEndMs = session.endedAtMs ??
         (RitmoDate.tryParseDayKey(session.dateIso)?.millisecondsSinceEpoch ?? nowMs);
 
     await db.transaction((txn) async {
+      final existingSessions = await txn.query(
+        'konkur_study_sessions',
+        where: 'id = ?',
+        whereArgs: [session.id],
+      );
+      final previousDuration = existingSessions.isNotEmpty
+          ? (existingSessions.first['durationMinutes'] as num?)?.toInt() ?? 0
+          : 0;
+      final deltaMinutes = session.durationMinutes - previousDuration;
+
       await txn.insert('konkur_study_sessions', session.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
 
       if (session.topicId != null && session.topicId!.isNotEmpty) {
         final topicRows = await txn.query('konkur_topics', where: 'id = ?', whereArgs: [session.topicId]);
         if (topicRows.isNotEmpty) {
           final oldTopic = StudyTopic.fromMap(topicRows.first);
-          final updatedMinutes = oldTopic.studyCompletedMinutes + session.durationMinutes;
+          final updatedMinutes = math.max(0, oldTopic.studyCompletedMinutes + deltaMinutes);
 
           final effectiveLastStudiedAt = (oldTopic.lastStudiedAtMs == null || sessionEndMs > oldTopic.lastStudiedAtMs!)
               ? sessionEndMs
@@ -223,24 +257,40 @@ class StudyRepository {
     ));
   }
 
-  Future<Map<String, SubjectStats>> getAggregatedSubjectStats({String? sinceDateIso}) async {
+  Future<Map<String, SubjectStats>> getAggregatedSubjectStats({
+    String? sinceDateIso,
+    bool isKonkurMode = false,
+  }) async {
     final db = await _database;
-    String sql = '''
-      SELECT subjectId,
-             SUM(durationMinutes) AS totalMinutes,
-             COUNT(*)             AS sessionCount,
-             MAX(dateIso)         AS lastStudiedDate,
-             SUM(testsTotal)      AS totalTests,
-             SUM(testsCorrect)    AS totalCorrect,
-             SUM(testsWrong)      AS totalWrong
-      FROM konkur_study_sessions
-    ''';
+    final whereClauses = <String>['sub.isArchived = 0'];
     final args = <dynamic>[];
+
+    if (isKonkurMode) {
+      whereClauses.add("(sub.origin = 'KONKUR_PRESET' OR sub.origin = 'KONKUR_CUSTOM' OR sub.origin = 'KONKUR' OR sub.isPreset = 1)");
+    } else {
+      whereClauses.add("sub.origin = 'USER' AND (sub.isPreset IS NULL OR sub.isPreset = 0)");
+    }
+
     if (sinceDateIso != null) {
-      sql += ' WHERE dateIso >= ?';
+      whereClauses.add('s.dateIso >= ?');
       args.add(sinceDateIso);
     }
-    sql += ' GROUP BY subjectId';
+
+    final whereSql = whereClauses.isNotEmpty ? 'WHERE ${whereClauses.join(' AND ')}' : '';
+
+    final sql = '''
+      SELECT s.subjectId,
+             SUM(s.durationMinutes) AS totalMinutes,
+             COUNT(*)               AS sessionCount,
+             MAX(s.dateIso)         AS lastStudiedDate,
+             SUM(s.testsTotal)      AS totalTests,
+             SUM(s.testsCorrect)    AS totalCorrect,
+             SUM(s.testsWrong)      AS totalWrong
+      FROM konkur_study_sessions s
+      INNER JOIN konkur_subjects sub ON s.subjectId = sub.id
+      $whereSql
+      GROUP BY s.subjectId
+    ''';
 
     final rows = await db.rawQuery(sql, args);
     final map = <String, SubjectStats>{};
@@ -305,13 +355,18 @@ class StudyRepository {
   }
 
   Future<void> saveDeadline(StudyDeadline deadline) async {
-    StudyValidator.validateDeadline(deadline);
-    final db = await _database;
-    await db.insert(
-      'study_deadlines',
-      deadline.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    try {
+      StudyValidator.validateDeadline(deadline);
+      final db = await _database;
+      await db.insert(
+        'study_deadlines',
+        deadline.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e, st) {
+      RitmoLog.error('StudyRepository', 'saveDeadline validation or db error', e, st);
+      rethrow;
+    }
   }
 
   Future<void> toggleDeadlineCompleted(String id, bool isCompleted) async {

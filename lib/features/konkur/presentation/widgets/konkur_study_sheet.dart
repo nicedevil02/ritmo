@@ -43,6 +43,8 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
   // Timer Variables
   Timer? _timer;
   int _secondsElapsed = 0;
+  DateTime? _timerStartedAt;
+  int _accumulatedSeconds = 0;
   bool _isRunning = false;
 
   // Test Mode Inputs
@@ -111,24 +113,40 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
 
   void _toggleTimer() {
     if (_isRunning) {
+      if (_timerStartedAt != null) {
+        _accumulatedSeconds += DateTime.now().difference(_timerStartedAt!).inSeconds;
+        _timerStartedAt = null;
+      }
       _timer?.cancel();
       setState(() {
         _isRunning = false;
+        _secondsElapsed = _accumulatedSeconds;
       });
     } else {
+      _timerStartedAt = DateTime.now();
       setState(() {
         _isRunning = true;
       });
+      _timer?.cancel();
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          _secondsElapsed++;
-        });
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        if (_timerStartedAt != null) {
+          final nowElapsed = _accumulatedSeconds + DateTime.now().difference(_timerStartedAt!).inSeconds;
+          setState(() {
+            _secondsElapsed = nowElapsed;
+          });
+        }
       });
     }
   }
 
   void _resetTimer() {
     _timer?.cancel();
+    _timerStartedAt = null;
+    _accumulatedSeconds = 0;
     setState(() {
       _secondsElapsed = 0;
       _isRunning = false;
@@ -136,6 +154,12 @@ class _KonkurStudySheetState extends State<KonkurStudySheet> {
   }
 
   Future<void> _saveSession() async {
+    if (_isRunning && _timerStartedAt != null) {
+      _accumulatedSeconds += DateTime.now().difference(_timerStartedAt!).inSeconds;
+      _secondsElapsed = _accumulatedSeconds;
+      _timerStartedAt = null;
+      _timer?.cancel();
+    }
     final colors = context.colors;
     if (_selectedTopic == null || _selectedSubject == null) {
       ScaffoldMessenger.of(context).showSnackBar(

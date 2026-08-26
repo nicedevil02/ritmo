@@ -112,6 +112,10 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       if (_isRunning) {
         setState(() {
           _secondsElapsed = CourseTimerService.instance.currentElapsedSeconds;

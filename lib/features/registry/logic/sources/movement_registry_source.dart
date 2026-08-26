@@ -5,7 +5,6 @@ import 'package:ritmo/core/domain/models.dart';
 import 'package:ritmo/features/registry/domain/registry_entry.dart';
 import 'package:ritmo/features/registry/logic/sources/registry_source.dart';
 import 'package:ritmo/features/supplementary_sports/data/repositories/mv_kind_repository.dart';
-import 'package:ritmo/features/supplementary_sports/domain/models/models.dart';
 
 class MovementRegistrySource implements RegistrySource {
   @override

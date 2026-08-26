@@ -155,7 +155,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final courseSessionsRaw = await db.query('course_sessions');
       final courseSessions = courseSessionsRaw.map(Map<String, dynamic>.from).toList();
 
-      final konkurSubjectsRaw = await db.query('konkur_subjects');
+      final konkurSubjectsRaw = await db.query(
+        'konkur_subjects',
+        where: "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)",
+      );
       final konkurSubjects = konkurSubjectsRaw.map(Map<String, dynamic>.from).toList();
 
       final settings = await db.query('app_settings');

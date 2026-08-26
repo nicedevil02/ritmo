@@ -17,8 +17,11 @@ class KonkurRegistrySource implements RegistrySource {
   @override
   Future<int> count({bool includeArchived = false}) async {
     final db = await DatabaseHelper.instance.database;
+    final whereStr = includeArchived
+        ? "(origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)"
+        : "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)";
     final res = await db.rawQuery(
-      'SELECT COUNT(*) as cnt FROM konkur_subjects',
+      'SELECT COUNT(*) as cnt FROM konkur_subjects WHERE $whereStr',
     );
     return Sqflite.firstIntValue(res) ?? 0;
   }
@@ -30,8 +33,12 @@ class KonkurRegistrySource implements RegistrySource {
     bool includeArchived = false,
   }) async {
     final db = await DatabaseHelper.instance.database;
+    final whereStr = includeArchived
+        ? "(origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)"
+        : "isArchived = 0 AND (origin = 'KONKUR_PRESET' OR origin = 'KONKUR_CUSTOM' OR origin = 'KONKUR' OR isPreset = 1)";
     final rows = await db.query(
       'konkur_subjects',
+      where: whereStr,
       orderBy: 'name ASC',
       limit: limit,
       offset: offset,

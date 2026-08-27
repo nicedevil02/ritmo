@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -33,10 +31,10 @@ class PhaseDesignTheme {
         return PhaseDesignTheme(
           title: 'فاز قاعدگی',
           description: 'زمان استراحت، تغذیه گرم و مراقبت ملایم از خود.',
-          baseColor: colors.medicalRed,
+          baseColor: colors.error,
           gradientColors: [
-            colors.medicalRed,
-            colors.medicalRed.withValues(alpha: 0.85),
+            colors.error,
+            colors.error.withValues(alpha: 0.85),
             colors.accent,
           ],
           icon: Icons.water_drop,
@@ -46,10 +44,10 @@ class PhaseDesignTheme {
           title: 'فاز فولیکولار',
           description:
               'افزایش سطح انرژی! زمان ایده‌آل برای برنامه‌ریزی و یادگیری.',
-          baseColor: colors.success,
+          baseColor: colors.accent,
           gradientColors: [
-            colors.success,
-            colors.success.withValues(alpha: 0.85),
+            colors.accent,
+            colors.accent.withValues(alpha: 0.85),
             colors.primary,
           ],
           icon: Icons.wb_sunny_outlined,
@@ -59,11 +57,11 @@ class PhaseDesignTheme {
           title: 'فاز تخمک‌گذاری',
           description:
               'اوج درخشش و ارتباطات اجتماعی. کارهای گروهی عالی پیش می‌روند.',
-          baseColor: colors.primary,
+          baseColor: colors.accent,
           gradientColors: [
-            colors.primary,
-            colors.primary.withValues(alpha: 0.85),
             colors.accent,
+            colors.accent.withValues(alpha: 0.85),
+            colors.primary,
           ],
           icon: Icons.auto_awesome,
         );
@@ -72,10 +70,10 @@ class PhaseDesignTheme {
           title: 'فاز لوتئال',
           description:
               'کاهش تدریجی انرژی. به سمت کارهای انفرادی و آرامش حرکت کنید.',
-          baseColor: colors.warning,
+          baseColor: colors.primary,
           gradientColors: [
-            colors.warning,
-            colors.warning.withValues(alpha: 0.85),
+            colors.primary,
+            colors.primary.withValues(alpha: 0.85),
             colors.accent,
           ],
           icon: Icons.nights_stay_outlined,
@@ -84,8 +82,8 @@ class PhaseDesignTheme {
   }
 }
 
-/// کارت هیرو پرمیوم چرخه بدن همراه با انیمیشن ذرات و گلبرگ‌های صعودی نرم
-class CycleHeroCard extends StatefulWidget {
+/// کارت هیرو پرمیوم چرخه بدن
+class CycleHeroCard extends StatelessWidget {
   const CycleHeroCard({
     super.key,
     required this.currentPhase,
@@ -93,67 +91,22 @@ class CycleHeroCard extends StatefulWidget {
     required this.totalDaysInPhase,
     this.onTap,
   });
+
   final CyclePhase currentPhase;
   final int currentDay;
   final int totalDaysInPhase;
   final VoidCallback? onTap;
 
   @override
-  State<CycleHeroCard> createState() => _CycleHeroCardState();
-}
-
-class _CycleHeroCardState extends State<CycleHeroCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  final List<_PetalParticle> _petals = [];
-  final math.Random _random = math.Random();
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    );
-
-    // ایجاد گلبرگ‌های اولیه
-    for (var i = 0; i < 12; i++) {
-      _petals.add(_PetalParticle.random(_random));
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final disableAnim = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-    if (disableAnim) {
-      if (_animationController.isAnimating) {
-        _animationController.stop();
-      }
-    } else {
-      if (!_animationController.isAnimating) {
-        _animationController.repeat();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final theme = PhaseDesignTheme.getTheme(widget.currentPhase, colors);
+    final theme = PhaseDesignTheme.getTheme(currentPhase, colors);
     final m = context.metrics;
-    final disableAnim = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: Container(
           width: double.infinity,
           constraints: BoxConstraints(
@@ -175,287 +128,84 @@ class _CycleHeroCardState extends State<CycleHeroCard>
               ),
             ],
           ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // لایه انیمیشن گلبرگ‌های صعودی پرمیوم
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: _PetalsPainter(
-                        petals: _petals,
-                        progress: disableAnim ? 0.5 : _animationController.value,
-                        baseColor: theme.baseColor,
-                        disableAnim: disableAnim,
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // محتوای کارت متنی و اطلاعات چرخه
-              Padding(
-                padding: EdgeInsets.all(m.spaceXl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+          child: Padding(
+            padding: EdgeInsets.all(m.spaceXl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(m.spaceSm),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            theme.icon,
-                            color: Colors.white,
-                            size: m.iconLg,
-                          ),
-                        ),
-                        SizedBox(width: m.spaceMd),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  theme.title,
-                                  style: RitmoTextStyles.sectionHeadline(Colors.white),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                toPersianDigits(
-                                  'روز ${widget.currentDay} از ${widget.totalDaysInPhase}',
-                                ),
-                                style: RitmoTextStyles.caption(
-                                  Colors.white.withValues(alpha: 0.9),
-                                ).copyWith(fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: m.spaceSm),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: m.spaceMd,
-                            vertical: m.spaceXs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(m.radiusHero),
-                          ),
-                          child: Text(
-                            'پرمیوم',
-                            style: RitmoTextStyles.badge(Colors.white).copyWith(
-                              fontWeight: FontWeight.bold,
+                    Container(
+                      padding: EdgeInsets.all(m.spaceSm),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        theme.icon,
+                        color: Colors.white,
+                        size: m.iconLg,
+                      ),
+                    ),
+                    SizedBox(width: m.spaceMd),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              theme.title,
+                              style: RitmoTextStyles.sectionHeadline(Colors.white),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            toPersianDigits(
+                              'روز $currentDay از $totalDaysInPhase',
+                            ),
+                            style: RitmoTextStyles.caption(
+                              Colors.white.withValues(alpha: 0.9),
+                            ).copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: m.spaceMd),
-                    Text(
-                      theme.description,
-                      style: RitmoTextStyles.body(
-                        Colors.white.withValues(alpha: 0.95),
-                      ).copyWith(height: 1.4),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    SizedBox(width: m.spaceSm),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: m.spaceMd,
+                        vertical: m.spaceXs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(m.radiusHero),
+                      ),
+                      child: Text(
+                        'پرمیوم',
+                        style: RitmoTextStyles.badge(Colors.white).copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              ),
-
-              // گل طراحی‌شده لوکس در گوشه پایین سمت چپ کارت
-              Positioned(
-                bottom: -15,
-                left: -15,
-                child: IgnorePointer(
-                  child: Hero(
-                    tag: 'cycle_flower_accent',
-                    child: CustomPaint(
-                      size: const Size(90, 90),
-                      painter: _CornerFlowerPainter(baseColor: theme.baseColor),
-                    ),
-                  ),
+                SizedBox(height: m.spaceMd),
+                Text(
+                  theme.description,
+                  style: RitmoTextStyles.body(
+                    Colors.white.withValues(alpha: 0.95),
+                  ).copyWith(height: 1.4),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-/// مدل هر گلبرگ متحرک
-class _PetalParticle {
-  _PetalParticle({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.speed,
-    required this.opacity,
-    required this.rotation,
-    required this.swingAngle,
-    required this.swingSpeed,
-  });
-
-  factory _PetalParticle.random(math.Random random) {
-    return _PetalParticle(
-      x: random.nextDouble(),
-      y: random.nextDouble() * 1.2, // شروع در ارتفاع‌های مختلف
-      size: random.nextDouble() * 10 + 6,
-      speed: random.nextDouble() * 0.05 + 0.03,
-      opacity: random.nextDouble() * 0.4 + 0.3,
-      rotation: random.nextDouble() * math.pi * 2,
-      swingAngle: random.nextDouble() * math.pi,
-      swingSpeed: random.nextDouble() * 2 + 1,
-    );
-  }
-  double x;
-  double y;
-  double size;
-  double speed;
-  double opacity;
-  double rotation;
-  double swingAngle;
-  double swingSpeed;
-
-  void update(math.Random random, double progress) {
-    y -= speed * 0.015; // حرکت صعودی روبه بالا
-    swingAngle += swingSpeed * 0.02;
-    x += math.sin(swingAngle) * 0.002; // تاب خوردن ملایم به چپ و راست
-    rotation += 0.01; // ریست شدن ذره در صورت خروج از سقف کارت
-    if (y < -0.2) {
-      y = 1.1;
-      x =
-          random.nextDouble() *
-          0.6; // تمرکز بیشتردر سمت چپ (جایی که گل قرار دارد)
-      opacity = random.nextDouble() * 0.4 + 0.3;
-    }
-  }
-}
-
-/// رسم‌کننده گلبرگ‌های صعودی
-class _PetalsPainter extends CustomPainter {
-  _PetalsPainter({
-    required this.petals,
-    required this.progress,
-    required this.baseColor,
-    this.disableAnim = false,
-  });
-  final List<_PetalParticle> petals;
-  final double progress;
-  final Color baseColor;
-  final bool disableAnim;
-  final math.Random _random = math.Random();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    for (final petal in petals) {
-      petal.update(_random, progress);
-
-      final actualX = petal.x * size.width;
-      final actualY = petal.y * size.height;
-
-      canvas.save();
-      canvas.translate(actualX, actualY);
-      canvas.rotate(petal.rotation);
-
-      // ایجاد افکت رنگی شیشه‌ای و درخشان برای گلبرگ‌ها
-      paint.color = Colors.white.withValues(alpha: petal.opacity);
-
-      // رسم شکل بیضی‌گون زیبا شبیه به گلبرگ طبیعی
-      final path = Path();
-      path.moveTo(0, -petal.size);
-      path.quadraticBezierTo(
-        petal.size * 0.6,
-        -petal.size * 0.5,
-        petal.size * 0.4,
-        petal.size,
-      );
-      path.quadraticBezierTo(
-        0,
-        petal.size * 1.2,
-        -petal.size * 0.4,
-        petal.size,
-      );
-      path.quadraticBezierTo(
-        -petal.size * 0.6,
-        -petal.size * 0.5,
-        0,
-        -petal.size,
-      );
-      path.close();
-
-      canvas.drawPath(path, paint);
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PetalsPainter oldDelegate) {
-    if (disableAnim) return false;
-    return oldDelegate.progress != progress || oldDelegate.baseColor != baseColor;
-  }
-}
-
-/// رسم‌کننده گل لوکس و چندلایه پرمیوم در گوشه کارت
-class _CornerFlowerPainter extends CustomPainter {
-  _CornerFlowerPainter({required this.baseColor});
-  final Color baseColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width * 0.2, size.height * 0.8);
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    // لایه اول: سایه گل
-    paint.color = Colors.black.withValues(alpha: 0.12);
-    _drawFlowerGeometry(canvas, center + const Offset(0, 4), 38, paint);
-
-    // لایه دوم: گلبرگ‌های بیرونی روشن‌تر و بزرگ‌تر
-    paint.color = Colors.white.withValues(alpha: 0.35);
-    _drawFlowerGeometry(canvas, center, 36, paint);
-
-    // لایه سوم: گلبرگ‌های اصلی همرنگ فاز ولی درخشان‌تر
-    paint.color = Colors.white.withValues(alpha: 0.7);
-    _drawFlowerGeometry(canvas, center, 26, paint);
-
-    // لایه چهارم: مرکز گل (پرچم گل)
-    paint.color = Colors.white;
-    canvas.drawCircle(center, 10, paint);
-
-    // پرزهای مرکز گل برای ظاهر لوکس‌تر
-    paint.color = baseColor.withValues(alpha: 0.6);
-    canvas.drawCircle(center, 6, paint);
-  }
-
-  void _drawFlowerGeometry(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    Paint paint,
-  ) {
-    const petalCount = 6;
-    for (var i = 0; i < petalCount; i++) {
-      final angle = (i * 2 * math.pi) / petalCount;
-      final petalX = center.dx + math.cos(angle) * radius * 0.6;
-      final petalY = center.dy + math.sin(angle) * radius * 0.6;
-      canvas.drawCircle(Offset(petalX, petalY), radius * 0.5, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -272,12 +272,15 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
       case CyclePhase.menstrual:
         return colors.error;
       case CyclePhase.ovulation:
+      case CyclePhase.follicular:
+      case CyclePhase.pregnancy:
         return colors.accent;
       case CyclePhase.luteal:
         return colors.primary;
-      case CyclePhase.follicular:
-      default:
-        return colors.accent;
+      case CyclePhase.dataStale:
+        return colors.warning;
+      case CyclePhase.noData:
+        return colors.textSecondary;
     }
   }
 

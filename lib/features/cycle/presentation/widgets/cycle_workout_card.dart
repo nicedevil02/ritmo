@@ -34,13 +34,13 @@ class CycleWorkoutCard extends StatelessWidget {
         description =
             'در فاز لوتئال انرژی به مرور کاهش می‌یابد. تمرینات با شدت متوسط، ورزش‌های تعادلی و روتین‌های کششی آرام‌بخش توصیه می‌شوند.';
         icon = CupertinoIcons.waveform_path_ecg;
-        phaseColor = colors.warning;
+        phaseColor = colors.primary;
       case CyclePhase.follicular:
         title = 'ورزش مناسب: کاردیو و هوازی ⚡';
         description =
             'در فاز فولیکولار سطح انرژی رو به افزایش است. زمان عالی برای ورزش‌های هوازی، دویدن و بالا بردن ضربان قلب است.';
         icon = CupertinoIcons.bolt_fill;
-        phaseColor = colors.success;
+        phaseColor = colors.accent;
       case CyclePhase.pregnancy:
         title = 'ورزش مناسب بارداری 🤰';
         description =
@@ -53,7 +53,7 @@ class CycleWorkoutCard extends StatelessWidget {
         description =
             'با ثبت اطلاعات دوره، برنامه و حرکات پیشنهادی ورزشی شما به طور خودکار متناسب با فاز چرخه بدنتان همگام می‌شود.';
         icon = Icons.auto_awesome;
-        phaseColor = colors.primary;
+        phaseColor = colors.textSecondary;
     }
 
     return RitmoTheme.glassCardLight(

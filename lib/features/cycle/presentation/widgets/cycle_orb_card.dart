@@ -66,14 +66,14 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         phaseText = 'دوران قاعدگی (پریود)';
         remainingText =
             'روز ${PersianDigits.toFa(widget.activePeriodDay.toString())} دوره خونریزی';
-        phaseColor = isDark ? const Color(0xFFFF7E70) : const Color(0xFFEB6E60);
+        phaseColor = colors.error;
         emoji = '🩸';
         statusTip =
             'بدن شما در حال پاکسازی طبیعی است. استراحت کافی، نوشیدن آب ولرم و دمنوش‌های ملایم به کاهش انقباضات کمک می‌کند.';
       case CyclePhase.ovulation:
         phaseText = 'روز تخمک‌گذاری';
         remainingText = 'اوج هورمون‌های زنانه و باروری';
-        phaseColor = isDark ? const Color(0xFFFFA048) : const Color(0xFFE88A2E);
+        phaseColor = colors.accent;
         emoji = '🥚';
         statusTip =
             'تخمک‌گذاری رخ داده است. هورمون‌ها در بالاترین سطح خود هستند و آمادگی فیزیکی و سطح نشاط بدنی شما عالی است.';
@@ -81,21 +81,21 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         phaseText = 'روزهای پیش از عادت (PMS)';
         remainingText =
             'روز ${PersianDigits.toFa(widget.dayOfCycle.toString())} چرخه بدنی';
-        phaseColor = isDark ? const Color(0xFFE074C4) : const Color(0xFFC752A8);
+        phaseColor = colors.primary;
         emoji = '🌸';
         statusTip =
             'روزهای قبل از پریود؛ نوسان هورمونی طبیعی است. یوگای آرام، کاهش مصرف نمک و خواب منظم بسیار موثر است.';
       case CyclePhase.dataStale:
         phaseText = 'نیاز به بازبینی وضعیت';
         remainingText = 'موعد تخمینی سپری شده است';
-        phaseColor = isDark ? const Color(0xFFFFB84D) : const Color(0xFFE59828);
+        phaseColor = colors.warning;
         emoji = '⏳';
         statusTip =
             'لطفاً وضعیت ثبت دورهٔ خود را مشخص کنید تا محاسبات و یادآوری‌ها دقیق بمانند.';
       case CyclePhase.pregnancy:
         phaseText = 'دوران بارداری';
         remainingText = 'محاسبات چرخه متوقف شده است';
-        phaseColor = isDark ? const Color(0xFF72A6F8) : const Color(0xFF4C87E8);
+        phaseColor = colors.accent;
         emoji = '🤰';
         statusTip =
             'حالت بارداری فعال است و ریتم متناسب با این دوران تنظیم شده است.';
@@ -110,7 +110,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         phaseText = 'فاز فولیکولار (رشد)';
         remainingText =
             'روز ${PersianDigits.toFa(widget.dayOfCycle.toString())} چرخه بدنی';
-        phaseColor = isDark ? const Color(0xFF5CC9A7) : const Color(0xFF38AA84);
+        phaseColor = colors.accent;
         emoji = '✨';
         statusTip =
             'فاز فولیکولار با رشد فولیکول‌ها شروع شده است. سطح هورمون استروژن افزایش یافته و انرژی و تمرکز شما رو به رشد است.';

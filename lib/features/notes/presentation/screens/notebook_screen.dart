@@ -446,21 +446,6 @@ class _NotebookScreenState extends State<NotebookScreen>
                         tooltip: 'دستیار هوشمند دفترچه',
                         onTap: _openAiAssistantSheet,
                       ),
-                      if (_tabController.index == 0)
-                        _buildHeaderActionButton(
-                          icon: _isGridView
-                              ? CupertinoIcons.rectangle_grid_1x2
-                              : CupertinoIcons.square_grid_2x2,
-                          iconColor: isDark
-                              ? Colors.white
-                              : const Color(0xFF1D2129),
-                          isDark: isDark,
-                          tooltip: _isGridView ? 'نمای فهرستی' : 'نمای شبکه‌ای',
-                          onTap: () {
-                            RitmoHapticsPolicy.selection();
-                            setState(() => _isGridView = !_isGridView);
-                          },
-                        ),
                       _buildHeaderActionButton(
                         icon: CupertinoIcons.archivebox,
                         iconColor: isDark

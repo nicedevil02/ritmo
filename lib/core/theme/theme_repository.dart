@@ -185,6 +185,21 @@ class ThemeRepository {
     );
   }
 
+  Future<bool> resetGlassSettings() async {
+    const defaultBlur = 26.0;
+    const defaultOpacity = 35;
+    final current = preferencesNotifier.value;
+    final updated = current.copyWith(
+      glassBlurSigma: defaultBlur,
+      glassOpacityPercent: defaultOpacity,
+    );
+    preferencesNotifier.value = updated;
+    return SettingsService.instance.setMany({
+      'glass_blur_intensity': defaultBlur.round(),
+      'glass_opacity_percent': defaultOpacity,
+    });
+  }
+
   Future<bool> resetAppearance() async {
     const defaults = ThemePreferences.defaults;
     preferencesNotifier.value = defaults;
@@ -194,7 +209,7 @@ class ThemeRepository {
       'theme_mode': _serializeThemeMode(defaults.mode),
       'theme_palette': RitmoPalette.serializeId(defaults.paletteId),
       'theme_reduce_transparency': false,
-      'glass_blur_intensity': 20,
+      'glass_blur_intensity': 26,
       'glass_opacity_percent': 35,
       'theme_true_black': false,
       'ui_text_scale': defaults.textScalePercent,

@@ -754,7 +754,7 @@ class SettingsRegistry {
       key: 'glass_blur_intensity',
       type: SettingType.integer,
       scope: SettingScope.db,
-      defaultValue: 20,
+      defaultValue: 26,
       min: 0,
       max: 40,
       labelFa: 'میزان مات بودن شیشه (بلور)',

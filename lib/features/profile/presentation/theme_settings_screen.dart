@@ -154,19 +154,19 @@ class ThemeSettingsScreen extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(RitmoRadius.card),
                             child: Container(
-                              height: 130,
+                              height: 135,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: context.isDark
                                     ? const Color(0xFF0F172A)
-                                    : const Color(0xFFE2E8F0),
+                                    : const Color(0xFFF1F5F9),
                               ),
                               child: Stack(
                                 children: [
-                                  // ۱. گوی نورانی گرم و زنده (آمبر / نارنجی) در سمت راست
+                                  // ۱. گوی نورانی پرکنتراست گرم (آمبر / نارنجی) در سمت راست
                                   Positioned(
-                                    top: -15,
-                                    right: 20,
+                                    top: 12,
+                                    right: 8,
                                     child: Container(
                                       width: 110,
                                       height: 110,
@@ -174,11 +174,11 @@ class ThemeSettingsScreen extends StatelessWidget {
                                         shape: BoxShape.circle,
                                         gradient: RadialGradient(
                                           colors: [
-                                            Color(0xFFFF9E44),
-                                            Color(0xFFFF5722),
+                                            Color(0xFFFF9233),
+                                            Color(0xFFFF5200),
                                             Colors.transparent,
                                           ],
-                                          stops: [0.2, 0.7, 1.0],
+                                          stops: [0.35, 0.85, 1.0],
                                         ),
                                       ),
                                     ),
@@ -186,31 +186,33 @@ class ThemeSettingsScreen extends StatelessWidget {
 
                                   // ۲. گوی نورانی فیروزه‌ای / زمردی در سمت چپ
                                   Positioned(
-                                    bottom: -20,
-                                    left: 30,
+                                    bottom: -15,
+                                    left: 20,
                                     child: Container(
-                                      width: 120,
-                                      height: 120,
+                                      width: 105,
+                                      height: 105,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         gradient: RadialGradient(
                                           colors: [
-                                            colors.primary.withValues(alpha: 0.9),
-                                            const Color(0xFF00E5FF).withValues(alpha: 0.6),
+                                            const Color(0xFF00E5FF).withValues(alpha: 0.8),
+                                            colors.primary.withValues(alpha: 0.5),
                                             Colors.transparent,
                                           ],
-                                          stops: const [0.1, 0.6, 1.0],
+                                          stops: const [0.2, 0.7, 1.0],
                                         ),
                                       ),
                                     ),
                                   ),
 
-                                  // ۳. کارت شناور شیشه‌ای روی هاله‌های نوری
+                                  // ۳. کارت شناور شیشه‌ای با هم‌پوشانی نوری
                                   Positioned.fill(
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
+                                      padding: const EdgeInsets.only(
+                                        left: 12,
+                                        top: 10,
+                                        bottom: 10,
+                                        right: 32,
                                       ),
                                       child: RitmoGlassCard(
                                         borderRadius: BorderRadius.circular(16),
@@ -220,7 +222,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                                         ),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
+                                            horizontal: 14,
                                             vertical: 10,
                                           ),
                                           child: Column(
@@ -237,7 +239,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                                                     ),
                                                     decoration: BoxDecoration(
                                                       color: (context.isDark ? Colors.white : Colors.black)
-                                                          .withValues(alpha: 0.88),
+                                                          .withValues(alpha: 0.90),
                                                       borderRadius: BorderRadius.circular(20),
                                                     ),
                                                     child: Row(
@@ -309,7 +311,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                                                       ],
                                                     ),
                                                   ),
-                                                  const SizedBox(width: 14),
+                                                  const SizedBox(width: 10),
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                                     decoration: BoxDecoration(
@@ -445,6 +447,46 @@ class ThemeSettingsScreen extends StatelessWidget {
                                 },
                               ),
                             ],
+                          ),
+                        ),
+                        // دکمه بازگردانی به مقادیر پیش‌فرض شیشه
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: RitmoSpacing.lg,
+                            vertical: RitmoSpacing.xs,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () {
+                                RitmoHapticsPolicy.selection();
+                                themeRepository.resetGlassSettings();
+                              },
+                              icon: Icon(
+                                Icons.restart_alt_rounded,
+                                size: 16,
+                                color: colors.primary,
+                              ),
+                              label: Text(
+                                'بازگردانی به پیش‌فرض',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.primary,
+                                  fontFamily: 'Vazirmatn',
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                backgroundColor: colors.primary.withValues(alpha: 0.08),
+                              ),
+                            ),
                           ),
                         ),
                       ],

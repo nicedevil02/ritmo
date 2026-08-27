@@ -12,7 +12,7 @@ class ThemePreferences {
     required this.paletteId,
     required this.reduceTransparency,
     required this.trueBlack,
-    this.glassBlurSigma = 20.0,
+    this.glassBlurSigma = 26.0,
     this.glassOpacityPercent = 35,
     this.autoDarkAtMaghrib = false, // Hook رزروشده بر اساس اوقات شرعی
     this.textScalePercent = RitmoUiScale.defaultTextPercent,
@@ -36,7 +36,7 @@ class ThemePreferences {
     paletteId: RitmoPaletteId.jadeNoir,
     reduceTransparency: false,
     trueBlack: false,
-    glassBlurSigma: 20.0,
+    glassBlurSigma: 26.0,
     glassOpacityPercent: 35,
     autoDarkAtMaghrib: false,
     textScalePercent: RitmoUiScale.defaultTextPercent,

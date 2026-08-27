@@ -55,6 +55,7 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
 
   Timer? _timer;
   int _secondsRemaining = 120;
+  DateTime? _targetExpiry;
   bool _isLoading = false;
   bool _isResending = false;
   String? _errorMessage;
@@ -76,12 +77,23 @@ class _OtpVerificationSheetState extends State<OtpVerificationSheet> {
 
   void _startCountdown() {
     _secondsRemaining = 120;
+    _targetExpiry = DateTime.now().add(const Duration(seconds: 120));
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_secondsRemaining > 0) {
-        setState(() => _secondsRemaining--);
-      } else {
+      if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_targetExpiry != null) {
+        final remaining = _targetExpiry!.difference(DateTime.now()).inSeconds;
+        if (remaining > 0) {
+          if (remaining != _secondsRemaining) {
+            setState(() => _secondsRemaining = remaining.clamp(0, 120));
+          }
+        } else {
+          t.cancel();
+          setState(() => _secondsRemaining = 0);
+        }
       }
     });
   }

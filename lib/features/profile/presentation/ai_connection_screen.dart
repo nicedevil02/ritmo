@@ -61,7 +61,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
 
   AiTestResult? _lastTestResult;
   List<AiChainEntry> _chainEntries = [];
-  bool _cloudConsentGranted = true;
+  bool _cloudConsentGranted = false;
 
   int _dailyQuotaUsed = 0;
   int _dailyQuotaLimit = 5;
@@ -113,7 +113,7 @@ class _AiConnectionScreenState extends State<AiConnectionScreen> {
       final chain = await repo.describeChain();
 
       final prefs = await SharedPreferences.getInstance();
-      final consent = prefs.getBool('assistant_cloud_consent') ?? true;
+      final consent = prefs.getBool('assistant_cloud_consent') ?? false;
 
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       final quotaUsed = prefs.getInt('local_ai_quota_count_$todayStr') ?? 0;

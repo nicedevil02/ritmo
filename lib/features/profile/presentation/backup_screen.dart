@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/services/backup_passcode_manager.dart';
 import 'package:ritmo/core/services/google_drive_backup_service.dart';
+import 'package:ritmo/core/settings/settings_service.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
@@ -43,7 +44,10 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      _isWeeklyBackupEnabled = prefs.getBool('weekly_backup_enabled') ?? false;
+      final settingsVal = SettingsService.instance.get<bool>('backup_auto_enabled');
+      _isWeeklyBackupEnabled = settingsVal ||
+          (prefs.getBool('weekly_backup_enabled') ?? false) ||
+          (prefs.getBool('backup_auto_enabled') ?? false);
       _hasPasscode = await _passcodeManager.hasPasscode();
       _passcodeHint = await _passcodeManager.getHint();
       
@@ -120,6 +124,8 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() {
       _isWeeklyBackupEnabled = enabled;
     });
+    await SettingsService.instance.set('backup_auto_enabled', enabled);
+    await prefs.setBool('backup_auto_enabled', enabled);
     await prefs.setBool('weekly_backup_enabled', enabled);
 
     if (enabled) {

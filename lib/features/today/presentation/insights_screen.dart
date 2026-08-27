@@ -20,9 +20,11 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/engines/engine_enums.dart';
 import 'package:ritmo/core/domain/engines/ritmo_engine_bus.dart';
 import 'package:ritmo/core/domain/models/inbox_item.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/services/ad_service.dart';
 import 'package:ritmo/core/services/central_inbox_service.dart';
 import 'package:ritmo/core/services/premium_service.dart';
+import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
@@ -305,19 +307,27 @@ class _InsightsScreenState extends State<InsightsScreen> {
       debugPrint('Error loading insights: $e');
     }
 
-    // Load AI Briefing & Deep Analysis cache
+    // Load AI Briefing & Deep Analysis cache (RITF-098)
     try {
       final b = await AiBriefingService.instance.getCached();
-      final prefs = await SharedPreferences.getInstance();
-      final cachedDeepAnalysis = prefs.getString('ai_deep_analysis_result_v1');
+      var cachedDeepAnalysis = await SecureKeyStore.getKey('ai_deep_analysis_result_v1');
+      if (cachedDeepAnalysis == null) {
+        final prefs = await SharedPreferences.getInstance();
+        final legacyDeep = prefs.getString('ai_deep_analysis_result_v1');
+        if (legacyDeep != null && legacyDeep.isNotEmpty) {
+          cachedDeepAnalysis = legacyDeep;
+          await SecureKeyStore.setKey('ai_deep_analysis_result_v1', legacyDeep);
+          await prefs.remove('ai_deep_analysis_result_v1');
+        }
+      }
       if (mounted) {
         setState(() {
           _briefing = b;
           _deepAnalysisResult = cachedDeepAnalysis;
         });
       }
-    } catch (e) {
-      debugPrint('Error loading briefing cache in Insights: $e');
+    } catch (e, st) {
+      RitmoLogger.warning('Error loading briefing cache in Insights: $e', error: e, stack: st);
     }
 
     if (mounted) {
@@ -433,8 +443,9 @@ ${jsonEncode(digest.json)}
       final finalResult = result.isNotEmpty ? result : 'خطا در برقراری ارتباط با سرور تحلیل هوش مصنوعی.';
 
       if (result.isNotEmpty) {
+        await SecureKeyStore.setKey('ai_deep_analysis_result_v1', result);
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('ai_deep_analysis_result_v1', result);
+        await prefs.remove('ai_deep_analysis_result_v1');
       }
 
       if (mounted) {
@@ -442,8 +453,8 @@ ${jsonEncode(digest.json)}
           _deepAnalysisResult = finalResult;
         });
       }
-    } catch (e) {
-      debugPrint('[DEEP_ANALYSIS] failed: $e');
+    } catch (e, st) {
+      RitmoLogger.warning('[DEEP_ANALYSIS] failed: $e', error: e, stack: st);
       if (mounted) {
         setState(() {
           _deepAnalysisResult = 'خطا در پردازش اطلاعات رفتاری شما.';

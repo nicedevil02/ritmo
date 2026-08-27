@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
-import 'package:ritmo/core/security/pin_hasher.dart';
+import 'package:ritmo/core/security/app_lock_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_registry.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
@@ -15,6 +15,7 @@ import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
 import 'package:ritmo/core/widgets/ritmo_module_app_bar.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
+import 'package:ritmo/features/cycle/logic/cycle_lock_service.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_section.dart';
 import 'package:ritmo/features/settings/presentation/widgets/settings_tile.dart';
 
@@ -120,8 +121,11 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
                   return;
                 }
                 Navigator.pop(ctx);
-                final hashed = PinHasher.hashPin(pin);
-                await SettingsService.instance.set(keyName, hashed);
+                if (keyName == 'cycle_lock_password') {
+                  await CycleLockService.instance.setPin(pin);
+                } else {
+                  await AppLockService.instance.setPin(pin);
+                }
                 saved = true;
                 await _loadState();
                 if (mounted) {
@@ -157,12 +161,13 @@ class _SecurityGroupScreenState extends State<SecurityGroupScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await SettingsService.instance.set(keyName, '');
-              if (keyName == 'app_lock_password') {
+              if (keyName == 'cycle_lock_password') {
+                await CycleLockService.instance.clearPin();
+                await SettingsService.instance.set('cycle_biometric_enabled', false);
+              } else {
+                await AppLockService.instance.setLockPassword(null);
                 await SettingsService.instance.set('app_lock_enabled', false);
                 await SettingsService.instance.set('app_biometric_enabled', false);
-              } else if (keyName == 'cycle_lock_password') {
-                await SettingsService.instance.set('cycle_biometric_enabled', false);
               }
               await _loadState();
               if (mounted) {

@@ -21,9 +21,12 @@ class MidDayReplanService {
     final now = DateTime.now();
     final todayStr = now.toIso8601String().substring(0, 10);
 
-    // 1. Anti-spam checks
+    // 1. Anti-spam checks (RITF-102: Bounded single key with date check)
     final prefs = await SharedPreferences.getInstance();
-    final suggestCount = prefs.getInt('replan_suggest_count_$todayStr') ?? 0;
+    final lastDate = prefs.getString('replan_last_suggest_date');
+    final suggestCount = (lastDate == todayStr)
+        ? (prefs.getInt('replan_suggest_count') ?? 0)
+        : (prefs.getInt('replan_suggest_count_$todayStr') ?? 0);
     if (suggestCount >= maxSuggestionsPerDay) {
       return false;
     }
@@ -60,8 +63,19 @@ class MidDayReplanService {
     final now = DateTime.now();
     final todayStr = now.toIso8601String().substring(0, 10);
     final prefs = await SharedPreferences.getInstance();
-    final suggestCount = prefs.getInt('replan_suggest_count_$todayStr') ?? 0;
-    await prefs.setInt('replan_suggest_count_$todayStr', suggestCount + 1);
+    final lastDate = prefs.getString('replan_last_suggest_date');
+    final currentCount = (lastDate == todayStr)
+        ? (prefs.getInt('replan_suggest_count') ?? 0)
+        : (prefs.getInt('replan_suggest_count_$todayStr') ?? 0);
+
+    await prefs.setString('replan_last_suggest_date', todayStr);
+    await prefs.setInt('replan_suggest_count', currentCount + 1);
+
+    // Auto-prune any legacy daily keys (RITF-102)
+    final legacyKeys = prefs.getKeys().where((k) => k.startsWith('replan_suggest_count_')).toList();
+    for (final k in legacyKeys) {
+      await prefs.remove(k);
+    }
   }
 
   /// Records user rejection to trigger cooldown.

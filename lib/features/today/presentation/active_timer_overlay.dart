@@ -7,7 +7,6 @@ import 'package:ritmo/core/domain/completion/completion_gateway.dart';
 import 'package:ritmo/core/domain/completion/completion_outcome.dart';
 import 'package:ritmo/core/domain/completion/completion_request.dart';
 import 'package:ritmo/core/domain/models.dart';
-import 'package:ritmo/core/domain/models/completion_result.dart';
 import 'package:ritmo/core/domain/models/duration_bounds.dart';
 import 'package:ritmo/core/platform/notification_platform.dart';
 import 'package:ritmo/core/services/ritmo_timer_service.dart';
@@ -45,6 +44,7 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
     with SingleTickerProviderStateMixin {
   late int _totalSeconds;
   int _elapsedSeconds = 0;
+  DateTime? _startedAt;
   bool _isPaused = false;
   Timer? _timer;
   late AnimationController _animController;
@@ -116,15 +116,26 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
       elapsedSeconds: _elapsedSeconds,
     );
 
-    // T9: Start local ticking — _showCompletionDialog called OUTSIDE setState
+    _startedAt = DateTime.now().subtract(Duration(seconds: _elapsedSeconds));
+
+    // T9: Start local ticking with wall-clock sync (RITF-099)
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_isPaused) return;
-      if (_elapsedSeconds < _totalSeconds) {
-        setState(() => _elapsedSeconds++);
+      if (!mounted) {
+        timer.cancel();
         return;
       }
+      if (_isPaused) return;
+      if (_startedAt != null) {
+        final elapsed = DateTime.now().difference(_startedAt!).inSeconds;
+        if (elapsed < _totalSeconds) {
+          if (elapsed != _elapsedSeconds) {
+            setState(() => _elapsedSeconds = elapsed);
+          }
+          return;
+        }
+      }
+      _elapsedSeconds = _totalSeconds;
       timer.cancel();
-      if (!mounted) return;
       unawaited(_showCompletionDialog());
     });
   }
@@ -132,6 +143,13 @@ class _ActiveTimerOverlayState extends State<ActiveTimerOverlay>
   // T8: _togglePause reads/writes via RitmoTimerService model, no raw columns
   Future<void> _togglePause() async {
     RitmoHaptics.confirm();
+    final now = DateTime.now();
+    if (!_isPaused && _startedAt != null) {
+      _elapsedSeconds = now.difference(_startedAt!).inSeconds.clamp(0, _totalSeconds);
+      _startedAt = null;
+    } else if (_isPaused) {
+      _startedAt = now.subtract(Duration(seconds: _elapsedSeconds));
+    }
     setState(() {
       _isPaused = !_isPaused;
     });

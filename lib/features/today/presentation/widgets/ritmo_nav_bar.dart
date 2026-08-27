@@ -638,6 +638,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
   Timer? _homeMorphTimer;
   Timer? _subMorphTimer;
   Timer? _initialMorphTimer;
+  int _morphCount = 0;
 
   bool get _isHome => widget.activeItem.label == 'خانه';
 
@@ -668,6 +669,7 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
     _homeMorphTimer?.cancel();
     _subMorphTimer?.cancel();
     _initialMorphTimer?.cancel();
+    _morphCount = 0;
 
     if (!_isHome) {
       if (_showPlusOnHome) {
@@ -692,6 +694,13 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
         timer.cancel();
         return;
       }
+      _morphCount++;
+      if (_morphCount > 2) {
+        timer.cancel();
+        setState(() => _showPlusOnHome = true);
+        return;
+      }
+
       setState(() => _showPlusOnHome = false);
 
       _subMorphTimer = Timer(const Duration(seconds: 2), () {

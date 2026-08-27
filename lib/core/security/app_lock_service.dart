@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
+import 'package:ritmo/core/security/pin_hasher.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/settings/settings_service.dart';
 
@@ -34,6 +35,11 @@ class AppLockService {
   // --- Setters ---
   Future<void> setLockEnabled(bool enabled) async {
     await SettingsService.instance.set('app_lock_enabled', enabled);
+  }
+
+  Future<bool> setPin(String plainPin) async {
+    final hashed = PinHasher.hashPin(plainPin);
+    return setLockPassword(hashed);
   }
 
   Future<bool> setLockPassword(String? password) async {

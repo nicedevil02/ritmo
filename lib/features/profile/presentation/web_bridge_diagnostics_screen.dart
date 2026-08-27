@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/ai/web_bridge/bridge_trace_log.dart';
@@ -28,10 +29,16 @@ class _WebBridgeDiagnosticsScreenState extends State<WebBridgeDiagnosticsScreen>
   @override
   void initState() {
     super.initState();
-    // بروزرسانی دوره‌ای هر ۲ ثانیه در حین باز بودن صفحه
-    _refreshTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (mounted) setState(() {});
-    });
+    // بروزرسانی دوره‌ای هر ۲ ثانیه در حین باز بودن صفحه فقط در حالت Debug (RITF-104)
+    if (kDebugMode) {
+      _refreshTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() {});
+      });
+    }
   }
 
   @override

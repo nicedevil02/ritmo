@@ -832,10 +832,154 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+    bool isPregnancyActive,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 48,
+                  child: Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                            size: 20,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      else
+                        const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          isPregnancyActive ? 'بارداری' : 'چرخه بدن',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 19,
+                            letterSpacing: -0.4,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                          ),
+                        ),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: _getActivePhaseColor(context),
+                        isAiButton: true,
+                        isDark: isDark,
+                        onTap: _openAiAssistant,
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.gear_alt_fill,
+                        iconColor: isDark
+                            ? const Color(0xFF9096A2)
+                            : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        onTap: _openSettingsSheet,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+                if (!isPregnancyActive)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeInOutCubic,
+                    height: _isTabsVisible ? 52.0 : 0.0,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: const BoxDecoration(),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _isTabsVisible ? 1.0 : 0.0,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: CycleSegmentedTabs(
+                              activeTab: _activeTab,
+                              onTabChanged: (index) =>
+                                  setState(() => _activeTab = index),
+                              settings: _settings,
+                              activeThemeColor:
+                                  _getActivePhaseColor(context),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
 
     if (_isLoading) {
       return const Scaffold(
@@ -887,22 +1031,20 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               isPregnancy: isPregnancyActive,
             ),
           ),
-          SafeArea(
+          Positioned.fill(
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
                 if (notification.metrics.axis == Axis.vertical) {
-                  if (notification.metrics.pixels <= 10) {
+                  if (notification.metrics.pixels <= 15) {
                     if (!_isTabsVisible) {
                       setState(() => _isTabsVisible = true);
                     }
                   } else if (notification is UserScrollNotification) {
                     if (notification.direction == ScrollDirection.reverse) {
-                      // Scrolling down -> hide tabs
                       if (_isTabsVisible) {
                         setState(() => _isTabsVisible = false);
                       }
                     } else if (notification.direction == ScrollDirection.forward) {
-                      // Scrolling up -> show tabs immediately at any scroll offset
                       if (!_isTabsVisible) {
                         setState(() => _isTabsVisible = true);
                       }
@@ -911,133 +1053,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                 }
                 return false;
               },
-              child: NestedScrollView(
-                headerSliverBuilder: (ctx, innerBoxIsScrolled) => [
-                  SliverAppBar(
-                    floating: false,
-                    pinned: true,
-                    elevation: 0,
-                    backgroundColor: isDark
-                        ? colors.background.withValues(alpha: 0.85)
-                        : const Color(0xFFF3F5F8).withValues(alpha: 0.90),
-                    automaticallyImplyLeading: false,
-                    titleSpacing: 0,
-                    flexibleSpace: ClipRect(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: colors.border.withValues(alpha: 0.25),
-                                width: 0.8,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    leading: Navigator.canPop(context)
-                        ? IconButton(
-                            icon: Icon(
-                              CupertinoIcons.arrow_right,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF1D2129),
-                              size: 22,
-                            ),
-                            onPressed: () => Navigator.pop(context),
-                          )
-                        : const SizedBox(width: 12),
-                    title: Text(
-                      isPregnancyActive ? 'بارداری' : 'چرخه بدن',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        letterSpacing: -0.5,
-                        color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      ),
-                    ),
-                    actions: [
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.sparkles,
-                        iconColor: _getActivePhaseColor(context),
-                        isAiButton: true,
-                        isDark: isDark,
-                        onTap: _openAiAssistant,
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.gear_alt_fill,
-                        iconColor: isDark
-                            ? const Color(0xFF9096A2)
-                            : const Color(0xFF6B7280),
-                        isDark: isDark,
-                        onTap: _openSettingsSheet,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    bottom: !isPregnancyActive
-                        ? PreferredSize(
-                            preferredSize: Size.fromHeight(
-                              _isTabsVisible ? 56.0 : 0.0,
-                            ),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 260),
-                              curve: Curves.easeInOutCubic,
-                              height: _isTabsVisible ? 56.0 : 0.0,
-                              clipBehavior: Clip.hardEdge,
-                              decoration: const BoxDecoration(),
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 200),
-                                opacity: _isTabsVisible ? 1.0 : 0.0,
-                                child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    10,
-                                    0,
-                                    10,
-                                    8,
-                                  ),
-                                  child: Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: CycleSegmentedTabs(
-                                        activeTab: _activeTab,
-                                        onTabChanged: (index) =>
-                                            setState(() => _activeTab = index),
-                                        settings: _settings,
-                                        activeThemeColor:
-                                            _getActivePhaseColor(context),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                ],
-              body: isPregnancyActive
+              child: isPregnancyActive
                   ? (hasValidPregnancyDates
                         ? PregnancyLockGate(
                             settings: _settings,
-                            child: CyclePregnancyModeView(
-                              pregnancyStartDate: _settings['preg_start_date']!,
-                              pregnancyDueDate: _settings['preg_due_date']!,
-                              onDeactivated: () async {
-                                final db =
-                                    await DatabaseHelper.instance.database;
-                                await PregnancySettings.setPregnancyActive(
-                                  false,
-                                  db: db,
-                                );
-                                await _loadData();
-                              },
-                              settings: _settings,
-                              dayLogs: _dayLogs,
-                              engineOutput: _engineOutput,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                top: topPadding + 64.0,
+                              ),
+                              child: CyclePregnancyModeView(
+                                pregnancyStartDate: _settings['preg_start_date']!,
+                                pregnancyDueDate: _settings['preg_due_date']!,
+                                onDeactivated: () async {
+                                  final db =
+                                      await DatabaseHelper.instance.database;
+                                  await PregnancySettings.setPregnancyActive(
+                                    false,
+                                    db: db,
+                                  );
+                                  await _loadData();
+                                },
+                                settings: _settings,
+                                dayLogs: _dayLogs,
+                                engineOutput: _engineOutput,
+                              ),
                             ),
                           )
                         : Directionality(
@@ -1111,7 +1150,12 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   : Directionality(
                       textDirection: TextDirection.rtl,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 80),
+                        padding: EdgeInsets.fromLTRB(
+                          10,
+                          topPadding + 118.0,
+                          10,
+                          80,
+                        ),
                         children: [
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
@@ -1274,9 +1318,27 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+
+          // 3. Floating Capsule Header Island
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+                child: _buildCapsuleHeader(
+                  context,
+                  isDark,
+                  colors,
+                  isPregnancyActive,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

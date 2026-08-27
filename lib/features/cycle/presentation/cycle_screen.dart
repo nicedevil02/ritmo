@@ -739,6 +739,65 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     );
   }
 
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+    required bool isDark,
+    bool hasGlow = false,
+  }) {
+    final btnBgColor =
+        isDark ? const Color(0xFF1E222A) : const Color(0xFFEFF2F6);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: btnBgColor,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isDark
+                ? (hasGlow
+                    ? iconColor.withValues(alpha: 0.45)
+                    : Colors.white.withValues(alpha: 0.08))
+                : (hasGlow
+                    ? iconColor.withValues(alpha: 0.35)
+                    : Colors.white),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? const Color(0xFF2B303C) : Colors.white,
+              offset: const Offset(-2, -2),
+              blurRadius: 4,
+            ),
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.55)
+                  : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+              offset: const Offset(2, 2),
+              blurRadius: 4,
+            ),
+            if (hasGlow)
+              BoxShadow(
+                color: iconColor.withValues(alpha: isDark ? 0.35 : 0.20),
+                blurRadius: 8,
+                spreadRadius: 0.5,
+              ),
+          ],
+        ),
+        child: Center(
+          child: Icon(icon, size: 17, color: iconColor),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -823,29 +882,28 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   title: Text(
                     isPregnancyActive ? 'بارداری' : 'چرخه بدن',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 19,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
                     ),
                   ),
                   actions: [
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.sparkles,
-                        color: colors.primary,
-                        size: 20,
-                      ),
-                      onPressed: _openAiAssistant,
+                    _buildHeaderActionButton(
+                      icon: CupertinoIcons.sparkles,
+                      iconColor: _getActivePhaseColor(context),
+                      hasGlow: true,
+                      isDark: isDark,
+                      onTap: _openAiAssistant,
                     ),
-                    IconButton(
-                      icon: Icon(
-                        CupertinoIcons.gear_alt,
-                        color: colors.textSecondary,
-                        size: 20,
-                      ),
-                      onPressed: _openSettingsSheet,
+                    _buildHeaderActionButton(
+                      icon: CupertinoIcons.gear_alt_fill,
+                      iconColor: isDark
+                          ? const Color(0xFF9096A2)
+                          : const Color(0xFF6B7280),
+                      isDark: isDark,
+                      onTap: _openSettingsSheet,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 8),
                   ],
                 ),
               ],

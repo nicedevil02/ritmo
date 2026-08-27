@@ -939,28 +939,28 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   ),
                 ),
                 if (!isPregnancyActive)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeInOutCubic,
-                    height: _isTabsVisible ? 56.0 : 0.0,
-                    clipBehavior: Clip.hardEdge,
-                    decoration: const BoxDecoration(),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _isTabsVisible ? 1.0 : 0.0,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: CycleSegmentedTabs(
-                              activeTab: _activeTab,
-                              onTabChanged: (index) =>
-                                  setState(() => _activeTab = index),
-                              settings: _settings,
-                              activeThemeColor:
-                                  _getActivePhaseColor(context),
+                  ClipRect(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeInOutCubic,
+                      height: _isTabsVisible ? 56.0 : 0.0,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: _isTabsVisible ? 1.0 : 0.0,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: CycleSegmentedTabs(
+                                activeTab: _activeTab,
+                                onTabChanged: (index) =>
+                                    setState(() => _activeTab = index),
+                                settings: _settings,
+                                activeThemeColor:
+                                    _getActivePhaseColor(context),
+                              ),
                             ),
                           ),
                         ),

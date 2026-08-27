@@ -1327,7 +1327,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
                 child: _buildCapsuleHeader(
                   context,
                   isDark,

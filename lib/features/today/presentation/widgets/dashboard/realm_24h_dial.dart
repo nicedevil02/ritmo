@@ -438,6 +438,7 @@ class _NeuDialPainter extends CustomPainter {
     final ring = Rect.fromCircle(center: center, radius: radius);
     final capAngle = (stroke / 2) / radius;
     final gapAngle = (stroke * 0.34) / radius;
+
     _paintTrack(canvas, center, radius, stroke, k);
 
     // ۱) سگمنت‌های غیرفعال: پیل‌های برجستهٔ نئومورفیک
@@ -456,7 +457,6 @@ class _NeuDialPainter extends CustomPainter {
       _paintActiveSegment(canvas, ring, g, seg, stroke, k, capAngle);
     }
 
-    _paintQuarterHourTicks(canvas, center, radius, stroke, k);
     _paintNowDot(canvas, center, radius, stroke, k);
     _paintHub(canvas, center, radius, stroke, k);
 
@@ -726,6 +726,54 @@ class _NeuDialPainter extends CustomPainter {
       ).createShader(hubRect);
     canvas.drawCircle(center, hubRadius, hubBody);
 
+    // ۲۴ نشانگر ظریف ساعت دور دایره داخلی (استایل ساعت مچی لوکس ۲۴ ساعته)
+    for (var hour = 0; hour < 24; hour++) {
+      final hourAngle = (hour / 24.0) * (2 * math.pi) - (math.pi / 2);
+      final isCardinal = hour % 6 == 0; // 00:00 (بالا)، 06:00 (راست)، 12:00 (پایین)، 18:00 (چپ)
+      final isMajor = hour % 3 == 0;
+
+      final tickLength = isCardinal
+          ? (hubRadius * 0.16).clamp(3.6, 6.5)
+          : (isMajor
+              ? (hubRadius * 0.10).clamp(2.2, 4.2)
+              : (hubRadius * 0.065).clamp(1.4, 2.8));
+
+      final tickColor = isCardinal
+          ? (isDarkMode
+              ? Colors.white.withValues(alpha: 0.55)
+              : const Color(0xFF64748B).withValues(alpha: 0.70))
+          : (isMajor
+              ? (isDarkMode
+                  ? Colors.white.withValues(alpha: 0.30)
+                  : const Color(0xFF94A3B8).withValues(alpha: 0.48))
+              : (isDarkMode
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : const Color(0xFFCBD5E1).withValues(alpha: 0.36)));
+
+      final tickStrokeWidth =
+          isCardinal ? (1.3 * k).clamp(1.0, 1.8) : (0.85 * k).clamp(0.65, 1.2);
+
+      final outerR = hubRadius - 2.8 * k;
+      final innerR = outerR - tickLength;
+
+      final outerPoint = Offset(
+        center.dx + outerR * math.cos(hourAngle),
+        center.dy + outerR * math.sin(hourAngle),
+      );
+      final innerPoint = Offset(
+        center.dx + innerR * math.cos(hourAngle),
+        center.dy + innerR * math.sin(hourAngle),
+      );
+
+      final tickPaint = Paint()
+        ..color = tickColor
+        ..strokeWidth = tickStrokeWidth
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawLine(outerPoint, innerPoint, tickPaint);
+    }
+
     final String emoji;
     if (activeZoneIcon != null && activeZoneIcon!.trim().isNotEmpty) {
       emoji = activeZoneIcon!.trim();
@@ -757,7 +805,7 @@ class _NeuDialPainter extends CustomPainter {
         canvas,
         emoji,
         center,
-        TextStyle(fontSize: (hubRadius * 0.48).clamp(11.0, 22.0)),
+        TextStyle(fontSize: (hubRadius * 0.48).clamp(13.0, 22.0)),
       );
       return;
     }
@@ -766,7 +814,7 @@ class _NeuDialPainter extends CustomPainter {
       canvas,
       emoji,
       center.translate(0, -hubRadius * 0.34),
-      TextStyle(fontSize: (hubRadius * 0.32).clamp(13.0, 28.0)),
+      TextStyle(fontSize: (hubRadius * 0.34).clamp(14.0, 32.0)),
     );
     _drawText(
       canvas,
@@ -789,42 +837,6 @@ class _NeuDialPainter extends CustomPainter {
       ),
       maxWidth: hubRadius * 1.7,
     );
-  }
-
-  /// خطوط نشانگر ۴ زمان اصلی ساعت ۲۴ ساعته (۰۰:۰۰ بالا، ۰۶:۰۰ راست، ۱۲:۰۰ پایین، ۱۸:۰۰ چپ)
-  void _paintQuarterHourTicks(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    double stroke,
-    double k,
-  ) {
-    const hours = <int>[0, 6, 12, 18];
-    final tickLength = (stroke * 0.42).clamp(4.0, 8.5);
-
-    final tickPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = (2.0 * k).clamp(1.5, 2.8)
-      ..color = isDarkMode
-          ? Colors.white.withValues(alpha: 0.32)
-          : const Color(0xFF64748B).withValues(alpha: 0.65);
-
-    for (final h in hours) {
-      final angle = _minuteToAngle(h * 60.0);
-      final cosA = math.cos(angle);
-      final sinA = math.sin(angle);
-
-      // خط نشانگر ساعت در لبه داخلی شیار
-      final p1 = center + Offset(cosA, sinA) * (radius - stroke / 2 - 1.2 * k);
-      final p2 = center + Offset(cosA, sinA) * (radius - stroke / 2 + tickLength);
-      canvas.drawLine(p1, p2, tickPaint);
-
-      // خط نشانگر ساعت در لبه خارجی شیار
-      final p3 = center + Offset(cosA, sinA) * (radius + stroke / 2 - tickLength);
-      final p4 = center + Offset(cosA, sinA) * (radius + stroke / 2 + 1.2 * k);
-      canvas.drawLine(p3, p4, tickPaint);
-    }
   }
 
   /// برچسب‌های ۰۰:۰۰ / ۰۶:۰۰ / ۱۲:۰۰ / ۱۸:۰۰ دور حلقه

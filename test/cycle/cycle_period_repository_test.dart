@@ -258,5 +258,68 @@ void main() {
       expect(all[1].id, equals('p2'));
       expect(all[2].id, equals('p1'));
     });
+
+    test('updatePeriod with clearEndDate=true or endDate=null clears endDate in database', () async {
+      final now = DateTime(2026, 8, 17);
+      await db.insert('cycle_periods', {
+        'id': 'p_to_reopen',
+        'startDate': '2026-08-14',
+        'endDate': '2026-08-16',
+        'createdAt': 1000,
+        'updatedAt': 1000,
+      });
+
+      await CyclePeriodRepository.instance.updatePeriod(
+        db: db,
+        id: 'p_to_reopen',
+        startDate: DateTime(2026, 8, 14),
+        endDate: null,
+        clearEndDate: true,
+        now: now,
+      );
+
+      final open = await CyclePeriodRepository.instance.getOpenPeriod(db);
+      expect(open, isNotNull);
+      expect(open!.id, equals('p_to_reopen'));
+      expect(open.endDate, isNull);
+      expect(open.isOpen, isTrue);
+    });
+
+    test('validatePeriodRange enforces endDate for periods started > 15 days ago', () {
+      final now = DateTime(2026, 8, 27);
+      final oldStart = DateTime(2026, 8, 1); // 26 days ago (>15)
+      final recentStart = DateTime(2026, 8, 25); // 2 days ago (<=15)
+
+      // Old period without endDate -> error
+      final errOld = CyclePeriodRepository.validatePeriodRange(
+        existing: [],
+        editingId: null,
+        startDate: oldStart,
+        endDate: null,
+        now: now,
+      );
+      expect(errOld, isNotNull);
+      expect(errOld!.contains('۱۵ روز'), isTrue);
+
+      // Old period with endDate -> valid
+      final validOld = CyclePeriodRepository.validatePeriodRange(
+        existing: [],
+        editingId: null,
+        startDate: oldStart,
+        endDate: DateTime(2026, 8, 6),
+        now: now,
+      );
+      expect(validOld, isNull);
+
+      // Recent period without endDate -> valid (open period)
+      final validRecent = CyclePeriodRepository.validatePeriodRange(
+        existing: [],
+        editingId: null,
+        startDate: recentStart,
+        endDate: null,
+        now: now,
+      );
+      expect(validRecent, isNull);
+    });
   });
 }

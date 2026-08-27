@@ -440,23 +440,17 @@ class CyclePeriodRepository {
       }
     }
 
+    final bool effectiveClearEndDate = clearEndDate || (endDate == null);
+
     // Check overlap with OTHER periods
-    final targetEnd = clearEndDate
+    final targetEnd = effectiveClearEndDate
         ? CycleDateContract.effectiveEnd(
             start: cleanStart,
             end: null,
             today: cleanToday,
             maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
           )
-        : (cleanEnd ??
-            (period.endDate != null
-                ? CycleDateContract.cleanDate(period.endDate!)
-                : CycleDateContract.effectiveEnd(
-                    start: cleanStart,
-                    end: null,
-                    today: cleanToday,
-                    maxPlausibleDays: CycleSettings.maxPlausiblePeriodDays,
-                  )));
+        : cleanEnd!;
 
     final all = await getAllPeriods(db);
     for (final p in all) {
@@ -484,7 +478,7 @@ class CyclePeriodRepository {
       CyclePeriodContract.colStartDate: CycleDateContract.toDayKey(cleanStart),
       CyclePeriodContract.colUpdatedAt: nowMs,
     };
-    if (clearEndDate) {
+    if (effectiveClearEndDate) {
       updateMap[CyclePeriodContract.colEndDate] = null;
     } else if (cleanEnd != null) {
       updateMap[CyclePeriodContract.colEndDate] = CycleDateContract.toDayKey(
@@ -504,6 +498,14 @@ class CyclePeriodRepository {
       where: '${CyclePeriodContract.colId} = ?',
       whereArgs: [id],
     );
+
+    // Phase 10: Sync confirmation requests
+    if (cleanEnd != null) {
+      await CycleConfirmationService.instance.onActualCycleEnded(
+        dbExecutor: db,
+        endDate: cleanEnd,
+      );
+    }
 
     // R7: Mandatory invalidate
     CycleEngine().invalidate();
@@ -550,19 +552,24 @@ class CyclePeriodRepository {
         : null;
 
     if (cleanStart.isAfter(cleanToday)) {
-      return 'startDate cannot be in the future.';
+      return 'تاریخ شروع نمی‌تواند در آینده باشد.';
     }
     if (cleanEnd != null) {
       if (cleanEnd.isBefore(cleanStart)) {
-        return 'endDate cannot be before startDate.';
+        return 'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.';
       }
       if (cleanEnd.isAfter(cleanToday)) {
-        return 'endDate cannot be in the future.';
+        return 'تاریخ پایان نمی‌تواند در آینده باشد.';
       }
       final duration = CycleDateContract.daysBetween(cleanStart, cleanEnd) + 1;
       if (duration > CycleSettings.maxPeriodDuration) {
-        return 'Period duration cannot exceed ${CycleSettings.maxPeriodDuration} days.';
+        return 'طول دوره قاعدگی نمی‌تواند بیش از ${CycleSettings.maxPeriodDuration} روز باشد.';
       }
+    }
+
+    if (cleanEnd == null &&
+        CycleDateContract.daysBetween(cleanStart, cleanToday) > 15) {
+      return 'ثبت تاریخ پایان برای دوره‌هایی که بیش از ۱۵ روز از شروع آن‌ها گذشته الزامی است.';
     }
 
     final targetEnd = cleanEnd ?? cleanToday;
@@ -580,7 +587,7 @@ class CyclePeriodRepository {
         p.startDate,
         pEnd,
       )) {
-        return 'Period date range overlaps with another period.';
+        return 'بازه تاریخی این دوره با دوره دیگری همپوشانی دارد.';
       }
     }
 

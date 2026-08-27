@@ -448,6 +448,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
               id: targetExistingId,
               startDate: start,
               endDate: end,
+              clearEndDate: end == null,
             );
           } else {
             final newId = await CyclePeriodRepository.instance.startPeriod(

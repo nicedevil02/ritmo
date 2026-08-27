@@ -32,6 +32,12 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
   bool _hasEndDate = false;
   String? _errorText;
 
+  bool get _isOldPeriod {
+    final cleanToday = CycleDateContract.cleanDate(CycleClock.now);
+    final cleanStart = CycleDateContract.cleanDate(_startDate);
+    return CycleDateContract.daysBetween(cleanStart, cleanToday) > 15;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -44,12 +50,17 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
       final endStr = widget.period!['endDate'] as String?;
       if (endStr != null) {
         _endDate = CycleDateContract.parseDayKey(endStr);
-        _hasEndDate = _endDate != null;
       }
     } else {
       _startDate = CycleClock.now;
       _endDate = null;
-      _hasEndDate = false;
+    }
+
+    if (_isOldPeriod) {
+      _hasEndDate = true;
+      _endDate ??= _startDate.add(const Duration(days: 5));
+    } else {
+      _hasEndDate = _endDate != null;
     }
   }
 
@@ -171,6 +182,15 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                   if (picked != null) {
                     setState(() {
                       _startDate = picked.toDateTime();
+                      if (_isOldPeriod) {
+                        _hasEndDate = true;
+                        if (_endDate == null || _endDate!.isBefore(_startDate)) {
+                          _endDate = _startDate.add(const Duration(days: 5));
+                        }
+                      } else if (_endDate != null &&
+                          _endDate!.isBefore(_startDate)) {
+                        _endDate = _startDate.add(const Duration(days: 5));
+                      }
                       _errorText = null;
                     });
                   }
@@ -207,30 +227,32 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'این دوره پایان یافته است',
-                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                  ),
-                  CupertinoSwitch(
-                    value: _hasEndDate,
-                    activeTrackColor: colors.primary,
-                    onChanged: (v) {
-                      setState(() {
-                        _hasEndDate = v;
-                        if (v && _endDate == null) {
-                          _endDate = _startDate.add(const Duration(days: 5));
-                        }
-                        _errorText = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (_hasEndDate) ...[
+              if (!_isOldPeriod) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'این دوره پایان یافته است',
+                      style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                    ),
+                    CupertinoSwitch(
+                      value: _hasEndDate,
+                      activeTrackColor: colors.primary,
+                      onChanged: (v) {
+                        setState(() {
+                          _hasEndDate = v;
+                          if (v && _endDate == null) {
+                            _endDate = _startDate.add(const Duration(days: 5));
+                          }
+                          _errorText = null;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (_hasEndDate || _isOldPeriod) ...[
                 Text(
                   'تاریخ پایان دوره:',
                   style: TextStyle(fontSize: 13, color: colors.textSecondary),
@@ -325,9 +347,17 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () {
+                    final effectiveEndDate =
+                        (_isOldPeriod || _hasEndDate) ? _endDate : null;
+                    if (_isOldPeriod && effectiveEndDate == null) {
+                      setState(() {
+                        _errorText = 'ثبت تاریخ پایان برای دوره‌های گذشته الزامی است.';
+                      });
+                      return;
+                    }
                     final error = widget.onValidate(
                       _startDate,
-                      _hasEndDate ? _endDate : null,
+                      effectiveEndDate,
                     );
                     if (error != null) {
                       setState(() {
@@ -335,7 +365,7 @@ class _AddEditPeriodSheetState extends State<AddEditPeriodSheet> {
                       });
                       return;
                     }
-                    widget.onSave(_startDate, _hasEndDate ? _endDate : null);
+                    widget.onSave(_startDate, effectiveEndDate);
                     Navigator.pop(context);
                   },
                   child: Text(

@@ -19,7 +19,6 @@ import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/navigation/shell_metrics.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/ritmo_toast.dart';
-import 'package:ritmo/core/ux/ritmo_directional_icon.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/features/assistant/logic/assistant_action_registry.dart';
 import 'package:ritmo/features/assistant/logic/day_plan_composer.dart';
@@ -1351,6 +1350,8 @@ $suggestedSteps''';
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 76.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -1358,87 +1359,21 @@ $suggestedSteps''';
         context: context,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: widget.isTab
-                ? null
-                : IconButton(
-                    icon: RitmoIcons.back(context, color: colors.textPrimary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-            title: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onLongPress: () {
-                HapticFeedback.mediumImpact();
-                ChatGptMiniPreview.show(context);
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      CupertinoIcons.sparkles,
-                      color: colors.primary,
-                      size: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'دستیار هوشمند',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            centerTitle: true,
-            actions: [
-              const BridgeStatusChip(),
-              IconButton(
-                icon: const Icon(CupertinoIcons.clock, size: 20),
-                tooltip: 'تغییرات اخیر',
-                onPressed: () => _showAuditLogSheet(context),
-              ),
-              IconButton(
-                icon: const Icon(CupertinoIcons.chat_bubble_2, size: 20),
-                tooltip: 'تاریخچه گفتگوها',
-                onPressed: () {
-                  Navigator.push<String>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ChatSessionListScreen(),
-                    ),
-                  ).then((selectedId) {
-                    if (selectedId != null) {
-                      setState(() {
-                        _sessionId = selectedId;
-                      });
-                      _loadMessages();
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-          body: Column(
+          body: Stack(
             children: [
-              if (_hasActiveDayPlanCommit)
-                Container(
-                  width: double.infinity,
-                  color: colors.primary.withValues(alpha: 0.08),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+              // Layer 1: Body Content
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    if (_hasActiveDayPlanCommit)
+                      Container(
+                        width: double.infinity,
+                        color: colors.primary.withValues(alpha: 0.08),
+                        margin: EdgeInsets.only(top: contentTopPadding),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                   child: Row(
                     children: [
                       Icon(
@@ -1898,6 +1833,275 @@ $suggestedSteps''';
               ),
             ],
           ),
+        ),
+
+        // Layer 2: Floating Capsule Header Island
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+              child: _buildCapsuleHeader(context, isDark, colors),
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+);
+}
+
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                if (!widget.isTab && Navigator.canPop(context))
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 38,
+                      minHeight: 38,
+                    ),
+                    icon: Icon(
+                      CupertinoIcons.arrow_right,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.pop(context);
+                    },
+                  )
+                else
+                  const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onLongPress: () {
+                      HapticFeedback.mediumImpact();
+                      ChatGptMiniPreview.show(context);
+                    },
+                    child: Row(
+                      children: [
+                        Text(
+                          'دستیار هوشمند',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17.5,
+                            letterSpacing: -0.4,
+                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: colors.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.sparkles,
+                                size: 11,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                'Pro',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const BridgeStatusChip(),
+                _buildHeaderActionButton(
+                  icon: CupertinoIcons.clock,
+                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                  isDark: isDark,
+                  tooltip: 'تغییرات و ممیزی دستیار',
+                  onTap: () => _showAuditLogSheet(context),
+                ),
+                _buildHeaderActionButton(
+                  icon: CupertinoIcons.chat_bubble_2_fill,
+                  iconColor: colors.primary,
+                  isDark: isDark,
+                  tooltip: 'تاریخچه گفتگوها',
+                  onTap: () {
+                    Navigator.push<String>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChatSessionListScreen(),
+                      ),
+                    ).then((selectedId) {
+                      if (selectedId != null) {
+                        setState(() {
+                          _sessionId = selectedId;
+                        });
+                        _loadMessages();
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(width: 2),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isAiButton = false,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: _buildHeaderActionButtonContent(
+        icon: icon,
+        iconColor: iconColor,
+        isDark: isDark,
+        isAiButton: isAiButton,
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildHeaderActionButtonContent({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    bool isAiButton = false,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark
+            ? (isAiButton
+                ? iconColor.withValues(alpha: 0.18)
+                : const Color(0xFF22262E))
+            : (isAiButton
+                ? iconColor.withValues(alpha: 0.12)
+                : const Color(0xFFF3F5F8)),
+        border: Border.all(
+          color: isDark
+              ? (isAiButton
+                  ? iconColor.withValues(alpha: 0.40)
+                  : Colors.white.withValues(alpha: 0.08))
+              : (isAiButton
+                  ? iconColor.withValues(alpha: 0.30)
+                  : Colors.white.withValues(alpha: 0.90)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+            offset: const Offset(2, 2),
+            blurRadius: 4,
+          ),
+          if (isAiButton)
+            BoxShadow(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 10,
+              spreadRadius: 1.0,
+            ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 18,
+          color: isAiButton
+              ? iconColor
+              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );

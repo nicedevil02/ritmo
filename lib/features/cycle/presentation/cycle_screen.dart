@@ -872,7 +872,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
             decoration: BoxDecoration(
               color: capsuleBgColor,
               borderRadius: BorderRadius.circular(26),
@@ -942,16 +942,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 260),
                     curve: Curves.easeInOutCubic,
-                    height: _isTabsVisible ? 52.0 : 0.0,
+                    height: _isTabsVisible ? 56.0 : 0.0,
                     clipBehavior: Clip.hardEdge,
                     decoration: const BoxDecoration(),
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 200),
                       opacity: _isTabsVisible ? 1.0 : 0.0,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
                         child: Align(
-                          alignment: Alignment.bottomCenter,
+                          alignment: Alignment.center,
                           child: Directionality(
                             textDirection: TextDirection.rtl,
                             child: CycleSegmentedTabs(
@@ -1059,7 +1059,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             settings: _settings,
                             child: Padding(
                               padding: EdgeInsets.only(
-                                top: topPadding + 80.0,
+                                top: topPadding + 84.0,
                               ),
                               child: CyclePregnancyModeView(
                                 pregnancyStartDate: _settings['preg_start_date']!,
@@ -1152,7 +1152,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       child: ListView(
                         padding: EdgeInsets.fromLTRB(
                           10,
-                          topPadding + 134.0,
+                          topPadding + 140.0,
                           10,
                           80,
                         ),

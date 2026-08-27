@@ -27,9 +27,7 @@ class PremiumService {
 
   static const String _secretKey = String.fromEnvironment('RITMO_PREMIUM_KEY');
 
-  static const _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const _storage = FlutterSecureStorage();
 
   static const _kSku = 'premium_sku';
   static const _kExpiry = 'premium_expiry';
@@ -42,10 +40,14 @@ class PremiumService {
   int _purchaseDateMs = 0;
   int _expiryDateMs = 0;
   String _store = 'none';
-  bool _debugMockActive = false;
+  bool _debugMockActive = true;
 
-  bool get isPremium => _isPremium;
-  String get purchaseType => _purchaseType;
+  /// در حالت دیباگ (kDebugMode)، پریمیوم به صورت پیش‌فرض فعال است.
+  /// در نسخه ریلیز، کامپایلر kDebugMode را false قطعی فرض می‌کند و دقیقاً وضعیت واقعی دیتابیس/پرداخت خوانده می‌شود.
+  bool get isPremium => kDebugMode ? _debugMockActive : _isPremium;
+  String get purchaseType => kDebugMode && _debugMockActive
+      ? (_purchaseType != 'free' ? _purchaseType : 'debug_premium_lifetime')
+      : _purchaseType;
   int get expiryDateMs => _expiryDateMs;
   int get purchaseDateMs => _purchaseDateMs;
   String get store => _store;
@@ -137,7 +139,7 @@ class PremiumService {
 
       if (kDebugMode) {
         final prefs = await SharedPreferences.getInstance();
-        _debugMockActive = prefs.getBool('premium_debug_mock') ?? false;
+        _debugMockActive = prefs.getBool('premium_debug_mock') ?? true;
       }
     } catch (e, st) {
       RitmoLog.error('PremiumService', 'Failed to load entitlement', e, st);
@@ -204,7 +206,7 @@ class PremiumService {
 
   /// Check if premium or if a feature is allowed (§10)
   bool can(PremiumFeature feature) {
-    if (_isPremium) return true;
+    if (isPremium) return true;
     final limits = FeatureLimits.current;
     switch (feature) {
       case PremiumFeature.unlimitedRoutines:
@@ -239,7 +241,7 @@ class PremiumService {
       case PremiumFeature.unlimitedAi:
         return limits.monthlyAiMessages;
       default:
-        return _isPremium ? 9999 : 5;
+        return isPremium ? 9999 : 5;
     }
   }
 
@@ -256,15 +258,21 @@ class PremiumService {
 
   /// Restores exported entitlement data to secure storage
   Future<void> restoreEntitlement(Map<String, String> data) async {
-    if (data[_kSku] == null || data[_kSku] == 'free') {
+    final sku = data[_kSku];
+    final expiry = data[_kExpiry];
+    final store = data[_kStore];
+    final purchaseDate = data[_kPurchaseDate];
+    final signature = data[_kSignature];
+
+    if (sku == null || sku == 'free' || expiry == null || store == null || purchaseDate == null || signature == null) {
       await setFree();
       return;
     }
-    await _storage.write(key: _kSku, value: data[_kSku]!);
-    await _storage.write(key: _kExpiry, value: data[_kExpiry]!);
-    await _storage.write(key: _kStore, value: data[_kStore]!);
-    await _storage.write(key: _kPurchaseDate, value: data[_kPurchaseDate]!);
-    await _storage.write(key: _kSignature, value: data[_kSignature]!);
+    await _storage.write(key: _kSku, value: sku);
+    await _storage.write(key: _kExpiry, value: expiry);
+    await _storage.write(key: _kStore, value: store);
+    await _storage.write(key: _kPurchaseDate, value: purchaseDate);
+    await _storage.write(key: _kSignature, value: signature);
   }
 
   Future<bool> activateWithCode(String code) async {

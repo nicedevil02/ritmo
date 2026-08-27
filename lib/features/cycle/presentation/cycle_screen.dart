@@ -1,6 +1,7 @@
 // C-41, C-42, C-43, C-44, C-45: CycleScreen coordinator shell
 // Decomposed into clean modular components, theme tokens, and < 800 lines.
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ritmo/core/database/database_helper.dart';
@@ -89,6 +90,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
   CycleAdaptiveAdvice? _adaptiveAdvice;
   Jalali _calendarMonth = Jalali.fromDateTime(CycleClock.now);
   final ScrollController _overviewScrollController = ScrollController();
+  final GlobalKey _calendarKey = GlobalKey();
 
   @override
   void initState() {
@@ -796,10 +798,28 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             child: NestedScrollView(
               headerSliverBuilder: (ctx, innerBoxIsScrolled) => [
                 SliverAppBar(
-                  floating: true,
-                  pinned: false,
-                  backgroundColor: Colors.transparent,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: isDark
+                      ? colors.background.withValues(alpha: 0.82)
+                      : colors.background.withValues(alpha: 0.88),
                   elevation: 0,
+                  flexibleSpace: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: colors.border.withValues(alpha: 0.25),
+                              width: 0.7,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   title: Text(
                     isPregnancyActive ? 'بارداری' : 'چرخه بدن',
                     style: TextStyle(
@@ -825,6 +845,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       ),
                       onPressed: _openSettingsSheet,
                     ),
+                    const SizedBox(width: 4),
                   ],
                 ),
               ],
@@ -921,7 +942,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                       textDirection: TextDirection.rtl,
                       child: ListView(
                         controller: _overviewScrollController,
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 32),
+                        padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
                         children: [
                           CycleSegmentedTabs(
                             activeTab: _activeTab,
@@ -930,7 +951,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             settings: _settings,
                             activeThemeColor: _getActivePhaseColor(context),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 16),
                           if (_activeTab == 0) ...[
                             if (_predictionConfidence != null &&
                                 _dataQualityReport != null)
@@ -938,18 +959,18 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 confidence: _predictionConfidence!,
                                 dataQuality: _dataQualityReport!,
                               ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             if (_burdenScore != null && _adaptiveAdvice != null)
                               CycleBurdenCard(
                                 burden: _burdenScore!,
                                 advice: _adaptiveAdvice!,
                               ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             if (_personalForecasts.isNotEmpty)
                               CyclePersonalForecastCard(
                                 forecasts: _personalForecasts,
                               ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             if (_engineOutput != null)
                               CycleSosSection(
                                 engineOutput: _engineOutput,
@@ -957,7 +978,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 settings: _settings,
                                 phase: _engineOutput!.currentPhase,
                               ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             CycleOverviewTab(
                               engineOutput: _engineOutput,
                               periods: _periods,
@@ -983,10 +1004,26 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 }
                                 WidgetsBinding.instance
                                     .addPostFrameCallback((_) {
-                                  if (_overviewScrollController.hasClients) {
+                                  final calCtx = _calendarKey.currentContext;
+                                  if (calCtx != null) {
+                                    Scrollable.ensureVisible(
+                                      calCtx,
+                                      duration:
+                                          const Duration(milliseconds: 650),
+                                      curve: Curves.easeInOutCubic,
+                                      alignment: 0.05,
+                                    );
+                                  } else if (_overviewScrollController
+                                      .hasClients) {
+                                    final target = (_overviewScrollController
+                                                .position.maxScrollExtent -
+                                            160)
+                                        .clamp(
+                                            0.0,
+                                            _overviewScrollController
+                                                .position.maxScrollExtent);
                                     _overviewScrollController.animateTo(
-                                      _overviewScrollController
-                                          .position.maxScrollExtent,
+                                      target,
                                       duration:
                                           const Duration(milliseconds: 650),
                                       curve: Curves.easeInOutCubic,
@@ -1003,8 +1040,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                     CyclePhase.follicular,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             CycleCalendarView(
+                              key: _calendarKey,
                               calendarMonth: _calendarMonth,
                               onMonthChanged: (m) async {
                                 setState(() => _calendarMonth = m);
@@ -1049,7 +1087,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 16),
                             CycleHistoryList(
                               periods: _periods,
                               onAddNewPeriod: () => _openAddEditPeriodSheet(),

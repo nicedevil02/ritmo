@@ -134,7 +134,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 340;
-        final cardHeight = isCompact ? 182.0 : 188.0 * m.densityFactor;
+        final cardHeight = isCompact ? 188.0 : 194.0 * m.densityFactor;
 
         return Container(
           width: double.infinity,
@@ -232,7 +232,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required String remainingText,
     required String statusTip,
   }) {
-    final dialSize = isCompact ? 94.0 : 104.0 * m.densityFactor;
+    final dialSize = isCompact ? 96.0 : 106.0 * m.densityFactor;
 
     return Material(
       color: Colors.transparent,
@@ -375,10 +375,10 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         borderRadius: BorderRadius.circular(34),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            16 * m.densityFactor,
-            12 * m.densityFactor,
-            16 * m.densityFactor,
-            20 * m.densityFactor,
+            14 * m.densityFactor,
+            10 * m.densityFactor,
+            14 * m.densityFactor,
+            18 * m.densityFactor,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -389,7 +389,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                   Text(
                     'پیش‌بینی روزهای آینده',
                     style: TextStyle(
-                      fontSize: isCompact ? 15 : 17,
+                      fontSize: isCompact ? 14.5 : 16.5,
                       fontWeight: FontWeight.w900,
                       color: isDark ? Colors.white : const Color(0xFF1D2129),
                     ),
@@ -398,14 +398,14 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                   Text(
                     'نمای کلی چرخه تا شروع دوره بعدی (مشاهده تقویم)',
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 10.2,
                       color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // ۴ کارت فازهای متوالی
               Expanded(
@@ -418,7 +418,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                       color: const Color(0xFFEB6E60),
                       isDark: isDark,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
                       title: 'فاز فولیکولی',
                       duration: '$follicularDays روز',
@@ -426,7 +426,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                       color: const Color(0xFF38AA84),
                       isDark: isDark,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
                       title: 'تخمک‌گذاری',
                       duration: '۲ روز',
@@ -434,7 +434,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                       color: const Color(0xFFE88A2E),
                       isDark: isDark,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     _buildTimelinePhaseCard(
                       title: 'فاز لوتئال',
                       duration: '$lutealDays روز',
@@ -446,7 +446,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // خط تایم‌لاین با نقاط متناظر
               _buildConnectingTimelineBar(
@@ -471,10 +471,10 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
         decoration: BoxDecoration(
           color: color.withValues(alpha: isDark ? 0.18 : 0.10),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: color.withValues(alpha: isDark ? 0.35 : 0.22),
             width: 0.9,
@@ -486,24 +486,24 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 9.2,
+                fontSize: 9.0,
                 fontWeight: FontWeight.w600,
                 color: isDark ? color : Color.lerp(color, Colors.black, 0.3),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               PersianDigits.toFa(duration),
               style: TextStyle(
-                fontSize: 11.2,
+                fontSize: 10.8,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF1D2129),
               ),
             ),
-            const SizedBox(height: 3),
-            Icon(icon, size: 15, color: color),
+            const SizedBox(height: 2),
+            Icon(icon, size: 14, color: color),
           ],
         ),
       ),

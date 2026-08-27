@@ -338,13 +338,23 @@ class DayAgendaService {
       int studyCount = 0;
       try {
         final studyRes = await db.rawQuery(
-          "SELECT COUNT(*) as cnt FROM konkur_topics WHERE nextReviewDate IS NOT NULL AND nextReviewDate < ? AND isArchived = 0",
+          "SELECT COUNT(*) as cnt FROM konkur_topics t JOIN konkur_subjects s ON t.subjectId = s.id WHERE t.nextReviewDate IS NOT NULL AND t.nextReviewDate < ? AND s.isArchived = 0",
           [cutoffStr],
         );
         if (studyRes.isNotEmpty) {
           studyCount = (studyRes.first['cnt'] as num?)?.toInt() ?? 0;
         }
-      } catch (_) {}
+      } catch (_) {
+        try {
+          final fallbackRes = await db.rawQuery(
+            "SELECT COUNT(*) as cnt FROM konkur_topics WHERE nextReviewDate IS NOT NULL AND nextReviewDate < ?",
+            [cutoffStr],
+          );
+          if (fallbackRes.isNotEmpty) {
+            studyCount = (fallbackRes.first['cnt'] as num?)?.toInt() ?? 0;
+          }
+        } catch (_) {}
+      }
 
       // 3. Course sessions overdue
       int courseCount = 0;

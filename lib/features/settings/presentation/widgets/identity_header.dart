@@ -104,11 +104,29 @@ class _IdentityHeaderState extends State<IdentityHeader>
       // محاسبه فعالیت‌های تکمیل‌شده امروز
       final now = DateTime.now();
       final dateStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final completedRes = await db.rawQuery(
-        'SELECT COUNT(*) FROM agenda_items WHERE isCompleted = 1 AND dateStr = ?',
-        [dateStr],
-      );
-      _completedTodayCount = Sqflite.firstIntValue(completedRes) ?? 0;
+      int completedCount = 0;
+      try {
+        final completedRoutines = await db.rawQuery(
+          'SELECT COUNT(*) FROM routine_completions WHERE completionDate = ?',
+          [dateStr],
+        );
+        completedCount += Sqflite.firstIntValue(completedRoutines) ?? 0;
+      } catch (_) {}
+      try {
+        final completedTasks = await db.rawQuery(
+          'SELECT COUNT(*) FROM simple_tasks WHERE isDone = 1 AND dueDate = ?',
+          [dateStr],
+        );
+        completedCount += Sqflite.firstIntValue(completedTasks) ?? 0;
+      } catch (_) {}
+      try {
+        final completedAgenda = await db.rawQuery(
+          'SELECT COUNT(*) FROM agenda_items WHERE isCompleted = 1 AND dateStr = ?',
+          [dateStr],
+        );
+        completedCount += Sqflite.firstIntValue(completedAgenda) ?? 0;
+      } catch (_) {}
+      _completedTodayCount = completedCount;
     } catch (e, st) {
       RitmoLog.error('Settings', 'Error loading identity header', e, st);
     } finally {

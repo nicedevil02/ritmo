@@ -29,6 +29,7 @@ import 'package:ritmo/features/konkur/presentation/widgets/konkur_hero.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_setup_flow.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_stats_section.dart';
 import 'package:ritmo/features/konkur/presentation/widgets/konkur_today_section.dart';
+import 'package:ritmo/features/study/data/study_settings_repository.dart';
 import 'package:ritmo/features/study/study_module_entry.dart';
 
 class KonkurScreen extends StatefulWidget {
@@ -366,7 +367,7 @@ class _KonkurScreenState extends State<KonkurScreen> with SingleTickerProviderSt
           initialShowInDashboard: _settings['konkur_show_in_dashboard'] == 'true',
           onSaved: _loadAllData,
           onOpenCurriculumPicker: _showFieldPicker,
-          onSwitchToStudyMode: widget.onSwitchToStudyMode,
+          onSwitchToStudyMode: _switchToStudyMode,
           onReset: () async {
             final confirm = await showDialog<bool>(
               context: context,
@@ -1148,12 +1149,7 @@ class _KonkurSettingsSheetState extends State<_KonkurSettingsSheet> {
             subtitle: Text('خروج از حالت اختصاصی کنکور و خروج به محیط عمومی مطالعه.', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
             trailing: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF3B82F6)),
             onTap: () async {
-              final db = await DatabaseHelper.instance.database;
-              await db.insert('app_settings', {
-                'key': 'study_konkur_mode',
-                'value': 'false',
-                'updatedAt': DateTime.now().millisecondsSinceEpoch,
-              });
+              await StudySettingsRepository.instance.setKonkurMode(false);
               if (context.mounted) Navigator.pop(context);
               widget.onSwitchToStudyMode?.call();
             },

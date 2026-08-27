@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/ai/ai_briefing_service.dart';
@@ -54,6 +55,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   // Selected time window ruler state (ط۵)
   InsightsTimeWindow _selectedWindow = InsightsTimeWindow.last7Days;
+  bool _isTabsVisible = true;
 
   // Gate & Metrics
   int _daysOfData = 0;
@@ -640,7 +642,7 @@ ${jsonEncode(digest.json)}
     }
 
     final topPadding = MediaQuery.paddingOf(context).top;
-    final contentTopPadding = topPadding + 76.0;
+    final contentTopPadding = topPadding + 142.0;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -650,68 +652,72 @@ ${jsonEncode(digest.json)}
         },
         child: Scaffold(
           backgroundColor: colors.background,
-          body: Stack(
-            children: [
-              // Layer 1: Body Content
-              Positioned.fill(
-                child: RefreshIndicator(
-                  onRefresh: _loadAnalytics,
-                  color: colors.primary,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Time Window Ruler (ط۵)
-                        InsightsTimeWindowRuler(
-                          selectedWindow: _selectedWindow,
-                          onWindowChanged: (w) {
-                            setState(() {
-                              _selectedWindow = w;
-                            });
-                            _loadAnalytics();
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // AI Briefing section
-                        PremiumGate(
-                          feature: PremiumFeature.unlimitedAi,
-                          child: _buildAIBriefingSection(colors, isDarkMode),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Maturity Gate Dispatcher
-                        if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
-                          _buildEarlyStageView(colors, isDarkMode)
-                        else
+          body: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is UserScrollNotification) {
+                if (notification.direction == ScrollDirection.reverse && _isTabsVisible) {
+                  setState(() => _isTabsVisible = false);
+                } else if (notification.direction == ScrollDirection.forward && !_isTabsVisible) {
+                  setState(() => _isTabsVisible = true);
+                }
+              } else if (notification is ScrollUpdateNotification) {
+                if (notification.metrics.pixels <= 15 && !_isTabsVisible) {
+                  setState(() => _isTabsVisible = true);
+                }
+              }
+              return false;
+            },
+            child: Stack(
+              children: [
+                // Layer 1: Body Content
+                Positioned.fill(
+                  child: RefreshIndicator(
+                    onRefresh: _loadAnalytics,
+                    color: colors.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // AI Briefing section
                           PremiumGate(
-                            feature: PremiumFeature.advancedInsights,
-                            child: _buildAdvancedView(colors, isDarkMode),
+                            feature: PremiumFeature.unlimitedAi,
+                            child: _buildAIBriefingSection(colors, isDarkMode),
                           ),
-                        const SizedBox(height: 16),
-                        AdService.instance.getBannerAd(),
-                      ],
+                          const SizedBox(height: 16),
+
+                          // Maturity Gate Dispatcher
+                          if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
+                            _buildEarlyStageView(colors, isDarkMode)
+                          else
+                            PremiumGate(
+                              feature: PremiumFeature.advancedInsights,
+                              child: _buildAdvancedView(colors, isDarkMode),
+                            ),
+                          const SizedBox(height: 16),
+                          AdService.instance.getBannerAd(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Layer 2: Floating Capsule Header Island
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                    child: _buildCapsuleHeader(context, isDarkMode, colors),
+                // Layer 2: Floating Capsule Header Island
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                      child: _buildCapsuleHeader(context, isDarkMode, colors),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -757,7 +763,6 @@ ${jsonEncode(digest.json)}
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
               color: capsuleBgColor,
@@ -767,66 +772,207 @@ ${jsonEncode(digest.json)}
                 width: 1.0,
               ),
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (Navigator.canPop(context))
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 38,
-                      minHeight: 38,
-                    ),
-                    icon: Icon(
-                      CupertinoIcons.arrow_right,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  )
-                else
-                  const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'بینش‌ها و الگوها',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 17.5,
-                      letterSpacing: -0.4,
-                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                // Top Row (52 height)
+                SizedBox(
+                  height: 52,
+                  child: Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                          },
+                        )
+                      else
+                        const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'بینش‌ها و الگوها',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17.5,
+                            letterSpacing: -0.4,
+                            color: isDark ? Colors.white : const Color(0xFF1D2129),
+                          ),
+                        ),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.calendar_today,
+                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        tooltip: 'انتخاب بازه زمانی',
+                        onTap: () => _showDateRangePicker(colors),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.arrow_down_doc,
+                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        tooltip: 'خروجی گرفتن',
+                        onTap: () => _showExportSheet(colors),
+                      ),
+                      Builder(
+                        builder: (btnCtx) => _buildHeaderActionButton(
+                          icon: CupertinoIcons.share,
+                          iconColor: colors.primary,
+                          isDark: isDark,
+                          tooltip: 'اشتراک‌گذاری گزارش',
+                          onTap: () => _simulateShare(btnCtx, colors),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                    ],
+                  ),
+                ),
+
+                // Bottom Collapsible Time Window Ruler
+                ClipRect(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeInOutCubic,
+                    height: _isTabsVisible ? 54.0 : 0.0,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _isTabsVisible ? 1.0 : 0.0,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: _buildTimeWindowSegmentedRuler(colors, isDark),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.calendar_today,
-                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                  isDark: isDark,
-                  tooltip: 'انتخاب بازه زمانی',
-                  onTap: () => _showDateRangePicker(colors),
-                ),
-                _buildHeaderActionButton(
-                  icon: CupertinoIcons.arrow_down_doc,
-                  iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                  isDark: isDark,
-                  tooltip: 'خروجی گرفتن',
-                  onTap: () => _showExportSheet(colors),
-                ),
-                Builder(
-                  builder: (btnCtx) => _buildHeaderActionButton(
-                    icon: CupertinoIcons.share,
-                    iconColor: colors.primary,
-                    isDark: isDark,
-                    tooltip: 'اشتراک‌گذاری گزارش',
-                    onTap: () => _simulateShare(btnCtx, colors),
-                  ),
-                ),
-                const SizedBox(width: 2),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTimeWindowSegmentedRuler(RitmoColors colors, bool isDark) {
+    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final accentColor = colors.primary;
+    final pillBgColor = isDark
+        ? const Color(0xFF22262F)
+        : Color.lerp(Colors.white, accentColor, 0.12)!;
+
+    const windows = InsightsTimeWindow.values;
+    final activeIndex = windows.indexOf(_selectedWindow).clamp(0, windows.length - 1);
+
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.all(3.5),
+      decoration: BoxDecoration(
+        color: trackBgColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFDDE3EA),
+          width: 0.9,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final totalWidth = constraints.maxWidth;
+          final itemWidth = totalWidth / windows.length;
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+
+          return Stack(
+            children: [
+              // Sliding animated pill background
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                left: isRtl ? null : activeIndex * itemWidth,
+                right: isRtl ? activeIndex * itemWidth : null,
+                top: 0,
+                bottom: 0,
+                width: itemWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: pillBgColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isDark
+                          ? accentColor.withValues(alpha: 0.35)
+                          : accentColor.withValues(alpha: 0.30),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.50)
+                            : accentColor.withValues(alpha: 0.18),
+                        offset: const Offset(0, 2),
+                        blurRadius: 5,
+                      ),
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : Colors.white.withValues(alpha: 0.9),
+                        offset: const Offset(0, -1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tab Buttons
+              Row(
+                children: windows.map((window) {
+                  final isSelected = window == _selectedWindow;
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (!isSelected) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedWindow = window;
+                          });
+                          _loadAnalytics();
+                        }
+                      },
+                      child: Center(
+                        child: Text(
+                          window.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected
+                                ? accentColor
+                                : (isDark ? const Color(0xFF8E95A2) : const Color(0xFF6B7280)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

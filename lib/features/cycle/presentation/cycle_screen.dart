@@ -922,11 +922,40 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                             ),
                             child: SafeArea(
                               bottom: false,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              child: Stack(
+                                clipBehavior: Clip.hardEdge,
                                 children: [
-                                  // Top Row: Back + Title + Sparkles + Settings
-                                  SizedBox(
+                                  // 1. Bottom Row: Tabs (Positioned right below top row with smooth slide-up effect)
+                                  if (!isPregnancyActive && tabOpacity > 0.01)
+                                    Positioned(
+                                      top: 56.0 - (collapseRatio * 32.0),
+                                      left: 10,
+                                      right: 10,
+                                      height: 48.0,
+                                      child: Opacity(
+                                        opacity: tabOpacity,
+                                        child: IgnorePointer(
+                                          ignoring: tabOpacity < 0.3,
+                                          child: Directionality(
+                                            textDirection: TextDirection.rtl,
+                                            child: CycleSegmentedTabs(
+                                              activeTab: _activeTab,
+                                              onTabChanged: (index) =>
+                                                  setState(() => _activeTab = index),
+                                              settings: _settings,
+                                              activeThemeColor:
+                                                  _getActivePhaseColor(context),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                  // 2. Top Row: Back + Title + Sparkles + Settings (Always pinned at top)
+                                  Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
                                     height: 56.0,
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -978,31 +1007,6 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                       ),
                                     ),
                                   ),
-
-                                  // Bottom Row: Tabs within the SAME header background
-                                  if (!isPregnancyActive)
-                                    Expanded(
-                                      child: Opacity(
-                                        opacity: tabOpacity,
-                                        child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                                          child: Align(
-                                            alignment: Alignment.bottomCenter,
-                                            child: Directionality(
-                                              textDirection: TextDirection.rtl,
-                                              child: CycleSegmentedTabs(
-                                                activeTab: _activeTab,
-                                                onTabChanged: (index) =>
-                                                    setState(() => _activeTab = index),
-                                                settings: _settings,
-                                                activeThemeColor:
-                                                    _getActivePhaseColor(context),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                 ],
                               ),
                             ),

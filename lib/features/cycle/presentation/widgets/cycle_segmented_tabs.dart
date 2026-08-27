@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
-import 'package:ritmo/core/theme/ritmo_theme.dart';
 
 class CycleSegmentedTabs extends StatelessWidget {
   const CycleSegmentedTabs({
@@ -21,7 +20,6 @@ class CycleSegmentedTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final showWorship = ModuleGate.instance.isEnabledFrom(
       settings,
       'module_religion_enabled',
@@ -29,9 +27,9 @@ class CycleSegmentedTabs extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final tabs = <_TabItem>[
-      const _TabItem(title: 'داشبورد', icon: CupertinoIcons.today),
-      const _TabItem(title: 'روندها', icon: CupertinoIcons.chart_bar_alt_fill),
-      const _TabItem(title: 'همبستگی‌ها', icon: CupertinoIcons.sparkles),
+      const _TabItem(title: 'داشبورد', icon: CupertinoIcons.square_grid_2x2_fill),
+      const _TabItem(title: 'داده‌ها', icon: CupertinoIcons.chart_bar_alt_fill),
+      const _TabItem(title: 'همه دستگیره‌ها', icon: CupertinoIcons.plus),
       if (showWorship)
         const _TabItem(title: 'روزه قضا', icon: CupertinoIcons.bookmark_fill),
     ];
@@ -39,13 +37,15 @@ class CycleSegmentedTabs extends StatelessWidget {
     final tabCount = tabs.length;
     final safeActiveIndex = activeTab.clamp(0, tabCount - 1);
 
-    // پالت نئومورفیک شیار زیرین و پیل شناور
-    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFE7EBF0);
-    final pillBgColor = isDark ? const Color(0xFF22262F) : Colors.white;
+    // پالت نئومورفیک شیار زیرین و پیل شناور (Apple Neumorphic Palette)
+    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final pillBgColor = isDark
+        ? const Color(0xFF22262F)
+        : Color.lerp(Colors.white, activeThemeColor, 0.12)!;
     final pillLightShadow = isDark ? const Color(0xFF2E3440) : Colors.white;
     final pillDarkShadow = isDark
         ? Colors.black.withValues(alpha: 0.60)
-        : const Color(0xFFB0BAC7).withValues(alpha: 0.65);
+        : const Color(0xFFB2BDCB).withValues(alpha: 0.65);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -53,7 +53,7 @@ class CycleSegmentedTabs extends StatelessWidget {
         const outerPadding = 4.0;
         final availableWidth = totalWidth - (outerPadding * 2);
         final tabWidth = availableWidth / tabCount;
-        const trackHeight = 44.0;
+        const trackHeight = 48.0;
         const pillHeight = trackHeight - (outerPadding * 2);
 
         return Container(
@@ -61,26 +61,26 @@ class CycleSegmentedTabs extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: trackBgColor,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.white.withValues(alpha: 0.80),
-              width: 1.0,
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 1.2,
             ),
             boxShadow: [
-              // شیار فرورفته نئومورفیک (Concave Track Shadow)
+              // شیار فرورفته نئومورفیک (Concave Track Dual Shadow)
               BoxShadow(
                 color: isDark
                     ? Colors.black.withValues(alpha: 0.70)
-                    : const Color(0xFFB8C2CE).withValues(alpha: 0.70),
+                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
                 offset: const Offset(2, 2),
                 blurRadius: 4,
               ),
               BoxShadow(
                 color: isDark
                     ? const Color(0xFF222630)
-                    : Colors.white,
+                    : Colors.white.withValues(alpha: 0.95),
                 offset: const Offset(-2, -2),
                 blurRadius: 4,
               ),
@@ -90,7 +90,7 @@ class CycleSegmentedTabs extends StatelessWidget {
             children: [
               // ۱. پیل شناور متحرک نئومورفیک (Convex Sliding Pill Indicator)
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 280),
                 curve: Curves.easeInOutCubic,
                 // در محیط راست‌به‌چپ، موقعیت بر اساس ایندکس محاسبه می‌شود
                 right: outerPadding + (safeActiveIndex * tabWidth),
@@ -100,11 +100,11 @@ class CycleSegmentedTabs extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: pillBgColor,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDark
-                          ? activeThemeColor.withValues(alpha: 0.35)
-                          : activeThemeColor.withValues(alpha: 0.25),
+                          ? activeThemeColor.withValues(alpha: 0.40)
+                          : activeThemeColor.withValues(alpha: 0.28),
                       width: 1.0,
                     ),
                     boxShadow: [
@@ -120,10 +120,10 @@ class CycleSegmentedTabs extends StatelessWidget {
                         offset: const Offset(2, 2),
                         blurRadius: 4,
                       ),
-                      // هاله رنگی فاز چرخه زیر پیل فعال
+                      // هاله رنگی فاز چرخه زیر پیل فعال (Soft Phase Glow)
                       BoxShadow(
                         color: activeThemeColor.withValues(
-                          alpha: isDark ? 0.25 : 0.15,
+                          alpha: isDark ? 0.28 : 0.18,
                         ),
                         blurRadius: 8,
                         spreadRadius: 0.5,
@@ -153,18 +153,14 @@ class CycleSegmentedTabs extends StatelessWidget {
                             child: AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 250),
                               style: TextStyle(
-                                fontSize: 12.2,
+                                fontSize: tabCount > 3 ? 11.5 : 12.5,
                                 fontWeight: isActive
                                     ? FontWeight.w900
                                     : FontWeight.w600,
                                 color: isActive
                                     ? (isDark
                                         ? Colors.white
-                                        : Color.lerp(
-                                            activeThemeColor,
-                                            Colors.black,
-                                            0.35,
-                                          ))
+                                        : activeThemeColor)
                                     : (isDark
                                         ? const Color(0xFF888F9C)
                                         : const Color(0xFF6B7280)),
@@ -185,7 +181,7 @@ class CycleSegmentedTabs extends StatelessWidget {
                                         child: Icon(
                                           tab.icon,
                                           key: ValueKey(isActive),
-                                          size: 14,
+                                          size: 15,
                                           color: isActive
                                               ? activeThemeColor
                                               : (isDark

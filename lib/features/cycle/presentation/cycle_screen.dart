@@ -482,8 +482,9 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
           await _loadData();
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Future<void> _deletePeriod(String id) async {
     final db = await DatabaseHelper.instance.database;
@@ -765,31 +766,37 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     required Color iconColor,
     required VoidCallback onTap,
     required bool isDark,
-    bool hasGlow = false,
+    bool isAiButton = false,
   }) {
-    final btnBgColor =
-        isDark ? const Color(0xFF1E222A) : const Color(0xFFEFF2F6);
+    final btnBgColor = isDark
+        ? (isAiButton
+            ? iconColor.withValues(alpha: 0.15)
+            : const Color(0xFF1E222A))
+        : (isAiButton
+            ? Color.lerp(Colors.white, iconColor, 0.12)!
+            : const Color(0xFFEFF2F6));
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         onTap();
       },
       child: Container(
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: btnBgColor,
           shape: BoxShape.circle,
           border: Border.all(
             color: isDark
-                ? (hasGlow
-                    ? iconColor.withValues(alpha: 0.45)
+                ? (isAiButton
+                    ? iconColor.withValues(alpha: 0.40)
                     : Colors.white.withValues(alpha: 0.08))
-                : (hasGlow
-                    ? iconColor.withValues(alpha: 0.35)
-                    : Colors.white),
-            width: 1.0,
+                : (isAiButton
+                    ? iconColor.withValues(alpha: 0.25)
+                    : Colors.white.withValues(alpha: 0.90)),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
@@ -799,21 +806,27 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
             ),
             BoxShadow(
               color: isDark
-                  ? Colors.black.withValues(alpha: 0.55)
+                  ? Colors.black.withValues(alpha: 0.60)
                   : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
               offset: const Offset(2, 2),
               blurRadius: 4,
             ),
-            if (hasGlow)
+            if (isAiButton)
               BoxShadow(
-                color: iconColor.withValues(alpha: isDark ? 0.35 : 0.20),
-                blurRadius: 8,
-                spreadRadius: 0.5,
+                color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+                blurRadius: 10,
+                spreadRadius: 1.0,
               ),
           ],
         ),
         child: Center(
-          child: Icon(icon, size: 17, color: iconColor),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isAiButton
+                ? iconColor
+                : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
+          ),
         ),
       ),
     );
@@ -882,8 +895,21 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                   pinned: true,
                   backgroundColor: isDark
                       ? colors.background.withValues(alpha: 0.82)
-                      : colors.background.withValues(alpha: 0.88),
+                      : const Color(0xFFF3F5F8).withValues(alpha: 0.88),
                   elevation: 0,
+                  automaticallyImplyLeading: false,
+                  leading: Navigator.canPop(context)
+                      ? IconButton(
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                            size: 22,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      : null,
                   flexibleSpace: ClipRect(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -904,7 +930,8 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     isPregnancyActive ? 'بارداری' : 'چرخه بدن',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 19,
+                      fontSize: 20,
+                      letterSpacing: -0.5,
                       color: isDark ? Colors.white : const Color(0xFF1D2129),
                     ),
                   ),
@@ -912,7 +939,7 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                     _buildHeaderActionButton(
                       icon: CupertinoIcons.sparkles,
                       iconColor: _getActivePhaseColor(context),
-                      hasGlow: true,
+                      isAiButton: true,
                       isDark: isDark,
                       onTap: _openAiAssistant,
                     ),

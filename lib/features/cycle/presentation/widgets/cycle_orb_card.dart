@@ -997,26 +997,17 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final sweepAngle = (2 * math.pi * percentage).clamp(0.001, 2 * math.pi);
 
-    // Soft ambient glow behind the progress arc
-    final glowPaint = Paint()
-      ..color = activeColor.withValues(alpha: isDark ? 0.35 : 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = strokeWidth + 3
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, glowPaint);
-
-    // Main arc with gradient mapped strictly across the active arc span [0.0 .. sweepAngle]
     final jellyArcPaint = Paint()
       ..shader = SweepGradient(
         startAngle: 0.0,
         endAngle: sweepAngle,
         colors: [
           activeColor.withValues(alpha: 0.25),
-          activeColor.withValues(alpha: 0.68),
+          activeColor.withValues(alpha: 0.65),
           activeColor,
         ],
         stops: const [0.0, 0.5, 1.0],
+        tileMode: TileMode.clamp,
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect)
       ..style = PaintingStyle.stroke

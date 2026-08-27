@@ -455,6 +455,30 @@ class RoutineAgendaSource implements AgendaSource {
       }
 
       final catStr = r['category']?.toString() ?? 'personal';
+      final normCat = catStr.trim().toLowerCase();
+
+      // Skip routines belonging to modules that are explicitly disabled
+      if ((normCat == 'fitness' || normCat == 'sports') &&
+          activeModules['sports'] == false) {
+        continue;
+      }
+      if (normCat == 'religious' && activeModules['religion'] == false) {
+        continue;
+      }
+      if ((normCat == 'medical' || normCat == 'health') &&
+          activeModules['medicine'] == false) {
+        continue;
+      }
+      if (normCat == 'learning' && activeModules['courses'] == false) {
+        continue;
+      }
+      if (normCat == 'konkur' && activeModules['study'] == false) {
+        continue;
+      }
+      if (normCat == 'habits' && activeModules['habits'] == false) {
+        continue;
+      }
+
       final category = Category.values.firstWhere(
         (e) => e.name.toLowerCase() == catStr.toLowerCase(),
         orElse: () => Category.custom,

@@ -23,7 +23,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
-  static const int _dbVersion = 134;
+  static const int _dbVersion = 1;
   static int get dbVersionForTest => _dbVersion;
 
   static bool _isClosing = false;
@@ -93,6 +93,22 @@ class DatabaseHelper {
     } catch (e, st) {
       RitmoLog.warning('DatabaseHelper', 'SQLite JSON1 capability verification warning: $e', e, st);
     }
+    try {
+      final settings = await db.query('app_settings');
+      final settingsMap = {
+        for (final s in settings)
+          s['key'] as String: s['value']?.toString() ?? '',
+      };
+      final sportsEnabled =
+          settingsMap['module_sports_enabled'] == 'true' ||
+          settingsMap['module_supplementary_sports_enabled'] == 'true';
+      if (!sportsEnabled) {
+        await db.delete(
+          'simple_tasks',
+          where: "title = 'تمرین قدرتی خانگی' OR title = 'تمرین قدرتی باشگاه'",
+        );
+      }
+    } catch (_) {}
   }
 
   /// Explicitly warms up background database tasks and seed verification (BOOT-07).
@@ -148,7 +164,7 @@ class DatabaseHelper {
           onCreate: _createDB,
           onConfigure: _onConfigure,
           onUpgrade: onUpgrade,
-          onDowngrade: _onDowngrade,
+          onDowngrade: onDatabaseDowngradeDelete,
         ),
       );
     } else {
@@ -164,7 +180,7 @@ class DatabaseHelper {
             onCreate: _createDB,
             onConfigure: _onConfigure,
             onUpgrade: onUpgrade,
-            onDowngrade: _onDowngrade,
+            onDowngrade: onDatabaseDowngradeDelete,
           );
         } catch (e, st) {
           final errStr = e.toString().toLowerCase();
@@ -195,7 +211,7 @@ class DatabaseHelper {
               onCreate: _createDB,
               onConfigure: _onConfigure,
               onUpgrade: onUpgrade,
-              onDowngrade: _onDowngrade,
+              onDowngrade: onDatabaseDowngradeDelete,
             );
           } else {
             RitmoLog.error('DatabaseHelper', 'Database open error non-fatal rethrow', e, st);
@@ -208,29 +224,11 @@ class DatabaseHelper {
 
   Future<void> _createDB(Database db, int version) async {
     await SchemaManager.createAll(db);
-
-    // A brand-new database goes straight to [version] through onCreate, so
-    // onUpgrade (and therefore the migration chain) never runs for it. Anything
-    // that lives only inside a migration - the `day_marks` table and the default
-    // calendar settings from v83, later added columns, seeded settings rows -
-    // used to be present on every upgraded install but missing on a fresh one,
-    // surfacing as `no such table` / `no such column` errors at runtime.
-    // Replaying the chain best-effort here makes a new database equivalent to a
-    // migrated one; seeds then land in the completed schema.
-    await MigrationRunner.runForFreshInstall(db, version);
-
     await SeedService.seedAll(db);
   }
 
   Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {
     await MigrationRunner.run(db, oldVersion, newVersion);
-  }
-
-  Future<void> _onDowngrade(Database db, int oldVersion, int newVersion) async {
-    RitmoLog.warning(
-      'DatabaseHelper',
-      'Downgrade detected: db=$oldVersion app=$newVersion. Keeping data as-is.',
-    );
   }
 
   Future<void> _onConfigure(Database db) async {

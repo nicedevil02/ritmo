@@ -125,6 +125,44 @@ class MockBatch implements Batch {
   }
 
   @override
+  void rawInsert(String sql, [List<Object?>? arguments]) {
+    if (sql.contains('INSERT INTO routines') && arguments != null) {
+      db.insert('routines', {
+        'id': arguments[0],
+        'title': arguments[1],
+        'category': arguments[2],
+        'routineType': arguments[3],
+        'notificationLevel': arguments[4],
+        'isEssential': arguments[5],
+        'energyRule': arguments[6],
+        'priority': arguments[7],
+        'targetDurationMinutes': arguments[8],
+        'displayOrder': arguments[9],
+        'description': arguments[10],
+        'createdAt': arguments[11],
+        'updatedAt': arguments[12],
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    } else if (sql.contains('INSERT INTO routine_schedules') && arguments != null) {
+      db.insert('routine_schedules', {
+        'id': arguments[0],
+        'routineId': arguments[1],
+        'scheduleType': arguments[2],
+        'timeOfDay': arguments[3],
+        'daysOfWeek': arguments[4],
+        'recurrenceRule': arguments[5],
+        'createdAt': arguments[6],
+        'updatedAt': arguments[7],
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    } else if (sql.contains('INSERT INTO app_settings') && arguments != null) {
+      db.insert('app_settings', {
+        'key': arguments[0],
+        'value': arguments[1],
+        'updatedAt': arguments[2],
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
+
+  @override
   Future<List<Object?>> commit({bool? exclusive, bool? noResult, bool? continueOnError}) async {
     return [];
   }

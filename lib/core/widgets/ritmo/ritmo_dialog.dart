@@ -35,7 +35,7 @@ class RitmoDialog extends StatelessWidget {
   }) {
     return showDialog<bool>(
       context: context,
-      barrierColor: context.colors.overlay,
+      barrierColor: Colors.transparent,
       builder: (context) => RitmoDialog(
         title: title,
         content: content,

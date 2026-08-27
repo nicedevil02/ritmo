@@ -48,7 +48,6 @@ class OnboardingGate {
       final prefs = await SharedPreferences.getInstance();
       final isSpCompleted = prefs.getBool('onboarding_completed') == true;
       if (isSpCompleted) {
-        await healFromPrefs(db);
         return true;
       }
     } catch (e, st) {
@@ -72,18 +71,16 @@ class OnboardingGate {
       if (isSpCompleted) {
         final nowMs = DateTime.now().millisecondsSinceEpoch;
         if (spUserName != null && spUserName.isNotEmpty) {
-          await UpsertHelper.upsert(
-            db,
+          await db.insert(
             'app_settings',
             {'key': 'user_name', 'value': spUserName, 'updatedAt': nowMs},
-            conflictColumns: const ['key'],
+            conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
-        await UpsertHelper.upsert(
-          db,
+        await db.insert(
           'app_settings',
           {'key': 'onboarding_completed', 'value': 'true', 'updatedAt': nowMs},
-          conflictColumns: const ['key'],
+          conflictAlgorithm: ConflictAlgorithm.replace,
         );
         return true;
       }

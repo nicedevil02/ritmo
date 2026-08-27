@@ -5,7 +5,7 @@ class KonkurTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 23. konkur_subjects (V2 table)
     await db.execute('''
-      CREATE TABLE konkur_subjects (
+      CREATE TABLE IF NOT EXISTS konkur_subjects (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           importanceFactor REAL NOT NULL DEFAULT 1.0,
@@ -23,7 +23,7 @@ class KonkurTables {
 
     // 24. konkur_topics (V2 table)
     await db.execute('''
-      CREATE TABLE konkur_topics (
+      CREATE TABLE IF NOT EXISTS konkur_topics (
           id TEXT PRIMARY KEY,
           subjectId TEXT NOT NULL,
           parentTopicId TEXT,
@@ -57,7 +57,7 @@ class KonkurTables {
 
     // 25. konkur_mock_exams (V2 table)
     await db.execute('''
-      CREATE TABLE konkur_mock_exams (
+      CREATE TABLE IF NOT EXISTS konkur_mock_exams (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           examDate TEXT NOT NULL,
@@ -66,11 +66,11 @@ class KonkurTables {
           note TEXT
       );
     ''');
-    await db.execute('CREATE INDEX index_konkur_mock_exams_examDate ON konkur_mock_exams(examDate);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_mock_exams_examDate ON konkur_mock_exams(examDate);');
 
     // 26. konkur_mock_exam_results (V2 table)
     await db.execute('''
-      CREATE TABLE konkur_mock_exam_results (
+      CREATE TABLE IF NOT EXISTS konkur_mock_exam_results (
           id TEXT PRIMARY KEY,
           mockExamId TEXT NOT NULL,
           subjectId TEXT NOT NULL,
@@ -84,12 +84,12 @@ class KonkurTables {
           FOREIGN KEY(subjectId) REFERENCES konkur_subjects(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_konkur_mock_exam_results_mockExamId ON konkur_mock_exam_results(mockExamId);');
-    await db.execute('CREATE INDEX index_konkur_mock_exam_results_subjectId ON konkur_mock_exam_results(subjectId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_mock_exam_results_mockExamId ON konkur_mock_exam_results(mockExamId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_mock_exam_results_subjectId ON konkur_mock_exam_results(subjectId);');
 
     // V15 konkur_study_sessions table
     await db.execute('''
-      CREATE TABLE konkur_study_sessions (
+      CREATE TABLE IF NOT EXISTS konkur_study_sessions (
         id TEXT PRIMARY KEY,
         topicId TEXT,
         subjectId TEXT,
@@ -105,13 +105,13 @@ class KonkurTables {
         createdAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_konkur_sessions_dateIso ON konkur_study_sessions(dateIso);');
-    await db.execute('CREATE INDEX index_konkur_sessions_subjectId ON konkur_study_sessions(subjectId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_sessions_dateIso ON konkur_study_sessions(dateIso);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_sessions_subjectId ON konkur_study_sessions(subjectId);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_konkur_sessions_date ON konkur_study_sessions(dateIso);');
 
     // V15 konkur_plan_items table
     await db.execute('''
-      CREATE TABLE konkur_plan_items (
+      CREATE TABLE IF NOT EXISTS konkur_plan_items (
         id TEXT PRIMARY KEY,
         dateIso TEXT NOT NULL,
         subjectId TEXT,
@@ -130,7 +130,7 @@ class KonkurTables {
         energyNote TEXT
       );
     ''');
-    await db.execute('CREATE INDEX index_konkur_plan_dateIso ON konkur_plan_items(dateIso);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_konkur_plan_dateIso ON konkur_plan_items(dateIso);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_konkur_plan_date_status ON konkur_plan_items(dateIso, status);');
 
     // V81 konkur_plans table

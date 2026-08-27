@@ -214,12 +214,17 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
               begin: activeSlot.toDouble(),
               end: activeSlot.toDouble(),
             ),
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeOutQuart,
+            duration: const Duration(milliseconds: 380),
+            curve: Curves.easeOutBack,
             builder: (context, currentSlotPos, _) {
               // محاسبه مرکز قوس و دکمه نسبت به داخل قرص (RTL)
               final ncx = barWidth - (currentSlotPos + 0.5) * slotWidth;
               final activeItem = destinations[activeSlot];
+
+              // محاسبه فیزیک کشسانی و جهش فنری اپل در حین حرکت (Apple Spring Stretch & Squish)
+              final distance = (currentSlotPos - activeSlot).abs();
+              final stretchX = (1.0 + distance * 0.12).clamp(1.0, 1.15);
+              final squishY = 1.0 / stretchX;
 
               return Stack(
                 clipBehavior: Clip.none,
@@ -252,16 +257,16 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                             ),
                             child: BackdropFilter(
                               filter: ui.ImageFilter.blur(
-                                sigmaX: 25.0,
-                                sigmaY: 25.0,
+                                sigmaX: 32.0,
+                                sigmaY: 32.0,
                               ),
                               child: CustomPaint(
                                 painter: _NeumorphicPillPainter(
                                   fillGradientTop: pillTop.withValues(
-                                    alpha: isDark ? 0.75 : 0.85,
+                                    alpha: isDark ? 0.70 : 0.80,
                                   ),
                                   fillGradientBottom: pillBottom.withValues(
-                                    alpha: isDark ? 0.88 : 0.92,
+                                    alpha: isDark ? 0.84 : 0.88,
                                   ),
                                   borderGradientTop: borderTop,
                                   borderGradientBottom: borderBottom,
@@ -342,29 +347,33 @@ class _RitmoNavBarState extends State<RitmoNavBar> {
                     top: -2.0,
                     width: _kCenterBtnSize,
                     height: _kCenterBtnSize,
-                    child: _AnimatedFloatingButton(
-                      activeItem: activeItem,
-                      bgTop: centerBtnColorTop,
-                      bgBottom: centerBtnColorBottom,
-                      iconColor: centerBtnIconColor,
-                      rimColor: centerBtnRim,
-                      isDark: isDark,
-                      onTap: () {
-                        if (activeItem.index ==
-                            RitmoShellMetrics.homeTabIndexFor(widget.mode)) {
-                          RitmoHaptics.confirm();
-                          widget.onCenterTap();
-                        } else {
-                          RitmoHaptics.selection();
-                          widget.onSelectTab(activeItem.index);
-                        }
-                      },
-                      onLongPress: widget.onCenterLongPress != null
-                          ? () {
-                              RitmoHaptics.warning();
-                              widget.onCenterLongPress!();
-                            }
-                          : null,
+                    child: Transform.scale(
+                      scaleX: stretchX,
+                      scaleY: squishY,
+                      child: _AnimatedFloatingButton(
+                        activeItem: activeItem,
+                        bgTop: centerBtnColorTop,
+                        bgBottom: centerBtnColorBottom,
+                        iconColor: centerBtnIconColor,
+                        rimColor: centerBtnRim,
+                        isDark: isDark,
+                        onTap: () {
+                          if (activeItem.index ==
+                              RitmoShellMetrics.homeTabIndexFor(widget.mode)) {
+                            RitmoHaptics.confirm();
+                            widget.onCenterTap();
+                          } else {
+                            RitmoHaptics.selection();
+                            widget.onSelectTab(activeItem.index);
+                          }
+                        },
+                        onLongPress: widget.onCenterLongPress != null
+                            ? () {
+                                RitmoHaptics.warning();
+                                widget.onCenterLongPress!();
+                              }
+                            : null,
+                      ),
                     ),
                   ),
                 ],
@@ -543,46 +552,63 @@ class _SunkenCraterPainter extends CustomPainter {
     const startAngle = -math.pi / 6;
     const sweepAngle = math.pi * 4 / 3;
 
-    // ۱. سایه عمقی، نرم و پخش‌شده پارچه‌ای (Soft Velvet Fabric Crease Shadow)
+    // ۱. کاسه فرورفته صیقلی سه‌بعدی (Concave Radial Dish Socket Fill)
+    final dishFillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = ui.Gradient.radial(
+        center,
+        radius,
+        [
+          (isDark ? const Color(0xFF0D1117) : const Color(0xFFD3DAE4))
+              .withValues(alpha: isDark ? 0.65 : 0.45),
+          (isDark ? const Color(0xFF141822) : const Color(0xFFE4E9F1))
+              .withValues(alpha: isDark ? 0.20 : 0.12),
+          Colors.transparent,
+        ],
+        [0.0, 0.72, 1.0],
+      );
+    canvas.drawCircle(center, radius, dishFillPaint);
+
+    // ۲. سایه عمقی داخلی لبه بالایی کاسه (Upper Crescent Inset Shadow)
     final innerShadowPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.6
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.4)
+      ..strokeWidth = 4.2
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.2)
       ..shader = ui.Gradient.linear(
         Offset(center.dx, center.dy - radius),
         Offset(center.dx, center.dy + radius),
         [
-          (isDark ? Colors.black : const Color(0xFF707D8F))
-              .withValues(alpha: isDark ? 0.45 : 0.30),
-          (isDark ? Colors.black : const Color(0xFF94A0B0))
-              .withValues(alpha: isDark ? 0.20 : 0.12),
+          (isDark ? Colors.black : const Color(0xFF5A6678))
+              .withValues(alpha: isDark ? 0.55 : 0.38),
+          (isDark ? Colors.black : const Color(0xFF8896A8))
+              .withValues(alpha: isDark ? 0.22 : 0.14),
           Colors.transparent,
         ],
-        [0.0, 0.6, 1.0],
+        [0.0, 0.55, 1.0],
       );
 
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 1.2),
+      Rect.fromCircle(center: center, radius: radius - 1.0),
       startAngle,
       sweepAngle,
       false,
       innerShadowPaint,
     );
 
-    // ۲. هایلایت مات، مخملی و ملایم لبه فرورفتگی پارچه‌ای (Velvety Specular Ambient Catch)
+    // ۳. هایلایت مات و مخملی لبه پایینی کاسه فرورفته (Lower Specular Rim Catch)
     final rimHighlightPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.4)
+      ..strokeWidth = 2.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5)
       ..shader = ui.Gradient.linear(
         Offset(center.dx, center.dy - radius),
         Offset(center.dx, center.dy + radius),
         [
           Colors.transparent,
           (isDark ? Colors.white : Colors.white)
-              .withValues(alpha: isDark ? 0.18 : 0.70),
+              .withValues(alpha: isDark ? 0.18 : 0.72),
         ],
-        [0.35, 1.0],
+        [0.4, 1.0],
       );
 
     canvas.drawArc(
@@ -744,7 +770,16 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                 width: _kCenterBtnRimW,
               ),
               boxShadow: [
-                // سایه اصلی عمیق زیر دکمه
+                // هاله درخشان نئونی برند متناسب با رنگ دکمه (Emissive Ambient Aura)
+                BoxShadow(
+                  color: widget.bgTop.withValues(
+                    alpha: widget.isDark ? 0.45 : 0.32,
+                  ),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+                // سایه اصلی عمیق زیر دکمه برای حس شناوری
                 BoxShadow(
                   color: Colors.black.withValues(
                     alpha: widget.isDark ? 0.55 : 0.28,
@@ -764,20 +799,49 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                 ),
               ],
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    widget.bgTop,
-                    widget.bgBottom,
-                  ],
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // گرادیان بدنه دکمه
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        widget.bgTop,
+                        widget.bgBottom,
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: Center(
-                child: ValueListenableBuilder<int>(
+                // هایلایت هلالی کلیمورفیک بالا-چپ (Top-Left Specular Sheen)
+                Positioned(
+                  top: 2.5,
+                  left: 5,
+                  right: 5,
+                  height: 18,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                        bottom: Radius.circular(10),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.38),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // آیکون وسط
+                Center(
+                  child: ValueListenableBuilder<int>(
                   valueListenable: SettingsService.instance.revision,
                   builder: (context, revision, child) {
                     final avatarPath = SettingsService.instance
@@ -855,12 +919,13 @@ class _AnimatedFloatingButtonState extends State<_AnimatedFloatingButton> {
                   },
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // ═══════════════════════════════════════════════════════════════════

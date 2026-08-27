@@ -242,6 +242,7 @@ class AgendaSourceRegistry {
               ctx.todayStr,
               ctx.settingsMap['app_start_date'],
               lookbackDays,
+              ctx.settingsMap,
             ),
             () => null,
           );

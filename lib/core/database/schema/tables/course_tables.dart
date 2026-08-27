@@ -4,7 +4,7 @@ class CourseTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 9. courses table
     await db.execute('''
-      CREATE TABLE courses (
+      CREATE TABLE IF NOT EXISTS courses (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           totalSessions INTEGER NOT NULL CHECK(totalSessions > 0),
@@ -42,7 +42,7 @@ class CourseTables {
 
     // 10. course_sessions table
     await db.execute('''
-      CREATE TABLE course_sessions (
+      CREATE TABLE IF NOT EXISTS course_sessions (
           id TEXT PRIMARY KEY,
           courseId TEXT NOT NULL,
           sessionNumber INTEGER NOT NULL,

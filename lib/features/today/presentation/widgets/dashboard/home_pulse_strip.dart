@@ -69,7 +69,7 @@ class HomePulseStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.lg,
-        vertical: RitmoSpacing.sm + 2,
+        vertical: 8,
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -98,30 +98,30 @@ class HomePulseStrip extends StatelessWidget {
           // ── ستون راست (RTL): عنوان + متریک‌ها ──
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // هدر: عنوان + منو
+                // هدر: عنوان + منو (۳ نقطه پشت نبض امروز)
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         fontFamily: 'Vazirmatn',
                         color: colors.textPrimary,
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     _menuDots(colors, isDark),
                   ],
                 ),
-                const SizedBox(height: RitmoSpacing.sm),
+                const SizedBox(height: 6),
                 // متریک‌ها
                 for (int i = 0; i < metrics.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 6),
+                  if (i > 0) const SizedBox(height: 4.5),
                   _neumorphicMetricRow(context, colors, isDark, metrics[i]),
                 ],
               ],
@@ -144,33 +144,39 @@ class HomePulseStrip extends StatelessWidget {
     final dotColor = colors.textTertiary;
     final bg = isDark
         ? colors.surfaceSunken.withValues(alpha: 0.4)
-        : const Color(0xFFD4D7DD);
+        : const Color(0xFFD8DCE3);
 
     Widget dots = Container(
-      width: 32,
-      height: 32,
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: bg,
+        border: isDark
+            ? null
+            : Border.all(
+                color: Colors.white.withValues(alpha: 0.8),
+                width: 0.6,
+              ),
         boxShadow: isDark
             ? null
-            : [
-                const BoxShadow(
+            : const [
+                BoxShadow(
                   color: Color(0xFFFBFBFD),
-                  offset: Offset(-2, -2),
-                  blurRadius: 4,
+                  offset: Offset(-1.5, -1.5),
+                  blurRadius: 3,
                 ),
-                const BoxShadow(
-                  color: Color(0xFFBCC3CF),
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
+                BoxShadow(
+                  color: Color(0xFFB8C0CD),
+                  offset: Offset(1.5, 1.5),
+                  blurRadius: 3,
                 ),
               ],
       ),
       child: Center(
         child: Icon(
           CupertinoIcons.ellipsis,
-          size: 16,
+          size: 13,
           color: dotColor,
         ),
       ),
@@ -319,27 +325,39 @@ class HomePulseStrip extends StatelessWidget {
     bool isDark,
     HomePulseMetric metric,
   ) {
-    final pillBg = isDark
-        ? colors.surfaceSunken.withValues(alpha: 0.3)
-        : const Color(0xFFE8EBF0);
-
     final row = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: pillBg,
+        borderRadius: BorderRadius.circular(11),
+        color: isDark ? colors.surfaceSunken.withValues(alpha: 0.3) : null,
+        gradient: isDark
+            ? null
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFF3F6FA),
+                  Color(0xFFE5E9F0),
+                ],
+              ),
+        border: Border.all(
+          color: isDark
+              ? colors.border.withValues(alpha: 0.4)
+              : Colors.white.withValues(alpha: 0.85),
+          width: 0.7,
+        ),
         boxShadow: isDark
             ? null
-            : [
-                const BoxShadow(
-                  color: Color(0xFFF5F7FA),
+            : const [
+                BoxShadow(
+                  color: Color(0xFFFFFFFF),
                   offset: Offset(-2, -2),
                   blurRadius: 4,
                 ),
-                const BoxShadow(
-                  color: Color(0xFFC5CAD4),
-                  offset: Offset(2, 2),
-                  blurRadius: 4,
+                BoxShadow(
+                  color: Color(0xFFB8C0CD),
+                  offset: Offset(2, 2.5),
+                  blurRadius: 5,
                 ),
               ],
       ),
@@ -347,33 +365,51 @@ class HomePulseStrip extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: Row(
           children: [
-            // آیکن دایره‌ای رنگی
+            // آیکن نئومورفیک ۳ بعدی (اسکویرکل پیلو)
             Container(
-              height: 28,
-              width: 28,
+              height: 24,
+              width: 24,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: metric.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(7.5),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    metric.color.withValues(alpha: 0.28),
+                    metric.color.withValues(alpha: 0.14),
+                  ],
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  width: 0.6,
+                ),
                 boxShadow: isDark
                     ? null
                     : [
+                        const BoxShadow(
+                          color: Colors.white,
+                          offset: Offset(-1, -1),
+                          blurRadius: 2,
+                        ),
                         BoxShadow(
-                          color: metric.color.withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
+                          color: metric.color.withValues(alpha: 0.35),
+                          offset: const Offset(1, 1.5),
+                          blurRadius: 3,
                         ),
                       ],
               ),
               child: Center(
-                child: Icon(metric.icon, size: 14, color: metric.color),
+                child: Icon(metric.icon, size: 12, color: metric.color),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 7),
             // لیبل
             Text(
               metric.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Vazirmatn',
                 color: colors.textSecondary,
@@ -383,8 +419,10 @@ class HomePulseStrip extends StatelessWidget {
             // مقدار
             Text(
               toPersianDigits(metric.value),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w800,
                 fontFamily: 'Vazirmatn',
                 color: colors.textPrimary,
@@ -394,7 +432,7 @@ class HomePulseStrip extends StatelessWidget {
               const SizedBox(width: 2),
               Icon(
                 CupertinoIcons.chevron_left,
-                size: 11,
+                size: 9.5,
                 color: colors.textTertiary,
               ),
             ],

@@ -4,7 +4,7 @@ class WorshipTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 19. worship_debts
     await db.execute('''
-      CREATE TABLE worship_debts (
+      CREATE TABLE IF NOT EXISTS worship_debts (
           id TEXT PRIMARY KEY,
           practiceId TEXT,
           sourcePracticeId TEXT,
@@ -21,12 +21,12 @@ class WorshipTables {
           userDisabledAt TEXT
       );
     ''');
-    await db.execute('CREATE INDEX index_worship_debts_debtType ON worship_debts(debtType);');
-    await db.execute('CREATE INDEX idx_worship_debts_practiceId ON worship_debts(practiceId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_worship_debts_debtType ON worship_debts(debtType);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_debts_practiceId ON worship_debts(practiceId);');
 
     // 20. worship_seasons
     await db.execute('''
-      CREATE TABLE worship_seasons (
+      CREATE TABLE IF NOT EXISTS worship_seasons (
           id TEXT PRIMARY KEY,
           seasonType TEXT NOT NULL,
           title TEXT NOT NULL,
@@ -46,11 +46,11 @@ class WorshipTables {
           hijriMonth INTEGER
       );
     ''');
-    await db.execute('CREATE INDEX index_worship_seasons_startDate ON worship_seasons(startDate);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_worship_seasons_startDate ON worship_seasons(startDate);');
 
     // 21. worship_practices (V12 table)
     await db.execute('''
-      CREATE TABLE worship_practices (
+      CREATE TABLE IF NOT EXISTS worship_practices (
           id TEXT PRIMARY KEY,
           practiceType TEXT NOT NULL,
           subType TEXT,
@@ -79,12 +79,12 @@ class WorshipTables {
           showInCalendar INTEGER DEFAULT 0
       );
     ''');
-    await db.execute('CREATE INDEX idx_wp_type ON worship_practices(practiceType);');
-    await db.execute('CREATE INDEX idx_wp_active ON worship_practices(isActive);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_wp_type ON worship_practices(practiceType);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_wp_active ON worship_practices(isActive);');
 
     // 22. fasting_debt (V19 table)
     await db.execute('''
-      CREATE TABLE fasting_debt (
+      CREATE TABLE IF NOT EXISTS fasting_debt (
         id TEXT PRIMARY KEY,
         dateIso TEXT NOT NULL,
         daysOwed INTEGER NOT NULL DEFAULT 1,
@@ -97,7 +97,7 @@ class WorshipTables {
 
     // 23. worship_completions (V57 table)
     await db.execute('''
-      CREATE TABLE worship_completions (
+      CREATE TABLE IF NOT EXISTS worship_completions (
           id TEXT PRIMARY KEY,
           practiceId TEXT NOT NULL,
           dateStr TEXT NOT NULL,
@@ -113,8 +113,8 @@ class WorshipTables {
           UNIQUE(practiceId, dateStr)
       );
     ''');
-    await db.execute('CREATE INDEX idx_worship_completions_date ON worship_completions(dateStr);');
-    await db.execute('CREATE INDEX idx_worship_completions_practice ON worship_completions(practiceId, dateStr);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_completions_date ON worship_completions(dateStr);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_worship_completions_practice ON worship_completions(practiceId, dateStr);');
 
     // 24. worship_day_context (V67 table)
     await db.execute('''

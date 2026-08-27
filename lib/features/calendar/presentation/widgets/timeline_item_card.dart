@@ -58,7 +58,8 @@ class TimelineItemCard extends StatelessWidget {
         ? 0.55
         : (isDimmed ? 0.30 : (isGhost ? 0.85 : 1.0));
 
-    final borderRadius = BorderRadius.circular(RitmoRadius.card);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(14);
 
     final startMin = layoutItem.startMinutes;
     final durMin = layoutItem.durationMinutes;
@@ -86,9 +87,34 @@ class TimelineItemCard extends StatelessWidget {
                         ? color
                         : (item.isEstimated
                               ? color.withValues(alpha: 0.4)
-                              : colors.border.withValues(alpha: 0.15)),
-                    width: isHighlighted ? 2.0 : 1.0,
+                              : (isDark
+                                    ? Colors.white.withValues(alpha: 0.08)
+                                    : color.withValues(alpha: 0.22))),
+                    width: isHighlighted ? 2.0 : 0.8,
                   ),
+                  boxShadow: [
+                    if (isHighlighted)
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.35),
+                        offset: const Offset(0, 3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      )
+                    else if (!isDone) ...[
+                      BoxShadow(
+                        color: color.withValues(alpha: isDark ? 0.16 : 0.12),
+                        offset: const Offset(0, 2),
+                        blurRadius: 5,
+                      ),
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.02)
+                            : Colors.white.withValues(alpha: 0.6),
+                        offset: const Offset(-0.8, -0.8),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ],
                 ),
                 child: ClipRRect(
                   borderRadius: borderRadius,

@@ -548,6 +548,7 @@ class RitmoTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: colors.surfaceElevated,
         modalBackgroundColor: colors.surfaceElevated,
+        modalBarrierColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
@@ -558,6 +559,7 @@ class RitmoTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: colors.surfaceElevated,
         surfaceTintColor: Colors.transparent,
+        barrierColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(m.radiusCard),
           side: isDark ? BorderSide(color: colors.border) : BorderSide.none,

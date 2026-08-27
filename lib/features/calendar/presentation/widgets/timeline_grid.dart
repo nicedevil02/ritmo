@@ -324,60 +324,112 @@ class _TimelineGridState extends State<TimelineGrid> {
                                   if (isLeadingAxis) ...[
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0,
-                                        vertical: 1.0,
+                                        horizontal: 6.0,
+                                        vertical: 2.0,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: colors.accent,
-                                        borderRadius: BorderRadius.circular(
-                                          RitmoRadius.pill,
-                                        ),
+                                        color: const Color(0xFFEF4444),
+                                        borderRadius: BorderRadius.circular(10),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                                            offset: const Offset(0, 1.5),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
                                       ),
                                       child: Text(
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: RitmoTextStyles.badge(
-                                          colors.onPrimary,
-                                        ).copyWith(
-                                          fontWeight: FontWeight.bold,
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
                                         ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFEF4444).withValues(alpha: 0.6),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     Expanded(
                                       child: Container(
-                                        height:
-                                            CalendarGeometry.nowLineThickness,
-                                        color: colors.accent,
+                                        height: 1.6,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              const Color(0xFFEF4444),
+                                              const Color(0xFFEF4444).withValues(alpha: 0.15),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ] else ...[
                                     Expanded(
                                       child: Container(
-                                        height:
-                                            CalendarGeometry.nowLineThickness,
-                                        color: colors.accent,
+                                        height: 1.6,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              const Color(0xFFEF4444).withValues(alpha: 0.15),
+                                              const Color(0xFFEF4444),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFEF4444).withValues(alpha: 0.6),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0,
-                                        vertical: 1.0,
+                                        horizontal: 6.0,
+                                        vertical: 2.0,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: colors.accent,
-                                        borderRadius: BorderRadius.circular(
-                                          RitmoRadius.pill,
-                                        ),
+                                        color: const Color(0xFFEF4444),
+                                        borderRadius: BorderRadius.circular(10),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                                            offset: const Offset(0, 1.5),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
                                       ),
                                       child: Text(
                                         toPersianDigits(
                                           '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        style: RitmoTextStyles.badge(
-                                          colors.onPrimary,
-                                        ).copyWith(
-                                          fontWeight: FontWeight.bold,
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),

@@ -728,7 +728,7 @@ class PlannerController extends ChangeNotifier {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
         final colors = context.colors;

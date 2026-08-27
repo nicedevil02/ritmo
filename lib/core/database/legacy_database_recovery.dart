@@ -221,7 +221,7 @@ class LegacyDatabaseRecovery {
       if (!await recoveryDir.exists()) return;
 
       final candidates = (await recoveryDir.list().where((e) => e is File).cast<File>().toList())
-          .where((f) => f.path.endsWith('.db'))
+          .where((f) => f.path.endsWith('.db') && !f.path.contains('corrupt'))
           .toList();
 
       candidates.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));

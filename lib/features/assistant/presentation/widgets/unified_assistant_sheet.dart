@@ -63,7 +63,7 @@ class AssistantSheet extends StatefulWidget {
       isScrollControlled: true,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierColor: Colors.transparent,
       builder: (context) =>
           AssistantSheet(persona: persona, initialQuery: initialQuery),
     );

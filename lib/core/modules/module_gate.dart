@@ -92,6 +92,12 @@ class ModuleGate {
     return isEnabled(owner);
   }
 
+  bool isCategoryEnabledFrom(Map<String, String> settings, String routineCategory) {
+    final owner = ModuleContentMap.ownerOfCategory(routineCategory);
+    if (owner == null) return true;
+    return isEnabledFrom(settings, owner);
+  }
+
   Set<String> get enabledKeys {
     return ModuleRegistry.modules
         .where((m) => isEnabled(m.key))

@@ -4,7 +4,7 @@ class ZoneTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 5. zones table
     await db.execute('''
-      CREATE TABLE zones (
+      CREATE TABLE IF NOT EXISTS zones (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           color TEXT,
@@ -21,7 +21,7 @@ class ZoneTables {
 
     // 6. zone_schedules table
     await db.execute('''
-      CREATE TABLE zone_schedules (
+      CREATE TABLE IF NOT EXISTS zone_schedules (
           id TEXT PRIMARY KEY,
           zoneId TEXT NOT NULL,
           daysOfWeek TEXT NOT NULL,
@@ -34,11 +34,11 @@ class ZoneTables {
           FOREIGN KEY(zoneId) REFERENCES zones(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_zone_schedules_zoneId ON zone_schedules(zoneId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_zone_schedules_zoneId ON zone_schedules(zoneId);');
 
     // 7. routine_zone_rules table
     await db.execute('''
-      CREATE TABLE routine_zone_rules (
+      CREATE TABLE IF NOT EXISTS routine_zone_rules (
           routineId TEXT NOT NULL,
           zoneId TEXT NOT NULL,
           ruleType TEXT NOT NULL,
@@ -48,7 +48,7 @@ class ZoneTables {
           FOREIGN KEY(zoneId) REFERENCES zones(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_routine_zone_rules_zoneId ON routine_zone_rules(zoneId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_zone_rules_zoneId ON routine_zone_rules(zoneId);');
 
     // 8. zone_sessions table (F-01, F-02)
     await db.execute('''

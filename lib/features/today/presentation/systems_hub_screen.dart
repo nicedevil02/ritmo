@@ -1924,7 +1924,7 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
+      barrierColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
         final isDark = context.isDark;

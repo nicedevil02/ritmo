@@ -4,7 +4,7 @@ class GoalTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 27. goals (V2 table)
     await db.execute('''
-      CREATE TABLE goals (
+      CREATE TABLE IF NOT EXISTS goals (
           id TEXT PRIMARY KEY,
           parentGoalId TEXT,
           title TEXT NOT NULL,
@@ -40,7 +40,7 @@ class GoalTables {
 
     // 28. goal_steps (V2 table)
     await db.execute('''
-      CREATE TABLE goal_steps (
+      CREATE TABLE IF NOT EXISTS goal_steps (
           id TEXT PRIMARY KEY,
           goalId TEXT NOT NULL,
           title TEXT NOT NULL,

@@ -554,9 +554,48 @@ class _JourneyScreenState extends State<JourneyScreen>
         break;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return PopupMenuButton<DayMarkKind>(
       tooltip: 'وضعیت روز ($label)',
-      icon: Icon(icon, color: iconColor, size: 20),
+      padding: EdgeInsets.zero,
+      offset: const Offset(0, 36),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF222834) : Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : const Color(0xFFCBD3DC),
+            width: 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.35)
+                  : const Color(0xFFC7CFDA).withValues(alpha: 0.75),
+              offset: const Offset(1, 1.8),
+              blurRadius: 3,
+            ),
+            BoxShadow(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : Colors.white,
+              offset: const Offset(-1, -1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+        child: Center(
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+      ),
       onSelected: (newKind) async {
         _invalidateDayMarkCache();
         await _controller.setDayMark(newKind);
@@ -682,7 +721,28 @@ class _JourneyScreenState extends State<JourneyScreen>
               children: [
                 // ─── Command Deck Header Surface (4 Controls) ───
                 Container(
-                  color: colors.surfaceElevated,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF141822)
+                        : const Color(0xFFEFF2F6),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : const Color(0xFFDDE3EA),
+                        width: 0.8,
+                      ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withValues(alpha: 0.25)
+                            : const Color(0xFFCCD4DF).withValues(alpha: 0.4),
+                        offset: const Offset(0, 2),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
                   padding: EdgeInsets.only(
                     left: RitmoSpacing.md,
                     right: RitmoSpacing.md,
@@ -695,18 +755,14 @@ class _JourneyScreenState extends State<JourneyScreen>
                       // [Control 1 & Navigation] Hero Date + Weekday + Period Nav Chevrons + Action Buttons
                       Row(
                         children: [
-                          // Previous period chevron
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.chevron_right, size: 20),
-                              onPressed: () => _controller.navigatePeriod(-1),
-                              tooltip: 'دوره قبل',
-                            ),
+                          // Previous period chevron (pointing right in RTL towards past)
+                          _NeumorphicHeaderIconButton(
+                            icon: Icons.chevron_left,
+                            size: 19,
+                            tooltip: 'دوره قبل',
+                            onPressed: () => _controller.navigatePeriod(-1),
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
 
                           // Tappable Date Title opens GoToDateDialog directly
                           Expanded(
@@ -720,12 +776,11 @@ class _JourneyScreenState extends State<JourneyScreen>
                                   await _controller.selectDate(picked);
                                 }
                               },
-                              borderRadius: BorderRadius.circular(
-                                RitmoRadius.card,
-                              ),
+                              borderRadius: BorderRadius.circular(12),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 2,
+                                  vertical: 4,
+                                  horizontal: 3,
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -734,8 +789,8 @@ class _JourneyScreenState extends State<JourneyScreen>
                                       child: Text(
                                         _getHeroDateTitle(selectedDate),
                                         style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13.0,
+                                          fontWeight: FontWeight.w800,
                                           letterSpacing: -0.2,
                                           color: colors.textPrimary,
                                         ),
@@ -755,18 +810,14 @@ class _JourneyScreenState extends State<JourneyScreen>
                             ),
                           ),
 
-                          // Next period chevron
-                          SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.chevron_left, size: 20),
-                              onPressed: () => _controller.navigatePeriod(1),
-                              tooltip: 'دوره بعد',
-                            ),
+                          // Next period chevron (pointing left in RTL towards future)
+                          _NeumorphicHeaderIconButton(
+                            icon: Icons.chevron_right,
+                            size: 19,
+                            tooltip: 'دوره بعد',
+                            onPressed: () => _controller.navigatePeriod(1),
                           ),
-                          const SizedBox(width: 2),
+                          const SizedBox(width: 4),
 
                           // Control 4: Animated Today Chip (visible only when !isToday)
                           AnimatedOpacity(
@@ -787,29 +838,32 @@ class _JourneyScreenState extends State<JourneyScreen>
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
+                                          horizontal: 9,
+                                          vertical: 4,
                                         ),
                                         margin: const EdgeInsets.only(left: 4),
                                         decoration: BoxDecoration(
-                                          color: colors.primary.withValues(
-                                            alpha: 0.12,
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF6366F1),
+                                              Color(0xFF4F46E5),
+                                            ],
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            RitmoRadius.pill,
-                                          ),
-                                          border: Border.all(
-                                            color: colors.primary.withValues(
-                                              alpha: 0.3,
+                                          borderRadius: BorderRadius.circular(14),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                                              offset: const Offset(0, 1.5),
+                                              blurRadius: 4,
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                        child: Text(
+                                        child: const Text(
                                           'امروز',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: colors.primary,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ),
@@ -818,107 +872,77 @@ class _JourneyScreenState extends State<JourneyScreen>
                           ),
 
                           // Control: Undo Action Button (CAL-44)
-                          if (_controller.canUndo)
-                            SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.undo_rounded, size: 18),
-                                tooltip:
-                                    'بازگردانی (${_controller.lastUndoDescription ?? ''})',
-                                color: colors.textPrimary,
-                                onPressed: _controller.undoLastAction,
-                              ),
+                          if (_controller.canUndo) ...[
+                            const SizedBox(width: 4),
+                            _NeumorphicHeaderIconButton(
+                              icon: Icons.undo_rounded,
+                              size: 17,
+                              tooltip:
+                                  'بازگردانی (${_controller.lastUndoDescription ?? ''})',
+                              onPressed: _controller.undoLastAction,
                             ),
+                          ],
 
                           // Control: Redo Action Button (CAL-44)
-                          if (_controller.canRedo)
-                            SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.redo_rounded, size: 18),
-                                tooltip:
-                                    'انجام مجدد (${_controller.lastRedoDescription ?? ''})',
-                                color: colors.textPrimary,
-                                onPressed: _controller.redoLastAction,
-                              ),
+                          if (_controller.canRedo) ...[
+                            const SizedBox(width: 4),
+                            _NeumorphicHeaderIconButton(
+                              icon: Icons.redo_rounded,
+                              size: 17,
+                              tooltip:
+                                  'انجام مجدد (${_controller.lastRedoDescription ?? ''})',
+                              onPressed: _controller.redoLastAction,
                             ),
+                          ],
+
+                          const SizedBox(width: 4),
 
                           // Quick Day Mark Status Button (CAL-49)
                           _buildQuickDayMarkButton(colors),
 
+                          const SizedBox(width: 4),
+
                           // Control 3: Search Button
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(Icons.search_rounded, size: 20),
-                              tooltip: 'جستجوی رویدادها',
-                              color: colors.textPrimary,
-                              onPressed: () {
-                                final items =
-                                    _controller.snapshot?.items ?? allItems;
-                                showSearch(
-                                  context: context,
-                                  delegate: CalendarSearchDelegate(
-                                    items: items,
-                                    onItemSelected: _openItemDetails,
-                                  ),
-                                );
-                              },
-                            ),
+                          _NeumorphicHeaderIconButton(
+                            icon: Icons.search_rounded,
+                            size: 18,
+                            tooltip: 'جستجوی رویدادها',
+                            onPressed: () {
+                              final items =
+                                  _controller.snapshot?.items ?? allItems;
+                              showSearch(
+                                context: context,
+                                delegate: CalendarSearchDelegate(
+                                  items: items,
+                                  onItemSelected: _openItemDetails,
+                                ),
+                              );
+                            },
                           ),
 
+                          const SizedBox(width: 4),
+
                           // Management Sheet Button (Three dots ⋯)
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: const Icon(
-                                    Icons.tune_rounded,
-                                    size: 20,
-                                  ),
-                                  tooltip: 'مدیریت و تنظیمات تقویم',
-                                  color: colors.textPrimary,
-                                  onPressed: () => CalendarManagementSheet.show(
-                                    context: context,
-                                    selectedDate: selectedDate,
-                                    currentScale: activeScale,
-                                    healthIssueCount: _registryHealthCount,
-                                    onSelectScale: _controller.setScale,
-                                    onOpenDayReview: () =>
-                                        _openDayReview(selectedDate, snapshot),
-                                    onOpenDayMarkPicker: () =>
-                                        _showDayMarkMenu(context, selectedDate),
-                                    onOpenAllPlans: _openAllPlans,
-                                    onRefresh: _controller.refresh,
-                                    onSaveDayTemplate: _saveDayAsTemplate,
-                                    onApplyDayTemplate: _applyDayTemplate,
-                                  ),
-                                ),
-                              ),
-                              if (_registryHealthCount > 0)
-                                Positioned(
-                                  top: 4,
-                                  left: 4,
-                                  child: Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: colors.error,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                          _NeumorphicHeaderIconButton(
+                            icon: Icons.tune_rounded,
+                            size: 18,
+                            tooltip: 'مدیریت و تنظیمات تقویم',
+                            badgeCount: _registryHealthCount,
+                            onPressed: () => CalendarManagementSheet.show(
+                              context: context,
+                              selectedDate: selectedDate,
+                              currentScale: activeScale,
+                              healthIssueCount: _registryHealthCount,
+                              onSelectScale: _controller.setScale,
+                              onOpenDayReview: () =>
+                                  _openDayReview(selectedDate, snapshot),
+                              onOpenDayMarkPicker: () =>
+                                  _showDayMarkMenu(context, selectedDate),
+                              onOpenAllPlans: _openAllPlans,
+                              onRefresh: _controller.refresh,
+                              onSaveDayTemplate: _saveDayAsTemplate,
+                              onApplyDayTemplate: _applyDayTemplate,
+                            ),
                           ),
                         ],
                       ),
@@ -1727,3 +1751,109 @@ class _DayMarkSheet extends StatelessWidget {
     );
   }
 }
+
+class _NeumorphicHeaderIconButton extends StatelessWidget {
+  const _NeumorphicHeaderIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.size = 18.0,
+    this.tooltip,
+    this.badgeCount = 0,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final double size;
+  final String? tooltip;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = context.colors;
+
+    final btn = Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF222834) : Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : const Color(0xFFCBD3DC),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.35)
+                : const Color(0xFFC7CFDA).withValues(alpha: 0.75),
+            offset: const Offset(1, 1.8),
+            blurRadius: 3,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.03)
+                : Colors.white,
+            offset: const Offset(-1, -1),
+            blurRadius: 2,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: Center(
+            child: Icon(
+              icon,
+              size: size,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.88)
+                  : const Color(0xFF334155),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (badgeCount > 0) {
+      final badgedBtn = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          btn,
+          Positioned(
+            top: 2,
+            left: 2,
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: colors.error,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? const Color(0xFF222834) : Colors.white,
+                  width: 1.2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      final tip = tooltip;
+      if (tip != null && tip.isNotEmpty) {
+        return Tooltip(message: tip, child: badgedBtn);
+      }
+      return badgedBtn;
+    }
+
+    final tip = tooltip;
+    if (tip != null && tip.isNotEmpty) {
+      return Tooltip(message: tip, child: btn);
+    }
+    return btn;
+  }
+}
+

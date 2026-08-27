@@ -32,6 +32,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -40,11 +41,26 @@ class JourneyScaleSwitcher extends StatelessWidget {
           // ─── 3-Tab Strip ───
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(1.5),
+              height: 36.0 * context.metrics.densityFactor,
+              padding: const EdgeInsets.all(3.0),
               decoration: BoxDecoration(
-                color: colors.surfaceSubtle,
-                borderRadius: BorderRadius.circular(RitmoRadius.field),
-                border: Border.all(color: colors.borderSubtle),
+                color: isDark ? const Color(0xFF151922) : const Color(0xFFE4E9EF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : const Color(0xFFCBD3DC).withValues(alpha: 0.8),
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.35)
+                        : const Color(0xFFC7CFDA).withValues(alpha: 0.55),
+                    offset: const Offset(0, 1.5),
+                    blurRadius: 3,
+                  ),
+                ],
               ),
               child: Row(
                 children: _primaryScales.map((scale) {
@@ -59,37 +75,41 @@ class JourneyScaleSwitcher extends StatelessWidget {
                         onTap: () => onScaleChanged(scale),
                         behavior: HitTestBehavior.opaque,
                         child: AnimatedContainer(
-                          duration: RitmoMotion.state,
-                          curve: RitmoMotion.enter,
-                          height: 28.0 * context.metrics.densityFactor,
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? colors.surfaceElevated
+                                ? (isDark ? const Color(0xFF262C38) : Colors.white)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(
-                              RitmoRadius.iconButton,
-                            ),
+                            borderRadius: BorderRadius.circular(13),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: colors.overlay.withValues(
-                                        alpha: 0.08,
-                                      ),
-                                      blurRadius: 3,
-                                      offset: const Offset(0, 1),
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.035)
+                                          : Colors.white,
+                                      offset: const Offset(-1.5, -1.5),
+                                      blurRadius: 4,
+                                    ),
+                                    BoxShadow(
+                                      color: isDark
+                                          ? Colors.black.withValues(alpha: 0.45)
+                                          : const Color(0xFFBAC3CF).withValues(alpha: 0.65),
+                                      offset: const Offset(1.5, 2.5),
+                                      blurRadius: 5,
                                     ),
                                   ]
                                 : null,
                           ),
                           child: Text(
                             label,
-                            style: RitmoTextStyles.badge(
-                              isSelected ? colors.primary : colors.textSecondary,
-                            ).copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              color: isSelected
+                                  ? colors.primary
+                                  : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ),
                           ),
                         ),
@@ -101,7 +121,7 @@ class JourneyScaleSwitcher extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
 
           // ─── Overflow ⋯ Button ───
           _OverflowScaleButton(
@@ -196,31 +216,55 @@ class _OverflowScaleButton extends StatelessWidget {
             .toList(),
         onSelected: onScaleChanged,
         child: AnimatedContainer(
-          duration: RitmoMotion.state,
-          curve: RitmoMotion.enter,
-          height: 31 * context.metrics.densityFactor,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          height: 36 * context.metrics.densityFactor,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: isActive
-                ? colors.primary.withValues(alpha: 0.12)
-                : colors.surfaceSubtle,
-            borderRadius: BorderRadius.circular(RitmoRadius.field),
+                ? colors.primary.withValues(alpha: 0.14)
+                : (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF232A37)
+                    : const Color(0xFFE4E9EF)),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isActive
-                  ? colors.primary.withValues(alpha: 0.3)
-                  : colors.borderSubtle,
+                  ? colors.primary.withValues(alpha: 0.45)
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : const Color(0xFFCBD3DC)),
+              width: 0.8,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : const Color(0xFFC7CFDA).withValues(alpha: 0.6),
+                offset: const Offset(1, 2),
+                blurRadius: 3,
+              ),
+            ],
           ),
           child: isActive
               ? Center(
                   child: Text(
                     JourneyScaleSwitcher.scaleLabelFa(activeScale),
-                    style: RitmoTextStyles.badge(
-                      colors.primary,
-                    ).copyWith(fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
+                    ),
                   ),
                 )
-              : const Center(child: Icon(Icons.more_horiz_rounded, size: 16)),
+              : Center(
+                  child: Icon(
+                    Icons.more_horiz_rounded,
+                    size: 18,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF64748B),
+                  ),
+                ),
         ),
       ),
     );

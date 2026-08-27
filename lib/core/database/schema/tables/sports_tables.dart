@@ -4,7 +4,7 @@ class SportsTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 11.5. workout_logs (V2 table)
     await db.execute('''
-      CREATE TABLE workout_logs (
+      CREATE TABLE IF NOT EXISTS workout_logs (
           id TEXT PRIMARY KEY,
           type TEXT NOT NULL,
           kind TEXT,
@@ -31,7 +31,7 @@ class SportsTables {
           metricsJson TEXT
       );
     ''');
-    await db.execute('CREATE INDEX index_workout_logs_loggedAt ON workout_logs(loggedAt);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_workout_logs_loggedAt ON workout_logs(loggedAt);');
     await db.execute('''
       CREATE UNIQUE INDEX IF NOT EXISTS idx_workout_logs_source_entity
       ON workout_logs(sourceModule, sourceEntityId)
@@ -40,7 +40,7 @@ class SportsTables {
 
     // 11.6. workout split + recovery (sports v2)
     await db.execute('''
-      CREATE TABLE workout_split_days (
+      CREATE TABLE IF NOT EXISTS workout_split_days (
         weekday INTEGER PRIMARY KEY,
         muscleGroups TEXT NOT NULL DEFAULT '',
         isRest INTEGER NOT NULL DEFAULT 0,
@@ -48,7 +48,7 @@ class SportsTables {
       );
     ''');
     await db.execute('''
-      CREATE TABLE workout_recovery_logs (
+      CREATE TABLE IF NOT EXISTS workout_recovery_logs (
         id TEXT PRIMARY KEY,
         date TEXT NOT NULL,
         soreness INTEGER NOT NULL DEFAULT 0,
@@ -59,11 +59,11 @@ class SportsTables {
         loggedAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_recovery_date ON workout_recovery_logs(date);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_recovery_date ON workout_recovery_logs(date);');
 
     // 11.7. exercises_library (sports v3)
     await db.execute('''
-      CREATE TABLE exercises_library (
+      CREATE TABLE IF NOT EXISTS exercises_library (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         category TEXT NOT NULL,
@@ -75,7 +75,7 @@ class SportsTables {
 
     // 11.8. workout_set_logs (sports v3)
     await db.execute('''
-      CREATE TABLE workout_set_logs (
+      CREATE TABLE IF NOT EXISTS workout_set_logs (
         id TEXT PRIMARY KEY,
         workoutLogId TEXT NOT NULL,
         exerciseId TEXT NOT NULL,

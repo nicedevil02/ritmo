@@ -34,15 +34,23 @@ class DaySummaryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: RitmoSpacing.md,
-        vertical: 3.0,
+        vertical: 4.0,
       ),
       decoration: BoxDecoration(
-        color: colors.surfaceSubtle,
-        border: Border(bottom: BorderSide(color: colors.borderSubtle)),
+        color: isDark ? const Color(0xFF141822) : const Color(0xFFEFF2F6),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : const Color(0xFFDDE3EA),
+            width: 0.8,
+          ),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -51,33 +59,58 @@ class DaySummaryBar extends StatelessWidget {
           _SummaryChip(
             label: 'مانده: ${toPersianDigits(snapshot.remainingCount)}',
             color: colors.primary,
+            isDark: isDark,
           ),
 
           // Completed count
           _SummaryChip(
             label: 'انجام‌شده: ${toPersianDigits(snapshot.completedCount)}',
             color: colors.success,
+            isDark: isDark,
           ),
 
           // Free time (tappable)
           InkWell(
             onTap: onTapFreeGaps,
-            borderRadius: BorderRadius.circular(RitmoRadius.badge),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1E2430)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : const Color(0xFFD5DCE4),
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : const Color(0xFFCCD4DF).withValues(alpha: 0.5),
+                    offset: const Offset(0, 1.5),
+                    blurRadius: 2.5,
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
                   Icon(
                     Icons.schedule_rounded,
-                    size: 12,
-                    color: colors.textSecondary,
+                    size: 13,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 3),
+                  const SizedBox(width: 4),
                   Text(
                     'آزاد: ${_formatFreeTime(_freeMinutes)}',
-                    style: RitmoTextStyles.badge(
-                      colors.textSecondary,
-                    ).copyWith(fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                    ),
                   ),
                 ],
               ),
@@ -90,23 +123,42 @@ class DaySummaryBar extends StatelessWidget {
 }
 
 class _SummaryChip extends StatelessWidget {
-  const _SummaryChip({required this.label, required this.color});
+  const _SummaryChip({
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
   final String label;
   final Color color;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(RitmoRadius.badge),
+        color: color.withValues(alpha: isDark ? 0.16 : 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.28 : 0.25),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: isDark ? 0.12 : 0.15),
+            offset: const Offset(0, 1),
+            blurRadius: 2,
+          ),
+        ],
       ),
       child: Text(
         label,
-        style: RitmoTextStyles.badge(
-          color,
-        ).copyWith(fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
   }

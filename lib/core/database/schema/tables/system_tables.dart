@@ -5,7 +5,7 @@ class SystemTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 8. temporary_events table
     await db.execute('''
-      CREATE TABLE temporary_events (
+      CREATE TABLE IF NOT EXISTS temporary_events (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           date TEXT NOT NULL,
@@ -16,11 +16,11 @@ class SystemTables {
           createdAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_temporary_events_date ON temporary_events(date);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_temporary_events_date ON temporary_events(date);');
 
     // 11. energy_logs table
     await db.execute('''
-      CREATE TABLE energy_logs (
+      CREATE TABLE IF NOT EXISTS energy_logs (
           id TEXT PRIMARY KEY,
           energyLevel TEXT NOT NULL,
           source TEXT NOT NULL DEFAULT 'MANUAL',
@@ -28,11 +28,11 @@ class SystemTables {
           loggedAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_energy_logs_loggedAt ON energy_logs(loggedAt);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_energy_logs_loggedAt ON energy_logs(loggedAt);');
 
     // 12. daily_rhythm table
     await db.execute('''
-      CREATE TABLE daily_rhythm (
+      CREATE TABLE IF NOT EXISTS daily_rhythm (
           date TEXT PRIMARY KEY,
           rhythmScore INTEGER NOT NULL DEFAULT 0,
           scheduledCount INTEGER NOT NULL DEFAULT 0,
@@ -55,7 +55,7 @@ class SystemTables {
 
     // 13. pending_reminders table
     await db.execute('''
-      CREATE TABLE pending_reminders (
+      CREATE TABLE IF NOT EXISTS pending_reminders (
           id TEXT PRIMARY KEY,
           routineId TEXT,
           scheduleId TEXT,
@@ -80,14 +80,14 @@ class SystemTables {
           FOREIGN KEY(courseSessionId) REFERENCES course_sessions(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_pending_reminders_routineId ON pending_reminders(routineId);');
-    await db.execute('CREATE INDEX index_pending_reminders_scheduleId ON pending_reminders(scheduleId);');
-    await db.execute('CREATE INDEX index_pending_reminders_scheduledTime ON pending_reminders(scheduledTime);');
-    await db.execute('CREATE UNIQUE INDEX index_pending_reminders_unique_slot ON pending_reminders(routineId, scheduleId, originalTime);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_pending_reminders_routineId ON pending_reminders(routineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_pending_reminders_scheduleId ON pending_reminders(scheduleId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_pending_reminders_scheduledTime ON pending_reminders(scheduledTime);');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS index_pending_reminders_unique_slot ON pending_reminders(routineId, scheduleId, originalTime);');
 
     // 14. prayer_times_cache table
     await db.execute('''
-      CREATE TABLE prayer_times_cache (
+      CREATE TABLE IF NOT EXISTS prayer_times_cache (
           date TEXT NOT NULL,
           cityId TEXT NOT NULL,
           fajr TEXT NOT NULL,
@@ -113,11 +113,11 @@ class SystemTables {
           FOREIGN KEY(cityId) REFERENCES iran_cities(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_prayer_times_cache_cityId ON prayer_times_cache(cityId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_prayer_times_cache_cityId ON prayer_times_cache(cityId);');
 
     // 15. iran_cities table (offline bundled seed data)
     await db.execute('''
-      CREATE TABLE iran_cities (
+      CREATE TABLE IF NOT EXISTS iran_cities (
           id TEXT PRIMARY KEY,
           province TEXT NOT NULL,
           city TEXT NOT NULL,
@@ -125,11 +125,11 @@ class SystemTables {
           longitude REAL NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_iran_cities_province ON iran_cities(province);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_iran_cities_province ON iran_cities(province);');
 
     // 16. app_settings table
     await db.execute('''
-      CREATE TABLE app_settings (
+      CREATE TABLE IF NOT EXISTS app_settings (
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL,
           updatedAt INTEGER NOT NULL
@@ -138,7 +138,7 @@ class SystemTables {
 
     // 17. calendar_exceptions table
     await db.execute('''
-      CREATE TABLE calendar_exceptions (
+      CREATE TABLE IF NOT EXISTS calendar_exceptions (
           date TEXT PRIMARY KEY,
           exceptionType TEXT NOT NULL,
           behavior TEXT NOT NULL DEFAULT 'NORMAL',
@@ -148,7 +148,7 @@ class SystemTables {
           createdAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_calendar_exceptions_exceptionType ON calendar_exceptions(exceptionType);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_calendar_exceptions_exceptionType ON calendar_exceptions(exceptionType);');
 
     // 18. active_timers table
     await db.execute('''
@@ -192,7 +192,7 @@ class SystemTables {
 
     // bedtime_diagnostics (V2 table)
     await db.execute('''
-      CREATE TABLE bedtime_diagnostics (
+      CREATE TABLE IF NOT EXISTS bedtime_diagnostics (
           date TEXT PRIMARY KEY,
           reason TEXT NOT NULL,
           note TEXT,
@@ -207,7 +207,7 @@ class SystemTables {
 
     // daily_checkins (V2 table)
     await db.execute('''
-      CREATE TABLE daily_checkins (
+      CREATE TABLE IF NOT EXISTS daily_checkins (
           id TEXT PRIMARY KEY,
           date TEXT NOT NULL UNIQUE,
           mood TEXT NOT NULL,
@@ -218,7 +218,7 @@ class SystemTables {
 
     // daily_reflections (V2 table)
     await db.execute('''
-      CREATE TABLE daily_reflections (
+      CREATE TABLE IF NOT EXISTS daily_reflections (
           id TEXT PRIMARY KEY,
           date TEXT NOT NULL UNIQUE,
           goodThing TEXT,
@@ -238,7 +238,7 @@ class SystemTables {
 
     // notification_history (V2 table)
     await db.execute('''
-      CREATE TABLE notification_history (
+      CREATE TABLE IF NOT EXISTS notification_history (
           id TEXT PRIMARY KEY,
           routineId TEXT,
           notificationType TEXT NOT NULL,
@@ -247,11 +247,11 @@ class SystemTables {
           FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE SET NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_notification_history_routineId ON notification_history(routineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_notification_history_routineId ON notification_history(routineId);');
 
     // assistant_suggestions (V2 table)
     await db.execute('''
-      CREATE TABLE assistant_suggestions (
+      CREATE TABLE IF NOT EXISTS assistant_suggestions (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           body TEXT NOT NULL,
@@ -263,7 +263,7 @@ class SystemTables {
 
     // assistant_audit_log (V2 table)
     await db.execute('''
-      CREATE TABLE assistant_audit_log (
+      CREATE TABLE IF NOT EXISTS assistant_audit_log (
           id TEXT PRIMARY KEY,
           actionType TEXT NOT NULL,
           targetKey TEXT,
@@ -276,7 +276,7 @@ class SystemTables {
 
     // mood_logs (V17 table)
     await db.execute('''
-      CREATE TABLE mood_logs (
+      CREATE TABLE IF NOT EXISTS mood_logs (
           id TEXT PRIMARY KEY,
           mood TEXT NOT NULL,
           valence INTEGER NOT NULL DEFAULT 3,
@@ -284,11 +284,11 @@ class SystemTables {
           loggedAt INTEGER NOT NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_mood_logs_loggedAt ON mood_logs(loggedAt);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_mood_logs_loggedAt ON mood_logs(loggedAt);');
 
     // devices (V22 table)
     await db.execute('''
-      CREATE TABLE devices (
+      CREATE TABLE IF NOT EXISTS devices (
           id TEXT PRIMARY KEY,
           deviceName TEXT,
           platform TEXT,
@@ -301,7 +301,7 @@ class SystemTables {
 
     // inbox_items (V26 table)
     await db.execute('''
-      CREATE TABLE inbox_items (
+      CREATE TABLE IF NOT EXISTS inbox_items (
         id TEXT PRIMARY KEY,
         category TEXT NOT NULL,
         sourceSystem TEXT NOT NULL,
@@ -319,9 +319,9 @@ class SystemTables {
         dedupeKey TEXT
       );
     ''');
-    await db.execute('CREATE INDEX idx_inbox_status ON inbox_items(status);');
-    await db.execute('CREATE INDEX idx_inbox_createdAt ON inbox_items(createdAt);');
-    await db.execute('CREATE UNIQUE INDEX idx_inbox_dedupe ON inbox_items(dedupeKey);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_items(status);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_inbox_createdAt ON inbox_items(createdAt);');
+    await db.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_inbox_dedupe ON inbox_items(dedupeKey);');
 
     // simple_tasks table (Prompt 057)
     await db.execute('''

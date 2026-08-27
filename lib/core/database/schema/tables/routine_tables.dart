@@ -5,7 +5,7 @@ class RoutineTables {
   static Future<void> create(DatabaseExecutor db) async {
     // 1. routines table
     await db.execute('''
-      CREATE TABLE routines (
+      CREATE TABLE IF NOT EXISTS routines (
           id TEXT PRIMARY KEY,
           title TEXT NOT NULL,
           description TEXT,
@@ -60,12 +60,12 @@ class RoutineTables {
           FOREIGN KEY(dependsOnRoutineId) REFERENCES routines(id) ON DELETE SET NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_routines_dependsOnRoutineId ON routines(dependsOnRoutineId);');
-    await db.execute('CREATE INDEX index_routines_category ON routines(category);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routines_dependsOnRoutineId ON routines(dependsOnRoutineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routines_category ON routines(category);');
 
     // 2. routine_schedules table
     await db.execute('''
-      CREATE TABLE routine_schedules (
+      CREATE TABLE IF NOT EXISTS routine_schedules (
           id TEXT PRIMARY KEY,
           routineId TEXT NOT NULL,
           scheduleType TEXT NOT NULL,
@@ -90,11 +90,11 @@ class RoutineTables {
           FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_routine_schedules_routineId ON routine_schedules(routineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_schedules_routineId ON routine_schedules(routineId);');
 
     // 3. routine_completions table
     await db.execute('''
-      CREATE TABLE routine_completions (
+      CREATE TABLE IF NOT EXISTS routine_completions (
           id TEXT PRIMARY KEY,
           routineId TEXT NOT NULL,
           completionDate TEXT NOT NULL,
@@ -114,12 +114,12 @@ class RoutineTables {
           FOREIGN KEY(routineId) REFERENCES routines(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_routine_completions_routineId ON routine_completions(routineId);');
-    await db.execute('CREATE INDEX index_routine_completions_completionDate ON routine_completions(completionDate);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_completions_routineId ON routine_completions(routineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_completions_completionDate ON routine_completions(completionDate);');
 
     // 4. routine_occurrences table
     await db.execute('''
-      CREATE TABLE routine_occurrences (
+      CREATE TABLE IF NOT EXISTS routine_occurrences (
           routine_id TEXT NOT NULL,
           date TEXT NOT NULL,
           scheduled_time TEXT,
@@ -129,12 +129,12 @@ class RoutineTables {
           FOREIGN KEY(routine_id) REFERENCES routines(id) ON DELETE CASCADE
       );
     ''');
-    await db.execute('CREATE INDEX index_routine_occurrences_routine_id ON routine_occurrences(routine_id);');
-    await db.execute('CREATE INDEX index_routine_occurrences_date ON routine_occurrences(date);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_occurrences_routine_id ON routine_occurrences(routine_id);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_occurrences_date ON routine_occurrences(date);');
 
     // 5. routine_logs table
     await db.execute('''
-      CREATE TABLE routine_logs (
+      CREATE TABLE IF NOT EXISTS routine_logs (
           id TEXT PRIMARY KEY,
           routineId TEXT NOT NULL,
           completionId TEXT,
@@ -145,8 +145,8 @@ class RoutineTables {
           FOREIGN KEY(completionId) REFERENCES routine_completions(id) ON DELETE SET NULL
       );
     ''');
-    await db.execute('CREATE INDEX index_routine_logs_routineId ON routine_logs(routineId);');
-    await db.execute('CREATE INDEX index_routine_logs_completionId ON routine_logs(completionId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_logs_routineId ON routine_logs(routineId);');
+    await db.execute('CREATE INDEX IF NOT EXISTS index_routine_logs_completionId ON routine_logs(completionId);');
 
     // 6. routine_actual_completions view for analytics
     await db.execute('''

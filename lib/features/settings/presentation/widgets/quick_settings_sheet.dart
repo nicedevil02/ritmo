@@ -21,6 +21,7 @@ class QuickSettingsSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => QuickSettingsSheet(themeRepository: themeRepository),
     );
@@ -418,6 +419,15 @@ class QuickSettingsSheet extends StatelessWidget {
         },
       );
 
+    final floatingShadow = [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+        blurRadius: 28,
+        spreadRadius: 0,
+        offset: const Offset(0, -4),
+      ),
+    ];
+
     if (!isGlass) {
       return Directionality(
         textDirection: TextDirection.rtl,
@@ -425,6 +435,7 @@ class QuickSettingsSheet extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surfaceElevated,
             borderRadius: sheetRadius,
+            boxShadow: floatingShadow,
             border: Border.all(
               color: isDark ? colors.border : colors.divider,
               width: 1.0,
@@ -437,37 +448,43 @@ class QuickSettingsSheet extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ClipRRect(
-        borderRadius: sheetRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.glassTint,
-              borderRadius: sheetRadius,
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.70),
-                width: 1.0,
-              ),
-            ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: sheetRadius,
+          boxShadow: floatingShadow,
+        ),
+        child: ClipRRect(
+          borderRadius: sheetRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
             child: DecoratedBox(
               decoration: BoxDecoration(
+                color: colors.glassTint,
                 borderRadius: sheetRadius,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withValues(
-                      alpha: isDark ? 0.08 : 0.20,
-                    ),
-                    Colors.white.withValues(alpha: 0.0),
-                  ],
-                  stops: const [0.0, 0.45],
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.70),
+                  width: 1.0,
                 ),
               ),
-              child: content,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: sheetRadius,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(
+                        alpha: isDark ? 0.08 : 0.20,
+                      ),
+                      Colors.white.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.45],
+                  ),
+                ),
+                child: content,
+              ),
             ),
           ),
         ),

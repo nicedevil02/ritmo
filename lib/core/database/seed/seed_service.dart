@@ -1,32 +1,42 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show compute, debugPrint;
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/features/supplementary_sports/data/seed/ss_exercise_animation_map.dart';
 import 'package:ritmo/features/supplementary_sports/data/seed/ss_exercise_farsi_names.dart';
 import 'package:ritmo/features/supplementary_sports/movement/data/seed/movement_kinds_seed.dart';
+import 'package:ritmo/features/supplementary_sports/movement/data/seed/mv_kind_profile_seed.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SeedService {
   static const int currentSeedVersion = 2;
 
   static Future<void> seedAll(DatabaseExecutor db) async {
+    RitmoLog.info('SeedService', 'Starting database seeding...');
     int seedVersion = 0;
     try {
       final rows = await db.query('app_settings', where: "key = 'seed_version'");
       if (rows.isNotEmpty) {
         seedVersion = int.tryParse(rows.first['value']?.toString() ?? '0') ?? 0;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLog.warning('SeedService', 'Failed to read seed_version, proceeding with seeding: $e', e, st);
+    }
 
-    if (seedVersion >= currentSeedVersion) return;
+    if (seedVersion >= currentSeedVersion) {
+      RitmoLog.info('SeedService', 'Database already seeded (v$seedVersion >= v$currentSeedVersion).');
+      return;
+    }
 
-    // Run all seeds idempotently (using conflictAlgorithm.ignore)
+    // Run all seeds idempotently (using conflictAlgorithm.ignore / replace)
     await seedSettings(db);
     await seedWorshipPractices(db);
     await seedIranCities(db);
     await seedSupplementarySports(db);
+    await seedMuscleGroups(db);
     await MovementKindsSeed.seed(db);
+    await MvKindProfileSeed.ensureSeed(db);
 
     try {
       await db.insert(
@@ -38,7 +48,10 @@ class SeedService {
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-    } catch (_) {}
+      RitmoLog.info('SeedService', 'Database seeding completed successfully (v$currentSeedVersion).');
+    } catch (e, st) {
+      RitmoLog.error('SeedService', 'Failed to update seed_version: $e', e, st);
+    }
   }
 
   static Future<void> seedSettings(DatabaseExecutor db) async {
@@ -205,8 +218,43 @@ class SeedService {
         batch.insert('iran_cities', city.cast<String, Object?>(), conflictAlgorithm: ConflictAlgorithm.ignore);
       }
       await batch.commit(noResult: true);
-    } catch (_) {
-      // Safe fallback for tests
+    } catch (e, st) {
+      RitmoLog.warning('SeedService', 'Iran cities asset not loaded or failed to seed (normal for tests): $e', e, st);
+    }
+  }
+
+  static Future<void> seedMuscleGroups(DatabaseExecutor db) async {
+    final muscleGroups = [
+      ['CHEST', 'سینه', 'UPPER', '🫁', 1],
+      ['SHOULDER', 'سرشانه', 'UPPER', '🎯', 2],
+      ['BICEPS', 'جلوبازو', 'UPPER', '💪', 3],
+      ['TRICEPS', 'پشت‌بازو', 'UPPER', '🦾', 4],
+      ['BACK', 'زیربغل و پشت', 'UPPER', '🪽', 5],
+      ['CORE', 'شکم و مرکز', 'CORE', '🎽', 6],
+      ['QUADS_GLUTES', 'ران و باسن', 'LOWER', '🦵', 7],
+      ['HAMSTRINGS', 'پشت ران', 'LOWER', '🦿', 8],
+      ['CALVES', 'ساق پا', 'LOWER', '🎯', 9],
+      ['CARDIO', 'هوازی', 'CARDIO', '🫀', 10],
+      ['MOBILITY', 'تحرک و کشش', 'MOBILITY', '🧘', 11],
+      ['FULL_BODY', 'کل بدن', 'FULL', '🔥', 12],
+    ];
+
+    try {
+      for (final m in muscleGroups) {
+        await db.insert(
+          'ss_muscle_group',
+          {
+            'code': m[0],
+            'titleFa': m[1],
+            'region': m[2],
+            'emoji': m[3],
+            'sortOrder': m[4],
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+    } catch (e, st) {
+      RitmoLog.error('SeedService', 'Failed to seed muscle groups: $e', e, st);
     }
   }
 
@@ -650,8 +698,8 @@ class SeedService {
           );
         } catch (_) {}
       }
-    } catch (e) {
-      debugPrint('Error seeding supplementary sports: $e');
+    } catch (e, st) {
+      RitmoLog.error('SeedService', 'Error seeding supplementary sports: $e', e, st);
     }
   }
 

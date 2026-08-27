@@ -71,9 +71,16 @@ class DatabaseHelper {
     try {
       final db = await _initDB('ritmo.db');
       _database = db;
+
+      // Seed default settings and initial data OUTSIDE the onCreate transaction!
+      await SeedService.seedAll(db);
+      await DatabaseHelper.ensureCriticalSchema(db);
+
       newCompleter.complete(db);
       return db;
     } catch (e, st) {
+      _database = null;
+      _dbInitCompleter = null;
       newCompleter.completeError(e, st);
       rethrow;
     } finally {
@@ -215,6 +222,8 @@ class DatabaseHelper {
             );
           } else {
             RitmoLog.error('DatabaseHelper', 'Database open error non-fatal rethrow', e, st);
+            _database = null;
+            _dbInitCompleter = null;
             rethrow;
           }
         }
@@ -223,8 +232,9 @@ class DatabaseHelper {
   }
 
   Future<void> _createDB(Database db, int version) async {
+    RitmoLog.info('DatabaseHelper', 'Creating fresh database DDL schema (baseline v$_dbVersion)...');
     await SchemaManager.createAll(db);
-    await SeedService.seedAll(db);
+    RitmoLog.info('DatabaseHelper', 'Fresh database DDL schema created successfully.');
   }
 
   Future<void> onUpgrade(Database db, int oldVersion, int newVersion) async {

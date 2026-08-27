@@ -6,9 +6,8 @@ import 'package:sqflite/sqflite.dart';
 class SupplementarySportsTables {
   static Future<void> create(DatabaseExecutor db) async {
     await MovementKindsSeed.ensureSchema(db);
-    await MovementKindsSeed.seed(db);
     await ensureCommitmentTables(db);
-    await ensureKindProfileTables(db);
+    await MvKindProfileSeed.ensureSchema(db);
 
     // 1. ss_exercise
     await db.execute('''
@@ -370,35 +369,6 @@ class SupplementarySportsTables {
         sortOrder INTEGER NOT NULL
       );
     ''');
-
-    final muscleGroups = [
-      ['CHEST', 'سینه', 'UPPER', '🫁', 1],
-      ['SHOULDER', 'سرشانه', 'UPPER', '🎯', 2],
-      ['BICEPS', 'جلوبازو', 'UPPER', '💪', 3],
-      ['TRICEPS', 'پشت‌بازو', 'UPPER', '🦾', 4],
-      ['BACK', 'زیربغل و پشت', 'UPPER', '🪽', 5],
-      ['CORE', 'شکم و مرکز', 'CORE', '🎽', 6],
-      ['QUADS_GLUTES', 'ران و باسن', 'LOWER', '🦵', 7],
-      ['HAMSTRINGS', 'پشت ران', 'LOWER', '🦿', 8],
-      ['CALVES', 'ساق پا', 'LOWER', '🎯', 9],
-      ['CARDIO', 'هوازی', 'CARDIO', '🫀', 10],
-      ['MOBILITY', 'تحرک و کشش', 'MOBILITY', '🧘', 11],
-      ['FULL_BODY', 'کل بدن', 'FULL', '🔥', 12],
-    ];
-
-    for (final m in muscleGroups) {
-      await db.insert(
-        'ss_muscle_group',
-        {
-          'code': m[0],
-          'titleFa': m[1],
-          'region': m[2],
-          'emoji': m[3],
-          'sortOrder': m[4],
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
-    }
 
     // 3. station_bundles
     await db.execute('''

@@ -16,10 +16,13 @@ void main() {
         inMemoryDatabasePath,
         version: DatabaseHelper.dbVersionForTest,
         onCreate: (db, version) async {
+          // onCreate is pure DDL only!
           await SchemaManager.createAll(db);
-          await SeedService.seedAll(db);
         },
       );
+
+      // Seeding runs cleanly outside the onCreate exclusive transaction:
+      await SeedService.seedAll(db);
 
       // Verify essential tables exist and are seeded
       final appSettings = await db.query('app_settings');

@@ -31,11 +31,21 @@ class RecoveryModeSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => RecoveryModeSheet(
-        course: course,
-        sessions: sessions,
-        onApplied: onApplied,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => RecoveryModeSheet(
+          course: course,
+          sessions: sessions,
+          onApplied: onApplied,
+        ),
       ),
     );
   }

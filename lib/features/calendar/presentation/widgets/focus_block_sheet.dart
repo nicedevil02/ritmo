@@ -34,8 +34,19 @@ class FocusBlockSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FocusBlockSheet(item: item, onComplete: onComplete),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) =>
+            FocusBlockSheet(item: item, onComplete: onComplete),
+      ),
     ).then((_) {
       RitmoHapticsPolicy.selection();
     });

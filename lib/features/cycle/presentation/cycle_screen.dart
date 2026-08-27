@@ -422,21 +422,30 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => AddEditPeriodSheet(
-        period:
-            period ??
-            () {
-              final m = <String, dynamic>{};
-              if (targetExistingId != null) m['id'] = targetExistingId;
-              if (targetStart != null) {
-                m['startDate'] = CycleDateContract.toDayKey(targetStart);
-              }
-              if (targetEnd != null) {
-                m['endDate'] = CycleDateContract.toDayKey(targetEnd);
-              }
-              return m.isEmpty ? null : m;
-            }(),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => AddEditPeriodSheet(
+          period:
+              period ??
+              () {
+                final m = <String, dynamic>{};
+                if (targetExistingId != null) m['id'] = targetExistingId;
+                if (targetStart != null) {
+                  m['startDate'] = CycleDateContract.toDayKey(targetStart);
+                }
+                if (targetEnd != null) {
+                  m['endDate'] = CycleDateContract.toDayKey(targetEnd);
+                }
+                return m.isEmpty ? null : m;
+              }(),
         onValidate: (start, end) {
           return CyclePeriodRepository.validatePeriodRange(
             existing: _periods.map((p) => CyclePeriod.fromMap(p)).toList(),

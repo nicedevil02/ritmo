@@ -24,28 +24,39 @@ class PregnancyEndSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) {
-        return RitmoSheetGlassCard(
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => RitmoSheetGlassCard(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: PregnancyEndSheet(
-              onBirth: () {
-                Navigator.of(sheetCtx).pop();
-                onBirth();
-              },
-              onLoss: () {
-                Navigator.of(sheetCtx).pop();
-                onLoss();
-              },
-              onMistake: () {
-                Navigator.of(sheetCtx).pop();
-                onMistake();
-              },
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: PregnancyEndSheet(
+                onBirth: () {
+                  Navigator.of(sheetCtx).pop();
+                  onBirth();
+                },
+                onLoss: () {
+                  Navigator.of(sheetCtx).pop();
+                  onLoss();
+                },
+                onMistake: () {
+                  Navigator.of(sheetCtx).pop();
+                  onMistake();
+                },
+              ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 

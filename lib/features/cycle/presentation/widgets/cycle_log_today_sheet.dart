@@ -20,12 +20,14 @@ class CycleLogTodaySheet extends StatefulWidget {
     required this.todayLog,
     required this.activePhaseColor,
     required this.onSaved,
+    this.scrollController,
   });
 
   final String todayStr;
   final Map<String, dynamic>? todayLog;
   final Color activePhaseColor;
   final VoidCallback onSaved;
+  final ScrollController? scrollController;
 
   static Future<void> show({
     required BuildContext context,
@@ -37,12 +39,23 @@ class CycleLogTodaySheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => CycleLogTodaySheet(
-        todayStr: todayStr,
-        todayLog: todayLog,
-        activePhaseColor: activePhaseColor,
-        onSaved: onSaved,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => CycleLogTodaySheet(
+          todayStr: todayStr,
+          todayLog: todayLog,
+          activePhaseColor: activePhaseColor,
+          onSaved: onSaved,
+          scrollController: scrollController,
+        ),
       ),
     );
   }
@@ -168,15 +181,27 @@ class _CycleLogTodaySheetState extends State<CycleLogTodaySheet> {
         child: Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            top: 24,
+            top: 12,
             left: 14,
             right: 14,
           ),
           child: SingleChildScrollView(
+            controller: widget.scrollController,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: colors.textSecondary.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

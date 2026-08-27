@@ -40,19 +40,32 @@ class PregnancySettingsSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => RitmoSheetGlassCard(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            top: 16,
-          ),
-          child: PregnancySettingsSheet(
-            onDataReloadNeeded: onDataReloadNeeded,
-            onEndPregnancy: onEndPregnancy,
-            onExitPregnancy: onExitPregnancy,
-            onOpenGeneralSettings: onOpenGeneralSettings,
-            initialProfile: initialProfile,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => RitmoSheetGlassCard(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              top: 12,
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: PregnancySettingsSheet(
+                onDataReloadNeeded: onDataReloadNeeded,
+                onEndPregnancy: onEndPregnancy,
+                onExitPregnancy: onExitPregnancy,
+                onOpenGeneralSettings: onOpenGeneralSettings,
+                initialProfile: initialProfile,
+              ),
+            ),
           ),
         ),
       ),

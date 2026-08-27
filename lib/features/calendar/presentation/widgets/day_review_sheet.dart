@@ -41,11 +41,21 @@ class DayReviewSheet extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => DayReviewSheet(
-        dateStr: dateStr,
-        snapshot: snapshot,
-        onReviewed: onReviewed,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.60,
+        minChildSize: 0.40,
+        maxChildSize: 0.94,
+        snap: true,
+        snapSizes: const [0.60, 0.94],
+        expand: false,
+        builder: (context, scrollController) => DayReviewSheet(
+          dateStr: dateStr,
+          snapshot: snapshot,
+          onReviewed: onReviewed,
+        ),
       ),
     );
   }

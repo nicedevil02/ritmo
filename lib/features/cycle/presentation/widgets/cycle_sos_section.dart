@@ -131,6 +131,8 @@ class CycleSosSection extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
+      enableDrag: true,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -148,9 +150,11 @@ class CycleSosSection extends StatelessWidget {
         }
 
         return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
+          initialChildSize: 0.60,
+          minChildSize: 0.40,
+          maxChildSize: 0.94,
+          snap: true,
+          snapSizes: const [0.60, 0.94],
           expand: false,
           builder: (context, scrollController) {
             return ClipRRect(
@@ -469,7 +473,6 @@ class CycleSosSection extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: themeColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
@@ -526,7 +529,6 @@ class CycleSosSection extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.02)

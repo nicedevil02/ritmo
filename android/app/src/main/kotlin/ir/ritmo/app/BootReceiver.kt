@@ -100,6 +100,7 @@ class BootReceiver : BroadcastReceiver() {
                 val id = alarmObj.getString("id")
                 val title = alarmObj.getString("title")
                 val scheduledTime = alarmObj.getLong("scheduledTime")
+                val isEssential = alarmObj.optBoolean("isEssential", false)
                 val firstPhysicalStep = if (alarmObj.has("firstPhysicalStep") && !alarmObj.isNull("firstPhysicalStep")) alarmObj.getString("firstPhysicalStep") else null
                 val allowMinimal = alarmObj.optBoolean("hasMinimalVariant", false)
 

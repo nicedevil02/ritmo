@@ -216,7 +216,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
   // ---------------------------------------------------------------------------
   // اسلاید ۱: وضعیت لحظه‌ای (Realtime Status & Dial)
-  // دایره در سمت چپ و عنوان و توضیحات در سمت راست
+  // دایره و کپسول فاز در سمت چپ، عنوان و توضیحات از بالا در سمت راست
   // ---------------------------------------------------------------------------
   Widget _buildSlide1Status({
     required BuildContext context,
@@ -231,112 +231,122 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required String remainingText,
     required String statusTip,
   }) {
-    final dialSize = isCompact ? 116.0 : 130.0 * m.densityFactor;
+    final dialSize = isCompact ? 104.0 : 116.0 * m.densityFactor;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        18 * m.densityFactor,
-        18 * m.densityFactor,
-        18 * m.densityFactor,
-        28 * m.densityFactor,
+        16 * m.densityFactor,
+        14 * m.densityFactor,
+        16 * m.densityFactor,
+        24 * m.densityFactor,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ۱. ستون متن‌ها و عنوان فاز (در چیدمان راست‌به‌چپ در سمت راست قرار می‌گیرد)
+          // ۱. ستون متن‌ها از بالا شروع می‌شود (در سمت راست)
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // کپسول شیشه‌ای فاز بالا
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: phaseColor.withValues(
-                      alpha: isDark ? 0.22 : 0.14,
-                    ),
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                      color: phaseColor.withValues(
-                        alpha: isDark ? 0.40 : 0.28,
-                      ),
-                      width: 1.0,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // عنوان اصلی روز دوره از بالاترین نقطه
+                  Text(
+                    remainingText,
+                    style: TextStyle(
+                      fontSize: isCompact ? 16.0 : 18.5,
+                      fontWeight: FontWeight.w900,
+                      color: isDark
+                          ? const Color(0xFFF5F5F7)
+                          : const Color(0xFF1D2129),
+                      height: 1.2,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 13)),
-                      const SizedBox(width: 5),
-                      Text(
-                        phaseText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? phaseColor
-                              : Color.lerp(
-                                  phaseColor,
-                                  Colors.black,
-                                  0.25,
-                                ),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+
+                  const SizedBox(height: 8),
+
+                  // توضیحات فاز زیر عنوان
+                  Text(
+                    statusTip,
+                    style: TextStyle(
+                      fontSize: isCompact ? 11.5 : 12.2,
+                      height: 1.6,
+                      color: isDark
+                          ? const Color(0xFFA1A8B3)
+                          : const Color(0xFF6B7280),
+                    ),
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // عنوان اصلی روز دوره
-                Text(
-                  remainingText,
-                  style: TextStyle(
-                    fontSize: isCompact ? 16.0 : 18.5,
-                    fontWeight: FontWeight.w900,
-                    color: isDark
-                        ? const Color(0xFFF5F5F7)
-                        : const Color(0xFF1D2129),
-                    height: 1.2,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // توضیحات فاز زیر عنوان
-                Text(
-                  statusTip,
-                  style: TextStyle(
-                    fontSize: isCompact ? 11.2 : 12.0,
-                    height: 1.5,
-                    color: isDark
-                        ? const Color(0xFFA1A8B3)
-                        : const Color(0xFF6B7280),
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
           SizedBox(width: isCompact ? 12 : 16),
 
-          // ۲. دیال حلقوی نئومورفیک (در چیدمان راست‌به‌چپ در سمت چپ قرار می‌گیرد)
-          _buildNeumorphicAcrylicDial(
-            context: context,
-            dialSize: dialSize,
-            targetProgress: targetProgress,
-            phaseColor: phaseColor,
-            currentDay: currentDay,
-            isDark: isDark,
-            phase: widget.phase,
+          // ۲. ستون سمت چپ: دایره در بالا و کپسول فاز دقیقاً زیر آن
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // دیال حلقوی نئومورفیک
+              _buildNeumorphicAcrylicDial(
+                context: context,
+                dialSize: dialSize,
+                targetProgress: targetProgress,
+                phaseColor: phaseColor,
+                currentDay: currentDay,
+                isDark: isDark,
+                phase: widget.phase,
+              ),
+
+              const SizedBox(height: 8),
+
+              // کپسول شیشه‌ای فاز زیر دایره
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4.5,
+                ),
+                decoration: BoxDecoration(
+                  color: phaseColor.withValues(
+                    alpha: isDark ? 0.22 : 0.14,
+                  ),
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(
+                    color: phaseColor.withValues(
+                      alpha: isDark ? 0.40 : 0.28,
+                    ),
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 11)),
+                    const SizedBox(width: 4),
+                    Text(
+                      phaseText,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? phaseColor
+                            : Color.lerp(
+                                phaseColor,
+                                Colors.black,
+                                0.25,
+                              ),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -700,39 +700,43 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => RitmoSheetGlassCard(
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            top: 16,
-          ),
-          child: SingleChildScrollView(
-            child: CycleSettingsPanel(
-              settings: _settings,
-              onDataReloadNeeded: _loadData,
-              onOpenPasscodeSheet: _openPasscodeSheet,
-              onOpenPregnancyOnboarding: () {
-                Navigator.pop(ctx);
-                _openPregnancyOnboarding();
-              },
-              onTogglePregnancyMode: () async {
-                Navigator.pop(ctx);
-                final isActive = _settings['cycle_pregnancy_mode'] == 'true';
-                final db = await DatabaseHelper.instance.database;
-                await PregnancySettings.setPregnancyActive(!isActive, db: db);
-                await _loadData();
-              },
-              onEditBaselineParameter:
-                  (key, title, minVal, maxVal, defVal) async {
-                    await _openBaselineParameterPicker(
-                      key,
-                      title,
-                      minVal,
-                      maxVal,
-                      defVal,
-                    );
-                  },
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.only(top: 28),
+        child: RitmoSheetGlassCard(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              top: 12,
+            ),
+            child: SingleChildScrollView(
+              child: CycleSettingsPanel(
+                settings: _settings,
+                onDataReloadNeeded: _loadData,
+                onOpenPasscodeSheet: _openPasscodeSheet,
+                onOpenPregnancyOnboarding: () {
+                  Navigator.pop(ctx);
+                  _openPregnancyOnboarding();
+                },
+                onTogglePregnancyMode: () async {
+                  Navigator.pop(ctx);
+                  final isActive = _settings['cycle_pregnancy_mode'] == 'true';
+                  final db = await DatabaseHelper.instance.database;
+                  await PregnancySettings.setPregnancyActive(!isActive, db: db);
+                  await _loadData();
+                },
+                onEditBaselineParameter:
+                    (key, title, minVal, maxVal, defVal) async {
+                      await _openBaselineParameterPicker(
+                        key,
+                        title,
+                        minVal,
+                        maxVal,
+                        defVal,
+                      );
+                    },
+              ),
             ),
           ),
         ),

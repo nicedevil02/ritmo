@@ -265,35 +265,32 @@ class CycleProgressRingPainter extends CustomPainter {
 
     if (percentage <= 0) return;
 
-    // Active sweep arc with butt caps to prevent seam bleeding
     final rect = Rect.fromCircle(center: center, radius: radius);
     final sweepAngle = 2 * math.pi * percentage;
+
+    // Extend slightly before 12 o'clock (~0.16 rad / ~9 deg) with 0% opacity for ultra-smooth fade-in
+    const fadeOffset = 0.16;
+    const arcStartAngle = -math.pi / 2 - fadeOffset;
+    final totalSweepAngle = sweepAngle + fadeOffset;
 
     final paintActive = Paint()
       ..shader = SweepGradient(
         startAngle: 0.0,
-        endAngle: sweepAngle,
+        endAngle: totalSweepAngle,
         colors: [
-          activeColor.withValues(alpha: 0.18),
-          activeColor.withValues(alpha: 0.60),
+          activeColor.withValues(alpha: 0.0),
+          activeColor.withValues(alpha: 0.08),
+          activeColor.withValues(alpha: 0.45),
           activeColor,
         ],
-        stops: const [0.0, 0.5, 1.0],
-        transform: const GradientRotation(-math.pi / 2),
+        stops: const [0.0, 0.12, 0.55, 1.0],
+        transform: const GradientRotation(arcStartAngle),
       ).createShader(rect)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.butt
       ..strokeWidth = strokeWidth;
 
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintActive);
-
-    // Soft origin glow at 12 o'clock
-    final startCapCenter = Offset(center.dx, center.dy - radius);
-    final startGlowPaint = Paint()
-      ..color = activeColor.withValues(alpha: isDark ? 0.35 : 0.22)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(startCapCenter, 5.0, startGlowPaint);
+    canvas.drawArc(rect, arcStartAngle, totalSweepAngle, false, paintActive);
 
     // Bold end cap at thumb
     final thumbAngle = -math.pi / 2 + sweepAngle;

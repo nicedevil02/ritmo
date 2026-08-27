@@ -997,34 +997,32 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final sweepAngle = 2 * math.pi * percentage;
 
-    // 1. Draw arc with butt caps to prevent shader seam wrapping across 12 o'clock
+    // Extend slightly before 12 o'clock (~0.16 rad / ~9 deg) with 0% opacity for ultra-smooth fade-in
+    const fadeOffset = 0.16;
+    const arcStartAngle = -math.pi / 2 - fadeOffset;
+    final totalSweepAngle = sweepAngle + fadeOffset;
+
+    // 1. Draw smooth fading arc from 0% opacity (completely transparent) up to 100% solid color at thumb
     final jellyArcPaint = Paint()
       ..shader = SweepGradient(
         startAngle: 0.0,
-        endAngle: sweepAngle,
+        endAngle: totalSweepAngle,
         colors: [
-          activeColor.withValues(alpha: 0.18),
-          activeColor.withValues(alpha: 0.60),
+          activeColor.withValues(alpha: 0.0),
+          activeColor.withValues(alpha: 0.08),
+          activeColor.withValues(alpha: 0.45),
           activeColor,
         ],
-        stops: const [0.0, 0.5, 1.0],
-        transform: const GradientRotation(-math.pi / 2),
+        stops: const [0.0, 0.12, 0.55, 1.0],
+        transform: const GradientRotation(arcStartAngle),
       ).createShader(rect)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.butt
       ..strokeWidth = strokeWidth;
 
-    canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, jellyArcPaint);
+    canvas.drawArc(rect, arcStartAngle, totalSweepAngle, false, jellyArcPaint);
 
-    // 2. Soft origin glow at 12 o'clock (no hollow circle artifact)
-    final startCapCenter = Offset(center.dx, center.dy - radius);
-    final startGlowPaint = Paint()
-      ..color = activeColor.withValues(alpha: isDark ? 0.35 : 0.22)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(startCapCenter, 5.0, startGlowPaint);
-
-    // 3. End Cap at thumb: 100% solid bold color matching the end of gradient
+    // 2. End Cap at thumb: 100% solid bold color matching the end of gradient
     final thumbAngle = -math.pi / 2 + sweepAngle;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
@@ -1035,7 +1033,7 @@ class _NeumorphicGlowRingPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, strokeWidth / 2, endCapPaint);
 
-    // 4. Apple Neumorphic thumb indicator on the bold end (contained without spill)
+    // 3. Apple Neumorphic thumb indicator on the bold end
     final thumbRimPaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.fill;

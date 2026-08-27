@@ -1,3 +1,4 @@
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/util/ritmo_number.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
@@ -30,7 +31,13 @@ class CourseDate {
           return DateTime(y, m, d);
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'CourseDate.parseDayKey error on "$key": $e',
+        error: e,
+        stack: st,
+      );
+    }
     return null;
   }
 

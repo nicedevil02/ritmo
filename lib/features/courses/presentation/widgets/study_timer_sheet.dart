@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/features/courses/logic/course_timer_service.dart';
 import 'package:ritmo/features/courses/logic/courses_repository.dart';
@@ -53,7 +54,13 @@ class _StudyTimerSheetState extends State<StudyTimerSheet> with TickerProviderSt
         _promptActiveTimerConflict();
       });
     } else {
-      CourseTimerService.instance.startTimer(widget.course.id, widget.session.id).catchError((Object _) {});
+      CourseTimerService.instance.startTimer(widget.course.id, widget.session.id).catchError((Object e, StackTrace st) {
+        RitmoLogger.warning(
+          'StudyTimerSheet: Failed to start timer for session ${widget.session.id}: $e',
+          error: e,
+          stack: st,
+        );
+      });
       _secondsElapsed = 0;
       _isRunning = true;
     }

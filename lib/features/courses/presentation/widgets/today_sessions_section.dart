@@ -21,11 +21,7 @@ class TodaySessionsSection extends StatelessWidget {
   final VoidCallback onRefresh;
 
   Course? _getCourse(String courseId) {
-    try {
-      return courses.firstWhere((c) => c.id == courseId);
-    } catch (_) {
-      return null;
-    }
+    return courses.cast<Course?>().firstWhere((c) => c?.id == courseId, orElse: () => null);
   }
 
   void _showTimer(BuildContext context, Course course, CourseSession session) {

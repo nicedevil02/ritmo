@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/utils/ritmo_color.dart';
 
 abstract final class CourseLimits {
   static const int minTotalSessions = 1;
@@ -555,19 +556,7 @@ class Course {
 
 extension SafeCourseColor on Course {
   Color resolvedColor(Color fallback) {
-    if (colorHex == null || colorHex!.trim().isEmpty) return fallback;
-    try {
-      var hex = colorHex!.trim().replaceAll('#', '');
-      if (hex.startsWith('0x') || hex.startsWith('0X')) {
-        hex = hex.substring(2);
-      }
-      if (hex.length == 6) {
-        hex = 'FF$hex';
-      }
-      final val = int.tryParse(hex, radix: 16);
-      if (val != null) return Color(val);
-    } catch (_) {}
-    return fallback;
+    return RitmoColor.fromHex(colorHex, fallback: fallback);
   }
 }
 

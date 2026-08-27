@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/core/di/service_locator.dart';
 import 'package:ritmo/core/domain/engines/ritmo_event_bus.dart';
+import 'package:ritmo/core/observability/ritmo_logger.dart';
 import 'package:ritmo/core/notifications/notification_channel.dart';
 import 'package:ritmo/core/notifications/notification_gateway.dart';
 import 'package:ritmo/core/notifications/notification_request.dart';
@@ -180,10 +182,11 @@ class CoursesRepository {
     late ScheduleResult scheduleResult;
 
     await db.transaction((txn) async {
-      await txn.insert(
+      await UpsertHelper.upsert(
+        txn,
         'courses',
         course.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
 
       scheduleResult = CourseScheduler.distributeSessions(
@@ -236,10 +239,11 @@ class CoursesRepository {
     late ScheduleResult scheduleResult;
 
     await db.transaction((txn) async {
-      await txn.insert(
+      await UpsertHelper.upsert(
+        txn,
         'courses',
         syncedCourse.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
 
       final pendingCount = draftSessions.length;
@@ -1440,7 +1444,13 @@ class CoursesRepository {
       if (sl.isRegistered<AlarmPlatform>()) {
         await sl<AlarmPlatform>().cancelAlarm(id);
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'CoursesRepository: Failed to cancel alarm $id: $e',
+        error: e,
+        stack: st,
+      );
+    }
   }
 
   /// Point reminder rebuild for a single session without wiping course reminders (Fixes H7)
@@ -1496,7 +1506,8 @@ class CoursesRepository {
 
     if (reminderTimeMs > nowMs) {
       final reminderId = 'rem_${nowMs}_${session.id}_${DateTime.now().microsecondsSinceEpoch % 10000}';
-      await txn.insert(
+      await UpsertHelper.upsert(
+        txn,
         'pending_reminders',
         {
           'id': reminderId,
@@ -1510,7 +1521,7 @@ class CoursesRepository {
           'createdAt': nowMs,
           'updatedAt': nowMs,
         },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+        conflictColumns: const ['id'],
       );
     }
 
@@ -1545,25 +1556,26 @@ class CoursesRepository {
       return alarmsToCancel;
     }
 
-    // Limit reminder rebuilding to upcoming 30 days / max 50 reminders per course (Fixes H7)
-    final sessionMaps = await txn.query(
+    final sessions = await txn.query(
       'course_sessions',
       where: 'courseId = ? AND completionStatus = ? AND plannedDate IS NOT NULL',
       whereArgs: [course.id, SessionStatus.pending.dbValue],
-      orderBy: 'plannedDate ASC, displayOrder ASC',
-      limit: 50,
     );
+
+    final parts = course.preferredTime!.split(':');
+    if (parts.length != 2) return alarmsToCancel;
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
 
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
-    for (final map in sessionMaps) {
-      final session = CourseSession.fromMap(map);
+    for (final s in sessions) {
+      final session = CourseSession.fromMap(s);
       final dateStr = session.plannedDate!;
-
-      final parts = course.preferredTime!.split(':');
-      if (parts.length != 2) continue;
-      final hour = int.tryParse(parts[0]) ?? 0;
-      final minute = int.tryParse(parts[1]) ?? 0;
+      final timeStr = session.plannedStartTime ?? course.preferredTime!;
+      final sParts = timeStr.split(':');
+      final sHour = sParts.length == 2 ? (int.tryParse(sParts[0]) ?? hour) : hour;
+      final sMinute = sParts.length == 2 ? (int.tryParse(sParts[1]) ?? minute) : minute;
 
       final dateParts = dateStr.split('-');
       if (dateParts.length != 3) continue;
@@ -1571,13 +1583,14 @@ class CoursesRepository {
       final month = int.tryParse(dateParts[1]) ?? 0;
       final day = int.tryParse(dateParts[2]) ?? 0;
 
-      final reminderDateTime = DateTime(year, month, day, hour, minute);
+      final reminderDateTime = DateTime(year, month, day, sHour, sMinute);
       final reminderTimeMs = reminderDateTime.millisecondsSinceEpoch;
 
       if (reminderTimeMs > nowMs) {
         // Collision safe reminder ID (Fixes M8)
         final reminderId = 'rem_${nowMs}_${session.id}_${DateTime.now().microsecondsSinceEpoch % 10000}';
-        await txn.insert(
+        await UpsertHelper.upsert(
+          txn,
           'pending_reminders',
           {
             'id': reminderId,
@@ -1591,7 +1604,7 @@ class CoursesRepository {
             'createdAt': nowMs,
             'updatedAt': nowMs,
           },
-          conflictAlgorithm: ConflictAlgorithm.replace,
+          conflictColumns: const ['id'],
         );
       }
     }
@@ -1656,7 +1669,13 @@ class CoursesRepository {
           return CourseEnergyLevelExtension.fromString(lvl).dbValue;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'CoursesRepository: Failed to fetch energy_logs: $e',
+        error: e,
+        stack: st,
+      );
+    }
 
     try {
       final settings = await db.query('app_settings', where: "key = 'default_energy_level'");
@@ -1666,7 +1685,13 @@ class CoursesRepository {
           return CourseEnergyLevelExtension.fromString(val).dbValue;
         }
       }
-    } catch (_) {}
+    } catch (e, st) {
+      RitmoLogger.warning(
+        'CoursesRepository: Failed to fetch default_energy_level: $e',
+        error: e,
+        stack: st,
+      );
+    }
 
     return CourseEnergyLevel.medium.dbValue;
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/database/upsert_helper.dart';
 import 'package:ritmo/features/courses/models/course_models.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -124,7 +125,12 @@ class CourseTimerService extends ChangeNotifier {
       updatedAt: nowMs,
     );
 
-    await db.insert('course_active_timers', timer.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await UpsertHelper.upsert(
+      db,
+      'course_active_timers',
+      timer.toMap(),
+      conflictColumns: const ['courseSessionId'],
+    );
 
     _activeTimer = timer;
     _startTicker();

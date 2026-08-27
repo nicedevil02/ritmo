@@ -239,12 +239,12 @@ class CycleProgressRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2 - 6;
-    const strokeWidth = 8.0;
+    final radius = math.min(size.width, size.height) / 2 - 7;
+    const strokeWidth = 8.5;
 
-    // Background track
+    // Background track with subtle depth
     final paintBg = Paint()
-      ..color = activeColor.withValues(alpha: isDark ? 0.20 : 0.12)
+      ..color = activeColor.withValues(alpha: isDark ? 0.18 : 0.10)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius, paintBg);
@@ -255,8 +255,12 @@ class CycleProgressRingPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final paintActive = Paint()
       ..shader = SweepGradient(
-        colors: [activeColor.withValues(alpha: 0.35), activeColor, activeColor],
-        stops: const [0.0, 0.5, 1.0],
+        colors: [
+          activeColor.withValues(alpha: 0.30),
+          activeColor.withValues(alpha: 0.85),
+          activeColor,
+        ],
+        stops: const [0.0, 0.6, 1.0],
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect)
       ..style = PaintingStyle.stroke
@@ -266,22 +270,30 @@ class CycleProgressRingPainter extends CustomPainter {
     final sweepAngle = 2 * math.pi * percentage;
     canvas.drawArc(rect, -math.pi / 2, sweepAngle, false, paintActive);
 
-    // Glow indicator at the thumb
+    // Multi-layer Apple Glow indicator at the thumb
     final thumbAngle = -math.pi / 2 + sweepAngle;
     final thumbX = center.dx + radius * math.cos(thumbAngle);
     final thumbY = center.dy + radius * math.sin(thumbAngle);
+    final thumbCenter = Offset(thumbX, thumbY);
 
-    final thumbPaint = Paint()
+    // 1. Outer diffuse glow
+    final outerGlowPaint = Paint()
+      ..color = activeColor.withValues(alpha: isDark ? 0.70 : 0.50)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(thumbCenter, 10, outerGlowPaint);
+
+    // 2. Mid vibrant rim
+    final midRimPaint = Paint()
+      ..color = activeColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(thumbCenter, 5.5, midRimPaint);
+
+    // 3. Crisp white center core
+    final corePaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-
-    final thumbShadowPaint = Paint()
-      ..color = activeColor
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(thumbX, thumbY), 9, thumbShadowPaint);
-    canvas.drawCircle(Offset(thumbX, thumbY), 4.5, thumbPaint);
+    canvas.drawCircle(thumbCenter, 3.8, corePaint);
   }
 
   @override

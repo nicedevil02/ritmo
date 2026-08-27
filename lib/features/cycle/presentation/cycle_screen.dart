@@ -974,6 +974,16 @@ class _CycleScreenContentState extends State<_CycleScreenContent> {
                                       _pendingConfirmation!,
                                     )
                                   : null,
+                              onNavigateToCalendar: () =>
+                                  setState(() => _activeTab = 1),
+                              onOpenSos: () => CycleSosSection.showSosModal(
+                                context,
+                                engineOutput: _engineOutput,
+                                dayLogs: _dayLogs,
+                                settings: _settings,
+                                phase: _engineOutput?.currentPhase ??
+                                    CyclePhase.follicular,
+                              ),
                             ),
                             const SizedBox(height: 6),
                             CycleCalendarView(

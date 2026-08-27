@@ -32,6 +32,8 @@ class CycleOverviewTab extends StatelessWidget {
     this.isTogglingPeriod = false,
     this.pendingConfirmation,
     this.onOpenConfirmation,
+    this.onNavigateToCalendar,
+    this.onOpenSos,
   });
 
   final CycleEngineOutput? engineOutput;
@@ -47,6 +49,8 @@ class CycleOverviewTab extends StatelessWidget {
   final bool isTogglingPeriod;
   final CycleConfirmationRequest? pendingConfirmation;
   final VoidCallback? onOpenConfirmation;
+  final VoidCallback? onNavigateToCalendar;
+  final VoidCallback? onOpenSos;
 
   String _formatJalaliDate(DateTime? dt) {
     if (dt == null) return '';
@@ -104,6 +108,9 @@ class CycleOverviewTab extends StatelessWidget {
           avgPeriodDuration:
               engineOutput?.stats.avgPeriodDuration ??
               CycleSettings.getPeriodDuration(settings).toDouble(),
+          onStatusTap: onOpenDailyLog,
+          onForecastTap: onNavigateToCalendar,
+          onCareTipsTap: onOpenSos,
         ),
         const SizedBox(height: 6),
         _buildNextPeriodPredictionCard(context, colors, isDark),

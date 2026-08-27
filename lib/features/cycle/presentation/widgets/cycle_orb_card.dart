@@ -1,4 +1,4 @@
-// C-43, C-44: CycleOrbCard (3-Slide Neumorphic Soft UI & Apple Glassmorphism)
+// C-43, C-44: CycleOrbCard (3-Slide Interactive Neumorphic Soft UI & Apple Glassmorphic Carousel)
 import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +15,9 @@ class CycleOrbCard extends StatefulWidget {
     required this.dayOfCycle,
     required this.totalCycleLength,
     required this.avgPeriodDuration,
+    this.onStatusTap,
+    this.onForecastTap,
+    this.onCareTipsTap,
   });
 
   final CyclePhase phase;
@@ -23,6 +26,9 @@ class CycleOrbCard extends StatefulWidget {
   final int dayOfCycle;
   final double totalCycleLength;
   final double avgPeriodDuration;
+  final VoidCallback? onStatusTap;
+  final VoidCallback? onForecastTap;
+  final VoidCallback? onCareTipsTap;
 
   @override
   State<CycleOrbCard> createState() => _CycleOrbCardState();
@@ -117,7 +123,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
         : 0.1;
     final m = context.metrics;
 
-    // پالت نئومورفیک نرم
     final cardBgColor = isDark ? const Color(0xFF1E2127) : const Color(0xFFF1F3F6);
     final cardLightShadow = isDark
         ? const Color(0xFF2B3039)
@@ -129,7 +134,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 340;
-        final cardHeight = isCompact ? 245.0 : 255.0 * m.densityFactor;
+        final cardHeight = isCompact ? 195.0 : 205.0 * m.densityFactor;
 
         return Container(
           width: double.infinity,
@@ -138,13 +143,11 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             color: cardBgColor,
             borderRadius: BorderRadius.circular(34),
             boxShadow: [
-              // هایلایت نوری بالا-چپ
               BoxShadow(
                 color: cardLightShadow,
                 offset: const Offset(-8, -8),
                 blurRadius: 18,
               ),
-              // سایه نرم پایین-راست
               BoxShadow(
                 color: cardDarkShadow,
                 offset: const Offset(8, 8),
@@ -154,14 +157,13 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
           ),
           child: Stack(
             children: [
-              // کاروسل ۳ اسلاید
               PageView(
                 controller: _pageController,
                 onPageChanged: (index) {
                   setState(() => _currentPage = index);
                 },
                 children: [
-                  // اسلاید ۱: وضعیت لحظه‌ای (دایره در سمت چپ و متن در سمت راست)
+                  // اسلاید ۱: وضعیت لحظه‌ای (کلیک -> ثبت علائم)
                   _buildSlide1Status(
                     context: context,
                     isCompact: isCompact,
@@ -176,16 +178,15 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                     statusTip: statusTip,
                   ),
 
-                  // اسلاید ۲: پیش‌بینی روزهای آینده و تایم‌لاین فازها
+                  // اسلاید ۲: پیش‌بینی روزهای آینده (کلیک -> تقویم دوره‌ها)
                   _buildSlide2Forecast(
                     context: context,
                     isCompact: isCompact,
                     m: m,
                     isDark: isDark,
-                    phaseColor: phaseColor,
                   ),
 
-                  // اسلاید ۳: توصیه‌های امروز و مراقبت‌های هوشمند
+                  // اسلاید ۳: توصیه‌های امروز (کلیک -> تسکین درد و SOS)
                   _buildSlide3Recommendations(
                     context: context,
                     isCompact: isCompact,
@@ -198,7 +199,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
 
               // ۳ نقطه نشانگر وضعیت در پایین کارت
               Positioned(
-                bottom: 12,
+                bottom: 10,
                 left: 0,
                 right: 0,
                 child: _buildBottomStatusDots(
@@ -215,8 +216,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }
 
   // ---------------------------------------------------------------------------
-  // اسلاید ۱: وضعیت لحظه‌ای (Realtime Status & Dial)
-  // دایره و کپسول فاز در سمت چپ، عنوان و توضیحات از بالا در سمت راست
+  // اسلاید ۱: وضعیت لحظه‌ای (کلیک -> ثبت علائم)
   // ---------------------------------------------------------------------------
   Widget _buildSlide1Status({
     required BuildContext context,
@@ -231,270 +231,233 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required String remainingText,
     required String statusTip,
   }) {
-    final dialSize = isCompact ? 104.0 : 116.0 * m.densityFactor;
+    final dialSize = isCompact ? 98.0 : 108.0 * m.densityFactor;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * m.densityFactor,
-        14 * m.densityFactor,
-        16 * m.densityFactor,
-        24 * m.densityFactor,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ۱. ستون متن‌ها از بالا شروع می‌شود (در سمت راست)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // عنوان اصلی روز دوره از بالاترین نقطه
-                  Text(
-                    remainingText,
-                    style: TextStyle(
-                      fontSize: isCompact ? 16.0 : 18.5,
-                      fontWeight: FontWeight.w900,
-                      color: isDark
-                          ? const Color(0xFFF5F5F7)
-                          : const Color(0xFF1D2129),
-                      height: 1.2,
-                    ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onStatusTap,
+        borderRadius: BorderRadius.circular(34),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16 * m.densityFactor,
+            12 * m.densityFactor,
+            16 * m.densityFactor,
+            20 * m.densityFactor,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // متن‌ها در سمت راست
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        remainingText,
+                        style: TextStyle(
+                          fontSize: isCompact ? 15.5 : 17.5,
+                          fontWeight: FontWeight.w900,
+                          color: isDark
+                              ? const Color(0xFFF5F5F7)
+                              : const Color(0xFF1D2129),
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        statusTip,
+                        style: TextStyle(
+                          fontSize: isCompact ? 11.0 : 11.8,
+                          height: 1.5,
+                          color: isDark
+                              ? const Color(0xFFA1A8B3)
+                              : const Color(0xFF6B7280),
+                        ),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
+                ),
+              ),
 
-                  const SizedBox(height: 8),
+              SizedBox(width: isCompact ? 10 : 14),
 
-                  // توضیحات فاز زیر عنوان
-                  Text(
-                    statusTip,
-                    style: TextStyle(
-                      fontSize: isCompact ? 11.5 : 12.2,
-                      height: 1.6,
-                      color: isDark
-                          ? const Color(0xFFA1A8B3)
-                          : const Color(0xFF6B7280),
+              // دایره و کپسول فاز زیر آن در سمت چپ
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildNeumorphicAcrylicDial(
+                    context: context,
+                    dialSize: dialSize,
+                    targetProgress: targetProgress,
+                    phaseColor: phaseColor,
+                    currentDay: currentDay,
+                    isDark: isDark,
+                    phase: widget.phase,
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
+                    decoration: BoxDecoration(
+                      color: phaseColor.withValues(
+                        alpha: isDark ? 0.22 : 0.14,
+                      ),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(
+                        color: phaseColor.withValues(
+                          alpha: isDark ? 0.40 : 0.28,
+                        ),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(emoji, style: const TextStyle(fontSize: 10.5)),
+                        const SizedBox(width: 3),
+                        Text(
+                          phaseText,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? phaseColor
+                                : Color.lerp(
+                                    phaseColor,
+                                    Colors.black,
+                                    0.25,
+                                  ),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          SizedBox(width: isCompact ? 12 : 16),
-
-          // ۲. ستون سمت چپ: دایره در بالا و کپسول فاز دقیقاً زیر آن
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // دیال حلقوی نئومورفیک
-              _buildNeumorphicAcrylicDial(
-                context: context,
-                dialSize: dialSize,
-                targetProgress: targetProgress,
-                phaseColor: phaseColor,
-                currentDay: currentDay,
-                isDark: isDark,
-                phase: widget.phase,
-              ),
-
-              const SizedBox(height: 8),
-
-              // کپسول شیشه‌ای فاز زیر دایره
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4.5,
-                ),
-                decoration: BoxDecoration(
-                  color: phaseColor.withValues(
-                    alpha: isDark ? 0.22 : 0.14,
-                  ),
-                  borderRadius: BorderRadius.circular(100),
-                  border: Border.all(
-                    color: phaseColor.withValues(
-                      alpha: isDark ? 0.40 : 0.28,
-                    ),
-                    width: 1.0,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(emoji, style: const TextStyle(fontSize: 11)),
-                    const SizedBox(width: 4),
-                    Text(
-                      phaseText,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? phaseColor
-                            : Color.lerp(
-                                phaseColor,
-                                Colors.black,
-                                0.25,
-                              ),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // اسلاید ۲: پیش‌بینی روزهای آینده (Cycle Forecast & Timeline)
+  // اسلاید ۲: پیش‌بینی روزهای آینده (کلیک -> اسکرول به تقویم)
   // ---------------------------------------------------------------------------
   Widget _buildSlide2Forecast({
     required BuildContext context,
     required bool isCompact,
     required RitmoMetrics m,
     required bool isDark,
-    required Color phaseColor,
   }) {
     final cycleLen = widget.totalCycleLength > 0 ? widget.totalCycleLength.round() : 28;
     final periodDur = widget.avgPeriodDuration > 0 ? widget.avgPeriodDuration.round() : 5;
     final ovulationDay = (cycleLen - 14).clamp(periodDur + 2, cycleLen - 4);
     final follicularDays = (ovulationDay - periodDur).clamp(3, 16);
     final lutealDays = (cycleLen - ovulationDay - 2).clamp(5, 18);
-
     final daysUntilPeriodEnd = (periodDur - widget.activePeriodDay).clamp(1, periodDur);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * m.densityFactor,
-        14 * m.densityFactor,
-        16 * m.densityFactor,
-        24 * m.densityFactor,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // سطر بالایی: عنوان و زیرعنوان
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onForecastTap,
+        borderRadius: BorderRadius.circular(34),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16 * m.densityFactor,
+            12 * m.densityFactor,
+            16 * m.densityFactor,
+            20 * m.densityFactor,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'پیش‌بینی روزهای آینده',
-                style: TextStyle(
-                  fontSize: isCompact ? 15 : 17,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF1D2129),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'پیش‌بینی روزهای آینده',
+                    style: TextStyle(
+                      fontSize: isCompact ? 15 : 17,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    'نمای کلی چرخه تا شروع دوره بعدی (مشاهده تقویم)',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // ۴ کارت فازهای متوالی
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildTimelinePhaseCard(
+                      title: 'پایان پریود',
+                      duration: '$daysUntilPeriodEnd روز دیگر',
+                      icon: CupertinoIcons.drop_fill,
+                      color: const Color(0xFFEB6E60),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildTimelinePhaseCard(
+                      title: 'فاز فولیکولی',
+                      duration: '$follicularDays روز',
+                      icon: CupertinoIcons.leaf_arrow_circlepath,
+                      color: const Color(0xFF38AA84),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildTimelinePhaseCard(
+                      title: 'تخمک‌گذاری',
+                      duration: '۲ روز',
+                      icon: CupertinoIcons.sparkles,
+                      color: const Color(0xFFE88A2E),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 6),
+                    _buildTimelinePhaseCard(
+                      title: 'فاز لوتئال',
+                      duration: '$lutealDays روز',
+                      icon: CupertinoIcons.moon_fill,
+                      color: const Color(0xFFC752A8),
+                      isDark: isDark,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                'نمای کلی چرخه تا شروع دوره بعدی',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
-                ),
+
+              const SizedBox(height: 8),
+
+              // خط تایم‌لاین با نقاط متناظر
+              _buildConnectingTimelineBar(
+                isDark: isDark,
+                periodDur: periodDur,
+                ovulationDay: ovulationDay,
+                cycleLen: cycleLen,
               ),
             ],
           ),
-
-          const SizedBox(height: 10),
-
-          // ۴ کارت فازهای متوالی متصل به خط تایم‌لاین
-          Expanded(
-            child: Row(
-              children: [
-                // ۱. پایان پریود
-                _buildTimelinePhaseCard(
-                  title: 'پایان پریود',
-                  duration: '$daysUntilPeriodEnd روز دیگر',
-                  icon: CupertinoIcons.drop_fill,
-                  color: const Color(0xFFEB6E60),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                // ۲. فاز فولیکولی
-                _buildTimelinePhaseCard(
-                  title: 'فاز فولیکولی',
-                  duration: '$follicularDays روز',
-                  icon: CupertinoIcons.leaf_arrow_circlepath,
-                  color: const Color(0xFF38AA84),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                // ۳. تخمک‌گذاری
-                _buildTimelinePhaseCard(
-                  title: 'تخمک‌گذاری',
-                  duration: '۲ روز',
-                  icon: CupertinoIcons.sparkles,
-                  color: const Color(0xFFE88A2E),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                // ۴. فاز لوتئال
-                _buildTimelinePhaseCard(
-                  title: 'فاز لوتئال',
-                  duration: '$lutealDays روز',
-                  icon: CupertinoIcons.moon_fill,
-                  color: const Color(0xFFC752A8),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // خط تایم‌لاین پایین با نقاط متناظر
-          _buildConnectingTimelineBar(
-            isDark: isDark,
-            periodDur: periodDur,
-            ovulationDay: ovulationDay,
-            cycleLen: cycleLen,
-          ),
-
-          const SizedBox(height: 8),
-
-          // کارت نکته آماری پایین
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF191B20) : Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
-                width: 0.8,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.lightbulb_outline_rounded,
-                  size: 16,
-                  color: isDark ? const Color(0xFFFFB84D) : const Color(0xFFE59828),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'چرخه شما به طور متوسط ${PersianDigits.toFa(cycleLen.toString())} روز است و پیش‌بینی‌ها بر اساس الگوهای شماست.',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: isDark ? const Color(0xFFA1A8B3) : const Color(0xFF6B7280),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -508,7 +471,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         decoration: BoxDecoration(
           color: color.withValues(alpha: isDark ? 0.18 : 0.10),
           borderRadius: BorderRadius.circular(16),
@@ -523,7 +486,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             Text(
               title,
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.2,
                 fontWeight: FontWeight.w600,
                 color: isDark ? color : Color.lerp(color, Colors.black, 0.3),
               ),
@@ -534,13 +497,13 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             Text(
               PersianDigits.toFa(duration),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 11.2,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF1D2129),
               ),
             ),
-            const SizedBox(height: 4),
-            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 3),
+            Icon(icon, size: 15, color: color),
           ],
         ),
       ),
@@ -584,28 +547,28 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
             Text(
               PersianDigits.toFa('روز $periodDur'),
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.0,
                 color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
               ),
             ),
             Text(
               PersianDigits.toFa('روز $ovulationDay'),
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.0,
                 color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
               ),
             ),
             Text(
               PersianDigits.toFa('روز ${ovulationDay + 2}'),
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.0,
                 color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
               ),
             ),
             Text(
               PersianDigits.toFa('روز $cycleLen'),
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.0,
                 color: isDark ? const Color(0xFF8E95A2) : const Color(0xFF7A828E),
               ),
             ),
@@ -633,7 +596,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }
 
   // ---------------------------------------------------------------------------
-  // اسلاید ۳: توصیه‌های هوشمند امروز (Today's Care & Health Recommendations)
+  // اسلاید ۳: توصیه‌های امروز (کلیک -> باز شدن تسکین درد SOS)
   // ---------------------------------------------------------------------------
   Widget _buildSlide3Recommendations({
     required BuildContext context,
@@ -644,129 +607,98 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   }) {
     final List<_CareTipItem> tips = _getPhaseRecommendations(widget.phase);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * m.densityFactor,
-        14 * m.densityFactor,
-        16 * m.densityFactor,
-        24 * m.densityFactor,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // سطر عنوان و زیرعنوان
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onCareTipsTap,
+        borderRadius: BorderRadius.circular(34),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16 * m.densityFactor,
+            12 * m.densityFactor,
+            16 * m.densityFactor,
+            20 * m.densityFactor,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'توصیه‌های امروز',
-                style: TextStyle(
-                  fontSize: isCompact ? 15 : 17,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF1D2129),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'توصیه‌های امروز',
+                    style: TextStyle(
+                      fontSize: isCompact ? 15 : 17,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : const Color(0xFF1D2129),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    _getPhaseSubtitle(widget.phase),
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                _getPhaseSubtitle(widget.phase),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
+
+              const SizedBox(height: 8),
+
+              // ۴ کارت توصیه (۲×۲)
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildTipCard(
+                              item: tips[0],
+                              isDark: isDark,
+                              phaseColor: phaseColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildTipCard(
+                              item: tips[1],
+                              isDark: isDark,
+                              phaseColor: phaseColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildTipCard(
+                              item: tips[2],
+                              isDark: isDark,
+                              phaseColor: phaseColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildTipCard(
+                              item: tips[3],
+                              isDark: isDark,
+                              phaseColor: phaseColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 8),
-
-          // گرید ۲×۲ از کارت‌های توصیه‌های نئومورفیک
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTipCard(
-                          item: tips[0],
-                          isDark: isDark,
-                          phaseColor: phaseColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildTipCard(
-                          item: tips[1],
-                          isDark: isDark,
-                          phaseColor: phaseColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTipCard(
-                          item: tips[2],
-                          isDark: isDark,
-                          phaseColor: phaseColor,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildTipCard(
-                          item: tips[3],
-                          isDark: isDark,
-                          phaseColor: phaseColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // کپسول قرمز هشدار و مراقبت پزشکی
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEB6E60).withValues(alpha: isDark ? 0.20 : 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFEB6E60).withValues(alpha: isDark ? 0.35 : 0.22),
-                width: 0.8,
-              ),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 16,
-                  color: Color(0xFFEB6E60),
-                ),
-                SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'در صورت درد شدید یا خونریزی غیرعادی با پزشک مشورت کنید.',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFEB6E60),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -777,7 +709,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
     required Color phaseColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF191B20) : Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(14),
@@ -789,23 +721,23 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
       child: Row(
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
               color: phaseColor.withValues(alpha: isDark ? 0.20 : 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(item.icon, size: 15, color: phaseColor),
+            child: Icon(item.icon, size: 14, color: phaseColor),
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               item.text,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 10.2,
                 fontWeight: FontWeight.w600,
                 color: isDark ? const Color(0xFFE2E6EE) : const Color(0xFF2C323D),
-                height: 1.3,
+                height: 1.25,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -819,18 +751,18 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
   String _getPhaseSubtitle(CyclePhase phase) {
     switch (phase) {
       case CyclePhase.menstrual:
-        return 'برای احساس بهتر در دوران پریود';
+        return 'برای احساس بهتر در دوران پریود (مشاهده راهکارهای تسکین درد)';
       case CyclePhase.follicular:
-        return 'برای بهره‌وری و رشد در فاز فولیکولار';
+        return 'برای بهره‌وری و رشد در فاز فولیکولار (مشاهده راهکارها)';
       case CyclePhase.ovulation:
-        return 'برای اوج نشاط و مراقبت در تخمک‌گذاری';
+        return 'برای اوج نشاط و مراقبت در تخمک‌گذاری (مشاهده راهکارها)';
       case CyclePhase.luteal:
-        return 'برای آرامش و تعادل در فاز لوتئال (PMS)';
+        return 'برای آرامش و تعادل در فاز لوتئال (مشاهده راهکارها)';
       case CyclePhase.pregnancy:
-        return 'توصیه‌های سلامت و آرامش در بارداری';
+        return 'توصیه‌های سلامت و آرامش در بارداری (مشاهده راهکارها)';
       case CyclePhase.dataStale:
       case CyclePhase.noData:
-        return 'توصیه‌های خود‌مراقبتی و هماهنگی بدن';
+        return 'توصیه‌های خود‌مراقبتی و هماهنگی بدن (مشاهده راهکارها)';
     }
   }
 
@@ -897,7 +829,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // ۱. شیار فرورفته زیرین
           Container(
             height: outerRingSize,
             width: outerRingSize,
@@ -920,8 +851,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
               ],
             ),
           ),
-
-          // ۲. نوار حلقوی شیشه‌ای و انیمیشن پیشرفت ژله‌ای
           SizedBox(
             height: outerRingSize,
             width: outerRingSize,
@@ -940,8 +869,6 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
               },
             ),
           ),
-
-          // ۳. دیسک میانی برجسته نئومورفیک
           Container(
             height: innerDiscSize,
             width: innerDiscSize,
@@ -970,12 +897,11 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                   Text(
                     phase == CyclePhase.menstrual ? 'روز پریود' : 'روز چرخه',
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w600,
                       color: isDark ? const Color(0xFF9096A2) : const Color(0xFF7A828E),
                     ),
                   ),
-                  const SizedBox(height: 1),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Padding(
@@ -983,7 +909,7 @@ class _CycleOrbCardState extends State<CycleOrbCard> {
                       child: Text(
                         PersianDigits.toFa(currentDay.toString()),
                         style: TextStyle(
-                          fontSize: 27,
+                          fontSize: 25,
                           fontWeight: FontWeight.w900,
                           color: phaseColor,
                           height: 1.15,

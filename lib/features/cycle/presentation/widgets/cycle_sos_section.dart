@@ -16,6 +16,22 @@ class CycleSosSection extends StatelessWidget {
     required this.settings,
     required this.phase,
   });
+
+  static void showSosModal(
+    BuildContext context, {
+    required CycleEngineOutput? engineOutput,
+    required List<Map<String, dynamic>> dayLogs,
+    required Map<String, String> settings,
+    required CyclePhase phase,
+  }) {
+    CycleSosSection(
+      engineOutput: engineOutput,
+      dayLogs: dayLogs,
+      settings: settings,
+      phase: phase,
+    )._showSosBottomSheet(context);
+  }
+
   final CycleEngineOutput? engineOutput;
   final List<Map<String, dynamic>> dayLogs;
   final Map<String, String> settings;

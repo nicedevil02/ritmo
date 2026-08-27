@@ -1,13 +1,14 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_card.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_chip.dart';
 import 'package:ritmo/core/widgets/ritmo/ritmo_empty_state.dart';
-import 'package:ritmo/core/widgets/ritmo/ritmo_page_scaffold.dart';
 import 'package:ritmo/core/domain/personas/persona_registry.dart';
 import 'package:ritmo/features/assistant/presentation/widgets/unified_assistant_sheet.dart';
 import 'package:ritmo/features/notes/data/experience_repository.dart';
@@ -37,6 +38,7 @@ class NotebookScreen extends StatefulWidget {
 class _NotebookScreenState extends State<NotebookScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isTabsVisible = true;
 
   // --- Tab 0 (Notes) State ---
   List<Note> _notes = [];
@@ -266,6 +268,8 @@ class _NotebookScreenState extends State<NotebookScreen>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final contentTopPadding = topPadding + 142.0;
 
     final totalActiveCount = _countsByKind.values.fold<int>(
       0,
@@ -274,287 +278,507 @@ class _NotebookScreenState extends State<NotebookScreen>
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RitmoPageScaffold(
-        padding: EdgeInsets.zero,
+      child: Scaffold(
+        backgroundColor: colors.bg,
         floatingActionButton: _buildAdaptiveFab(context, colors),
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              // 1. Top Luxury Bar: Back Badge, Title, AI Lens Badge
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                child: Row(
-                  children: [
-                    // Right side: Back Button & Screen Title
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                RitmoHapticsPolicy.tap();
-                                Navigator.pop(context);
-                              },
-                              borderRadius: BorderRadius.circular(14),
-                              child: Container(
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: colors.surfaceSunken,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: colors.border,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Icon(
-                                  CupertinoIcons.arrow_right,
-                                  size: 18,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'دفترچه و تجربه‌ها',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.4,
-                                    color: colors.textPrimary,
-                                  ),
-                                ),
-                                if (totalActiveCount > 0)
-                                  Text(
-                                    '${PersianDigits.convert(totalActiveCount.toString())} یادداشت فعال',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.textSecondary.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Left side: AI Assistant Badge
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _openAiAssistantSheet,
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.primaryContainer,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: colors.primary.withValues(
-                                alpha: isDark ? 0.45 : 0.35,
-                              ),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.primary.withValues(
-                                  alpha: isDark ? 0.12 : 0.08,
-                                ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.sparkles,
-                                size: 13,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'دستیار هوش مصنوعی',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // 2. Modern Segmented Tab Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                child: Container(
-                  height: 46,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: colors.border, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.shadow.withValues(
-                          alpha: isDark ? 0.2 : 0.06,
-                        ),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                    indicator: BoxDecoration(
-                      color: colors.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.4),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.shadow.withValues(
-                            alpha: isDark ? 0.25 : 0.12,
-                          ),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    labelColor: isDark ? colors.accent : colors.primary,
-                    unselectedLabelColor: colors.textSecondary.withValues(
-                      alpha: 0.7,
-                    ),
-                    labelStyle: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    tabs: [
-                      Tab(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(CupertinoIcons.doc_text_fill, size: 13),
-                              const SizedBox(width: 4),
-                              Text(
-                                'یادداشت‌ها (${PersianDigits.convert(totalActiveCount.toString())})',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Tab(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(CupertinoIcons.lightbulb_fill, size: 13),
-                              const SizedBox(width: 4),
-                              Text(
-                                'درس‌ها و تجارب (${PersianDigits.convert(_experiences.length.toString())})',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Tab(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                CupertinoIcons.arrow_2_circlepath_circle_fill,
-                                size: 13,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text('مرور و تحلیل'),
-                              if (_dueNotesCount > 0) ...[
-                                const SizedBox(width: 4),
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: colors.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // 3. Tab Views Content
-              Expanded(
+        body: Stack(
+          children: [
+            // Layer 1: Body Content (NotificationListener for Instant Quick-Return Header)
+            Positioned.fill(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis == Axis.vertical) {
+                    if (notification.metrics.pixels <= 15) {
+                      if (!_isTabsVisible) {
+                        setState(() => _isTabsVisible = true);
+                      }
+                    } else if (notification is UserScrollNotification) {
+                      if (notification.direction == ScrollDirection.reverse) {
+                        if (_isTabsVisible) {
+                          setState(() => _isTabsVisible = false);
+                        }
+                      } else if (notification.direction == ScrollDirection.forward) {
+                        if (!_isTabsVisible) {
+                          setState(() => _isTabsVisible = true);
+                        }
+                      }
+                    }
+                  }
+                  return false;
+                },
                 child: TabBarView(
                   controller: _tabController,
                   physics: const BouncingScrollPhysics(),
                   children: [
                     // Tab 0: Notes
-                    _buildNotesTab(context, colors, isDark),
+                    _buildNotesTab(context, colors, isDark, contentTopPadding),
 
                     // Tab 1: Experiences & Lessons
-                    _buildExperiencesTab(context, colors, isDark),
+                    _buildExperiencesTab(context, colors, isDark, contentTopPadding),
 
                     // Tab 2: Spaced Repetition & Reviews
-                    _buildReviewTab(context, colors, isDark),
+                    _buildReviewTab(context, colors, isDark, contentTopPadding),
                   ],
                 ),
               ),
+            ),
+
+            // Layer 2: Floating Capsule Header Island
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                  child: _buildCapsuleHeader(
+                    context,
+                    isDark,
+                    colors,
+                    totalActiveCount,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCapsuleHeader(
+    BuildContext context,
+    bool isDark,
+    RitmoColors colors,
+    int totalActiveCount,
+  ) {
+    final capsuleBgColor = isDark
+        ? const Color(0xFF1E222A).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.88);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.90);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.50)
+                : const Color(0xFFCBD5E1).withValues(alpha: 0.65),
+            offset: const Offset(0, 5),
+            blurRadius: 14,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.white.withValues(alpha: 0.90),
+            offset: const Offset(0, -1),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            decoration: BoxDecoration(
+              color: capsuleBgColor,
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(
+                color: borderColor,
+                width: 1.0,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Row: Back Button, Title + Count, AI, Grid/List Toggle, Trash/Archive
+                SizedBox(
+                  height: 48,
+                  child: Row(
+                    children: [
+                      if (Navigator.canPop(context))
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 38,
+                            minHeight: 38,
+                          ),
+                          icon: Icon(
+                            CupertinoIcons.arrow_right,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            RitmoHapticsPolicy.tap();
+                            Navigator.pop(context);
+                          },
+                        )
+                      else
+                        const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'دفترچه و تجربه‌ها',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            letterSpacing: -0.4,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF1D2129),
+                          ),
+                        ),
+                      ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.sparkles,
+                        iconColor: colors.primary,
+                        isAiButton: true,
+                        isDark: isDark,
+                        tooltip: 'دستیار هوشمند دفترچه',
+                        onTap: _openAiAssistantSheet,
+                      ),
+                      if (_tabController.index == 0)
+                        _buildHeaderActionButton(
+                          icon: _isGridView
+                              ? CupertinoIcons.rectangle_grid_1x2
+                              : CupertinoIcons.square_grid_2x2,
+                          iconColor: isDark
+                              ? Colors.white
+                              : const Color(0xFF1D2129),
+                          isDark: isDark,
+                          tooltip: _isGridView ? 'نمای فهرستی' : 'نمای شبکه‌ای',
+                          onTap: () {
+                            RitmoHapticsPolicy.selection();
+                            setState(() => _isGridView = !_isGridView);
+                          },
+                        ),
+                      _buildHeaderActionButton(
+                        icon: CupertinoIcons.archivebox,
+                        iconColor: isDark
+                            ? const Color(0xFF9096A2)
+                            : const Color(0xFF6B7280),
+                        isDark: isDark,
+                        tooltip: 'سطل بازیافت و آرشیو',
+                        onTap: () async {
+                          RitmoHapticsPolicy.tap();
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NoteTrashArchiveScreen(),
+                            ),
+                          );
+                          if (mounted) await _loadNotes();
+                        },
+                      ),
+                      const SizedBox(width: 2),
+                    ],
+                  ),
+                ),
+
+                // Bottom Collapsible 3-Tier Segmented Tabs
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeInOutCubic,
+                  height: _isTabsVisible ? 54.0 : 0.0,
+                  clipBehavior: Clip.hardEdge,
+                  decoration: const BoxDecoration(),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _isTabsVisible ? 1.0 : 0.0,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 2, 4, 6),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: _buildSegmentedTabs(colors, isDark, totalActiveCount),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabs(
+    RitmoColors colors,
+    bool isDark,
+    int totalActiveCount,
+  ) {
+    final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
+    final pillBgColor = isDark
+        ? const Color(0xFF22262F)
+        : Color.lerp(Colors.white, colors.primary, 0.12)!;
+    final activeIndex = _tabController.index.clamp(0, 2);
+
+    final tabs = [
+      (
+        title: 'یادداشت‌ها',
+        count: totalActiveCount > 0 ? totalActiveCount : null,
+        icon: CupertinoIcons.doc_text_fill,
+        hasBadge: false,
+      ),
+      (
+        title: 'تجارب',
+        count: _experiences.isNotEmpty ? _experiences.length : null,
+        icon: CupertinoIcons.lightbulb_fill,
+        hasBadge: false,
+      ),
+      (
+        title: 'مرور',
+        count: null,
+        icon: CupertinoIcons.arrow_2_circlepath_circle_fill,
+        hasBadge: _dueNotesCount > 0,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        const outerPadding = 4.0;
+        final availableWidth = totalWidth - (outerPadding * 2);
+        final tabWidth = availableWidth / 3;
+        const trackHeight = 44.0;
+        const pillHeight = trackHeight - (outerPadding * 2);
+
+        return Container(
+          height: trackHeight,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: trackBgColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.70)
+                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
+                offset: const Offset(2, 2),
+                blurRadius: 4,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? const Color(0xFF222630)
+                    : Colors.white.withValues(alpha: 0.95),
+                offset: const Offset(-2, -2),
+                blurRadius: 4,
+              ),
             ],
           ),
+          child: Stack(
+            children: [
+              // Sliding Pill Indicator
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeInOutCubic,
+                right: outerPadding + (activeIndex * tabWidth),
+                top: outerPadding,
+                width: tabWidth,
+                height: pillHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: pillBgColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
+                      width: 1.0,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.60)
+                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
+                        offset: const Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
+                        offset: const Offset(-2, -2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Tab Buttons
+              Row(
+                children: List.generate(3, (index) {
+                  final item = tabs[index];
+                  final isSelected = activeIndex == index;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _tabController.animateTo(index);
+                        setState(() {});
+                      },
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            color: isSelected
+                                ? colors.primary
+                                : (isDark
+                                    ? const Color(0xFF8A93A4)
+                                    : const Color(0xFF6B7280)),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  item.icon,
+                                  size: 13,
+                                  color: isSelected
+                                      ? colors.primary
+                                      : (isDark
+                                          ? const Color(0xFF8A93A4)
+                                          : const Color(0xFF6B7280)),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  item.count != null
+                                      ? '${item.title} (${PersianDigits.convert(item.count.toString())})'
+                                      : item.title,
+                                ),
+                                if (item.hasBadge) ...[
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: colors.error,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    required VoidCallback onTap,
+    String? tooltip,
+    bool isAiButton = false,
+  }) {
+    final button = GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: _buildHeaderActionButtonContent(
+        icon: icon,
+        iconColor: iconColor,
+        isDark: isDark,
+        isAiButton: isAiButton,
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildHeaderActionButtonContent({
+    required IconData icon,
+    required Color iconColor,
+    required bool isDark,
+    bool isAiButton = false,
+  }) {
+    return Container(
+      width: 36,
+      height: 36,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isDark
+            ? (isAiButton
+                ? iconColor.withValues(alpha: 0.18)
+                : const Color(0xFF22262E))
+            : (isAiButton
+                ? iconColor.withValues(alpha: 0.12)
+                : const Color(0xFFF3F5F8)),
+        border: Border.all(
+          color: isDark
+              ? (isAiButton
+                  ? iconColor.withValues(alpha: 0.40)
+                  : Colors.white.withValues(alpha: 0.08))
+              : (isAiButton
+                  ? iconColor.withValues(alpha: 0.30)
+                  : Colors.white.withValues(alpha: 0.90)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.white.withValues(alpha: 0.95),
+            offset: const Offset(-2, -2),
+            blurRadius: 4,
+          ),
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : const Color(0xFFB5C0CD).withValues(alpha: 0.65),
+            offset: const Offset(2, 2),
+            blurRadius: 4,
+          ),
+          if (isAiButton)
+            BoxShadow(
+              color: iconColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              blurRadius: 10,
+              spreadRadius: 1.0,
+            ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 18,
+          color: isAiButton
+              ? iconColor
+              : (isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280)),
         ),
       ),
     );
@@ -563,7 +787,12 @@ class _NotebookScreenState extends State<NotebookScreen>
   // ==========================================
   // TAB 0: ALL NOTES & NOTEBOOK VIEW
   // ==========================================
-  Widget _buildNotesTab(BuildContext context, RitmoColors colors, bool isDark) {
+  Widget _buildNotesTab(
+    BuildContext context,
+    RitmoColors colors,
+    bool isDark,
+    double contentTopPadding,
+  ) {
     final pinnedNotes = _notes.where((n) => n.isPinned).toList();
     final otherNotes = _notes.where((n) => !n.isPinned).toList();
 
@@ -587,7 +816,7 @@ class _NotebookScreenState extends State<NotebookScreen>
         // Search Bar & Filter Chips Header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+            padding: EdgeInsets.fromLTRB(14, contentTopPadding, 14, 4),
             child: Column(
               children: [
                 // Search Bar Row
@@ -819,7 +1048,7 @@ class _NotebookScreenState extends State<NotebookScreen>
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Pinned Notes Section
@@ -879,6 +1108,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     BuildContext context,
     RitmoColors colors,
     bool isDark,
+    double contentTopPadding,
   ) {
     final insightsColor = context.modules.insights;
 
@@ -889,26 +1119,32 @@ class _NotebookScreenState extends State<NotebookScreen>
     final featuredExp = _featuredExp;
 
     if (_isLoadingExp) {
-      return const RitmoShimmerGrid(count: 4);
+      return Padding(
+        padding: EdgeInsets.only(top: contentTopPadding),
+        child: const RitmoShimmerGrid(count: 4),
+      );
     }
 
     if (_experiences.isEmpty) {
-      return RitmoEmptyState(
-        icon: CupertinoIcons.lightbulb,
-        title: 'بانک درس‌های زندگی خالی است',
-        description:
-            'تجربه‌ها، آموخته‌ها و حکمت‌هایی که در جریان زندگی کسب می‌کنید را ثبت کنید تا چراغ راه تصمیمات آینده‌تان باشند.',
-        actionLabel: 'ثبت اولین آموزه زندگی',
-        onAction: () async {
-          RitmoHapticsPolicy.tap();
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NoteEditorScreen(isExperience: true),
-            ),
-          );
-          if (mounted) await _loadExperiences();
-        },
+      return Padding(
+        padding: EdgeInsets.only(top: contentTopPadding),
+        child: RitmoEmptyState(
+          icon: CupertinoIcons.lightbulb,
+          title: 'بانک درس‌های زندگی خالی است',
+          description:
+              'تجربه‌ها، آموخته‌ها و حکمت‌هایی که در جریان زندگی کسب می‌کنید را ثبت کنید تا چراغ راه تصمیمات آینده‌تان باشند.',
+          actionLabel: 'ثبت اولین آموزه زندگی',
+          onAction: () async {
+            RitmoHapticsPolicy.tap();
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NoteEditorScreen(isExperience: true),
+              ),
+            );
+            if (mounted) await _loadExperiences();
+          },
+        ),
       );
     }
 
@@ -922,7 +1158,7 @@ class _NotebookScreenState extends State<NotebookScreen>
           // Category Selector Chips
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 8),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -993,7 +1229,7 @@ class _NotebookScreenState extends State<NotebookScreen>
 
           // Wisdom Cards List
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.fromLTRB(10, 16, 10, 80),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) => _buildWisdomCard(context, filtered[i], isDark),
@@ -1015,9 +1251,13 @@ class _NotebookScreenState extends State<NotebookScreen>
     BuildContext context,
     RitmoColors colors,
     bool isDark,
+    double contentTopPadding,
   ) {
     if (_isLoadingReview) {
-      return const RitmoShimmerGrid(count: 3);
+      return Padding(
+        padding: EdgeInsets.only(top: contentTopPadding),
+        child: const RitmoShimmerGrid(count: 3),
+      );
     }
 
     return RefreshIndicator(
@@ -1026,17 +1266,17 @@ class _NotebookScreenState extends State<NotebookScreen>
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
+        padding: EdgeInsets.fromLTRB(10, contentTopPadding, 10, 80),
         children: [
           // 1. Spaced Repetition (SRS) Flashcards Hero Card
           _buildSrsHeroCard(context, colors, isDark),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           // 2. Weekly Review Card
           _buildWeeklyReviewCard(context, colors, isDark),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           // 3. Archive & Trash Hub
           _buildArchiveAndTrashSection(context, colors, isDark),
@@ -1578,7 +1818,7 @@ class _NotebookScreenState extends State<NotebookScreen>
     final style = NoteUiHelper.getKindStyle(context, note.kind);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.surfaceSunken,

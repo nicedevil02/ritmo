@@ -22,10 +22,12 @@ class PlanningScreen extends StatefulWidget {
     super.key,
     this.upcomingTimeline = const [],
     this.embedded = false,
+    this.topPadding,
   });
 
   final List<dynamic> upcomingTimeline;
   final bool embedded;
+  final double? topPadding;
 
   @override
   State<PlanningScreen> createState() => _PlanningScreenState();
@@ -121,15 +123,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     if (widget.embedded) {
       return Directionality(
         textDirection: TextDirection.rtl,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _buildSegmentedControl(colors),
-            ),
-            Expanded(child: _buildBody(context)),
-          ],
-        ),
+        child: _buildBody(context, header: _buildSegmentedControl(colors)),
       );
     }
 
@@ -145,7 +139,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBody(BuildContext context, {Widget? header}) {
     final colors = context.colors;
 
     if (_controller.status == PlanningStateStatus.loading) {
@@ -174,25 +168,32 @@ class _PlanningScreenState extends State<PlanningScreen> {
 
     switch (_controller.selectedHorizon) {
       case PlanningHorizon.day:
-        return _buildTodayView(context);
+        return _buildTodayView(context, header: header);
       case PlanningHorizon.week:
-        return _buildWeekView(context);
+        return _buildWeekView(context, header: header);
       case PlanningHorizon.month:
         return MonthPlanSection(
           controller: _controller,
           upcomingTimeline: widget.upcomingTimeline,
+          header: header,
+          topPadding: widget.topPadding,
         );
     }
   }
 
-  Widget _buildTodayView(BuildContext context) {
+  Widget _buildTodayView(BuildContext context, {Widget? header}) {
     final colors = context.colors;
+    final effectiveTop = widget.topPadding ?? 16.0;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (header != null) ...[
+            header,
+            const SizedBox(height: 16),
+          ],
           // Command card for today (U-03)
           Container(
             padding: const EdgeInsets.all(20),
@@ -385,7 +386,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
               children: _controller.commitments.map((c) {
                 final isDone = c.status == CommitmentStatus.done;
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -526,7 +527,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
     );
   }
 
-  Widget _buildWeekView(BuildContext context) {
+  Widget _buildWeekView(BuildContext context, {Widget? header}) {
     final colors = context.colors;
     final active = _controller.activeCycle;
     final totalCommittable = _controller.capacities.fold<int>(
@@ -537,15 +538,20 @@ class _PlanningScreenState extends State<PlanningScreen> {
       0,
       (acc, c) => acc + c.effortMinutes,
     );
+    final effectiveTop = widget.topPadding ?? 16.0;
 
     return Column(
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 20),
+            padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (header != null) ...[
+                  header,
+                  const SizedBox(height: 16),
+                ],
                 // 1. Cycle status bar (U-04)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -730,7 +736,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
                     final isExpanded = _expandedDayKeys.contains(dLoad.dayKey);
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
+                      margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
                         color: colors.card,
                         borderRadius: BorderRadius.circular(16),

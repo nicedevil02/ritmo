@@ -14,10 +14,14 @@ class MonthPlanSection extends StatelessWidget {
     super.key,
     required this.controller,
     this.upcomingTimeline = const [],
+    this.header,
+    this.topPadding,
   });
 
   final PlanningController controller;
   final List<dynamic> upcomingTimeline;
+  final Widget? header;
+  final double? topPadding;
 
   Future<void> _showAddSkippedItemDialog(BuildContext context, PlanningCycle cycle) async {
     final textController = TextEditingController();
@@ -92,11 +96,16 @@ class MonthPlanSection extends StatelessWidget {
         monthCommitments.fold<int>(0, (acc, c) => acc + c.effortMinutes);
     final totalCommitmentHours = (totalCommitmentMinutes / 60).round();
 
+    final effectiveTop = topPadding ?? 20.0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(10, effectiveTop, 10, 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (header != null) ...[
+            header!,
+            const SizedBox(height: 16),
+          ],
           // 1. Fixed Realities of Month (U-10 timeline integration)
           Container(
             padding: const EdgeInsets.all(16),

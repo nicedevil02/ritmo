@@ -102,21 +102,13 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       useSafeArea: true,
-      enableDrag: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.60,
-        minChildSize: 0.40,
-        maxChildSize: 0.94,
-        snap: true,
-        snapSizes: const [0.60, 0.94],
-        expand: false,
-        builder: (context, scrollController) => CreateGoalSheet(
-          activeGoals: activeGoals,
-          routines: routines,
-          goalToEdit: editGoal,
-          templateData: templateData,
-          onSaved: () => _controller.reload(force: true),
-        ),
+      enableDrag: false,
+      builder: (context) => CreateGoalSheet(
+        activeGoals: activeGoals,
+        routines: routines,
+        goalToEdit: editGoal,
+        templateData: templateData,
+        onSaved: () => _controller.reload(force: true),
       ),
     );
   }
@@ -358,12 +350,10 @@ class _GoalsScreenState extends State<GoalsScreen> with SingleTickerProviderStat
                         controller: _tabController,
                         children: [
                           // Tab 0: Planning Horizons
-                          Padding(
-                            padding: EdgeInsets.only(top: contentTopPadding),
-                            child: PlanningScreen(
-                              embedded: true,
-                              upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
-                            ),
+                          PlanningScreen(
+                            embedded: true,
+                            upcomingTimeline: engineOutput?.upcomingTimeline ?? [],
+                            topPadding: contentTopPadding,
                           ),
 
                           // Tab 1: Goals Card List or Tree View

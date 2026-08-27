@@ -127,6 +127,18 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
     return (h * 60 + m) % 1440;
   }
 
+  bool _isMinuteInBlock(int minute, _DayTimelineBlock block) {
+    if (block.startMinute == block.endMinute) {
+      return true; // covers all 24 hours
+    }
+    if (block.startMinute < block.endMinute) {
+      return minute >= block.startMinute && minute < block.endMinute;
+    } else {
+      // Crosses midnight (e.g. start: 1350, end: 330)
+      return minute >= block.startMinute || minute < block.endMinute;
+    }
+  }
+
   List<_DayTimelineBlock> _buildDayBlocks() {
     final daySchedules = widget.schedules
         .where((s) => s.isEnabled && s.daysOfWeek.contains(_selectedWeekday))
@@ -144,7 +156,8 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
       ];
     }
 
-    final rawSpans = <({int start, int end, RealmScheduleData schedule, RealmData realm})>[];
+    // 1. Build a 1440-minute grid
+    final minuteGrid = List<({RealmData? realm, RealmScheduleData? schedule})?>.filled(1440, null);
 
     for (final s in daySchedules) {
       final realm = widget.realms.firstWhere(
@@ -158,50 +171,81 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
         ),
       );
 
-      final startMin = _parseMinute(s.startTime);
-      var endMin = _parseMinute(s.endTime);
-      if (endMin <= startMin) {
-        endMin += 1440;
+      final start = _parseMinute(s.startTime);
+      final end = _parseMinute(s.endTime);
+
+      if (start < end) {
+        for (var m = start; m < end; m++) {
+          minuteGrid[m] = (realm: realm, schedule: s);
+        }
+      } else {
+        for (var m = start; m < 1440; m++) {
+          minuteGrid[m] = (realm: realm, schedule: s);
+        }
+        for (var m = 0; m < end; m++) {
+          minuteGrid[m] = (realm: realm, schedule: s);
+        }
       }
-      rawSpans.add((start: startMin, end: endMin, schedule: s, realm: realm));
     }
 
-    rawSpans.sort((a, b) => a.start.compareTo(b.start));
+    // 2. Check if the entire 24h is uniform
+    final first = minuteGrid[0];
+    var isAllSame = true;
+    for (var i = 1; i < 1440; i++) {
+      if (minuteGrid[i]?.schedule?.id != first?.schedule?.id) {
+        isAllSame = false;
+        break;
+      }
+    }
+    if (isAllSame) {
+      return [
+        _DayTimelineBlock(
+          startMinute: 0,
+          endMinute: 1440,
+          realm: first?.realm,
+          schedule: first?.schedule,
+          isFreeTime: first == null,
+        ),
+      ];
+    }
 
-    final result = <_DayTimelineBlock>[];
-    var currentMin = 0;
+    // 3. Find first transition cut point along the 1440-minute loop
+    var startIdx = 0;
+    for (var i = 0; i < 1440; i++) {
+      final curr = minuteGrid[i];
+      final prev = minuteGrid[(i - 1 + 1440) % 1440];
+      if (curr?.schedule?.id != prev?.schedule?.id) {
+        startIdx = i;
+        break;
+      }
+    }
 
-    for (final span in rawSpans) {
-      if (span.start > currentMin) {
-        result.add(_DayTimelineBlock(
-          startMinute: currentMin,
-          endMinute: span.start,
-          realm: null,
-          schedule: null,
-          isFreeTime: true,
+    final blocks = <_DayTimelineBlock>[];
+    var segStart = startIdx;
+    var currentEntity = minuteGrid[startIdx];
+
+    for (var count = 1; count <= 1440; count++) {
+      final idx = (startIdx + count) % 1440;
+      final entity = count == 1440 ? null : minuteGrid[idx];
+
+      final isSameEntity = count < 1440 && entity?.schedule?.id == currentEntity?.schedule?.id;
+
+      if (!isSameEntity) {
+        final segEnd = (startIdx + count) % 1440;
+        blocks.add(_DayTimelineBlock(
+          startMinute: segStart,
+          endMinute: segEnd,
+          realm: currentEntity?.realm,
+          schedule: currentEntity?.schedule,
+          isFreeTime: currentEntity == null,
         ));
+
+        segStart = segEnd;
+        currentEntity = entity;
       }
-      result.add(_DayTimelineBlock(
-        startMinute: span.start % 1440,
-        endMinute: span.end % 1440 == 0 && span.end > 0 ? 1440 : span.end % 1440,
-        realm: span.realm,
-        schedule: span.schedule,
-        isFreeTime: false,
-      ));
-      currentMin = span.end % 1440;
     }
 
-    if (currentMin < 1440 && currentMin > 0) {
-      result.add(_DayTimelineBlock(
-        startMinute: currentMin,
-        endMinute: 1440,
-        realm: null,
-        schedule: null,
-        isFreeTime: true,
-      ));
-    }
-
-    return result;
+    return blocks;
   }
 
   /// وضعیت و اطلاعات دقیق بر اساس دقیقه جاری یا کاوش‌شده
@@ -212,11 +256,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
     final timeStr = '$h:$m';
 
     for (final b in blocks) {
-      final inBlock = b.endMinute > b.startMinute
-          ? (minute >= b.startMinute && minute < b.endMinute)
-          : (minute >= b.startMinute || minute < b.endMinute);
-
-      if (inBlock) {
+      if (_isMinuteInBlock(minute, b)) {
         if (b.isFreeTime || b.realm == null) {
           return (
             name: 'زمان آزاد و شناور',
@@ -747,9 +787,7 @@ class _Realm24hOverviewSheetState extends State<Realm24hOverviewSheet> {
 
   Widget _buildTimelineBlockCard(bool isDark, _DayTimelineBlock block, int activeNowMinute) {
     final isCurrent = _selectedWeekday == _now.weekday &&
-        (block.endMinute > block.startMinute
-            ? (activeNowMinute >= block.startMinute && activeNowMinute < block.endMinute)
-            : (activeNowMinute >= block.startMinute || activeNowMinute < block.endMinute));
+        _isMinuteInBlock(activeNowMinute, block);
 
     final isFree = block.isFreeTime || block.realm == null;
     final color = isFree ? const Color(0xFF94A3B8) : block.realm!.parseColor();

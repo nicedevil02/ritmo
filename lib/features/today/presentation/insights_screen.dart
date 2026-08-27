@@ -113,7 +113,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     // POP v1.1 — defer heavy analytics load until after first frame
     // so the Insights scaffold renders immediately (no jank on tab switch).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadAnalytics();
+      if (mounted) _loadAnalytics(showLoading: true);
     });
   }
 
@@ -123,10 +123,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAnalytics() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadAnalytics({bool showLoading = false}) async {
+    if (showLoading && mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final db = await DatabaseHelper.instance.database;
@@ -631,16 +633,6 @@ ${jsonEncode(digest.json)}
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: colors.background,
-        body: Center(
-          child: CircularProgressIndicator(color: colors.primary),
-        ),
-      );
-    }
-
     final topPadding = MediaQuery.paddingOf(context).top;
     final contentTopPadding = topPadding + 142.0;
 
@@ -671,36 +663,43 @@ ${jsonEncode(digest.json)}
               children: [
                 // Layer 1: Body Content
                 Positioned.fill(
-                  child: RefreshIndicator(
-                    onRefresh: _loadAnalytics,
-                    color: colors.primary,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // AI Briefing section
-                          PremiumGate(
-                            feature: PremiumFeature.unlimitedAi,
-                            child: _buildAIBriefingSection(colors, isDarkMode),
+                  child: _isLoading
+                      ? Padding(
+                          padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 16),
+                          child: Center(
+                            child: CircularProgressIndicator(color: colors.primary),
                           ),
-                          const SizedBox(height: 16),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => _loadAnalytics(showLoading: false),
+                          color: colors.primary,
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(16, contentTopPadding, 16, 120),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // AI Briefing section
+                                PremiumGate(
+                                  feature: PremiumFeature.unlimitedAi,
+                                  child: _buildAIBriefingSection(colors, isDarkMode),
+                                ),
+                                const SizedBox(height: 16),
 
-                          // Maturity Gate Dispatcher
-                          if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
-                            _buildEarlyStageView(colors, isDarkMode)
-                          else
-                            PremiumGate(
-                              feature: PremiumFeature.advancedInsights,
-                              child: _buildAdvancedView(colors, isDarkMode),
+                                // Maturity Gate Dispatcher
+                                if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
+                                  _buildEarlyStageView(colors, isDarkMode)
+                                else
+                                  PremiumGate(
+                                    feature: PremiumFeature.advancedInsights,
+                                    child: _buildAdvancedView(colors, isDarkMode),
+                                  ),
+                                const SizedBox(height: 16),
+                                AdService.instance.getBannerAd(),
+                              ],
                             ),
-                          const SizedBox(height: 16),
-                          AdService.instance.getBannerAd(),
-                        ],
-                      ),
-                    ),
-                  ),
+                          ),
+                        ),
                 ),
 
                 // Layer 2: Floating Capsule Header Island
@@ -870,66 +869,81 @@ ${jsonEncode(digest.json)}
 
   Widget _buildTimeWindowSegmentedRuler(RitmoColors colors, bool isDark) {
     final trackBgColor = isDark ? const Color(0xFF16191E) : const Color(0xFFEFF2F6);
-    final accentColor = colors.primary;
     final pillBgColor = isDark
         ? const Color(0xFF22262F)
-        : Color.lerp(Colors.white, accentColor, 0.12)!;
+        : Color.lerp(Colors.white, colors.primary, 0.12)!;
+    final activeIndex = InsightsTimeWindow.values.indexOf(_selectedWindow).clamp(0, 3);
 
-    const windows = InsightsTimeWindow.values;
-    final activeIndex = windows.indexOf(_selectedWindow).clamp(0, windows.length - 1);
+    const tabs = InsightsTimeWindow.values;
 
-    return Container(
-      height: 42,
-      padding: const EdgeInsets.all(3.5),
-      decoration: BoxDecoration(
-        color: trackBgColor,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFDDE3EA),
-          width: 0.9,
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final totalWidth = constraints.maxWidth;
-          final itemWidth = totalWidth / windows.length;
-          final isRtl = Directionality.of(context) == TextDirection.rtl;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        const outerPadding = 4.0;
+        final availableWidth = totalWidth - (outerPadding * 2);
+        final tabWidth = availableWidth / tabs.length;
+        const trackHeight = 44.0;
+        const pillHeight = trackHeight - (outerPadding * 2);
 
-          return Stack(
+        return Container(
+          height: trackHeight,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: trackBgColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.90),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.70)
+                    : const Color(0xFFB8C2CE).withValues(alpha: 0.55),
+                offset: const Offset(2, 2),
+                blurRadius: 4,
+              ),
+              BoxShadow(
+                color: isDark
+                    ? const Color(0xFF222630)
+                    : Colors.white.withValues(alpha: 0.95),
+                offset: const Offset(-2, -2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          child: Stack(
             children: [
-              // Sliding animated pill background
+              // Sliding Pill Indicator
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                left: isRtl ? null : activeIndex * itemWidth,
-                right: isRtl ? activeIndex * itemWidth : null,
-                top: 0,
-                bottom: 0,
-                width: itemWidth,
+                curve: Curves.easeInOutCubic,
+                right: outerPadding + (activeIndex * tabWidth),
+                top: outerPadding,
+                width: tabWidth,
+                height: pillHeight,
                 child: Container(
                   decoration: BoxDecoration(
                     color: pillBgColor,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: isDark
-                          ? accentColor.withValues(alpha: 0.35)
-                          : accentColor.withValues(alpha: 0.30),
+                      color: colors.primary.withValues(alpha: isDark ? 0.40 : 0.28),
                       width: 1.0,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: isDark
-                            ? Colors.black.withValues(alpha: 0.50)
-                            : accentColor.withValues(alpha: 0.18),
-                        offset: const Offset(0, 2),
-                        blurRadius: 5,
+                            ? Colors.black.withValues(alpha: 0.60)
+                            : const Color(0xFFB2BDCB).withValues(alpha: 0.65),
+                        offset: const Offset(2, 2),
+                        blurRadius: 4,
                       ),
                       BoxShadow(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : Colors.white.withValues(alpha: 0.9),
-                        offset: const Offset(0, -1),
-                        blurRadius: 2,
+                        color: isDark ? const Color(0xFF2E3440) : Colors.white,
+                        offset: const Offset(-2, -2),
+                        blurRadius: 4,
                       ),
                     ],
                   ),
@@ -937,43 +951,48 @@ ${jsonEncode(digest.json)}
               ),
 
               // Tab Buttons
-              Row(
-                children: windows.map((window) {
-                  final isSelected = window == _selectedWindow;
-                  return Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        if (!isSelected) {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _selectedWindow = window;
-                          });
-                          _loadAnalytics();
-                        }
-                      },
-                      child: Center(
-                        child: Text(
-                          window.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                            color: isSelected
-                                ? accentColor
-                                : (isDark ? const Color(0xFF8E95A2) : const Color(0xFF6B7280)),
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: outerPadding),
+                  child: Row(
+                    children: tabs.map((window) {
+                      final isSelected = window == _selectedWindow;
+                      return Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            if (!isSelected) {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _selectedWindow = window;
+                              });
+                              _loadAnalytics(showLoading: false);
+                            }
+                          },
+                          child: Center(
+                            child: Text(
+                              window.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                color: isSelected
+                                    ? (isDark ? Colors.white : const Color(0xFF1D2129))
+                                    : (isDark ? const Color(0xFF8E95A2) : const Color(0xFF6B7280)),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

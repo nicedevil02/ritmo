@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ritmo/core/database/database_helper.dart';
 import 'package:ritmo/core/domain/realm/active_realm_resolver.dart';
 import 'package:ritmo/core/repositories/realm_repository.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
@@ -29,6 +30,11 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
   List<RealmScheduleData> _schedules = [];
   Map<String, int> _routineCounts = {};
   ActiveRealmState _activeState = const FreeRealmState();
+
+  String? _suggestedBedtime;
+  String? _suggestedWake;
+  bool _showSleepSuggestion = false;
+  bool _isSuggestionDismissed = false;
 
   int _selectedWeekday = DateTime.now().weekday; // Default to today's weekday
   Timer? _minuteTimer;
@@ -62,11 +68,42 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
       final schedules = await _repository.loadSchedules();
       final routineCounts = await _repository.loadRoutineCountsPerRealm();
 
+      // بررسی برنامه خواب کاربر در بخش حال و تعادل
+      final db = await DatabaseHelper.instance.database;
+      final sleepSettings = await db.query(
+        'app_settings',
+        where: "key IN ('sleep_target_bedtime', 'sleep_target_wake')",
+      );
+      String? bedtime;
+      String? wake;
+      for (final r in sleepSettings) {
+        final k = r['key'] as String?;
+        final v = r['value'] as String?;
+        if (k == 'sleep_target_bedtime') bedtime = v;
+        if (k == 'sleep_target_wake') wake = v;
+      }
+
+      final hasSleepRealm = realms.any((r) =>
+          r.name.contains('خواب') ||
+          r.name.contains('استراحت') ||
+          r.icon.contains('🌙') ||
+          r.icon.contains('😴'));
+
+      final showSuggestion = bedtime != null &&
+          wake != null &&
+          bedtime.trim().isNotEmpty &&
+          wake.trim().isNotEmpty &&
+          !hasSleepRealm &&
+          !_isSuggestionDismissed;
+
       if (mounted) {
         setState(() {
           _realms = realms;
           _schedules = schedules;
           _routineCounts = routineCounts;
+          _suggestedBedtime = bedtime;
+          _suggestedWake = wake;
+          _showSleepSuggestion = showSuggestion;
           _isLoading = false;
         });
         await _resolveActiveState();
@@ -78,6 +115,69 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
         });
       }
     }
+  }
+
+  Future<void> _quickAddSleepRealm() async {
+    if (_suggestedBedtime == null || _suggestedWake == null) return;
+
+    final realmId = 'sleep_${DateTime.now().millisecondsSinceEpoch}';
+    final realm = RealmData(
+      id: realmId,
+      name: 'خواب و ریکاوری',
+      colorHex: '#6366F1',
+      icon: '🌙',
+      mode: RealmMode.silent,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    final schedule = RealmScheduleData(
+      id: 'sched_${DateTime.now().millisecondsSinceEpoch}',
+      zoneId: realmId,
+      daysOfWeek: const {1, 2, 3, 4, 5, 6, 7},
+      startTime: _suggestedBedtime!,
+      endTime: _suggestedWake!,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await _repository.saveRealm(realm, [schedule]);
+    await _loadData();
+  }
+
+  void _openCustomSleepSheet() {
+    if (_suggestedBedtime == null || _suggestedWake == null) return;
+
+    final realmId = 'sleep_${DateTime.now().millisecondsSinceEpoch}';
+    final defaultRealm = RealmData(
+      id: realmId,
+      name: 'خواب و ریکاوری',
+      colorHex: '#6366F1',
+      icon: '🌙',
+      mode: RealmMode.silent,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    final defaultSchedule = RealmScheduleData(
+      id: 'sched_${DateTime.now().millisecondsSinceEpoch}',
+      zoneId: realmId,
+      daysOfWeek: const {1, 2, 3, 4, 5, 6, 7},
+      startTime: _suggestedBedtime!,
+      endTime: _suggestedWake!,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => RealmEditFormSheet(
+        initialRealm: defaultRealm,
+        initialSchedules: [defaultSchedule],
+        onSave: (savedRealm, savedSchedules) async {
+          await _repository.saveRealm(savedRealm, savedSchedules);
+          await _loadData();
+        },
+      ),
+    );
   }
 
   Future<void> _resolveActiveState() async {
@@ -399,6 +499,9 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
 
                         const SizedBox(height: 12),
 
+                        // 3.5 SMART SLEEP SUGGESTION BANNER
+                        _buildSleepSuggestionCard(colors),
+
                         // 4. REALMS LIST OR EMPTY STATE
                         if (_realms.isEmpty) ...[
                           _buildEmptyStateCard(colors),
@@ -414,6 +517,211 @@ class _RealmManagementSheetState extends State<RealmManagementSheet> {
     ),
   );
 }
+
+  Widget _buildSleepSuggestionCard(RitmoColors colors) {
+    if (!_showSleepSuggestion || _suggestedBedtime == null || _suggestedWake == null) {
+      return const SizedBox.shrink();
+    }
+
+    final isDark = widget.isDarkMode;
+    const accentColor = Color(0xFF6366F1);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? const [
+                  Color(0xFF222044),
+                  Color(0xFF181730),
+                ]
+              : const [
+                  Color(0xFFEEF2FF),
+                  Color(0xFFE0E7FF),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: accentColor.withValues(alpha: isDark ? 0.45 : 0.30),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: isDark ? 0.20 : 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Icon + Badge + Close
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.20),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.40),
+                    width: 1,
+                  ),
+                ),
+                child: const Text('🌙', style: TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'پیشنهاد هوشمند ریتمو',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'حال و تعادل',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'همگام‌سازی قلمرو خواب با برنامه خواب شما',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isSuggestionDismissed = true;
+                    _showSleepSuggestion = false;
+                  });
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 16,
+                    color: colors.textSecondary.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Message & Time Pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.70),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  CupertinoIcons.clock,
+                  size: 14,
+                  color: accentColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'ساعت خواب تنظیم‌شده: $_suggestedBedtime تا $_suggestedWake',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Actions: 1-Tap Add & Customize
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _quickAddSleepRealm,
+                  icon: const Icon(CupertinoIcons.check_mark_circled_solid, size: 16, color: Colors.white),
+                  label: const Text(
+                    'افزودن خودکار قلمرو خواب',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: _openCustomSleepSheet,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: accentColor.withValues(alpha: 0.40)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text(
+                  'شخصی‌سازی',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildActiveRealmBanner(RitmoColors colors) {
     final state = _activeState;

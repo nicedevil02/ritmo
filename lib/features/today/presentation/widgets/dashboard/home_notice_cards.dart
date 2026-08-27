@@ -111,7 +111,10 @@ class _NoticeHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
+        if (trailing != null) ...[
+          const SizedBox(width: RitmoSpacing.sm),
+          trailing!,
+        ],
       ],
     );
   }

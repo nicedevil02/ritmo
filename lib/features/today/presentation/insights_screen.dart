@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -28,6 +28,7 @@ import 'package:ritmo/core/services/premium_service.dart';
 import 'package:ritmo/core/services/secure_key_store.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
+import 'package:ritmo/core/utils/ritmo_date.dart';
 import 'package:ritmo/core/utils/persian_digits.dart';
 import 'package:ritmo/core/ux/ritmo_haptics.dart';
 import 'package:ritmo/core/widgets/premium_gate.dart';
@@ -49,6 +50,9 @@ class InsightsScreen extends StatefulWidget {
 
 class _InsightsScreenState extends State<InsightsScreen> {
   bool _isLoading = true;
+  bool _isRefreshing = false;
+  String? _error;
+  int _loadGeneration = 0;
   AiBriefing? _briefing;
   bool _isDeepAnalyzing = false;
   String? _deepAnalysisResult;
@@ -69,7 +73,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   List<Map<String, dynamic>> _pulseHistoryList = [];
 
   // Life Balance
-  int _lifeBalanceScore = 100;
+  int _lifeBalanceScore = 0;
   Map<String, double> _categoryDistribution = {};
 
   // Energy
@@ -123,33 +127,70 @@ class _InsightsScreenState extends State<InsightsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAnalytics({bool showLoading = false}) async {
-    if (showLoading && mounted) {
+  // IN-05: Safe percent change helper to prevent division by zero / NaN / Infinity crash
+  (int percent, bool isUp) _safePercentChange(double current, double previous) {
+    if (previous <= 0.0 || !previous.isFinite || !current.isFinite) {
+      return (0, true);
+    }
+    final diff = current - previous;
+    final percent = ((diff.abs() / previous) * 100).round().clamp(0, 999);
+    return (percent, diff >= 0);
+  }
+
+  Future<void> _loadAnalytics({bool showLoading = false, bool isRefresh = false}) async {
+    final generation = ++_loadGeneration;
+
+    if (mounted) {
       setState(() {
-        _isLoading = true;
+        if (isRefresh) {
+          _isRefreshing = true;
+        } else if (showLoading) {
+          _isLoading = true;
+        }
+        _error = null;
+        // IN-15: Explicit reset so stale data is not rendered
+        _insights = [];
+        _milestones = [];
+        _categoryDistribution = {};
+        _lifeBalanceScore = 0; // IN-16: 0 means uncalculated, not 100
+        _peakPerformanceWindow = null;
+        _mostProductiveWeekday = null;
+        _mostFatiguedWindow = null;
+        _pulseDiffPercentage = 0;
+        _pulseMonthlyChange = 0;
       });
     }
 
     try {
+      final loadedAt = DateTime.now();
       final db = await DatabaseHelper.instance.database;
 
-      // 1. Fetch raw data from DB using windowed queries for memory safety (ط۳)
-      final ninetyDaysAgoMs = DateTime.now().subtract(const Duration(days: 90)).millisecondsSinceEpoch;
+      // 1. Fetch raw data from DB using windowed queries for memory safety (ط۳, IN-02, IN-23)
+      final windowDays = _selectedWindow.days;
+      final windowStart = loadedAt.subtract(Duration(days: windowDays));
+      final windowStartMs = windowStart.millisecondsSinceEpoch;
+      final windowStartDay = RitmoDate.dayKey(windowStart);
+
       final completionsRaw = await db.query(
         'routine_completions',
         where: 'completionTime >= ?',
-        whereArgs: [ninetyDaysAgoMs],
+        whereArgs: [windowStartMs],
       );
       final completions = completionsRaw.map(Map<String, dynamic>.from).toList();
 
       final energyRaw = await db.query(
         'energy_logs',
         where: 'loggedAt >= ?',
-        whereArgs: [ninetyDaysAgoMs],
+        whereArgs: [windowStartMs],
       );
       final energy = energyRaw.map(Map<String, dynamic>.from).toList();
 
-      final rhythmsRaw = await db.query('daily_rhythm');
+      final rhythmsRaw = await db.query(
+        'daily_rhythm',
+        where: 'date >= ?',
+        whereArgs: [windowStartDay],
+        orderBy: 'date DESC',
+      );
       final rhythms = rhythmsRaw.map(Map<String, dynamic>.from).toList();
 
       final routinesRaw = await db.query('routines');
@@ -183,7 +224,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
       final completionDates = completions.map((c) => c['completionDate'] as String?).whereType<String>().toSet();
       final rhythmDates = rhythms.map((r) => r['date'] as String?).whereType<String>().toSet();
       final allActiveDates = {...completionDates, ...rhythmDates};
-      _daysOfData = allActiveDates.length;
+      _daysOfData = math.min(allActiveDates.length, windowDays);
       if (_daysOfData < 1 && completions.isNotEmpty) _daysOfData = 1;
 
       // 3. Load Pulse History
@@ -194,11 +235,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
       _pulseHistoryList.sort((a, b) => (b['date'] as String).compareTo(a['date'] as String));
 
       // Calculate averages
-      final now = DateTime.now();
-      final sevenDaysAgo = now.subtract(const Duration(days: 7));
-      final fourteenDaysAgo = now.subtract(const Duration(days: 14));
-      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-      final sixtyDaysAgo = now.subtract(const Duration(days: 60));
+      final sevenDaysAgo = loadedAt.subtract(const Duration(days: 7));
+      final fourteenDaysAgo = loadedAt.subtract(const Duration(days: 14));
+      final thirtyDaysAgo = loadedAt.subtract(const Duration(days: 30));
+      final sixtyDaysAgo = loadedAt.subtract(const Duration(days: 60));
 
       final recentRhythms = rhythms.where((r) {
         final date = DateTime.tryParse(r['date'] as String? ?? '');
@@ -221,11 +261,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         prevAvg = prevRhythms.map((r) => (r['rhythmScore'] as num? ?? 0).toDouble()).reduce((a, b) => a + b) / prevRhythms.length;
       }
 
-      if (prevAvg > 0) {
-        final diff = recentAvg - prevAvg;
-        _pulseDiffPercentage = ((diff.abs() / prevAvg) * 100).round();
-        _pulseDiffUp = diff >= 0;
-      }
+      final (weekPct, weekUp) = _safePercentChange(recentAvg, prevAvg);
+      _pulseDiffPercentage = weekPct;
+      _pulseDiffUp = weekUp;
 
       // Calculate monthly average difference if data >= 60 days
       if (_daysOfData >= 60) {
@@ -242,9 +280,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
         if (thisMonthRhythms.isNotEmpty && lastMonthRhythms.isNotEmpty) {
           final thisAvg = thisMonthRhythms.map((r) => (r['rhythmScore'] as num? ?? 0).toDouble()).reduce((a, b) => a + b) / thisMonthRhythms.length;
           final lastAvg = lastMonthRhythms.map((r) => (r['rhythmScore'] as num? ?? 0).toDouble()).reduce((a, b) => a + b) / lastMonthRhythms.length;
-          final diff = thisAvg - lastAvg;
-          _pulseMonthlyChange = ((diff.abs() / lastAvg) * 100).round();
-          _pulseMonthlyUp = diff >= 0;
+          final (monthPct, monthUp) = _safePercentChange(thisAvg, lastAvg);
+          _pulseMonthlyChange = monthPct;
+          _pulseMonthlyUp = monthUp;
         }
       }
 
@@ -258,6 +296,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             energyLogs: energy,
             routineCompletions: completions,
             dailyRhythm: rhythms,
+            now: loadedAt,
           ),
         );
         _peakPerformanceWindow = energyOut.peakPerformanceWindow;
@@ -268,7 +307,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
         final balanceOut = await bus.execute<LifeBalanceEngineInput, LifeBalanceEngineOutput>(
           LifeBalanceEngine,
           LifeBalanceEngineInput(
-            now: DateTime.now(),
+            now: loadedAt,
             routines: routines,
             routineCompletions: completions,
           ),
@@ -295,6 +334,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
         _insights = await bus.execute<InsightGenerationEngineInput, List<InsightResult>>(
           InsightGenerationEngine,
           InsightGenerationEngineInput(
+            now: loadedAt,
+            windowDays: _selectedWindow.days,
             routineCompletions: completions,
             routines: routines,
             peakPerformanceWindow: _peakPerformanceWindow,
@@ -307,9 +348,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
         );
         unawaited(_pushInsightsToInbox(_insights));
       }
-    } catch (e) {
-      debugPrint('Error loading insights: $e');
+    } catch (e, st) {
+      RitmoLogger.error('[Insights] analytics load failed: $e', error: e, stack: st);
+      if (generation == _loadGeneration && mounted) {
+        setState(() {
+          _error = 'محاسبهٔ بینش‌ها با خطا مواجه شد.';
+        });
+      }
+    } finally {
+      if (generation == _loadGeneration && mounted) {
+        setState(() {
+          _isLoading = false;
+          _isRefreshing = false;
+        });
+      }
     }
+
+    if (generation != _loadGeneration) return;
 
     // Load AI Briefing & Deep Analysis cache (RITF-098)
     try {
@@ -324,7 +379,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           await prefs.remove('ai_deep_analysis_result_v1');
         }
       }
-      if (mounted) {
+      if (generation == _loadGeneration && mounted) {
         setState(() {
           _briefing = b;
           _deepAnalysisResult = cachedDeepAnalysis;
@@ -332,12 +387,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
       }
     } catch (e, st) {
       RitmoLogger.warning('Error loading briefing cache in Insights: $e', error: e, stack: st);
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -671,7 +720,7 @@ ${jsonEncode(digest.json)}
                           ),
                         )
                       : RefreshIndicator(
-                          onRefresh: () => _loadAnalytics(showLoading: false),
+                          onRefresh: () => _loadAnalytics(isRefresh: true),
                           color: colors.primary,
                           child: SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
@@ -679,23 +728,36 @@ ${jsonEncode(digest.json)}
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // AI Briefing section
-                                PremiumGate(
-                                  feature: PremiumFeature.unlimitedAi,
-                                  child: _buildAIBriefingSection(colors, isDarkMode),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Maturity Gate Dispatcher
-                                if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
-                                  _buildEarlyStageView(colors, isDarkMode)
-                                else
-                                  PremiumGate(
-                                    feature: PremiumFeature.advancedInsights,
-                                    child: _buildAdvancedView(colors, isDarkMode),
+                                if (_isRefreshing)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: LinearProgressIndicator(
+                                      minHeight: 2,
+                                      backgroundColor: Colors.transparent,
+                                      color: colors.primary,
+                                    ),
                                   ),
-                                const SizedBox(height: 16),
-                                AdService.instance.getBannerAd(),
+                                if (_error != null)
+                                  _buildErrorView(colors, isDarkMode)
+                                else ...[
+                                  // AI Briefing section
+                                  PremiumGate(
+                                    feature: PremiumFeature.unlimitedAi,
+                                    child: _buildAIBriefingSection(colors, isDarkMode),
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // Maturity Gate Dispatcher
+                                  if (!DataMaturityEngine.hasEnoughDataForWeeklyTrend(_daysOfData))
+                                    _buildEarlyStageView(colors, isDarkMode)
+                                  else
+                                    PremiumGate(
+                                      feature: PremiumFeature.advancedInsights,
+                                      child: _buildAdvancedView(colors, isDarkMode),
+                                    ),
+                                  const SizedBox(height: 16),
+                                  AdService.instance.getBannerAd(),
+                                ],
                               ],
                             ),
                           ),
@@ -808,20 +870,6 @@ ${jsonEncode(digest.json)}
                             color: isDark ? Colors.white : const Color(0xFF1D2129),
                           ),
                         ),
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.calendar_today,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        isDark: isDark,
-                        tooltip: 'انتخاب بازه زمانی',
-                        onTap: () => _showDateRangePicker(colors),
-                      ),
-                      _buildHeaderActionButton(
-                        icon: CupertinoIcons.arrow_down_doc,
-                        iconColor: isDark ? const Color(0xFF9096A2) : const Color(0xFF6B7280),
-                        isDark: isDark,
-                        tooltip: 'خروجی گرفتن',
-                        onTap: () => _showExportSheet(colors),
                       ),
                       Builder(
                         builder: (btnCtx) => _buildHeaderActionButton(
@@ -1110,6 +1158,48 @@ ${jsonEncode(digest.json)}
       child: Text(
         label,
         style: RitmoTextStyles.badge(color).copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // ERROR VIEW (IN-06)
+  Widget _buildErrorView(RitmoColors colors, bool isDarkMode) {
+    final m = context.metrics;
+    return RitmoTheme.glassCardLight(
+      child: Padding(
+        padding: EdgeInsets.all(m.spaceXl),
+        child: Column(
+          children: [
+            Icon(
+              CupertinoIcons.exclamationmark_circle_fill,
+              size: 48 * m.densityFactor,
+              color: colors.medicalRed,
+            ),
+            SizedBox(height: m.spaceMd),
+            Text(
+              'خطا در بارگذاری اطلاعات',
+              style: RitmoTextStyles.cardTitle(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: m.spaceSm),
+            Text(
+              _error ?? 'محاسبهٔ بینش‌ها با خطا مواجه شد.',
+              textAlign: TextAlign.center,
+              style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.5),
+            ),
+            SizedBox(height: m.spaceLg),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              icon: const Icon(CupertinoIcons.refresh, size: 18),
+              label: const Text('تلاش مجدد'),
+              onPressed: () => _loadAnalytics(showLoading: true),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2049,7 +2139,7 @@ ${jsonEncode(digest.json)}
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: min(_milestones.length, 5), // Only show top 5 milestones
+      itemCount: math.min(_milestones.length, 5), // Only show top 5 milestones
       separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final milestone = _milestones[index];
@@ -2232,219 +2322,9 @@ ${jsonEncode(digest.json)}
     );
   }
 
-  // Action: Date range picker connecting to InsightsTimeWindow
-  void _showDateRangePicker(RitmoColors colors) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xff1C1F2E)
-                : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              'انتخاب محدوده زمانی',
-              style: RitmoTextStyles.titleMedium(
-                colors.textPrimary,
-              ).copyWith(fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: InsightsTimeWindow.values.map((w) {
-                final isSelected = w == _selectedWindow;
-                return ListTile(
-                  title: Text(
-                    w.label,
-                    style: RitmoTextStyles.caption(
-                      colors.textPrimary,
-                    ),
-                  ),
-                  leading: Icon(
-                    isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: isSelected ? colors.primary : colors.textSecondary.withValues(alpha: 0.5),
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() {
-                      _selectedWindow = w;
-                    });
-                    _loadAnalytics();
-                  },
-                );
-              }).toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'بستن',
-                  style: TextStyle(color: colors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
-  // Action: Export sheet
-  void _showExportSheet(RitmoColors colors) {
-    final isDark = context.isDark;
-    final isGlass = context.isGlassEnabled;
-    final blur = context.glassBlurSigma.clamp(0.0, 50.0);
-    const sheetRadius = BorderRadius.vertical(top: Radius.circular(24));
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final content = Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'خروجی از بینش‌ها',
-                style: RitmoTextStyles.titleMedium(colors.textPrimary).copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'گزارش وضعیت روندها و تعادل ابعاد زندگی شما آماده خروجی گرفتن است.',
-                style: RitmoTextStyles.caption(colors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary.withValues(alpha: 0.1),
-                  foregroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                icon: const Icon(CupertinoIcons.doc_richtext, size: 18),
-                label: const Text('دانلود فایل متنی PDF', style: TextStyle()),
-                onPressed: () {
-                  Navigator.pop(context);
-                  _executeExport(colors, 'PDF');
-                },
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary.withValues(alpha: 0.1),
-                  foregroundColor: colors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                icon: const Icon(CupertinoIcons.photo, size: 18),
-                label: const Text('ذخیره تصویر روندها (Image)', style: TextStyle()),
-                onPressed: () {
-                  Navigator.pop(context);
-                  _executeExport(colors, 'IMAGE');
-                },
-              ),
-            ],
-          ),
-        );
 
-        final sheetBody = Directionality(
-          textDirection: TextDirection.rtl,
-          child: Material(
-            type: MaterialType.transparency,
-            child: content,
-          ),
-        );
-
-        if (!isGlass) {
-          return Container(
-            decoration: BoxDecoration(
-              color: colors.surfaceElevated,
-              borderRadius: sheetRadius,
-              border: Border.all(
-                color: isDark ? colors.border : colors.divider,
-                width: 1.0,
-              ),
-            ),
-            child: sheetBody,
-          );
-        }
-
-        return ClipRRect(
-          borderRadius: sheetRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.glassTint,
-                borderRadius: sheetRadius,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.70),
-                  width: 1.0,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: sheetRadius,
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.20),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.45],
-                  ),
-                ),
-                child: sheetBody,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _executeExport(RitmoColors colors, String format) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xff1C1F2E)
-                : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                Icon(CupertinoIcons.checkmark_circle_fill, color: colors.success, size: 22),
-                const SizedBox(width: 8),
-                Text('خروجی با موفقیت آماده شد', style: RitmoTextStyles.body(colors.textPrimary)),
-              ],
-            ),
-            content: Text(
-              _isFemale
-                  ? 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های محرمانه چرخه بدنی و سلامت خصوصی هرگز در خروجی قرار نگرفته‌اند.'
-                  : 'گزارش نبض زندگی و تعادل ابعاد شما با موفقیت آماده شد.\n\n⚠️ توجه: به دلیل مسائل حریم خصوصی، داده‌های شخصی و حساس هرگز در خروجی قرار نگرفته‌اند.',
-              style: RitmoTextStyles.caption(colors.textSecondary).copyWith(height: 1.6),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('تایید', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   // System Share Action with Dedicated Persian Sheet & Fast Clipboard Option
   void _simulateShare(BuildContext buttonContext, RitmoColors colors) {
@@ -2600,14 +2480,14 @@ class DonutChartPainter extends CustomPainter {
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(Offset(radius, radius), radius - 10, trackPaint);
 
-    var startAngle = -pi / 2;
+    var startAngle = -math.pi / 2;
     final activeEntries = distribution.entries.where((e) => e.value > 0).toList();
 
     if (activeEntries.isEmpty) return;
 
     for (final entry in activeEntries) {
       final percentage = entry.value;
-      final sweepAngle = (percentage / 100.0) * 2 * pi;
+      final sweepAngle = (percentage / 100.0) * 2 * math.pi;
       final color = colors[entry.key] ?? Colors.grey;
 
       final paint = Paint()

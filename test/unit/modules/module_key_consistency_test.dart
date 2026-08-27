@@ -15,6 +15,7 @@ void main() {
       const allowedExceptions = <String, String>{
         // Fallback reading for historical users migrated from old versions
         'module_health_enabled': 'Legacy key fallback in ModuleGate and historical migration registry',
+        'module_sports_enabled': 'Legacy key fallback for sports module in ModuleGate',
         // Historical database migration files
         'module_konkur_enabled': 'Historical migration v73 and v78 schema key',
         // Denylist guard in AI settings assistant

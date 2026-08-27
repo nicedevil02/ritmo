@@ -6,7 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:ritmo/core/logging/ritmo_logger.dart';
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/analytics/courses_engine.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
+import 'package:ritmo/core/utils/ritmo_toast.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/core/theme/ritmo_theme.dart';
 import 'package:ritmo/core/ux/ritmo_empty_state.dart';
 import 'package:ritmo/core/ux/ritmo_skeleton.dart';
@@ -191,7 +194,25 @@ class _CoursesScreenState extends State<CoursesScreen> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () async {
-                      await ModuleManagementService.instance.setModuleEnabled('module_courses_enabled', true);
+                      final result = await ModuleManagementService.instance.setModuleEnabled('module_courses_enabled', true);
+                      if (!mounted) return;
+                      if (result == ModuleToggleResult.limitReached) {
+                        final limit = FeatureLimits.current.maxActiveModules;
+                        RitmoToast.show(
+                          this.context,
+                          'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول دیگر را غیرفعال کنید یا به ریتمو پلاس ارتقا دهید.',
+                          icon: Icons.lock_outline,
+                        );
+                        unawaited(PremiumUpgradeSheet.show(this.context));
+                        return;
+                      } else if (result == ModuleToggleResult.error) {
+                        RitmoToast.show(
+                          this.context,
+                          'خطا در فعال‌سازی سیستم. لطفاً دوباره تلاش کنید.',
+                          icon: Icons.error_outline,
+                        );
+                        return;
+                      }
                       await _loadAllData();
                     },
                     style: ElevatedButton.styleFrom(

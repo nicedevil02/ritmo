@@ -1,5 +1,6 @@
 import 'package:ritmo/core/modules/module_gate.dart';
 import 'package:ritmo/core/database/database_helper.dart';
+import 'package:ritmo/core/services/module_management_service.dart';
 import 'package:sqflite/sqflite.dart';
 
 class StudySettings {
@@ -68,16 +69,7 @@ class StudySettingsRepository {
   }
 
   Future<void> setModuleEnabled(bool enabled) async {
-    final db = await _dbHelper.database;
-    await db.insert(
-      'app_settings',
-      {
-        'key': 'module_study_enabled',
-        'value': enabled.toString(),
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await ModuleManagementService.instance.setModuleEnabled('module_study_enabled', enabled);
   }
 
   Future<void> updateSetting(String key, String value) async {

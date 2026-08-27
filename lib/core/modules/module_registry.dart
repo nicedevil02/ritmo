@@ -82,17 +82,10 @@ class ModuleRegistry {
       defaultEnabled: false,
     ),
     ModuleDescriptor(
-      key: 'module_sports_enabled',
+      key: 'module_supplementary_sports_enabled',
       titleFa: 'ورزش و تحرک',
       oneLineFa: 'برنامهٔ تمرینی، فعالیت‌های بدنی و ثبت سلامتی',
       icon: Icons.fitness_center_rounded,
-      defaultEnabled: false,
-    ),
-    ModuleDescriptor(
-      key: 'module_supplementary_sports_enabled',
-      titleFa: 'ورزش و تحرک تکمیلی',
-      oneLineFa: 'برنامه و تمرین‌های ورزشی تکمیلی',
-      icon: Icons.directions_run_rounded,
       defaultEnabled: false,
     ),
     ModuleDescriptor(
@@ -156,8 +149,14 @@ class ModuleRegistry {
   ];
 
   static ModuleDescriptor? findByKey(String key) {
+    var effectiveKey = key;
+    if (key == 'module_sports_enabled') {
+      effectiveKey = 'module_supplementary_sports_enabled';
+    } else if (key == 'module_health_enabled') {
+      effectiveKey = 'module_medicine_enabled';
+    }
     for (final m in modules) {
-      if (m.key == key) return m;
+      if (m.key == effectiveKey) return m;
     }
     return null;
   }

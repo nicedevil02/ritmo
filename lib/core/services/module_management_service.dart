@@ -70,7 +70,8 @@ class ModuleManagementService {
 
       // Check concurrent module limit when enabling a non-core module
       if (!ModuleRegistry.isCoreModule(key)) {
-        if (!ModuleGate.instance.canActivateMoreModules) {
+        final alreadyEnabled = ModuleGate.instance.isEnabled(key);
+        if (!alreadyEnabled && !ModuleGate.instance.canActivateMoreModules) {
           final limit = FeatureLimits.current.maxActiveModules;
           RitmoLog.warning(
             'Modules',

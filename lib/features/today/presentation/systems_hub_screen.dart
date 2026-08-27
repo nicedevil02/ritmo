@@ -20,7 +20,9 @@ import 'package:ritmo/core/theme/theme_repository.dart';
 import 'package:ritmo/core/utils/cycle_privacy_guard.dart';
 import 'package:ritmo/core/widgets/ritmo_adaptive_grid.dart';
 import 'package:ritmo/core/domain/models.dart';
+import 'package:ritmo/core/services/feature_limits.dart';
 import 'package:ritmo/core/services/module_management_service.dart';
+import 'package:ritmo/features/premium/presentation/premium_upgrade_sheet.dart';
 import 'package:ritmo/features/assistant/presentation/assistant_screen.dart';
 import 'package:ritmo/features/courses/presentation/courses_screen.dart';
 import 'package:ritmo/features/cycle/presentation/cycle_screen.dart';
@@ -1926,10 +1928,10 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
       backgroundColor: Colors.transparent,
       barrierColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
-        final isDark = context.isDark;
-        final isGlass = context.isGlassEnabled;
-        final blur = context.glassBlurSigma.clamp(0.0, 50.0);
+      builder: (sheetContext) {
+        final isDark = sheetContext.isDark;
+        final isGlass = sheetContext.isGlassEnabled;
+        final blur = sheetContext.glassBlurSigma.clamp(0.0, 50.0);
         const sheetRadius = BorderRadius.vertical(top: Radius.circular(30));
 
         final content = Padding(
@@ -1986,11 +1988,29 @@ class _SystemsHubScreenState extends State<SystemsHubScreen>
                 height: 50,
                 child: TextButton(
                   onPressed: () async {
-                    Navigator.pop(context);
-                    await ModuleManagementService.instance.setModuleEnabled(
+                    Navigator.pop(sheetContext);
+                    final result = await ModuleManagementService.instance.setModuleEnabled(
                       settingKey,
                       true,
                     );
+                    if (!mounted) return;
+                    if (result == ModuleToggleResult.limitReached) {
+                      final limit = FeatureLimits.current.maxActiveModules;
+                      RitmoToast.show(
+                        context,
+                        'سقف $limit ماژول فعال همزمان پر شده. ابتدا یک ماژول را خاموش کنید یا به ریتمو پلاس ارتقا دهید.',
+                        icon: Icons.lock_outline,
+                      );
+                      unawaited(PremiumUpgradeSheet.show(context));
+                      return;
+                    } else if (result == ModuleToggleResult.error) {
+                      RitmoToast.show(
+                        context,
+                        'خطا در فعال‌سازی سیستم. لطفاً دوباره تلاش کنید.',
+                        icon: Icons.error_outline,
+                      );
+                      return;
+                    }
                     await _loadAllData();
                     onActivated();
                   },

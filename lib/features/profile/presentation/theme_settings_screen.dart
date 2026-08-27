@@ -121,12 +121,12 @@ class ThemeSettingsScreen extends StatelessWidget {
                       Material(
                         color: Colors.transparent,
                         child: SwitchListTile(
-                          value: prefs.reduceTransparency,
+                          value: !prefs.reduceTransparency,
                           onChanged: (val) {
-                            themeRepository.updateReduceTransparency(val);
+                            themeRepository.updateReduceTransparency(!val);
                           },
                           title: Text(
-                            'غیرفعال‌سازی متریال شیشه‌ای',
+                            'متریال شیشه‌ای (بلور)',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -134,7 +134,7 @@ class ThemeSettingsScreen extends StatelessWidget {
                             ),
                           ),
                           subtitle: Text(
-                            'حذف افکت بلور شیشه‌ای برای کارایی بالاتر روی دستگاه‌های ضعیف‌تر',
+                            'افکت بلور و شفافیت در کارت‌ها و پس‌زمینه (خاموش برای گوشی‌های ضعیف‌تر)',
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary,

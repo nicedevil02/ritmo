@@ -485,7 +485,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                 SettingsSection(
                   title: 'جلوه‌های بصری و نمایشگر',
                   children: [
-                    // ۱. خاموش‌سازی کامل متریال شیشه‌ای
+                    // ۱. متریال شیشه‌ای
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: m.spaceLg,
@@ -499,7 +499,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'غیرفعال‌سازی متریال شیشه‌ای',
+                                  'متریال شیشه‌ای (بلور)',
                                   style:
                                       context.t.titleSmall?.copyWith(
                                         fontWeight: FontWeight.w600,
@@ -512,7 +512,7 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                                 ),
                                 SizedBox(height: m.spaceXs),
                                 Text(
-                                  'حذف افکت بلور شیشه‌ای برای روان‌تر شدن برنامه در گوشی‌های ضعیف‌تر',
+                                  'افکت بلور و شفافیت در کارت‌ها و پس‌زمینه (خاموش برای گوشی‌های ضعیف‌تر)',
                                   style:
                                       context.t.bodySmall?.copyWith(
                                         color: colors.textSecondary,
@@ -524,12 +524,12 @@ class _AppearanceGroupScreenState extends State<AppearanceGroupScreen> {
                           ),
                           SizedBox(width: m.spaceMd),
                           CupertinoSwitch(
-                            value: prefs.reduceTransparency,
+                            value: !prefs.reduceTransparency,
                             activeTrackColor: colors.primary,
                             onChanged: (val) {
                               RitmoHapticsPolicy.selection();
                               widget.themeRepository.updateReduceTransparency(
-                                val,
+                                !val,
                               );
                             },
                           ),
